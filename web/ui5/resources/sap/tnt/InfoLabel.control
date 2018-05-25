@@ -22,27 +22,27 @@ When using &lt;code&gt;InfoLabel&lt;/code&gt; in non-editable &lt;code&gt;Forms&
     <since>1.54</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" defaultValue="" bindable="bindable">
+        <property bindable="bindable" defaultValue="" type="sap.ui.core/string" name="text">
             <documentation>Specifies the text inside the &lt;code&gt;InfoLabel&lt;/code&gt; control.</documentation>
         </property>
-        <property name="renderMode" type="sap.tnt/RenderMode" defaultValue="Loose" group="Appearance">
+        <property group="Appearance" defaultValue="Loose" type="sap.tnt/RenderMode" name="renderMode">
             <documentation>Specifies the type of the &lt;code&gt;InfoLabel&lt;/code&gt; paddings - loose or narrow.
 &lt;b&gt;Note:&lt;/b&gt; By default the padding is loose. It is recommended to use narrow (smaller) paddings for numeric texts.</documentation>
         </property>
-        <property name="colorScheme" type="sap.ui.core/int" defaultValue="7" group="Misc">
+        <property group="Misc" defaultValue="7" type="sap.ui.core/int" name="colorScheme">
             <documentation>Specifies the fill and text color of the control. Accepts a digit as a value.
 You can choose from 9 predefined background and text color combinations.
 The color schemes are non-semantic, you can select them according to your own preferences.
 The default &lt;code&gt;colorScheme&lt;/code&gt; is 7.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" group="Dimension">
+        <property group="Dimension" type="sap.ui.core/CSSSize" name="width">
             <documentation>Specifies the width of the &lt;code&gt;InfoLabel&lt;/code&gt; control. By default, the &lt;code&gt;InfoLabel&lt;/code&gt; control has the width of the content. Set this property to restrict the width to a custom value.</documentation>
         </property>
-        <property name="displayOnly" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="displayOnly">
             <documentation>Determines if the &lt;code&gt;InfoLabel&lt;/code&gt; is in &lt;code&gt;displayOnly&lt;/code&gt; mode.
 When set to &lt;code&gt;true&lt;/code&gt; the control size adjusts to fit other controls, for example non-editable &lt;code&gt;Forms&lt;/code&gt;.</documentation>
         </property>
-        <property name="textDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance">
+        <property group="Appearance" defaultValue="Inherit" type="sap.ui.core/TextDirection" name="textDirection">
             <documentation>Available options for the text direction are LTR and RTL. By default the control inherits the text direction from its parent control.</documentation>
         </property>
     </properties>

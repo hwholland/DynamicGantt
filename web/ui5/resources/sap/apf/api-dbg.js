@@ -3,7 +3,7 @@
  * 
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
-/*global jQuery, sap */
+/*global jQuery, sap, OData */
 (function() {
 	'use strict';
 	jQuery.sap.declare('sap.apf.api');
@@ -27,8 +27,10 @@
 	jQuery.sap.require("sap.apf.ui.representations.pieChart");
 	jQuery.sap.require("sap.apf.ui.representations.percentageStackedColumnChart");
 	jQuery.sap.require('sap.apf.ui.representations.bubbleChart');
+	jQuery.sap.require("sap.apf.ui.representations.treeTable");
 	jQuery.sap.require('sap.apf.messageCallbackForStartup');
 	jQuery.sap.require("sap.ui.thirdparty.datajs");
+	jQuery.sap.require("sap.apf.core.utils.filterSimplify");
 	/**
 	 * @public
 	 * @class Official API for Analysis Path Framework (APF)<br>
@@ -64,6 +66,9 @@
 		var messageCallbackForStartup;
 		var bStartupSucceeded = true;
 		var onBeforeApfStartupDeferred = jQuery.Deferred();
+		var corePromise = new jQuery.Deferred();
+		var application;
+		var isUsingCloudFoundryProxy;
 		/**
 		 * @public
 		 * @description Contains 'api'
@@ -110,7 +115,7 @@
 		};
 		/**
 		 * @public
-		 * @experimental Revision planned by moving the method into apf.Component.js.
+		 * @experimental NOT FOR PRODUCTION USE
 		 * @function
 		 * @name sap.apf.Api#activateOnErrorHandling
 		 * @description The handling of the window.onerror by the message handler is
@@ -131,33 +136,6 @@
 		 */
 		this.getStartParameterFacade = function() {
 			return oCoreApi.getStartParameterFacade();
-		};
-		/**
-		 * @private
-		 * @deprecated since Version 1.23.1.
-		 * @function
-		 * @name sap.apf.Api#setCallbackForMessageHandling
-		 * @description Sets a callback function, so that a message can be further
-		 *              processed.
-		 * @param {function} fnCallback
-		 *            The callback function will be called with the messageObject of type {sap.apf.core.MessageObject}.
-		 * @returns undefined
-		 */
-		this.setCallbackForMessageHandling = function(fnCallback) {
-			return oCoreApi.setCallbackForMessageHandling(fnCallback);
-		};
-		/**
-		 * @private
-		 * @deprecated since Version 1.23.1.
-		 * @function
-		 * @name sap.apf.Api#setApplicationCallbackForMessageHandling
-		 * @description Sets an application callback function, which allows applications to register a message callback.
-		 * @param {function} fnCallback
-		 *            The callback function will be called with the messageObject of type {sap.apf.core.MessageObject}.
-		 * @returns undefined
-		 */
-		this.setApplicationCallbackForMessageHandling = function(fnCallback) {
-			return oCoreApi.setApplicationCallbackForMessageHandling(fnCallback);
 		};
 		/**
 		 * @private
@@ -495,7 +473,7 @@
 		};
 		/**
 		 * @public
-		 * @experimental Revision planned by moving the method into apf.Component.js.
+		 * @experimental NOT FOR PRODUCTION USE
 		 * @deprecated since Version 1.23.1.
 		 * @function
 		 * @name sap.apf.Api#loadApplicationConfig
@@ -585,7 +563,7 @@
 		};
 		/**
 		 * @public
-		 * @experimental Method name tentative.
+		 * @experimental NOT FOR PRODUCTION USE
 		 * @function
 		 * @name sap.apf.Api#selectionChanged
 		 * @description Calls the sap.apf.core.instance#updatePath (also see {@link sap.apf.core.Path#update}) with proper callback for UI.
@@ -598,7 +576,7 @@
 		};
 		/**
 		 * @private
-		 * @experimental Revision planned by moving the method into apf.Component.js.
+		 * @experimental NOT FOR PRODUCTION USE
 		 * @function
 		 * @name sap.apf.Api#createApplicationLayout
 		 * @description Creates the APF application layout.
@@ -606,7 +584,11 @@
 		 */
 		this.createApplicationLayout = function() {
 			// Create and return APF UI Content
-			return oUiApi.createApplicationLayout();
+			if (!application){
+				application = new sap.m.App().addStyleClass("sapApf");
+			}
+			
+			return application;
 		};
 		/**
 		 * @private
@@ -616,37 +598,42 @@
 		 * @returns {sap.m.App} - the APF content
 		 */
 		this.startApf = function() {
-			var oApfContent;
+	
 			var deferredMode;
 			var that = this;
-			try {
-			// Notify applications before APF start-up
-			if (this.fnBeforeApfStartupCallback && typeof this.fnBeforeApfStartupCallback === "function") {
-				this.fnBeforeApfStartupCallback.apply(oComponent, [ this ]);
-			}
-			onBeforeApfStartupDeferred.resolve();
-			// Create APF UI Content
-				oApfContent = this.createApplicationLayout();
-				deferredMode = oNavigationHandler.checkMode();
-			// Handle APF Start-up based on mode
-			var promiseStartup = oUiApi.handleStartup(deferredMode);
-			// Notify applications after APF start-up
-			promiseStartup.done(function() {
-				if (that.fnAfterApfStartupCallback && typeof that.fnAfterApfStartupCallback === "function") {
-					that.fnAfterApfStartupCallback.apply(oComponent, [ that ]);
-				}
-					oMessageHandler.setLifeTimePhaseRunning();
-			});
-			} catch(e) {
-				bStartupSucceeded = false;
-				return new sap.m.Text({ text : "" });
-			}
+			var app = this.createApplicationLayout();
+			corePromise.done(function(){
+				try {
+					// Notify applications before APF start-up
+					
+					if (this.fnBeforeApfStartupCallback && typeof this.fnBeforeApfStartupCallback === "function") {
+						this.fnBeforeApfStartupCallback.apply(oComponent, [ this ]);
+					}
+					onBeforeApfStartupDeferred.resolve();
+					// Create APF UI Content
+					oUiApi.createApplicationLayout(app);
+					deferredMode = oNavigationHandler.checkMode();
+					// Handle APF Start-up based on mode
+					var promiseStartup = oUiApi.handleStartup(deferredMode);
+					// Notify applications after APF start-up
+					promiseStartup.done(function() {
+						
+						if (that.fnAfterApfStartupCallback && typeof that.fnAfterApfStartupCallback === "function") {
+							that.fnAfterApfStartupCallback.apply(oComponent, [ that ]);
+						}
+						oMessageHandler.setLifeTimePhaseRunning();	
+					});
+					} catch(e) {
+						bStartupSucceeded = false;
+						
+					}
+			}.bind(this));
 			// Return APF UI Content
-			return oApfContent;
+			return app;
 		};
 		/**
 		 * @public
-		 * @experimental Revision planned for method name.
+		 * @experimental NOT FOR PRODUCTION USE
 		 * @deprecated since Version 1.23.1. Remains in api in order to maintain downward compatibility to 3 Wave 5 apps.
 		 * @function
 		 * @name sap.apf.Api#addMasterFooterContent
@@ -658,7 +645,7 @@
 		};
 		/**
 		 * @public
-		 * @experimental Revision planned for all parameter objects of callback function.
+		 * @experimental NOT FOR PRODUCTION USE
 		 * @function
 		 * @name sap.apf.Api#setEventCallback
 		 * @description Register the function callback to be executed on the given event type.
@@ -670,6 +657,7 @@
 		 * @param {function} fnCallback that will be executed depending on the event type.
 		 * @returns {boolean} true or false based on success or failure of registering the listener.
 		 */
+
 		this.setEventCallback = function(sEventType, fnCallback) {
 			switch (sEventType) {
 				case sap.apf.core.constants.eventTypes.contextChanged:
@@ -679,11 +667,21 @@
 					oUiApi.setEventCallback(sEventType, fnCallback);
 					return true;
 				case sap.apf.core.constants.eventTypes.format:
-					oUiApi.setEventCallback(sEventType, fnCallback);
+					this.customFormat(fnCallback);
 					return true;
 				default:
 					return false;
 			}
+		};
+		/**
+		 * @public
+		 * @function
+		 * @name sap.apf.Api#customFormat
+		 * @description helps to call customer defined custom formatter function(fnCallback).
+		 * @param {function} fnCallback custom format function need to be called.
+		 */
+		this.customFormat = function(fnCallback) {
+			oUiApi.setCustomFormatExit(fnCallback);
 		};
 		/**
 		 * @public
@@ -756,26 +754,40 @@
 		oMessageHandler = new (inject && inject.constructors && inject.constructors.MessageHandler || sap.apf.core.MessageHandler)();
 		oMessageHandler.activateOnErrorHandling(true);
 		oMessageHandler.setLifeTimePhaseStartup();
+		oMessageHandler.loadConfig(sap.apf.core.messageDefinition, true);
 		messageCallbackForStartup = inject && inject.functions && inject.functions.messageCallbackForStartup || sap.apf.messageCallbackForStartup;
 		oMessageHandler.setMessageCallback(messageCallbackForStartup);
-		oMessageHandler.loadConfig(sap.apf.core.messageDefinition, true);
+
+		if (inject && inject.functions && inject.functions.isUsingCloudFoundryProxy) {
+			isUsingCloudFoundryProxy = inject.functions.isUsingCloudFoundryProxy;
+		} else {
+			isUsingCloudFoundryProxy = function() {
+				return false;
+			};
+		}
 
 		try {
-
 			oCoreApi = new (inject && inject.constructors && inject.constructors.CoreInstance || sap.apf.core.Instance)({
 				functions: {
+					isUsingCloudFoundryProxy : isUsingCloudFoundryProxy,
 					getCumulativeFilter : function() {
 						return oStartFilterHandler.getCumulativeFilter();
 					},
 					getCombinedContext : function(){
 						return oExternalContext.getCombinedContext();
 					},
-					ajax : (inject && inject.functions && inject.functions.ajax),
+					ajax : (inject && inject.functions && inject.functions.ajax), 
+					serializeApfState : function(isTransient, keepInitialStartFilterValues){
+						return oSerializationMediator.serialize(isTransient, keepInitialStartFilterValues);
+					}, 
+					deserializeApfState : function(serializedApfState){
+						return oSerializationMediator.deserialize(serializedApfState);
+					},
 					odataRequest : (inject && inject.functions && inject.functions.odataRequest),
 					getComponentName : function() {
 						if (manifests && manifests.manifest && manifests.manifest["sap.app"]) {
 							return  manifests.manifest["sap.app"].id;
-					}
+						}
 						return oComponent.getMetadata().getComponentName();
 					}
 				},
@@ -789,12 +801,14 @@
 					Metadata : (inject && inject.constructors && inject.constructors.Metadata),
 					MetadataFactory : (inject && inject.constructors && inject.constructors.MetadataFactory),
 					ResourcePathHandler: (inject && inject.constructors && inject.constructors.ResourcePathHandler),
+					TextResourceHandler: (inject && inject.constructors && inject.constructors.TextResourceHandler),
 					SessionHandler : (inject && inject.constructors && inject.constructors.SessionHandler),
 					Persistence : (inject && inject.constructors && inject.constructors.Persistence)
 				},
 				manifests: manifests,
 				exits: (inject && inject.exits),
-				coreProbe : (inject && inject.coreProbe)
+				coreProbe : (inject && inject.coreProbe),
+				corePromise : corePromise
 			});
 
 			injectExternalContext = {
@@ -823,58 +837,55 @@
 						StartFilter : sap.apf.utils.StartFilter
 					}
 			};
-		oStartFilterHandler = new ((inject && inject.constructors && inject.constructors.StartFilterHandler) || sap.apf.utils.StartFilterHandler)(injectStartFilterHandler);
-		injectFilterIdHandler = {
-			functions : {
-				setRestrictionByProperty : oStartFilterHandler.setRestrictionByProperty,
-				getRestrictionByProperty : oStartFilterHandler.getRestrictionByProperty
-			},
-			instances : {
-				messageHandler : oMessageHandler
-			}
-		};
-		oFilterIdHandler = new ((inject && inject.constructors && inject.constructors.FilterIdHandler) || sap.apf.utils.FilterIdHandler)(injectFilterIdHandler);
-		var injectNavigationHandler = {
-			functions : {
-				getCumulativeFilterUpToActiveStep : oCoreApi.getCumulativeFilterUpToActiveStep,
-				getNavigationTargets : oCoreApi.getNavigationTargets,
-				getActiveStep : oCoreApi.getActiveStep,
-				serialize : oCoreApi.serialize,
-				serializeFilterIds : oFilterIdHandler.serialize,
-				isDirty : oCoreApi.isDirty,
-				getPathName : oCoreApi.getPathName,
-				deserialize : oCoreApi.deserialize,
-				deserializeFilterIds : oFilterIdHandler.deserialize,
-				setDirtyState : oCoreApi.setDirtyState,
-				setPathName : oCoreApi.setPathName,
-				createRequest : oCoreApi.getFunctionCreateRequest(),
-				getXappStateId : oCoreApi.getStartParameterFacade().getXappStateId,
-				isFilterReductionActive : oCoreApi.getStartParameterFacade().isFilterReductionActive,
-				getAllParameterEntitySetKeyProperties : oCoreApi.getMetadataFacade().getAllParameterEntitySetKeyProperties
-			},
-			instances : {
-				messageHandler : oMessageHandler,
-				component : oComponent,
-				startFilterHandler : oStartFilterHandler
-			}
-		};
-		oNavigationHandler = new ((inject && inject.constructors && inject.constructors.NavigationHandler) || sap.apf.utils.NavigationHandler)(injectNavigationHandler);
-		oSerializationMediator = new ((inject && inject.constructors && inject.constructors.SerializationMediator) || sap.apf.utils.SerializationMediator)({
-			instances : {
-				coreApi : oCoreApi,
-				filterIdHandler : oFilterIdHandler,
-				startFilterHandler : oStartFilterHandler
-			}
-		});
-		oUiApi = new (inject && inject.constructors && inject.constructors.UiInstance || sap.apf.ui.Instance)({
-			oCoreApi : oCoreApi,
-			oFilterIdHandler : oFilterIdHandler,
-			oSerializationMediator : oSerializationMediator,
-			oNavigationHandler : oNavigationHandler,
-			oComponent : oComponent,
-			oStartParameter : oStartParameter,
-			oStartFilterHandler : oStartFilterHandler
-		});
+			oStartFilterHandler = new ((inject && inject.constructors && inject.constructors.StartFilterHandler) || sap.apf.utils.StartFilterHandler)(injectStartFilterHandler);
+			injectFilterIdHandler = {
+				functions : {
+					setRestrictionByProperty : oStartFilterHandler.setRestrictionByProperty,
+					getRestrictionByProperty : oStartFilterHandler.getRestrictionByProperty
+				},
+				instances : {
+					messageHandler : oMessageHandler
+				}
+			};
+			oFilterIdHandler = new ((inject && inject.constructors && inject.constructors.FilterIdHandler) || sap.apf.utils.FilterIdHandler)(injectFilterIdHandler);
+			oSerializationMediator = new ((inject && inject.constructors && inject.constructors.SerializationMediator) || sap.apf.utils.SerializationMediator)({
+				instances : {
+					coreApi : oCoreApi,
+					filterIdHandler : oFilterIdHandler,
+					startFilterHandler : oStartFilterHandler, 
+					messageHandler : oMessageHandler
+				}
+			});
+			var injectNavigationHandler = {
+				constructors : {
+					FilterReduction : sap.apf.core.utils.FilterReduction
+				},
+				functions : {
+					getCumulativeFilterUpToActiveStep : oCoreApi.getCumulativeFilterUpToActiveStep,
+					getNavigationTargets : oCoreApi.getNavigationTargets,
+					getActiveStep : oCoreApi.getActiveStep,
+					createRequest : oCoreApi.getFunctionCreateRequest(),
+					getXappStateId : oCoreApi.getStartParameterFacade().getXappStateId,
+					isFilterReductionActive : oCoreApi.getStartParameterFacade().isFilterReductionActive,
+					getAllParameterEntitySetKeyProperties : oCoreApi.getMetadataFacade().getAllParameterEntitySetKeyProperties
+				},
+				instances : {
+					messageHandler : oMessageHandler,
+					component : oComponent,
+					serializationMediator : oSerializationMediator
+				}
+			};
+			oNavigationHandler = new ((inject && inject.constructors && inject.constructors.NavigationHandler) || sap.apf.utils.NavigationHandler)(injectNavigationHandler);
+			oUiApi = new (inject && inject.constructors && inject.constructors.UiInstance || sap.apf.ui.Instance)({
+				oCoreApi : oCoreApi,
+				oFilterIdHandler : oFilterIdHandler,
+				oSerializationMediator : oSerializationMediator,
+				oNavigationHandler : oNavigationHandler,
+				oComponent : oComponent,
+				oStartParameter : oStartParameter,
+				oStartFilterHandler : oStartFilterHandler,
+				exits : inject && inject.exits || {}
+			});
 		} catch(error) {
 			bStartupSucceeded = false;
 			this.startApf = function() {
@@ -887,7 +898,7 @@
 		}
 		/**
 		 * @private
-		 * @experimental Not yet final
+		 * @experimental NOT FOR PRODUCTION USE
 		 * @function
 		 * @name sap.apf.core.Instance#createRepresentation
 		 * @description Method to be used APF internally by the binding class to create instances from representation constructors.
@@ -920,7 +931,8 @@
 				injectedFunctionsNavigationHandler : injectNavigationHandler && injectNavigationHandler.functions,
 				startFilterHandler : oStartFilterHandler,
 				externalContext : oExternalContext,
-				filterIdHandler : oFilterIdHandler
+				filterIdHandler : oFilterIdHandler, 
+				corePromise : corePromise
 			});
 		}
 	};

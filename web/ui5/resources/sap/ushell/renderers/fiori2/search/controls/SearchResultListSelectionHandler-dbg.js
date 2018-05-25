@@ -1,13 +1,11 @@
 /* global sap,window,jQuery */
 
-
-
-(function() {
+sap.ui.define([
+    'sap/ui/base/Object'
+], function() {
     "use strict";
 
-    jQuery.sap.require('sap.ui.base.Object');
-
-    sap.ui.base.Object.extend("sap.ushell.renderers.fiori2.search.controls.SearchResultListSelectionHandler", {
+    return sap.ui.base.Object.extend("sap.ushell.renderers.fiori2.search.controls.SearchResultListSelectionHandler", {
 
         isMultiSelectionAvailable: function(dataSource) {
             return false;
@@ -17,4 +15,4 @@
             return [];
         }
     });
-})();
+});

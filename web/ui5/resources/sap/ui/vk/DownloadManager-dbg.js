@@ -23,7 +23,7 @@ sap.ui.define([
 	 * @param {int} maxParallelTasks The maximum number of downloading tasks to execute in parallel.
 	 * @private
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 * @extends sap.ui.base.EventProvider
 	 * @alias sap.ui.vk.DownloadManager
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
@@ -75,13 +75,13 @@ sap.ui.define([
 						 * The size of data which has been downloaded so far for a particular file.
 						 */
 						loaded: {
-							type: "number"
+							type: "int"
 						},
 						/**
 						 * The total size of the file being currently downloaded.
 						 */
 						total: {
-							type: "number"
+							type: "int"
 						}
 					}
 				},
@@ -103,6 +103,9 @@ sap.ui.define([
 						status: {
 							type: "any"
 						},
+						/**
+						 * The status text.
+						 */
 						statusText: {
 							type: "string"
 						}
@@ -116,7 +119,6 @@ sap.ui.define([
 			}
 		},
 		constructor: function(sources, maxParallelTasks) {
-			this._messages = new Messages();
 			EventProvider.apply(this);
 
 			this._maxParallelTasks = maxParallelTasks || 5;
@@ -125,14 +127,13 @@ sap.ui.define([
 		}
 	});
 
-
-
 	/**
 	 * Starts the downloading process.
 	 * @returns {sap.ui.vk.DownloadManager} <code>this</code> to allow method chaining.
 	 * @public
 	 */
 	DownloadManager.prototype.start = function() {
+		// Schedule simultaneous downloading of up to this._maxParallelTasks.
 		/* eslint-disable no-empty */
 		while (this._pickAndDispatchTask()) {
 			// A comment to avoid ESLint warnings.
@@ -143,8 +144,20 @@ sap.ui.define([
 	};
 
 	/**
+	 * Adds a new source to the download queue.
+	 *
+	 * @param {any} source A new source to download.
+	 * @returns {sap.ui.vk.DownloadManager} <code>this</code> to allow method chaining.
+	 */
+	DownloadManager.prototype.queue = function(source) {
+		this._sourcesToProcess.push(source);
+		this._pickAndDispatchTask();
+		return this;
+	};
+
+	/**
 	 * Picks and dispatches a source for downloading.
-	 * @return {boolean} Returns <code>true</code> if a source is picked and dispatched, returns <code>false</code> if there are no more sources to download.
+	 * @returns {boolean} Returns <code>true</code> if a source is picked and dispatched, returns <code>false</code> otherwise.
 	 * @private
 	 */
 	DownloadManager.prototype._pickAndDispatchTask = function() {
@@ -159,7 +172,7 @@ sap.ui.define([
 
 	/**
 	 * @param {sap.ui.core.URI|File} source The URL or File that is completed.
-	 * @return {boolean} Returns <code>true</code> if it is the last task completed.
+	 * @returns {sap.ui.vk.DownloadManager} <code>this</code> to allow method chaining.
 	 * @private
 	 */
 	DownloadManager.prototype._taskFinished = function(source) {
@@ -168,6 +181,10 @@ sap.ui.define([
 			this._sourcesBeingProcessed.splice(index, 1);
 		}
 
+		return this;
+	};
+
+	DownloadManager.prototype._queueIsEmpty = function() {
 		return this._sourcesToProcess.length === 0 && this._sourcesBeingProcessed.length === 0;
 	};
 
@@ -181,24 +198,25 @@ sap.ui.define([
 			var xhr = new (typeof sinon === "object" && sinon.xhr && sinon.xhr.XMLHttpRequest || XMLHttpRequest);
 
 			xhr.onerror = function(event) {
-				//onerror event caters for events such as CORS errors
+				that._taskFinished(source);
+				that._pickAndDispatchTask();
+
+				// onerror event caters for events such as CORS errors
 				that.fireItemFailed({
 					source: source,
 					status: xhr.status,
 					statusText: xhr.statusText
 				});
 
-				var isLast = that._taskFinished(source);
-				that._pickAndDispatchTask();
-				if (isLast) {
-					that.fireAllItemsCompleted({});
+				if (that._queueIsEmpty()) {
+					that._asyncFireAllItemsCompleted();
 				}
 			};
 
 			xhr.onload = function(event) {
-
-				var isLast = that._taskFinished(source);
+				that._taskFinished(source);
 				that._pickAndDispatchTask();
+
 				// When file is loaded from a Cordova container the status equals 0.
 				if (xhr.status === 200 || xhr.status === 0) {
 					that.fireItemSucceeded({
@@ -206,17 +224,17 @@ sap.ui.define([
 						response: xhr.response
 					});
 				} else {
-					//onload event is also called in the case of status code 404 Not Found.
-					//This is why we have to check for the right status. If the status is not
-					//something that indicates success, we fire the fireItemFailed event.
+					// onload event is also called in the case of status code 404 Not Found.
+					// This is why we have to check for the right status. If the status is not
+					// something that indicates success, we fire the fireItemFailed event.
 					that.fireItemFailed({
 						source: source,
 						status: xhr.status,
 						statusText: xhr.statusText
 					});
 				}
-				if (isLast) {
-					that.fireAllItemsCompleted({});
+				if (that._queueIsEmpty()) {
+					that._asyncFireAllItemsCompleted();
 				}
 			};
 
@@ -235,14 +253,31 @@ sap.ui.define([
 			var fileReader = new FileReader();
 
 			fileReader.onload = function(event) {
-				var isLast = that._taskFinished(source);
+				that._taskFinished(source);
 				that._pickAndDispatchTask();
+
 				that.fireItemSucceeded({
 					source: source,
 					response: fileReader.result
 				});
-				if (isLast) {
-					that.fireAllItemsCompleted({});
+
+				if (that._queueIsEmpty()) {
+					that._asyncFireAllItemsCompleted();
+				}
+			};
+
+			fileReader.onerror = function(event) {
+				that._taskFinished(source);
+				that._pickAndDispatchTask();
+
+				that.fireItemFailed({
+					source: source,
+					status: fileReader.error.name,
+					statusText: fileReader.error.message
+				});
+
+				if (that._queueIsEmpty()) {
+					that._asyncFireAllItemsCompleted();
 				}
 			};
 
@@ -254,25 +289,21 @@ sap.ui.define([
 				});
 			};
 
-			fileReader.onerror = function(event) {
-				var isLast = that._taskFinished(source);
-				that._pickAndDispatchTask();
-				that.fireItemFailed({
-					source: source,
-					status: fileReader.error.name,
-					statusText: fileReader.error.message
-				});
-				if (isLast) {
-					that.fireAllItemsCompleted({});
-				}
-			};
-
 			fileReader.readAsArrayBuffer(source);
 		} else {
-			jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(this._messages.messages.VIT5.summary), this._messages.messages.VIT5.code, "sap.ui.vk.DownloadManager");
+			jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(Messages.VIT5.summary), Messages.VIT5.code, "sap.ui.vk.DownloadManager");
 		}
 
 		return this;
+	};
+
+	/**
+	 * The allItemsCompleted event is fired asynchronously as otherwise something is wrong in Emscripten
+	 * e.g. std::cout is unusable, some global variables are uninitialised.
+	 * @private
+	 */
+	DownloadManager.prototype._asyncFireAllItemsCompleted = function() {
+		jQuery.sap.delayedCall(0, this, this.fireAllItemsCompleted);
 	};
 
 	DownloadManager.prototype.attachItemSucceeded = function(data, func, listener) {

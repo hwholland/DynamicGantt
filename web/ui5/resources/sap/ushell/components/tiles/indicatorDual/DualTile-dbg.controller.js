@@ -3,6 +3,7 @@
 (function () {
 	/* global $ */
 	"use strict";
+	
 	sap.ui.controller("sap.ushell.components.tiles.indicatorDual.DualTile", {
 
 		getRelativeTime: function() {

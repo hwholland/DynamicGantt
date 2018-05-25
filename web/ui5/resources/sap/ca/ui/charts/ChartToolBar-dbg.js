@@ -71,7 +71,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * - personalization icon
  * - showLegend toggle
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

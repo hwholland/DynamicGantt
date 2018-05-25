@@ -1,4 +1,3 @@
-
 sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool', 'sap/ushell/library' ],
 function (jQuery, Control, IconPool) {
     "use strict";
@@ -13,7 +12,7 @@ function (jQuery, Control, IconPool) {
      * A control to be placed in the tool area
      * @extends sap.ui.core.Control
      *
-     * @version ${version}
+     * @version 1.54.3
      *
      * @constructor
      * @public

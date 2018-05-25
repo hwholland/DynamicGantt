@@ -18,9 +18,7 @@ jQuery.sap.declare("sap.apf.core.metadataFactory");
 		 * @returns {String}
 		 */
 		this.type = "metadataFactory";
-		var that = this;
-		var oMessageHandler = oInject.instances.messageHandler;
-		var oConfigurationFactory = oInject.instances.configurationFactory;
+		var messageHandler = oInject.instances.messageHandler;
 		var Hashtable = oInject.constructors.Hashtable;
 		var Metadata = oInject.constructors.Metadata;
 		var EntityTypeMetadata = oInject.constructors.EntityTypeMetadata;
@@ -29,85 +27,109 @@ jQuery.sap.declare("sap.apf.core.metadataFactory");
 		delete oInject.constructors.Metadata;
 		delete oInject.constructors.EntityTypeMetadata;
 		delete oInject.constructors.MetadataFacade;
-		delete oInject.constructors.MetadataProperty;
 		delete oInject.instances.configurationFactory;
-		var oMetadataInstances = new Hashtable(oMessageHandler);
-		// Public functions
+		var metadataBuffer = new Hashtable(messageHandler);
 		/**
 		 * @description Returns metadata object that represents metadata corresponding to the service document.
-		 * @param {string} sAbsolutePathToServiceDocument Path to the service document
-		 * @returns {sap.apf.core.Metadata}
+		 * @param {string} pathToServiceDocument Path to the service document
+		 * @returns {jQuery.Deferred.Promise} resolves with an instance of sap.apf.core.Metadata or is rejected in error case
 		 */
-		this.getMetadata = function(sAbsolutePathToServiceDocument) {
-			var metadataCandidate;
-			if (oMetadataInstances.hasItem(sAbsolutePathToServiceDocument) === false) {
-				metadataCandidate = new Metadata(oInject, sAbsolutePathToServiceDocument);
-				if (!metadataCandidate.failed) {
-					oMetadataInstances.setItem(sAbsolutePathToServiceDocument, {
-						metadata : metadataCandidate
-					});
-				} else {
-					return undefined;
-				}
+		this.getMetadata = function(pathToServiceDocument) {
+			if (metadataBuffer.hasItem(pathToServiceDocument) === false) {
+				metadataBuffer.setItem(pathToServiceDocument, {
+					metadataPromise : new Metadata(oInject, pathToServiceDocument).isInitialized()
+				});
 			}
-			return oMetadataInstances.getItem(sAbsolutePathToServiceDocument).metadata;
+			return metadataBuffer.getItem(pathToServiceDocument).metadataPromise;
 		};
 		/**
 		 * @description Returns metadata object that represents metadata corresponding to the service document and an entity type that belongs to the service.
-		 * @param {string} sAbsolutePathToServiceDocument Absolute path to the service document
-		 * @param {string} sEntityType Entity type
-		 * @returns {sap.apf.core.EntityTypeMetadata}
+		 * @param {string} pathToServiceDocument Absolute path to the service document
+		 * @param {string} entityType Entity type
+		 * @returns {jQuery.Deferred} will be resolved with {sap.apf.core.EntityTypeMetadata | undefined}
 		 */
-		this.getEntityTypeMetadata = function(sAbsolutePathToServiceDocument, sEntityType) {
-			var oEntityTypes;
-			var oMetadata = this.getMetadata(sAbsolutePathToServiceDocument);
-			oEntityTypes = oMetadataInstances.getItem(sAbsolutePathToServiceDocument).entityTypes;
-			if (!oEntityTypes) {
-				oEntityTypes = new Hashtable(oMessageHandler);
-				oMetadataInstances.getItem(sAbsolutePathToServiceDocument).entityTypes = oEntityTypes;
+		this.getEntityTypeMetadata = function(pathToServiceDocument, entityType) {
+			var entityTypesOfService;
+			var deferredResult;
+			var metadataPromise = this.getMetadata(pathToServiceDocument);
+			entityTypesOfService = metadataBuffer.getItem(pathToServiceDocument).entityTypes;
+			if (!entityTypesOfService) {
+				entityTypesOfService = new Hashtable(messageHandler);
+				metadataBuffer.getItem(pathToServiceDocument).entityTypes = entityTypesOfService;
 			}
-			if (!oEntityTypes.getItem(sEntityType)) {
-				oEntityTypes.setItem(sEntityType, new EntityTypeMetadata(oMessageHandler, sEntityType, oMetadata));
+			if (!entityTypesOfService.getItem(entityType)) {
+				deferredResult = jQuery.Deferred();
+				entityTypesOfService.setItem(entityType, deferredResult.promise());
+				metadataPromise.then(function(metadata) {
+					deferredResult.resolve(new EntityTypeMetadata(messageHandler, entityType, metadata));
+				}, function() {
+					deferredResult.resolve(undefined);
+				});
 			}
-			return oEntityTypes.getItem(sEntityType);
+			return entityTypesOfService.getItem(entityType);
 		};
 		/**
 		 * @description Returns instance of {sap.apf.core.MetadataFacade}
 		 * @returns {sap.apf.core.MetadataFacade}
 		 */
-		this.getMetadataFacade = function(sAbsolutePathToServiceDocument) {
+		this.getMetadataFacade = function(pathToServiceDocument) {
+			//TODO Check if it would be better to buffer THE MetadataFaced-instance - kind of singleton
 			return new MetadataFacade({
 				constructors : {
-					MetadataProperty : sap.apf.core.MetadataProperty 
+					MetadataProperty : oInject.constructors.MetadataProperty 
 				},
 				instances : { 
-					messageHandler : oMessageHandler,
-					metadataFactory : that
+					messageHandler : messageHandler,
+					metadataFactory : this
 				}
-			}, sAbsolutePathToServiceDocument);
+			}, pathToServiceDocument);
 		};
 		/**
 		 * @description Returns service documents
 		 * @returns {Array}
 		 */
 		this.getServiceDocuments = function() {
-			return oConfigurationFactory.getServiceDocuments();
+			return oInject.functions.getServiceDocuments();
 		};
 		/**
-		 * @description Returns all entity sets of service
+		 * @description Returns all entity sets of service suitable for configuration of analytical request
 		 * @returns {Array}
 		 */
 		this.getEntitySets = function(sService) {
-			var oMetadata = this.getMetadata(sService);
-			return oMetadata.getEntitySets();
+			var deferred = jQuery.Deferred();
+			this.getMetadata(sService).done(function(metadata) {
+				deferred.resolve(metadata.getEntitySets());
+			}).fail(function(){
+				deferred.resolve([]);
+			});
+			return deferred.promise();
+		};
+		
+		/**
+		 * @description Returns all entity sets of service regardless semantics but without parameter entity sets
+		 * @returns {Array}
+		 */
+		this.getAllEntitySetsExceptParameterEntitySets = function(sService) {
+			var deferred = jQuery.Deferred();
+			this.getMetadata(sService).done(function(metadata) {			
+				deferred.resolve(metadata.getAllEntitySetsExceptParameterEntitySets());
+			}).fail(function(){
+				deferred.resolve([]);
+			});
+			return deferred.promise();
 		};
 		/**
 		 * @description Returns all entity types of service
 		 * @returns {Array}
 		 */
 		this.getEntityTypes = function(sService) {
-			var oMetadata = this.getMetadata(sService);
-			return oMetadata.getEntityTypes();
+			var deferred = jQuery.Deferred();
+			this.getMetadata(sService).done(function(metadata) {
+				deferred.resolve(metadata.getEntityTypes());
+			}).fail(function(){
+				deferred.resolve([]);
+			});
+			return deferred.promise();
 		};
 	};
 }());

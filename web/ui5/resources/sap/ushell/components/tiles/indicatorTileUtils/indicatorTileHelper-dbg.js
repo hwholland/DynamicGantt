@@ -1,42 +1,45 @@
-(function(){
-    jQuery.sap.declare("sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper");
+sap.ui.define(function() {
+	"use strict";
 
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper = function(tile) {
+    var indicatorTileHelper = function(tile) {
         this.tile = tile;
     };
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setErrorState = function() {
+    indicatorTileHelper.prototype.setErrorState = function() {
         this.getTile().setState(sap.suite.ui.commons.LoadState.Failed);
     };
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setLoadingState = function() {
+    indicatorTileHelper.prototype.setLoadingState = function() {
         this.getTile().setState(sap.suite.ui.commons.LoadState.Loading);
     };
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setLoadedState = function() {
+    indicatorTileHelper.prototype.setLoadedState = function() {
         this.getTile().setState(sap.suite.ui.commons.LoadState.Loaded);
     };
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setTrendDown = function() {
+    indicatorTileHelper.prototype.setTrendDown = function() {
         this.getTile().setIndicator(sap.suite.ui.commons.DeviationIndicator.Down);
     };
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setTrendUp = function() {
+    indicatorTileHelper.prototype.setTrendUp = function() {
         this.getTile().setIndicator(sap.suite.ui.commons.DeviationIndicator.Up);
     };
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setTrendNeutral = function() {
+    indicatorTileHelper.prototype.setTrendNeutral = function() {
         this.getTile().setIndicator(sap.suite.ui.commons.DeviationIndicator.None);
     };
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setThresholdGood = function(){};
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setThresholdBad = function(){};
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setThresholdCritical = function(){};
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setThresholdNeutral = function(){};
+    indicatorTileHelper.prototype.setThresholdGood = function(){};
+    indicatorTileHelper.prototype.setThresholdBad = function(){};
+    indicatorTileHelper.prototype.setThresholdCritical = function(){};
+    indicatorTileHelper.prototype.setThresholdNeutral = function(){};
 
 
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.calculateThreshold = function(actualValue, variantValue, improvementDirection) {
+    indicatorTileHelper.prototype.calculateThreshold = function(actualValue, variantValue, improvementDirection) {
 
     };
 
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.setTile = function(tile) {
+    indicatorTileHelper.prototype.setTile = function(tile) {
         this.tile = tile;
     };
-    sap.ushell.components.tiles.indicatorTileUtils.indicatorTileHelper.prototype.getTile = function() {
+    indicatorTileHelper.prototype.getTile = function() {
         return this.tile;
     };
-}());
 
+
+	return indicatorTileHelper;
+
+}, /* bExport= */ true);

@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // ------------------------------------------------------------------------------------------
@@ -25,14 +26,18 @@ sap.ui.define([
 		 * 
 		 * @param {Object} oControl - the control which can be toggled to full screen
 		 * @param {boolean} bEnterFullScreen - whether the control should be enter/exit full screen mode
+		 * @param {Object} oFullScreenButton - full screen button of the control which can be toggled to full screen
+		 * @param {function} fnExternalClose - callback function to be called when dialog is closed externally (E.g. due to navigation)
 		 * @private
 		 */
-		toggleFullScreen: function(oControl, bEnterFullScreen) {
+		toggleFullScreen: function(oControl, bEnterFullScreen, oFullScreenButton, fnExternalClose) {
 			var $oContent;
 			// Switch to full-screen mode
 			if (bEnterFullScreen) {
 				// get the dom reference of the control
 				$oContent = oControl.$();
+				// add 100% height to the FlexBox container for the Control to rendering in full screen
+				$oContent.css("height", "100%");
 				if ($oContent) {
 					// Create an HTML element to add the controls DOM content in the FullScreen dialog
 					if (!oControl._oHTML) {
@@ -60,10 +65,44 @@ sap.ui.define([
 						oControl._oFullScreenDialog = new Dialog({
 							showHeader: false,
 							stretch: true,
+							escapeHandler: function(oPromise) {
+								// reject ther Promise
+								oPromise.reject();
+
+								// TODO: Discuss leaving the full screen
+							},
+							beforeClose: function() {
+								// In case fullscreen dialog was closed due to navigation to another page/view/app etc. The dialog close would be
+								// triggered externally and we need to clean up and replace the DOM content back to the original location
+								if (oControl && oControl._$placeHolder && fnExternalClose) {
+									fnExternalClose();
+								}
+							},
 							content: [
 								oControl._oHTML
 							]
 						});
+						// Set focus back on full-screen button of control
+						if (oFullScreenButton) {
+							oControl._oFullScreenDialog.attachAfterOpen(function() {
+								oFullScreenButton.focus();
+								// Hack to update scroll of sap.m.List/ResponsiveTable - 2/2
+								if (oControl._oGrowingDelegate && oControl._oGrowingDelegate.onAfterRendering) {
+									// Temporarily change the parent of control to Fullscreen Dialog
+									oControl._oOldParent = oControl.oParent;
+									oControl.oParent = oControl._oFullScreenDialog;
+									// update delegate to enable scroll with new parent
+									oControl._oGrowingDelegate.onAfterRendering();
+									// restore parent
+									oControl.oParent = oControl._oOldParent;
+									// delete unnecessary props
+									delete oControl._oOldParent;
+								}
+							});
+							oControl._oFullScreenDialog.attachAfterClose(function() {
+								oFullScreenButton.focus();
+							});
+						}
 						// add the style class from control to the dialog
 						oControl._oFullScreenDialog.addStyleClass($oContent.closest(".sapUiSizeCompact").length ? "sapUiSizeCompact" : "");
 						// add style class to make the scroll container height as 100% (required to stretch UI to 100% e.g. for SmartChart)
@@ -80,6 +119,15 @@ sap.ui.define([
 					// Add a dummy div as content of the HTML control
 					oControl._oHTML.setContent("<div/>");
 				}
+				// Hack to update scroll of sap.m.List/ResponsiveTable - 1/2
+				if (!oControl._oGrowingDelegate) {
+					oControl._oGrowingDelegate = oControl._oTable || oControl._oList;
+					if (oControl._oGrowingDelegate && oControl._oGrowingDelegate.getGrowingScrollToLoad && oControl._oGrowingDelegate.getGrowingScrollToLoad()) {
+						oControl._oGrowingDelegate = oControl._oGrowingDelegate._oGrowingDelegate;
+					} else {
+						oControl._oGrowingDelegate = null;
+					}
+				}
 				// open the full screen Dialog
 				oControl._oFullScreenDialog.open();
 				// Switch back from full-screen mode
@@ -88,12 +136,14 @@ sap.ui.define([
 				$oContent = oControl._oHTML.$();
 				// Replace the place holder with the Controls DOM ref (child of HTML)
 				oControl._$placeHolder.replaceWith($oContent.children());
+
+				oControl._$placeHolder = null;
+				$oContent = null;
+
 				// close the full screen Dialog
 				if (oControl._oFullScreenDialog) {
 					oControl._oFullScreenDialog.close();
 				}
-				oControl._$placeHolder = null;
-				$oContent = null;
 			}
 		},
 		/**
@@ -111,6 +161,7 @@ sap.ui.define([
 			// clean up instance variables created for full screen mode
 			oControl._$placeHolder = null;
 			oControl._oHTML = null;
+			oControl._oGrowingDelegate = null;
 		}
 	};
 

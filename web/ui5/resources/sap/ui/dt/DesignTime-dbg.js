@@ -49,7 +49,7 @@ function(
 	 * @extends sap.ui.base.ManagedObject
 	 *
 	 * @author SAP SE
-	 * @version 1.54.5
+	 * @version 1.54.3
 	 *
 	 * @constructor
 	 * @private
@@ -254,16 +254,6 @@ function(
 			var oNewOverlay = oEvent.getParameter("elementOverlay");
 			this._aOverlaysCreatedInLastBatch.push(oNewOverlay);
 		}.bind(this));
-
-		this.attachElementOverlayDestroyed(this._onOverlayDestroyedDuringSyncing, this);
-	};
-
-	DesignTime.prototype._onOverlayDestroyedDuringSyncing = function (oEvent) {
-		var oDestroyedOverlay = oEvent.getParameter("elementOverlay");
-		var iIndex = this._aOverlaysCreatedInLastBatch.indexOf(oDestroyedOverlay);
-		if (iIndex !== -1) {
-			this._aOverlaysCreatedInLastBatch.splice(iIndex, 1);
-		}
 	};
 
 	DesignTime.prototype._registerElementOverlaysInPlugins = function () {
@@ -281,7 +271,7 @@ function(
 	 * @protected
 	 */
 	DesignTime.prototype.exit = function () {
-		this.detachElementOverlayDestroyed(this._onOverlayDestroyedDuringSyncing, this);
+		delete this._aOverlaysCreatedInLastBatch;
 
 		this._oTaskManager.destroy();
 
@@ -292,7 +282,6 @@ function(
 
 		this._destroyAllOverlays();
 		this._oSelectionManager.destroy();
-		delete this._aOverlaysCreatedInLastBatch;
 	};
 
 	/**
@@ -749,10 +738,7 @@ function(
 						}, this)
 				).then(function (aChildrenElementOverlays) {
 					aChildrenElementOverlays.map(function (oChildElementOverlay) {
-						if (
-							oChildElementOverlay instanceof ElementOverlay
-							&& !oChildElementOverlay.bIsDestroyed
-						) {
+						if (oChildElementOverlay instanceof ElementOverlay) {
 							oAggregationOverlay.addChild(oChildElementOverlay, true);
 						}
 					}, this);
@@ -815,7 +801,7 @@ function(
 		}
 
 		this.fireElementOverlayDestroyed({
-			elementOverlay: oElementOverlay
+			overlay: oElementOverlay
 		});
 	};
 

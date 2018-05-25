@@ -33,64 +33,64 @@ As part of the messaging concept, MessageView provides a way to centrally manage
     <since>1.46</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="asyncDescriptionHandler" type="sap.ui.core/any" group="Behavior">
+        <property group="Behavior" type="sap.ui.core/any" name="asyncDescriptionHandler">
             <documentation>Callback function for resolving a promise after description has been asynchronously loaded inside this function</documentation>
         </property>
-        <property name="asyncURLHandler" type="sap.ui.core/any" group="Behavior">
+        <property group="Behavior" type="sap.ui.core/any" name="asyncURLHandler">
             <documentation>Callback function for resolving a promise after a link has been asynchronously validated inside this function</documentation>
         </property>
-        <property name="groupItems" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="groupItems">
             <documentation>Defines whether the MessageItems are grouped or not</documentation>
         </property>
-        <property name="showDetailsPageHeader" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="showDetailsPageHeader">
             <documentation>Defines whether the header of details page will be shown</documentation>
         </property>
     </properties>
     <events>
-        <event name="afterOpen" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="afterOpen">
             <documentation>This event will be fired after the popover is opened</documentation>
             <parameters>
-                <parameter name="openBy" type="sap.ui.core/Control">
+                <parameter type="sap.ui.core/Control" name="openBy">
                     <documentation>This refers to the control which opens the popover</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="itemSelect" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="itemSelect">
             <documentation>This event will be fired when description is shown</documentation>
             <parameters>
-                <parameter name="item" type="sap.m/MessageItem">
+                <parameter type="sap.m/MessageItem" name="item">
                     <documentation>Refers to the message item that is being presented</documentation>
                 </parameter>
-                <parameter name="messageTypeFilter" type="sap.ui.core/MessageType">
+                <parameter type="sap.ui.core/MessageType" name="messageTypeFilter">
                     <documentation>Refers to the type of messages being shown
 See sap.ui.core.MessageType values for types</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="listSelect" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="listSelect">
             <documentation>This event will be fired when one of the lists is shown when (not) filtered  by type</documentation>
             <parameters>
-                <parameter name="messageTypeFilter" type="sap.ui.core/MessageType">
+                <parameter type="sap.ui.core/MessageType" name="messageTypeFilter">
                     <documentation>This parameter refers to the type of messages being shown.</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="longtextLoaded" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="longtextLoaded">
             <documentation>This event will be fired when the long text description data from a remote URL is loaded</documentation>
         </event>
-        <event name="urlValidated" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="urlValidated">
             <documentation>This event will be fired when a validation of a URL from long text description is ready</documentation>
         </event>
     </events>
     <aggregations default="items">
-        <aggregation name="items" type="sap.m/MessageItem" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.m/MessageItem" name="items">
             <documentation>A list with message items.
 If only one item is provided, the initial page will be the details page for the item.</documentation>
         </aggregation>
-        <aggregation name="headerButton" type="sap.m/Button" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/Button" name="headerButton">
             <documentation>A custom header button</documentation>
         </aggregation>
-        <aggregation name="_navContainer" type="sap.m/NavContainer" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/NavContainer" name="_navContainer">
             <documentation>A navContainer that contains both details and list pages</documentation>
         </aggregation>
     </aggregations>

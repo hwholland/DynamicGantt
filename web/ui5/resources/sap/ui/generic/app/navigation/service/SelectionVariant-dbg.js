@@ -481,7 +481,16 @@ sap.ui.define(["./NavError",  "sap/ui/base/Object", "jquery.sap.global"],
 		getSelectOptionsPropertyNames : function() {
 			return Object.keys(this._mSelectOptions);
 		},
-	
+		
+		/**
+		 * Returns the names of the parameter and select option properties available for this instance.
+		 * @returns {array} The list of parameter and select option property names available for this instance
+		 * @public
+		 */
+		getPropertyNames : function() {
+			return this.getParameterNames().concat(this.getSelectOptionsPropertyNames());
+		},
+		
 		/**
 		 * Adds a set of select options to the list of select options for a given parameter.
 		 * @param {string} sPropertyName The name of the property for which the set of select options is added

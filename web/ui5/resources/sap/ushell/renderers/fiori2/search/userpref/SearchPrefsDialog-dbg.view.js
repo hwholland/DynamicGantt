@@ -1,17 +1,16 @@
 /*global jQuery, sap, document */
-(function() {
+sap.ui.define([
+    "sap/m/MessageBox"
+], function() {
     "use strict";
 
-    // import modules
-    // =======================================================================    
-    jQuery.sap.require("sap.m.MessageBox");
-
     // search preferences dialog view
-    // =======================================================================        
-    sap.ui.jsview("sap.ushell.renderers.fiori2.search.userpref.SearchPrefsDialog", {
+    // =======================================================================
+    return sap.ui.jsview("sap.ushell.renderers.fiori2.search.userpref.SearchPrefsDialog", {
 
         createContent: function(oController) {
-            var that = this;
+
+            this.firstTimeBeforeRendering = true;
 
             // label for switch button
             var userProfilingLabel = new sap.m.Label({
@@ -21,29 +20,11 @@
             // switch button for sessionUserActive (switch on/off user profiling)
             var switchButton = new sap.m.Switch({
                 state: {
-                    path: "/sessionUserActive",
+                    path: "/personalizedSearch",
                     mode: sap.ui.model.BindingMode.TwoWay
                 },
-                enabled: {
-                    parts: [{
-                        path: '/searchPrefsActive'
-                    }, {
-                        path: '/personalizationPolicy'
-                    }],
-                    formatter: function(searchPrefsActive, personalizationPolicy) {
-                        var model = that.getModel();
-                        if (searchPrefsActive &&
-                            personalizationPolicy !== model.personalizationPolicyEnforced &&
-                            personalizationPolicy !== model.personalizationPolicyDisabled) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    },
-                    mode: sap.ui.model.BindingMode.OneWay
-                },
-                ariaLabelledBy: userProfilingLabel
-                //change: this.switchChangeHandler.bind(this)
+                ariaLabelledBy: userProfilingLabel,
+                enabled: '{/searchPrefsActive}'
             });
 
             // reset button
@@ -51,38 +32,39 @@
                 text: sap.ushell.resources.i18n.getText("sp.clearCollectedData"),
                 press: this.resetHistory.bind(this),
                 enabled: {
-                    parts: [{
-                        path: '/searchPrefsActive'
-                    }, {
-                        path: '/personalizationPolicy'
-                    }],
-                    formatter: function(searchPrefsActive, personalizationPolicy) {
-                        var model = that.getModel();
-                        if (searchPrefsActive &&
-                            personalizationPolicy !== model.personalizationPolicyDisabled) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    },
-                    mode: sap.ui.model.BindingMode.OneWay
+                    parts: ['/searchPrefsActive', '/resetButtonWasClicked'],
+                    formatter: function(searchPrefsActive, resetButtonWasClicked) {
+                        return searchPrefsActive && !resetButtonWasClicked;
+                    }
                 }
             });
 
-            // explanation text (disclaimer)
-            var explanationText = new sap.m.Text({
-                text: sap.ushell.resources.i18n.getText('sp.disclaimer')
+            // vertical layout with explanation and disclaimer
+            var vLayout = new sap.ui.layout.VerticalLayout({
+                content: [new sap.m.Text({
+                    text: sap.ushell.resources.i18n.getText('sp.disclaimer')
+                })]
             });
 
-            // assemble 
-            var content = [userProfilingLabel, switchButton, explanationText, this.resetButton];
+            // assemble
+            var content = [userProfilingLabel, switchButton, vLayout, this.resetButton];
             return content;
+        },
+
+        onBeforeRendering: function() {
+            // first -> no model reload
+            if (this.firstTimeBeforeRendering) {
+                this.firstTimeBeforeRendering = false;
+                return;
+            }
+            // reload model data
+            this.getModel().reload();
         },
 
         resetHistory: function() {
             var that = this;
             this.getModel().resetProfile().then(function() {
-                that.resetButton.setEnabled(false);
+                // nothing todo
             }, function(response) {
                 var errorText = sap.ushell.resources.i18n.getText('sp.resetFailed');
                 if (response.statusText && response.statusText.length > 0 && response.statusText !== 'OK') {
@@ -122,7 +104,7 @@
             }
             var i18n = sap.ushell.resources.i18n;
             var disableText = i18n.getText("sp.disable");
-            sap.m.MessageBox.confirm(i18n.getText('sp.disablingUserProfiling'), {
+            sap.m.MessageBox.confirm(i18n.getText('sp.disablingUserProfilingMsg'), {
                 title: sap.ushell.resources.i18n.getText("sp.disableUserProfiling"),
                 icon: sap.m.MessageBox.Icon.QUESTION,
                 actions: [disableText, sap.m.MessageBox.Action.CANCEL],
@@ -153,4 +135,4 @@
 
     });
 
-}());
+});

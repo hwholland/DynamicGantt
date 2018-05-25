@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 // Utility functions for Inbox
 /*global URI */// declare unusual global vars for JSLint/SAPUI5 validation

@@ -54,7 +54,7 @@ jQuery.sap.require("sap.m.ScrollContainer");
  * @class
  * A Tile container for the Overview tile with growing capabilities
  * @extends sap.m.ScrollContainer
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

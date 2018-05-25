@@ -8,63 +8,63 @@ The control can be added to a Parent container that has a defined width. The Thi
     <deprecation since="1.38">There is not an exact replacement.</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="title" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="title">
             <documentation>Title of the Thing Inspector</documentation>
         </property>
-        <property name="type" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="type">
             <documentation>Thing type</documentation>
         </property>
-        <property name="icon" type="sap.ui.core/URI" group="Misc">
+        <property group="Misc" type="sap.ui.core/URI" name="icon">
             <documentation>Thing Icon Url</documentation>
         </property>
-        <property name="subtitle" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="subtitle">
             <documentation>Subtitle of the Thing Inspector</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="100%" group="Misc">
+        <property group="Misc" defaultValue="100%" type="sap.ui.core/CSSSize" name="width">
             <documentation>Width of the ThingViewer</documentation>
         </property>
-        <property name="height" type="sap.ui.core/CSSSize" defaultValue="100%" group="Misc">
+        <property group="Misc" defaultValue="100%" type="sap.ui.core/CSSSize" name="height">
             <documentation>Height of the ThingViewer</documentation>
         </property>
-        <property name="headerType" type="sap.ui.ux3/ThingViewerHeaderType" defaultValue="Standard" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="Standard" type="sap.ui.ux3/ThingViewerHeaderType" name="headerType">
             <documentation>Defines which header type should be used.</documentation>
         </property>
     </properties>
     <events>
-        <event name="facetSelected" allowPreventDefault="true">
+        <event allowPreventDefault="true" name="facetSelected">
             <documentation>Event for facet selection. The application is responsible for displaying the correct content for the selected one. The ThingInspector will currently always mark the first facet as selected.</documentation>
             <parameters>
-                <parameter name="id" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="id">
                     <documentation>Id of selected NavigationItem</documentation>
                 </parameter>
-                <parameter name="item" type="sap.ui.ux3/NavigationItem">
+                <parameter type="sap.ui.ux3/NavigationItem" name="item">
                     <documentation>The selected NavigationItem</documentation>
                 </parameter>
-                <parameter name="key" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="key">
                     <documentation>Key of selected NavigationItem</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations>
-        <aggregation name="headerContent" type="sap.ui.ux3/ThingGroup" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.ux3/ThingGroup" name="headerContent">
             <documentation>ThingGroups for the header content</documentation>
         </aggregation>
-        <aggregation name="facets" type="sap.ui.ux3/NavigationItem" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.ux3/NavigationItem" name="facets">
             <documentation>Thing Inspector facets</documentation>
         </aggregation>
-        <aggregation name="facetContent" type="sap.ui.ux3/ThingGroup" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.ux3/ThingGroup" name="facetContent">
             <documentation>ThingGroups for content of the selected facet</documentation>
         </aggregation>
-        <aggregation name="actionBar" type="sap.ui.ux3/ActionBar" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.ux3/ActionBar" name="actionBar">
             <documentation>An ActionBar can be given</documentation>
         </aggregation>
-        <aggregation name="navBar" type="sap.ui.ux3/NavigationBar" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.ux3/NavigationBar" name="navBar">
             <documentation>NavigationBar that is managed by this ThingViewer</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="selectedFacet" type="sap.ui.ux3/NavigationItem" cardinality="0..1">
+        <association cardinality="0..1" type="sap.ui.ux3/NavigationItem" name="selectedFacet">
             <documentation>The Facet that is currently selected.</documentation>
         </association>
     </associations>

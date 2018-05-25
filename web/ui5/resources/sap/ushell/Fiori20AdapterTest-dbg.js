@@ -1,22 +1,20 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The purpose Fiori20AdapterTest in this file is to decide whether to load
  * the Fiori20Adapter at all. This file is kept small in size on purpose
  * as it is always required in productive code even when Fiori 2 adaptation
  * is not required.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
 
-(function () {
+sap.ui.define(['sap/ui/core/UIComponent'],
+	function(UIComponent) {
+	"use strict";
+
     /*
      * Note: the code below runs once ever after the Launchpad is started.
      */
-
-    "use strict";
-    jQuery.sap.declare("sap.ushell.Fiori20AdapterTest");
-
-    jQuery.sap.require("sap.ui.core.UIComponent");
 
     /**
      * Resolves Fiori20Adapter configuration options from three possible sources (whitelist, URL parameter, app metadata)
@@ -36,7 +34,32 @@
         A_WHITELIST: ["fin.*",
                       "ssuite.fin.*",
                       "fscm.*",
-                      "sap.fin.*"],
+                      "sap.fin.*",
+                      "cus.sd.*",
+                      "cus.o2c.*",
+                      "sap.apf.*",
+                      "tl.ibp.*",
+                      "ux.fnd.apf.o2c.*",
+                      "fnd.apf.*",
+                      "fnd.pob.o2c.*",
+                      "fcg.sll.*",
+                      "ux.fnd.generic-apf-application.*",
+                      "hpa.cei.*",
+                      "query.viewbrowser.s1.*",
+                      "ssuite.vdm.viewbrowser.s1.*",
+                      "ssuite.smartbusiness.kpi.s1.*",
+                      "ssuite.smartbusiness.evaluation.s1.*",
+                      "ssuite.smartbusiness.association.s1.*",
+                      "ssuite.smartbusiness.drilldown.s1.*",
+                      "ssuite.smartbusiness.tile.s1.*",
+                      "ssuite.smartbusiness.tile.ce.s1.*",
+                      "ssuite.smartbusiness.workspace.s1.*",
+                      "ssuite.smartbusiness.runtime.s1.*",
+                      "gs.fin.customersummarycn.display.*",
+                      "gs.fin.financialstatement.structure.manage.*",
+                      "gs.fin.financialstatement.display.*",
+                      "uipsm.*",
+                      "publicservices.her.*"],
 
         getConfiguration: function(oComp) {
 
@@ -120,7 +143,7 @@
 
         _getDefaultConfiguration: function(oComp) {
 
-            var bEnabled = this._hasMinVersionSmallerThan(oComp, "1.38") && this._isWhitelisted(oComp);
+            var bEnabled = this._hasMinVersionSmallerThan(oComp, "1.42") && this._isWhitelisted(oComp);
             return {
                 bStylePage: bEnabled,
                 bMoveTitle: bEnabled,
@@ -179,7 +202,7 @@
         }
     };
 
-    sap.ui.core.UIComponent._fnOnInstanceInitialized = function(oComponent) {
+    UIComponent._fnOnInstanceInitialized = function(oComponent) {
         var oControl = oComponent.getAggregation("rootControl");
 
         if (!oControl
@@ -251,4 +274,6 @@
         oControl.addEventDelegate(oDelegate);
     };
 
-})();
+
+
+}, /* bExport= */ false);

@@ -35,7 +35,10 @@ VBI.Automations = function() {
 				automation.load(dat.Call, ctx); // load the automation...//
 
 				automations.m_automations.push(automation);
-				// todo: load when there is only one object
+				/*
+				 * TO DO:
+				 * load when there is only one object
+				 */
 			} else if (jQuery.type(dat.Call) == 'array') {
 				// load an array of automations
 				for (var nJ = 0; nJ < dat.Call.length; ++nJ) {
@@ -161,7 +164,9 @@ VBI.FlyToHandler = function(dat) {
 	}
 
 	flyToHandler.start = function() {
-		VBI.m_bTrace && VBI.Trace("FlyTo triggered to " + flyToHandler.m_x + "," + flyToHandler.m_y + "," + flyToHandler.m_lod + " on scene " + flyToHandler.m_scene);
+		if (VBI.m_bTrace) {
+			VBI.m_bTrace && VBI.Trace("FlyTo triggered to " + flyToHandler.m_x + "," + flyToHandler.m_y + "," + flyToHandler.m_lod + " on scene " + flyToHandler.m_scene);
+		}
 		if (flyToHandler.m_scene == undefined || flyToHandler.m_x == undefined || flyToHandler.m_y == undefined || flyToHandler.m_lod == undefined) {
 			return true; // unsuccessful but repeating makes no sense either
 		}
@@ -200,7 +205,8 @@ VBI.ContextMenuHandler = function(dat) {
 
 	contextMenuHandler.start = function() {
 		var scene = contextMenuHandler.m_Ctx.m_SceneManager.GetSceneByName(contextMenuHandler.m_scene);
-		var oMenuObject = contextMenuHandler.m_Ctx.m_Menus.findMenuByID(contextMenuHandler.m_refID);
+		var ctx = contextMenuHandler.m_Ctx;
+		var oMenuObject = ctx.m_Menus.findMenuByID(contextMenuHandler.m_refID);
 		if (!scene) {
 			return true;
 		}
@@ -208,9 +214,16 @@ VBI.ContextMenuHandler = function(dat) {
 		oMenuObject.vbi_data.scene = contextMenuHandler.m_scene;
 		oMenuObject.vbi_data.object = contextMenuHandler.m_refObj;
 		oMenuObject.vbi_data.instance = contextMenuHandler.m_refInstance;
-		// remember open menu to be able to close it
-		contextMenuHandler.m_Ctx.m_strOpenMenu = contextMenuHandler.m_refID; 
-
+		// close any opened menu
+		if (ctx.m_strOpenMenu) {
+			ctx.m_Menus.findMenuByID(ctx.m_strOpenMenu).close();
+		}
+		if (ctx.m_HitMenu) {
+			ctx.m_HitMenu.close();
+			ctx.m_HitMenu.destroy();
+		}
+		// open new menu and keep it for future reference
+		ctx.m_strOpenMenu = contextMenuHandler.m_refID;
 		oMenuObject.open(true, 0, "begin top", "begin top", scene.m_Div, "" + contextMenuHandler.m_x + " " + contextMenuHandler.m_y + "", "fit");
 	};
 

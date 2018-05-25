@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.gantt.config.ToolbarGroup
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -32,8 +32,9 @@ sap.ui.define([
 				 * Determines the button type. See {@link sap.m.ButtonType}
 				 * true stands for {@link sap.m.ButtonType.Emphasized}
 				 * false stands for {@link sap.m.ButtonType.Default}
+				 * @deprecated Since version 1.50
 				 */
-				enableRichStyle: {type: "boolean", defaultValue: true}
+				enableRichStyle: {type: "boolean", defaultValue: true},
 			}
 		}
 	});

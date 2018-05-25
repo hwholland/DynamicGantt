@@ -3,7 +3,8 @@
 
   <name>sap.apf</name>
   <vendor>SAP SE</vendor>
-  <version>1.38.16</version>
+  <copyright>SAP UI development toolkit for HTML5 (SAPUI5)</copyright>
+  <version>1.54.3</version>
   
   <documentation>Analysis Path Framework</documentation>
   
@@ -11,8 +12,8 @@
     <dependency>
       <libraryName>sap.ui.core</libraryName>
     </dependency>
-     <dependency>
-      <libraryName>sap.ca.ui</libraryName>
+    <dependency>
+      <libraryName>sap.suite.ui.commons</libraryName>
     </dependency>
      <dependency>
       <libraryName>sap.m</libraryName>
@@ -25,6 +26,11 @@
     </dependency>
     <dependency>
       <libraryName>sap.viz</libraryName>
+    </dependency>
+    <dependency>
+      <libraryName>sap.ui.comp</libraryName>
+    </dependency><dependency>
+      <libraryName>sap.ui.export</libraryName>
     </dependency>
   </dependencies>
   

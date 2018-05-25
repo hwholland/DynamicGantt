@@ -6,15 +6,17 @@
  */
 
 // Provides control sap.ui.vk.InputDevicPointer.
-sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceMouse"], function(jQuery, EventProvider, InputDeviceMouse) {
+sap.ui.define([
+	"jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceMouse"
+], function(jQuery, EventProvider, InputDeviceMouse) {
 	"use strict";
 
-	var Pointer = EventProvider.extend("sap.ui.vk.InputDevicePointer", {
+	var InputDevicePointer = EventProvider.extend("sap.ui.vk.InputDevicePointer", {
 		metadata: {
 			publicMethods: [
-			    "isSupported",
-			    "enable",
-			    "disable"
+				"isSupported",
+				"enable",
+				"disable"
 			]
 		},
 
@@ -26,12 +28,17 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 			this._points = 0;
 			this._buttons = 0;
 			this._mouse = new InputDeviceMouse(this._loco);
+			this._pointerdownProxy = this._onpointerdown.bind(this);
+			this._pointerupProxy = this._onpointerup.bind(this);
+			this._pointermoveProxy = this._onpointermove.bind(this);
+			this._mousewheelProxy = this._mouse._onmousewheel.bind(this._mouse);
+			this._contextmenuProxy = this._mouse._oncontextmenu.bind(this._mouse);
+			this._onpointerupWindowListenerProxy = this._onpointerupWindowListener.bind(this);
 		}
-
 	});
 
 
-	Pointer.prototype._clearPointers = function() {
+	InputDevicePointer.prototype._clearPointers = function() {
 		this._pointerIds = [];
 		this._pointers = [];
 		this._count = 0;
@@ -39,8 +46,8 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 		this._buttons = 0;
 	};
 
-	Pointer.prototype._addPointer = function(id, _x, _y) {
-		//jQuery.sap.log.debug("AddPointer[" + id + "]: " + _x + ", " + _y);
+	InputDevicePointer.prototype._addPointer = function(id, _x, _y) {
+		// jQuery.sap.log.debug("AddPointer[" + id + "]: " + _x + ", " + _y);
 
 		if (this._pointerIds[id] == null) {
 			this._pointerIds[id] = this._count;
@@ -60,8 +67,8 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 		return this._count;
 	};
 
-	Pointer.prototype._removePointer = function(id) {
-		//jQuery.sap.log.debug("RemovePointer[" + id + "]");
+	InputDevicePointer.prototype._removePointer = function(id) {
+		// jQuery.sap.log.debug("RemovePointer[" + id + "]");
 
 		if (this._pointerIds[id] == null) {
 			return this._count;
@@ -79,7 +86,7 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 		return this._count;
 	};
 
-	Pointer.prototype._eventToInput = function(event) {
+	InputDevicePointer.prototype._eventToInput = function(event) {
 		// Encapsulate HTML pointer event to this._loco input event
 		var input = {
 			x: 0,
@@ -111,7 +118,7 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 		return input;
 	};
 
-	Pointer.prototype._onpointerdown = function(ev) {
+	InputDevicePointer.prototype._onpointerdown = function(ev) {
 		var event = ev.originalEvent ? ev.originalEvent : ev;
 
 		if (event.pointerType != "touch" && event.pointerType != "pen") {
@@ -131,22 +138,23 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 		var input = this._eventToInput(event);
 
 		if (this._points != 0 && this._points != input.n) {
-			this._loco.endGesture(input);
+			this._loco.endGesture(input, this._control);
+			this._loco._resetClickTimer();
 		}
 
 		this._points = input.n;
 		input.handled = false;
-		this._loco.beginGesture(input);
+		this._loco.beginGesture(input, this._control);
 
 		if (input.handled) {
-			event._sapui_handledByControl = true;
-			event.preventDefault();
+			// event["_sapui_handledByControl"] = true;
+			// event.preventDefault();
 		} else {
 			this._removePointer(event.pointerId);
 		}
 	};
 
-	Pointer.prototype._onpointerup = function(ev) {
+	InputDevicePointer.prototype._onpointerup = function(ev) {
 		this._capturedByControl = true;
 
 		var event = ev.originalEvent ? ev.originalEvent : ev;
@@ -163,47 +171,48 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 
 		var input = this._eventToInput(event);
 
-		this._loco.endGesture(input);
+		this._loco.endGesture(input, this._control);
 
 		if (input.n != 0 && this._points != input.n) {
 			input.handled = false;
-			this._loco.beginGesture(input);
+			this._loco.beginGesture(input, this._control);
+			this._loco._resetClickTimer();
 		}
 
 		this._points = input.n;
 
-		if (input.handled) {
-			event._sapui_handledByControl = true;
-			event.preventDefault();
-		}
+		// if (input.handled) {
+		// 	event["_sapui_handledByControl"] = true;
+		// 	event.preventDefault();
+		// }
 	};
 
-	//This method is called when we the pointerup event is fired.
-	//When you hold and drag the left mouse button and release while outside
-	//the area of Viewport/NativeViewport, Loco doesn't know the gesture ended.
-	//This way, we attach a listener to the window so we can capture the pointerup event all the time.
-	//This method is fired after the regular "Pointer._prototype._onpointerup". We check if the pointerup event
-	//was handled in that method. If not, we callthe _onpointerup method manually.
-	//This fix is requiered because Loco gets confused when the pointerup event occurs outside
-	//the Viewport/NativeViewport.
-	Pointer.prototype._onpointerupWindowListener = function(event) {
+	// This method is called when we the pointerup event is fired.
+	// When you hold and drag the left mouse button and release while outside
+	// the area of Viewport/NativeViewport, Loco doesn't know the gesture ended.
+	// This way, we attach a listener to the window so we can capture the pointerup event all the time.
+	// This method is fired after the regular "Pointer._prototype._onpointerup". We check if the pointerup event
+	// was handled in that method. If not, we call the _onpointerup method manually.
+	// This fix is required because Loco gets confused when the pointerup event occurs outside
+	// the Viewport/NativeViewport.
+	InputDevicePointer.prototype._onpointerupWindowListener = function(event) {
 		if (!this._capturedByControl) {
 			this._onpointerup(event);
 		}
 		this._capturedByControl = false;
 	};
 
-	Pointer.prototype._onpointermove = function(ev) {
-		if (ev.buttons !== 0) {
+	InputDevicePointer.prototype._onpointermove = function(ev) {
+		if (ev.buttons !== 0 || sap.ui.Device.system.desktop) {
 			var event = ev.originalEvent ? ev.originalEvent : ev;
 
 			if (event.pointerType != "touch" && event.pointerType != "pen") {
-				if (this._buttons != event.buttons) {
-					this._mouse._onmousedown(event);
-					this._buttons = event.buttons;
-				} else {
+				// if (this._buttons != event.buttons) {
+				// 	this._mouse._onmousedown(event);
+				// 	this._buttons = event.buttons;
+				// } else {
 					this._mouse._onmousemove(event);
-				}
+				// }
 				return;
 			}
 
@@ -212,25 +221,30 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 			var input = this._eventToInput(event);
 
 			if (this._points != input.n) {
-				this._loco.endGesture(input);
+				this._loco.endGesture(input, this._control);
+				this._loco._resetClickTimer();
 				input.handled = false;
-				this._loco.beginGesture(input);
+				this._loco.beginGesture(input, this._control);
+				this._loco._resetClickTimer();
 				this._points = input.n;
 			} else {
-				this._loco.move(input);
+				this._loco.move(input, this._control);
 			}
 
-			if (input.handled) {
-				event._sapui_handledByControl = true;
-				event.preventDefault();
-			}
+			// if (input.handled) {
+			// 	event["_sapui_handledByControl"] = true;
+			// 	event.preventDefault();
+			// }
 		}
 
 	};
 
-	Pointer.prototype.isSupported = function() {
-		// Because of the Chrome 55 Pointer Events changes,
-		// we need to disable the support for the pointers.
+	InputDevicePointer.prototype.isSupported = function() {
+        if ((sap.ui.Device.browser.edge || sap.ui.Device.browser.msie) && sap.ui.Device.support.pointer) {
+            return true;
+        }
+        // Because of the Chrome 55 Pointer Events changes,
+		// we need to disable the support for the pointers in chrome and other browsers we havn't tested.
 		return false;
 		/*
 		 * TO DO:
@@ -238,7 +252,7 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 		 */
 	};
 
-	Pointer.prototype.enable = function(control) {
+	InputDevicePointer.prototype.enable = function(control) {
 		this._pointerIds = [];
 		this._pointers = [];
 		this._points = 0;
@@ -246,34 +260,29 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider", "./InputDeviceM
 		this._buttons = 0;
 		this._mouse._buttons = 0;
 
-		this._pointerdownProxy = this._onpointerdown.bind(this);
-		this._pointerupProxy = this._onpointerup.bind(this);
-		this._pointermoveProxy = this._onpointermove.bind(this);
-		this._mousewheelProxy = this._mouse._onmousewheel.bind(this._mouse);
-		this._contextmenuProxy = this._mouse._oncontextmenu.bind(this._mouse);
 		this._control = control;
 		this._mouse._control = control;
 
-		var func = (this._control) ? this._control.attachBrowserEvent.bind(this._control) : window.document.addEventListener;
-		func('pointerdown', this._pointerdownProxy, false);
-		func('pointerup', this._pointerupProxy, false);
-		func('pointermove', this._pointermoveProxy, false);
-		func('mousewheel', this._mousewheelProxy, false);
-		func('DOMMouseScroll', this._mousewheelProxy, false);
-		func("contextmenu", this._contextmenuProxy, false);
-		window.document.addEventListener("pointerup", this._onpointerupWindowListener.bind(this));
-	};
-
-	Pointer.prototype.disable = function() {
-		var func = (this._control) ? this._control.attachBrowserEvent.bind(this._control) : window.document.addEventListener;
-		func('pointerdown', this._pointerdownProxy);
-		func('pointerup', this._pointerupProxy);
-		func('pointermove', this._pointermoveProxy);
-		func('mousewheel', this._mousewheelProxy);
-		func('DOMMouseScroll', this._mousewheelProxy);
+		var func = this._control ? this._control.attachBrowserEvent.bind(this._control) : window.document.addEventListener;
+		func("pointerdown", this._pointerdownProxy);
+		func("pointerup", this._pointerupProxy);
+		func("pointermove", this._pointermoveProxy);
+		func("mousewheel", this._mousewheelProxy);
+		func("DOMMouseScroll", this._mousewheelProxy);
 		func("contextmenu", this._contextmenuProxy);
-		window.document.removeEventListener("pointerup", this._onpointerupWindowListener.bind(this));
+		window.document.addEventListener("pointerup", this._onpointerupWindowListenerProxy);
 	};
 
-	return Pointer;
+	InputDevicePointer.prototype.disable = function() {
+		var func = this._control ? this._control.detachBrowserEvent.bind(this._control) : window.document.removeEventListener;
+		func("pointerdown", this._pointerdownProxy);
+		func("pointerup", this._pointerupProxy);
+		func("pointermove", this._pointermoveProxy);
+		func("mousewheel", this._mousewheelProxy);
+		func("DOMMouseScroll", this._mousewheelProxy);
+		func("contextmenu", this._contextmenuProxy);
+		window.document.removeEventListener("pointerup", this._onpointerupWindowListenerProxy);
+	};
+
+	return InputDevicePointer;
 }, /* bExport= */ true);

@@ -1,24 +1,22 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Fiori20 adapter is not a platform adapter, but a UI adapter.
  *
  * The Fiori20 adapter automatically re-styles old (Fiori 1) applications to match Fiori2 design requirements.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
 
-(function () {
+sap.ui.define(['sap/ui/base/Object', 'sap/ui/core/Component', 'sap/ui/core/UIComponent', 'sap/ui/model/resource/ResourceModel'],
+    function(BaseObject, Component, UIComponent, ResourceModel) {
     "use strict";
     /*jslint nomen: true*/
     /* eslint-disable no-alert */
     /*global jQuery, sap, setTimeout */
 
-    jQuery.sap.declare("sap.ushell.Fiori20Adapter");
-    jQuery.sap.declare("sap.ui.core.UIComponent");
-
     var oUIService;
 
-    sap.ui.core.UIComponent._fnOnInstanceDestroy = function(oComponent) {
+    UIComponent._fnOnInstanceDestroy = function(oComponent) {
         if (oComponent._fioriAdapter) {
             oComponent._fioriAdapter.destroy();
         }
@@ -30,9 +28,9 @@
      *
      * @type {Function}
      */
-    var AppInfo = sap.ui.base.Object.extend("AppInfo", {
+    var AppInfo = BaseObject.extend("AppInfo", {
         constructor: function(oComponent) {
-            sap.ui.base.Object.call(this);
+            BaseObject.call(this);
             this._oComponent = oComponent;
         },
 
@@ -66,8 +64,7 @@
         },
 
         _getLocalized: function(sText, sResBundle) {
-            jQuery.sap.require("sap.ui.model.resource.ResourceModel");
-            var oModel = new sap.ui.model.resource.ResourceModel({
+            var oModel = new ResourceModel({
                 bundleUrl: jQuery.sap.getModulePath(this._oComponent.getMetadata().getComponentName()) + "/" + sResBundle
             });
             return oModel.getResourceBundle().getText(sText.replace(/^{{/, "").replace(/}}$/, ""));
@@ -85,12 +82,12 @@
      *
      * @type {Function}
      */
-    var HeaderInfo = sap.ui.base.Object.extend("HeaderInfo", {
+    var HeaderInfo = BaseObject.extend("HeaderInfo", {
         constructor: function(oComponent, oConfig, oAppInfo) {
-            sap.ui.base.Object.call(this);
+            BaseObject.call(this);
             this._oConfig = oConfig;
             this._oAppInfo = oAppInfo;
-            
+
             this._aHierarchy = [];
             this._defaultTitle = this._oAppInfo.getDefaultTitle();
             this._oCurrentViewInfo = {oTitleInfo: {text: this._defaultTitle}};
@@ -110,8 +107,21 @@
             var sTitle = this._oCurrentViewInfo.oTitleInfo ? this._oCurrentViewInfo.oTitleInfo.text : undefined;
             if (sTitle !== oUIService.getTitle()) {
                 oUIService.setTitle(sTitle);
-                this._updateHierarchy();
             }
+            this._updateHierarchy();
+
+            this._setBackNavigation(oViewInfo.oBackButton, oViewInfo.oAdaptOptions);
+        },
+
+        _setBackNavigation: function(oBackButton, oAdaptOptions) {
+            if (oAdaptOptions && oAdaptOptions.bHideBackButton === false) { //disabled by configuration
+                return;
+            }
+            var fnBackPress;
+            if (oBackButton) {
+                fnBackPress = oBackButton.firePress.bind(oBackButton);
+            }
+            oUIService.setBackNavigation(fnBackPress);
         },
 
         _updateHierarchy : function() {
@@ -187,9 +197,9 @@
     });
 
 
-    var Fiori20Adapter = sap.ui.base.Object.extend("sap.ushell.Fiori20Adapter", {
+    var Fiori20Adapter = BaseObject.extend("sap.ushell.Fiori20Adapter", {
         constructor: function(oComponent, oConfig) {
-            sap.ui.base.Object.call(this);
+            BaseObject.call(this);
             this._oComponent = oComponent;
             this._oConfig = oConfig;
 
@@ -238,7 +248,7 @@
 
     Fiori20Adapter.applyTo = function(oControl, oComponent, oConfig, oService) {
 
-        var oOwner = oControl instanceof sap.ui.core.UIComponent ? oControl : sap.ui.core.Component.getOwnerComponentFor(oControl);
+        var oOwner = oControl instanceof UIComponent ? oControl : Component.getOwnerComponentFor(oControl);
         if (!oOwner) {
             oOwner = oComponent;
         }
@@ -252,5 +262,4 @@
 
     return Fiori20Adapter;
 
-}());
-
+}, /* bExport= */ false);

@@ -1,24 +1,18 @@
-sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler", "../js/AnnotationHelper", "../js/QuickTemplates/AnnotationHelper"], function(TemplateAssembler, AnnotationHelper, QCAnnotationHelper) {
-	"use strict";
+sap.ui.define(["../js/QuickTemplates/QuickTemplateComponentFactory", "../js/AnnotationHelper", "../js/QuickTemplates/AnnotationHelper", "sap/ca/ui/utils/Lessifier"], function(QuickTemplateComponentFactory, AnnotationHelper, QCAnnotationHelper, Lessifier) {
+    "use strict";
 
-	function getMethods(oComponent, oComponentUtils) {
-		return {};
-	}
+    return QuickTemplateComponentFactory.createQuickTemplateComponent("sap.suite.ui.generic.template.QuickView.Component", {
 
-	return TemplateAssembler.getTemplateComponent(getMethods,
-		"sap.suite.ui.generic.template.QuickView.Component", {
-
-			metadata: {
-				library: "sap.suite.ui.generic.template",
-				properties: {
-					"templateName": {
-						"type": "string",
-						"defaultValue": "sap.suite.ui.generic.template.QuickView.view.QuickView"
-					}
-				},
-				"manifest": "json"
-
-			}
-		});
+            metadata: {
+                library: "sap.suite.ui.generic.template",
+                properties: {
+                    "viewName": {
+                        "type": "string",
+                        "defaultValue": "sap.suite.ui.generic.template.QuickView.view.QuickView"
+                    }
+                },
+                "manifest": "json"
+            }
+        });
 
 });

@@ -46,7 +46,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -57,8 +57,8 @@ sap.ui.define([
 			properties: {
 				isClosed: {type: "boolean", defaultValue: true},
 
-				verticalDiagonal: {type: "number", defaultValue: 12},
-				horizontalDiagonal: {type: "number", defaultValue: 12}
+				verticalDiagonal: {type: "float", defaultValue: 12},
+				horizontalDiagonal: {type: "float", defaultValue: 12}
 			}
 		}
 	});
@@ -93,27 +93,33 @@ sap.ui.define([
 	 * 
 	 * @param {object} oData Shape data.
 	 * @param {object} oRowInfo Information about the row and row data.
-	 * @return {string} Value of property <code>d</code>.
+	 * @return {string} Value of property <code>d</code> or null if the generated d is invalid according to the given data.
 	 * @public
 	 */
 	Diamond.prototype.getD = function (oData, oRowInfo) {
+		var sD;
 		if (this.mShapeConfig.hasShapeProperty("d")) {
-			return this._configFirst("d", oData);
+			sD = this._configFirst("d", oData);
+		} else {
+			var halfVertical = this.getVerticalDiagonal(oData, oRowInfo) / 2;
+			var halfHorizontal = this.getHorizontalDiagonal(oData, oRowInfo) / 2;
+
+			var aCenter = this.getRotationCenter(oData, oRowInfo);
+
+			if (aCenter && aCenter.length === 2 && jQuery.isNumeric(halfVertical) && jQuery.isNumeric(halfHorizontal)) {
+				sD = "M " + aCenter.join(" ") +
+				" m " + -halfHorizontal + " 0" +
+				" l " + halfHorizontal + " -" + halfVertical +
+				" l " + halfHorizontal + " " + halfVertical +
+				" l -" + halfHorizontal + " " + halfVertical + " z";
+			}
 		}
 
-		var halfVertical = this.getVerticalDiagonal(oData, oRowInfo) / 2;
-		var halfHorizontal = this.getHorizontalDiagonal(oData, oRowInfo) / 2;
-
-		var aCenter = this.getRotationCenter(oData, oRowInfo);
-
-		if (aCenter && aCenter.length === 2 && jQuery.isNumeric(halfVertical) && jQuery.isNumeric(halfHorizontal)) {
-			return "M " + aCenter.join(" ") +
-			" m " + -halfHorizontal + " 0" +
-			" l " + halfHorizontal + " -" + halfVertical +
-			" l " + halfHorizontal + " " + halfVertical +
-			" l -" + halfHorizontal + " " + halfVertical + " z";
+		if(this.isValid(sD)) {
+			return sD;
 		} else {
-			return "";
+			jQuery.sap.log.warning("Diamond shape generated invalid d: " + sD + " from the given data: " + oData);
+			return null;
 		}
 	};
 

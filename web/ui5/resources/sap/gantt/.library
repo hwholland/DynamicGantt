@@ -7,7 +7,7 @@
 
 		(c) Copyright 2009-2015 SAP SE. All rights reserved
 	</copyright>
-	<version>1.38.22</version>
+	<version>1.54.2</version>
 
 	<documentation>UI5 library: sap.gantt</documentation>
 
@@ -23,9 +23,6 @@
 		</dependency>
 		<dependency>
 			<libraryName>sap.m</libraryName>
-		</dependency>
-		<dependency>
-			<libraryName>sap.ui.unified</libraryName>
 		</dependency>
 	</dependencies>
 

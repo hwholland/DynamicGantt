@@ -7,16 +7,16 @@
     <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.TabContainer&lt;/code&gt; control.</deprecation>
     <baseType>sap.ui.commons/Panel</baseType>
     <properties>
-        <property name="verticalScrolling" type="sap.ui.core/Scrolling" defaultValue="None" group="Behavior">
+        <property group="Behavior" defaultValue="None" type="sap.ui.core/Scrolling" name="verticalScrolling">
             <documentation>Specifies the vertical scrolling.</documentation>
         </property>
-        <property name="horizontalScrolling" type="sap.ui.core/Scrolling" defaultValue="None" group="Behavior">
+        <property group="Behavior" defaultValue="None" type="sap.ui.core/Scrolling" name="horizontalScrolling">
             <documentation>Specifies the horizontal scrolling.</documentation>
         </property>
-        <property name="closable" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
+        <property group="Misc" defaultValue="false" type="sap.ui.core/boolean" name="closable">
             <documentation>Specifies whether the tab contains a close button.</documentation>
         </property>
-        <property name="selected" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="selected">
             <documentation>Defines whether the tab is the active one.</documentation>
             <deprecation since="0.17.0">This property is not used. To identify the selected tab in a TabStrip selectedIndex is used.</deprecation>
         </property>

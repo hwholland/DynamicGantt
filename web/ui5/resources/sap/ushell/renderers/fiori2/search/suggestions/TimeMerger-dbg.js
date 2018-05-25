@@ -1,16 +1,16 @@
 /* global jQuery, sap, window */
 
-(function() {
+sap.ui.define([], function() {
     "use strict";
 
     // =======================================================================
     // declare package
-    // =======================================================================    
+    // =======================================================================
     jQuery.sap.declare('sap.ushell.renderers.fiori2.search.suggestions.TimeMerger');
 
     // =======================================================================
     // suggestion types
-    // =======================================================================        
+    // =======================================================================
 
     var TimeMerger = sap.ushell.renderers.fiori2.search.suggestions.TimeMerger = function() {
         this.init.apply(this, arguments);
@@ -43,7 +43,7 @@
             // register done callback for all promises
             for (var i = 0; i < this.promiseList.length; ++i) {
                 var promise = this.promiseList[i];
-                promise.done(this.assembleDoneCallback(i));
+                promise.then(this.assembleDoneCallback(i));
             }
             // schedule time delayed merging of promise results
             this.scheduleProcessorNotification();
@@ -71,7 +71,7 @@
                 this.processorCallback(this.returned);
                 this.returned = [];
             }
-            // check if we need to schedule a new merge 
+            // check if we need to schedule a new merge
             if (this.pending > 0) {
                 this.scheduleProcessorNotification();
             }
@@ -94,5 +94,5 @@
 
     };
 
-
-})();
+    return TimeMerger;
+});

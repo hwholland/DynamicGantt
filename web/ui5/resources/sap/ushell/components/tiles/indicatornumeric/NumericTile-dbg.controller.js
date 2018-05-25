@@ -1,5 +1,5 @@
 (function () {
-    "use strict";
+	"use strict";
     jQuery.sap.require("sap.ushell.components.tiles.generic");
     sap.ushell.components.tiles.generic.extend("sap.ushell.components.tiles.indicatornumeric.NumericTile", {
         onInit :  function(){

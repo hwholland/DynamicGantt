@@ -1,8 +1,8 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's container adapter for standalone demos.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
 /**
  * @namespace Default namespace for Unified Shell adapters for standalone demos. They can usually
@@ -13,14 +13,11 @@
  * @see sap.ushell.adapters.local.ContainerAdapter
  * @since 1.15.0
  */
-(function () {
-    "use strict";
+sap.ui.define(['sap/ushell/User','sap/ushell/utils'],
+	function(User, utils) {
+	"use strict";
+
     /*global jQuery, location, sap, window */
-    jQuery.sap.declare("sap.ushell.adapters.local.ContainerAdapter");
-
-    jQuery.sap.require("sap.ushell.User");
-    jQuery.sap.require("sap.ushell.utils");
-
     /**
      * This method MUST be called by the Unified Shell's container only, others MUST call
      * <code>sap.ushell.services.initializeContainer("local")</code>.
@@ -35,7 +32,7 @@
      * @see sap.ushell.services.initializeContainer
      * @since 1.15.0
      */
-    sap.ushell.adapters.local.ContainerAdapter = function (oSystem, sParameter, oAdapterConfiguration) {
+    var ContainerAdapter = function (oSystem, sParameter, oAdapterConfiguration) {
 
         var oAdapterConfig,
             oUserConfig,
@@ -52,12 +49,14 @@
             isJamActive: false,
             language: sap.ui.getCore().getConfiguration().getLanguage() || "en",
             bootTheme: {
-                theme: "sap_bluecrystal",
+                theme: "sap_belize",
                 root: ""
             },
             themeRoot: "/sap/public/bc/themes/",
             setAccessibilityPermitted: true,
             setThemePermitted: true,
+            isLanguagePersonalized: false,
+            setContentDensityPermitted: true,
             trackUsageAnalytics : null
         };
         for (sKey in oAdapterConfig) {
@@ -92,6 +91,15 @@
         };
 
         /**
+         * Instructs the platform/backend system to keep the session alive.
+         *
+         * @since 1.48.0
+         */
+        this.sessionKeepAlive = function () {
+            console.warn("Demo container adapter sessionKeepAlive called");
+        };
+
+        /**
          * Does the bootstrap for the demo platform (and loads the container's configuration).
          *
          * @returns {jQuery.Deferred}
@@ -119,7 +127,7 @@
                 if (oUserCallback && typeof oUserCallback[sUserCallback] === "function") {
                     oUserCallback[sUserCallback](oDeferredUserCallback);
                 } else {
-                    throw new sap.ushell.utils.Error("ContainerAdapter local platform: Cannot execute setUserCallback - " +
+                    throw new utils.Error("ContainerAdapter local platform: Cannot execute setUserCallback - " +
                             oAdapterConfig.setUserCallback);
                 }
                 oDeferredUserCallback.done(function (oUserNames) {
@@ -128,11 +136,11 @@
                             oUserConfig[val] = oUserNames[val];
                         }
                     });
-                    oUser = new sap.ushell.User(oUserConfig);
+                    oUser = new User(oUserConfig);
                     oDeferredLoad.resolve();
                 });
             } else {
-                oUser = new sap.ushell.User(oUserConfig);
+                oUser = new User(oUserConfig);
                 oDeferredLoad.resolve();
             }
             return oDeferredLoad.promise();
@@ -152,8 +160,12 @@
         this.logout = function (bLogonSystem) {
             jQuery.sap.log.info("Demo system logged out: " + oSystem.getAlias(), null,
                 "sap.ushell.adapters.local.ContainerAdapter");
-            sap.ushell.utils.reload();
+            utils.reload();
             return (new jQuery.Deferred()).resolve().promise();
         };
     };
-}());
+
+
+	return ContainerAdapter;
+
+}, /* bExport= */ true);

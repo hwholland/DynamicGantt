@@ -1,13 +1,14 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.smarttable.SmartTable.
 sap.ui.define([
-	'jquery.sap.global', 'sap/m/VBoxRenderer', 'sap/m/Column', 'sap/m/Label', 'sap/m/MessageBox', 'sap/m/Table', 'sap/m/Text', 'sap/m/Title', 'sap/m/OverflowToolbar', 'sap/m/ToolbarDesign', 'sap/m/OverflowToolbarButton', 'sap/m/ToolbarSeparator', 'sap/m/VBox', 'sap/ui/comp/library', 'sap/ui/comp/providers/TableProvider', 'sap/ui/comp/smartfilterbar/FilterProvider', 'sap/ui/comp/smartvariants/SmartVariantManagement', 'sap/ui/model/FilterOperator', 'sap/ui/model/json/JSONModel', 'sap/ui/table/AnalyticalColumn', 'sap/ui/table/AnalyticalTable', 'sap/ui/table/Column', 'sap/ui/table/Table', 'sap/ui/table/TreeTable', 'sap/ui/comp/personalization/Util', 'sap/ui/comp/util/FormatUtil', 'sap/ui/comp/odata/ODataModelUtil'
-], function(jQuery, VBoxRenderer, Column1, Label, MessageBox, ResponsiveTable, Text, Title, OverflowToolbar, ToolbarDesign, OverflowToolbarButton, ToolbarSeparator, VBox, library, TableProvider, FilterProvider, SmartVariantManagement, FilterOperator, JSONModel, AnalyticalColumn, AnalyticalTable, Column, Table, TreeTable, PersonalizationUtil, FormatUtil, ODataModelUtil) {
+	'jquery.sap.global', 'sap/m/VBoxRenderer', 'sap/m/Column', 'sap/m/Label', 'sap/m/MessageBox', 'sap/m/Table', 'sap/m/Text', 'sap/m/Title', 'sap/m/OverflowToolbar', 'sap/m/ToolbarDesign', 'sap/m/OverflowToolbarButton', 'sap/m/ToolbarSeparator', 'sap/m/VBox', 'sap/ui/comp/library', 'sap/ui/comp/providers/TableProvider', 'sap/ui/comp/smartfilterbar/FilterProvider', 'sap/ui/comp/smartvariants/SmartVariantManagement', 'sap/ui/model/FilterOperator', 'sap/ui/model/json/JSONModel', 'sap/ui/table/AnalyticalColumn', 'sap/ui/table/AnalyticalTable', 'sap/ui/table/Column', 'sap/ui/table/Table', 'sap/ui/table/TreeTable', 'sap/ui/comp/personalization/Util', 'sap/ui/comp/util/FormatUtil', 'sap/ui/comp/odata/ODataModelUtil', 'sap/ui/comp/odata/ODataType', 'sap/ui/comp/state/UIState'
+], function(jQuery, VBoxRenderer, Column1, Label, MessageBox, ResponsiveTable, Text, Title, OverflowToolbar, ToolbarDesign, OverflowToolbarButton, ToolbarSeparator, VBox, library, TableProvider, FilterProvider, SmartVariantManagement, FilterOperator, JSONModel, AnalyticalColumn, AnalyticalTable, Column, Table, TreeTable, PersonalizationUtil, FormatUtil, ODataModelUtil, ODataType, UIState) {
 	"use strict";
 
 	/**
@@ -18,14 +19,15 @@ sap.ui.define([
 	 * @class The SmartTable control creates a table based on OData metadata and the configuration specified. The entitySet attribute must be
 	 *        specified to use the control. This attribute is used to fetch fields from OData metadata, from which columns will be generated; it can
 	 *        also be used to fetch the actual table data.<br>
-	 *        Based on the tableType property, this control will render a standard, analytical, or responsive table.<br>
+	 *        Based on the tableType property, this control will render a standard, analytical, tree, or responsive table.<br>
 	 *        <b><i>Note:</i></b><br>
 	 *        Most of the attributes/properties are not dynamic and cannot be changed once the control has been initialized.
 	 * @extends sap.m.VBox
-	 * @author Pavan Nayak, Benjamin Spieler
+	 * @author SAP SE
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.smarttable.SmartTable
+	 * @see {@link topic:bed8274140d04fc0b9bcb2db42d8bac2 Smart Table}
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var SmartTable = VBox.extend("sap.ui.comp.smarttable.SmartTable", /** @lends sap.ui.comp.smarttable.SmartTable.prototype */
@@ -34,7 +36,7 @@ sap.ui.define([
 
 			library: "sap.ui.comp",
 
-			designTime: true,
+			designtime: "sap/ui/comp/designtime/smarttable/SmartTable.designtime",
 
 			properties: {
 
@@ -158,7 +160,10 @@ sap.ui.define([
 				},
 
 				/**
-				 * Can be set to true or false depending on whether you want to export data to MS Excel®.
+				 * Can be set to true or false depending on whether you want to export data to a spreadsheet application, for example Microsoft Excel.<br>
+				 * <i>Note:</i><br>
+				 * Any $expand parameters are removed when sending the request to generate the spreadsheet. (only valid when <code>exportType</code>
+				 * is <code>sap.ui.comp.smarttable.ExportType.GW</code>)
 				 * 
 				 * @since 1.26.0
 				 */
@@ -166,6 +171,17 @@ sap.ui.define([
 					type: "boolean",
 					group: "Misc",
 					defaultValue: true
+				},
+
+				/**
+				 * Specifies the type of export to be used in the <code>SmartTable</code> control.
+				 * 
+				 * @since 1.50.0
+				 */
+				exportType: {
+					type: "sap.ui.comp.smarttable.ExportType",
+					group: "Misc",
+					defaultValue: "UI5Client"
 				},
 
 				/**
@@ -193,7 +209,11 @@ sap.ui.define([
 				},
 
 				/**
-				 * If the showRowCount attribute is set to true number of rows is shown along with the header text.
+				 * If set to <code>true</code> (default), the number of rows is shown along with the header text.<br>
+				 * If set to <code>false</code>, the number of rows will not be shown on the user interface.<br>
+				 * <i>Note:</i><br>
+				 * To avoid sending dedicated OData requests in order to improve your application's performance, you must configure the binding of the
+				 * table as required.
 				 * 
 				 * @since 1.26.0
 				 */
@@ -229,6 +249,10 @@ sap.ui.define([
 				 * Can be used to override the filter behavior. If set to true (default), instead of the filter input box a button is rendered. When
 				 * pressing this button, the SmartTable control opens the filter panel directly in the table personalization dialog.
 				 * 
+				 * @deprecated Since 1.40.0. After personalization dialog has been introduced in SmartTable the property
+				 *             <code>enableCustomFilter</code> does not make sense. When setting the property to <code>false</code>, the entered
+				 *             custom filter value will not be shown in personalization dialog and will also not be persisted in variant management.
+				 *             The custom filter will also be overwritten when rebindTable is called on the SmartTable.
 				 * @since 1.26.0
 				 */
 				enableCustomFilter: {
@@ -273,7 +297,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * This attribute can be used to specify if the controls created by the SmartTable control are editable.
+				 * This attribute can be used to specify if the controls created by the SmartTable control are editable. (The automatic toggle of
+				 * controls works only for the SmartField/SmartToggle scenario)
 				 * 
 				 * @since 1.28.0
 				 */
@@ -309,7 +334,7 @@ sap.ui.define([
 
 				/**
 				 * Specifies whether the editable property can be toggled via a button on the toolbar. (The automatic toggle of controls works only
-				 * for the SmartField scenario)
+				 * for the SmartField/SmartToggle scenario)
 				 * 
 				 * @since 1.28.0
 				 */
@@ -357,7 +382,9 @@ sap.ui.define([
 
 				/**
 				 * A toolbar that can be added by the user to define their own custom buttons, icons, etc. If this is specified, the SmartTable
-				 * control does not create an additional toolbar, but makes use of this one.
+				 * control does not create an additional toolbar, but makes use of this one.<br>
+				 * <i>Note:</i><br>
+				 * The CSS class sapMTBHeader-CTX is applied on the given toolbar.
 				 * 
 				 * @since 1.26.0
 				 */
@@ -406,78 +433,148 @@ sap.ui.define([
 			events: {
 
 				/**
-				 * Event fired once the control has been initialized.
+				 * This event is fired once the control has been initialized.
 				 * 
 				 * @since 1.26.0
 				 */
 				initialise: {},
 
 				/**
-				 * Event fired just before the binding is being done.
+				 * This event is fired just before the binding is being done.
 				 * 
-				 * @param {object} [bindingParams] the bindingParams object contains filters, sorters and other binding related information for the
-				 *        table.
-				 * @param {boolean} [bindingParams.preventTableBind] can be set to true by the listener to prevent binding from being done
-				 * @param {object} [bindingParams.filters] the combined filter array containing a set of sap.ui.model.Filter instances from SmartTable
-				 *        and SmartFilter - can be modified by users to influence filtering
-				 * @param {object} [bindingParams.sorter] an array containing a set of sap.ui.model.Sorter instances from SmartTable (personalisation) -
-				 *        can be modified by users to influence sorting
+				 * @name sap.ui.comp.smarttable.SmartTable#beforeRebindTable
+				 * @event
+				 * @param {sap.ui.base.Event} oControlEvent
+				 * @param {sap.ui.base.EventProvider} oControlEvent.getSource
+				 * @param {object} oControlEvent.getParameters
+				 * @param {object} oControlEvent.getParameters.bindingParams The bindingParams object contains filters, sorters and other binding
+				 *        related information for the table.
+				 * @param {boolean} oControlEvent.getParameters.bindingParams.preventTableBind If set to <code>true</code> by the listener, binding
+				 *        is prevented
+				 * @param {sap.ui.model.Filter[]} oControlEvent.getParameters.bindingParams.filters The combined filter array containing a set of
+				 *        sap.ui.model.Filter instances of the SmartTable and SmartFilter controls; can be modified by users to influence filtering
+				 * @param {sap.ui.model.Sorter[]} oControlEvent.getParameters.bindingParams.sorter An array containing a set of sap.ui.model.Sorter
+				 *        instances of the SmartTable control (personalization); can be modified by users to influence sorting
 				 * @since 1.26.0
+				 * @public
 				 */
 				beforeRebindTable: {},
 
 				/**
-				 * Event fired when display/edit button is clicked.
+				 * This event is fired when display/edit button is clicked.
 				 * 
 				 * @since 1.28.0
 				 */
 				editToggled: {},
 
 				/**
-				 * Event fired when data is received after binding. The event is fired if the binding for the table is done by the SmartTable itself.
+				 * This event is fired when data is requested after binding. The event is fired if the binding for the table is done by the SmartTable
+				 * itself.
+				 * 
+				 * @since 1.52.0
+				 */
+				dataRequested: {},
+
+				/**
+				 * This event is fired when data is received after binding. The event is fired if the binding for the table is done by the SmartTable
+				 * itself.
 				 * 
 				 * @since 1.28.0
 				 */
 				dataReceived: {},
 
 				/**
-				 * Event fired after variant management in the SmartTable has been initialized.
+				 * This event is fired after variant management in the SmartTable has been initialized.
 				 * 
 				 * @since 1.28.0
 				 */
 				afterVariantInitialise: {},
 
 				/**
-				 * Event fired after a variant has been saved. This event can be used to retrieve the ID of the saved variant.
+				 * This event is fired after a variant has been saved. This event can be used to retrieve the ID of the saved variant.
 				 * 
-				 * @param {string} [currentVariantId] id of the currently selected variant
 				 * @since 1.28.0
 				 */
-				afterVariantSave: {},
+				afterVariantSave: {
+					parameters: {
+						/**
+						 * ID of the currently selected variant
+						 */
+						currentVariantId: {
+							type: "string"
+						}
+					}
+				},
 
 				/**
-				 * Event fired after a variant has been applied.
+				 * This event is fired after a variant has been applied.
 				 * 
-				 * @param {string} [currentVariantId] id of the currently selected variant
 				 * @since 1.28.0
 				 */
-				afterVariantApply: {},
+				afterVariantApply: {
+					parameters: {
+						/**
+						 * ID of the currently selected variant
+						 */
+						currentVariantId: {
+							type: "string"
+						}
+					}
+				},
 
 				/**
-				 * Event fired just before the overlay is being shown.
+				 * This event is fired just before the overlay is being shown.
 				 * 
-				 * @param {object} [overlay] the overlay object contains information related to the table's overlay.
-				 * @param {boolean} [overlay.show] can be set to false by the listener to prevent the overlay being shown.
+				 * @name sap.ui.comp.smarttable.SmartTable#showOverlay
+				 * @event
+				 * @param {sap.ui.base.Event} oControlEvent
+				 * @param {sap.ui.base.EventProvider} oControlEvent.getSource
+				 * @param {object} oControlEvent.getParameters
+				 * @param {object} oControlEvent.getParameters.overlay The overlay object contains information related to the table's overlay
+				 * @param {boolean} oControlEvent.getParameters.overlay.show If set to <code>false</code> by the listener, overlay is not shown
 				 * @since 1.32.0
+				 * @public
 				 */
 				showOverlay: {},
 
 				/**
-				 * Event fired when an editable field, created internally by the SmartTable control, is changed.
+				 * This event is fired when an editable field, created internally by the SmartTable control, is changed.
 				 * 
 				 * @since 1.34.0
 				 */
-				fieldChange: {}
+				fieldChange: {},
+
+				/**
+				 * This event is fired right after the full screen mode of the SmartTable control has been changed.
+				 * 
+				 * @since 1.46
+				 */
+				fullScreenToggled: {
+					parameters: {
+						/**
+						 * If <code>true</code>, control is in full screen mode
+						 */
+						fullScreen: {
+							type: "boolean"
+						}
+					}
+				},
+				/**
+				 * This event is fired just before export is triggered.
+				 * 
+				 * @since 1.50
+				 * @public
+				 */
+				beforeExport: {
+					parameters: {
+						/**
+						 * Contains workbook.columns, dataSource and other export-related information
+						 */
+						exportSettings: {
+							type: "object"
+						}
+					}
+				}
 			}
 		},
 		renderer: VBoxRenderer.render,
@@ -509,8 +606,8 @@ sap.ui.define([
 		sap.m.FlexBox.prototype.init.call(this);
 		this.addStyleClass("sapUiCompSmartTable");
 		this.setFitContainer(true);
-		this.setHeight("100%");
 		this._aColumnKeys = [];
+		this._aDeactivatedColumns = [];
 		this._mLazyColumnMap = {};
 	};
 
@@ -576,7 +673,7 @@ sap.ui.define([
 
 			// Current variant could have been set already (before initialise) by the SmartVariant, in case of GLO/Industry specific variant
 			// handling
-			// this._oVariantManagement.attachInitialise(this._variantInitialised, this);
+			this._oVariantManagement.attachSave(this._variantSaved, this);
 			this._oVariantManagement.attachAfterSave(this._variantAfterSave, this);
 
 			this._oVariantManagement.initialise(this._variantInitialised, this);
@@ -589,6 +686,18 @@ sap.ui.define([
 			this._oCurrentVariant = "STANDARD";
 		}
 		this.fireAfterVariantInitialise();
+		/*
+		 * If VariantManagement is disabled (no LRep connectivity) trigger the binding
+		 */
+		if (this._oVariantManagement && !this._oVariantManagement.getEnabled()) {
+			this._checkAndTriggerBinding();
+		}
+	};
+
+	SmartTable.prototype._variantSaved = function() {
+		if (this._oPersController) {
+			this._oPersController.setPersonalizationData(this._oCurrentVariant);
+		}
 	};
 
 	SmartTable.prototype._variantAfterSave = function() {
@@ -602,6 +711,16 @@ sap.ui.define([
 			return;
 		}
 		this.setProperty("useExportToExcel", bUseExportToExcel, true);
+		if (this.bIsInitialised && this._oToolbar) {
+			this._createToolbarContent();
+		}
+	};
+
+	SmartTable.prototype.setExportType = function(sExportType) {
+		if (sExportType === this.getExportType()) {
+			return;
+		}
+		this.setProperty("exportType", sExportType, true);
 		if (this.bIsInitialised && this._oToolbar) {
 			this._createToolbarContent();
 		}
@@ -653,8 +772,18 @@ sap.ui.define([
 	};
 
 	SmartTable.prototype.setHeader = function(sText) {
+		var sOldText = this.getProperty("header"), bPreventUpdateContent;
 		this.setProperty("header", sText, true);
-		this._refreshHeaderText();
+		if (this.bIsInitialised && this._oToolbar) {
+			// Update Toolbar content to show/hide separator only if text changes from empty to some value -or- from some value to empty
+			// else there could be a re-render triggered on the inner table!
+			bPreventUpdateContent = (!sOldText === !sText);
+			if (!bPreventUpdateContent) {
+				this._createToolbarContent();
+			} else {
+				this._refreshHeaderText();
+			}
+		}
 	};
 
 	SmartTable.prototype.setShowRowCount = function(bShow) {
@@ -662,12 +791,33 @@ sap.ui.define([
 		this._refreshHeaderText();
 	};
 
-	SmartTable.prototype.setEditTogglable = function(bToggle) {
-		this.setProperty("editTogglable", bToggle, true);
+	SmartTable.prototype.setShowFullScreenButton = function(bShowFullScreenButton) {
+		this.setProperty("showFullScreenButton", bShowFullScreenButton, true);
+		if (this._oFullScreenButton) {
+			this._oFullScreenButton.setVisible(bShowFullScreenButton);
+		}
+	};
+
+	SmartTable.prototype.setEditTogglable = function(bEditTogglable) {
+		this.setProperty("editTogglable", bEditTogglable, true);
+		if (this._oEditButton) {
+			this._oEditButton.setVisible(bEditTogglable);
+		}
 	};
 
 	SmartTable.prototype.setEditable = function(bEdit) {
 		this.setProperty("editable", bEdit, true);
+		// Update local EditModel's property
+		if (this._oEditModel) {
+			this._oEditModel.setProperty("/editable", bEdit);
+		}
+		if (this._oEditButton) {
+			this._oEditButton.setIcon(bEdit ? "sap-icon://display" : "sap-icon://edit");
+		}
+		// update keyboard handling for sap.m.Table
+		if (this._isMobileTable && this._oTable.setKeyboardMode) {
+			this._oTable.setKeyboardMode(bEdit ? "Edit" : "Navigation");
+		}
 	};
 
 	SmartTable.prototype.setDemandPopin = function(bDemandPopin) {
@@ -698,8 +848,9 @@ sap.ui.define([
 		}
 
 		var sText = this.getHeader();
+		this._headerText.setVisible(!!sText);
 		if (this.getShowRowCount()) {
-			var iRowCount = parseInt(this._getRowCount(), 10);
+			var iRowCount = parseInt(this._getRowCount(true), 10);
 			jQuery.sap.require("sap.ui.core.format.NumberFormat");
 			var sValue = sap.ui.core.format.NumberFormat.getFloatInstance().format(iRowCount);
 
@@ -713,16 +864,20 @@ sap.ui.define([
 	 * creates the fullscreen button and adds it into toolbar
 	 */
 	SmartTable.prototype._addFullScreenButton = function() {
-		var oFullScreenButton;
+		// always remove content first
+		if (this._oFullScreenButton) {
+			this._oToolbar.removeContent(this._oFullScreenButton);
+		}
 		if (this.getShowFullScreenButton()) {
-			oFullScreenButton = new OverflowToolbarButton(this.getId() + "-btnFullScreen", {
-				press: function() {
-					this._toggleFullScreen(!this.bFullScreen);
-				}.bind(this)
-			});
-			this.oFullScreenButton = oFullScreenButton;
-			this._toggleFullScreen(this.bFullScreen, true);
-			this._oToolbar.addContent(oFullScreenButton);
+			if (!this._oFullScreenButton) {
+				this._oFullScreenButton = new OverflowToolbarButton(this.getId() + "-btnFullScreen", {
+					press: function() {
+						this._toggleFullScreen(!this.bFullScreen);
+					}.bind(this)
+				});
+			}
+			this._renderFullScreenButton();
+			this._oToolbar.addContent(this._oFullScreenButton);
 		}
 	};
 	/**
@@ -748,7 +903,6 @@ sap.ui.define([
 			this._oToolbar.setLayoutData(new sap.m.FlexItemData({
 				shrinkFactor: 0
 			}));
-			this.insertItem(this._oToolbar, 0);
 		}
 	};
 	/**
@@ -759,9 +913,7 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartTable.prototype._toggleFullScreen = function(bValue, bForced) {
-		var resourceB = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp"), sText;
-
-		if (!this.oFullScreenButton || (bValue === this.bFullScreen && !bForced)) {
+		if (!this._oFullScreenButton || (bValue === this.bFullScreen && !bForced)) {
 			return;
 		}
 
@@ -770,12 +922,25 @@ sap.ui.define([
 		if (!this._oFullScreenUtil) {
 			this._oFullScreenUtil = sap.ui.requireSync("sap/ui/comp/util/FullScreenUtil");
 		}
-		this._oFullScreenUtil.toggleFullScreen(this, this.bFullScreen);
+		this._oFullScreenUtil.toggleFullScreen(this, this.bFullScreen, this._oFullScreenButton, this._toggleFullScreen.bind(this, false));
+
+		this._renderFullScreenButton();
+		// Fire the fullScreen Event
+		this.fireFullScreenToggled({
+			fullScreen: bValue
+		});
+	};
+
+	/**
+	 * Renders the look and feel of the full screen button
+	 */
+	SmartTable.prototype._renderFullScreenButton = function() {
+		var resourceB = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp"), sText;
 
 		sText = this.bFullScreen ? resourceB.getText("CHART_MINIMIZEBTN_TOOLTIP") : resourceB.getText("CHART_MAXIMIZEBTN_TOOLTIP");
-		this.oFullScreenButton.setTooltip(sText);
-		this.oFullScreenButton.setText(sText);
-		this.oFullScreenButton.setIcon(this.bFullScreen ? "sap-icon://exit-full-screen" : "sap-icon://full-screen");
+		this._oFullScreenButton.setTooltip(sText);
+		this._oFullScreenButton.setText(sText);
+		this._oFullScreenButton.setIcon(this.bFullScreen ? "sap-icon://exit-full-screen" : "sap-icon://full-screen");
 	};
 
 	/**
@@ -787,6 +952,7 @@ sap.ui.define([
 		if (!this._oToolbar) {
 			this._createToolbar();
 		}
+
 		// insert the items in the custom toolbar in reverse order => insert always at position 0
 		this._addVariantManagementToToolbar();
 		this._addSeparatorToToolbar();
@@ -801,12 +967,8 @@ sap.ui.define([
 		this._addExportToExcelToToolbar();
 		this._addFullScreenButton();
 
-		// seems like toolbar only contains spacer and is actually not needed - remove it
-		if (this._oToolbar && (this._oToolbar.getContent().length === 0 || (this._oToolbar.getContent().length === 1 && this._oToolbar.getContent()[0] instanceof sap.m.ToolbarSpacer))) {
-			this.removeItem(this._oToolbar);
-			this._oToolbar.destroy();
-			this._oToolbar = null;
-		}
+		this._bToolbarInsertedIntoItems = true;
+		this.insertItem(this._oToolbar, 0);
 	};
 
 	/**
@@ -816,6 +978,10 @@ sap.ui.define([
 	 */
 	SmartTable.prototype._addEditTogglableToToolbar = function() {
 		var sButtonLabel;
+		// always remove content first
+		if (this._oEditButton) {
+			this._oToolbar.removeContent(this._oEditButton);
+		}
 		if (this.getEditTogglable()) {
 			if (!this._oEditButton) {
 				sButtonLabel = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("TABLE_EDITTOGGLE_TOOLTIP");
@@ -828,7 +994,6 @@ sap.ui.define([
 						// toggle property editable and set it on the smart table
 						bEditable = !bEditable;
 						this.setEditable(bEditable, true);
-						this._oEditButton.setIcon(bEditable ? "sap-icon://display" : "sap-icon://edit");
 						// notify any listeners
 						this.fireEditToggled({
 							editable: bEditable
@@ -837,8 +1002,6 @@ sap.ui.define([
 				});
 			}
 			this._oToolbar.addContent(this._oEditButton);
-		} else if (this._oEditButton) {
-			this._oToolbar.removeContent(this._oEditButton);
 		}
 	};
 
@@ -848,17 +1011,19 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartTable.prototype._addHeaderToToolbar = function() {
-		if (this.getHeader()) {
-			if (!this._headerText) {
-				this._headerText = new Title(this.getId() + "-header");
-				this._headerText.addStyleClass("sapMH4Style");
-				this._headerText.addStyleClass("sapUiCompSmartTableHeader");
-			}
-			this._refreshHeaderText();
-			this._oToolbar.insertContent(this._headerText, 0);
-		} else if (this._headerText) {
+		// always remove content first
+		if (this._headerText) {
 			this._oToolbar.removeContent(this._headerText);
 		}
+
+		if (!this._headerText) {
+			this._headerText = new Title(this.getId() + "-header");
+			this._headerText.addStyleClass("sapMH4Style");
+			this._headerText.addStyleClass("sapUiCompSmartTableHeader");
+		}
+
+		this._refreshHeaderText();
+		this._oToolbar.insertContent(this._headerText, 0);
 	};
 
 	/**
@@ -867,6 +1032,10 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartTable.prototype._addSeparatorToToolbar = function() {
+		// always remove content first
+		if (this._oSeparator) {
+			this._oToolbar.removeContent(this._oSeparator);
+		}
 		if (this.getHeader() && this.getUseVariantManagement() && this._oVariantManagement && !this._oVariantManagement.isPageVariant()) {
 			if (!this._oSeparator) {
 				this._oSeparator = new ToolbarSeparator(this.getId() + "-toolbarSeperator");
@@ -876,12 +1045,10 @@ sap.ui.define([
 				}
 			}
 			this._oToolbar.insertContent(this._oSeparator, 0);
-			// Also set the height to 3rem (via css) when no height is explicitly specified
-			if (!this._oToolbar.getHeight()) {
-				this._oToolbar.addStyleClass("sapUiCompSmartTableToolbarHeight");
-			}
-		} else if (this._oSeparator) {
-			this._oToolbar.removeContent(this._oSeparator);
+		}
+
+		if (this._oToolbar) {
+			this._oToolbar.addStyleClass("sapMTBHeader-CTX");
 		}
 	};
 
@@ -892,13 +1059,13 @@ sap.ui.define([
 	 */
 	SmartTable.prototype._addVariantManagementToToolbar = function() {
 		if (this._oVariantManagement && !this._oVariantManagement.isPageVariant()) {
+			// always remove content first
+			this._oToolbar.removeContent(this._oVariantManagement);
 			if (this.getUseVariantManagement()) {
 				this._oToolbar.insertContent(this._oVariantManagement, 0);
 				if (!this._oVariantManagement.isPageVariant()) {
 					this._oVariantManagement.setVisible(this.getShowVariantManagement());
 				}
-			} else if (this._oVariantManagement) {
-				this._oToolbar.removeContent(this._oVariantManagement);
 			}
 		}
 	};
@@ -933,6 +1100,10 @@ sap.ui.define([
 	 */
 	SmartTable.prototype._addTablePersonalisationToToolbar = function() {
 		var sButtonLabel;
+		// always remove content first
+		if (this._oTablePersonalisationButton) {
+			this._oToolbar.removeContent(this._oTablePersonalisationButton);
+		}
 		if (this.getUseTablePersonalisation()) {
 			if (!this._oTablePersonalisationButton) {
 				sButtonLabel = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("TABLE_PERSOBTN_TOOLTIP");
@@ -947,8 +1118,6 @@ sap.ui.define([
 				this._oTablePersonalisationButton.setVisible(this.getShowTablePersonalisation());
 			}
 			this._oToolbar.addContent(this._oTablePersonalisationButton);
-		} else if (this._oTablePersonalisationButton) {
-			this._oToolbar.removeContent(this._oTablePersonalisationButton);
 		}
 	};
 
@@ -958,8 +1127,12 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartTable.prototype._addExportToExcelToToolbar = function() {
-		if (this.getUseExportToExcel() && this._bTableSupportsExcelExport) {
-			var that = this, sButtonLabel;
+		// always remove content first
+		if (this._oUseExportToExcel) {
+			this._oToolbar.removeContent(this._oUseExportToExcel);
+		}
+		if (this.getUseExportToExcel() && (this._bTableSupportsExcelExport || this.getExportType() === "UI5Client")) {
+			var sButtonLabel;
 			if (!this._oUseExportToExcel) {
 				sButtonLabel = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("TABLE_EXPORT_TEXT");
 				this._oUseExportToExcel = new sap.m.OverflowToolbarButton(this.getId() + "-btnExcelExport", {
@@ -967,16 +1140,31 @@ sap.ui.define([
 					text: sButtonLabel,
 					tooltip: sButtonLabel,
 					press: function(oEvent) {
-
+						if (this.getExportType() === "UI5Client") {
+							this._triggerUI5ClientExport();
+							return;
+						}
 						var fDownloadXls = function() {
-							var oRowBinding = that._getRowBinding();
+							var oRowBinding = this._getRowBinding();
 							var sUrl = oRowBinding.getDownloadUrl("xlsx");
-							// sUrl = that._adjustUrlToVisibleColumns(sUrl);
-							sUrl = that._removeExpandParameter(sUrl);
-							window.open(sUrl);
-						};
+							sUrl = this._removeExpandParameter(sUrl);
+							// check for length of URL -> URLs longer than 2048 chars aren't supported in some browsers (e.g. Internet Explorer)
+							if (sUrl && sUrl.length > 2048 && sap.ui.Device.browser.msie) {
+								// thrown info to user!
+								MessageBox.error(sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("DOWNLOAD_TOO_COMPLEX_TEXT"));
+								return;
+							}
+							var mExportSettings = {
+								url: sUrl
+							};
+							// Fire event to enable export url manipulation
+							this.fireBeforeExport({
+								exportSettings: mExportSettings
+							});
+							window.open(mExportSettings.url);
+						}.bind(this);
 
-						var iRowCount = that._getRowCount();
+						var iRowCount = this._getRowCount(true);
 
 						if (iRowCount > 10000) {
 							MessageBox.confirm(sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("DOWNLOAD_CONFIRMATION_TEXT", iRowCount), {
@@ -992,33 +1180,134 @@ sap.ui.define([
 						} else {
 							fDownloadXls();
 						}
-					}
+					}.bind(this)
 				});
 				this._setExcelExportEnableState();
 			}
 			this._oToolbar.addContent(this._oUseExportToExcel);
-		} else if (this._oUseExportToExcel) {
-			this._oToolbar.removeContent(this._oUseExportToExcel);
 		}
 	};
 
 	/**
-	 * replaces the given Url's select parameter with a select parameter adjusted to the visible columns
+	 * Triggers export via "sap.ui.export"/"Document Export Services" export functionality
 	 * 
-	 * @param {string} sUrl the original url
 	 * @private
-	 * @returns {string} the resolved url string
 	 */
-	SmartTable.prototype._adjustUrlToVisibleColumns = function(sUrl) {
-		var aVisibleColumns = this._getVisibleColumnPaths().select;
-		var sFinalUrl = sUrl.replace(new RegExp("([\\?&]\\$select=)[^&]+"), function(result, match) {
-			if (aVisibleColumns && aVisibleColumns.length) {
-				return match + jQuery.sap.encodeURL(aVisibleColumns.join(","));
-			} else {
-				return "";
+	SmartTable.prototype._triggerUI5ClientExport = function() {
+		var oExportLibLoadPromise = sap.ui.getCore().loadLibrary("sap.ui.export", true);
+		oExportLibLoadPromise.then(function() {
+			var aColumns = this._oTable.getColumns(), i, iLen = aColumns.length, oColumn, oColumnData, oLabel, sPath, sTemplate, nWidth, sType, oType, aSheetColumns = [];
+			if (this._isMobileTable && aColumns.length) {
+				aColumns = aColumns.sort(function(oCol1, oCol2) {
+					return oCol1.getOrder() - oCol2.getOrder();
+				});
 			}
-		});
-		return sFinalUrl;
+			for (i = 0; i < iLen; i++) {
+				sPath = null;
+				sTemplate = null;
+				oColumn = aColumns[i];
+				if (oColumn.getVisible()) {
+					if (oColumn.getLeadingProperty) {
+						sPath = oColumn.getLeadingProperty();
+					}
+					oColumnData = oColumn.data("p13nData");
+					if (oColumnData) {
+						if (!sPath) {
+							sPath = oColumnData["leadingProperty"];
+						}
+					}
+					if (Array.isArray(sPath)) {
+						sPath = sPath[0];
+					}
+					if (sPath) {
+						if (oColumn.getLabel) {
+							oLabel = oColumn.getLabel();
+						} else if (oColumn.getHeader) {
+							oLabel = oColumn.getHeader();
+						}
+						nWidth = oColumn.getWidth().toLowerCase() || oColumnData.width || "";
+						if (nWidth.indexOf("em") > 0) {
+							nWidth = Math.round(parseFloat(nWidth));
+						} else if (nWidth.indexOf("px") > 0) {
+							nWidth = Math.round(parseInt(nWidth, 10) / 16);
+						}
+						sType = oColumnData.type === "numeric" ? "number" : oColumnData.type;
+						oType = null;
+						if (oColumnData.isCurrency) {
+							sType = "currency";
+						} else if (oColumnData.description) {
+							sTemplate = FormatUtil.getFormattedExpressionFromDisplayBehaviour(oColumnData.displayBehaviour, "{0}", "{1}");
+						} else if (oColumnData.isDigitSequence) {
+							sType = "number";
+						} else if (sType != "date" && ODataType.isDateOrTime(oColumnData.edmType)) {
+							// set type as expected by excel for OData specific Date/Time fields
+							sType = ODataType.getDefaultValueTypeName(oColumnData.edmType);
+							if (sType === "DateTimeOffset") {
+								sType = "DateTime";
+							}
+						} else if (sType === "boolean") {
+							oType = ODataType.getType(oColumnData.edmType);
+						}
+						aSheetColumns.push({
+							columnId: oColumn.getId(),
+							property: sTemplate ? [
+								sPath, oColumnData.description
+							] : sPath,
+							type: sType,
+							label: (oLabel && oLabel.getText) ? oLabel.getText() : sPath,
+							width: nWidth,
+							textAlign: oColumn.getHAlign(),
+							template: sTemplate,
+							trueValue: (sType === "boolean" && oType) ? oType.formatValue(true, "string") : undefined,
+							falseValue: (sType === "boolean" && oType) ? oType.formatValue(false, "string") : undefined,
+							unitProperty: (sType === "currency" || sType === "number") ? oColumnData.unit : undefined,
+							displayUnit: sType === "currency",
+							precision: oColumnData.precision,
+							scale: oColumnData.scale
+						});
+					}
+				}
+			}
+			var oRowBinding = this._getRowBinding();
+			var oModel = this.getModel();
+			var sFileName = this.getHeader();
+			var iCount = !this._isTreeTable ? this._getRowCount(true) : undefined;
+			var sDataUrl = oRowBinding.getDownloadUrl && oRowBinding.getDownloadUrl("json");
+			var sServiceUrl = oModel.sServiceUrl;
+			// Check if cloud InterceptService exists (for destination routing)
+			// This hack is necessary for cloud instances e.g. SAP CP, due to some destination routing that is not known by UI5 model/client!
+			if (!this._InterceptService) {
+				this._InterceptService = sap.ui.require("sap/ushell/cloudServices/interceptor/InterceptService");
+			}
+			// Use Url from the intercept service, if it exists!
+			if (this._InterceptService) {
+				sDataUrl = this._InterceptService.getInstance().interceptUrl(sDataUrl);
+				sServiceUrl = this._InterceptService.getInstance().interceptUrl(sServiceUrl);
+			}
+			var mExportSettings = {
+				workbook: {
+					columns: aSheetColumns
+				},
+				dataSource: {
+					type: "odata",
+					dataUrl: sDataUrl,
+					serviceUrl: sServiceUrl,
+					headers: oModel.getHeaders(),
+					count: iCount,
+					useBatch: oModel.bUseBatch
+				},
+				fileName: sFileName
+			};
+			// Event to enable user modification of excel settings
+			this.fireBeforeExport({
+				exportSettings: mExportSettings
+			});
+			sap.ui.require([
+				"sap/ui/export/Spreadsheet"
+			], function(Spreadsheet) {
+				new Spreadsheet(mExportSettings).build();
+			});
+		}.bind(this));
 	};
 
 	/**
@@ -1038,10 +1327,11 @@ sap.ui.define([
 	/**
 	 * gets table's row count
 	 * 
+	 * @param {Boolean} bConsiderTotal whether to consider total
 	 * @private
-	 * @returns {integer} the row count
+	 * @returns {int} the row count
 	 */
-	SmartTable.prototype._getRowCount = function() {
+	SmartTable.prototype._getRowCount = function(bConsiderTotal) {
 		var oRowBinding = this._getRowBinding();
 
 		if (!oRowBinding) {
@@ -1049,7 +1339,7 @@ sap.ui.define([
 		}
 
 		var iRowCount = 0;
-		if (oRowBinding.getTotalSize) {
+		if (bConsiderTotal && oRowBinding.getTotalSize) {
 			iRowCount = oRowBinding.getTotalSize();
 		} else {
 			iRowCount = oRowBinding.getLength();
@@ -1070,20 +1360,7 @@ sap.ui.define([
 	SmartTable.prototype._setExcelExportEnableState = function() {
 		if (this._oUseExportToExcel) {
 			var iRowCount = this._getRowCount();
-			if (iRowCount > 0) {
-				this._oUseExportToExcel.setEnabled(true);
-			} else {
-				// check if first row contains data (getRowCount relies on binding which reports 0 if backend does not support line count)
-				var aRows;
-				if (this._isMobileTable) {
-					aRows = this._oTable.getItems();
-				} else {
-					aRows = this._oTable.getRows();
-				}
-
-				var bEnable = aRows != null && aRows.length > 0 && aRows[0].getBindingContext() != null;
-				this._oUseExportToExcel.setEnabled(bEnable);
-			}
+			this._oUseExportToExcel.setEnabled(iRowCount > 0);
 		}
 	};
 
@@ -1219,22 +1496,53 @@ sap.ui.define([
 					this._oEditModel = new JSONModel({
 						editable: this.getEditable()
 					});
-					this.bindProperty("editable", {
-						path: "sm4rtM0d3l>/editable"
-					});
 					// Set the local model on the SmartTable
 					this.setModel(this._oEditModel, "sm4rtM0d3l");
 
+					this.attachEvent("_change", this._onPropertyChange, this);
+
 					this.fireInitialise();
-					if (this.getEnableAutoBinding()) {
-						if (this._oSmartFilter && this._oSmartFilter.isPending()) {
-							this._oSmartFilter.triggerSearch();
-						} else {
-							this._reBindTable();
-						}
+					// Trigger initial binding if no Variant exists -or- if it is already initialised
+					if (!this._oVariantManagement || (this._oVariantManagement && this._bVariantInitialised)) {
+						this._checkAndTriggerBinding();
 					}
 				}
 			}
+		}
+	};
+
+	/**
+	 * Check if control needs to be bound and trigger binding accordingly.
+	 * 
+	 * @private
+	 */
+	SmartTable.prototype._checkAndTriggerBinding = function() {
+		if (!this._bAutoBindingTriggered) {
+			this._bAutoBindingTriggered = true;
+			if (this.getEnableAutoBinding()) {
+				if (this._oSmartFilter) {
+					this._oSmartFilter.search();
+				} else {
+					this._reBindTable();
+				}
+			}
+		}
+	};
+
+	SmartTable.prototype._aStaticProperties = [
+		"entitySet", "ignoredFields", "initiallyVisibleFields", "ignoreFromPersonalisation", "tableType", "useTablePersonalisation", "enableAutoBinding", "persistencyKey", "smartFilterId"
+	];
+
+	/**
+	 * Callback when the property changes for the SmartTable control.
+	 * 
+	 * @param {object} oEvent - the event object
+	 * @private
+	 */
+	SmartTable.prototype._onPropertyChange = function(oEvent) {
+		var sProperty = oEvent.getParameter("name");
+		if (this._aStaticProperties.indexOf(sProperty) > -1) {
+			jQuery.sap.log.error("Property " + sProperty + " cannot be changed after the SmartTable with id " + this.getId() + " is initialised");
 		}
 	};
 
@@ -1257,18 +1565,22 @@ sap.ui.define([
 					sIgnoredFields = this._aExistingColumns.toString();
 				}
 			}
-			this._oTableProvider = new sap.ui.comp.providers.TableProvider({ // FIXME workaround to make sinon stubs work with AMD
+			this._oTableProvider = new TableProvider({
 				entitySet: sEntitySetName,
 				ignoredFields: sIgnoredFields,
 				initiallyVisibleFields: this.getInitiallyVisibleFields(),
 				isEditableTable: this.getEditable(),
+				smartTableId: this.getId(),
 				isAnalyticalTable: !!this._isAnalyticalTable,
 				isMobileTable: !!this._isMobileTable,
 				dateFormatSettings: this.data("dateFormatSettings"),
 				currencyFormatSettings: this.data("currencyFormatSettings"),
 				defaultDropDownDisplayBehaviour: this.data("defaultDropDownDisplayBehaviour"),
 				useSmartField: this.data("useSmartField"),
+				useSmartToggle: this.data("useSmartToggle"),
 				skipAnnotationParse: this.data("skipAnnotationParse"),
+				lineItemQualifier: this.data("lineItemQualifier"),
+				presentationVariantQualifier: this.data("presentationVariantQualifier"),
 				enableInResultForLineItem: this.data("enableInResultForLineItem"),
 				_semanticKeyAdditionalControl: this.getAggregation("semanticKeyAdditionalControl"),
 				model: oModel,
@@ -1292,19 +1604,19 @@ sap.ui.define([
 		if (this._oSmartFilter) {
 			this._oSmartFilter.attachSearch(this._reBindTable, this);
 			this._oSmartFilter.attachFilterChange(this._filterChangeEvent, this);
-			this._oSmartFilter.attachCancel(this._cancelEvent, this);
 
 			// Set initial empty text only if a valid SmartFilter is found
 			this._setNoDataText(sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("SMARTTABLE_NO_DATA"));
+		} else {
+			// Set initial empty text for the case when no SmartFilter is attached to SmartTable
+			this._setNoDataText(sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("SMARTTABLE_NO_DATA_WITHOUT_FILTERBAR"));
 		}
 	};
 
 	SmartTable.prototype._filterChangeEvent = function() {
-		this._showOverlay(true);
-	};
-
-	SmartTable.prototype._cancelEvent = function() {
-		this._showOverlay(false);
+		if (this._isTableBound() && this._oSmartFilter && !this._oSmartFilter.getLiveMode() && !this._oSmartFilter.isDialogOpen()) {
+			this._showOverlay(true);
+		}
 	};
 
 	/**
@@ -1386,12 +1698,12 @@ sap.ui.define([
 	/**
 	 * Re-binds the table
 	 * 
-	 * @param {Object} mEventParams - the event parameters
+	 * @param {object} mEventParams - the event parameters
 	 * @param {boolean} bForceRebind - force bind call to be triggered on the table
 	 * @private
 	 */
 	SmartTable.prototype._reBindTable = function(mEventParams, bForceRebind) {
-		var oTableBinding, sTableBindingPath, mTablePersonalisationData, i, iLen, aSmartFilters, aProcessedFilters = [], aFilters, oExcludeFilters, sRequestAtLeastFields, aAlwaysSelect, aSelect, mSelectExpand, aExpand, aSorters, mParameters = {}, mBindingParams = {
+		var oTableBinding, sTableBindingPath, mTablePersonalisationData, i, iLen, aSmartFilters, aProcessedFilters = [], aFilters, oExcludeFilters, aAlwaysSelect, aSelect, mSelectExpand, aExpand, aSorters, mParameters = {}, mBindingParams = {
 			preventTableBind: false
 		};
 
@@ -1429,15 +1741,8 @@ sap.ui.define([
 		} else {
 			aFilters = aProcessedFilters;
 		}
-
-		sRequestAtLeastFields = this.getRequestAtLeastFields();
-		if (sRequestAtLeastFields) {
-			aAlwaysSelect = sRequestAtLeastFields.split(",");
-		} else {
-			aAlwaysSelect = [];
-		}
-		aAlwaysSelect = aAlwaysSelect.concat(this._aAlwaysSelect);
-		mSelectExpand = this._getVisibleColumnPaths();
+		aAlwaysSelect = this._getRequestAtLeastFields();
+		mSelectExpand = this._getRelevantColumnPaths();
 		aSelect = mSelectExpand["select"];
 		// handle fields that shall always be selected
 		if (!aSelect || !aSelect.length) {
@@ -1492,14 +1797,14 @@ sap.ui.define([
 				return;
 			}
 			sTableBindingPath = this.getTableBindingPath() || ("/" + this.getEntitySet());
-			this._oTable.setEnableBusyIndicator(false);
-			this._oTable.setBusy(true);
 
 			// Reset Suppress refresh
-			if (this._oTable._setSuppressRefresh) {
-				this._oTable._setSuppressRefresh(false);
+			if (this._oTable.resumeUpdateAnalyticalInfo) {
+				// resumeUpdateAnalyticalInfo forces binding change if not explicitly set to false
+				this._oTable.resumeUpdateAnalyticalInfo(true, false);
 			}
 			this._bDataLoadPending = true;
+			this._bIgnoreChange = false; // if a 2nd request is sent while the 1st one is in progress the dataReceived event may not be fired!
 			// Check if table has to be forcefully bound again!
 			if (this._bForceTableUpdate) {
 				bForceRebind = true;
@@ -1516,6 +1821,11 @@ sap.ui.define([
 					bForceRebind = !(jQuery.sap.equal(mParameters, oTableBinding.mParameters, true) && jQuery.sap.equal(mParameters.custom, oTableBinding.mParameters.custom) && !mBindingParams.length && !mBindingParams.startIndex && sTableBindingPath === oTableBinding.getPath());
 				}
 			}
+			// Update No data text (once), just before triggering the binding!
+			if (!this._bNoDataUpdated) {
+				this._bNoDataUpdated = true;
+				this._setNoDataText();
+			}
 
 			// do the binding if no binding is already present or if it is being forced!
 			if (!oTableBinding || !this._bIsTableBound || bForceRebind) {
@@ -1528,12 +1838,18 @@ sap.ui.define([
 					startIndex: mBindingParams.startIndex,
 					template: this._oTemplate,
 					events: {
-						dataRequested: function() {
+						dataRequested: function(oEvt) {
+							// AnalyticalBinding fires dataRequested too often/early
+							if (oEvt && oEvt.getParameter && oEvt.getParameter("__simulateAsyncAnalyticalBinding")) {
+								return;
+							}
 							this._bIgnoreChange = true;
+							// notify any listeners about dataRequested
+							this.fireDataRequested(oEvt.getParameters());
 						}.bind(this),
 						dataReceived: function(mEventParams) {
-							// Ignore events without data parameter
-							if (mEventParams && mEventParams.getParameter && !mEventParams.getParameter("data")) {
+							// AnalyticalBinding fires dataReceived too often/early
+							if (mEventParams && mEventParams.getParameter && mEventParams.getParameter("__simulateAsyncAnalyticalBinding")) {
 								return;
 							}
 							this._bIgnoreChange = false;
@@ -1560,11 +1876,6 @@ sap.ui.define([
 				// Flag to indicate if table was bound (data fetch triggered) at least once
 				this._bIsTableBound = true;
 			} else {
-				// checking if an empty object {} is passed from the application code
-				// this empty object {} has to converted to an array for handling the correct filter binding to the table
-				if (Object.keys(aFilters).length === 0) {
-					aFilters = [];
-				}
 				oTableBinding.sort(aSorters);
 				oTableBinding.filter(aFilters, "Application");
 			}
@@ -1575,24 +1886,14 @@ sap.ui.define([
 	/**
 	 * Called once data is loaded in the binding (i.e. either backend fetch or once change event is fired)
 	 * 
-	 * @param {Object} mEventParams - the event parameters
+	 * @param {object} mEventParams - the event parameters
 	 * @param {boolean} bForceUpdate - force update
 	 * @private
 	 */
 	SmartTable.prototype._onDataLoadComplete = function(mEventParams, bForceUpdate) {
 		if (this._bDataLoadPending || bForceUpdate) {
-			if (this._bDataLoadPending) {
-				this._oTable.setBusy(false);
-				this._oTable.setEnableBusyIndicator(true);
-			}
 			this._bDataLoadPending = false;
-			// Update No data text (once) only if table has no results!
-			if (!this._bNoDataUpdated && !this._getRowCount()) {
-				this._bNoDataUpdated = true;
-				this._setNoDataText();
-			}
 			this.updateTableHeaderState();
-			this._disableSumRows();
 		}
 	};
 
@@ -1666,11 +1967,11 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartTable.prototype._createContent = function() {
-		var i, iLen = 0, oField, aIndexedColumns, oColumn;
+		var i, iLen = 0, oField, aIndexedColumns, oColumn, aRemainingColumnKeys = [];
 
 		// Sync the current table columns with the _aColumnKeys array
 		if (this._aExistingColumns && this._aExistingColumns.length) {
-			this._aColumnKeys = this._aExistingColumns.reverse();
+			this._aColumnKeys = [].concat(this._aExistingColumns.reverse());
 		}
 
 		aIndexedColumns = this._parseIndexedColumns();
@@ -1678,8 +1979,12 @@ sap.ui.define([
 		iLen = this._aTableViewMetadata.length;
 		for (i = 0; i < iLen; i++) {
 			oField = this._aTableViewMetadata[i];
-			// Fill all columns coming from metadata
-			this._aColumnKeys.push(oField.name);
+			// Fill only inititally visible columns coming from metadata
+			if (oField.isInitiallyVisible) {
+				this._aColumnKeys.push(oField.name);
+			} else {
+				aRemainingColumnKeys.push(oField.name);
+			}
 
 			// Store the non-relevant columns in a map
 			if (!(oField.isInitiallyVisible || oField.inResult)) {
@@ -1693,6 +1998,9 @@ sap.ui.define([
 
 		this._insertIndexedColumns(aIndexedColumns);
 
+		// Fill remaining columns from metadata into the column keys array
+		this._aColumnKeys = this._aColumnKeys.concat(aRemainingColumnKeys);
+
 		this._updateColumnsPopinFeature();
 
 		this._storeInitialColumnSettings();
@@ -1701,8 +2009,8 @@ sap.ui.define([
 	/**
 	 * Creates the column from the field metadata and returns it
 	 * 
-	 * @param {Object} oField - the field metadata from which we create the columns
-	 * @returns {Object} the created column
+	 * @param {object} oField - the field metadata from which we create the columns
+	 * @returns {object} the created column
 	 * @private
 	 */
 	SmartTable.prototype._createColumnForField = function(oField) {
@@ -1720,10 +2028,20 @@ sap.ui.define([
 			navigationProperty: oField.navigationProperty, // navigationProperty that has to be expanded in $expand
 			sortProperty: oField.sortable ? oField.name : undefined,
 			filterProperty: oField.filterable ? oField.name : undefined,
+			isGroupable: oField.sortable && oField.filterable && oField.aggregationRole === "dimension",
+			fullName: oField.hasValueListAnnotation ? oField.fullName : null,
 			type: oField.filterType,
 			maxLength: oField.maxLength,
 			precision: oField.precision,
 			scale: oField.scale,
+			align: oField.align,
+			edmType: oField.type,
+			displayBehaviour: oField.displayBehaviour,
+			description: oField.description,
+			isDigitSequence: oField.isDigitSequence,
+			isCurrency: oField.isCurrencyField,
+			unit: oField.unit,
+			width: oField.width,
 			aggregationRole: oField.aggregationRole
 		});
 
@@ -1862,7 +2180,9 @@ sap.ui.define([
 				oColumn.setMinScreenWidth("1px");
 			} else {
 				oColumn.setDemandPopin(true);
-				oColumn.setPopinDisplay(sap.m.PopinDisplay.Inline);
+				if (oColumn.getPopinDisplay() != "WithoutHeader") {
+					oColumn.setPopinDisplay(sap.m.PopinDisplay.Inline);
+				}
 				oColumn.setMinScreenWidth((i + 1) * 10 + "rem");
 			}
 		}
@@ -1909,10 +2229,6 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartTable.prototype._registerContentTemplateEvents = function(oTemplateControl) {
-		if (oTemplateControl instanceof sap.ui.comp.navpopover.SmartLink) {
-			var oSemanticObjectController = this.getSemanticObjectController();
-			oTemplateControl.setSemanticObjectController(oSemanticObjectController);
-		}
 		if (oTemplateControl && oTemplateControl.attachChange) {
 			oTemplateControl.attachChange(function(oEventParams) {
 				this.fireFieldChange({
@@ -1957,12 +2273,12 @@ sap.ui.define([
 	};
 
 	/**
-	 * gets the array of visible column path that is used to create the select query
+	 * gets the array of visible and inResult column path, that will used to create the select query
 	 * 
 	 * @private
-	 * @returns {Object|{}} Map containing array of column paths to be selected and expanded
+	 * @returns {object} Map containing array of column paths to be selected and expanded
 	 */
-	SmartTable.prototype._getVisibleColumnPaths = function() {
+	SmartTable.prototype._getRelevantColumnPaths = function() {
 		var mResult = {}, aSelect = [], aExpand = [], aColumns = this._oTable.getColumns(), i, iLen = aColumns ? aColumns.length : 0, oColumn, oColumnData, sPath, sAdditionalPath, sExpandPath;
 
 		var fExtractAndInsertPathToArray = function(sPath, aArray) {
@@ -1983,7 +2299,7 @@ sap.ui.define([
 		for (i = 0; i < iLen; i++) {
 			oColumn = aColumns[i];
 			sPath = null;
-			if (oColumn.getVisible()) {
+			if (oColumn.getVisible() || (oColumn.getInResult && oColumn.getInResult())) {
 				if (oColumn.getLeadingProperty) {
 					sPath = oColumn.getLeadingProperty();
 				}
@@ -2170,32 +2486,12 @@ sap.ui.define([
 	};
 
 	/**
-	 * sets the disable property on the DOM's input elements on existing sum rows
-	 * 
-	 * @private
-	 */
-	SmartTable.prototype._disableSumRows = function() {
-		if (sap.ui.Device.browser.msie && sap.ui.Device.browser.version < 11) { // other browser work via pointer-events: none in CSS
-			jQuery.sap.delayedCall(60, this, function() { // CSS classes are set in sap.ui.table.AnalyticalTable._updateTableContent ONLY if data is
-				// available. Data gets set via sap.ui.table.Table.updateRows with a setDelay50 call, so
-				// ensure this call is triggerd afterwards
-				if (this.getEditable()) {
-					this._oTable.$().find(".sapUiAnalyticalTableSum input").prop("disabled", true); // set the input elements on the sum line to
-					// disabled
-					this._oTable.$().find(".sapUiTableGroupHeader input").prop("disabled", true); // set the input elements on the group headers sum
-					// line to disabled
-				}
-			});
-		}
-	};
-
-	/**
 	 * Creates and returns a Column that can be added to the table, based on the metadata provided by the TableProvider
 	 * 
 	 * @param {object} oField The column's metadata
 	 * @param {string} sId The id to be set on the column
 	 * @private
-	 * @returns {Object} the column that is created
+	 * @returns {object} the column that is created
 	 */
 	SmartTable.prototype._createColumn = function(oField, sId) {
 		var oColumn;
@@ -2225,7 +2521,7 @@ sap.ui.define([
 	 * @param {object} oField The column's metadata
 	 * @param {string} sId The id to be set on the column
 	 * @private
-	 * @returns {Object} the column that is created
+	 * @returns {object} the column that is created
 	 */
 	SmartTable.prototype._createAnalyticalColumn = function(oField, sId) {
 		var oColumn;
@@ -2246,6 +2542,8 @@ sap.ui.define([
 			tooltip: oField.quickInfo,
 			sorted: oField.sorted,
 			sortOrder: oField.sortOrder,
+			grouped: oField.grouped,
+			showIfGrouped: oField.grouped,
 			showSortMenuEntry: oField.sortable,
 			showFilterMenuEntry: oField.filterable && this._bIsFilterPanelEnabled,
 			summed: oField.summed,
@@ -2261,7 +2559,7 @@ sap.ui.define([
 	 * @param {object} oField The column's metadata
 	 * @param {string} sId The id to be set on the column
 	 * @private
-	 * @returns {Object} the column that is created
+	 * @returns {object} the column that is created
 	 */
 	SmartTable.prototype._createMobileColumn = function(oField, sId) {
 		var oColumn;
@@ -2276,10 +2574,7 @@ sap.ui.define([
 			tooltip: oField.quickInfo,
 			width: oField.isImageURL ? "3em" : undefined
 		});
-		// Mobile table needs the content control to be passed as a template with the items aggregation
-		if (oField.template && oField.template.setWrapping) {
-			oField.template.setWrapping(true);
-		}
+
 		if (this._oTemplate) {
 			this._oTemplate.addCell(oField.template);
 		}
@@ -2287,10 +2582,10 @@ sap.ui.define([
 	};
 
 	/**
-	 * Interface function for SmartVariantManagment control, returns the current used variant data
+	 * Interface function for SmartVariantManagement control, returns the current used variant data
 	 * 
 	 * @public
-	 * @returns {json} The currently set variant
+	 * @returns {object} The currently set variant
 	 */
 	SmartTable.prototype.fetchVariant = function() {
 		if (this._oCurrentVariant === "STANDARD" || this._oCurrentVariant === null) {
@@ -2301,10 +2596,11 @@ sap.ui.define([
 	};
 
 	/**
-	 * Interface function for SmartVariantManagment control, sets the current variant
+	 * Interface function for SmartVariantManagement control, sets the current variant. <b>Note:</b> If an application default variant exists, then
+	 * all other variants are extended from this application default variant.
 	 * 
-	 * @param {Object} oVariantJSON - the variants json
-	 * @param {string} sContext - describes the context in which the apply was executed
+	 * @param {object} oVariantJSON The variants json
+	 * @param {string} sContext Describes the context in which the apply was executed
 	 * @public
 	 */
 	SmartTable.prototype.applyVariant = function(oVariantJSON, sContext) {
@@ -2315,18 +2611,6 @@ sap.ui.define([
 		}
 
 		PersonalizationUtil.recoverPersonalisationDateData(this._oCurrentVariant, this._oTable);
-
-		// Context STANDARD here specifies that this is a custom application variant for Globalisation/Industry!
-		// This would be called just once in the beginning!
-		if (sContext === "STANDARD") {
-			this._oApplicationDefaultVariant = this._oCurrentVariant;
-		}
-		// if an application default variant exists --> extend all the other variants based on this!
-		// Changes to the industry should be taken over --> but first we only take over non conflicting changes
-		// if the user already has some changes --> just use those
-		if (this._oApplicationDefaultVariant && !sContext) {
-			this._oCurrentVariant = jQuery.extend(true, {}, this._oApplicationDefaultVariant, oVariantJSON);
-		}
 
 		// Set instance flag to indicate that we are currently in the process of applying the changes
 		this._bApplyingVariant = true;
@@ -2351,9 +2635,105 @@ sap.ui.define([
 	};
 
 	/**
+	 * Interface function for SmartVariantManagement control. It indicates, that the variant management is fully initialized.
+	 * 
+	 * @internal
+	 */
+	SmartTable.prototype.variantsInitialized = function() {
+		this._bVariantInitialised = true;
+		this._checkAndTriggerBinding();
+	};
+
+	/**
+	 * Returns the current UI state of the <code>SmartTable</code> control.<br>
+	 * <b>Note:</b><br>
+	 * The following limitations apply:
+	 * <ul>
+	 * <li>Visualizations can only be used to modify the visibility and order of columns, the template or importance of the column cannot be changed</li>
+	 * <li>MaxItems is not supported</li>
+	 * <li>RequestAtLeast contains values that are combined from both the <code>SmartTable</code> control property and PresentationVariant
+	 * annotation, but when it is updated it only affects the internal array. The property in the <code>SmartTable</code> stays the same as before</li>
+	 * <li>Changes to RequestAtLeast alone will not lead to a new data request</li>
+	 * <li>RequestAtLeast is not supported in <code>AnalyticalTable</code> scenario</li>
+	 * <li>Any other limitations, like the ones mentioned in {@link sap.ui.comp.state.UIState}, also apply</li>
+	 * </ul>
+	 * 
+	 * @returns {sap.ui.comp.state.UIState} Current UI state
+	 * @public
+	 * @since 1.52
+	 */
+	SmartTable.prototype.getUiState = function() {
+		var oUIStateP13n = this._oPersController ? this._oPersController.getDataSuiteFormatSnapshot() : null;
+		return new UIState({
+			presentationVariant: {
+				SortOrder: oUIStateP13n ? oUIStateP13n.SortOrder : [],
+				GroupBy: oUIStateP13n ? oUIStateP13n.GroupBy : [],
+				Total: oUIStateP13n ? oUIStateP13n.Total : [],
+				RequestAtLeast: this._getRequestAtLeastFields(),
+				Visualizations: oUIStateP13n ? oUIStateP13n.Visualizations : []
+			},
+			selectionVariant: {
+				SelectOptions: oUIStateP13n ? oUIStateP13n.SelectOptions : []
+			},
+			variantName: this.getCurrentVariantId()
+		});
+	};
+
+	/**
+	 * Replaces the current UI state of the <code>SmartTable</code> control with the data represented in {@link sap.ui.comp.state.UIState}.<br>
+	 * <b>Note:</b><br>
+	 * The following limitations apply:
+	 * <ul>
+	 * <li>Visualizations can only be used to modify the visibility and order of columns, the template or importance of the column cannot be changed</li>
+	 * <li>MaxItems is not supported</li>
+	 * <li>RequestAtLeast contains values that are combined from both the <code>SmartTable</code> control property and PresentationVariant
+	 * annotation, but when it is updated it only affects the internal array. The property in the <code>SmartTable</code> stays the same as before</li>
+	 * <li>Changes to RequestAtLeast alone will not lead to a new data request</li>
+	 * <li>RequestAtLeast is not supported in <code>AnalyticalTable</code> scenario</li>
+	 * <li>Any other limitations, like the ones mentioned in {@link sap.ui.comp.state.UIState}, also apply</li>
+	 * </ul>
+	 * 
+	 * @param {sap.ui.comp.state.UIState} oUIState the new representation of UI state
+	 * @public
+	 * @since 1.52
+	 */
+	SmartTable.prototype.setUiState = function(oUIState) {
+		var aRequestAtLeast, oPersistentDataVariant;
+		if (!oUIState.getPresentationVariant() || !oUIState.getPresentationVariant().Visualizations.some(function(oVisualization) {
+			return oVisualization.Type === "LineItem";
+		})) {
+			jQuery.sap.log.error("sap.ui.comp.smarttable.SmartTable.prototype.setUiState: 'Visualizations' array should contain at least one 'LineItem' entry");
+			return;
+		}
+
+		aRequestAtLeast = oUIState.getPresentationVariant().RequestAtLeast ? [].concat(oUIState.getPresentationVariant().RequestAtLeast) : [];
+
+		if (!jQuery.sap.equal(aRequestAtLeast, this._getRequestAtLeastFields())) {
+			this._aAlwaysSelect = aRequestAtLeast;
+		}
+
+		if (this._oPersController) {
+			oPersistentDataVariant = (this._oVariantManagement && oUIState.getVariantName()) ? this._oVariantManagement.getVariantContent(this, oUIState.getVariantName()) : {};
+			this._oPersController.setDataSuiteFormatSnapshot(jQuery.extend(true, {}, oUIState.getPresentationVariant(), oUIState.getSelectionVariant()), oPersistentDataVariant);
+		}
+	};
+
+	/**
+	 * Returns an Array containing the RequestAtLeast fields that includes both "requestAtLeast" property and back-end annotation fields
+	 * 
+	 * @private
+	 * @returns {Array} an Array containing the RequestAtLeast fields
+	 */
+	SmartTable.prototype._getRequestAtLeastFields = function() {
+		var sRequestAtLeastFields = this.getRequestAtLeastFields();
+		var aAlwaysSelect = sRequestAtLeastFields ? sRequestAtLeastFields.split(",") : [];
+		return aAlwaysSelect.concat(this._aAlwaysSelect);
+	};
+
+	/**
 	 * Event handler fired when a column is requested by Personalisation/VariantManagement
 	 * 
-	 * @param {Object} oEvent - the event parameter
+	 * @param {object} oEvent The event parameter
 	 */
 	SmartTable.prototype._personalisationRequestColumns = function(oEvent) {
 		var aColumnKeys = oEvent.getParameter("columnKeys"), sColumnKey, i, iLength, oField, oColumn, oColumnKey2ColumnMap = {};
@@ -2382,14 +2762,9 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartTable.prototype._beforePersonalisationModelDataChange = function(oEvent) {
-
-		// we set busy indicator since operation on the table (like setting visible to true) can take longer and the table provides no visual feedback
-		this._oTable.setEnableBusyIndicator(false);
-		this._oTable.setBusy(true);
-
 		// Suppress refresh to prevent backend roundtrips
-		if (this._oTable._setSuppressRefresh) {
-			this._oTable._setSuppressRefresh(true);
+		if (this._oTable.suspendUpdateAnalyticalInfo) {
+			this._oTable.suspendUpdateAnalyticalInfo();
 		}
 	};
 
@@ -2402,11 +2777,6 @@ sap.ui.define([
 	 */
 	SmartTable.prototype._afterPersonalisationModelDataChange = function(oEvent) {
 		this._updateColumnsPopinFeature();
-
-		// we remove the temporary busy indicator - see sap.ui.comp.smarttable.SmartTable.prototype._beforePersonalisationModelDataChange
-		this._oTable.setBusy(false);
-		this._oTable.setEnableBusyIndicator(true);
-
 	};
 
 	/**
@@ -2417,14 +2787,14 @@ sap.ui.define([
 	 */
 	SmartTable.prototype._personalisationModelDataChange = function(oEvent) {
 		this._oCurrentVariant = oEvent.getParameter("persistentData");
-		var oChangeInfo = oEvent.getParameter("changeType");
+		var oChangeInfo = oEvent.getParameter("runtimeDeltaDataChangeType");
 		var changeStatus = this._getChangeStatus(oChangeInfo);
 
 		if (changeStatus === sap.ui.comp.personalization.ChangeType.Unchanged) {
 			return;
 		}
 
-		if (!this._bApplyingVariant) {
+		if (!(this._bApplyingVariant || this._bDeactivatingColumns)) {
 			if (!this.getUseVariantManagement()) {
 				this._persistPersonalisation();
 			} else if (this._oVariantManagement) {
@@ -2432,21 +2802,17 @@ sap.ui.define([
 			}
 		}
 
-		if (changeStatus === sap.ui.comp.personalization.ChangeType.ModelChanged) {
-			// Check if table was bound already
-			if (this._isTableBound()) {
-				if (oChangeInfo && oChangeInfo.columns === sap.ui.comp.personalization.ChangeType.ModelChanged) {
-					this._bForceTableUpdate = true;
-				}
-				// If a SmartFilter is associated with SmartTable - trigger search on the SmartFilter
-				if (this._oSmartFilter) {
-					this._oSmartFilter.triggerSearch();
-				} else {
-					// Rebind Table only if data was set on it once or no smartFilter is attached!
-					this._reBindTable(null);
-				}
+		if (changeStatus === sap.ui.comp.personalization.ChangeType.ModelChanged && this._isTableBound()) {
+			if (oChangeInfo && oChangeInfo.columns === sap.ui.comp.personalization.ChangeType.ModelChanged) {
+				this._bForceTableUpdate = true;
+			}
+			// if table was bound already -and:
+			// If a SmartFilter is associated with SmartTable - trigger search on the SmartFilter
+			if (this._oSmartFilter) {
+				this._oSmartFilter.search();
 			} else {
-				this._showOverlay(true);
+				// Rebind Table only if data was set on it once or no smartFilter is attached!
+				this._reBindTable(null);
 			}
 		}
 	};
@@ -2494,11 +2860,14 @@ sap.ui.define([
 		// group handling
 		if (this._isMobileTable && this._oCurrentVariant.group && this._oCurrentVariant.group.groupItems) {
 			oGroupItem = this._oCurrentVariant.group.groupItems[0];
-			oColumn = this._getColumnByKey(oGroupItem.columnKey);
-			if (oColumn) {
-				sColumnsText = oColumn.getHeader().getText();
+			// Exclude deactivated columns
+			if (this._aDeactivatedColumns.indexOf(oGroupItem.columnKey) < 0) {
+				oColumn = this._getColumnByKey(oGroupItem.columnKey);
+				if (oColumn) {
+					sColumnsText = oColumn.getHeader().getText();
+				}
+				sPath = this._getPathFromColumnKeyAndProperty(oGroupItem.columnKey, "sortProperty");
 			}
-			sPath = this._getPathFromColumnKeyAndProperty(oGroupItem.columnKey, "sortProperty");
 			// Path can be null if the variant data is invalid/contains only invalid information
 			if (sPath) {
 				// Initialise the GroupPath to a new variable as it is being used in the formatter function
@@ -2526,7 +2895,12 @@ sap.ui.define([
 		if (aSortData) {
 			aSortData.forEach(function(oModelItem) {
 				var bDescending = oModelItem.operation === "Descending";
-				sPath = this._getPathFromColumnKeyAndProperty(oModelItem.columnKey, "sortProperty");
+				// Path has be re-calculated below
+				sPath = null;
+				// Exclude deactivated columns
+				if (this._aDeactivatedColumns.indexOf(oModelItem.columnKey) < 0) {
+					sPath = this._getPathFromColumnKeyAndProperty(oModelItem.columnKey, "sortProperty");
+				}
 				// Path can be null if the variant data is invalid/contains only invalid information
 				if (sPath) {
 					if (oGroupSorter && oGroupSorter.sPath === sPath) {
@@ -2545,7 +2919,11 @@ sap.ui.define([
 				// Filter path has be re-calculated below
 				sPath = null;
 				bIsTimeField = false;
-				oColumn = this._getColumnByKey(oModelItem.columnKey);
+				oColumn = null;
+				// Exclude deactivated columns
+				if (this._aDeactivatedColumns.indexOf(oModelItem.columnKey) < 0) {
+					oColumn = this._getColumnByKey(oModelItem.columnKey);
+				}
 				if (oColumn) {
 					if (oColumn.getFilterProperty) {
 						sPath = oColumn.getFilterProperty();
@@ -2654,25 +3032,21 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartTable.prototype._persistPersonalisation = function() {
-		var that = this;
 		if (this._oVariantManagement && !this._oVariantManagement.isPageVariant()) {
 			this._oVariantManagement.getVariantsInfo(function(aVariants) {
-				var sPersonalisationVariantKey = null;
+				var bOverwrite, sPersonalisationVariantKey = null;
 				if (aVariants && aVariants.length > 0) {
 					sPersonalisationVariantKey = aVariants[0].key;
 				}
-
-				var bOverwrite = sPersonalisationVariantKey !== null;
-
-				var oParams = {
+				bOverwrite = sPersonalisationVariantKey !== null;
+				this._oVariantManagement.fireSave({
 					name: "Personalisation",
 					global: false,
 					overwrite: bOverwrite,
 					key: sPersonalisationVariantKey,
 					def: true
-				};
-				that._oVariantManagement.fireSave(oParams);
-			});
+				});
+			}.bind(this));
 		}
 	};
 
@@ -2683,13 +3057,7 @@ sap.ui.define([
 	 * @returns {string} id of the currently selected variant
 	 */
 	SmartTable.prototype.getCurrentVariantId = function() {
-		var sKey = "";
-
-		if (this._oVariantManagement) {
-			sKey = this._oVariantManagement.getCurrentVariantId();
-		}
-
-		return sKey;
+		return this._oVariantManagement ? this._oVariantManagement.getCurrentVariantId() : "";
 	};
 
 	/**
@@ -2701,25 +3069,83 @@ sap.ui.define([
 	 * @param {string} sVariantId id of the currently selected variant
 	 */
 	SmartTable.prototype.setCurrentVariantId = function(sVariantId) {
-		if (this._oVariantManagement) {
+		if (this._oVariantManagement && !this._oVariantManagement.isPageVariant()) {
 			this._oVariantManagement.setCurrentVariantId(sVariantId);
 		} else {
-			jQuery.sap.log.error("sap.ui.comp.smarttable.SmartTable.prototype.setCurrentVariantId: VariantManagement does not exist");
+			jQuery.sap.log.error("sap.ui.comp.smarttable.SmartTable.prototype.setCurrentVariantId: VariantManagement does not exist, or is a page variant");
 		}
+	};
+
+	/**
+	 * Checks whether the control is initialised
+	 * 
+	 * @returns {boolean} returns whether control is already initialised
+	 * @protected
+	 */
+	SmartTable.prototype.isInitialised = function() {
+		return !!this.bIsInitialised;
+	};
+
+	SmartTable.prototype._aAvailablePanels = [
+		"Columns", "Sort", "Filter", "Group"
+	];
+
+	/**
+	 * Opens the desired panel of the personalization dialog.<br>
+	 * <i>Note:</i> Calling this for panels that are globally hidden (E.g. manually by the application, or due to unavailability of functionality)
+	 * leads to an empty dialog being shown.
+	 * 
+	 * @param {string} sPanel The desired panel; the value is either "Columns", "Sort", "Filter" or "Group"
+	 * @public
+	 * @since 1.48.0
+	 */
+	SmartTable.prototype.openPersonalisationDialog = function(sPanel) {
+		if (!sPanel || this._aAvailablePanels.indexOf(sPanel) < 0) {
+			jQuery.sap.log.warning("sap.ui.comp.smarttable.SmartTable.prototype.openPersonalisationDialog: " + sPanel + " is not a valid panel!");
+			return;
+		}
+		if (this._oPersController) {
+			var oPanel = {};
+			oPanel[sPanel.toLowerCase()] = {
+				visible: true
+			};
+			this._oPersController.openDialog(oPanel);
+		}
+	};
+
+	/**
+	 * Deactivates existing columns in the personalization dialog based on the provided column keys.<br>
+	 * <i>Note:</i> The columns are set to invisible and excluded from all panels in the table personalization. Any existing sorting, filtering or
+	 * grouping in the personalization dialog for such columns will no longer be taken into account.
+	 * 
+	 * @param {string[]|null|undefined} aColumnKeys An array of column keys by which the corresponding columns are deactivated. If <code>null</code>
+	 *        or <code>undefined</code> or an empty array is passed, no column is deactivated, and all previously deactivated columns will be reset
+	 * @public
+	 * @since 1.54.0
+	 */
+	SmartTable.prototype.deactivateColumns = function(aColumnKeys) {
+		this._aDeactivatedColumns = aColumnKeys || [];
+
+		this._bDeactivatingColumns = true;
+		// When there is no perso controller - nothing will be done as the user cannot even use settings and can simply remove the column via code
+		if (this._oPersController) {
+			this._oPersController.addToSettingIgnoreColumnKeys(aColumnKeys);
+		}
+		this._bDeactivatingColumns = false;
 	};
 
 	/**
 	 * Cleans up the control
 	 * 
-	 * @public
+	 * @protected
 	 */
 	SmartTable.prototype.exit = function() {
 		var i, oField;
+		this.detachEvent("_change", this._onPropertyChange, this);
 		// Cleanup smartFilter events as it can be used again stand-alone without being destroyed!
 		if (this._oSmartFilter) {
 			this._oSmartFilter.detachSearch(this._reBindTable, this);
 			this._oSmartFilter.detachFilterChange(this._filterChangeEvent, this);
-			this._oSmartFilter.detachCancel(this._cancelEvent, this);
 			this._oSmartFilter = null;
 		}
 		if (this._oTableProvider && this._oTableProvider.destroy) {
@@ -2731,6 +3157,7 @@ sap.ui.define([
 		}
 		this._oPersController = null;
 		if (this._oVariantManagement) {
+			this._oVariantManagement.detachSave(this._variantSaved, this);
 			this._oVariantManagement.detachAfterSave(this._variantAfterSave, this);
 			if (!this._oVariantManagement.isPageVariant() && this._oVariantManagement.destroy) {
 				this._oVariantManagement.destroy();
@@ -2764,12 +3191,16 @@ sap.ui.define([
 		this._oEditModel = null;
 		this._oVariantManagement = null;
 		this._oCurrentVariant = null;
-		this._oApplicationDefaultVariant = null;
 		this._aExistingColumns = null;
 		this._mLazyColumnMap = null;
 		this._aColumnKeys = null;
+		this._aDeactivatedColumns = null;
 		this._aAlwaysSelect = null;
 		this._oCustomToolbar = null;
+		// Destroy the toolbar if it is not already inserted into items; else it will automatically be destroyed
+		if (this._oToolbar && !this._bToolbarInsertedIntoItems) {
+			this._oToolbar.destroy();
+		}
 		this._oToolbar = null;
 		if (this._oUseExportToExcel && !this.getUseExportToExcel()) {
 			this._oUseExportToExcel.destroy();
@@ -2781,6 +3212,8 @@ sap.ui.define([
 		if (this._oTemplate) {
 			this._oTemplate.destroy();
 		}
+		// Delete reference to InterceptService
+		this._InterceptService = null;
 		this._oTemplate = null;
 		this._oView = null;
 		this._oTable = null;

@@ -53,7 +53,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * The OverflowContainer allows the content of a control to be partially displayed before being fully expanded.
  * It will cut its content to a fixed height that can be defined. It is fully suitable within an IconTabBar.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

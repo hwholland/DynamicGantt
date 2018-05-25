@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * Inbox Split App
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -74,15 +74,39 @@ sap.ui.core.Control.extend("sap.uiext.inbox.InboxSplitApp", { metadata : {
 	],
 	library : "sap.uiext.inbox",
 	properties : {
+
+		/**
+		 * Show/Hide the Navigation Button for the Master Page
+		 */
 		"showMasterPageNavBtn" : {type : "boolean", group : "Appearance", defaultValue : null},
+
+		/**
+		 * TCM service URL
+		 */
 		"tcmServiceURL" : {type : "string", group : "", defaultValue : null},
+
+		/**
+		 * Filters to be applied on the data shown in the MasterPage
+		 */
 		"filters" : {type : "object[]", group : "Misc", defaultValue : null},
+
+		/**
+		 * TCM Configuration object for control initialization.
+		 */
 		"tcmConfiguration" : {type : "object", group : "Misc", defaultValue : null}
 	},
 	aggregations : {
+
+		/**
+		 * This is the splitApp that is created inside the control
+		 */
 		"splitAppl" : {type : "sap.m.SplitApp", multiple : false}
 	},
 	events : {
+
+		/**
+		 * Navigation Button of the Master Page is pressed, if visible.
+		 */
 		"navButtonPressed" : {}
 	}
 }});

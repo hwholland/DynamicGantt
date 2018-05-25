@@ -1,19 +1,21 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's bookmark service, which allows you to create shortcuts on the
  * user's home page.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.services.Bookmark");
 
     /**
      * This method MUST be called by the Unified Shell's container only, others MUST call
      * <code>sap.ushell.Container.getService("Bookmark")</code>.
      * Constructs a new instance of the bookmark service.
+     *
+     * @name sap.ushell.services.Bookmark
      *
      * @class The unified shell's bookmark service, which allows you to create shortcuts on the
      * user's home page.
@@ -23,7 +25,7 @@
      * @since 1.15.0
      * @public
      */
-    sap.ushell.services.Bookmark = function () {
+    function Bookmark () {
         var oLaunchPageService = sap.ushell.Container.getService("LaunchPage");
 
         /**
@@ -47,39 +49,46 @@
         };
 
         /**
-         * Adds a bookmark to the user's home page.
+         * Adds a bookmark tile to one of the user's home page groups.
          *
          * @param {object} oParameters
-         *   Bookmark parameters. In addition to title and URL, a bookmark might allow additional
+         *   bookmark parameters. In addition to title and URL, a bookmark might allow additional
          *   settings, such as an icon or a subtitle. Which settings are supported depends
          *   on the environment in which the application is running. Unsupported parameters will be
          *   ignored.
+         *
          * @param {string} oParameters.title
          *   The title of the bookmark.
          * @param {string} oParameters.url
          *   The URL of the bookmark. If the target application shall run in the Shell the URL has
-         *   to be in the format <code>"#SO-Action~Context?P1=a&P2=x&/route?RPV=1"</code>
+         *   to be in the format <code>"#SO-Action~Context?P1=a&P2=x&/route?RPV=1"</code>.
          * @param {string} [oParameters.icon]
-         *   The icon URL of the bookmark (e.g. <code>"sap-icon://home"</code>).
+         *   The optional icon URL of the bookmark (e.g. <code>"sap-icon://home"</code>).
          * @param {string} [oParameters.info]
-         *   The information text of the bookmark.
+         *   The optional information text of the bookmark. This property is not relevant in the CDM
+         *   context.
          * @param {string} [oParameters.subtitle]
-         *   The subtitle of the bookmark.
+         *   The optional subtitle of the bookmark.
          * @param {string} [oParameters.serviceUrl]
-         *   The URL (a string or a JS function) to a REST or OData service that provides some dynamic information for the
+         *   The URL to a REST or OData service that provides some dynamic information for the
          *   bookmark.
          * @param {string} [oParameters.serviceRefreshInterval]
          *   The refresh interval for the <code>serviceUrl</code> in seconds.
          * @param {string} [oParameters.numberUnit]
          *   The unit for the number retrieved from <code>serviceUrl</code>.
+         *   This property is not relevant in the CDM context.
+         * @param {object} [oGroup]
+         *   Optional reference to the group the bookmark tile should be added to.
+         *   If not given, the default group is used.
+         *
          * @returns {object}
-         *   A <code>jQuery.Deferred</code> object's promise which informs about success or failure
-         *   of this asynchronous operation. In case of success, no further details are passed.
-         *   In case of failure, an error message is passed.
+         *   A <code>jQuery.Deferred</code> promise which resolves on success, but rejects
+         *   (with a reason-message) on failure to add the bookmark to the specified or implied group.
          *
          * @see sap.ushell.services.URLParsing#getShellHash
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.Bookmark#addBookmark
          */
         this.addBookmark = function (oParameters, oGroup) {
             var oPromise = oLaunchPageService.addBookmark(oParameters, oGroup);
@@ -200,6 +209,7 @@
          *
          * @since 1.21.2
          * @public
+         * @alias sap.ushell.services.Bookmark#addCatalogTileToGroup
          */
         this.addCatalogTileToGroup = function (sCatalogTileId, sGroupId, oCatalogData) {
             var oDeferred = new jQuery.Deferred(),
@@ -265,6 +275,7 @@
          * @see #addBookmark
          * @since 1.17.1
          * @public
+         * @alias sap.ushell.services.Bookmark#countBookmarks
          */
         this.countBookmarks = function (sUrl) {
             return oLaunchPageService.countBookmarks(sUrl);
@@ -285,6 +296,7 @@
          * @see #countBookmarks
          * @since 1.17.1
          * @public
+         * @alias sap.ushell.services.Bookmark#deleteBookmarks
          */
         this.deleteBookmarks = function (sUrl) {
             var oPromise = oLaunchPageService.deleteBookmarks(sUrl);
@@ -317,10 +329,14 @@
          * @see #deleteBookmarks
          * @since 1.17.1
          * @public
+         * @alias sap.ushell.services.Bookmark#updateBookmarks
          */
         this.updateBookmarks = function (sUrl, oParameters) {
             return oLaunchPageService.updateBookmarks(sUrl, oParameters);
         };
     };
-    sap.ushell.services.Bookmark.hasNoAdapter = true;
-}());
+
+    Bookmark.hasNoAdapter = true;
+    return Bookmark;
+
+}, true /* bExport */);

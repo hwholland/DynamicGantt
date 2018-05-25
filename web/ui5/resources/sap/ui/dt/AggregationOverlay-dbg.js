@@ -33,7 +33,7 @@ function(
 	 * @extends sap.ui.core.Overlay
 	 *
 	 * @author SAP SE
-	 * @version 1.54.5
+	 * @version 1.54.3
 	 *
 	 * @constructor
 	 * @private
@@ -144,17 +144,16 @@ function(
 			if (this.isRendered()) {
 				var iPositionInDom = this._getChildIndex(oChild);
 				var $Child = oChild.isRendered() ? oChild.$() : oChild.render(true);
-				var $Children = jQuery(this.getChildrenDomRef());
-				var iCurrentPosition = $Children.find('>').index($Child);
+				var iCurrentPosition = this._$children.find('>').index($Child);
 				var iInsertIndex;
 
 				if (iCurrentPosition !== iPositionInDom) {
 					if (iPositionInDom > 0) {
 						iInsertIndex = iCurrentPosition > -1 && iCurrentPosition < iPositionInDom ? iPositionInDom : iPositionInDom - 1;
-						$Children.find('>').eq(iInsertIndex).after($Child);
+						this._$children.find('>').eq(iInsertIndex).after($Child);
 					} else {
 						iInsertIndex = iPositionInDom; // === 0
-						$Children.prepend($Child);
+						this._$children.prepend($Child);
 					}
 				}
 
@@ -193,7 +192,7 @@ function(
 	 */
 	AggregationOverlay.prototype._getRenderingParent = function () {
 		if (Util.isInteger(this.getScrollContainerId())) {
-			return this.getParent().getScrollContainerById(this.getScrollContainerId());
+			return this.getParent().getScrollContainerByIndex(this.getScrollContainerId());
 		} else {
 			return Overlay.prototype._getRenderingParent.apply(this, arguments);
 		}

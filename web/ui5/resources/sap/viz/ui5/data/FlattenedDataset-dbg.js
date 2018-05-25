@@ -1,12 +1,12 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.data.FlattenedDataset.
-sap.ui.define(['sap/viz/library','./Dataset'],
-	function(library, Dataset) {
+sap.ui.define(['sap/viz/library', "sap/ui/model/ChangeReason", "./Dataset", "./CVOMDatasetAdaptor", "sap/viz/ui5/controls/common/utils/Constants"],
+	function(library, ChangeReason, Dataset, CVOMDatasetAdaptor, Constants) {
 	"use strict";
 
 	/**
@@ -57,6 +57,27 @@ sap.ui.define(['sap/viz/library','./Dataset'],
 			 * programmatically using the aggregation mutator methods like addData.
 			 */
 			data : {type : "sap.ui.core.Element", multiple : true, singularName : "data", bindable : "bindable"}
+		},
+
+		events :{
+			/**
+			 data change event
+             **/
+			dataChange:{ 
+				
+			},
+			/**
+			 * data refresh event
+			 */
+			dataRefresh:{
+			    
+			},
+			/**
+			 * data error event
+			 */
+			dataError:{
+			    
+			}			
 		}
 	}});
 
@@ -64,16 +85,54 @@ sap.ui.define(['sap/viz/library','./Dataset'],
 	FlattenedDataset.getMetadata().getAllAggregations()["data"]._doesNotRequireFactory = true;
 
 	FlattenedDataset.prototype.init = function() {
-	    this._transformer = null;
-		this._bSuppressInvalidate = false;
+	    this._oCVOMDatasetAdaptor = new CVOMDatasetAdaptor();
+	    //required specific range 
+	    this._iStartIndex = -1;
+	    this._iLength = -1;
+	    this._bReady = true;
+        this._bInitializeBinding = true;
 	};
 
-	FlattenedDataset.prototype.updateData = function() {
-		if (this._bSuppressInvalidate) {
-			this._bSuppressInvalidate = false;
-		} else {
-		    this.invalidate();
+	FlattenedDataset.prototype._bindAggregation = function() {
+        this._bInitializeBinding = true;
+		Dataset.prototype._bindAggregation.apply(this, arguments);
+        this._bInitializeBinding = false;
+		var oBinding = this.getBinding("data");
+		if (oBinding) {
+			oBinding.attachDataReceived(this._dataReceivedListener, this);
 		}
+	};
+
+	FlattenedDataset.prototype._dataReceivedListener = function(oEvent) {
+		// AnalyticalBinding fires dataReceived too early
+		if (oEvent && oEvent.getParameter && oEvent.getParameter("__simulateAsyncAnalyticalBinding")) {
+			return;
+		}
+		if (oEvent.getParameter('data') === undefined) {
+			this._bDataReceiveError = true;
+			this.fireEvent('dataError');
+		}
+	};
+
+	FlattenedDataset.prototype.refreshData = function(reason) {
+		this._bDataReceiveError = false;
+	    this._bReady = false;
+	    this.fireEvent("dataRefresh", {reason: reason});
+	    this._getDataContexts();
+	};
+
+	FlattenedDataset.prototype.updateData = function(reason) {
+        var V4ODataModel = sap.ui.require("sap/ui/model/odata/v4/ODataModel");
+        var bV4ODataModel = V4ODataModel && this.getBinding("data").getModel() instanceof V4ODataModel;
+        if (!this._bInitializeBinding || !bV4ODataModel) {
+            // workaround, OData V4 binding currently fires 'change' event during initialization, do not call binding.getContexts() before binding.updateAnalyticalInfo()
+            // getContexts() will be later called through binding.filter() during rendering process
+            // TODO: Need to verify if requests from other controls are able to merged into one batch with request from chart by doing so
+            this._bDataReceiveError = false;
+            this._bReady = true;
+            this.fireEvent("dataChange", {reason: reason});
+            this.invalidate();
+        }
 	};
 
 	// override standard aggregation methods for 'data' and report an error when they are used
@@ -85,50 +144,49 @@ sap.ui.define(['sap/viz/library','./Dataset'],
 	});
 
 	/**
+	 * return info chart flattable dataset which is in sap.viz.chart.js
 	 * @returns sap.viz.api.data.FlatTableDataset
 	 */
 	FlattenedDataset.prototype.getVIZFlatDataset = function() {
-		jQuery.sap.require('sap.viz.ui5.data.transformers.ModelToFlattable');
-	    return this._transform(sap.viz.ui5.data.transformers.ModelToFlattable);
+	    return this._getCVOMDataset(Constants.DATASET_TYPES.FLATTABLEDATASET);
 	};
 
 	/**
+	 * return info chart crosstable dataset which is in sap.viz.chart.js
 	 * @returns sap.viz.api.data.CrosstableDataset
 	 */
 	FlattenedDataset.prototype.getVIZCrossDataset = function() {
-		jQuery.sap.require('sap.viz.ui5.data.transformers.ModelToCrosstable');
-	    return this._transform(sap.viz.ui5.data.transformers.ModelToCrosstable);
+	    return this._getCVOMDataset(Constants.DATASET_TYPES.CROSSTABLEDATASET);
 	};
 
 	/**
+	 * return viz chart crosstable dataset which is in sap.viz.js
 	 * @returns sap.viz.data.CrosstableDataset
 	 */
 	FlattenedDataset.prototype.getVIZDataset = function() {
-	    var result;
-	    try {
-	    	jQuery.sap.require('sap.viz.ui5.data.transformers.ModelToDataset');
-	    	result = this._transform(sap.viz.ui5.data.transformers.ModelToDataset);
-	    } catch (err) {
-	    	result = this.getVIZCrossDataset();
-	    }
-	    return result;
+	    return this._getCVOMDataset(Constants.DATASET_TYPES.LEGACYCROSSTABLEDATASET);
 	};
 
+	 /**
+	 * type: 
+     * @returns CVOM Dataset
+     */
+    FlattenedDataset.prototype._getCVOMDataset = function(type) {
+        return this._oCVOMDatasetAdaptor.getDataset({
+            type: type,
+            dataContexts: this._getDataContexts(),
+            dimensions: this.getDimensions(),
+            measures: this.getMeasures(),
+            additionalInfo:this._info || this._defaultSelectionInfo, 
+            contexts:this.getContext(),
+            pagingOption:this._oPagingOption
+        });
+    };
 
-	FlattenedDataset.prototype._transform = function(Transformer) {
-	    if (!this._transformer || !(this._transformer instanceof Transformer)) {
-	        this._transformer = new Transformer();
-	    }
-	    // @formatter:off
-	    return this._transformer.getVizDataset(
-	        this.getBinding("data"), this.getDimensions(), this.getMeasures(), 
-	        this._defaultSelectionInfo, this._info, this.getBindingInfo('data'), this._oPagingOption, this.getContext());
-	    // @formatter:on
-	};
 
 	FlattenedDataset.prototype.invalidate = function(oOther) {
-	    if (this._transformer) {
-	        this._transformer.reset();
+	    if (this._oCVOMDatasetAdaptor) {
+	        this._oCVOMDatasetAdaptor.invalidate();
 	    }
 	    sap.ui.core.Element.prototype.invalidate.apply(this, arguments);
 	};
@@ -162,14 +220,7 @@ sap.ui.define(['sap/viz/library','./Dataset'],
 	        // Deprecated, not public
 	        // Will not apply to crosstable already created
 	        this._info = values;
-	    } else if (values === undefined || typeof values === 'string') {
-	        if (this._transformer && this._transformer instanceof sap.viz.ui5.data.transformers.ModelToCrosstable) {
-	            var crosstable = sap.viz.ui5.data.transformers.ModelToCrosstable.prototype.getVizDataset();
-	            if (crosstable) {
-	                return crosstable.info(values);
-	            }
-	        }
-	    }
+	    } 
 	};
 
 	/**
@@ -204,8 +255,8 @@ sap.ui.define(['sap/viz/library','./Dataset'],
 	 * @public
 	 */
 	FlattenedDataset.prototype.findContext = function(oCriteria) {
-		if (this._transformer) {
-			return this._transformer.findContext(oCriteria);
+		if (this._oCVOMDatasetAdaptor) {
+			return this._oCVOMDatasetAdaptor.findContext(oCriteria);
 		}
 	};
 
@@ -217,14 +268,69 @@ sap.ui.define(['sap/viz/library','./Dataset'],
 	};
 	
 	FlattenedDataset.prototype.getRenderedPageNo = function() {
-		if (this._transformer) {
-			return this._transformer.getRenderedPageNo();
+		if (this._oCVOMDatasetAdaptor) {
+			return this._oCVOMDatasetAdaptor.getRenderedPageNo();
 		}
 	};
 
-	FlattenedDataset.prototype.suppressInvalidate = function() {
-		this._bSuppressInvalidate = true;
-	}	
+	FlattenedDataset.prototype.setRange = function(iStart, iLength){
+        this._iStartIndex = iStart;
+        this._iLength = iLength;
+	};
+
+	FlattenedDataset.prototype.getRange = function(iStart, iLength){
+		return {
+           iStartIndex : this._iStartIndex,
+           iLength : this._iLength
+		};
+	};
+
+    // check if the data is ready to consume 
+	FlattenedDataset.prototype.isReady = function(){
+		if (this._bDataReceiveError) {
+			// allow vizFrame to continue render as no data if error occurred in backend in OData service
+			return true;
+		}
+        return this._bReady;
+	};
+
+	FlattenedDataset.prototype._getDataContexts = function(){
+        var start = this._iStartIndex, 
+            length = this._iLength,
+            binding = this.getBinding("data"),
+			V4ODataModel = sap.ui.require("sap/ui/model/odata/v4/ODataModel");
+        if (!binding){
+            return null;
+        } 
+
+        var bindingInfo;
+
+        if (start == -1){
+            bindingInfo = this.getBindingInfo("data");
+            start = (bindingInfo && bindingInfo.startIndex !== undefined) ? bindingInfo.startIndex : 0 ;
+		}
+		var noPaging = true;
+        if (length == -1){
+            bindingInfo = bindingInfo || this.getBindingInfo("data");
+            if (bindingInfo && bindingInfo.length !== undefined){
+				length = bindingInfo.length;
+				noPaging = false;
+			} else {
+				//analytic binding should use getTotalSize to return the correct total length
+				length = binding.getTotalSize ? binding.getTotalSize() :  binding.getLength();
+           }
+        }
+        if (this._bDataReceiveError) {
+            // if error, treat as empty dataset
+            return [];
+        } else if (V4ODataModel && (binding.getModel() instanceof V4ODataModel) ){
+			//for noPaging, Infinity means to prefetch all data
+			return noPaging ? binding.getContexts(start, length, Infinity) : 
+						binding.getContexts(start, length);
+		} else {
+            return binding.getContexts(start, length);
+        }
+    };
 
 	return FlattenedDataset;
 

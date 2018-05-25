@@ -941,87 +941,87 @@
   </module>
   <module name="sap/ui/fl/messagebundle.properties" size="5802">
   </module>
-  <module name="sap/ui/fl/messagebundle_ar.properties" size="8661">
+  <module name="sap/ui/fl/messagebundle_ar.properties" size="8489">
   </module>
-  <module name="sap/ui/fl/messagebundle_bg.properties" size="10143">
+  <module name="sap/ui/fl/messagebundle_bg.properties" size="10067">
   </module>
-  <module name="sap/ui/fl/messagebundle_ca.properties" size="5940">
+  <module name="sap/ui/fl/messagebundle_ca.properties" size="5717">
   </module>
-  <module name="sap/ui/fl/messagebundle_cs.properties" size="6156">
+  <module name="sap/ui/fl/messagebundle_cs.properties" size="5958">
   </module>
-  <module name="sap/ui/fl/messagebundle_da.properties" size="5848">
+  <module name="sap/ui/fl/messagebundle_da.properties" size="5616">
   </module>
-  <module name="sap/ui/fl/messagebundle_de.properties" size="6119">
+  <module name="sap/ui/fl/messagebundle_de.properties" size="5902">
   </module>
-  <module name="sap/ui/fl/messagebundle_el.properties" size="10283">
+  <module name="sap/ui/fl/messagebundle_el.properties" size="10208">
   </module>
-  <module name="sap/ui/fl/messagebundle_en.properties" size="5749">
+  <module name="sap/ui/fl/messagebundle_en.properties" size="6136">
   </module>
-  <module name="sap/ui/fl/messagebundle_en_US_sappsd.properties" size="12134">
+  <module name="sap/ui/fl/messagebundle_en_US_sappsd.properties" size="11468">
   </module>
-  <module name="sap/ui/fl/messagebundle_en_US_saptrc.properties" size="6871">
+  <module name="sap/ui/fl/messagebundle_en_US_saptrc.properties" size="6612">
   </module>
-  <module name="sap/ui/fl/messagebundle_es.properties" size="5982">
+  <module name="sap/ui/fl/messagebundle_es.properties" size="5758">
   </module>
-  <module name="sap/ui/fl/messagebundle_et.properties" size="5851">
+  <module name="sap/ui/fl/messagebundle_et.properties" size="5618">
   </module>
-  <module name="sap/ui/fl/messagebundle_fi.properties" size="6137">
+  <module name="sap/ui/fl/messagebundle_fi.properties" size="5910">
   </module>
-  <module name="sap/ui/fl/messagebundle_fr.properties" size="6089">
+  <module name="sap/ui/fl/messagebundle_fr.properties" size="5856">
   </module>
-  <module name="sap/ui/fl/messagebundle_hi.properties" size="9629">
+  <module name="sap/ui/fl/messagebundle_hi.properties" size="9541">
   </module>
-  <module name="sap/ui/fl/messagebundle_hr.properties" size="5904">
+  <module name="sap/ui/fl/messagebundle_hr.properties" size="5682">
   </module>
-  <module name="sap/ui/fl/messagebundle_hu.properties" size="6339">
+  <module name="sap/ui/fl/messagebundle_hu.properties" size="6130">
   </module>
-  <module name="sap/ui/fl/messagebundle_it.properties" size="5884">
+  <module name="sap/ui/fl/messagebundle_it.properties" size="5657">
   </module>
-  <module name="sap/ui/fl/messagebundle_iw.properties" size="8365">
+  <module name="sap/ui/fl/messagebundle_iw.properties" size="8229">
   </module>
-  <module name="sap/ui/fl/messagebundle_ja.properties" size="7337">
+  <module name="sap/ui/fl/messagebundle_ja.properties" size="7147">
   </module>
-  <module name="sap/ui/fl/messagebundle_kk.properties" size="9816">
+  <module name="sap/ui/fl/messagebundle_kk.properties" size="9674">
   </module>
-  <module name="sap/ui/fl/messagebundle_ko.properties" size="7060">
+  <module name="sap/ui/fl/messagebundle_ko.properties" size="6852">
   </module>
-  <module name="sap/ui/fl/messagebundle_lt.properties" size="6206">
+  <module name="sap/ui/fl/messagebundle_lt.properties" size="5992">
   </module>
-  <module name="sap/ui/fl/messagebundle_lv.properties" size="6201">
+  <module name="sap/ui/fl/messagebundle_lv.properties" size="5984">
   </module>
-  <module name="sap/ui/fl/messagebundle_ms.properties" size="5795">
+  <module name="sap/ui/fl/messagebundle_ms.properties" size="5564">
   </module>
-  <module name="sap/ui/fl/messagebundle_nl.properties" size="5873">
+  <module name="sap/ui/fl/messagebundle_nl.properties" size="5642">
   </module>
-  <module name="sap/ui/fl/messagebundle_no.properties" size="5856">
+  <module name="sap/ui/fl/messagebundle_no.properties" size="5624">
   </module>
-  <module name="sap/ui/fl/messagebundle_pl.properties" size="6249">
+  <module name="sap/ui/fl/messagebundle_pl.properties" size="6031">
   </module>
-  <module name="sap/ui/fl/messagebundle_pt.properties" size="6076">
+  <module name="sap/ui/fl/messagebundle_pt.properties" size="5861">
   </module>
-  <module name="sap/ui/fl/messagebundle_ro.properties" size="6137">
+  <module name="sap/ui/fl/messagebundle_ro.properties" size="5902">
   </module>
-  <module name="sap/ui/fl/messagebundle_ru.properties" size="9840">
+  <module name="sap/ui/fl/messagebundle_ru.properties" size="9813">
   </module>
-  <module name="sap/ui/fl/messagebundle_sh.properties" size="5841">
+  <module name="sap/ui/fl/messagebundle_sh.properties" size="5621">
   </module>
-  <module name="sap/ui/fl/messagebundle_sk.properties" size="6293">
+  <module name="sap/ui/fl/messagebundle_sk.properties" size="6087">
   </module>
-  <module name="sap/ui/fl/messagebundle_sl.properties" size="5897">
+  <module name="sap/ui/fl/messagebundle_sl.properties" size="5663">
   </module>
-  <module name="sap/ui/fl/messagebundle_sv.properties" size="5900">
+  <module name="sap/ui/fl/messagebundle_sv.properties" size="5669">
   </module>
-  <module name="sap/ui/fl/messagebundle_th.properties" size="9690">
+  <module name="sap/ui/fl/messagebundle_th.properties" size="9608">
   </module>
-  <module name="sap/ui/fl/messagebundle_tr.properties" size="6274">
+  <module name="sap/ui/fl/messagebundle_tr.properties" size="6052">
   </module>
-  <module name="sap/ui/fl/messagebundle_uk.properties" size="9830">
+  <module name="sap/ui/fl/messagebundle_uk.properties" size="9839">
   </module>
-  <module name="sap/ui/fl/messagebundle_vi.properties" size="7133">
+  <module name="sap/ui/fl/messagebundle_vi.properties" size="6952">
   </module>
-  <module name="sap/ui/fl/messagebundle_zh_CN.properties" size="6401">
+  <module name="sap/ui/fl/messagebundle_zh_CN.properties" size="6187">
   </module>
-  <module name="sap/ui/fl/messagebundle_zh_TW.properties" size="6393">
+  <module name="sap/ui/fl/messagebundle_zh_TW.properties" size="6191">
   </module>
   <module name="sap/ui/fl/registry/ChangeHandlerRegistration.js" size="1598" compressedSize="1012">
     <description>! UI development toolkit for HTML5 (OpenUI5) (c) Copyright 2009-2018 SAP SE or an SAP affiliate company. Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</description>

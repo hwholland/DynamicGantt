@@ -25,7 +25,6 @@ jQuery.sap.require("sap.apf.core.request");
 	sap.apf.core.ReadRequestByRequiredFilter = function(oInject, oRequest, sService, sEntityType) {
 		var oCoreApi = oInject.instances.coreApi;
 		var oMessageHandler = oInject.instances.messageHandler;
-		var oMetadata;
 
 		/**
 		 * @description Contains 'readRequestByRequiredFilter'
@@ -61,42 +60,45 @@ jQuery.sap.require("sap.apf.core.request");
 				fnCallback(aData, oEntityTypeMetadata, oMessageObject);
 			};
 
-			if (!oMetadata) {
-				oMetadata = oCoreApi.getMetadata(sService);
-			}
 
-			//		Get parameter entity set key properties
-			var aParameterEntitySetKeyProperties = oMetadata.getParameterEntitySetKeyProperties(sEntityType);
+			oCoreApi.getMetadata(sService).done(function(oMetadata){
 
-			//		Get required filters
-			var sRequiredFilterProperty = "";
-			var oEntityTypeMetadata = oMetadata.getEntityTypeAnnotations(sEntityType);
-			if (oEntityTypeMetadata.requiresFilter !== undefined && oEntityTypeMetadata.requiresFilter === "true") {
-				if (oEntityTypeMetadata.requiredProperties !== undefined) {
-					sRequiredFilterProperty = oEntityTypeMetadata.requiredProperties;
+
+
+
+				//		Get parameter entity set key properties
+				var aParameterEntitySetKeyProperties = oMetadata.getParameterEntitySetKeyProperties(sEntityType);
+
+				//		Get required filters
+				var sRequiredFilterProperty = "";
+				var oEntityTypeMetadata = oMetadata.getEntityTypeAnnotations(sEntityType);
+				if (oEntityTypeMetadata.requiresFilter !== undefined && oEntityTypeMetadata.requiresFilter === "true") {
+					if (oEntityTypeMetadata.requiredProperties !== undefined) {
+						sRequiredFilterProperty = oEntityTypeMetadata.requiredProperties;
+					}
 				}
-			}
 
-			//		Join parameter entity set key properties & Required filters
-			var aRequiredProperties = sRequiredFilterProperty.split(',');
-			aParameterEntitySetKeyProperties.forEach(function(property) {
-				aRequiredProperties.push(property.name);
-			});
+				//		Join parameter entity set key properties & Required filters
+				var aRequiredProperties = sRequiredFilterProperty.split(',');
+				aParameterEntitySetKeyProperties.forEach(function(property) {
+					aRequiredProperties.push(property.name);
+				});
 
-			//		Reduce the context filter to {parameter entity set key properties + Required filters}
-			oCoreApi.getCumulativeFilter().done(function(oContextFilter) {
+				//		Reduce the context filter to {parameter entity set key properties + Required filters}
+				oCoreApi.getCumulativeFilter().done(function(oContextFilter) {
 
-				oProjectedContextFilter = oContextFilter.reduceToProperty(aRequiredProperties);
+					oProjectedContextFilter = oContextFilter.restrictToProperties(aRequiredProperties);
 
-				//		Intersect both filters.
+					//		Intersect both filters.
 
-				if (oFilter) {
-					oRequestFilter = oFilter.getInternalFilter();
-					oRequestFilter.addAnd(oProjectedContextFilter);
-				} else {
-					oRequestFilter = oProjectedContextFilter;
-				}
-				oRequest.sendGetInBatch(oRequestFilter, callbackForRequest, oRequestOptions);
+					if (oFilter) {
+						oRequestFilter = oFilter.getInternalFilter();
+						oRequestFilter.addAnd(oProjectedContextFilter);
+					} else {
+						oRequestFilter = oProjectedContextFilter;
+					}
+					oRequest.sendGetInBatch(oRequestFilter, callbackForRequest, oRequestOptions);
+				});
 			});
 
 		};

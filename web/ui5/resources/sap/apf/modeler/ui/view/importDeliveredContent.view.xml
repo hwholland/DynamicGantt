@@ -3,15 +3,15 @@
 	xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
 	class="sapUiSizeCompact">
 	<Dialog xmlns="sap.m" id="idImportDeliveredContentDialog"
-		showHeader="true" class="sapUiSizeCompact" contentWidth="700px"
-		initialFocus="idImportDeliveredContentDialog">
+		showHeader="true" class="sapUiSizeCompact dialogContentPadding"
+		contentWidth="700px" initialFocus="idImportDeliveredContentDialog">
 		<VBox xmlns="sap.m">
 			<HBox xmlns="sap.m">
 				<Label xmlns="sap.m" id="idConfigLabel" class="importFileUploaderDialogLabels" />
 				<ComboBox xmlns="sap.m" id="idAppConfigCombobox"
 					showSecondaryValues="true" items="{/Objects}"
 					selectionChange="handleSelectionChangeOfAppConfigTextField" change="handleChangeOfAppConfigTextField"
-					class="appCofigCombo">
+					class="appCofigCombo" ariaLabelledBy="idConfigLabel">
 					<core:ListItem text="{applicationText}"
 						additionalText="{configurationText}" app:value="{value}"></core:ListItem>
 				</ComboBox>

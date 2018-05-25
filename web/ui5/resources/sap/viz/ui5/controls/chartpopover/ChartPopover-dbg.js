@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 sap.ui.define([
     'jquery.sap.global',
@@ -9,9 +9,10 @@ sap.ui.define([
     './HeaderBar',
     './SubActionItemsPage',
     'sap/ui/core/Control',
-    'sap/viz/ui5/format/ChartFormatter'
+    'sap/viz/ui5/format/ChartFormatter',
+    '../common/utils/FormatDataUtil'
 ],
-function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartFormatter) {
+function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartFormatter, FormatDataUtil) {
 	
     /**
      * ChartPopover provides a popover used with charts to display chart selections.
@@ -73,8 +74,17 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
         this._oPopover.addStyleClass('viz-controls-chartPopover');
         this._oPopover.attachAfterClose(this._afterClose, this);
         this._oPopover.attachAfterOpen(this._afterOpen, this);
+        
+        this._setAriaLabelledBys();
         this._infoDiv = null;
         this._chartType = null;
+    };
+    
+    ChartPopover.prototype._setAriaLabelledBys = function(){
+        this._oPopover.removeAllAriaLabelledBy();
+        
+        this._oPopover.addAriaLabelledBy(this._oContentPanel);
+        this._oPopover.addAriaLabelledBy(this._oSelectedLabel);
     };
 
     ChartPopover.prototype._afterOpen = function() {
@@ -175,14 +185,19 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
 
         this._options = null;
         this._infoDiv = null;
-            this._chartType = null;
+        this._chartType = null;
     };
 
     /**
      * Set popover's options
      */
     ChartPopover.prototype.setOptions = function(options) {
-        var data = this._formatData(options); 
+        var config = {
+            formatString: this.getFormatString(),
+            chartType: this.getChartType(),
+            mode: "popover"
+        };
+        var data = FormatDataUtil.formatData(options, config); 
         if (!this._infoDiv || this.getChartType() != this._chartType) {
             var node = options.target;
             while ((node = node.parentNode) && !hasClass(node, "v-info")) {
@@ -245,8 +260,9 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
             this._oSelectedBar.addStyleClass('viz-controls-chartPopover-vizSelectedBarBorder');
         } else {
             //No custom data content.
-            this._oCustomPanel = null;
-
+            this._oPopover.removeContent(this._oCustomPanel);
+            this._oCustomPanel = null; // it does not work
+            
             if(this._oContentPanel.isMultiSelected()){
                 this._oPopover.removeContent(this._oContentPanel);
             }else if (this._oPopover.indexOfContent(this._oContentPanel) === -1) {
@@ -314,12 +330,26 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
     };
 
     ChartPopover.prototype._navigateBack = function() {
+        this._resetHeaderBar();
+        if(this._oActionList){
+            this._oActionList.removeStyleClass('hideActionList');
+            this._oActionList.focus();
+        }
+        
+        this._setAriaLabelledBys();
+    };
+    
+    ChartPopover.prototype._resetHeaderBar = function() {
         this._oPopover.removeContent(this._oSubActionItemsPage);
         this._oCustomHeader.setShowNavButton(false).setTitle(sap.viz.extapi.env.Language.getResourceString("IDS_CURRENT_SELECTION"));
     };
-
+    
     ChartPopover.prototype._navigateTo = function(pageId) {
         this._oCustomHeader.setShowNavButton(true);
+        if(this._oActionList){
+            this._oActionList.addStyleClass('hideActionList');
+        }
+        this._oPopover.removeAriaLabelledBy(this._oContentPanel);
     };
 
     /**
@@ -331,91 +361,6 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
         return this.getId() + "-" + sId;
     };
 
-    /**
-     * Create a new copy of data with all values formatted using "formatString" property
-     * 
-     * @param data original data to format
-     * @return a copy of the original data with all values formatted
-     */
-    ChartPopover.prototype._formatData = function (options) {
-        if (!(options.data && options.data.val)) {
-            return options.data;
-        }
-        var data = options.data,
-            formatFn = sap.viz.api.env.Format.format,
-            formatted = jQuery.extend(true, {}, data),
-            timeMeasureIdx = formatted.val.hasOwnProperty("timeMeasure") ? formatted.val.timeMeasure : -1,
-            timeDimensions = formatted.val.hasOwnProperty("timeDimensions") ? formatted.val.timeDimensions : [],
-            formatString = this.getFormatString(),
-            catchAll = null,
-            byMeasure = {},
-            pattern;
-        
-        if (typeof formatString === "string") {
-            catchAll = formatString;
-        } else if (formatString instanceof Object) {
-            byMeasure = formatString;
-        }
-
-        // convert value of time measure from milliseconds int to javascript Date object
-        //Handle measure is Time.
-        if(timeMeasureIdx !== -1) {
-            var timeValue = formatted.val.filter(function(i) {
-                return (i.type) && (i.type.toLowerCase() === "measure");
-            })[timeMeasureIdx];
-            timeValue.value = new Date(timeValue.value);
-        }
-        
-        if(options.timeTooltipData && this.getChartType().indexOf('time') > -1){
-            //Time series chart and have time tooltip.
-            var hasTimeFormatString = false;
-            if(formatString){
-                timeDimensions.forEach(function(index){
-                   if(formatted.val[index] && formatted.val[index].id && byMeasure[formatted.val[index].id]){
-                       hasTimeFormatString = true;
-                   } 
-                });
-            }
-            if(hasTimeFormatString){
-                //Use Customer format string
-                formatted.val.forEach(function(i, index){
-                    if (timeDimensions.indexOf(index) > -1){
-                        //popover didnot accept time as dimension, so change it to measure.
-                        i.type = "measure";
-                        i.value = new Date(i.value);
-                    }
-                });
-            }else{
-                //Follow chart's format rules
-                var tooltipData = jQuery.extend(true, [], options.timeTooltipData);
-                tooltipData.forEach(function(i, index) {
-                    if (formatted.val[index].dataName) {
-                        tooltipData[index].dataName = formatted.val[index].dataName;
-                    }
-                });
-                formatted.val = tooltipData;
-                formatted.isTimeSeries = true;
-            }
-        }
-
-        formatted.val.forEach(function(val) {
-            if (val.type && val.type.toLowerCase() === "measure") {
-                pattern = byMeasure[val.id] || catchAll || val.formatString;
-                if (pattern) {
-                    val.value = formatFn(val.value, pattern);
-                } else {
-                    val.value = formatFn(val.value);
-                }
-                
-                if (val.hasOwnProperty("value") && val.unit) {
-                	if (!val.bothValue || val.bothValue.primaryKey === "value") {
-                		val.value +=  (" " + val.unit);
-                	}
-                }
-            }
-        });
-        return formatted;
-    };
 
     ChartPopover.prototype._updatePopoverSettings = function(target){
             var data = this._options.data.val;
@@ -470,7 +415,8 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
                     this._oPopover.setPlacement(sap.m.PlacementType.PreferredRightOrFlip);
                     targetElement = target;
                     break;
-                case 'info/vertical_bullet': 
+                case 'info/vertical_bullet':
+                case 'info/timeseries_bullet' :
                     this._oPopover.setPlacement(sap.m.PlacementType.PreferredTopOrFlip);
                     targetElement = target;
                     break;
@@ -488,8 +434,9 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
                 case 'info/100_stacked_bar':
                 case 'info/100_dual_stacked_bar':
                 case 'info/waterfall':
+                case 'info/timeseries_waterfall':
                     this._oPopover.setPlacement(sap.m.PlacementType.VerticalPreferredTop);
-                    targetElement = this._createOpenByElement(targetSize);
+                    targetElement = target.firstChild;
                     break;
                 case 'info/stacked_column':
                 case 'info/dual_stacked_column':
@@ -497,8 +444,11 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
                 case 'info/100_dual_stacked_column':
                 case 'info/horizontal_waterfall':
                 case 'info/heatmap':
+                case 'info/treemap':
+                case 'info/timeseries_stacked_column':
+                case 'info/timeseries_100_stacked_column':
                     this._oPopover.setPlacement(sap.m.PlacementType.HorizontalPreferredRight);
-                    targetElement = this._createOpenByElement(targetSize); 
+                    targetElement = target.firstChild;
                     break;
                 //Handle Combination chart
                 case 'info/combination':
@@ -506,16 +456,16 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
                 case 'info/dual_timeseries_combination':
                     if(isDataTypeLine){
                         this._oPopover.setPlacement(sap.m.PlacementType.PreferredTopOrFlip);
-                        targetElement = this._createOpenByElement(targetSize); 
                     }else{
                         if(measureValue < 0){
                             this._oPopover.setPlacement(sap.m.PlacementType.PreferredBottomOrFlip);
                         }else{
                             this._oPopover.setPlacement(sap.m.PlacementType.PreferredTopOrFlip);
                         }
-                        targetElement = target.firstChild;
                     }
+                    targetElement = target.firstChild;
                     break;
+                case 'info/dual_combination':
                 case 'info/stacked_combination':
                 case 'info/dual_stacked_combination':
                     if(isDataTypeLine){ 
@@ -523,8 +473,9 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
                      }else{ 
                          this._oPopover.setPlacement(sap.m.PlacementType.HorizontalPreferedRight); 
                      }
-                    targetElement = this._createOpenByElement(targetSize); 
+                    targetElement = target.firstChild;
                     break;
+                case 'info/dual_horizontal_combination':
                 case 'info/horizontal_stacked_combination':
                 case 'info/dual_horizontal_stacked_combination':
                     if(isDataTypeLine){ 
@@ -532,29 +483,19 @@ function(jQuery, ContentPanel, HeaderBar, SubActionItemsPage, Control, ChartForm
                     }else{ 
                         this._oPopover.setPlacement(sap.m.PlacementType.VerticalPreferedTop); 
                     }
-                    targetElement = this._createOpenByElement(targetSize);
+                    targetElement = target.firstChild;
                     break;
             }
             return targetElement;
     };
-
-    ChartPopover.prototype._createOpenByElement = function(boundingInfo){
-        if(!this._targetElement){
-            this._targetElement = jQuery('<div></div>')
-                .attr('class', 'viz-controls-chartPopover-dpMarker')
-                .attr('style', 'position: fixed;')
-                .css('visibility', 'hidden');
-            
-            jQuery('body').append(this._targetElement);
-        }
-
-        this._targetElement.css('width', boundingInfo.width+'px')
-            .css('height', boundingInfo.height+'px')
-            .css('left', boundingInfo.left)
-            .css('top', boundingInfo.top);
-
-        return this._targetElement[0];
-    };
     
+    ChartPopover.prototype.addStyleClass = function() {
+        this._oPopover.addStyleClass.apply(this._oPopover, arguments);
+    };
+
+    ChartPopover.prototype.removeStyleClass = function() {
+        this._oPopover.removeStyleClass.apply(this._oPopover, arguments);
+    };
+
     return ChartPopover;
 });

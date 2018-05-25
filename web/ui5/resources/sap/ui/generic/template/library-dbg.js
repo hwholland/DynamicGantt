@@ -1,8 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /**
@@ -20,14 +19,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/ui/comp/library'
 	 * @namespace
 	 * @name sap.ui.generic.template
 	 * @author SAP SE
-	 * @version 1.38.33
-	 * @public
+	 * @version 1.54.3
+	 * @private
 	 */
 	
 	// delegate further initialization of this library to the Core
 	sap.ui.getCore().initLibrary({
 		name : "sap.ui.generic.template",
-		version: "1.38.33",
+		version: "1.54.3",
 		dependencies : ["sap.ui.core", "sap.ui.comp", "sap.ui.generic.app"],
 		types: [],
 		interfaces: [],

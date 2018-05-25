@@ -6,8 +6,8 @@
 
 // Provides helper sap.ui.table.TableAccExtension.
 sap.ui.define([
-	"jquery.sap.global", "sap/ui/core/Control", "./library", "./TableExtension", "./TableAccRenderExtension", "./TableUtils", "sap/ui/Device"
-], function(jQuery, Control, library, TableExtension, TableAccRenderExtension, TableUtils, Device) {
+	"jquery.sap.global", "sap/ui/core/Control", "./library", "./TableExtension", "./TableAccRenderExtension", "./TableUtils"
+], function(jQuery, Control, library, TableExtension, TableAccRenderExtension, TableUtils) {
 	"use strict";
 
 	// shortcuts
@@ -862,7 +862,7 @@ sap.ui.define([
 	 * @class Extension for sap.ui.table.Table which handles ACC related things.
 	 * @extends sap.ui.table.TableExtension
 	 * @author SAP SE
-	 * @version 1.54.5
+	 * @version 1.54.3
 	 * @constructor
 	 * @private
 	 * @alias sap.ui.table.TableAccExtension
@@ -876,7 +876,6 @@ sap.ui.define([
 		_init: function(oTable, sTableType, mSettings) {
 			this._accMode = sap.ui.getCore().getConfiguration().getAccessibility();
 			this._readonly = sTableType === TableExtension.TABLETYPES.ANALYTICAL;
-			this._busyCells = [];
 
 			oTable.addEventDelegate(this);
 
@@ -904,7 +903,6 @@ sap.ui.define([
 			this.getTable().removeEventDelegate(this);
 
 			this._readonly = false;
-			this._busyCells = [];
 
 			TableExtension.prototype.destroy.apply(this, arguments);
 		},
@@ -1022,6 +1020,11 @@ sap.ui.define([
 
 		var oTable = this.getTable();
 
+		if (oTable._mTimeouts._cleanupACCFocusRefresh) {
+			jQuery.sap.clearDelayedCall(oTable._mTimeouts._cleanupACCFocusRefresh);
+			oTable._mTimeouts._cleanupACCFocusRefresh = null;
+		}
+
 		if (bOnCellFocus) {
 			ExtensionHelper.cleanupCellModifications(this);
 		}
@@ -1050,29 +1053,22 @@ sap.ui.define([
 		}
 
 		if (!bOnCellFocus) {
-			// Set cell to busy when scrolling (focus stays on the same cell, only content is replaced)
+			// Delayed reinitialize the focus when scrolling (focus stays on the same cell, only content is replaced)
 			// to force screenreader announcements
 			if (oInfo.isOfType(CellType.DATACELL | CellType.ROWHEADER)) {
-				if (oTable._mTimeouts._cleanupACCCellBusy) {
-					jQuery.sap.clearDelayedCall(oTable._mTimeouts._cleanupACCCellBusy);
-					oTable._mTimeouts._cleanupACCCellBusy = null;
-				}
-				oTable._mTimeouts._cleanupACCCellBusy = jQuery.sap.delayedCall(100, this, function() {
-					for (var i = 0; i < this._busyCells.length; i++) {
-						this._busyCells[i].removeAttr("aria-hidden");
-						this._busyCells[i].removeAttr("aria-busy");
+				oTable._mTimeouts._cleanupACCFocusRefresh = jQuery.sap.delayedCall(100, this, function($Cell) {
+					var oTable = this.getTable();
+					if (!oTable) {
+						return;
 					}
-					oTable._mTimeouts._cleanupACCCellBusy = null;
-					this._busyCells = [];
-				});
-				if (Device.browser.chrome) {
-					oInfo.cell.attr("aria-hidden", "true"); //Seems to be needed for Chrome
-				}
-				oInfo.cell.attr("aria-busy", "true"); // Should be right thing, works in IE
-				this._busyCells.push(oInfo.cell);
-			} else {
-				return;
+					var oInfo = ExtensionHelper.getInfoOfFocusedCell(this);
+					if (oInfo && oInfo.cell && oInfo.cell.get(0) && $Cell.get(0) === oInfo.cell.get(0)) {
+						oInfo.cell.blur().focus();
+					}
+					oTable._mTimeouts._cleanupACCFocusRefresh = null;
+				}, [oInfo.cell]);
 			}
+			return;
 		}
 
 		ExtensionHelper["modifyAccOf" + sCellType].apply(this, [oInfo.cell, bOnCellFocus]);

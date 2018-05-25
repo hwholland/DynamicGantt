@@ -9,10 +9,13 @@
 * @name titleBreadCrumb
 * @description controller for view.titleBreadCrumb
 */
-sap.ui.controller("sap.apf.modeler.ui.controller.titleBreadCrumb", {
-	// Updates the title of the Detail Page
-	setTitleForDetailPage : function(sFormTitle) {
-		var oController = this;
-		oController.byId("IdFormTitle").setText(sFormTitle);
-	}
-});
+(function() {
+	'use strict';
+	sap.ui.controller("sap.apf.modeler.ui.controller.titleBreadCrumb", {
+		// Updates the title of the Detail Page
+		setTitleForDetailPage : function(sFormTitle) {
+			var oController = this;
+			oController.byId("IdFormTitle").setText(sFormTitle);
+		}
+	});
+}());

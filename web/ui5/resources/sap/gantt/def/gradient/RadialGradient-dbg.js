@@ -32,7 +32,7 @@ sap.ui.define([
 	 * @extends sap.gantt.def.DefBase
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -46,31 +46,31 @@ sap.ui.define([
 				 * Attribute 'cx' of SVG tag 'radialGradient'. See 
 				 * {@link http://www.w3.org/TR/SVG/pservers.html#RadialGradientElementCXAttribute 'cx' attribute of 'radialGradient' element in SVG 1.1 specification} for detail.
 				 */
-				cx: {type: "number", defaultValue: 400},
+				cx: {type: "float", defaultValue: 400},
 				
 				/**
 				 * Attribute 'cy' of SVG tag 'radialGradient'. See 
 				 * {@link http://www.w3.org/TR/SVG/pservers.html#RadialGradientElementCYAttribute 'cy' attribute of 'radialGradient' element in SVG 1.1 specification} for detail.
 				 */
-				cy: {type: "number", defaultValue: 200},
+				cy: {type: "float", defaultValue: 200},
 				
 				/**
 				 * Attribute 'r' of SVG tag 'radialGradient'. See 
 				 * {@link http://www.w3.org/TR/SVG/pservers.html#RadialGradientElementRAttribute 'r' attribute of 'radialGradient' element in SVG 1.1 specification} for detail.
 				 */
-				r: {type: "number", defaultValue: 300},
+				r: {type: "float", defaultValue: 300},
 				
 				/**
 				 * Attribute 'fx' of SVG tag 'radialGradient'. See 
 				 * {@link http://www.w3.org/TR/SVG/pservers.html#RadialGradientElementFXAttribute 'fx' attribute of 'radialGradient' element in SVG 1.1 specification} for detail.
 				 */
-				fx: {type: "number", defaultValue: 400},
+				fx: {type: "float", defaultValue: 400},
 				
 				/**
 				 * Attribute 'fy' of SVG tag 'radialGradient'. See 
 				 * {@link http://www.w3.org/TR/SVG/pservers.html#RadialGradientElementFYAttribute 'fy' attribute of 'radialGradient' element in SVG 1.1 specification} for detail.
 				 */
-				fy: {type: "number", defaultValue: 200}
+				fy: {type: "float", defaultValue: 200}
 			},
 			aggregations:{
 				

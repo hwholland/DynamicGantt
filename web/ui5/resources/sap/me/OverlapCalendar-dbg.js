@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
+        (c) Copyright 2009-2018 SAP SE. All rights reserved
     
  */
 
@@ -23,7 +23,7 @@ sap.ui.define(['jquery.sap.global', './Calendar', './CalendarDate', './library',
 	 * @constructor
 	 * @public
 	 * @deprecated Since version 1.34.0.
-	 * This control was experimental since 1.12. Please use the sap.m.TeamCalendar instead!
+	 * This control was experimental since 1.12. Please use the sap.m.PlanningCalendar instead!
 	 * @alias sap.me.OverlapCalendar
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */

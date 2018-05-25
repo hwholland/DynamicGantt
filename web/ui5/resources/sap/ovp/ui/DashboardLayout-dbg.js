@@ -1,17 +1,17 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
  */
 
 /*global sap window*/
-sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutModel", "sap/ovp/ui/DashboardLayoutUtil",
-		"sap/ovp/ui/DashboardLayoutRearrange"
+sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutUtil", "sap/ovp/library"
 	],
-	function(jQuery, DashboardLayoutModel, DashboardLayoutUtil, DashboardLayoutRearrange) {
+	function(jQuery, DashboardLayoutUtil) {	
 		"use strict";
 
 		var DashboardLayout = sap.ui.core.Control.extend("sap.ovp.ui.DashboardLayout", {
 
 			metadata: {
+				designTime: true,
 				library: "sap.ovp",
 				aggregations: {
 					content: {
@@ -37,7 +37,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutModel", "sap/ovp/
 					},
 					debounceTime: {
 						group: "Misc",
-						type: "sap.ui.core/int",
+						type: "int",
 						defaultValue: 150
 					}
 				}
@@ -46,69 +46,84 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutModel", "sap/ovp/
 			renderer: {
 
 				render: function(oRm, oControl) {
+                    // get viewport width depending layout data
+                    var ctrlWidth = oControl.$().width();
+                    var bRTL = sap.ui.getCore().getConfiguration().getRTL();
+                    var oLayoutData = oControl.dashboardLayoutUtil.updateLayoutData(ctrlWidth ? ctrlWidth : jQuery(window).width());
+                    var aCards = oControl.dashboardLayoutUtil.getCards(oLayoutData.colCount);
 
-					// get viewport width depending layout data
-					var ctrlWidth = oControl.$().width();
+                    function filterVisibleCards(element) {
+                        return element.getVisible();
+                    }
 
-					var oLayoutData = oControl.dashboardLayoutUtil.updateLayoutData(ctrlWidth ? ctrlWidth : jQuery(window).width());
-					var aCards = oControl.dashboardLayoutUtil.getCards(oLayoutData.colCount);
+                    function filterById(element) {
+                        return element.id === this.getId().split("--")[1];
+                    }
 
-					var filteredItems = oControl.getContent().filter(function(item) {
-						return item.getVisible();
-					});
+                    var filteredItems = oControl.getContent().filter(filterVisibleCards);
+                    oRm.write("<div");
+                    oRm.writeControlData(oControl);
+                    oRm.addClass("sapUshellEasyScanLayout");
+                    if (!sap.ui.Device.system.phone) {
+                        oRm.addClass("sapOvpDashboardDragAndDrop");
+                    }
+                    oRm.addClass("sapOvpDashboard");
+                    oRm.writeClasses();
+                    bRTL ? oRm.addStyle("margin-right", oLayoutData.marginPx + "px") : oRm.addStyle("margin-left", oLayoutData.marginPx + "px");
+                    oRm.writeStyles();
+                    oRm.write(">");
+                    oRm.write("<div class='sapUshellEasyScanLayoutInner'>");
 
-					oRm.write("<div");
-					oRm.writeControlData(oControl);
-					oRm.addClass("sapUshellEasyScanLayout");
-					if (!sap.ui.Device.system.phone){
-					    oRm.addClass("sapOvpDashboardDragAndDrop");
-					}
-					oRm.writeClasses();
-					oRm.addStyle("margin-left", oLayoutData.marginPx + "px");
-					oRm.writeStyles();
-					oRm.write(">");
+                    if (aCards.length > 0) {
+                        var card = {}, classToBeAdded = '', counter, iLength, bSideCard,
+                            colCount = oControl.dashboardLayoutUtil.oLayoutData.colCount;
+                        for (counter = 0, iLength = filteredItems.length; counter < iLength; counter++) {
+                            card = aCards.filter(filterById.bind(filteredItems[counter]))[0];
+                            //re-set css values for current card
+                            oControl.dashboardLayoutUtil.setCardCssValues(card);
+                            bSideCard = card.dashboardLayout.column + card.dashboardLayout.colSpan === colCount + 1;
+                            if (bSideCard) {
+                                if (card.dashboardLayout.colSpan === 1) {
+                                    classToBeAdded = 'sapOvpNotResizableLeftRight';
+                                } else {
+                                    classToBeAdded = 'sapOvpNotResizableRight';
+                                }
+                            }
 
-					oRm.write("<div class='sapUshellEasyScanLayoutInner' tabindex='0'>");
+                            if (card.template === "sap.ovp.cards.stack" || card.settings.stopResizing || !sap.ui.Device.system.desktop) {
+                                oRm.write("<div id='" + oControl.dashboardLayoutUtil.getCardDomId(card.id) +
+                                    //padding: 1rem; vs. border: 0.5rem solid transparent
+                                "' class='easyScanLayoutItemWrapper sapOvpDashboardLayoutItem sapOvpDashboardLayoutItemNoDragIcon' style='" +
+                                "; transform:translate3d(" + card.dashboardLayout.left + " ," + card.dashboardLayout.top + " ,0px)" +
+                                "; -ms-transform:translate3d(" + card.dashboardLayout.left + " ," + card.dashboardLayout.top + " ,0px)" +
+                                "; -moz-transform:translate3d(" + card.dashboardLayout.left + " ," + card.dashboardLayout.top + " ,0px)" +
+                                "; -webkit-transform:translate3d(" + card.dashboardLayout.left + " ," + card.dashboardLayout.top + " ,0px)" +
+                                "; height:" + card.dashboardLayout.height + "; width:" + card.dashboardLayout.width + ";'" +
+                                " tabindex='0'; aria-setsize=" + iLength + " aria-posinset=" + counter + ">");
+                            } else {
+                                oRm.write("<div id='" + oControl.dashboardLayoutUtil.getCardDomId(card.id) +
+                                    //padding: 1rem; vs. border: 0.5rem solid transparent
+                                "' class='easyScanLayoutItemWrapper sapOvpDashboardLayoutItem " + classToBeAdded + "' style='" +
+                                "; transform:translate3d(" + card.dashboardLayout.left + " ," + card.dashboardLayout.top + " ,0px)" +
+                                "; -ms-transform:translate3d(" + card.dashboardLayout.left + " ," + card.dashboardLayout.top + " ,0px)" +
+                                "; -moz-transform:translate3d(" + card.dashboardLayout.left + " ," + card.dashboardLayout.top + " ,0px)" +
+                                "; -webkit-transform:translate3d(" + card.dashboardLayout.left + " ," + card.dashboardLayout.top + ", 0px)" +
+                                "; height:" + card.dashboardLayout.height + "; width:" + card.dashboardLayout.width + ";'" +
+                                " tabindex='0'; aria-setsize=" + iLength + " aria-posinset=" + counter + ">");
+                            }
+                            oRm.renderControl(filteredItems[counter]);
+                            oRm.write("</div>");
+                        }
+                    }
 
-					if (aCards.length > 0) {
-						var card = {};
-						filteredItems.forEach(function(item) {
-							card = aCards.find(function(element) {
-								return element.id === this.getId().split("--")[1];
-							}.bind(item));
-
-							//re-set css values for current card
-							oControl.dashboardLayoutUtil.setCardCssValues(card);
-
-							if (!sap.ui.Device.support.touch) {
-							    oRm.write("<div id='" + oControl.dashboardLayoutUtil.getCardDomId(card.id) +
-									//padding: 1rem; vs. border: 0.5rem solid transparent
-									"' class='easyScanLayoutItemWrapper sapOvpDashboardLayoutItem' style='top:" + card.dashboardLayout.top +
-									"; left:" + card.dashboardLayout.left + "; height:" + card.dashboardLayout.height +
-									"; width:" + card.dashboardLayout.width + ";'>");
-
-							} else { //this is a workaround since UI5 do not yet provide a touch device information
-							oRm.write("<div id='" + oControl.dashboardLayoutUtil.getCardDomId(card.id) +
-									//padding: 1rem; vs. border: 0.5rem solid transparent
-									"' class='easyScanLayoutItemWrapper sapOvpDashboardLayoutItem sapOvpDashboardLayoutItemTouch' style='top:" + card.dashboardLayout
-									.top +
-									"; left:" + card.dashboardLayout.left + "; height:" + card.dashboardLayout.height +
-									"; width:" + card.dashboardLayout.width + ";'>");
-							}
-
-							oRm.renderControl(item);
-
-							oRm.write("</div>");
-						});
-					}
-
-					oRm.write("</div>");
-					oRm.write("</div>");
+                    oRm.write("</div>");
+                    // dummy after focusable area
+                    oRm.write("<div class='after' tabindex='0'></div>");
+                    oRm.write("</div>");
 				}
 			},
 
 			init: function() {
-				//this.data("sap-ui-fastnavgroup", "true", true);
 				this.oColumnLayoutData = {};
 				this.resizeHandlerId = this.initResizeHandler();
 
@@ -117,10 +132,22 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutModel", "sap/ovp/
 				this.dashboardLayoutUtil.setLayout(this);
 			},
 
+			exit: function() {
+				//de-register event handler
+				if (this.resizeHandlerId) {
+					sap.ui.core.ResizeHandler.deregister(this.resizeHandlerId);
+				}
+				//delete rearrange instance (incl. its ui actions)
+				if (this.layoutDragAndDrop) {
+					this.layoutDragAndDrop.destroy();
+					delete this.layoutDragAndDrop;
+				}
+			},
+
 			onBeforeRendering: function() {},
 
 			onAfterRendering: function() {
-
+                this.keyboardNavigation = new KeyboardNavigation(this);
 				if (!this.getDragAndDropRootSelector()) {
 					this.setDragAndDropRootSelector("#" + this.getId());
 				}
@@ -130,7 +157,6 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutModel", "sap/ovp/
 				if (this.getDragAndDropEnabled()) {
 
 					this.layoutDragAndDrop = this.dashboardLayoutUtil.getRearrange({
-						//afterReplaceElements: this.afterDragAndDropHandler.bind(this),
 						rootSelector: this.getDragAndDropRootSelector(),
 						layout: this
 					});
@@ -149,6 +175,10 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutModel", "sap/ovp/
 				return this.dashboardLayoutUtil.getDashboardLayoutModel().getLayoutVariants4Pers();
 			},
 
+            filterVisibleCards : function(element){
+                return element.getVisible();
+            },
+
 			getDashboardLayoutUtil: function() {
 				return this.dashboardLayoutUtil;
 			},
@@ -160,9 +190,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutModel", "sap/ovp/
 			getVisibleLayoutItems: function() {
 				//layout items could be hidden, so we filter them and receive only visible
 				var content = this.getContent();
-				var filteredItems = content.filter(function(item) {
-					return item.getVisible();
-				});
+				var filteredItems = content.filter(this.filterVisibleCards);
 				return filteredItems;
 			},
 
@@ -182,6 +210,214 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/ui/DashboardLayoutModel", "sap/ovp/
 			}
 
 		});
+        
+        var KeyboardNavigation = function (ovpLayout) {
+            this.init(ovpLayout);
+        };
+
+        KeyboardNavigation.prototype.init = function (ovpLayout) {
+            this.layoutUtil = ovpLayout.getDashboardLayoutUtil();
+            this.layoutModel = ovpLayout.getDashboardLayoutModel();
+            this.keyCodes = jQuery.sap.KeyCodes;
+            this.jqElement = ovpLayout.$();
+            this.bIgnoreSelfFocus = false;
+            this.jqElement.on('keydown', this.keyDownHandler.bind(this));
+        };
+
+        // Key Down Handler
+        KeyboardNavigation.prototype.keyDownHandler = function (e) {
+            var activeItem = document.activeElement,
+                sCardId = this.layoutUtil.getCardId(activeItem.id),
+                aCards = jQuery.extend([], this.layoutModel.aCards),
+                oCard = this.layoutModel.getCardById(sCardId),
+                columnCount = this.layoutModel.iColCount,
+                tempCards = {}, column, colSpan, columnIndex, rowIndex, cardId, cardsLength, currentCard;
+            this.layoutModel._sortCardsByRow(aCards);
+            for (var i = 1; i <= columnCount; i++) {
+                tempCards[i] = [];
+            }
+            for (var j = 0; j < aCards.length; j++) {
+                column = aCards[j].dashboardLayout.column;
+                colSpan = aCards[j].dashboardLayout.colSpan;
+                if (colSpan === 1) {
+                    tempCards[column].push(aCards[j]);
+                } else {
+                    for (var k = column; k < column + colSpan; k++) {
+                        tempCards[k].push(aCards[j]);
+                    }
+                }
+            }
+            rowIndex = this.getCardPosition(sCardId, tempCards[oCard.dashboardLayout.column]);
+
+            switch (e.keyCode) {
+                case this.keyCodes.F6:
+                    if (e.shiftKey) {
+                        this.bIgnoreSelfFocus = true;
+                        this.jqElement.find(".sapUshellEasyScanLayoutInner").focus();
+                        jQuery.sap.handleF6GroupNavigation(e);
+                    } else {
+                        this.bIgnoreSelfFocus = true;
+                        var beforeScrollLocation = this.jqElement.scrollTop();
+                        this.jqElement.find(".after").focus();
+                        jQuery.sap.handleF6GroupNavigation(e);
+                        this.jqElement.scrollTop(beforeScrollLocation);
+                    }
+                    break;
+                case this.keyCodes.F7:
+                    //If focus is on a Item, move focus to the control inside the Item. Default: first control in the tab chain inside the Item.
+                    //If focus is on a control inside a Item, move focus to the Item.
+                    var jqFocusedElement = jQuery(document.activeElement);
+                    if (jqFocusedElement.hasClass("easyScanLayoutItemWrapper")) {
+                        //focus on item we place on first element inside
+                        jqFocusedElement.find(":sapTabbable").first().focus();
+                    } else {
+                        //focus inside item, we put it on item itself
+                        jqFocusedElement.closest(".easyScanLayoutItemWrapper").focus();
+                    }
+                    e.preventDefault();
+                    break;
+                case this.keyCodes.ARROW_UP:
+                    columnIndex = oCard.dashboardLayout.column;
+                    rowIndex--;
+                    cardId = tempCards[columnIndex][rowIndex] && tempCards[columnIndex][rowIndex].id;
+                    this.setFocusOnCard(cardId);
+                    break;
+                case this.keyCodes.ARROW_DOWN:
+                    columnIndex = oCard.dashboardLayout.column;
+                    rowIndex++;
+                    cardId = tempCards[columnIndex][rowIndex] && tempCards[columnIndex][rowIndex].id;
+                    this.setFocusOnCard(cardId);
+                    break;
+                case this.keyCodes.ARROW_LEFT:
+                    columnIndex = oCard.dashboardLayout.column;
+                    columnIndex--;
+                    if (!tempCards[columnIndex] || !tempCards[columnIndex][rowIndex]) {
+                        do {
+                            if (columnIndex === 0) {
+                                columnIndex = columnCount;
+                                rowIndex--;
+                                break;
+                            }
+                            if (rowIndex < 0) {
+                                break;
+                            }
+                            columnIndex--;
+                        } while (!tempCards[columnIndex] || !tempCards[columnIndex][rowIndex])
+                    }
+                    cardId = tempCards[columnIndex][rowIndex] && tempCards[columnIndex][rowIndex].id;
+                    this.setFocusOnCard(cardId);
+                    break;
+                case this.keyCodes.ARROW_RIGHT:
+                    columnIndex = oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan;
+                    if (!tempCards[columnIndex] || !tempCards[columnIndex][rowIndex]) {
+                        do {
+                            if (columnIndex > columnCount) {
+                                columnIndex = 1;
+                                rowIndex++;
+                                break;
+                            }
+                            columnIndex++;
+                        } while (!tempCards[columnIndex] || !tempCards[columnIndex][rowIndex])
+                    }
+                    cardId = tempCards[columnIndex][rowIndex] && tempCards[columnIndex][rowIndex].id;
+                    this.setFocusOnCard(cardId);
+                    break;
+                case this.keyCodes.PAGE_UP:
+                    e.preventDefault();
+                    columnIndex = oCard.dashboardLayout.column;
+                    if (e.altKey == true) {
+                        (columnIndex === 1) ? rowIndex = 0 : columnIndex = 1;
+                        cardId = tempCards[columnIndex][rowIndex] && tempCards[columnIndex][rowIndex].id;
+                    } else {
+                        cardsLength = tempCards[columnIndex].length - 1;
+                        for (var i = cardsLength; i > 0; i--) {
+                            currentCard = document.getElementById(this.layoutUtil.getCardDomId(tempCards[columnIndex][i].id));
+                            if (currentCard.getBoundingClientRect().bottom < 0) {
+                                cardId = tempCards[columnIndex][i].id;
+                                break;
+                            }
+                        }
+                        if (!cardId) {
+                            cardId = tempCards[columnIndex][0].id;
+                        }
+                    }
+                    this.setFocusOnCard(cardId);
+                    break;
+                case this.keyCodes.PAGE_DOWN:
+                    e.preventDefault();
+                    columnIndex = oCard.dashboardLayout.column;
+                    if (e.altKey == true) {
+                        cardId = (columnIndex + oCard.dashboardLayout.colSpan) > columnCount ? aCards[aCards.length - 1].id : tempCards[columnCount][rowIndex] && tempCards[columnCount][rowIndex].id;
+                    } else {
+                        var windowHeight = jQuery(window).height();
+                        cardsLength = tempCards[columnIndex].length;
+                        for (var i = 0; i < cardsLength; i++) {
+                            currentCard = document.getElementById(this.layoutUtil.getCardDomId(tempCards[columnIndex][i].id));
+                            if (currentCard.getBoundingClientRect().top > windowHeight) {
+                                cardId = tempCards[columnIndex][i].id;
+                                break;
+                            }
+                        }
+                        if (!cardId) {
+                            cardId = tempCards[columnIndex][cardsLength - 1].id;
+                        }
+                    }
+                    this.setFocusOnCard(cardId);
+                    break;
+                case this.keyCodes.HOME:
+                    e.preventDefault();
+                    columnIndex = oCard.dashboardLayout.column;
+                    if (e.ctrlKey == true) {
+                        (rowIndex === 0) ? columnIndex = 1 : rowIndex = 0;
+                    } else {
+                        (columnIndex === 1) ? rowIndex = 0 : columnIndex = 1;
+                    }
+                    cardId = tempCards[columnIndex][rowIndex] && tempCards[columnIndex][rowIndex].id;
+                    this.setFocusOnCard(cardId);
+                    break;
+                case this.keyCodes.END:
+                    e.preventDefault();
+                    columnIndex = oCard.dashboardLayout.column;
+                    if (e.ctrlKey == true) {
+                        var lastCardInColumn = tempCards[columnIndex].length - 1;
+                        cardId = (lastCardInColumn === rowIndex) ? aCards[aCards.length - 1].id : tempCards[columnIndex][lastCardInColumn] && tempCards[columnIndex][lastCardInColumn].id;
+                    } else {
+                        cardId = (columnIndex + oCard.dashboardLayout.colSpan) > columnCount ? aCards[aCards.length - 1].id : tempCards[columnCount][rowIndex] && tempCards[columnCount][rowIndex].id;
+                    }
+                    this.setFocusOnCard(cardId);
+                    break;
+            }
+        };
+
+        /**
+         * Method to set focus on card
+         *
+         * @method setFocusOnCard
+         * @param {String} cardId - card id on which focus is to be set
+         */
+        KeyboardNavigation.prototype.setFocusOnCard = function (cardId) {
+            if (cardId) {
+                var card = document.getElementById(this.layoutUtil.getCardDomId(cardId));
+                card && card.focus();
+            }
+        };
+
+        /**
+         * Method to calculate the card position in a array
+         *
+         * @method getCardPosition
+         * @param {String} cardId - card id of card which position is to be determined
+         * @param {Array} allCards - card array from which position to be determined
+         * @return {Integer} i - position of card in the card array
+         */
+        KeyboardNavigation.prototype.getCardPosition = function (cardId, allCards) {
+            for (var i = 0; i < allCards.length; i++) {
+                if (allCards[i].id === cardId) {
+                    break;
+                }
+            }
+            return i;
+        };
 
 		return DashboardLayout;
 

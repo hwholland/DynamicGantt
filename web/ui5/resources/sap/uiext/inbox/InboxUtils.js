@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.InboxUtils");jQuery.sap.require("sap.ui.model.odata.Filter");jQuery.sap.require("sap.uiext.inbox.InboxConstants");
 sap.uiext.inbox.InboxUtils=function(){throw new Error();};

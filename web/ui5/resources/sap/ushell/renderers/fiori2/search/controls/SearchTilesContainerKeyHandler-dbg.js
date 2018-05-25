@@ -1,14 +1,8 @@
 /* global jQuery, sap, console, window  */
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper'
+], function(SearchHelper) {
     "use strict";
-
-    // =======================================================================
-    // declare/import packages
-    // =======================================================================
-    jQuery.sap.declare('sap.ushell.renderers.fiori2.search.controls.SearchTilesContainerKeyHandler');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-
-    var searchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
 
     // =======================================================================
     // dom helper
@@ -85,7 +79,7 @@
         focus: function() {
             /*this.element.focus();
             return;*/
-            var element = searchHelper.getFocusableTileDomRef(this.element);
+            var element = SearchHelper.getFocusableTileDomRef(this.element);
             if (element) {
                 element.focus();
             }
@@ -152,4 +146,5 @@
 
     };
 
-})();
+    return KeyHandler;
+});

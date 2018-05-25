@@ -1,17 +1,20 @@
 // iteration 0 ok
-/* global jQuery,sap, $, window, setTimeout, clearTimeout */
+/* global jQuery,sap, $, window, setTimeout, clearTimeout, document */
 
-(function() {
+sap.ui.define([
+    'sap/m/MessageBox',
+    'sap/ui/core/format/NumberFormat',
+    'sap/ui/core/format/FileSizeFormat',
+    'jquery.sap.storage'
+], function() {
     "use strict";
 
     jQuery.sap.declare('sap.ushell.renderers.fiori2.search.SearchHelper');
     var module = sap.ushell.renderers.fiori2.search.SearchHelper = {};
 
-    jQuery.sap.require('jquery.sap.storage');
-
     // =======================================================================
     // Regex Tester
-    // =======================================================================            
+    // =======================================================================
     module.Tester = function() {
         this.init.apply(this, arguments);
     };
@@ -398,6 +401,10 @@
             innerhtml = innerhtml.replace('&lt;i&gt;', '<i>');
             innerhtml = innerhtml.replace('&lt;/i&gt;', '</i>');
         }
+        while (innerhtml.indexOf('&lt;span&gt;') + innerhtml.indexOf('&lt;/span&gt;') >= -1) { // while these tags are found
+            innerhtml = innerhtml.replace('&lt;span&gt;', '<span>');
+            innerhtml = innerhtml.replace('&lt;/span&gt;', '</span>');
+        }
         domref.innerHTML = innerhtml;
     };
 
@@ -437,9 +444,87 @@
         return '#' + (window.location.href.split("#")[1] || "");
     };
 
+    module.getUrlParameter = function(name) {
+        if (typeof window !== "undefined") {
+            var search = window.location.href;
+            var value = (new RegExp(name + '=' + '(.+?)(&|$|#)', 'i').exec(search) || [null])[1];
+            if (!value) {
+                return value;
+            }
+            value = decodeURIComponent(value.replace(/\+/g, ' '));
+            return value;
+        }
+        return "";
+    };
+
+    module.getUrlParameters = function() {
+        var urlSearchPart;
+        if (sap && sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("URLParsing")) {
+            var oURLParsing = sap.ushell.Container.getService("URLParsing");
+            var appSpecificRoute = oURLParsing.splitHash(module.getHashFromUrl()).appSpecificRoute;
+            urlSearchPart = appSpecificRoute.substring(2);
+        } else {
+            // we are not running in a ushell
+            urlSearchPart = module.getHashFromUrl();
+        }
+        var urlParameters = module.parseUrlParameters(urlSearchPart);
+        return urlParameters;
+    };
+
+    module.parseUrlParameters = function(unescapedSearchUrl) {
+        // workaround for url ushells broken url escaping if special chars
+        // like [] are used in urls (like in app tiles with search filters).
+        // limitation of this workaround:
+        // - tiles with searchterms like the names of the parameters dont
+        //   work (for example a tile with searchterm "top=")
+        var oParametersLowerCased = {};
+        var knownSearchUrlParameters = [{
+            "name": "filter",
+            "pos": -1,
+            "value": ""
+        }, {
+            "name": "top",
+            "pos": -1,
+            "value": ""
+        }, {
+            "name": "datasource",
+            "pos": -1,
+            "value": ""
+        }, {
+            "name": "searchterm",
+            "pos": -1,
+            "value": ""
+        }];
+        // find the parameters:
+        for (var i = 0; i < knownSearchUrlParameters.length; i++) {
+            knownSearchUrlParameters[i].pos = unescapedSearchUrl.toLowerCase().indexOf(knownSearchUrlParameters[i].name + "=");
+        }
+        knownSearchUrlParameters.sort(function(a, b) {
+            return a.pos - b.pos;
+        });
+        // find the parameter boundaries:
+        for (var j = 0; j < knownSearchUrlParameters.length; j++) {
+            if (knownSearchUrlParameters[j].pos !== -1) {
+                if (knownSearchUrlParameters[j + 1] && knownSearchUrlParameters[j + 1].pos !== -1) {
+                    knownSearchUrlParameters[j].value = unescapedSearchUrl.substring(knownSearchUrlParameters[j].pos, knownSearchUrlParameters[j + 1].pos);
+                } else {
+                    knownSearchUrlParameters[j].value = unescapedSearchUrl.substring(knownSearchUrlParameters[j].pos);
+                }
+                // remove the parameter name and "=":
+                knownSearchUrlParameters[j].value = knownSearchUrlParameters[j].value.substring(knownSearchUrlParameters[j].name.length + 1);
+                if (knownSearchUrlParameters[j].value.charAt(knownSearchUrlParameters[j].value.length - 1) === "&") {
+                    knownSearchUrlParameters[j].value = knownSearchUrlParameters[j].value.substring(0, knownSearchUrlParameters[j].value.length - 1);
+                }
+                knownSearchUrlParameters[j].value = decodeURIComponent(knownSearchUrlParameters[j].value);
+                oParametersLowerCased[knownSearchUrlParameters[j].name] = knownSearchUrlParameters[j].value;
+            }
+        }
+        return oParametersLowerCased;
+    };
+
     // =======================================================================
     // check if search app is running
-    // =======================================================================            
+    // =======================================================================
     module.isSearchAppActive = function() {
         if (module.getHashFromUrl().substr(1, 13) === 'Action-search') {
             return true;
@@ -449,7 +534,7 @@
     };
 
     // =======================================================================
-    // Hasher  
+    // Hasher
     // using window.hasher does not work because
     // hasher always use encodeURL for the whole hash but for example we need
     // - to encode '=' in a value (of name value pair)
@@ -494,7 +579,6 @@
             this.urlError = true;
 
             // show message box
-            jQuery.sap.require("sap.m.MessageBox");
             var message = sap.ushell.resources.i18n.getText('searchUrlErrorMessage', error.toString());
             sap.m.MessageBox.alert(message, {
                 title: sap.ushell.resources.i18n.getText('searchUrlErrorTitle'),
@@ -504,29 +588,28 @@
 
     };
 
-
     // =======================================================================
-    // Check whether the filter button status is pressed or not
+    // Check which type is the result view type set
     // =======================================================================
-    module.loadFilterButtonStatus = function() {
+    module.loadResultViewType = function() {
         if (jQuery.sap.storage && jQuery.sap.storage.isSupported()) {
-            var facetsShown = jQuery.sap.storage.get("showSearchFacets");
-            if (!facetsShown) {
-                return false;
+            var resultViewType = jQuery.sap.storage.get("resultViewType");
+            if (!resultViewType || resultViewType !== "searchResultTable") {
+                return "searchResultList";
             } else {
-                return true;
+                return "searchResultTable";
             }
         } else {
-            return false;
+            return "searchResultList";
         }
     };
 
     // =======================================================================
-    // Set button status in sap storage
+    // Set result view type status in sap storage
     // =======================================================================
-    module.saveFilterButtonStatus = function(areFacetsShown) {
+    module.saveResultViewType = function(resultViewType) {
         if (jQuery.sap.storage.isSupported()) {
-            jQuery.sap.storage.put("showSearchFacets", areFacetsShown);
+            jQuery.sap.storage.put("resultViewType", resultViewType);
         }
     };
 
@@ -582,14 +665,16 @@
             var index = 0;
             var control = null;
             var controlDomRef = null;
+            var isListDisplayed = false;
             var isTableDisplayed = false;
+            var isMapDisplayed = false;
 
             if (this.oModel.getDataSource() !== this.oModel.appDataSource) {
 
                 // 1. mixed result list
 
                 if (this.oModel.getProperty('/boCount') > 0 && this.oModel.getProperty('/appCount') > 0) {
-                    // 1.1 bos + apps                    
+                    // 1.1 bos + apps
                     index = this.oModel.getProperty('/focusIndex');
                     index = (index > 0) ? index + 1 : index;
                     control = this.oSearchView.resultList.getItems()[index];
@@ -597,21 +682,26 @@
                         controlDomRef = control.getDomRef();
                     }
                 } else if (this.oModel.getProperty('/boCount') > 0 && this.oModel.getProperty('/appCount') === 0) {
-                    // 1.2 only bos                    
+                    // 1.2 only bos
                     index = this.oModel.getProperty('/focusIndex');
+                    isListDisplayed = this.oModel.getResultToDisplay() === "searchResultList";
                     isTableDisplayed = this.oModel.getResultToDisplay() === "searchResultTable";
-                    if (!isTableDisplayed) {
+                    isMapDisplayed = this.oModel.getResultToDisplay() === "searchResultMap";
+                    if (isListDisplayed) {
                         // 1.2.1 list view
                         control = this.oSearchView.resultList.getItems()[index];
-                    } else {
+                    } else if (isTableDisplayed) {
                         // 1.2.2 table view
                         control = this.oSearchView.searchResultTable.getItems()[index];
+                    } else if (isMapDisplayed) {
+                        // 1.2.3 map view
+                        control = this.oSearchView.searchResultMap;
                     }
                     if (control && control.getDomRef) {
                         controlDomRef = control.getDomRef();
                     }
                 } else if (this.oModel.getProperty('/boCount') === 0 && this.oModel.getProperty('/appCount') > 0) {
-                    // 1.3 only apps                    
+                    // 1.3 only apps
                     var firstItem = this.oSearchView.resultList.getItems()[0];
                     if (!module._isDisplayed(firstItem)) {
                         return null;
@@ -654,6 +744,7 @@
             // this method is called
             // 1) after event allSearchFinished (see registration in Search.controller)
             // 2) after event afterNavigate (see registration in searchshellhelper)
+            // 3) after event appComponentLoaded (see registration in searchshellhelper)
 
             var that = this;
             var retries = 10;
@@ -665,16 +756,34 @@
 
                 var controlDomRef = that.get2BeFocusedControlDomRef();
 
-                // check that all conditions for setting the focus are fullfilled
-                if (!controlDomRef || // condition 1
-                    sap.ui.getCore().getUIDirty() || // condition 2
-                    sap.ui.getCore().byId('loadingDialog').isOpen() || // condition 3
-                    jQuery('.sapUshellSearchTileContainerDirty').length > 0 || // condition 4
-                    jQuery('.sapMBusyDialog').length > 0) { // condition 5
-                    if (--retries) {
-                        that.focusSetter = setTimeout(doSetFocus, 100);
+                // not in fiori
+                if (!sap.ui.getCore().byId('Fiori2LoadingDialog')) {
+                    if (jQuery('.sapMBusyDialog').length > 0) {
+                        if (--retries) {
+                            that.focusSetter = setTimeout(doSetFocus, 100);
+                        }
+                        return;
                     }
-                    return;
+                } else {
+                    // check that all conditions for setting the focus are fullfilled
+                    if (!controlDomRef || // condition 1
+                        sap.ui.getCore().getUIDirty() || // condition 2
+                        sap.ui.getCore().byId('Fiori2LoadingDialog').isOpen() || // condition 3
+                        jQuery('.sapUshellSearchTileContainerDirty').length > 0 || // condition 4
+                        jQuery('.sapMBusyDialog').length > 0) { // condition 5
+
+                        /*console.log('--focus failed',
+                            controlDomRef,
+                            sap.ui.getCore().getUIDirty(),
+                            sap.ui.getCore().byId('Fiori2LoadingDialog').isOpen(),
+                            jQuery('.sapUshellSearchTileContainerDirty').length > 0,
+                            jQuery('.sapMBusyDialog').length > 0);*/
+
+                        if (--retries) {
+                            that.focusSetter = setTimeout(doSetFocus, 100);
+                        }
+                        return;
+                    }
                 }
 
                 // condition 1:
@@ -693,6 +802,19 @@
 
                 // set focus
                 controlDomRef.focus();
+                //console.log('--set');
+
+                /*var meButton = document.getElementById('meAreaHeaderButton');
+                if (!meButton.isDecorated) {
+                    var originalFocus = meButton.focus;
+                    meButton.focus = function() {
+                        //console.log('--reset');
+                        //   debugger;
+                        originalFocus.apply(this, arguments);
+                    };
+                    meButton.isDecorated = true;
+                }*/
+
 
                 // automatic expand only the first result líst item
                 if (that.oModel.getProperty('/focusIndex') === 0) {
@@ -724,31 +846,167 @@
 
     // =======================================================================
     // looks into a tile and return the first focusable child element
-    // =======================================================================    
+    // =======================================================================
     module.getFocusableTileDomRef = function(tileDomRef) {
         return jQuery(tileDomRef).find('[tabindex], button')[0]; // find element which has tabindex or is a button
         //return jQuery(tileDomRef).find(".sapUshellTileBase, .sapUiCockpitReportTile, .sapUshellSearchShowMoreTileButton")[0];
     };
 
     // =======================================================================
+    // format integer
+    // =======================================================================
+    module.formatInteger = function(value) {
+
+        // lazy create integerShortFormatter
+        if (!module._integerShortFormatter) {
+            module._integerShortFormatter = sap.ui.core.format.NumberFormat.getIntegerInstance({
+                style: 'short',
+                precision: 3,
+                groupingEnabled: true
+            }, sap.ui.getCore().getConfiguration().getLocale());
+
+        }
+
+        // lazy create integerStandardFormatter
+        if (!module._integerStandardFormatter) {
+            module._integerStandardFormatter = sap.ui.core.format.NumberFormat.getIntegerInstance({
+                style: 'standard',
+                precision: 3,
+                groupingEnabled: true
+            }, sap.ui.getCore().getConfiguration().getLocale());
+        }
+
+        // 99950 is the first number (with precision 3 rounding) that will map to 100000; same as "parseFloat((Math.abs(number)).toPrecision(3)) >= 100000"
+        if (Math.abs(value) >= 99950) {
+            return module._integerShortFormatter.format(value);
+        } else {
+            return module._integerStandardFormatter.format(value);
+        }
+    };
+
+    // =======================================================================
+    // format file size humanfriendly
+    // =======================================================================
+    module.formatFileSize = function(value) {
+
+        // lazy create integerShortFormatter
+        if (!module._fileSizeFormatter) {
+            module._fileSizeFormatter = sap.ui.core.format.FileSizeFormat.getInstance({
+                style: 'short',
+                precision: 3,
+                groupingEnabled: true,
+                binaryFilesize: true
+            }, sap.ui.getCore().getConfiguration().getLocale());
+        }
+
+        return module._fileSizeFormatter.format(value);
+
+    };
+
+    // =======================================================================
+    // get Url parameter by using uhsell service
+    // =======================================================================
+    module.getUrlParameterByUi2Service = function(parameterName) {
+
+        var mParameterMap = sap.ui2.srvc.getParameterMap();
+        var value = mParameterMap[parameterName];
+        return value;
+    };
+
+    // =======================================================================
     // dynamically add a tooltip to text elements if they are overflown
     // =======================================================================
     module.attachEventHandlersForTooltip = function(element) {
-        $(element).find('.sapUshellSearchResultListItem-MightOverflow').on('mouseenter', function() {
+        var $element = $(element);
+        $element.find('.sapUshellSearchResultListItem-MightOverflow').on('mouseenter', function() {
             var $this = $(this);
+            var text = $this.text();
             var title = $this.attr('title');
-            if ((this.offsetWidth < this.scrollWidth || this.offsetHeight < this.scrollHeight) && !$this.attr('title')) {
-                $this.attr("title", $this.text());
+            var tooltip;
+            var tooltippedby = $this.attr("data-tooltippedby");
+            if (tooltippedby) {
+                var tooltippedbyElement = $element.find("#" + tooltippedby);
+                tooltip = tooltippedbyElement.text();
+            }
+            // var isLongText = $this.attr("data-islongtext") == "true";
+            // var isHighlighted = $this.attr("data-ishighlighted") == "true";
+            // if (isLongText && isHighlighted) {
+            //     var originalText = $this.text().replace(/^(\.\.\.)|\1$/g, "");
+            //     originalText = originalText.replace(/<[/]?b>/g, "");
+            //
+            // }
+            if (!$this.attr('title') &&
+                (this.offsetWidth < this.scrollWidth ||
+                    this.offsetHeight < this.scrollHeight) ||
+                tooltip && text !== tooltip
+            ) {
+                if (!tooltip) {
+                    tooltip = $this.text();
+                }
+                $this.attr("title", tooltip);
             } else if (title === $this.text()) {
                 $this.removeAttr('title');
             }
         }).on('mouseout', function() {
             var $this = $(this);
+            var tooltip;
+            var tooltippedby = $this.attr("data-tooltippedby");
+            if (tooltippedby) {
+                var tooltippedbyElement = $element.find("#" + tooltippedby);
+                tooltip = tooltippedbyElement.text();
+            }
+            if (!tooltip) {
+                tooltip = $this.text();
+            }
             var title = $this.attr('title');
-            if (title === $this.text()) {
+            if (title === tooltip) {
                 $this.removeAttr('title');
             }
         });
-    }
+    };
 
-})();
+    // =======================================================================
+    // convert promise to jquery deferred
+    // =======================================================================
+    module.convertPromiseTojQueryDeferred = function(promise) {
+        var deferred = new jQuery.Deferred();
+        promise.then(function() {
+            deferred.resolve.apply(deferred, arguments);
+        }, function() {
+            deferred.reject.apply(deferred, arguments);
+        });
+        return deferred;
+    };
+
+    // =======================================================================
+    // check the switch of user logging / navigation event requests
+    // in url parameter and in configuration
+    // =======================================================================
+    module.isLoggingEnabled = function() {
+        if (this.isLoggingEnabledFlag !== undefined) {
+            return this.isLoggingEnabledFlag;
+        }
+        this.isLoggingEnabledFlag = true;
+        try {
+            // 1. check searchLogging in url parameter
+            var parameterInUrl = this.getUrlParameter("searchLogging");
+            if (parameterInUrl === "false") {
+                this.isLoggingEnabledFlag = false;
+            }
+            if (parameterInUrl === undefined) {
+                // 2. check searchLogging in configuration
+                if (window['sap-ushell-config'] !== undefined) {
+                    var config = window['sap-ushell-config'].renderers.fiori2.componentData.config;
+                    if (config !== undefined) {
+                        if (config.enableSearchLogging === false) {
+                            this.isLoggingEnabledFlag = false;
+                        }
+                    }
+                }
+            }
+        } catch (e) { /* do nothing */ }
+        return this.isLoggingEnabledFlag;
+    };
+
+    return module;
+});

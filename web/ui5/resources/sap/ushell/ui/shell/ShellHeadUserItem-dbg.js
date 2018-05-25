@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap, document */
 // Provides control sap.ushell.ui.shell.ShellHeadUserItem.
@@ -20,7 +20,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', 'sap/ui/core/IconPool
          * @extends sap.ui.core.Element
          *
          * @author SAP SE
-         * @version ${version}
+         * @version 1.54.3
          *
          * @constructor
          * @private
@@ -64,8 +64,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', 'sap/ui/core/IconPool
         };
 
         ShellHeadUserItem.prototype.onsapspace = ShellHeadUserItem.prototype.onclick;
-
-        ShellHeadUserItem.prototype.onsapenter = ShellHeadUserItem.prototype.onclick;
 
         ShellHeadUserItem.prototype.setImage = function (sImage) {
             this.setProperty("image", sImage, true);

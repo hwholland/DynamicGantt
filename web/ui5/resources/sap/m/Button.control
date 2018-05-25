@@ -24,54 +24,54 @@ that it is pressed or hovered over with the mouse cursor. A disabled &lt;code&gt
 inactive and cannot be pressed.</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="text">
             <documentation>Determines the text of the &lt;code&gt;Button&lt;/code&gt;.</documentation>
         </property>
-        <property name="type" type="sap.m/ButtonType" defaultValue="Default" group="Appearance">
+        <property group="Appearance" defaultValue="Default" type="sap.m/ButtonType" name="type">
             <documentation>Defines the &lt;code&gt;Button&lt;/code&gt; type.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" group="Misc">
+        <property group="Misc" type="sap.ui.core/CSSSize" name="width">
             <documentation>Defines the &lt;code&gt;Button&lt;/code&gt; width.</documentation>
         </property>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>Determines whether the &lt;code&gt;Button&lt;/code&gt; is enabled (default is set to &lt;code&gt;true&lt;/code&gt;).
 A disabled &lt;code&gt;Button&lt;/code&gt; has different colors depending on the {@link sap.m.ButtonType ButtonType}.</documentation>
         </property>
-        <property name="icon" type="sap.ui.core/URI" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/URI" name="icon">
             <documentation>Defines the icon to be displayed as graphical element within the &lt;code&gt;Button&lt;/code&gt;.
 It can be an image or an icon from the icon font.</documentation>
         </property>
-        <property name="iconFirst" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="iconFirst">
             <documentation>Determines whether the icon is displayed before the text.</documentation>
         </property>
-        <property name="activeIcon" type="sap.ui.core/URI" group="Misc">
+        <property group="Misc" type="sap.ui.core/URI" name="activeIcon">
             <documentation>The source property of an alternative icon for the active (depressed) state of the button.
 Both active and default icon properties should be defined and have the same type: image or icon font.
 If the &lt;code&gt;icon&lt;/code&gt; property is not set or has a different type, the active icon is not displayed.</documentation>
         </property>
-        <property name="iconDensityAware" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="iconDensityAware">
             <documentation>By default, this is set to true but then one or more requests are sent trying to get the density perfect version of image if this version of image doesn't exist on the server.
 
 If only one version of image is provided, set this value to false to avoid the attempt of fetching density perfect image.</documentation>
         </property>
-        <property name="textDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance" since="1.28.0">
+        <property since="1.28.0" group="Appearance" defaultValue="Inherit" type="sap.ui.core/TextDirection" name="textDirection">
             <documentation>This property specifies the element's text directionality with enumerated options. By default, the control inherits text direction from the DOM.</documentation>
         </property>
     </properties>
     <events>
-        <event name="tap" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="tap">
             <documentation>Fired when the user taps the control.</documentation>
             <deprecation since="1.20">replaced by &lt;code&gt;press&lt;/code&gt; event</deprecation>
         </event>
-        <event name="press" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="press">
             <documentation>Fired when the user clicks or taps on the control.</documentation>
         </event>
     </events>
     <associations>
-        <association name="ariaDescribedBy" type="sap.ui.core/Control" cardinality="0..n">
+        <association cardinality="0..n" type="sap.ui.core/Control" name="ariaDescribedBy">
             <documentation>Association to controls / ids which describe this control (see WAI-ARIA attribute aria-describedby).</documentation>
         </association>
-        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
+        <association cardinality="0..n" type="sap.ui.core/Control" name="ariaLabelledBy">
             <documentation>Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).</documentation>
         </association>
     </associations>

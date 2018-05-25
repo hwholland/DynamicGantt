@@ -7,7 +7,7 @@
     <since>1.15</since>
     <abstract/>
     <properties>
-        <property name="content" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="content">
             <documentation>The Template definition as a String.</documentation>
         </property>
     </properties>

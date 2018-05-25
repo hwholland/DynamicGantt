@@ -20,7 +20,7 @@ jQuery.sap.declare("sap.apf.modeler.core.facetFilter");
 	 * @constructor
 	 */
 	sap.apf.modeler.core.FacetFilter = function(facetFilterId, inject, dataFromCopy) {
-		var request, selectPropertyForValueHelp, selectPropertyForFilterResolution, metadata, label, preselectionDefaults, valueList, property, alias, labelKey, preselectionFunction, hasAutomaticSelection = true, isMultiSelectionActive, invisible, useSameRequestForValueHelpAndFilterResolution;
+		var request, selectPropertyForValueHelp, selectPropertyForFilterResolution, metadata, label, preselectionDefaults, valueList, property, alias, labelKey, preselectionFunction, hasAutomaticSelection, isMultiSelectionActive, invisible, useSameRequestForValueHelpAndFilterResolution, hasNoneSelection = true;
 		if (!dataFromCopy) {
 			request = {
 				forValueHelp : {
@@ -55,6 +55,7 @@ jQuery.sap.declare("sap.apf.modeler.core.facetFilter");
 			isMultiSelectionActive = dataFromCopy.isMultiSelectionActive;
 			hasAutomaticSelection = dataFromCopy.hasAutomaticSelection;
 			useSameRequestForValueHelpAndFilterResolution = dataFromCopy.useSameRequestForValueHelpAndFilterResolution;
+			hasNoneSelection = dataFromCopy.hasNoneSelection;
 		}
 		/**
 		 * @private
@@ -135,16 +136,41 @@ jQuery.sap.declare("sap.apf.modeler.core.facetFilter");
 		};
 		/**
 		 * @private
+		 * @name sap.apf.modeler.core.FacetFilter#setNoneSelection
+		 * @function
+		 * @description Sets Indicator, that there will be no default selection.
+		 * @param {boolean}
+		 */
+		this.setNoneSelection = function(value) {
+			hasNoneSelection = value;
+			if(hasNoneSelection){
+				hasAutomaticSelection = false;
+				this.removePreselectionDefaults();
+				this.removePreselectionFunction();
+			}
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.FacetFilter#getAutomaticSelection
+		 * @function
+		 * @description gets Indicator, that there will be no default selection.
+		 */
+		this.getNoneSelection = function() {
+			return hasNoneSelection;
+		};
+		/**
+		 * @private
 		 * @name sap.apf.modeler.core.FacetFilter#setAutomaticSelection
 		 * @function
 		 * @description Sets Indicator, that there will be a auto selection.
 		 * This means, that for single selection the first value will be selected in the facet filter at run time or all values will be selected for multiple selection
-		 * @param {boolean} value preselectionFunction
+		 * @param {boolean} value
 		 */
 		this.setAutomaticSelection = function(value) {
 			inject.instances.messageHandler.check(typeof value === "boolean", "facetFilter wrong input for setAutomaticSelection");
 			hasAutomaticSelection = value;
 			if (hasAutomaticSelection) {
+				hasNoneSelection = false;
 				this.removePreselectionFunction();
 				this.removePreselectionDefaults();
 			}
@@ -168,6 +194,7 @@ jQuery.sap.declare("sap.apf.modeler.core.facetFilter");
 		this.setPreselectionFunction = function(value) {
 			preselectionFunction = value;
 			hasAutomaticSelection = false;
+			hasNoneSelection = false;
 			this.removePreselectionDefaults();
 		};
 		/**
@@ -198,6 +225,7 @@ jQuery.sap.declare("sap.apf.modeler.core.facetFilter");
 		this.setPreselectionDefaults = function(array) {
 			preselectionDefaults = array;
 			hasAutomaticSelection = false;
+			hasNoneSelection = false;
 			this.removePreselectionFunction();
 		};
 		/**
@@ -526,7 +554,8 @@ jQuery.sap.declare("sap.apf.modeler.core.facetFilter");
 				labelKey : labelKey,
 				invisible : invisible, 
 				isMultiSelectionActive : isMultiSelectionActive,
-				hasAutomaticSelection : hasAutomaticSelection
+				hasAutomaticSelection : hasAutomaticSelection,
+				hasNoneSelection : hasNoneSelection
 			};
 			var dataFromCopy = sap.apf.modeler.core.ConfigurationObjects.deepDataCopy(dataForCopy);
 			return new sap.apf.modeler.core.FacetFilter((newIdForCopy || this.getId()), inject, dataFromCopy);

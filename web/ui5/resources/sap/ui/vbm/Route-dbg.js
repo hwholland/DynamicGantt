@@ -324,7 +324,8 @@ sap.ui.define([
 
 		var flight = new Array(101);
 		var flight_geo = new Array(201);
-		for (var i = 0; i <= 100; i++) {
+		var i;
+		for (i = 0; i <= 100; i++) {
 			flight[i] = new Array(4);
 			flight_geo[i] = new Array(4);
 		}
@@ -336,7 +337,7 @@ sap.ui.define([
 
 		var route = "";
 
-		for (var i = 0; i <= 100; i++) {
+		for (i = 0; i <= 100; i++) {
 			var t = i / 100 * angle_r;
 
 			flight[i][0] = 0;

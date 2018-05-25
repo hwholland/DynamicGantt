@@ -10,54 +10,54 @@ to see the next or previous items.</documentation>
     <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.IconTabBar&lt;/code&gt;, &lt;code&gt;sap.m.TabContainer&lt;/code&gt; or &lt;code&gt;sap.uxap.ObjectPageLayout&lt;/code&gt; control.</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="toplevelVariant" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
+        <property group="Misc" defaultValue="false" type="sap.ui.core/boolean" name="toplevelVariant">
             <documentation>Defines whether the navigation bar shall have top-level appearance</documentation>
         </property>
-        <property name="overflowItemsToUpperCase" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.36">
+        <property since="1.36" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="overflowItemsToUpperCase">
             <documentation>Sets the appearance of the menu items in the overflow menu to uppercase</documentation>
         </property>
     </properties>
     <events>
-        <event name="select" allowPreventDefault="true">
+        <event allowPreventDefault="true" name="select">
             <documentation>Event is fired when an item is selected by the user</documentation>
             <parameters>
-                <parameter name="itemId" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="itemId">
                     <documentation>The ID of the newly selected NavigationItem.</documentation>
                 </parameter>
-                <parameter name="item" type="sap.ui.ux3/NavigationItem">
+                <parameter type="sap.ui.ux3/NavigationItem" name="item">
                     <documentation>The newly selected NavigationItem.</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations default="items">
-        <aggregation name="items" type="sap.ui.ux3/NavigationItem" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.ux3/NavigationItem" name="items">
             <documentation>If the navigation items need to have a different parent than the NavigationBar, alternatively the associatedItems association can be used.
 The NavigationBar follows the approach to use the items aggregation. If this aggregation is empty, associatedItems is used.</documentation>
         </aggregation>
-        <aggregation name="overflowMenu" type="sap.ui.commons/Menu" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.commons/Menu" name="overflowMenu">
             <documentation>Hidden aggregation for the overflow menu if applicable</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="selectedItem" type="sap.ui.ux3/NavigationItem" cardinality="0..1">
+        <association cardinality="0..1" type="sap.ui.ux3/NavigationItem" name="selectedItem">
             <documentation>The selected NavigationItem.</documentation>
         </association>
-        <association name="associatedItems" type="sap.ui.ux3/NavigationItem" cardinality="0..n">
+        <association cardinality="0..n" type="sap.ui.ux3/NavigationItem" name="associatedItems">
             <documentation>This association is ignored as long as the items aggregation is used; and supposed to be used alternatively when the items should be aggregated by other
 entities.</documentation>
         </association>
     </associations>
     <methods>
-        <method name="setAssociatedItems" type="sap.ui.ux3/NavigationBar">
+        <method type="sap.ui.ux3/NavigationBar" name="setAssociatedItems">
             <documentation>Replaces the currently associated items with the ones in the given array</documentation>
             <parameters>
-                <parameter name="items" type="sap.ui.ux3/NavigationItem[]">
+                <parameter type="sap.ui.ux3/NavigationItem[]" name="items">
                     <documentation>The items to associate</documentation>
                 </parameter>
             </parameters>
         </method>
-        <method name="isSelectedItemValid" type="sap.ui.core/boolean">
+        <method type="sap.ui.core/boolean" name="isSelectedItemValid">
             <documentation>Returns whether there is a selectedItem set which is actually present in the items aggregation; or, if the aggregation is empty, in the associatedItems association.</documentation>
         </method>
     </methods>

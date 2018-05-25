@@ -10,11 +10,14 @@
  * @memberOf sap.apf.ui.reuse.view
  * 
  */
-sap.ui.jsview("sap.apf.ui.reuse.view.stepGallery", {
-	getControllerName : function() {
-		return "sap.apf.ui.reuse.controller.stepGallery";
-	},
-	createContent : function(oController) {
-		this.oController = oController;
-}
-});
+(function() {
+	"use strict";
+	sap.ui.jsview("sap.apf.ui.reuse.view.stepGallery", {
+		getControllerName : function() {
+			return "sap.apf.ui.reuse.controller.stepGallery";
+		},
+		createContent : function(oController) {
+			this.oController = oController;
+		}
+	});
+}());

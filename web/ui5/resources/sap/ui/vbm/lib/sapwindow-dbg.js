@@ -1,4 +1,4 @@
-﻿// ...........................................................................//
+// ...........................................................................//
 // this module does the window handling......................................//
 
 // Author: Ulrich Roegelein
@@ -195,7 +195,6 @@ VBI.Windows = function() {
 
 		return null;
 	};
-	
 	windows.NotifySceneMove = function(scene) {
 		// notify all windows about a data change..............................//
 		var oA = windows.m_WindowArray;
@@ -361,8 +360,7 @@ VBI.Window = function() {
 	this.NotifyResize = function() {
 		return;
 
-	};	
-	
+	};
 	this.NotifySceneMove = function(scene) {
 		return;
 	};
@@ -847,8 +845,8 @@ VBI.LegendWindow = function() {
 			legend.calcMaxHeight();
 		}
 
-	};	
-	
+	};
+
 	legend.NotifyDataChange = function() {
 
 		if (legend.m_Props) {
@@ -997,7 +995,6 @@ VBI.LegendWindow = function() {
 		if (newpos[1] + legend.m_oLegend.m_Header.clientHeight > hs.m_Div.clientTop + hs.m_Div.clientHeight) {
 			newpos[1] = hs.m_Div.clientTop + hs.m_Div.clientHeight - legend.m_oLegend.m_Header.clientHeight;
 		}
-		
 
 		jQuery(legend.m_oLegend.m_Div).css('top', newpos[1] + 'px');
 		jQuery(legend.m_oLegend.m_Div).css('right', hs.m_Div.clientWidth - legend.m_oLegend.m_Div.clientWidth - newpos[0] + 'px');

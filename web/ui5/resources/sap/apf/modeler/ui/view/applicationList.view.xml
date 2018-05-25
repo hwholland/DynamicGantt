@@ -45,7 +45,8 @@
 												enabled="true" editable="false" liveChange="handleOnLiveChange"
 												class="cursor" />
 											<Icon xmlns="sap.ui.core" id="idDeleteIcon" src="sap-icon://sys-cancel"
-												visible="false" color="#cc1919" press="handleDeletePress"></Icon>
+												visible="false" press="handleDeletePress"
+												ariaLabelledBy="idAriaPropertyForDelete"></Icon>
 										</cells>
 									</ColumnListItem>
 								</items>
@@ -53,6 +54,7 @@
 						</ScrollContainer>
 					</items>
 				</VBox>
+				<InvisibleText xmlns="sap.ui.core" id="idAriaPropertyForDelete" />
 			</content>
 			<footer>
 				<Bar xmlns="sap.m" id="idFooterBarMain">

@@ -1,5 +1,5 @@
 /*!
- * SAP APF Analysis Path Framework
+ * SAP APF Analysis Path Framework 
  * 
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
@@ -7,41 +7,35 @@
  * @class stepContainer
  * @name stepContainer
  * @memberOf sap.apf.ui.reuse.view
- * @description Holds the step in main area. Includes the step toolbar view and step representation view
+ * @description Creates ChartContainer and add it into the layout 
  * @returns {stepContainerLayout}
  */
-sap.ui.jsview("sap.apf.ui.reuse.view.stepContainer", {
-	/**
-	 * @this {sap.apf.ui.reuse.view.stepContainer}
-	 *
-	 */
-	/**
-	 * @memberOf sap.apf.ui.reuse.view.stepContainer
-	 * @method getStepToolbar
-	 * @see sap.apf.ui.reuse.view.stepToolbar
-	 * @description Getter for step toolbar container 
-	 * @returns stepToolbar view 
-	 */
-	getStepToolbar : function() {
-		return this.oStepToolbar;
-	},
-	getControllerName : function() {
-		return "sap.apf.ui.reuse.controller.stepContainer";
-	},
-
-	createContent : function(oController) {
-		var oViewData = this.getViewData();
-		this.oStepToolbar = sap.ui.view({viewName:"sap.apf.ui.reuse.view.stepToolbar", type:sap.ui.core.mvc.ViewType.JS,viewData :oViewData});
-		this.stepLayout = new sap.ui.layout.VerticalLayout({
-			content : [ this.oStepToolbar],
-			width : "100%"
-		});
-		this.vLayout = new sap.ui.layout.VerticalLayout({
-			content : this.stepLayout,
-			width : "100%"
-		});
-		this.vLayout.setBusy(true);
-		return this.vLayout; //holds chart and toolbar
-	}
-
-});
+(function() {
+	"use strict";
+	jQuery.sap.require("sap.suite.ui.commons.ChartContainer");
+	sap.ui.jsview("sap.apf.ui.reuse.view.stepContainer", {
+		/**
+		 * @this {sap.apf.ui.reuse.view.stepContainer}
+		 *
+		 */
+		getControllerName : function() {
+			return "sap.apf.ui.reuse.controller.stepContainer";
+		},
+		createContent : function(oController) {
+			if (sap.ui.Device.system.desktop) {
+				oController.getView().addStyleClass("sapUiSizeCompact");
+			}
+			var chartContainer = new sap.suite.ui.commons.ChartContainer({
+				id : oController.createId("idChartContainer"),
+				showFullScreen : true
+			}).addStyleClass("chartContainer ChartArea");
+			this.stepLayout = new sap.ui.layout.VerticalLayout({
+				id : oController.createId("idStepLayout"),
+				content : [ chartContainer ],
+				width : "100%"
+			});
+			this.stepLayout.setBusy(true);
+			return this.stepLayout;
+		}
+	});
+}());

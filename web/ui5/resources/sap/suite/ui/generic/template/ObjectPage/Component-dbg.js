@@ -1,56 +1,37 @@
-sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler"], function(TemplateAssembler) {
+sap.ui.define(["jquery.sap.global", "sap/suite/ui/generic/template/lib/TemplateAssembler",
+	"sap/suite/ui/generic/template/lib/TemplateComponent", "sap/suite/ui/generic/template/detailTemplates/detailUtils",
+	"sap/suite/ui/generic/template/ObjectPage/controller/ControllerImplementation"
+], function(jQuery, TemplateAssembler, TemplateComponent, detailUtils, ControllerImplementation) {
 	"use strict";
 
 	function getMethods(oComponent, oComponentUtils) {
-		var oViewProxy;
+		var oViewProxy = {};
+		
+		var oBase = detailUtils.getComponentBase(oComponent, oComponentUtils, oViewProxy);                         
 
-		// helper functions
-		function fnBindBreadCrumbs() {
-			if (!oViewProxy) {
-				return;
-			}
-			var oRouter = oComponent.getRouter();
-			var sPath = oRouter && oRouter.oHashChanger && oRouter.oHashChanger.getHash();
-
-			if (!sPath) {
-				return;
-			}
-
-			// remove query part if there's one
-			sPath = sPath.split("?")[0];
-			var aSections = sPath.split("/");
-
-			if (aSections[0] === "" || aSections[0] === "#") {
-				// Path started with a / - remove first section
-				aSections.splice(0, 1);
-			}
-
-			// remove the last one - this is the current shown section
-			aSections.pop();
-
-			oViewProxy.bindBreadCrumbs(aSections);
-		}
-
-		return {
-			onActivate: function(sBindingPath) {
-				// preliminary: in draft case maybe on first time property is not set
-				var oUIModel = oComponent.getModel("ui");
-				if (oComponentUtils.getEditableNDC()) {
-					oUIModel.setProperty("/editable", true);
-				} else if (oViewProxy && !oViewProxy.isDraftEnabled()) {
-					oUIModel.setProperty("/editable", false);
-				}
-				oViewProxy.onComponentActivate(sBindingPath);
-			},
-			forView: {
-				registerView: function(theViewProxy) {
-					oViewProxy = theViewProxy;
+		var oSpecific = {
+			oControllerSpecification: {
+				getMethods: ControllerImplementation.getMethods.bind(null, oViewProxy),
+				oControllerDefinition: {
+					// ---------------------------------------------
+					// Extensions
+					// ---------------------------------------------
+					adaptNavigationParameterExtension: function(oSelectionVariant, oObjectInfo) {},
+					onBeforeRebindTableExtension: function(oEvent) {},
+					onListNavigationExtension: function(oEvent){},
+					provideCustomStateExtension: function(oState){},
+					applyCustomStateExtension: function(oState, bIsSameAsLast){},
+					adaptTransientMessageExtension: function(){}
 				}
 			},
-
+			getTemplateSpecificParameters: function(){
+				return {
+					breadCrumb: oComponentUtils.getBreadCrumbInfo()	
+				};
+			},
 			refreshBinding: function(bUnconditional, mRefreshInfos) {
 				// default implementation: refresh element binding
-				if (bUnconditional){
+				if (bUnconditional) {
 					var oElementBinding = oComponent.getComponentContainer().getElementBinding();
 					if (oElementBinding) {
 						oElementBinding.refresh(true);
@@ -59,107 +40,78 @@ sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler"], function(
 					oViewProxy.refreshFacets(mRefreshInfos);
 				}
 			},
-			
-			overwrite: {
-				updateBindingContext: function() {
-
-					sap.suite.ui.generic.template.lib.TemplateComponent.prototype.updateBindingContext.apply(oComponent,
-							arguments);
-
-					var oBindingContext = oComponent.getBindingContext();
-					if (oBindingContext) {
-						oComponent.getModel().getMetaModel().loaded()
-								.then(
-										function() {
-											var oTemplatePrivateModel = oComponent.getModel("_templPriv");
-
-											// set draft status to blank according to UI decision
-											oTemplatePrivateModel.setProperty("/generic/draftIndicatorState", sap.m.DraftIndicatorState.Clear);
-
-											var oActiveEntity = oBindingContext.getObject();
-											if (oActiveEntity) {
-												var oUIModel = oComponent.getModel("ui");
-												var oDraftController = oComponent.getAppComponent().getTransactionController()
-														.getDraftController();
-												var oDraftContext = oDraftController.getDraftContext();
-												var bIsDraft = oDraftContext.hasDraft(oBindingContext) && !oActiveEntity.IsActiveEntity;
-												var bHasActiveEntity = oActiveEntity.HasActiveEntity;
-												if (oComponentUtils.getCreateMode()) {
-													oUIModel.setProperty("/createMode", true);
-													oUIModel.setProperty("/editable", true);
-													oUIModel.setProperty("/enabled", true);
-												} else if (bIsDraft) {
-													if (bHasActiveEntity) {
-														oUIModel.setProperty("/createMode", false);
-														oUIModel.setProperty("/editable", true);
-														oUIModel.setProperty("/enabled", true);
-													} else {
-														oUIModel.setProperty("/createMode", true);
-														oUIModel.setProperty("/editable", true);
-														oUIModel.setProperty("/enabled", true);
-													}
-												} else {
-													oUIModel.setProperty("/createMode", false);
-													oUIModel.setProperty("/editable", oComponentUtils.getEditableNDC());
-													if (oActiveEntity.hasOwnProperty("HasDraftEntity") && oActiveEntity.HasDraftEntity &&
-															oDraftContext.hasSiblingEntity(oComponent.getEntitySet())) {
-														oUIModel.setProperty("/enabled", false);
-														oComponent.getModel().read(
-																oBindingContext.getPath(),
-																{
-																	urlParameters: {
-																		"$expand": "SiblingEntity,DraftAdministrativeData"
-																	},
-																	success: function(oResponseData) {
-																		var oSiblingContext = oComponent.getModel().getContext(
-																				"/" + oComponent.getModel().getKey(oResponseData.SiblingEntity));
-																		if (oSiblingContext) {
-																			oViewProxy.draftResume(oSiblingContext, oActiveEntity,
-																					oResponseData.DraftAdministrativeData);
-																		}
-																		// enable the buttons
-																		oUIModel.setProperty("/enabled", true);
-																	}
-																});
-													} else {
-														// enable the buttons
-														oUIModel.setProperty("/enabled", true);
-													}
-												}
-											}
-										});
-						fnBindBreadCrumbs();
-					}
+			presetDisplayMode: function(iDisplayMode, bIsAlreadyDisplayed){
+				if (bIsAlreadyDisplayed){
+					return; // wait for the data to come for the case that the view is already displayed
 				}
+				var oTemplateModel = oComponentUtils.getTemplatePrivateModel();
+				oTemplateModel.setProperty("/objectPage/displayMode", iDisplayMode);
+			},
+			beforeRebind: function(){
+				oViewProxy.beforeRebind();
+			},
+			afterRebind: function(){
+				oViewProxy.afterRebind();
+			},
+			enhanceExtensionAPI4Reuse: function(oExtensionAPI, oEmbeddedComponentInfo){
+				oExtensionAPI.setSectionHidden = function(bHidden){
+					var oTemplateModel = oComponentUtils.getTemplatePrivateModel();
+					oTemplateModel.setProperty("/generic/embeddedComponents/" + oEmbeddedComponentInfo.embeddedKey + "/hidden", bHidden);					
+				};	
 			}
 		};
+		return jQuery.extend(oBase, oSpecific);
 	}
 
 	return TemplateAssembler.getTemplateComponent(getMethods,
-			"sap.suite.ui.generic.template.ObjectPage.Component", {
+		"sap.suite.ui.generic.template.ObjectPage", {
 
-				metadata: {
-					library: "sap.suite.ui.generic.template",
-					properties: {
-						// reference to smart template
-						"templateName": {
-							"type": "string",
-							"defaultValue": "sap.suite.ui.generic.template.ObjectPage.view.Details"
-						},
-						// shall button "Related Apps" be visible on the object page?
-						"showRelatedApps": {
-							"type": "boolean",
-							"defaultValue": "false"
-						},
-						// shall it be possible to edit the contents of the header?
-						"editableHeaderContent" : {
-							"type" : "boolean",
-							"defaultValue" : "false"
-						},
-						"gridTable": "boolean"
+			metadata: {
+				library: "sap.suite.ui.generic.template",
+				properties: {
+					// reference to smart template
+					"templateName": {
+						"type": "string",
+						"defaultValue": "sap.suite.ui.generic.template.ObjectPage.view.Details"
 					},
-					// app descriptor format
-					"manifest": "json"
-				}
-			});
+					// shall button "Related Apps" be visible on the object page?
+					"showRelatedApps": {
+						"type": "boolean",
+						"defaultValue": "false"
+					},
+					// shall confirmation popup be shown in object page while saving?
+					"showConfirmationOnDraftActivate": {
+						"type": "boolean",
+						"defaultValue": "false"
+					},
+					// hide chevron for unauthorized inline external navigation?
+					"hideChevronForUnauthorizedExtNav": {
+						"type": "boolean",
+						"defaultValue": "false"
+					},
+					// To enable multiselect in tables
+					"multiSelect": "boolean",	
+					"allTableMultiSelect": "boolean",
+					// shall it be possible to edit the contents of the header?
+					"editableHeaderContent": {
+						"type": "boolean",
+						"defaultValue": "false"
+					},
+					"gridTable": "boolean",
+					"tableType": "string",
+					"sections": "object",
+					// Shall the simple header facets be used?
+					"simpleHeaderFacets": {
+						"type": "boolean",
+						"defaultValue": "false"
+					},
+					//Allow deep linking to sub object pages?
+					"allowDeepLinking": "boolean",
+					//Navigate to list report page on draft activation?
+					"navToListOnSave": "boolean"
+				},
+				// app descriptor format
+				"manifest": "json"
+			}
+		});
 });

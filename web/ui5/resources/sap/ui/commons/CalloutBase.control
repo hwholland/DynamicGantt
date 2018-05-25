@@ -7,48 +7,48 @@
     <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.core/TooltipBase</baseType>
     <events>
-        <event name="open" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="open">
             <documentation>The event is fired when the popup is opened.</documentation>
             <parameters>
-                <parameter name="parent" type="sap.ui.core/Control">
+                <parameter type="sap.ui.core/Control" name="parent">
                     <documentation>Parent control that has this Callout as a tooltip</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="close" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="close">
             <documentation>Event is fired when the Callout window is closed.</documentation>
         </event>
-        <event name="beforeOpen" allowPreventDefault="true">
+        <event allowPreventDefault="true" name="beforeOpen">
             <documentation>Event is fired before a Callout is displayed. Call the preventDefault method of the event object to postpone opening. Application may use this event to start asynchronous Ajax call to load the Callout content</documentation>
             <parameters>
-                <parameter name="parent" type="sap.ui.core/Control">
+                <parameter type="sap.ui.core/Control" name="parent">
                     <documentation>Parent control that has this Callout as a tooltip</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="opened" since="1.11.0" allowPreventDefault="false">
+        <event allowPreventDefault="false" since="1.11.0" name="opened">
             <documentation>Is fired when the Callout has been opened</documentation>
         </event>
     </events>
     <methods>
-        <method name="adjustPosition" type="sap.ui.core/void">
+        <method type="sap.ui.core/void" name="adjustPosition">
             <documentation>Adjust position of the already opened Callout window.
 Call this method each time when the size of the opened
 Callout window may be changed due to new or changed
 contents.</documentation>
         </method>
-        <method name="close" type="sap.ui.core/void">
+        <method type="sap.ui.core/void" name="close">
             <documentation>Closes Callout</documentation>
         </method>
-        <method name="setPosition" type="sap.ui.commons/CalloutBase">
+        <method type="sap.ui.commons/CalloutBase" name="setPosition">
             <documentation>Set position of the Callout window relative to the parent control.
 This function automatically calculates and sets the correct offset,
 use it instead of &lt;code&gt;setMyPosition/setAtPosition&lt;/code&gt;.</documentation>
             <parameters>
-                <parameter name="myPosition" type="sap.ui.core/Dock">
+                <parameter type="sap.ui.core/Dock" name="myPosition">
                     <documentation>docking position of the Callout</documentation>
                 </parameter>
-                <parameter name="atPosition" type="sap.ui.core/Dock">
+                <parameter type="sap.ui.core/Dock" name="atPosition">
                     <documentation>docking position of the parent control</documentation>
                 </parameter>
             </parameters>

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * InboxAttachmentTile
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -70,16 +70,52 @@ sap.ui.core.Control.extend("sap.uiext.inbox.composite.InboxAttachmentTile", { me
 
 	library : "sap.uiext.inbox",
 	properties : {
+
+		/**
+		 * Name of the attachment
+		 */
 		"fileName" : {type : "string", group : "", defaultValue : null},
+
+		/**
+		 * size of the attachment
+		 */
 		"fileSize" : {type : "string", group : "", defaultValue : null},
+
+		/**
+		 * description of the attachment
+		 */
 		"fileDescription" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * Icon URI of the file type
+		 */
 		"fileTypeIcon" : {type : "sap.ui.core.URI", group : "Misc", defaultValue : null},
+
+		/**
+		 * creation date of the attachment
+		 */
 		"creationDate" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * URL for attachment title link to download the attachment.
+		 */
 		"downloadUrl" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * name of the user who has uploaded attachment
+		 */
 		"createdBy" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * boolean value to indicate whether to show delete button
+		 */
 		"showDeleteButton" : {type : "boolean", group : "Misc", defaultValue : true}
 	},
 	events : {
+
+		/**
+		 * fire this event to delete the attachment
+		 */
 		"deleteAttachment" : {}
 	}
 }});

@@ -36,7 +36,7 @@ sap.ui.define([
 	 * @extends sap.gantt.shape.ext.ubc.UbcPolygon
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public

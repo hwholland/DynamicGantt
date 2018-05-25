@@ -1,60 +1,60 @@
-(function () {
-	"use strict";
-	/*global jQuery, sap */
+sap.ui.define(["sap/ovp/cards/generic/Component", "sap/ovp/cards/charts/VizAnnotationManager",
+        "sap/ovp/cards/charts/Utils"],
 
-	jQuery.sap.declare("sap.ovp.cards.charts.generic.Component");
-	jQuery.sap.require("sap.ovp.cards.generic.Component");
-	jQuery.sap.require("sap.ovp.cards.charts.VizAnnotationManager");
-	jQuery.sap.require("sap.ovp.cards.charts.Utils");
-	sap.ovp.cards.generic.Component.extend("sap.ovp.cards.charts.generic.Component", {
-		// use inline declaration instead of component.json to save 1 round trip
-		metadata: {
-			properties: {
-				"headerExtensionFragment":{
-					"type": "string",
-					"defaultValue": "sap.ovp.cards.generic.KPIHeader"
-				},
-				"selectionAnnotationPath":{
-					"type": "string",
-					"defaultValue": "com.sap.vocabularies.UI.v1.SelectionVariant"
-				},
-				"chartAnnotationPath":{
-					"type": "string",
-					"defaultValue": "com.sap.vocabularies.UI.v1.Chart"
-				},
-				"presentationAnnotationPath":{
-					"type": "string",
-					"defaultValue": "com.sap.vocabularies.UI.v1.PresentationVariant"
-				},
-				"identificationAnnotationPath":{
-					"type": "string",
-					"defaultValue": "com.sap.vocabularies.UI.v1.Identification"
-				},
-				"dataPointAnnotationPath":{
-					"type": "string",
-					"defaultValue": "com.sap.vocabularies.UI.v1.DataPoint"
-				}
-			},
+    function (CardComponent, VizAnnotationManager, ChartUtils) {
+        "use strict";
 
-			version: "1.38.10",
+        return CardComponent.extend("sap.ovp.cards.charts.generic.Component", {
+            // use inline declaration instead of component.json to save 1 round trip
+            metadata: {
+                properties: {
+                    "headerExtensionFragment": {
+                        "type": "string",
+                        "defaultValue": "sap.ovp.cards.generic.KPIHeader"
+                    },
+                    "selectionAnnotationPath": {
+                        "type": "string",
+                        "defaultValue": "com.sap.vocabularies.UI.v1.SelectionVariant"
+                    },
+                    "chartAnnotationPath": {
+                        "type": "string",
+                        "defaultValue": "com.sap.vocabularies.UI.v1.Chart"
+                    },
+                    "presentationAnnotationPath": {
+                        "type": "string",
+                        "defaultValue": "com.sap.vocabularies.UI.v1.PresentationVariant"
+                    },
+                    "identificationAnnotationPath": {
+                        "type": "string",
+                        "defaultValue": "com.sap.vocabularies.UI.v1.Identification"
+                    },
+                    "dataPointAnnotationPath": {
+                        "type": "string",
+                        "defaultValue": "com.sap.vocabularies.UI.v1.DataPoint"
+                    }
+                },
 
-			library: "sap.ovp",
+                version: "1.54.3",
 
-			includes: [],
+                library: "sap.ovp",
 
-			dependencies: {
-				libs: [ "sap.m" ],
-				components: []
-			},
-			config: {}
-		},
+                includes: [],
 
-		addTabindex: function() {
-			jQuery(".tabindex0").attr("tabindex", 0);
-		},
+                dependencies: {
+                    libs: [],
+                    components: []
+                },
+                config: {}
+            },
 
-		onAfterRendering: function() {
-			this.addTabindex();
-		}
-	});
-})();
+            addTabindex: function () {
+                jQuery(".tabindex0").attr("tabindex", 0);
+                jQuery(".tabindex-1").attr("tabindex", -1);
+            },
+
+            onAfterRendering: function () {
+                this.addTabindex();
+            }
+        });
+    }
+);

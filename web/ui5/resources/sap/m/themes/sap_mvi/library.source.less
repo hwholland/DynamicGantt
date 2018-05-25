@@ -1,6 +1,6 @@
 /*!
  * UI development toolkit for HTML5 (OpenUI5)
- * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2018 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,6 +9,7 @@
 @import "shared.less";
 
 @import "ActionListItem.less";
+@import "ActionSelect.less";
 @import "ActionSheet.less";
 @import "App.less";
 @import "Bar.less";
@@ -19,19 +20,15 @@
 @import "Button.less";
 @import "Carousel.less";
 @import "CheckBox.less";
+@import "ColumnHeader.less";
 @import "ColumnListItem.less";
-@import "CustomListItem.less";
+@import "ColorPalette.less";
 @import "CustomTile.less";
-@import "DatePicker.less";
 @import "DateRangeSelection.less";
-@import "DateTimeInput.less";
 @import "DateTimePicker.less";
 @import "Dialog.less";
 @import "DisplayListItem.less";
 @import "DraftIndicator.less";
-@import "DynamicPage.less";
-@import "DynamicPageTitle.less";
-@import "DynamicPageHeader.less";
 @import "MessagePage.less";
 @import "FacetFilter.less";
 @import "FacetFilterItem.less";
@@ -39,14 +36,13 @@
 @import "FeedContent.less";
 @import "FeedInput.less";
 @import "FeedListItem.less";
-@import "FileUpload.less";
 @import "FlexBox.less";
 @import "FormattedText.less";
-@import "FlexibleColumnLayout.less";
 @import "GenericTile.less";
 @import "GroupHeaderListItem.less";
-@import "GrowingList.less";
+@import "HeaderContainer.less";
 @import "IconTabBar.less";
+@import "IconTabBarSelectList.less";
 @import "Image.less";
 @import "ImageContent.less";
 @import "Input.less";
@@ -59,17 +55,21 @@
 
 @import "InputListItem.less";
 @import "Label.less";
+@import "LightBox.less";
 @import "Link.less";
-@import "List.less";
 @import "ListBase.less";
 @import "ListItemBase.less";
-@import "MaskInput.less";
+
+/* Note: The following file is not in alphabetical order and should be imported after ListItemBase.less */
+@import "CustomListItem.less";
+
 @import "Menu.less";
 @import "MenuButton.less";
 @import "MenuListItem.less";
 @import "MessageBox.less";
 @import "MessageStrip.less";
 @import "MessagePopover.less";
+@import "MessageView.less";
 @import "MessageToast.less";
 @import "MultiComboBox.less";
 @import "MultiInput.less";
@@ -91,12 +91,13 @@
 @import "P13nConditionPanel.less";
 @import "P13nDialog.less";
 @import "P13nFilterPanel.less";
-@import "P13nPanel.less";
 @import "P13nSortPanel.less";
 @import "Page.less";
 @import "PagingButton.less";
 @import "Panel.less";
+@import "PDFViewer.less";
 @import "PlanningCalendar.less";
+@import "PlanningCalendarLegend.less";
 @import "Popover.less";
 @import "ProgressIndicator.less";
 @import "PullToRefresh.less";
@@ -111,15 +112,20 @@
 @import "Select.less";
 @import "SelectDialog.less";
 @import "SelectList.less";
+@import "SelectionDetails.less";
+@import "SelectionDetailsItem.less";
 @import "SemanticPage.less";
 @import "Shell.less";
 @import "Slider.less";
+@import "SliderTooltip.less";
+@import "SliderTooltipContainer.less";
 @import "SlideTile.less";
-@import "SplitApp.less";
 @import "SplitButton.less";
 @import "SplitContainer.less";
 @import "StandardListItem.less";
+@import "StandardTreeItem.less";
 @import "StandardTile.less";
+@import "StepInput.less";
 @import "SuggestionItem.less";
 @import "Support.less";
 @import "Switch.less";
@@ -128,14 +134,13 @@
 @import "TablePersoDialog.less";
 @import "TableSelectDialog.less";
 @import "TabStrip.less";
-@import "TabStripSelect.less";
-@import "TabStripSelectList.less";
 @import "Text.less";
 @import "TextArea.less";
 @import "Tile.less";
 @import "TileContent.less";
 @import "TileContainer.less";
 @import "TimePicker.less";
+@import "TimePickerSliders.less";
 @import "Title.less";
 @import "ToggleButton.less";
 @import "Token.less";
@@ -143,7 +148,9 @@
 @import "Toolbar.less";
 @import "ToolbarSeparator.less";
 @import "ToolbarSpacer.less";
+@import "TreeItemBase.less";
 @import "UploadCollection.less";
+@import "ValueStateMessage.less";
 @import "ViewSettingsDialog.less";
 @import "Wizard.less";
 @import "WizardProgressNavigator.less";

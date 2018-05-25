@@ -4,7 +4,7 @@
 		<sapui5>
 			
 			<basePath>../../../../../</basePath>
-            <viewName>sap.ushell.components.tiles.indicatordeviation.DeviationTile.view.js</viewName>
+            <viewName>sap.ushell.components.tiles.indicatorDual.DualTile.view.js</viewName>
 		</sapui5>
 	</implementation>
 	<appearance>

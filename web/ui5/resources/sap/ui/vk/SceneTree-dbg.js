@@ -7,8 +7,10 @@
 
 // Provides control sap.ui.vk.SceneTree.
 sap.ui.define([
-	"jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/table/TreeTable", "sap/ui/table/Column", "sap/ui/model/json/JSONModel", "sap/m/Title", "./CheckEye", "./NodeProxy"
-], function(jQuery, library, Control, TreeTable, Column, JSONModel, Title, CheckEye, NodeProxy) {
+	"jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/table/TreeTable", "sap/ui/table/Column", "sap/ui/model/json/JSONModel",
+	"sap/m/Title", "./CheckEye", "./ContentConnector", "./ViewStateManager"
+], function(jQuery, library, Control, TreeTable, Column, JSONModel,
+		Title, CheckEye, ContentConnector, ViewStateManager) {
 	"use strict";
 
 	/**
@@ -21,7 +23,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 *
 	 * @constructor
 	 * @public
@@ -32,16 +34,28 @@ sap.ui.define([
 	var SceneTree = Control.extend("sap.ui.vk.SceneTree", /** @lends sap.ui.vk.SceneTree.prototype */ {
 		metadata: {
 			library: "sap.ui.vk",
-			properties: {},
-			events: {},
-			associations: {
-				/*viewState: { type: "sap.ui.vk.ViewState", multiple: false }*/
-			},
 			aggregations: {
 				_tree: {
 					type: "sap.ui.table.TreeTable",
 					multiple: false,
 					visibility: "hidden"
+				}
+			},
+			associations: {
+				/**
+				 * An association to the <code>ContentConnector</code> instance that manages content resources.
+				 */
+				contentConnector: {
+					type: "sap.ui.vk.ContentConnector",
+					multiple: false
+				},
+
+				/**
+				 * An association to the <code>ViewStateManager</code> instance.
+				 */
+				viewStateManager: {
+					type: "sap.ui.vk.ViewStateManager",
+					multiple: false
 				}
 			}
 		}
@@ -51,39 +65,28 @@ sap.ui.define([
 		return sap.ui.vk.getResourceBundle().getText(isVisible ? "SCENETREE_VISIBILITYSTATEVISIBLE" : "SCENETREE_VISIBILITYSTATEHIDDEN");
 	};
 
-	SceneTree.prototype._createNodeForSceneTree = function(nodeName, nodeId, viewStateManager) {
-		var nodeVisibility = viewStateManager.getVisibilityState(nodeId);
+	SceneTree.prototype._createNodeForSceneTree = function(nodeName, nodeRef, viewStateManager) {
+		var nodeVisibility = viewStateManager.getVisibilityState(nodeRef);
 		return {
 			name: nodeName,
-			id: nodeId,
+			id: nodeRef,
 			visible: nodeVisibility,
 			checkEyeTooltip: getCheckEyeTooltip(nodeVisibility, this)
 		};
 	};
 
+	// This methods is kept here for backward compatibility.
 	SceneTree.prototype.setScene = function(scene, viewStateManager) {
-		if (this._nodeSelectionChangedBinding == undefined) {
-			this._nodeSelectionChangedBinding = this._nodeSelectionChanged.bind(this);
-			this._nodeVisibilityChangedBinding = this._nodeVisibilityChanged.bind(this);
-		}
-		if (this._viewStateManager) {
-			this._viewStateManager.detachSelectionChanged(this._nodeSelectionChangedBinding);
-			this._viewStateManager.detachSelectionChanged(this._nodeVisibilityChangedBinding);
-		}
+		this.setViewStateManager(viewStateManager);
+		this._setScene(scene);
+	};
 
+	SceneTree.prototype._setScene = function(scene) {
 		this._scene = scene;
-		this._viewStateManager = viewStateManager;
-
-		if (this._viewStateManager) {
-			this._viewStateManager.attachSelectionChanged(this._nodeSelectionChangedBinding);
-			this._viewStateManager.attachVisibilityChanged(this._nodeVisibilityChangedBinding);
-		}
-
 		this.refresh();
 	};
 
 	SceneTree.prototype.init = function() {
-		var currentSceneTree = this;
 		if (Control.prototype.init) {
 			Control.prototype.init.apply(this);
 		}
@@ -95,17 +98,17 @@ sap.ui.define([
 
 		_title.onAfterRendering = function() {
 			var $this = this.$();
-			$this.addClass('sapUiVkTitle');
+			$this.addClass("sapUiVkTitle");
 		};
 
 		this._visibilityColumnHeader = new CheckEye({
 			checked: true,
-			tooltip: getCheckEyeTooltip(true, currentSceneTree),
+			tooltip: getCheckEyeTooltip(true, this),
 			change: function(event) {
 				var isVisible = event.getParameters("checked").checked;
-				this.setTooltip(getCheckEyeTooltip(isVisible, currentSceneTree));
-				currentSceneTree._toggleVisibilityForAllChildren(currentSceneTree._model.getData(), isVisible);
-			}
+				this.setTooltip(getCheckEyeTooltip(isVisible, this));
+				this._toggleVisibilityForAllChildren(this._model.getData(), isVisible);
+			}.bind(this)
 		});
 
 		this._tree = new TreeTable({
@@ -123,7 +126,7 @@ sap.ui.define([
 					resizable: false
 				}),
 				new Column({
-					label: currentSceneTree._visibilityColumnHeader,
+					label: this._visibilityColumnHeader,
 					template: new CheckEye({
 						checked: "{visible}",
 						tooltip: "{checkEyeTooltip}"
@@ -132,10 +135,10 @@ sap.ui.define([
 					resizable: false,
 					hAlign: "Center"
 				})
-				],
+			],
 			selectionMode: "MultiToggle",
 			selectionBehavior: "RowSelector",
-			visibleRowCountMode: "Auto",
+			visibleRowCountMode: "Fixed",
 			expandFirstLevel: false,
 			collapseRecursive: true,
 			rowHeight: 32
@@ -146,12 +149,11 @@ sap.ui.define([
 		this._model = new JSONModel();
 		this._tree.setModel(this._model);
 		this._tree.bindRows({
-			path: '/'
+			path: "/"
 		});
 		this._tree.attachRowSelectionChange(this._nodeSelection.bind(this));
 		this._tree.getBinding("rows").attachChange(this._dataChange.bind(this));
 
-		this._viewStateManager = null;
 		this._scene = null;
 
 		this._syncing = false;
@@ -170,10 +172,6 @@ sap.ui.define([
 		this._totalNodes = null;
 	};
 
-	SceneTree.prototype.exit = function() {
-
-	};
-
 	SceneTree.prototype.onBeforeRendering = function() {
 		this._tree.setVisible(true);
 	};
@@ -189,7 +187,7 @@ sap.ui.define([
 		var level = "";
 
 		while (path.length > 0) {
-			var pos = path.indexOf('/');
+			var pos = path.indexOf("/");
 
 			if (pos >= 0) {
 				level = path.substr(0, pos);
@@ -210,7 +208,7 @@ sap.ui.define([
 		return node;
 	};
 
-	SceneTree.prototype._indexToNodeId = function(index) {
+	SceneTree.prototype._indexToNodeRef = function(index) {
 		var context = this._tree.getContextByIndex(index);
 		if (context) {
 			var node = this._pathToNode(context.sPath, context.oModel.oData);
@@ -226,14 +224,14 @@ sap.ui.define([
 		var desel = [];
 		var undodesel = {};
 
-		for (var i = 0;; i++) {
-			var id = this._indexToNodeId(i);
-			if (id == null) {
+		for (var i = 0; ; i++) {
+			var ref = this._indexToNodeRef(i);
+			if (ref == null) {
 				break;
 			}
 
-			if (vsm.hasOwnProperty(id)) {
-				undodesel[id] = true;
+			if (vsm.hasOwnProperty(ref)) {
+				undodesel[ref] = true;
 			}
 		}
 
@@ -246,7 +244,7 @@ sap.ui.define([
 
 		if (desel.length > 0) {
 			this._syncing = true;
-			vs.setSelectionState(desel, false, true);
+			vs.setSelectionState(desel, false, false);
 			this._syncing = false;
 		}
 	};
@@ -289,7 +287,7 @@ sap.ui.define([
 		}
 	};
 
-	SceneTree.prototype._nodeSelectionChanged = function(event) {
+	SceneTree.prototype._handleSelectionChanged = function(event) {
 		if (!this._syncing) {
 			if (this._reverseTimer > 0) {
 				clearTimeout(this._reverseTimer);
@@ -322,14 +320,13 @@ sap.ui.define([
 		}
 
 		this._syncing = true;
-
-		//this for loop goes through the list of nodes which ar margked as selected,
-		//finds the row that was just clicked and it applies selection to it
-		//via the ViewStateManager method "setSelection"
+		// this for loop goes through the list of nodes which ar marked as selected,
+		// finds the row that was just clicked and it applies selection to it
+		// via the ViewStateManager method "setSelection"
 		for (var i in this._selected) {
 			if (this._selected.hasOwnProperty(i)) {
-				var id = this._indexToNodeId(parseInt(i, 10));
-				if (id == null || id == "") {
+				var ref = this._indexToNodeRef(parseInt(i, 10));
+				if (ref == null || ref == "") {
 					continue;
 				}
 
@@ -339,36 +336,37 @@ sap.ui.define([
 					isSelected = !isSelected;
 				}
 
-				//We check if the current element fron "this._selected" array is the clicked row,
-				//so we can set the selection/deselection on it.
+				// We check if the current element from "this._selected" array is the clicked row,
+				// so we can set the selection/deselection on it.
 				if (targetedNodesIndexes.indexOf(parseInt(i, 10)) !== -1) {
-					this._viewStateManager.setSelectionState(id, isSelected, true);
+					this._viewStateManager.setSelectionState(ref, isSelected, false);
 
-					//Sometimes, a clicked row is part of a parent which is selected which causes all its children
-					//to be selected. If we deselect a particular child, we have to make sure we also deselect its parent.
+					// Sometimes, a clicked row is part of a parent which is selected which causes all its children
+					// to be selected. If we deselect a particular child, we have to make sure we also deselect its parent.
 					if (!isSelected) {
 						var nodeHierarchy = this._viewStateManager.getNodeHierarchy();
-						var ancestors = nodeHierarchy.getAncestors(id);
-						//the immediat parent of a node is the last element in the ancestors array
-						var parentNodeId = ancestors[ancestors.length - 1];
-						//We check if the parnet is in the list of currently selected rows.
-						if (this._viewStateManager._selectedNodes.has(parentNodeId)) {
-							this._viewStateManager.setSelectionState(parentNodeId, false);
-							//We update "this._selected" and "his._vsmSelected"
+						var ancestors = nodeHierarchy.getAncestors(ref);
+						// the immediate parent of a node is the last element in the ancestors array
+						var parentNodeRef = ancestors[ancestors.length - 1];
+						// We check if the parnet is in the list of currently selected rows.
+						if (this._viewStateManager.getSelectionState(parentNodeRef)) {
+							this._viewStateManager.setSelectionState(parentNodeRef, false);
+							// We update "this._selected" and "his._vsmSelected"
 							var selectedIndices = this._tree.getSelectedIndices();
 							for (var j = 0, length = selectedIndices.length; j < length; j++) {
 								var index = selectedIndices[j];
-								if (parentNodeId === this._indexToNodeId(index)) {
+								if (parentNodeRef === this._indexToNodeRef(index)) {
 									this._selected[index] = false;
+									this._tree.removeSelectionInterval(index, index);
 									break;
 								}
 							}
-							this._vsmSelected[parentNodeId] = false;
+							this._vsmSelected[parentNodeRef] = false;
 						}
 					}
 				}
 				this._selected[i] = isSelected;
-				this._vsmSelected[id] = isSelected;
+				this._vsmSelected[ref] = isSelected;
 			}
 		}
 
@@ -390,13 +388,13 @@ sap.ui.define([
 		var selCount = 0;
 		this._selected = {};
 
-		for (var i = 0;; i++) {
-			var id = this._indexToNodeId(i);
-			if (id == null || id == "") {
+		for (var i = 0; ; i++) {
+			var ref = this._indexToNodeRef(i);
+			if (ref == null || ref == "") {
 				break;
 			}
 
-			var sel = vs.getSelectionState(id);
+			var sel = vs.getSelectionState(ref);
 
 			if (sel) {
 				this._selected[i] = true;
@@ -415,12 +413,12 @@ sap.ui.define([
 		this._syncing = false;
 	};
 
-	SceneTree.prototype._expandToNode = function(nodeId, callback) {
+	SceneTree.prototype._expandToNode = function(nodeRef, callback) {
 
 		var totalNodes = this._totalNodes;
 
-		//we pass tree structure and an array of positions and it returns the resulting tree component
-		//For example: if we pas [0, 2, 3, 2], it returns dataModel[0][2][3][2]
+		// we pass tree structure and an array of positions and it returns the resulting tree component
+		// For example: if we pas [0, 2, 3, 2], it returns dataModel[0][2][3][2]
 		var getFormattedDataModel = function(dataModel, pathInModel) {
 			pathInModel.forEach(function(position) {
 				dataModel = dataModel[position];
@@ -429,29 +427,29 @@ sap.ui.define([
 		};
 
 		// getScrollPosition - When we know the index of the row where we want to scroll,
-		//we do some calculations so we position that row in the middle
-		//of the table. For example if we want to scroll index 30 into view
-		//and the table can fit 12 rows into the view, we will display the rows
-		//starting from 24 until 36 so row number 30 is in the middle.
-		var getScrollPosition = function (currentRow, rowIndex, rowCapacity) {
+		// we do some calculations so we position that row in the middle
+		// of the table. For example if we want to scroll index 30 into view
+		// and the table can fit 12 rows into the view, we will display the rows
+		// starting from 24 until 36 so row number 30 is in the middle.
+		var getScrollPosition = function(currentRow, rowIndex, rowCapacity) {
 			var position;
 			if ((rowIndex < currentRow) || (rowIndex >= (currentRow + rowCapacity))) {
-				//if the relevant row index is not in the view,
-				//we perform the necessary calculations.
+				// if the relevant row index is not in the view,
+				// we perform the necessary calculations.
 				position = rowIndex - (rowCapacity / 2);
 			} else {
-				//if the relevant row is already visible,
-				//we don't change anything and we return the current index.
+				// if the relevant row is already visible,
+				// we don't change anything and we return the current index.
 				position = currentRow;
 			}
-			//We round the index so it's an integer
-			//and we also make sure it's greater than 0 at all times.
+			// We round the index so it's an integer
+			// and we also make sure it's greater than 0 at all times.
 			position = position > 0 ? Math.floor(position) : 0;
 			return position;
 		};
 
-		//This is the method that performs the actual scrolling
-		var scrollNodeIntoView = function (tree, rowIndex) {
+		// This is the method that performs the actual scrolling
+		var scrollNodeIntoView = function(tree, rowIndex) {
 			var rowCapacity = tree.getVisibleRowCount(),
 				currentRow = tree.getFirstVisibleRow(),
 				rowToScrollTo = getScrollPosition(currentRow, rowIndex, rowCapacity);
@@ -460,14 +458,14 @@ sap.ui.define([
 			}
 		};
 
-		//This method takes a tree table and a node id as parameters and
-		//it returns the row index for the node with that id.
-		var getIndexFromNodeId = function(treeTable, nodeId) {
+		// This method takes a tree table and a node reference as parameters and
+		// it returns the row index for the node with that id.
+		var getIndexFromNodeRef = function(treeTable, nodeRef) {
 
 			var rowIndex = null,
 				context;
 
-			//we iterate over all row indexes
+			// we iterate over all row indexes
 			for (var currentIndex = 0; currentIndex < totalNodes; currentIndex++) {
 				context = treeTable.getContextByIndex(currentIndex);
 				if (context) {
@@ -475,9 +473,9 @@ sap.ui.define([
 					pathInModel.shift();
 					var dataModel = context.getModel().getData();
 
-					if (getFormattedDataModel(dataModel, pathInModel).id === nodeId) {
-						//when we find the node id that we need, we save the index
-						//and break out of the while loop
+					if (getFormattedDataModel(dataModel, pathInModel).id === nodeRef) {
+						// when we find the node reference that we need, we save the index
+						// and break out of the while loop
 						rowIndex = currentIndex;
 						break;
 					}
@@ -487,46 +485,50 @@ sap.ui.define([
 		};
 
 		var nodeHierarchy = this._scene.getDefaultNodeHierarchy(),
-			ancestors = nodeHierarchy.getAncestors(nodeId);
+			ancestors = nodeHierarchy.getAncestors(nodeRef);
 
-		//processAncestors removes the first ancestor from the collection,
-		//it gets the row index from the tree table, it expands that row
-		//and at the end, it scrolls the relevant row into view.
-		var processAncestors = function (tree, ancestors) {
+		// expandHandler it's called after the tree table expands a row.
+		// This is a way of expanding nodes recursively. We start with the
+		// "oldest" ancestors and we continue down the tree to the relevant node.
+		var expandHandler = function(ancestorsProcessorCallback, tree, ancestors, event) {
+			if (event.getParameter("reason") === "expand") {
+				ancestorsProcessorCallback(tree, ancestors);
+			}
+		};
+
+		var expandHandlerProxy; // forward declaration.
+
+		// processAncestors removes the first ancestor from the collection,
+		// it gets the row index from the tree table, it expands that row
+		// and at the end, it scrolls the relevant row into view.
+		var processAncestors = function(tree, ancestors) {
 			setTimeout(function() {
 				if (ancestors.length) {
-					//retrieve the first ancestor from the collection and remove it
-					var ancestorId = ancestors.shift();
-					var rowIndex = getIndexFromNodeId(tree, ancestorId);
+					// retrieve the first ancestor from the collection and remove it
+					var ancestorRef = ancestors.shift();
+					var rowIndex = getIndexFromNodeRef(tree, ancestorRef);
 					if (rowIndex !== null) {
 						tree.expand(rowIndex);
 					}
 				} else {
-					//after we expand the last node, we scroll the selected element into view
-					var scrollIndex = getIndexFromNodeId(tree, nodeId);
+					// after we expand the last node, we scroll the selected element into view
+					var scrollIndex = getIndexFromNodeRef(tree, nodeRef);
 					if (scrollIndex !== null) {
 						scrollNodeIntoView(tree, scrollIndex);
-						tree.getBinding("rows").detachChange(expandHandler);
+						tree.getBinding("rows").detachChange(expandHandlerProxy);
 						callback();
 					}
 				}
 			}, 70);
 		};
 
-		//expandHandler it's called after the tree table expands a row.
-		//This is a way of expanding nodes recursively. We start with the
-		//"oldest" ancestors and we continue down the tree to the relevant node.
-		var expandHandler = function (tree, ancestors, event) {
-			if (event.getParameter("reason") === "expand") {
-				processAncestors(tree, ancestors);
-			}
-		};
+		expandHandlerProxy = expandHandler.bind(this, processAncestors, this._tree, ancestors);
 
-		//We listen for the change event so we now when the tree.expand() method has finished
-		this._tree.getBinding("rows").attachChange(expandHandler.bind(this, this._tree, ancestors));
+		// We listen for the change event so we know when the tree.expand() method has finished
+		this._tree.getBinding("rows").attachChange(expandHandlerProxy);
 
-		//start processing the ancestors:
-		//get ancestor => find its index => expand that index => repeat
+		// start processing the ancestors:
+		// get ancestor => find its index => expand that index => repeat
 		processAncestors(this._tree, ancestors);
 
 	};
@@ -557,43 +559,45 @@ sap.ui.define([
 		}
 	};
 
-	SceneTree.prototype._enumerateChildrenIntoArray = function(nodeId, list) {
+	SceneTree.prototype._enumerateChildrenIntoArray = function(nodeRef, list) {
 		var nodeInfo = this._scene.getDefaultNodeHierarchy();
-		nodeInfo.enumerateChildren(nodeId, function(pnode) {
-			var id = pnode.getNodeId();
-			list.push(id);
+		nodeInfo.enumerateChildren(nodeRef, function(pnode) {
+			var ref = pnode.getNodeRef();
+			list.push(ref);
 			if (pnode.getHasChildren()) {
-				this._enumerateChildrenIntoArray(id, list);
+				this._enumerateChildrenIntoArray(ref, list);
 			}
 		});
 	};
 
 	SceneTree.prototype._setNodeVisibilityRecursive = function(node, viewStateManager) {
 		if (node.id != null && viewStateManager.getVisibilityState(node.id) != node.visible) {
-			//setVisbility state with a "true" value as third parameter
-			//will change the visibility of a node and its children recursively.
+			// setVisbility state with a "true" value as third parameter
+			// will change the visibility of a node and its children recursively.
 			viewStateManager.setVisibilityState(node.id, node.visible, true);
 
-			if (node[0] != undefined) {
+			if (node[0] !== undefined || node.hasOwnProperty("children")) {
 				if (this._reverseVTimer > 0) {
 					clearTimeout(this._reverseVTimer);
 				}
 				this._reverseVTimer = setTimeout(this._resyncVisibilityReverse.bind(this), 100);
 			}
 		} else {
-			for (var i = 0; node[i] != null; i++) {
-				this._setNodeVisibilityRecursive(node[i], viewStateManager);
+			var children = node.hasOwnProperty("children") ? node.children : node;
+			for (var i = 0; children[i] != null; i++) {
+				this._setNodeVisibilityRecursive(children[i], viewStateManager);
 			}
 		}
 	};
 
 	SceneTree.prototype._toggleVisibilityForAllChildren = function(node, isVisible) {
-		for (var i = 0; node[i] != null; i++) {
-			this._viewStateManager.setVisibilityState(node[i].id, isVisible, true);
+		var children = node.hasOwnProperty("children") ? node.children : node;
+		for (var i = 0; children[i] != null; i++) {
+			this._viewStateManager.setVisibilityState(children[i].id, isVisible, true);
 		}
 	};
 
-	SceneTree.prototype._nodeVisibilityChanged = function(event) {
+	SceneTree.prototype._handleVisibilityChanged = function(event) {
 		if (!this._vSyncing) {
 			if (this._reverseVTimer > 0) {
 				clearTimeout(this._reverseVTimer);
@@ -615,50 +619,102 @@ sap.ui.define([
 	SceneTree.prototype._getNodeVisibilityRecursive = function(node, vsm) {
 		if (node.id != null) {
 			node.visible = vsm.getVisibilityState(node.id);
-			//Updating the tooltip for each node
+			// Updating the tooltip for each node
 			node.checkEyeTooltip = getCheckEyeTooltip(node.visible, this);
 		}
 
-		for (var i = 0; node[i] != null; i++) {
-			this._getNodeVisibilityRecursive(node[i], vsm);
+		var children = node.hasOwnProperty("children") ? node.children : node;
+		for (var i = 0; children[i] != null; i++) {
+			this._getNodeVisibilityRecursive(children[i], vsm);
 		}
 	};
 
+	SceneTree.prototype.updateHeight = function(height) {
+		this._tree.setVisibleRowCount(Math.floor(height / this._tree.getRowHeight()) - 2);
+	};
+
 	SceneTree.prototype.refresh = function() {
-		if (this._scene == null) {
+		if (this._scene == null || !this._viewStateManager || !this._viewStateManager.getNodeHierarchy()) {
 			this._model.setData([]);
 			return;
 		}
 
 		var nodeHierarchy = this._scene.getDefaultNodeHierarchy();
 
-		//building the tree model which is going to be passed to the TreeTable control.
-		var tree = {};
+		// building the tree model which is going to be passed to the TreeTable control.
+		var tree = [];
 		this._totalNodes = 0;
-		var getChildrenRecursively = function(tree, nodeIds) {
-			nodeIds.forEach(function(nodeId, index) {
-				var node = new NodeProxy(nodeHierarchy, nodeId);
-				var treeNode = this._createNodeForSceneTree(node.getName(), node.getNodeId(), this._viewStateManager);
+		var getChildrenRecursively = function(tree, nodeRefs) {
+			nodeRefs.forEach(function(nodeRef, index) {
+				var node = nodeHierarchy.createNodeProxy(nodeRef);
+				var treeNode = this._createNodeForSceneTree(node.getName(), node.getNodeRef(), this._viewStateManager);
 				tree[index] = treeNode;
-				node.destroy();
+				nodeHierarchy.destroyNodeProxy(node);
 				this._totalNodes++;
-				getChildrenRecursively.bind(this)(tree[index], nodeHierarchy.getChildren(nodeId));
+				treeNode.children = [];
+				getChildrenRecursively.bind(this)(treeNode.children, nodeHierarchy.getChildren(nodeRef));
 			}.bind(this));
 		};
 		getChildrenRecursively.bind(this)(tree, nodeHierarchy.getChildren());
 
-		//set the object that we've just build as data model for the TreeTable control
+		// set the object that we've just built as data model for the TreeTable control
 		this._model.setData(tree);
 		this._tree.setModel(this._model);
 		this._tree.bindRows({
-			path: '/'
+			path: "/",
+			parameters: {
+				arrayNames: [ "children" ]
+			}
 		});
 		this._tree.getBinding("rows").attachChange(this._dataChange.bind(this));
 		this._visibilityColumnHeader.setChecked(true);
 		this._visibilityColumnHeader.setTooltip(getCheckEyeTooltip(true, this));
 	};
 
-	SceneTree.prototype.onAfterRendering = function() {};
+	////////////////////////////////////////////////////////////////////////
+	// Content connector and view state manager handling begins.
+
+	SceneTree.prototype._onBeforeClearContentConnector =
+	SceneTree.prototype._onBeforeClearViewStateManager = function() {
+		this._setScene(null);
+	};
+
+	SceneTree.prototype._onAfterUpdateContentConnector =
+	SceneTree.prototype._onAfterUpdateViewStateManager = function() {
+		if (this._contentConnector) {
+			this._setContent(this._contentConnector.getContent());
+		}
+	};
+
+	// Content connector and view state manager handling ends.
+	////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////
+	// Scene handling begins.
+	SceneTree.prototype._setContent = function(content) {
+		this._setScene(content);
+	};
+
+	SceneTree.prototype._handleContentReplaced = function(event) {
+		this._setContent(event.getParameter("newContent"));
+	};
+
+	SceneTree.prototype._handleNodeHierarchyReplaced = function(event) {
+		this._setScene(this._scene);
+	};
+
+	SceneTree.prototype._handleContentChangesFinished = function(event) {
+		this.refresh();
+	};
+
+	// Scene handling ends.
+	////////////////////////////////////////////////////////////////////////
+
+	// This mixin adds and maintains private property _contentConnector.
+	ContentConnector.injectMethodsIntoClass(SceneTree);
+
+	// This mixin adds and maintains private property _viewStateManager.
+	ViewStateManager.injectMethodsIntoClass(SceneTree);
 
 	return SceneTree;
 

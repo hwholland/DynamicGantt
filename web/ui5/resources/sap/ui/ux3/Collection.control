@@ -7,31 +7,31 @@
     <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
-        <property name="title" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="title">
             <documentation>Name for the collection</documentation>
         </property>
-        <property name="editable" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="editable">
             <documentation>If a collection is editable an edit button will be displayed below the list of items</documentation>
         </property>
-        <property name="multiSelection" type="sap.ui.core/boolean" defaultValue="false" group="Accessibility">
+        <property group="Accessibility" defaultValue="false" type="sap.ui.core/boolean" name="multiSelection">
             <documentation>Allow multi selection of items in collection</documentation>
         </property>
     </properties>
     <events>
-        <event name="selectionChanged" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="selectionChanged">
             <documentation>Fired when ever the selected items changer</documentation>
         </event>
-        <event name="propertyChanged" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="propertyChanged">
             <documentation>Fires if a property has changed, and the collection inspector needs to do something after that</documentation>
         </event>
     </events>
     <aggregations>
-        <aggregation name="items" type="sap.ui.core/Item" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Item" name="items">
             <documentation>Items in the collection</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="selectedItems" type="sap.ui.core/Item" cardinality="0..n">
+        <association cardinality="0..n" type="sap.ui.core/Item" name="selectedItems">
             <documentation>Contains all items that are currently selected</documentation>
         </association>
     </associations>

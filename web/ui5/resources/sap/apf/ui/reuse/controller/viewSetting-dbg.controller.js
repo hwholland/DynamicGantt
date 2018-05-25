@@ -5,60 +5,45 @@
  */
 (function() {
 	'use strict';
-	var oSelectedRepresentation, oViewSettingDialog;
-	/**
-	* @description sorts the data in the table representation
-	*/
-	function _sortAndUpdateTableData(oSortOption) {
-		var sorter = [];
-		sorter.push(new sap.ui.model.Sorter(oSortOption.property, oSortOption.descending));
-		oSelectedRepresentation.oTableRepresentation.getBinding("items").sort(sorter); // sort the data in the table 
-	}
-	/**
-	* @description sorts the data in the main table representation after new data is appended after pagination. 
-	* Only new data is fetched from backend hence the sorting needs to be consistent.
-	*/
-	function _sortVisibleDataInTable(aDataResponse, oSortOption) {
-		var aSortedData = aDataResponse.sort(function(previousDataRow, currentDataRow) {
-			return oSortOption.descending ? currentDataRow[oSortOption.property] - previousDataRow[oSortOption.property] : previousDataRow[oSortOption.property] - currentDataRow[oSortOption.property];
-		});
-		return aSortedData;
-	}
-	/**
-	* @description sorts the data in the main table representation
-	*/
-	function _sortTableRepresentationData(oSortOption, callbackForBusyIndicator) {
-		oSelectedRepresentation.oApi.updatePath(function(oStep, bStepChanged) { // if it is table representation
-			if (oStep === oSelectedRepresentation.oApi.getActiveStep()) {
-				var aSortedData = _sortVisibleDataInTable(oSelectedRepresentation.aDataResponse, oSortOption); // Sorting after pagination
-				oSelectedRepresentation.oTableRepresentation.getModel().setData({ // update the data in the table with the sorted data
-					tableData : aSortedData
-				});
-				callbackForBusyIndicator();
-			}
-		});
-	}
 	/**
 		* Creates the sort option for the representation.      
 		* @description sets the selected sort item on the view setting dialog. Selects the first property in case the default property has to be selected
 		*/
-	function _selectSortItemOnViewSettingDialog(oController) {
-		var oSelectedSortItem = {};
-		var oSelectedSortItem = oViewSettingDialog.getSelectedSortItem();
-		var isDescending = oViewSettingDialog.getSortDescending();
-		if (oSelectedRepresentation.orderby && oSelectedRepresentation.orderby.length) { // if the orderby is configured, select the option in the view setting dialog
-			oSelectedSortItem = {
-				property : oSelectedRepresentation.orderby[0].property
-			};
-			isDescending = !oSelectedRepresentation.orderby[0].ascending;
-			oViewSettingDialog.setSelectedSortItem(oSelectedSortItem.property);
+	function _selectSortItemOnViewSettingDialog(oSelectedRepresentation, oViewSettingDialog) {
+		var oSelectedSortItem = {}, isAscending;
+		if (oSelectedRepresentation.orderby && oSelectedRepresentation.orderby.length && oSelectedRepresentation.orderby[0].ascending !== undefined) {
+			isAscending = oSelectedRepresentation.orderby[0].ascending;
 		}
-		if (oSelectedSortItem === null) { // if the sort property for table is not changed from view setting dialog. Default sort property 
-			oSelectedSortItem = oViewSettingDialog.getSortItems()[0];
-			isDescending = false;
+		if (oSelectedRepresentation.orderby && oSelectedRepresentation.orderby.length > 1) { //More than one sorting criterium in config
+			oSelectedSortItem = undefined;
+		} else if(oSelectedRepresentation.orderby && oSelectedRepresentation.orderby.length == 1) { //One sorting criterium in config
+			oSelectedSortItem = oSelectedRepresentation.orderby[0].property;
+		} else {
+			oSelectedSortItem = undefined; //No sorting criterium in config
+			isAscending = true;
 		}
+		oViewSettingDialog.setSortDescending(!isAscending);
 		oViewSettingDialog.setSelectedSortItem(oSelectedSortItem);
-		oViewSettingDialog.setSortDescending(isDescending);
+	}
+	function _bIsSortoptionChanged(oSortEvent, oViewSettingDialog) {
+		var property;
+		if(oSortEvent.getParameters().sortItem && oSortEvent.getParameters().sortItem.getKey()){
+			property = oSortEvent.getParameters().sortItem.getKey();
+		} else {
+			return false;
+		}
+		var oCurrSortOption = {
+				property : property, // read the sort property and sort order
+				ascending : !oSortEvent.getParameters().sortDescending
+		};
+		var oPrevSortOption = {
+			property : oViewSettingDialog._oPreviousState.sortItem ? oViewSettingDialog._oPreviousState.sortItem.getKey() : undefined,
+			ascending : !oViewSettingDialog._oPreviousState.sortDescending
+		};
+		if (oPrevSortOption.property === oCurrSortOption.property && oPrevSortOption.ascending === oCurrSortOption.ascending) {
+			return false;
+		}
+		return true;
 	}
 	sap.ui.controller("sap.apf.ui.reuse.controller.viewSetting", {
 		/**
@@ -68,32 +53,33 @@
 		*/
 		onInit : function() {
 			var oController = this;
-			oViewSettingDialog = oController.getView().getContent()[0];
-			oSelectedRepresentation = oController.getView().getViewData();
-			_selectSortItemOnViewSettingDialog(oController); //select the first sort item in case orderby is not available
+			this.oViewSettingDialog = oController.getView().getContent()[0];
+			this.oSelectedRepresentation = oController.getView().getViewData().oTableInstance;
+			_selectSortItemOnViewSettingDialog(this.oSelectedRepresentation, this.oViewSettingDialog);
 		},
 		/**
 		* @method handleConfirmForSort
 		* @description handler for the sort property change on press of ok in view setting dialog.
 		* Reads the sort property from the event and sorts the data in the table as well as in alternate representation
-		* Also sets the sort property on the selected representation
 		*/
-		handleConfirmForSort : function(oEvent) {
-			oSelectedRepresentation.oTableRepresentation.getParent().getParent().setBusy(true); // set the table to busy
-			var oSortOption = {
-				property : oEvent.getParameters().sortItem.getKey(), // read the sort property and sort order
-				descending : oEvent.getParameters().sortDescending
-			};
-			if (oEvent.getParameters().sortItem) { // if there is sort item , table should be updated with the sorted data
-				if (oSelectedRepresentation.oParameter.isAlternateRepresentation) { // if it is alternate table
-					_sortAndUpdateTableData(oSortOption);
-					oSelectedRepresentation.oTableRepresentation.getParent().getParent().setBusy(false); // set the table to busy
-				} else {
-					_sortTableRepresentationData(oSortOption, function() {
-						oSelectedRepresentation.oTableRepresentation.getParent().getParent().setBusy(false); // set the table to busy
-					});
-				}
+		handleConfirmForSort : function(oSortEvent) {
+			if (!_bIsSortoptionChanged(oSortEvent, this.oViewSettingDialog)) {
+				return;
 			}
+			if(this.oSelectedRepresentation){
+				this.oSelectedRepresentation.resetPaginationForTable();
+			}
+			this.oSelectedRepresentation.oApi.selectionChanged(true);
+			
+		},
+		/**
+		* @method handleCancel
+		* @description handler for the sort property change on press of cancel in view setting dialog.
+		* Cancels the sort dialog
+		*/
+		handleCancel : function(oSortEvent) {
+			this.oViewSettingDialog.destroy();
+			this.oSelectedRepresentation.oViewSettingDialog = undefined;
 		}
 	});
 }());

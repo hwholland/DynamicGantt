@@ -79,7 +79,7 @@ sap.ui.define([
 		})
 		.attr("width", iTableWidth - iTableHeaderWidth - 3)
 		.attr("class", function(d){
-			var sBackgroundClass = oChartSchemeBackgroundConfig ? oChartSchemeBackgroundConfig[d.chartScheme] : undefined;
+			var sBackgroundClass = oChartSchemeBackgroundConfig? oChartSchemeBackgroundConfig[d.chartScheme] : undefined;
 			if (sBackgroundClass && sBackgroundClass !== ""){
 				return "sapGanttExpandChartCnt " + sBackgroundClass;
 			} else {
@@ -112,12 +112,14 @@ sap.ui.define([
 		aCntG.enter().append("g").classed("sapGanttExpandChartContent",true);
 		aCntG.exit().remove();
 
-		var aCntIcon = aCntG.selectAll(".sapGanttExpandChartIcon").data(function(d) {return d;});
+		var aCntIcon = aCntG.selectAll(".sapGanttExpandChartIcon").data(function(d){ return d; });
 		aCntIcon.enter().append(function(d){
+			/* eslint-disable sap-no-element-creation */
 			if (IconPool.isIconURI(d.icon)) {
-				return document.createElementNS("http://www.w3.org/2000/svg", 'text');
+				return document.createElementNS(d3.ns.prefix.svg, "text");
 			}
-			return document.createElementNS("http://www.w3.org/2000/svg", 'image');
+			return document.createElementNS(d3.ns.prefix.svg, "image");
+			/* eslint-enable sap-no-element-creation */
 		})
 		.classed("sapGanttExpandChartIcon", true)
 		.classed("iconFont", function(d){
@@ -217,9 +219,10 @@ sap.ui.define([
 		.on("click", function (d) {
 			var oBinding = that._oGanttChartWithTable._oTT.getBinding("rows");
 			var aRows = oBinding.getContexts(0, oBinding.getLength());
+			var sRowIdName = that._oGanttChartWithTable.getRowIdName();
 			for (var i = 0; i < aRows.length; i++) {
 				var oContext = aRows[i].getProperty();
-				if (oContext && d.id && oContext.id === d.id) {
+				if (oContext && d.id && oContext[sRowIdName] === d.id) {
 					that._oGanttChartWithTable.handleExpandChartChange(false, [d.chartScheme], [i]);
 				}
 			}

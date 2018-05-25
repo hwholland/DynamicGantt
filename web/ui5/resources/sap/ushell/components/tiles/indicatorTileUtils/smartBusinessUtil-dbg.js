@@ -16,8 +16,9 @@ sap.ushell.components.tiles.indicatorTileUtils = sap.ushell.components.tiles.ind
 sap.ushell.components.tiles.indicatorTileUtils.util = sap.ushell.components.tiles.indicatorTileUtils.util || {};
 
 sap.ushell.components.tiles.indicatorTileUtils.util = (function(global, $) {
-	
+
 	"use strict";
+
 	var cache = {};
 	var timeUnitMap = {
 			"ANN" : "years",
@@ -415,6 +416,7 @@ sap.ushell.components.tiles.indicatorTileUtils.util = (function(global, $) {
 			try {
 				//var uri = '/sap/opu/odata/SSB/SMART_BUSINESS_RUNTIME_SRV';
 				var uri = oTileApi.url.addSystemToServiceUrl('/sap/opu/odata/SSB/SMART_BUSINESS_RUNTIME_SRV');
+				uri = sap.ushell.components.tiles.smartBusinessUtil.cacheBustingMechanism(uri);				
 				cacheODataModel = this.getODataModelByServiceUri(uri);
 				var uri  = "/CacheParameters(P_CacheType=1)/Results";
 				/*var uri  = "/CacheParameters(P_CacheType=1)/Results?$filter=";
@@ -475,6 +477,7 @@ sap.ushell.components.tiles.indicatorTileUtils.util = (function(global, $) {
 			try {
 				var uri = oTileApi.url.addSystemToServiceUrl("/sap/opu/odata/SSB/SMART_BUSINESS_RUNTIME_SRV/");
 				//var uri = "/sap/opu/odata/SSB/SMART_BUSINESS_RUNTIME_SRV/";
+				uri = sap.ushell.components.tiles.smartBusinessUtil.cacheBustingMechanism(uri);				
 				var cacheODataModel = this.getODataModelByServiceUri(uri);
 				var entity = "/CacheData";
 				cacheODataModel.create(entity, data ,{
@@ -570,7 +573,9 @@ sap.ushell.components.tiles.indicatorTileUtils.util = (function(global, $) {
 		},
 
 		getModelerRuntimeServiceModel : function() {
-			return this.getODataModelByServiceUri("/sap/hba/apps/kpi/s/odata/smart_business_runtime_services.xsodata");
+			var uri = "/sap/hba/apps/kpi/s/odata/smart_business_runtime_services.xsodata";
+			uri = sap.ushell.components.tiles.smartBusinessUtil.cacheBustingMechanism(uri);
+			return this.getODataModelByServiceUri(uri);
 		},
 		getSapFontErrorCode : function() {
 			return String.fromCharCode(0xe0b1);
@@ -612,14 +617,31 @@ sap.ushell.components.tiles.indicatorTileUtils.util = (function(global, $) {
 			}
 			return cache[sServiceUri];
 		},
+		cacheBustingMechanism: function(sUrl){
+			if(window["sap-ushell-config"].cacheBusting.cacheBusterToken){
+	    		var cacheBusting = window["sap-ushell-config"].cacheBusting && window["sap-ushell-config"].cacheBusting.cacheBusterToken;
+	        	sUrl = sUrl + "?_=" + cacheBusting;
+	    	}
+			return sUrl;
+		},
 
 		getRunTimeUri : function(sPlatform){
 			//if (this.getPlatform(sPlatform) == "HANA")
+
+			var urlWithHANA = "/sap/hba/r/sb/core/odata/runtime/SMART_BUSINESS.xsodata";
+			var urlWithoutHANA = "/sap/opu/odata/SSB/SMART_BUSINESS_RUNTIME_SRV";
 			if (sPlatform.toUpperCase() == "HANA") {
-				return "/sap/hba/r/sb/core/odata/runtime/SMART_BUSINESS.xsodata";
+				if(window["sap-ushell-config"].cacheBusting){
+				urlWithHANA = sap.ushell.components.tiles.smartBusinessUtil.cacheBustingMechanism(urlWithHANA);
+				}
+				return urlWithHANA;
 			}
-			return "/sap/opu/odata/SSB/SMART_BUSINESS_RUNTIME_SRV";
-		},
+			if(window["sap-ushell-config"].cacheBusting){
+			urlWithoutHANA = sap.ushell.components.tiles.smartBusinessUtil.cacheBustingMechanism(urlWithoutHANA);
+			}
+			return urlWithoutHANA;
+
+					},
 		getFilterFromRunTimeService: function(oConfig,oTileApi,fnS,fnE){
 			var sPlatform = oConfig.TILE_PROPERTIES.sb_metadata;
 			var KPI_RUNTIME_ODATA_MODEL =  this.getODataModelByServiceUriFromChipAPI(this.getRunTimeUri(sPlatform),oTileApi);
@@ -1660,5 +1682,6 @@ sap.ushell.components.tiles.indicatorTileUtils.cache = (function() {
 		setKpivalueById : function(key, data) {
 			KPIVALUE[key]  = data;
 		}
-	};
-})();
+        };
+	})();
+

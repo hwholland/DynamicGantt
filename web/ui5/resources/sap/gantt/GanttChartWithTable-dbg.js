@@ -9,30 +9,30 @@ sap.ui.define([
 	"sap/ui/layout/Splitter", "sap/ui/layout/SplitterLayoutData",
 	"sap/gantt/GanttChart", "sap/gantt/control/Cell", "sap/gantt/control/Toolbar",
 	"sap/gantt/control/AssociateContainer","sap/gantt/drawer/SelectionPanel",
-	"sap/gantt/misc/Utility", "sap/gantt/misc/AxisOrdinal","sap/ui/thirdparty/d3"
+	"sap/gantt/misc/Utility", "sap/gantt/misc/AxisOrdinal", "sap/gantt/eventHandler/MouseWheelHandler", "sap/ui/thirdparty/d3"
 ], function (Core, Device, GanttChartBase, Column, TreeTable, ScrollBar, Splitter, SplitterLayoutData,
-		GanttChart, Cell, Toolbar, AssociateContainer, SelectionPanelDrawer, Utility, AxisOrdinal) {
+		GanttChart, Cell, Toolbar, AssociateContainer, SelectionPanelDrawer, Utility, AxisOrdinal, MouseWheelHandler) {
 	"use strict";
-	
+
 	/**
 	 * Creates and initializes a new Gantt Chart with a TreeTable control on the left and a svg chart area on the right.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
-	 * 
-	 * @class 
+	 *
+	 * @class
 	 * Embed a <code>sap.ui.table.TreeTable</code> and a <code>sap.gantt.GanttChart</code> side-by-side.
-	 * 
+	 *
 	 * <p>This class defines:
 	 * The TreeTable part provide a column view of data with sorting/filtering functions available. The svg chart part provide graphic Gantt chart
 	 * view of data. Both width can be adjusted by a splitter bar, and row scrolling are always synchronized.3
 	 * </p>
-	 * 
+	 *
 	 * @extends sap.gantt.GanttChartBase
-	 * 
+	 *
 	 * @author SAP SE
-	 * @version 1.38.22
-	 * 
+	 * @version 1.54.2
+	 *
 	 * @constructor
 	 * @public
 	 * @alias sap.gantt.GanttChartWithTable
@@ -55,6 +55,7 @@ sap.ui.define([
 				/**
 				 * Property propagated from <code>sap.ui.table.Table</code>.
 				 * @see sap.ui.table.Table#fixedColumnCount
+				 * @deprecated We don't recommend use this property
 				 */
 				fixedColumnCount: {type: "int"}
 			},
@@ -103,19 +104,24 @@ sap.ui.define([
 		// create selection panel
 		this._oTT = new TreeTable({
 			visibleRowCountMode: "Auto",
-			minAutoRowCount: 1,
-			fixedColumnCount: this.getFixedColumnCount(),
-			selectionBehavior: sap.ui.table.SelectionBehavior.Row
-			//selectionMode: sap.ui.table.SelectionMode.Multi
+			minAutoRowCount: 1
 		});
 
-		this._oTT._bVariableRowHeightEnabled = true;
+		// Init exposed TreeTable properties in GanttChartWithTable
+		jQuery.extend(this.mDefaultTableProperties, {
+			fixedColumnCount: 0,
+			showColumnVisibilityMenu: false,
+			selectionBehavior: sap.ui.table.SelectionBehavior.Row
+		});
+		this.setTableProperties(jQuery.extend({}, this.mDefaultTableProperties));
 
-		//this will enable the legacy multi selection mode in 1.38.8
-		this._oTT._enableLegacyMultiSelection = true;
-		this._oTT.setSelectionMode(sap.ui.table.SelectionMode.MultiToggle);
-		this._oTT._collectRowHeights = function(){
-			that._aHeights = TreeTable.prototype._collectRowHeights.apply(this);
+		this._oTT._bVariableRowHeightEnabled = true;
+		this._oTT._collectRowHeights = function(bHeader){
+			var aHeights = TreeTable.prototype._collectRowHeights.apply(this, arguments);
+			if (bHeader) {
+				return aHeights;
+			}
+			that._aHeights = aHeights;
 			var iBaseRowHeight = that._aHeights[0];
 			var iFirstVisibleRowIndex = this.getFirstVisibleRow();
 			var iRowCount = that._aHeights.length;
@@ -145,11 +151,11 @@ sap.ui.define([
 			sap.ui.table.TreeTable.prototype._updateTableContent.apply(this, arguments);
 
 			var aRows = this.getRows(),
-				aRowHeights = that._aHeights;
+				aRowHeights = that._getRowHeights();
 			if (!aRowHeights) {
 				return;
 			}
-			var $fixedRows = this.$().find(".sapUiTableCtrlFixed > tbody > tr");
+			var $fixedRows = this.$().find(".sapUiTableCtrlFixed > tbody > tr.sapUiTableTr");
 			var $rowHeaders = this.$().find(".sapUiTableRowHdr");
 			for (var iIndex = 0; iIndex < aRows.length; iIndex++) {
 				var $Row = aRows[iIndex].$(),
@@ -164,10 +170,9 @@ sap.ui.define([
 			}
 		};
 
-		this._oTT.onvscroll = function (oEvent) {
-			sap.ui.table.TreeTable.prototype.onvscroll.apply(this, arguments);
-			that._onSelectionPanelVSbScroll();
-		};
+		this._oTT.addEventDelegate({
+			onAfterRendering: this._bindVerticalScrollForTT
+		}, this);
 
 		this._oTT.attachToggleOpenState(function(oEvent) {
 			//bubble up the toggle event
@@ -187,8 +192,10 @@ sap.ui.define([
 		});
 		this._oToolbar.data("holder", this);
 		this._oToolbar.attachSourceChange(this._onToolbarSourceChange, this);
+		this._oToolbar.attachExpandChartChange(this._onToolbarExpandChartChange, this);
 		this._oToolbar.attachExpandTreeChange(this._onToolbarExpandTreeChange, this);
 		this._oToolbar.attachModeChange(this._onToolbarModeChange, this);
+		this._oToolbar.attachBirdEye(this._onToolbarBirdEye, this);
 		this._oTT.addExtension(this._oToolbar);
 		this._oSelectionPanelCnt = new AssociateContainer({
 			enableRootDiv: true,
@@ -208,7 +215,6 @@ sap.ui.define([
 
 		// attach this to layout resize
 		this._oSplitter.attachResize(this._onSplitterResize, this);
-
 		// sync oTC oTT vertical scroll
 		this._oGanttChart.attachHorizontalScroll(this._onChartHSbScroll, this);
 		this._oGanttChart.attachVerticalScroll(this._onChartVSbScroll, this);
@@ -219,28 +225,29 @@ sap.ui.define([
 		this._oGanttChart.attachChartClick(this._onClick, this);
 		this._oGanttChart.attachChartDoubleClick(this._onDoubleClick, this);
 		this._oGanttChart.attachChartRightClick(this._onRightClick, this);
-
 		this._oGanttChart.attachEvent("_zoomInfoUpdated", this._onZoomInfoUpdated, this);
 		this._oGanttChart.attachEvent("_shapesUpdated", this._onShapesUpdated, this);
 		this._oGanttChart.attachChartDragEnter(this._onChartDragEnter, this);
 		this._oGanttChart.attachChartDragLeave(this._onChartDragLeave, this);
 		this._oGanttChart.attachShapeDragEnd(this._onShapeDragEnd, this);
-		
+		this._oGanttChart.attachEvent("_visibleHorizonUpdate" , this._onGanttChartVisibleHorizonUpdate, this);
+		this._oGanttChart.attachEvent("_timePeriodZoomStatusChange" , this._onGanttChartTimePeriodZoomStatusChange, this);
+		this._oGanttChart.attachEvent("_timePeriodZoomOperation" , this._onGanttChartTimePeriodZoomOperation, this);
+		this._oGanttChart.attachShapeResizeEnd(this._onShapeResizeEnd, this);
+		this._oGanttChart.attachShapeMouseEnter(this._onShapeMouseEnter, this);
+		this._oGanttChart.attachShapeMouseLeave(this._onShapeMouseLeave, this);
+
 		this._oModesConfigMap = {};
 		this._oModesConfigMap[sap.gantt.config.DEFAULT_MODE_KEY] = sap.gantt.config.DEFAULT_MODE;
-		
+
 		this._oToolbarSchemeConfigMap = {};
 		this._oToolbarSchemeConfigMap[sap.gantt.config.DEFAULT_GANTTCHART_TOOLBAR_SCHEME_KEY] = sap.gantt.config.DEFAULT_GANTTCHART_TOOLBAR_SCHEME;
 		this._oToolbarSchemeConfigMap[sap.gantt.config.EMPTY_TOOLBAR_SCHEME_KEY] = sap.gantt.config.EMPTY_TOOLBAR_SCHEME;
-		
+
 		this._oHierarchyConfigMap = {};
 		this._oHierarchyConfigMap[sap.gantt.config.DEFAULT_HIERARCHY_KEY] = sap.gantt.config.DEFAULT_HIERARCHY;
-		this._oDefaultExpansionStatus = {};
 
 		this._oSelectionPanelDrawer = new SelectionPanelDrawer();
-
-		this._bCanApplyTableTransform = true;
-		this._iFirstVisiableRowIndex = undefined;
 
 		// defualt maps
 		this._oGanttChartSchemesConfigMap = {};
@@ -248,15 +255,39 @@ sap.ui.define([
 		this._oObjectTypesConfigMap = {};
 		this._oObjectTypesConfigMap[sap.gantt.config.DEFAULT_OBJECT_TYPE_KEY] = sap.gantt.config.DEFAULT_OBJECT_TYPE;
 		this._oShapesConfigMap = {};
+
+		//init mouse wheel handler
+		this._oMouseWheelHandler = new MouseWheelHandler(this);
+
 		jQuery.sap.measure.end("GanttChartWithTable Init");
 	};
-	
+
+	/**
+	 * To set fixedColumnCount value
+	 * @see sap.ui.table.Table.setFixedColumnCount
+	 * @param {int} iFixedColumnCount
+	 * @return {sap.gantt.GanttChartWithTable} A reference to the GanttChartWithTable control, which can be used for chaining
+	 * @public
+	 * @deprecated We recommend use setTableProperties function instead
+	 */
 	GanttChartWithTable.prototype.setFixedColumnCount = function (iFixedColumnCount) {
-		this.setProperty("fixedColumnCount", iFixedColumnCount);
-		this._oTT.setFixedColumnCount(iFixedColumnCount);
+		this.setTableProperties({
+			fixedColumnCount: iFixedColumnCount
+		});
 		return this;
 	};
-	
+
+	/**
+	 * To get fixedColumnCount value
+	 * @see sap.ui.table.Table.getFixedColumnCount
+	 * @return {int} The value of fixedColumnCount
+	 * @public
+	 * @deprecated We recommend use getTableProperties function instead
+	 */
+	GanttChartWithTable.prototype.getFixedColumnCount = function () {
+		return this.getTableProperties().fixedColumnCount;
+	};
+
 	GanttChartWithTable.prototype.setTimeAxis = function (oTimeAxis) {
 		this.setProperty("timeAxis", oTimeAxis, true);
 		this._oGanttChart.setTimeAxis(oTimeAxis);
@@ -269,7 +300,7 @@ sap.ui.define([
 		this._oToolbar.setMode(sMode);
 		return this;
 	};
-	
+
 	GanttChartWithTable.prototype.setModes = function (aModes) {
 		this.setProperty("modes", aModes);
 		this._oToolbar.setModes(aModes);
@@ -282,32 +313,40 @@ sap.ui.define([
 		}
 		return this;
 	};
-	
+
 	GanttChartWithTable.prototype.setSelectionMode = function (sSelectionMode) {
 		this.setProperty("selectionMode", sSelectionMode);
-		if (this._oTT) {
-			if (sSelectionMode == sap.gantt.SelectionMode.None) {
-				this._oTT.setSelectionMode(sap.ui.table.SelectionMode.None);
-				this._oTT.setSelectionBehavior(sap.ui.table.SelectionBehavior.RowOnly);
-			}else if (sSelectionMode == sap.gantt.SelectionMode.MultiWithKeyboard) {
-				this._oTT.setSelectionMode(sap.ui.table.SelectionMode.MultiToggle);
-				this._oTT.setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
-			}else {
-				if (sSelectionMode == sap.gantt.SelectionMode.Single) {
-					this._oTT.setSelectionMode(sap.ui.table.SelectionMode.Single);
-				}else {
-					this._oTT.setSelectionMode(sap.ui.table.SelectionMode.MultiToggle);
-				}
-				this._oTT.setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
-			}
+		switch (sSelectionMode) {
+			case sap.gantt.SelectionMode.Multiple:
+			case sap.gantt.SelectionMode.MultiWithKeyboard:
+				this.setTableProperties({
+					selectionMode: sap.ui.table.SelectionMode.MultiToggle,
+					selectionBehavior: sap.ui.table.SelectionBehavior.Row
+				});
+				break;
+			case sap.gantt.SelectionMode.Single:
+				this.setTableProperties({
+					selectionMode: sap.ui.table.SelectionMode.Single,
+					selectionBehavior: sap.ui.table.SelectionBehavior.Row
+				});
+				break;
+			case sap.gantt.SelectionMode.None:
+				this.setTableProperties({
+					selectionMode: sap.ui.table.SelectionMode.None,
+					selectionBehavior: sap.ui.table.SelectionBehavior.RowOnly
+				});
+				break;
 		}
-		
-		if (this._oGanttChart) {
-			this._oGanttChart.setSelectionMode(sSelectionMode);
-		}
+		this._oGanttChart.setSelectionMode(sSelectionMode);
 		return this;
 	};
-	
+
+	GanttChartWithTable.prototype.setShapeSelectionMode = function (sShapeSelectionMode) {
+		this.setProperty("shapeSelectionMode", sShapeSelectionMode);
+		this._oGanttChart.setShapeSelectionMode(sShapeSelectionMode);
+		return this;
+	};
+
 	GanttChartWithTable.prototype.setToolbarSchemes = function (aToolbarSchemes) {
 		this.setProperty("toolbarSchemes", aToolbarSchemes);
 		this._oToolbar.setToolbarSchemes(aToolbarSchemes);
@@ -327,7 +366,7 @@ sap.ui.define([
 		this._hierarchyChange();
 		return this;
 	};
-	
+
 	GanttChartWithTable.prototype.setHierarchies = function (aHierarchies) {
 		this.setProperty("hierarchies", aHierarchies);
 		this._oToolbar.setHierarchies(aHierarchies);
@@ -341,14 +380,14 @@ sap.ui.define([
 		this._hierarchyChange();
 		return this;
 	};
-	
+
 	GanttChartWithTable.prototype.setCalendarDef = function (oCalendarDef) {
 		this.setAggregation("calendarDef", oCalendarDef);
 		/*
 		 * Copy oCalendarDef to this._oGanttChart instead of set it directly to this._oGanttChart.
 		 * Because if we do so, in binding case, copying of private aggregation '_chart' won't copy
 		 * template calendarDef. Therefore have to go this way.
-		 * And in this way, have to set templateShareable = true if oCalendarDef is a template. 
+		 * And in this way, have to set templateShareable = true if oCalendarDef is a template.
 		 */
 		var oPSBindingInfo = oCalendarDef.getBindingInfo("defs");
 		if (oPSBindingInfo) {
@@ -357,15 +396,55 @@ sap.ui.define([
 		this._oGanttChart.setCalendarDef(oCalendarDef.clone());
 		return this;
 	};
-	
-	GanttChartWithTable.prototype._hierarchyChange = function () {
+
+	GanttChartWithTable.prototype.setAdhocLineLayer = function (sLayer) {
+		this.setProperty("adhocLineLayer", sLayer);
+		this._oGanttChart.setAdhocLineLayer(sLayer);
+		return this;
+	};
+
+	GanttChartWithTable.prototype.addAdhocLine = function (oAdhocLine) {
+		this._oGanttChart.addAdhocLine(oAdhocLine);
+		return this;
+	};
+
+	GanttChartWithTable.prototype.insertAdhocLine = function (oAdhocLine, iIndex) {
+		this._oGanttChart.insertAdhocLine(oAdhocLine, iIndex);
+		return this;
+	};
+
+	GanttChartWithTable.prototype.removeAdhocLine = function (oAdhocLine) {
+		return this._oGanttChart.removeAdhocLine(oAdhocLine);
+	};
+
+	GanttChartWithTable.prototype.getAdhocLines = function () {
+		return this._oGanttChart.getAdhocLines();
+	};
+
+	GanttChartWithTable.prototype.removeAllAdhocLines = function () {
+		return this._oGanttChart.removeAllAdhocLines();
+	};
+
+	/**
+	 * Allows to hide the hierarchy structure (tree icons, indentation) in left table.
+	 * This might be useful in some scenarios when the data is not hierarchical, no need for any expand/collapse.
+	 * <b>Note:</b> In flat mode the hierarchy is not visible to the user.
+	 * @param {boolean} bFlat If set to <code>true</code>, the flat mode is enabled
+	 * @protected
+	 */
+	GanttChartWithTable.prototype.setUseFlatMode = function (bFlat) {
+		this._oTT.setUseFlatMode(bFlat);
+		return this;
+	};
+
+	GanttChartWithTable.prototype._hierarchyChange = function (sOldHierarchyKey) {
 		var sHierarchyKey = this.getHierarchyKey();
 		if (sHierarchyKey && this._oHierarchyConfigMap[sHierarchyKey]) {
 			// if current hierarchy has a column configuration, generate columns from configuration.
 			if (this._oHierarchyConfigMap[sHierarchyKey].getColumns() &&
 					this._oHierarchyConfigMap[sHierarchyKey].getColumns().length > 0) {
 				this._buildColumnFromCellCallback();
-			} 
+			}
 			// adjust current mode
 			var sMode =  this.getMode();
 			if (sMode === sap.gantt.config.DEFAULT_MODE_KEY && this._oHierarchyConfigMap[this.getHierarchyKey()]) {
@@ -377,7 +456,7 @@ sap.ui.define([
 
 	GanttChartWithTable.prototype._buildColumnFromCellCallback = function () {
 		this._oTT.removeAllColumns();
-		
+
 		var oHierarchyConfig, aColumnConfig;
 		oHierarchyConfig = this._oHierarchyConfigMap[this.getHierarchyKey()];
 		if (oHierarchyConfig){
@@ -393,13 +472,14 @@ sap.ui.define([
 					template: new Cell({
 						cellCallback: this.getCellCallback(),
 						columnConfig: aColumnConfig[i]
-					})
+					}).data("rowTypeName", this.getRowTypeName())
 				});
 				this._oTT.addColumn(oCol);
+				this._oTT.addAriaLabelledBy(oCol.getLabel());
 			}
-		}
+		} 
 	};
-	
+
 	GanttChartWithTable.prototype.setObjectTypes = function (aObjectTypes) {
 		this.setProperty("objectTypes", aObjectTypes, true);
 		this._oGanttChart.setObjectTypes(aObjectTypes);
@@ -478,14 +558,32 @@ sap.ui.define([
 		return this;
 	};
 
+	GanttChartWithTable.prototype.setEnableAdhocLine = function (bEnableAdhocLine) {
+		this.setProperty("enableAdhocLine", bEnableAdhocLine);
+		this._oGanttChart.setEnableAdhocLine(bEnableAdhocLine);
+		this._oToolbar.setEnableAdhocLine(bEnableAdhocLine);
+		return this;
+	};
+
+	GanttChartWithTable.prototype.setEnableShapeTimeDisplay = function (bEnableShapeTimeDisplay) {
+		this.setProperty("enableShapeTimeDisplay", bEnableShapeTimeDisplay);
+		this._oGanttChart.setEnableShapeTimeDisplay(bEnableShapeTimeDisplay);
+		return this;
+	};
+
 	GanttChartWithTable.prototype.setTimeZoomRate = function (fTimeZoomRate) {
 		this.setProperty("timeZoomRate", fTimeZoomRate, true);
 		this._oGanttChart.setTimeZoomRate(fTimeZoomRate);
 		return this;
 	};
-	
-	GanttChartWithTable.prototype.getTimeZoomRate = function () {
-		return this._oGanttChart.getTimeZoomRate();
+
+	GanttChartWithTable.prototype.setAxisTimeStrategy = function (oAxisTimeStrategy) {
+		this._oGanttChart.setAxisTimeStrategy(oAxisTimeStrategy);
+		return this;
+	};
+
+	GanttChartWithTable.prototype.getAxisTimeStrategy = function () {
+		return this._oGanttChart.getAxisTimeStrategy();
 	};
 	/*
 	 * @see JSDoc generated by SAPUI5 control API generator
@@ -565,6 +663,12 @@ sap.ui.define([
 		return this._oTT.getColumns();
 	};
 
+	GanttChartWithTable.prototype.setGhostAlignment = function (sGhostAlignment) {
+		this.setProperty("ghostAlignment", sGhostAlignment);
+		this._oGanttChart.setGhostAlignment(sGhostAlignment);
+		return this;
+	};
+
 	GanttChartWithTable.prototype._bindAggregation = function (sName, oBindingInfo) {
 		var oModel, oBindingContext;
 		if (sName == "rows" && oBindingInfo){
@@ -601,8 +705,14 @@ sap.ui.define([
 		}
 	};
 
+	GanttChartWithTable.prototype.setTableProperties = function (oProperties) {
+		GanttChartBase.prototype.setTableProperties.apply(this, arguments);
+		this._oGanttChart.setTableProperties(oProperties);
+		return this;
+	};
+
 	GanttChartWithTable.prototype._updateRows = function (sReason) {
-		if (this._oTC.getFirstVisibleRow() === this._oTT.getFirstVisibleRow() || sReason === sap.ui.model.ChangeReason.Filter || sReason === sap.ui.model.ChangeReason.Sort){
+		if (sReason !== sap.ui.table.TableUtils.RowsUpdateReason.VerticalScroll && (this._oTC.getFirstVisibleRow() === this._oTT.getFirstVisibleRow() || sReason === sap.ui.model.ChangeReason.Filter || sReason === sap.ui.model.ChangeReason.Sort)){
 			sap.ui.table.Table.prototype.updateRows.apply(this._oTT, arguments);
 		}
 		sap.ui.table.Table.prototype.updateRows.apply(this._oTC, arguments);
@@ -610,31 +720,27 @@ sap.ui.define([
 
 	GanttChartWithTable.prototype._detachToolbarEvents = function () {
 		this._oToolbar.detachSourceChange(this._onToolbarSourceChange, this);
+		this._oToolbar.detachExpandChartChange(this._onToolbarExpandChartChange, this);
 		this._oToolbar.detachExpandTreeChange(this._onToolbarExpandTreeChange, this);
+		this._oToolbar.detachBirdEye(this._onToolbarBirdEye, this);
+	};
+
+	GanttChartWithTable.prototype._onToolbarBirdEye = function (oEvent) {
+		var oParameter = oEvent.getParameters();
+		var sBirdEyeRange = oParameter.birdEyeRange;
+		this._oGanttChart._doBirdEye(sBirdEyeRange);
+	};
+	/**
+	 * @param {number} iRowIndex row index, indicate the index of the row in all rows array
+	 * The visible horizon will be calculated based on the shapes on the specified row.
+	 * .
+	 */
+	GanttChartWithTable.prototype.doBirdEyeOnRow = function (iRowIndex) {
+		this._oGanttChart.doBirdEyeOnRow(iRowIndex);
 	};
 
 	GanttChartWithTable.prototype.onAfterRendering = function () {
-		//expand tree table to default level expandedLevels defined in configuration of hierarchy
-		this._expandDefaultLevel();
 		this._attachEvents();
-	};
-
-	GanttChartWithTable.prototype._adjustChartHeaderHeight = function (){
-		var $tableExtDiv = this._oTT.$().find(".sapUiTableExt");
-		var $tableHeaderDiv = this._oTT.$().find(".sapUiTableColHdrCnt");
-		var iGanttChartHeaderHeight;
-		if ($tableExtDiv.height() === null){
-			iGanttChartHeaderHeight = $tableExtDiv.outerHeight() + $tableHeaderDiv.height();
-		} else {
-			iGanttChartHeaderHeight = $tableExtDiv.outerHeight() + $tableHeaderDiv.height() + 1;
-		}
-
-		var $headerDiv = this._oGanttChart.$().find(".sapGanttChartHeader");
-		$headerDiv.height(iGanttChartHeaderHeight);
-		$headerDiv.css("min-height", iGanttChartHeaderHeight);
-		var $headerSvg = this._oGanttChart.$().find(".sapGanttChartHeaderSvg");
-		$headerSvg.height(iGanttChartHeaderHeight);
-		$headerSvg.css("min-height", iGanttChartHeaderHeight);
 	};
 
 	GanttChartWithTable.prototype.onBeforeRendering = function () {
@@ -657,7 +763,7 @@ sap.ui.define([
 		this._oTC.addEventDelegate(oDelegate,this);
 
 		this._appendMaskSvg();
-		var $tableMaskSvg = this.$().find("#" + this.getId() + "-spm-svg-table");
+		var $tableMaskSvg = this.$().find(this.getDomSelectorById("spm-svg-table"));
 		if (Device.browser.firefox) {
 			$tableMaskSvg.unbind("MozMousePixelScroll.sapUiTableMouseWheel", this._onMouseWheel.bind(this));
 			$tableMaskSvg.bind("MozMousePixelScroll.sapUiTableMouseWheel", this._onMouseWheel.bind(this));
@@ -668,38 +774,12 @@ sap.ui.define([
 	};
 
 	GanttChartWithTable.prototype._onMouseWheel = function(oEvent) {
-		var oOriginalEvent = oEvent.originalEvent;
-		var bIsHorizontal = oOriginalEvent.shiftKey;
-		var iScrollDelta = 0;
-		if (Device.browser.firefox) {
-			iScrollDelta = oOriginalEvent.detail;
-		} else {
-			if (bIsHorizontal) {
-				iScrollDelta = oOriginalEvent.deltaX;
-			} else {
-				iScrollDelta = oOriginalEvent.deltaY;
-			}
-		}
-
-		if (bIsHorizontal) {
-			var oHsb = this._oTT.getDomRef(sap.ui.table.SharedDomRef.HorizontalScrollBar);
-			if (oHsb) {
-				oHsb.scrollLeft = oHsb.scrollLeft + iScrollDelta;
-			}
-		}else {
-			var oVsb = this._oTT.getDomRef(sap.ui.table.SharedDomRef.VerticalScrollBar);
-			if (oVsb) {
-				//this._oTT._bIsScrolledByWheel = true;
-				oVsb.scrollTop = oVsb.scrollTop + iScrollDelta;
-			}
-		}
-
-		oEvent.preventDefault();
-		oEvent.stopPropagation();
-	}; 
+		this._oMouseWheelHandler.handleEvent(oEvent);
+	};
 
 	GanttChartWithTable.prototype._onRowSelectionChange = function (oEvent){
-		
+		var aSelectedRows = this._oTT.getSelectedIndices();
+		this._oToolbar.toggleExpandTreeButton(aSelectedRows.length > 0);
 		this.fireRowSelectionChange({
 			originEvent: oEvent.getParameter("originEvent")
 		});
@@ -776,15 +856,14 @@ sap.ui.define([
 			originEvent: oEvent.getParameter("originEvent")
 		});
 	};
-	
+
 	GanttChartWithTable.prototype._onChartDragLeave = function (oEvent) {
 		this.fireChartDragLeave({
 			originEvent: oEvent.getParameter("originEvent"),
 			draggingSource: oEvent.getParameter("draggingSource")
 		});
-			
 	};
-	
+
 	GanttChartWithTable.prototype._onShapeDragEnd = function (oEvent) {
 		var oParam = oEvent.getParameters();
 		this.fireShapeDragEnd({
@@ -796,27 +875,79 @@ sap.ui.define([
 		});
 	};
 	
-	GanttChartWithTable.prototype._onChartHSbScroll = function (oEvent) {
-		var nScrollLeft = (Core.getConfiguration().getRTL() && sap.ui.Device.browser.name === "ff") ? this._oTC.$(sap.ui.table.SharedDomRef.HorizontalScrollBar).scrollLeftRTL() : this._oTC.$(sap.ui.table.SharedDomRef.HorizontalScrollBar).scrollLeft();
-		this.fireHorizontalScroll({
-			scrollSteps: nScrollLeft,
-			leftOffsetRate: this._oGanttChart.updateLeftOffsetRate(nScrollLeft)
+	GanttChartWithTable.prototype._onShapeResizeEnd = function (oEvent) {
+		var oParam = oEvent.getParameters();
+		this.fireShapeResizeEnd({
+			shapeUid: oParam.shapeUid,
+			rowObject: oParam.rowObject,
+			oldTime: oParam.oldTime,
+			newTime: oParam.newTime
 		});
 	};
-	
+
+	GanttChartWithTable.prototype._onShapeMouseEnter = function (oEvent) {
+		var oParam = oEvent.getParameters();
+		this.fireShapeMouseEnter({
+			shapeData: oParam.shapeData,
+			pageX: oParam.pageX,
+			pageY: oParam.pageY,
+			originEvent: oParam.originEvent
+		});
+	};
+
+	GanttChartWithTable.prototype._onShapeMouseLeave = function (oEvent) {
+		var oParam = oEvent.getParameters();
+		this.fireShapeMouseLeave({
+			shapeData: oParam.shapeData,
+			originEvent: oParam.originEvent
+		});
+	};
+
+	GanttChartWithTable.prototype._onGanttChartVisibleHorizonUpdate = function (oEvent) {
+		this.fireEvent("_visibleHorizonUpdate", oEvent.getParameters());
+	};
+
+	GanttChartWithTable.prototype._onGanttChartTimePeriodZoomStatusChange = function (oEvent) {
+		this.fireEvent("_timePeriodZoomStatusChange", oEvent.getParameters());
+	};
+
+	GanttChartWithTable.prototype._onGanttChartTimePeriodZoomOperation = function (oEvent){
+		this.fireEvent("_timePeriodZoomOperation", oEvent.getParameters());
+	};
+
+	GanttChartWithTable.prototype.syncTimePeriodZoomStatus = function (bActive){
+		this._oGanttChart.syncTimePeriodZoomStatus(bActive);
+	};
+
+	GanttChartWithTable.prototype.syncTimePeriodZoomOperation = function (oEvent, bTimeScrollSync, sOrientation){
+		this._oGanttChart.syncTimePeriodZoomOperation(oEvent, bTimeScrollSync, sOrientation);
+	};
+
+	GanttChartWithTable.prototype.syncMouseWheelZoom = function (oEventData) {
+		this._oGanttChart.syncMouseWheelZoom(oEventData);
+	};
+
+	GanttChartWithTable.prototype._onChartHSbScroll = function (oEvent) {
+		this.fireHorizontalScroll(oEvent.getParameters());
+	};
+
+	GanttChartWithTable.prototype.syncVisibleHorizon = function (oTimeHorizon, iVisibleWidth, bKeepStartTime){
+		this._oGanttChart.syncVisibleHorizon(oTimeHorizon, iVisibleWidth, bKeepStartTime);
+	};
+
 	GanttChartWithTable.prototype._onChartVSbScroll = function (oEvent) {
-		var $ttvsb = jQuery(this._oTT.getDomRef(sap.ui.table.SharedDomRef.VerticalScrollBar));
-		var $tcvsb = jQuery(this._oTC.getDomRef(sap.ui.table.SharedDomRef.VerticalScrollBar));
+		var $ttvsb = jQuery(this.getTTVsbDom());
+		var $tcvsb = jQuery(this.getTCVsbDom());
 		if (this.sScrollSource === null || this.sScrollSource !== "GanttChartWithTable") {
 			this.sScrollSource = "GanttChart";
-			$ttvsb.scrollTop($tcvsb.scrollTop());
+			window.requestAnimationFrame(function(){$ttvsb.scrollTop($tcvsb.scrollTop());});
 		} else {
 			this.sScrollSource = null;
 		}
 
 		this.fireVerticalScroll({
 			scrollSteps: this._oTC.getFirstVisibleRow(),
-			scrollPosition: jQuery(this._oTC.getDomRef(sap.ui.table.SharedDomRef.VerticalScrollBar)).scrollTop()
+			scrollPosition: jQuery(this.getTCVsbDom()).scrollTop()
 		});
 	};
 
@@ -828,19 +959,29 @@ sap.ui.define([
 	};
 
 	GanttChartWithTable.prototype._onZoomInfoUpdated = function (oEvent) {
-		this.fireEvent("_zoomInfoUpdated", {zoomInfo: oEvent.getParameter("zoomInfo")});
+		var oParameters = oEvent.getParameters();
+		if (oParameters.axisTimeChanged) {
+			this.setProperty("timeZoomRate", this._oGanttChart.getAxisTime().getZoomRate(), true);
+		}
+		this.fireEvent("_zoomInfoUpdated",oParameters);
 	};
 
 	GanttChartWithTable.prototype._onShapesUpdated = function (oEvent) {
 		this.fireEvent("_shapesUpdated", {aSvg: oEvent.getParameter("aSvg")});
 	};
 
-	GanttChartWithTable.prototype._onSelectionPanelVSbScroll = function () {
-		var $ttvsb = jQuery(this._oTT.getDomRef(sap.ui.table.SharedDomRef.VerticalScrollBar));
-		var $tcvsb = jQuery(this._oTC.getDomRef(sap.ui.table.SharedDomRef.VerticalScrollBar));
+	GanttChartWithTable.prototype._bindVerticalScrollForTT = function() {
+		var $vsb = jQuery(this.getTTVsbDom());
+		$vsb.unbind("scroll.sapUiTableVScrollForGanttChartWithTable", this._onSelectionPanelVSbScroll);
+		$vsb.bind("scroll.sapUiTableVScrollForGanttChartWithTable", jQuery.proxy(this._onSelectionPanelVSbScroll, this));
+	};
+
+	GanttChartWithTable.prototype._onSelectionPanelVSbScroll = function() {
+		var $ttvsb = jQuery(this.getTTVsbDom());
+		var $tcvsb = jQuery(this.getTCVsbDom());
 		if (this.sScrollSource === null || this.sScrollSource !== "GanttChart") {
 			this.sScrollSource = "GanttChartWithTable";
-			$tcvsb.scrollTop($ttvsb.scrollTop());
+			window.requestAnimationFrame(function(){$tcvsb.scrollTop($ttvsb.scrollTop());});
 		} else {
 			this.sScrollSource = null;
 		}
@@ -848,15 +989,13 @@ sap.ui.define([
 	};
 
 	GanttChartWithTable.prototype._applyTransform = function(){
-		this.$().find("#" + this.getId() + "-spm-svg-table")
+		this.$().find(this.getDomSelectorById("spm-svg-table"))
 			.css("transform", "translateY(" + (-this._oTT.$().find(".sapUiTableCCnt").scrollTop()) + "px)");
 	};
 
 	GanttChartWithTable.prototype._onSplitterResize = function (oEvent) {
-		//this._oGanttChart._draw(true);
-		this._oTC.updateRows();
 		var oParam = oEvent.getParameters();
-		// reset size of chart and selectionpanel explicitely to force chart div resizing
+		this._oGanttChart._draw();
 		// fire event
 		this.fireSplitterResize(oParam);
 
@@ -864,26 +1003,33 @@ sap.ui.define([
 
 	GanttChartWithTable.prototype._onToolbarSourceChange = function (oEvent) {
 		var oldHierarchy = this.getHierarchyKey();
+		var oldMode = this.getMode();
 		this.setHierarchyKey(oEvent.getParameter("id"));
 
 		this.notifySourceChange();
 		this.fireGanttChartSwitchRequested({
 			hierarchyKey: oEvent.getParameter("id"),
-			oldHierarchyKey: oldHierarchy
+			oldHierarchyKey: oldHierarchy,
+			oldMode: oldMode
 		});
+	};
+	
+	GanttChartWithTable.prototype._onToolbarExpandChartChange = function (oEvent) {
+		var bExpanded = oEvent.getParameter("isExpand"),
+			aChartSchemes = oEvent.getParameter("expandedChartSchemes");
+		this.handleExpandChartChange(bExpanded, aChartSchemes, null /**selected Indices*/);
+
 	};
 
 	GanttChartWithTable.prototype._onToolbarExpandTreeChange = function(oEvent){
 		var sAction = oEvent.getParameter("action");
 		if (sAction){
 			var aSelectedRows = this._oTT.getSelectedIndices();
-			for (var i = aSelectedRows.length - 1; i > -1; i--){
-				this._oTT[sAction](aSelectedRows[i]);
-				aSelectedRows = this._oTT.getSelectedIndices();
-			}
+			this._oTT[sAction](aSelectedRows);
 		}
+		
 	};
-	
+
 	GanttChartWithTable.prototype._onToolbarModeChange = function (oEvent) {
 		// update data if mode is bound to model
 		var oBindingInfo = this.getBinding("mode");
@@ -908,18 +1054,20 @@ sap.ui.define([
 	GanttChartWithTable.prototype._updateTableRowHeights = function () {
 		var oTable = this._oTT;
 
-		var aHeights = this._aHeights;
+		var aHeights = this._getRowHeights();
 		if (!aHeights) {
 			return;
 		}
-		
-		oTable._updateRowHeader(aHeights);
+		oTable._updateRowHeights(aHeights, false);
 	};
-	
+
+	GanttChartWithTable.prototype._getRowHeights = function () {
+		return this._aHeights;
+	};
+
 	GanttChartWithTable.prototype.setBaseRowHeight = function (nBaseRowHeight) {
 		this.setProperty("baseRowHeight", nBaseRowHeight);
 		this._oTT.setRowHeight(nBaseRowHeight);
-		this._oGanttChart._setInferedBaseRowHeight(nBaseRowHeight);
 		return this._oGanttChart.setBaseRowHeight(nBaseRowHeight);
 	};
 
@@ -928,9 +1076,9 @@ sap.ui.define([
 	};
 
 	GanttChartWithTable.prototype._onTTRowUpdate = function(){
+		var $tableMask = this.$().find(this.getDomSelectorById("spm-svg-table-ctn"));
 		if (this._oGanttChart.isRowExpanded()){
 			var $tableDom = this._oTT.$();
-			var $tableMask = this.$().find("#" + this.getId() + "-spm-svg-table-ctn");
 			$tableMask.height($tableDom.find(".sapUiTableCCnt").height());
 			$tableMask.show();
 
@@ -938,7 +1086,6 @@ sap.ui.define([
 			$tableMaskSvg.height($tableDom.find(".sapUiTableCtrlCnt").height());
 			this._drawSvg();
 		} else {
-			var $tableMask = this.$().find("#" + this.getId() + "-spm-svg-table-ctn");
 			$tableMask.hide();
 		}
 		this._adjustGanttInferredRowHeight();
@@ -946,15 +1093,37 @@ sap.ui.define([
 		this._adjustChartHeaderHeight();
 	};
 
+	GanttChartWithTable.prototype._adjustChartHeaderHeight = function (){
+		var $tableExtDiv = this._oTT.$().find(".sapUiTableExt");
+		var $tableHeaderDiv = this._oTT.$().find(".sapUiTableColHdrCnt");
+		var iGanttChartHeaderHeight = $tableExtDiv.outerHeight() + $tableHeaderDiv.height() + 1;
+
+		var $headerDiv = this._oGanttChart.$().find(".sapGanttChartHeader");
+		$headerDiv.height(iGanttChartHeaderHeight);
+		$headerDiv.css("min-height", iGanttChartHeaderHeight);
+		var $headerSvg = this._oGanttChart.$().find(".sapGanttChartHeaderSvg");
+		$headerSvg.height(iGanttChartHeaderHeight);
+		$headerSvg.css("min-height", iGanttChartHeaderHeight);
+	};
+
 	GanttChartWithTable.prototype._adjustGanttInferredRowHeight = function (){
-		var aHeights = this._aHeights;
+		var aHeights = this._getRowHeights();
 		var iFirstVisibleRowIndex = this.getFirstVisibleRow();
 		var aShapeDatas = this._oGanttChart._getDrawingData([iFirstVisibleRowIndex, iFirstVisibleRowIndex]);
 		if (aHeights && aHeights.length > 0 && aShapeDatas && aShapeDatas.length > 0){
 			var iBaseRowHeight = aHeights[0] / aShapeDatas[0].visibleRowSpan;
-			this._oGanttChart._setInferedBaseRowHeight(iBaseRowHeight);
+			var iPreInferedBaseRowHeight = this._oGanttChart._iInferedBaseRowHeight;
+			if (iBaseRowHeight !== iPreInferedBaseRowHeight) {
+				this._oGanttChart._setInferedBaseRowHeight(iBaseRowHeight);
+				/* For the very first initial loading of GanttChart, sometimes (at certain probability) the GanttChart rendered
+				 * before left selection panel which means the '_iInferedBaseRowHeight' remain undefined while GanttChart got rendered,
+				 * when GanttChart did not know the right row height of selection panel. The result is GanttChart row height is not sync with left
+				 * selection panel, so here needs to trigger re-render of GanttChart manually*/
+				if (iPreInferedBaseRowHeight === undefined) {
+					this._oTC.updateRows();
+				}
+			}
 		}
-		
 	};
 
 	GanttChartWithTable.prototype._syncGanttTablesDomEvents = function(oEvent) {
@@ -965,16 +1134,16 @@ sap.ui.define([
 		oSourceTable.$().find(".sapUiTableRowHdr, .sapUiTableTr").hover(function(oEvent) {
 			var iIndex = jQuery(oEvent.currentTarget).data("sapUiRowindex");
 
-			oTargetTable.$().find(".sapUiTableCtrlFixed > tbody > tr")
+			oTargetTable.$().find(".sapUiTableCtrlFixed > tbody > tr.sapUiTableTr")
 							.filter(":eq(" + iIndex + ")").addClass("sapUiTableRowHvr");
-			oTargetTable.$().find(".sapUiTableCtrlScroll > tbody > tr")
+			oTargetTable.$().find(".sapUiTableCtrlScroll > tbody > tr.sapUiTableTr")
 							.filter(":eq(" + iIndex + ")").addClass("sapUiTableRowHvr");
 			oTargetTable.$().find(".sapUiTableRowHdr")
 							.filter(":eq(" + iIndex + ")").addClass("sapUiTableRowHvr");
 
 		}, function(oEvent) {
-			oTargetTable.$().find(".sapUiTableCtrlFixed > tbody > tr").removeClass("sapUiTableRowHvr");
-			oTargetTable.$().find(".sapUiTableCtrlScroll > tbody > tr").removeClass("sapUiTableRowHvr");
+			oTargetTable.$().find(".sapUiTableCtrlFixed > tbody > tr.sapUiTableTr").removeClass("sapUiTableRowHvr");
+			oTargetTable.$().find(".sapUiTableCtrlScroll > tbody > tr.sapUiTableTr").removeClass("sapUiTableRowHvr");
 			oTargetTable.$().find(".sapUiTableRowHdr").removeClass("sapUiTableRowHvr");
 		});
 	};
@@ -1013,124 +1182,48 @@ sap.ui.define([
 		this._oGanttChart.jumpToPosition(oDate);
 	};
 
-	/**
-	 * Selects in-row shapes and returns a success code.
-	 * 
-	 * @param {array} [aIds] List of the shapes that you want to select
-	 * @param {boolean} [isExclusive] Whether all other selected shapes are deselected
-	 * @return {boolean} If any selection change is applied, returns true.
-	 * @public
-	 */
 	GanttChartWithTable.prototype.selectShapes = function(aIds, isExclusive) {
 		return this._oGanttChart.selectShapes(aIds, isExclusive);
 	};
 
-	/**
-	 * Deselects in-row shapes and returns a success code.
-	 * 
-	 * @param {array} [aIds] List the shapes that you want to deselect
-	 * @return {boolean} If any selection change is applied, returns true.
-	 * @public
-	 */
 	GanttChartWithTable.prototype.deselectShapes = function(aIds) {
 		return this._oGanttChart.deselectShapes(aIds);
 	};
 
-	/**
-	 * Selects relationships and returns a success code.
-	 * 
-	 * @param {array} [aIds] List of the relationships that you want to select
-	 * @param {boolean} [isExclusive] Whether all other selected relationships are deselected
-	 * @return {boolean} - If any selection change is applied, returns true.
-	 * @public
-	 */
 	GanttChartWithTable.prototype.selectRelationships = function(aIds, isExclusive) {
 		return this._oGanttChart.selectRelationships(aIds, isExclusive);
 	};
 
-	/**
-	 * Deselects relationships and returns a success code.
-	 * 
-	 * @param {array} [aIds] List of the relationships that you want to deselect
-	 * @return {boolean} - If any selection change is applied, returns true.
-	 * @public
-	 */
 	GanttChartWithTable.prototype.deselectRelationships = function(aIds) {
 		return this._oGanttChart.deselectRelationships(aIds);
 	};
 
-	/**
-	 * Selects rows and returns a success code.
-	 * 
-	 * @param {array} [aIds] List of the rows that you want to select
-	 * @param {boolean} [isExclusive] Whether all other selected elements are deselected
-	 * @returns {boolean} - If any selection change is applied, returns true.
-	 * @public
-	 */
 	GanttChartWithTable.prototype.selectRows = function(aIds, isExclusive) {
 		return this._oGanttChart.selectRows(aIds, isExclusive);
 	};
 
-	/**
-	 * Deselects rows and returns a success code.
-	 * 
-	 * @param {array} [aIds] List of the rows that you want to deselect
-	 * @returns {boolean} - If any selection change is applied, returns true.
-	 * @public
-	 */
 	GanttChartWithTable.prototype.deselectRows = function(aIds) {
 		return this._oGanttChart.deselectRows(aIds);
 	};
-	
-	/**
-	 * Selects rows and all in-row shapes contained in the rows.
-	 * 
-	 * @param {array} [aIds] Row uids
-	 * @param {boolean} [bIsExclusive] Whether all other selected rows and shapes are deselected
-	 * @returns {boolean} - If any selection change is applied, returns true.
-	 * @public
-	 */
+
 	GanttChartWithTable.prototype.selectRowsAndShapes = function(aIds, bIsExclusive) {
 		return this._oGanttChart.selectRowsAndShapes(aIds, bIsExclusive);
 	};
 
-	/**
-	 * Gets all selected rows, shapes, and relationships
-	 * @return {object} The returned object contains "rows" for all selected rows, "shapes" for all selected shapes, and "relationships" for all selected relationships
-	 * @public
-	 */
 	GanttChartWithTable.prototype.getAllSelections = function () {
 		return this._oGanttChart.getAllSelections();
 	};
 
-	/**
-	 * Gets selected in-row shapes.
-	 * 
-	 * @return {array} Returns all selected shapes in the chart
-	 * @public
-	 */
 	GanttChartWithTable.prototype.getSelectedShapes = function() {
 		var aSelectedShapes = this._oGanttChart.getSelectedShapes();
 		return aSelectedShapes;
 	};
 
-	/**
-	 * Gets selected rows.
-	 * 
-	 * @return {array} Returns all selected rows
-	 * @public
-	 */
 	GanttChartWithTable.prototype.getSelectedRows = function() {
 		var aSelectedRows = this._oGanttChart.getSelectedRows();
 		return aSelectedRows;
 	};
 
-	/**
-	 * Gets selected relationships.
-	 * 
-	 * @return {array} Returns all selected relationships in the chart
-	 * @public
-	 */
 	GanttChartWithTable.prototype.getSelectedRelationships = function() {
 		var aSelectedRelationships = this._oGanttChart.getSelectedRelationships();
 		return aSelectedRelationships;
@@ -1140,27 +1233,17 @@ sap.ui.define([
 		this._oGanttChart.setDraggingData(oDraggingShape);
 	};
 
-	/**
-	 * Get row object by shape uid
-	 * @param {string} [sShapeUid] shape uid
-	 * @return {object} row object
-	 * @public
-	 */
 	GanttChartWithTable.prototype.getRowByShapeUid = function (sShapeUid) {
 		return this._oGanttChart.getRowByShapeUid(sShapeUid);
 	};
-	
 
 	GanttChartWithTable.prototype._drawSelectionPanel = function () {
-		var aTableSvg = d3.select("#" + this.getId() + "-spm-svg-table");
 		var iTableHeaderWidth = this._oTT.$().find(".sapUiTableRowHdrScr").width();
 
 		var aVisibleRowDatas = this._getVisibleRowData();
 		if (aVisibleRowDatas !== undefined){
-			this._oSelectionPanelDrawer.drawSvg(aTableSvg, aVisibleRowDatas, iTableHeaderWidth, this);
-			this.$().find("#" + this.getId() + "-spm-svg-table").css("transform", "translateY(" + (-this._oTT.$().find(".sapUiTableCCnt").scrollTop()) + "px)");
-			this._iFirstVisiableRowIndex = this._oTT.getFirstVisibleRow();
-			this._bCanApplyTableTransform = true;
+			this._oSelectionPanelDrawer.drawSvg(d3.select(this.getDomSelectorById("spm-svg-table")), aVisibleRowDatas, iTableHeaderWidth, this);
+			this.$().find(this.getDomSelectorById("spm-svg-table")).css("transform", "translateY(" + (-this._oTT.$().find(".sapUiTableCCnt").scrollTop()) + "px)");
 		}
 	};
 
@@ -1184,7 +1267,7 @@ sap.ui.define([
 	};
 
 	GanttChartWithTable.prototype._appendMaskSvg = function(){
-		var $tableMask = this.$().find("#" + this.getId() + "-spm-svg-table-ctn");
+		var $tableMask = this.$().find(this.getDomSelectorById("spm-svg-table-ctn"));
 		var $tableDom = this._oTT.$();
 
 		if ($tableMask.length == 0) {
@@ -1199,7 +1282,7 @@ sap.ui.define([
 	};
 
 	GanttChartWithTable.prototype._updateMaskSvg = function (){
-		var $tableMask = this.$().find("#" + this.getId() + "-spm-svg-table-ctn");
+		var $tableMask = this.$().find(this.getDomSelectorById("spm-svg-table-ctn"));
 		var $tableDom = this._oTT.$();
 
 		$tableMask.height($tableDom.find(".sapUiTableCCnt").height());
@@ -1221,144 +1304,28 @@ sap.ui.define([
 		return this._oGanttChart.getAxisTime();
 	};
 
-	GanttChartWithTable.prototype.getZoomInfo = function () {
-		return this._oGanttChart.getZoomInfo();
-	};
-
-	GanttChartWithTable.prototype._expandDefaultLevel = function() {
-		var aExpandedLevels;
-		var sHierarchyKey = this.getHierarchyKey();
-		//Check because default expansion should be applied only once
-		if (this._oDefaultExpansionStatus) {
-			if (this._oDefaultExpansionStatus[sHierarchyKey] === true) {
-				return;
-			}
-		}
-
-		if (this._oHierarchyConfigMap[sHierarchyKey] && this._oHierarchyConfigMap[sHierarchyKey].getExpandedLevels()) {
-			aExpandedLevels = this._oHierarchyConfigMap[this.getHierarchyKey()].getExpandedLevels();
-			var oBinding = this._oTT.getBinding("rows");
-			if (!oBinding) {
-				return;
-			}
-			var oTreeTableData = oBinding.getModel().getObject(oBinding.getPath());
-			var iCurrentLevel = 0; //Traversal level
-			var iRowCursor = 0;
-			var aCollapseRowIndex = [];
-			var aNodeNames = this._oTT.getBindingInfo("rows").parameters.arrayNames;
-			var hasChildren = function(oNode) {
-				for (var i = 0; i < aNodeNames.length; i++){
-					if (oNode[aNodeNames[i]]) {
-						return true;
-					}
-				}
-				return false;
-			};
-			if (aExpandedLevels.length <= 0) {
-				//No configuration, mark expand as applied and exit
-				this._oDefaultExpansionStatus[sHierarchyKey] = true;
-				return;
-			} else {
-				//Attach change event to binding
-				//Expand the tree table to the level of length of configured levels
-				//In change event handler. detach the event first, then find and collapse the nodes which do not match the config
-				var fnCalculateCollapseRowIndex = function(index, oNode) {
-					if (iCurrentLevel > aExpandedLevels.length) {
-						if (iCurrentLevel === (aExpandedLevels.length + 1)) {
-							iRowCursor++;
-						}
-						return;
-					}
-					if (hasChildren(oNode) === true) {
-						if (!($.inArray(oNode.type, aExpandedLevels[iCurrentLevel]) > -1)) {
-							if (aCollapseRowIndex) {
-								aCollapseRowIndex.push(iRowCursor);
-							} else {
-								aCollapseRowIndex = [iRowCursor];
-							}
-						}
-						iRowCursor++;
-						if (iCurrentLevel <= aExpandedLevels.length) {
-							iCurrentLevel++;
-							for (var j = 0; j < aNodeNames.length; j++){
-								if (oNode[aNodeNames[j]]) {
-									jQuery.each(oNode[aNodeNames[j]], fnCalculateCollapseRowIndex);
-								}
-							}
-							iCurrentLevel--;
-						}
-					} else {
-						iRowCursor++;
-					}
-				};
-				var fnCollapse = function() {
-					oBinding.detachChange(fnCollapse, this);
-					for (var i = 0; i < aNodeNames.length; i++){
-						if (oTreeTableData[aNodeNames[i]]) {
-							jQuery.each(oTreeTableData[aNodeNames[i]], fnCalculateCollapseRowIndex);
-						}
-					}
-					oBinding.getContexts(this._oTT.getFirstVisibleRow(), 0);
-					//must use inverted order because collapse will reset the index
-					for (var iIndex = aCollapseRowIndex.length - 1; iIndex >= 0; iIndex--) {
-						if (oBinding.getNodeByIndex(aCollapseRowIndex[iIndex])){
-							this._oTT.collapse(aCollapseRowIndex[iIndex]);
-						}
-					}
-				};
-				oBinding.attachChange(fnCollapse, this);
-				this._oTT.expandToLevel(aExpandedLevels.length);
-			}
-		}
-		//update default expansion status of hierarchy to avoid it is applied again
-		this._oDefaultExpansionStatus[sHierarchyKey] = true;
-	};
-
-	/**
-	 * Expands the selection panel to the given level
-	 * 
-	 * @see sap.ui.table.TreeTable.expandToLevel
-	 *
-	 * @param {int} iLevel
-	 *         Level of the selection panel to expand
-	 * @return {sap.gantt.GanttChartWithTable} A reference to the GanttChartWithTable control, which can be used for chaining
-	 * @public
-	 */
 	GanttChartWithTable.prototype.expandToLevel = function (iLevel) {
 		this._oTT.expandToLevel(iLevel);
 		return this;
 	};
 
-	/**
-	 * Expands the row for the given row index in the selection panel
-	 * 
-	 * @see sap.ui.table.Table.expand
-	 *
-	 * @param {int} iRowIndex
-	 *         Index of the row to expand
-	 * @return {sap.gantt.GanttChartWithTable} A reference to the GanttChartWithTable control, which can be used for chaining
-	 * @public
-	 */
 	GanttChartWithTable.prototype.expand = function(iRowIndex) {
 		this._oTT.expand(iRowIndex);
 		return this;
 	};
 	
-	/**
-	 * Collapses the row for the given row index in the selection panel
-	 *
-	 * @see sap.ui.table.Table.collapse
-	 * 
-	 * @param {int} iRowIndex
-	 *         index of the row to expand
-	 * @return {sap.gantt.GanttChartWithTable} A reference to the GanttChartWithTable control, which can be used for chaining
-	 * @public
-	 */
 	GanttChartWithTable.prototype.collapse = function(iRowIndex) {
 		this._oTT.collapse(iRowIndex);
 		return this;
 	};
+
+	GanttChartWithTable.prototype.getVisibleRowCount = function() {
+		return this._oTT.getVisibleRowCount();
+	};
 	
+	GanttChartWithTable.prototype.getLargestHorizonByDataRange = function(sBirdEyeRange){
+		return this._oGanttChart.getLargestHorizonByDataRange(sBirdEyeRange);
+	};
 	/**
 	 * Selects a row in the selection panel.
 	 * 
@@ -1393,9 +1360,10 @@ sap.ui.define([
 	 * 
 	 * @return {int} the first visible row index
 	 * @public
+	 * @deprecated We recommend use getTableProperties function instead
 	 */
 	GanttChartWithTable.prototype.getFirstVisibleRow = function() {
-		return this._oTT.getFirstVisibleRow();
+		return this.getTableProperties().firstVisibleRow;
 	};
 
 	/**
@@ -1406,22 +1374,13 @@ sap.ui.define([
 	 * @param {int} iRowIndex The row index to be set as the first visible row
 	 * @return {sap.gantt.GanttChartWithTable} A reference to the GanttChartWithTable control, which can be used for chaining
 	 * @public
+	 * @deprecated We recommend use setTableProperties function instead
 	 */
 	GanttChartWithTable.prototype.setFirstVisibleRow = function(iRowIndex) {
-		this._oTT.setFirstVisibleRow(iRowIndex);
+		this.setTableProperties({
+			firstVisibleRow: iRowIndex
+		});
 		return this;
-	};
-	
-	/**
-	 * Gets the number of visible rows in the selection panel. 
-	 * 
-	 * @see sap.ui.table.Table.getVisibleRowCount
-	 * 
-	 * @return {int} The first visible row index
-	 * @public
-	 */
-	GanttChartWithTable.prototype.getVisibleRowCount = function() {
-		return this._oTT.getVisibleRowCount();
 	};
 	
 	GanttChartWithTable.prototype.getRows = function() {
@@ -1466,6 +1425,26 @@ sap.ui.define([
 		if (this._oHierarchyConfigMap[this.getHierarchyKey()].getAutoResizeColumn()) {
 			this.autoResizeColumn();
 		}
+	};
+	
+	GanttChartWithTable.prototype.redraw = function (bHard) {
+		this._oGanttChart.redraw(bHard);
+	};
+
+	GanttChartWithTable.prototype.selectByUid = function (aUid) {
+		this._oGanttChart.selectByUid(aUid);
+	};
+
+	GanttChartWithTable.prototype.getTTHsbDom = function () {
+		return this._oTT.getDomRef(sap.ui.table.SharedDomRef.HorizontalScrollBar);
+	};
+
+	GanttChartWithTable.prototype.getTTVsbDom = function () {
+		return this._oTT.getDomRef(sap.ui.table.SharedDomRef.VerticalScrollBar);
+	};
+
+	GanttChartWithTable.prototype.getTCVsbDom = function () {
+		return this._oGanttChart.getTTVsbDom();
 	};
 
 	["addCustomToolbarItem", "insertCustomToolbarItem", "removeCustomToolbarItem", "indexOfCustomToolbarItem", "removeAllCustomToolbarItems", "destroyCustomToolbarItems", "getCustomToolbarItems"]

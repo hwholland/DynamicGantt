@@ -20,7 +20,7 @@ sap.ui.define([
 	 * @extends sap.gantt.config.ToolbarGroup
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -32,8 +32,9 @@ sap.ui.define([
 			properties: {
 				/**
 				 * Association to the setting item. See {@link sap.gantt.config.SettingItem}
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.SettingItem[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				items: {type: "array", defaultValue: sap.gantt.config.DEFAULT_TOOLBAR_SETTING_ITEMS}
+				items: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_TOOLBAR_SETTING_ITEMS}
 			}
 		}
 	});

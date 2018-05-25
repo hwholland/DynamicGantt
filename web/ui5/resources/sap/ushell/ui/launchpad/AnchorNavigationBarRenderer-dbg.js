@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 /**
  * @class AnchorNavigationBar renderer.
@@ -7,11 +7,10 @@
  * @private
  */
 
-(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.ui.launchpad.AnchorNavigationBarRenderer");
+sap.ui.define(function() {
+	"use strict";
 
-    sap.ushell.ui.launchpad.AnchorNavigationBarRenderer = {};
+    var AnchorNavigationBarRenderer = {};
 
     /**
      * Renders the HTML for the given control, using the provided
@@ -24,7 +23,7 @@
      *            oControl an object representation of the control that should be
      *            rendered
      */
-    sap.ushell.ui.launchpad.AnchorNavigationBarRenderer.render = function (oRm, oControl) {
+    AnchorNavigationBarRenderer.render = function (oRm, oControl) {
         oRm.write("<div");
         oRm.addClass("sapUshellAnchorNavigationBar");
         oRm.writeClasses();
@@ -54,8 +53,7 @@
         oRm.write("<ul");
         oRm.addClass("sapUshellAnchorNavigationBarItemsScroll");
         oRm.writeClasses();
-        oRm.writeAttribute("tabindex", "0");
-        oRm.writeAccessibilityState(oControl, {role: "listbox"});
+        oRm.writeAccessibilityState(oControl, {label: sap.ushell.resources.i18n.getText("AnchorNavigationBar_AriaLabel"), role: "listbox"});
         oRm.write(">");
         this.renderAnchorNavigationItems(oRm, oControl);
         oRm.write("</ul>");
@@ -82,17 +80,20 @@
         oRm.write("</div>");
 
         oRm.write("</div>");
-
     };
 
-    sap.ushell.ui.launchpad.AnchorNavigationBarRenderer.renderAnchorNavigationItems = function (oRm, oControl) {
+    AnchorNavigationBarRenderer.renderAnchorNavigationItems = function (oRm, oControl) {
         var aGroups = oControl.getGroups();
 
         jQuery.each(aGroups, function (index, aGroup) {
             oRm.renderControl(this);
         });
     };
-    sap.ushell.ui.launchpad.AnchorNavigationBarRenderer.shouldAddIBarContext = function () {
+    AnchorNavigationBarRenderer.shouldAddIBarContext = function () {
         return false;
     };
-}());
+
+
+	return AnchorNavigationBarRenderer;
+
+}, /* bExport= */ true);

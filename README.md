@@ -1,6 +1,6 @@
-# project
+# DynamicGantt
 
-This is a project without a direction or purpose
+Data-driven Gantt Chart from the SAP UI5 framework
 
 ## Installing
 
@@ -8,7 +8,7 @@ Download the package to the host computer (desktop or server), then navigate
 to the project's directory on the filesystem using a command-prompt or terminal.
 
 ```
-~/project
+~/DynamicGantt
 ```
 
 Run the following command to install the node.js dependency modules.

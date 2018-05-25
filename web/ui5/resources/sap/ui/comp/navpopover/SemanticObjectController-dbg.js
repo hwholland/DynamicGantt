@@ -1,22 +1,25 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.navpopover.SemanticObjectController.
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Element', 'sap/ui/comp/personalization/Util', './Factory', 'sap/ui/model/json/JSONModel'
-], function(jQuery, library, Element, PersonalizationUtil, Factory, JSONModel) {
+	'jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Element', './Factory', 'sap/ui/model/json/JSONModel'
+], function(jQuery, library, Element, Factory, JSONModel) {
 	"use strict";
 
 	/**
-	 * Constructor for a new navpopover/SemanticObjectController.
-	 * 
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
+	 * @class The <code>SemanticObjectController</code> control operates as a single entry point for <code>SmartLink</code> controls created automatically
+	 * by {@link sap.ui.comp.smarttable.SmartTable SmartTable} control, {@link sap.ui.comp.smartchart.SmartChart SmartChart} control,
+	 * {@link sap.ui.comp.smartform.SmartForm SmartForm} control and {@link sap.ui.comp.smartfield.SmartField SmartField} control based on OData metadata.
+	 * Additionally, all events provided by the <code>SmartLink</code> control are registered by the SemanticObjectController and can be consumed there in
+	 * a single place. As usual, the SemanticObjectController can be defined within the XML view as well as in the code.
+	 *
+	 * @param {string} [sID] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new control
-	 * @class The SemanticObjectController allows the user to register against semantic object navigation events as well as define semantic objects
-	 *        which should be ignored.
 	 * @extends sap.ui.core.Element
 	 * @constructor
 	 * @public
@@ -32,7 +35,7 @@ sap.ui.define([
 
 				/**
 				 * Comma-separated list of field names that must not be displayed as links.
-				 * 
+				 *
 				 * @since 1.28.0
 				 */
 				ignoredFields: {
@@ -44,7 +47,10 @@ sap.ui.define([
 				/**
 				 * If set to <code>true</code>, the SemanticObjectController will retrieve all navigation targets once and will disable links for
 				 * which no targets were found. Setting this value to <code>true</code> will trigger an additional roundtrip.
-				 * 
+				 *
+				 * @deprecated Since 1.42.0. The property <code>prefetchNavigationTargets</code> is obsolete as navigation targets are determined
+				 *             automatically. The SmartLink controls are re-rendered as soon as the asynchronous determination of navigation targets
+				 *             has been completed.
 				 * @since 1.28.0
 				 */
 				prefetchNavigationTargets: {
@@ -56,7 +62,7 @@ sap.ui.define([
 				/**
 				 * Maps the field names to the related semantic objects. When accessing this property for the first time, the mapping will be
 				 * calculated from the metadata within the provided model.
-				 * 
+				 *
 				 * @since 1.28.0
 				 */
 				fieldSemanticObjectMap: {
@@ -68,13 +74,47 @@ sap.ui.define([
 				/**
 				 * The name of the entity set used. If <code>entitySet</code> has not been defined, the SemanticObjectController tries to retrieve
 				 * the name from its parents. <b>Note:</b> This is not a dynamic UI5 property.
-				 * 
+				 *
 				 * @since 1.28.0
 				 */
 				entitySet: {
 					type: "string",
 					group: "Misc",
 					defaultValue: null
+				},
+
+				/**
+				 * Navigation property that points from the current to the related entity type where the
+				 * <code>com.sap.vocabularies.Communication.v1.Contact</code> annotation is defined, for example,
+				 * <code> '\{"Supplier":"to_Supplier", "CompanyName":"to_Company"\}' </code>. An empty string means that the related entity type is
+				 * the current one.
+				 *
+				 * @since 1.40.0
+				 */
+				contactAnnotationPaths: {
+					type: "object",
+					defaultValue: null
+				},
+
+				/**
+				 * Determines whether the personalization link is shown inside the NavigationPopover control. For example,
+				 * <code> '\{"Supplier":false, "CompanyName":true\}' </code>.
+				 *
+				 * @since 1.44.0
+				 */
+				enableAvailableActionsPersonalization: {
+					type: "object",
+					defaultValue: null
+				},
+
+				/**
+				 * If set to <code>false</code>, the SmartLink control will not replace its field name with the according
+				 * <code>semanticObject</code> property during the calculation of the semantic attributes.
+				 *
+				 * @since 1.48.0
+				 */
+				mapFieldToSemanticObject: {
+					type: "boolean"
 				}
 			},
 			events: {
@@ -82,7 +122,7 @@ sap.ui.define([
 				/**
 				 * After the navigation targets have been retrieved, <code>navigationTargetsObtained</code> is fired and makes it possible you to
 				 * change the targets.
-				 * 
+				 *
 				 * @since 1.28.0
 				 */
 				navigationTargetsObtained: {
@@ -109,10 +149,24 @@ sap.ui.define([
 						},
 
 						/**
+						 * Array containing contact data.
+						 */
+						popoverForms: {
+							type: "sap.ui.layout.form.SimpleForm[]"
+						},
+
+						/**
 						 * The semantic object for which the navigation targets have been retrieved.
 						 */
 						semanticObject: {
 							type: "string"
+						},
+
+						/**
+						 * Map containing the semantic attributes.
+						 */
+						semanticAttributes: {
+							type: "object"
 						},
 
 						/**
@@ -129,17 +183,34 @@ sap.ui.define([
 						 * This callback function shows the actual navigation popover. If the <code>navigationTargetsObtained</code> has been
 						 * registered, the <code>show</code> function has to be called manually in order to open the navigation popover. Signatures:
 						 * <code>show()</code>
-						 *  <code>show(oMainNavigation, aAvailableActions, oExtraContent)</code>
-						 *  <code>show(sMainNavigationId, oMainNavigation, aAvailableActions, oExtraContent)</code>
-						 * Parameters:
 						 * <ul>
-						 * <li>{string} sMainNavigationId The visible text for the main navigation section. If empty, the main navigation ID is
-						 * calculated using binding context of given source object (such as SmartLink).</li>
-						 * <li>{sap.ui.comp.navpopover.LinkData} oMainNavigation The main navigation object. If empty, property
-						 * <code>mainNavigation</code> will be used.</li>
-						 * <li>{sap.ui.comp.navpopover.LinkData[]} aAvailableActions Array containing the cross-application navigation links. If
-						 * empty, property <code>actions</code> will be used.</li>
-						 * <li>{sap.ui.core.Control} oExtraContent Control that will be displayed in extra content section on the popover.</li>
+						 * <li><code>show(oMainNavigation, aAvailableActions, oAdditionalContent)</code> Parameters:
+						 * <ul>
+						 * <li>{sap.ui.comp.navpopover.LinkData | null | undefined} oMainNavigation The main navigation object. With
+						 * <code>null</code> the main navigation object will be removed. With <code>undefined</code> the old object will remain.</li>
+						 * <li>{sap.ui.comp.navpopover.LinkData[] | [] | undefined} aAvailableActions Array containing the cross application
+						 * navigation links. With empty array all available links will be removed. With <code>undefined</code> the old links will
+						 * remain.</li>
+						 * <li>{sap.ui.core.Control | null | undefined} oAdditionalContent Control that will be displayed in extra content section on
+						 * the popover. With <code>null</code> the main extra content object will be removed. With <code>undefined</code> the old
+						 * object still remains.</li>
+						 * </ul>
+						 * </li>
+						 * <li><code>show(sMainNavigationId, oMainNavigation, aAvailableActions, oAdditionalContent)</code> Parameters:
+						 * <ul>
+						 * <li>{string | undefined} sMainNavigationId The visible description for the main navigation link. With <code>''</code>,
+						 * both the description and subtitle will be removed. With <code>undefined</code>, the description is calculated using the
+						 * binding context of a given source object (for example <code>SmartLink</code> control).</li>
+						 * <li>{sap.ui.comp.navpopover.LinkData | null | undefined} oMainNavigation The main navigation object. With
+						 * <code>null</code> the main navigation object will be removed. With <code>undefined</code> the old object will remain.</li>
+						 * <li>{sap.ui.comp.navpopover.LinkData[] | [] | undefined} aAvailableActions Array containing the cross application
+						 * navigation links. With empty array all available links will be removed. With <code>undefined</code> the old links will
+						 * remain.</li>
+						 * <li>{sap.ui.core.Control | null | undefined} oAdditionalContent Control that will be displayed in extra content section on
+						 * the popover. With <code>null</code> the main extra content object will be removed. With <code>undefined</code> the old
+						 * object still remains.</li>
+						 * </ul>
+						 * </li>
 						 * </ul>
 						 */
 						show: {
@@ -152,7 +223,7 @@ sap.ui.define([
 				 * Event is fired before the navigation popover opens and before navigation target links are retrieved. Event can be used to change
 				 * the parameters used to retrieve the navigation targets. In case of SmartLink, <code>beforePopoverOpens</code> is fired after the
 				 * link has been clicked.
-				 * 
+				 *
 				 * @since 1.28.0
 				 */
 				beforePopoverOpens: {
@@ -166,8 +237,21 @@ sap.ui.define([
 
 						/**
 						 * Map containing the semantic attributes calculated from the binding that will be used to retrieve the navigation targets.
+						 *
+						 * @deprecated Since 1.42.0. The parameter <code>semanticAttributes</code> is obsolete. Instead use the parameter
+						 *             <code>semanticAttributesOfSemanticObjects</code>.
 						 */
 						semanticAttributes: {
+							type: "object"
+						},
+
+						/**
+						 * A map of semantic objects for which the navigation targets will be retrieved and it's semantic attributes calculated from
+						 * the binding context. The semantic attributes will be used as parameters in order to retrieve the navigation targets.
+						 *
+						 * @since 1.42.0
+						 */
+						semanticAttributesOfSemanticObjects: {
 							type: "object"
 						},
 
@@ -175,7 +259,8 @@ sap.ui.define([
 						 * This callback function enables you to define a changed semantic attributes map. Signatures:
 						 * <code>setSemanticAttributes(oSemanticAttributesMap)</code> Parameter:
 						 * <ul>
-						 * <li>{object} oSemanticAttributesMap New map containing the semantic attributes to be used.</li>
+						 * <li>{object} oSemanticAttributesMap New map containing the semantic attributes</li>
+						 * <li>{string} sSemanticObject Semantic Object for which the oSemanticAttributesMap belongs</li>
 						 * </ul>
 						 */
 						setSemanticAttributes: {
@@ -217,7 +302,7 @@ sap.ui.define([
 				/**
 				 * This event is fired after a navigation link on the navigation popover has been clicked. This event is only fired, if the user
 				 * left-clicks the link. Right-clicking the link and selecting 'Open in New Window' etc. in the context menu does not fire the event.
-				 * 
+				 *
 				 * @since 1.28.0
 				 */
 				navigate: {
@@ -265,7 +350,9 @@ sap.ui.define([
 				/**
 				 * If the property <code>prefetchNavigationTargets</code> is set to <code>true</code>, event <code>prefetchDone</code> is fired
 				 * after all navigation targets have been retrieved.
-				 * 
+				 *
+				 * @deprecated Since 1.42.0. The event <code>prefetchDone</code> is obsolete because it depends on the property
+				 *             <code>prefetchNavigationTargets</code> which has been deprecated.
 				 * @since 1.28.0
 				 */
 				prefetchDone: {
@@ -285,67 +372,90 @@ sap.ui.define([
 
 	// Fill 'oSemanticObjects' as soon as possible
 	SemanticObjectController.oSemanticObjects = {};
+	SemanticObjectController.oNavigationTargetActions = {};
 	SemanticObjectController.bHasPrefetchedDistinctSemanticObjects = false;
-	SemanticObjectController.oPromise;
+	SemanticObjectController.bHasPrefetchedNavigationTargetActions = false;
+	SemanticObjectController.oPromise = null;
+	SemanticObjectController.oPromiseActions = null;
 
 	SemanticObjectController.prototype.init = function() {
 		SemanticObjectController.prefetchDistinctSemanticObjects();
-		
-		this._proxyOnBeforePopoverOpens = jQuery.proxy(this._onBeforePopoverOpens, this);
-		this._proxyOnTargetsObtained = jQuery.proxy(this._onTargetsObtained, this);
-		this._proxyOnNavigate = jQuery.proxy(this._onNavigate, this);
+
+		this._proxyOnBeforePopoverOpens = this._onBeforePopoverOpens.bind(this);
+		this._proxyOnTargetsObtained = this._onTargetsObtained.bind(this);
+		this._proxyOnNavigate = this._onNavigate.bind(this);
 		this._aRegisteredControls = [];
 	};
 
 	/**
-	 * Adds the given control to the SemanticObjectController and registers all relevant events.
-	 * 
-	 * @param {sap.ui.comp.navpopover.SmartLink} oSmartLink
+	 * Returns whether the given control has been registered by the SemanticObjectController.
+	 *
+	 * @param {sap.ui.comp.navpopover.SmartLink | sap.ui.comp.navpopover.NavigationPopoverHandler} oControl Control registered by <code>SemanticObjectController</code>
+	 * @returns {boolean} <code>true</code> if the given control has been registered
 	 * @public
 	 */
-	SemanticObjectController.prototype.registerControl = function(oSmartLink) {
-//		if (!(oSmartLink instanceof sap.ui.comp.navpopover.SmartLink)) {
-//			jQuery.sap.log.warning("SemanticObjectController: " + (oSmartLink.getMetadata ? oSmartLink.getMetadata() : "parameter") + " is not of SmartLink instance");
-//			return;
-//		}
-		if (oSmartLink.attachBeforePopoverOpens && !oSmartLink.hasListeners("beforePopoverOpens")) {
-			oSmartLink.attachBeforePopoverOpens(this._proxyOnBeforePopoverOpens);
+	SemanticObjectController.prototype.isControlRegistered = function(oControl) {
+		return this._aRegisteredControls.indexOf(oControl) > -1;
+	};
+
+	/**
+	 * Adds the given control to the SemanticObjectController and registers all relevant events.
+	 *
+	 * @param {sap.ui.comp.navpopover.SmartLink | sap.ui.comp.navpopover.NavigationPopoverHandler} oControl Control to be registered by <code>SemanticObjectController</code>
+	 * @public
+	 */
+	SemanticObjectController.prototype.registerControl = function(oControl) {
+		if (!(oControl instanceof sap.ui.comp.navpopover.SmartLink || oControl instanceof sap.ui.comp.navpopover.NavigationPopoverHandler)) {
+			jQuery.sap.log.warning("sap.ui.comp.navpopover.SemanticObjectController: " + (oControl.getMetadata ? oControl.getMetadata() : "parameter") + " is neither of SmartLink nor of NavigationPopoverHandler instance");
+			return;
 		}
-		if (oSmartLink.attachNavigationTargetsObtained && !oSmartLink.hasListeners("navigationTargetsObtained")) {
-			oSmartLink.attachNavigationTargetsObtained(this._proxyOnTargetsObtained);
+		if (this.isControlRegistered(oControl)) {
+			return;
+		}
+		if (oControl.attachBeforePopoverOpens) {
+			oControl.attachBeforePopoverOpens(this._proxyOnBeforePopoverOpens);
+		}
+		if (oControl.attachNavigationTargetsObtained) {
+			oControl.attachNavigationTargetsObtained(this._proxyOnTargetsObtained);
 		}
 
-		if (oSmartLink.attachInnerNavigate && !oSmartLink.hasListeners("innerNavigate")) {
-			oSmartLink.attachInnerNavigate(this._proxyOnNavigate);
+		if (oControl.attachInnerNavigate) {
+			oControl.attachInnerNavigate(this._proxyOnNavigate);
 		}
 
-		this._aRegisteredControls.push(oSmartLink);
+		this._aRegisteredControls.push(oControl);
 	};
 
 	/**
 	 * Removes the given control from the SemanticObjectController and unregisters all relevant events.
-	 * 
-	 * @param {sap.ui.comp.navpopover.SmartLink} oSmartLink
+	 *
+	 * @param {sap.ui.comp.navpopover.SmartLink | sap.ui.comp.navpopover.NavigationPopoverHandler} oControl Control to be unregistered by <code>SemanticObjectController</code>
 	 * @public
 	 */
-	SemanticObjectController.prototype.unregisterControl = function(oSmartLink) {
-		if (oSmartLink.detachBeforePopoverOpens) {
-			oSmartLink.detachBeforePopoverOpens(this._proxyOnBeforePopoverOpens);
+	SemanticObjectController.prototype.unregisterControl = function(oControl) {
+		if (!oControl) {
+			return;
 		}
-		if (oSmartLink.detachNavigationTargetsObtained) {
-			oSmartLink.detachNavigationTargetsObtained(this._proxyOnTargetsObtained);
+		if (!this.isControlRegistered(oControl)) {
+			return;
+		}
+		if (oControl.detachBeforePopoverOpens) {
+			oControl.detachBeforePopoverOpens(this._proxyOnBeforePopoverOpens);
+		}
+		if (oControl.detachNavigationTargetsObtained) {
+			oControl.detachNavigationTargetsObtained(this._proxyOnTargetsObtained);
 		}
 
-		if (oSmartLink.detachInnerNavigate) {
-			oSmartLink.detachInnerNavigate(this._proxyOnNavigate);
+		if (oControl.detachInnerNavigate) {
+			oControl.detachInnerNavigate(this._proxyOnNavigate);
 		}
 
-		this._aRegisteredControls.pop(oSmartLink);
+		this._aRegisteredControls.splice(this._aRegisteredControls.indexOf(oControl), 1);
 	};
 
 	/**
 	 * Eventhandler before navigation popover opens
-	 * 
+	 *
 	 * @param {object} oEvent the event parameters.
 	 * @private
 	 */
@@ -356,6 +466,7 @@ sap.ui.define([
 			this.fireBeforePopoverOpens({
 				semanticObject: oParameters.semanticObject,
 				semanticAttributes: oParameters.semanticAttributes,
+				semanticAttributesOfSemanticObjects: oParameters.semanticAttributesOfSemanticObjects,
 				setSemanticAttributes: oParameters.setSemanticAttributes,
 				setAppStateKey: oParameters.setAppStateKey,
 				originalId: oParameters.originalId,
@@ -368,31 +479,31 @@ sap.ui.define([
 
 	/**
 	 * Eventhandler after navigation targets have been retrieved.
-	 * 
+	 *
 	 * @param {object} oEvent the event parameters.
 	 * @private
 	 */
 	SemanticObjectController.prototype._onTargetsObtained = function(oEvent) {
 		var oParameters = oEvent.getParameters();
-		if (this.hasListeners("navigationTargetsObtained")) {
-			// var oSource = oEvent.getSource();
-			this.fireNavigationTargetsObtained({
-				semanticObject: oParameters.semanticObject,// oSource.getSemanticObject(),
-				semanticAttributes: oParameters.semanticAttributes, // oSource.getSemanticAttributes(),
-				actions: oParameters.actions,
-				mainNavigation: oParameters.mainNavigation,
-				ownNavigation: oParameters.ownNavigation,
-				originalId: oParameters.originalId,
-				show: oParameters.show
-			});
-		} else {
+		if (!this.hasListeners("navigationTargetsObtained")) {
 			oParameters.show();
+			return;
 		}
+		this.fireNavigationTargetsObtained({
+			mainNavigation: oParameters.mainNavigation,
+			actions: oParameters.actions,
+			ownNavigation: oParameters.ownNavigation,
+			popoverForms: oParameters.popoverForms,
+			semanticObject: oParameters.semanticObject,
+			semanticAttributes: oParameters.semanticAttributes,
+			originalId: oParameters.originalId,
+			show: oParameters.show
+		});
 	};
 
 	/**
 	 * Eventhandler after navigation has been triggered.
-	 * 
+	 *
 	 * @param {object} oEvent the event parameters.
 	 * @private
 	 */
@@ -409,9 +520,10 @@ sap.ui.define([
 
 	/**
 	 * Checks if the given SmartLink has to be enabled or disabled and sets the state.
-	 * 
+	 *
 	 * @param {sap.ui.comp.navpopover.SmartLink} oSmartLink the SmartLink which should be enabled or disabled.
 	 * @public
+	 * @deprecated Since 1.42.0. The method <code>setIgnoredState</code> is obsolete as SmartLink is processing the internal state on its own.
 	 */
 	SemanticObjectController.prototype.setIgnoredState = function(oSmartLink) {
 		if (oSmartLink instanceof sap.ui.comp.navpopover.SmartLink) {
@@ -423,11 +535,14 @@ sap.ui.define([
 		this.setProperty("ignoredFields", sIgnoredFields);
 
 		this._aRegisteredControls.forEach(function(oRegisteredControl) {
-			oRegisteredControl._updateEnabled();
+			if (oRegisteredControl._updateEnabled) {
+				oRegisteredControl._updateEnabled();
+			}
 		});
 		return this;
 	};
 
+	// @deprecated
 	SemanticObjectController.prototype.setPrefetchNavigationTargets = function(bPrefetch) {
 		this.setProperty("prefetchNavigationTargets", bPrefetch);
 
@@ -435,10 +550,14 @@ sap.ui.define([
 			return this;
 		}
 
+		jQuery.sap.log.error("sap.ui.comp.navpopover.SemanticObjectController: Please be aware that in case of a large amount of semantic objects the performance may suffer significantly and the received links will be created out of context");
+
 		var that = this;
 		SemanticObjectController.getDistinctSemanticObjects().then(function(oSemanticObjects) {
-			that.firePrefetchDone({
-				semanticObjects: oSemanticObjects
+			SemanticObjectController.getNavigationTargetActions(oSemanticObjects).then(function(oNavigationTargetActions) {
+				that.firePrefetchDone({
+					semanticObjects: oNavigationTargetActions
+				});
 			});
 		});
 
@@ -452,7 +571,7 @@ sap.ui.define([
 		}
 
 		if (!this.getEntitySet()) {
-			jQuery.sap.log.warning("FieldSemanticObjectMap is not set on SemanticObjectController, retrieval without EntitySet not possible");
+			jQuery.sap.log.warning("sap.ui.comp.navpopover.SemanticObjectController: FieldSemanticObjectMap is not set on SemanticObjectController, retrieval without EntitySet not possible");
 			return null;
 		}
 
@@ -491,20 +610,15 @@ sap.ui.define([
 	 * Checks if the given semantic object name has a navigation link. <b>Note</b>: this method returns a valid value only after the event
 	 * <code>prefetchDone</code> has been raised. The event <code>prefetchDone</code> is raised if the property
 	 * <code>prefetchNavigationTargets</code> is set to <code>true</code>.
-	 * 
-	 * @param {string} sSemanticObject
-	 * @returns {boolean} true if the semantic object has known navigation links
+	 *
+	 * @param {string} sSemanticObject Name of semantic object
+	 * @returns {boolean} true if the semantic object has any navigation links
 	 * @public
+	 * @deprecated Since 1.42.0. The method <code>hasSemanticObjectLinks</code> is obsolete because it depends on the property
+	 *             <code>prefetchNavigationTargets</code> which has been deprecated.
 	 */
 	SemanticObjectController.prototype.hasSemanticObjectLinks = function(sSemanticObject) {
 		return SemanticObjectController.hasDistinctSemanticObject(sSemanticObject, SemanticObjectController.oSemanticObjects);
-	};
-
-	/**
-	 * @private
-	 */
-	SemanticObjectController.hasDistinctSemanticObject = function(sSemanticObject, oSemanticObjects) {
-		return !!oSemanticObjects[sSemanticObject];
 	};
 
 	/**
@@ -519,25 +633,23 @@ sap.ui.define([
 
 	/**
 	 * Static method which calls asynchronous CrossApplicationNavigation.
-	 * 
-	 * @returns: {jQuery.Deferred.promise}
+	 *
+	 * @returns {Promise} A <code>Promise</code> for asynchronous execution
 	 * @private
 	 */
 	SemanticObjectController.getDistinctSemanticObjects = function() {
 		if (SemanticObjectController.bHasPrefetchedDistinctSemanticObjects) {
-			return new Promise(function(resolve) {
-				return resolve(SemanticObjectController.oSemanticObjects);
-			});
+			return Promise.resolve(SemanticObjectController.oSemanticObjects);
 		}
 		if (!SemanticObjectController.oPromise) {
 			SemanticObjectController.oPromise = new Promise(function(resolve) {
 				var oCrossAppNav = Factory.getService("CrossApplicationNavigation");
-				var oURLParsing = Factory.getService("URLParsing");
-				if (!oCrossAppNav || !oURLParsing) {
+				if (!oCrossAppNav) {
+					jQuery.sap.log.error("sap.ui.comp.navpopover.SemanticObjectController: Service 'CrossApplicationNavigation' could not be obtained");
 					SemanticObjectController.bHasPrefetchedDistinctSemanticObjects = true;
 					return resolve({});
 				}
-				oCrossAppNav.getDistinctSemanticObjects().done(function(aSemanticObjects) {
+				oCrossAppNav.getDistinctSemanticObjects().then(function(aSemanticObjects) {
 					aSemanticObjects.forEach(function(sSemanticObject_) {
 						SemanticObjectController.oSemanticObjects[sSemanticObject_] = {};
 					});
@@ -545,10 +657,73 @@ sap.ui.define([
 					oModel.setProperty("/distinctSemanticObjects", SemanticObjectController.oSemanticObjects);
 					SemanticObjectController.bHasPrefetchedDistinctSemanticObjects = true;
 					return resolve(SemanticObjectController.oSemanticObjects);
+				}, function() {
+					jQuery.sap.log.error("sap.ui.comp.navpopover.SemanticObjectController: getDistinctSemanticObjects() of service 'CrossApplicationNavigation' failed");
+					SemanticObjectController.bHasPrefetchedDistinctSemanticObjects = true;
+					return resolve({});
 				});
 			});
 		}
 		return SemanticObjectController.oPromise;
+	};
+
+	/**
+	 * Static method which calls asynchronous CrossApplicationNavigation.
+	 * @param {object} oSemanticObjects
+	 * @returns {Promise} A <code>Promise</code> for asynchronous execution
+	 * @private
+	 */
+	SemanticObjectController.getNavigationTargetActions = function(oSemanticObjects) {
+		if (SemanticObjectController.bHasPrefetchedNavigationTargetActions) {
+			return Promise.resolve(SemanticObjectController.oNavigationTargetActions);
+		}
+		if (!SemanticObjectController.oPromiseLinks) {
+			SemanticObjectController.oPromiseLinks = new Promise(function(resolve) {
+				var oCrossAppNav = Factory.getService("CrossApplicationNavigation");
+				var oURLParsing = Factory.getService("URLParsing");
+				if (!oCrossAppNav || !oURLParsing) {
+					jQuery.sap.log.error("sap.ui.comp.navpopover.SemanticObjectController: Service 'CrossApplicationNavigation' or 'URLParsing' could not be obtained");
+					SemanticObjectController.bHasPrefetchedNavigationTargetActions = true;
+					return resolve({});
+				}
+				var aSemanticObjects = Object.keys(oSemanticObjects);
+				var aParams = aSemanticObjects.map(function(sSemanticObject) {
+					// we put just one argument into an array (according to FLP API
+					return [
+						{
+							semanticObject: sSemanticObject
+						}
+					];
+				});
+				oCrossAppNav.getLinks(aParams).then(function(aLinksOfSemanticObjects) {
+					aSemanticObjects.forEach(function(sSemanticObject, iIndex) {
+						SemanticObjectController.oNavigationTargetActions[sSemanticObject] = [];
+						aLinksOfSemanticObjects[iIndex][0].forEach(function(oLink) {
+							var oShellHash = oURLParsing.parseShellHash(oLink.intent);
+							if (oShellHash && oShellHash.semanticObject === sSemanticObject) {
+								SemanticObjectController.oNavigationTargetActions[sSemanticObject].push(oShellHash.action);
+							}
+						});
+					});
+					var oModel = SemanticObjectController.getJSONModel();
+					oModel.setProperty("/navigationTargetActions", SemanticObjectController.oNavigationTargetActions);
+					SemanticObjectController.bHasPrefetchedNavigationTargetActions = true;
+					return resolve(SemanticObjectController.oNavigationTargetActions);
+				}, function() {
+					jQuery.sap.log.error("sap.ui.comp.navpopover.SemanticObjectController: getLinks() of service 'CrossApplicationNavigation' failed");
+					SemanticObjectController.bHasPrefetchedNavigationTargetActions = true;
+					return resolve({});
+				});
+			});
+		}
+		return SemanticObjectController.oPromiseLinks;
+	};
+
+	/**
+	 * @private
+	 */
+	SemanticObjectController.hasDistinctSemanticObject = function(sSemanticObject, oSemanticObjects) {
+		return !!oSemanticObjects[sSemanticObject];
 	};
 
 	/**
@@ -573,8 +748,11 @@ sap.ui.define([
 	 */
 	SemanticObjectController.destroyDistinctSemanticObjects = function() {
 		SemanticObjectController.oSemanticObjects = {};
+		SemanticObjectController.oNavigationTargetActions = {};
 		SemanticObjectController.oPromise = null;
+		SemanticObjectController.oPromiseActions = null;
 		SemanticObjectController.bHasPrefetchedDistinctSemanticObjects = false;
+		SemanticObjectController.bHasPrefetchedNavigationTargetActions = false;
 
 		// destroy model and its data
 		var oModel = sap.ui.getCore().getModel("$sapuicompSemanticObjectController_DistinctSemanticObjects");

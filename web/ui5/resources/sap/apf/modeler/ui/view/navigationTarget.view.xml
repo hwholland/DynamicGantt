@@ -6,18 +6,13 @@
 		renderType="Div" justifyContent="Start" alignItems="Stretch">
 		<items>
 			<ScrollContainer vertical="true">
-				<f:SimpleForm maxContainerCols="1" editable="false"
+				<f:SimpleForm maxContainerCols="1" editable="true"
 					labelMinWidth="300" layout="ResponsiveGridLayout" labelSpanL="4"
 					labelSpanM="4" labelSpanS="4" emptySpanL="2" emptySpanM="2"
-					emptySpanS="2" columnsL="1" columnsM="1">
+					emptySpanS="2" columnsL="1" columnsM="1" class="formBottomPadding">
 					<f:content>
 						<!-- NAVIGATION TARGET BASIC DATA -->
-						<ObjectHeader id="idNavigationTargetHeaderLabel"
-							condensed="true" backgroundDesign="Transparent">
-							<layoutData>
-								<l:GridData span="L12 M12 S12" />
-							</layoutData>
-						</ObjectHeader>
+						<core:Title id="idNavigationTargetHeaderLabel" level="H4" />
 						<Label xmlns="sap.m" id="idSemanticObjectLabel" required="true" />
 						<ComboBox xmlns="sap.m" id="idSemanticObjectField"
 							visible="true" enabled="true" width="100%" maxWidth="100%" type="Default"
@@ -25,23 +20,39 @@
 							items="{/Objects}">
 							<core:Item key="{id}" text="{id}" />
 						</ComboBox>
-						<Label xmlns="sap.m" id="idActionLabel" required="true"/>
+						<Label xmlns="sap.m" id="idActionLabel" required="true" />
 						<ComboBox xmlns="sap.m" id="idActionField" visible="true"
 							enabled="true" width="100%" maxWidth="100%" type="Default"
 							autoAdjustWidth="false" change="handleChangeofAction" items="{/Objects}">
 							<core:Item key="{id}" text="{id}" />
 						</ComboBox>
 						<Label xmlns="sap.m" id="idDescriptionLabel" />
-						<Input xmlns="sap.m" id="idDescription" editable="false" />
-
-						<!-- NAVIGATION TARGET TYPE -->
-
-						<ObjectHeader id="idNavigationTargetTypeHeaderLabel"
-							condensed="true" backgroundDesign="Transparent">
+						<Input xmlns="sap.m" id="idDescription" editable="true"
+							change="handleChangeForTitleText" showSuggestion="true"
+							suggestionItems="{/Objects}" suggest="handleSuggestions">
+							<core:Item key="{key}" text="{name}" />
+						</Input>
+						<!-- NAVIGATION PARAMETERS -->
+						<core:Title id="idNavigationParametersHeaderLabel" level="H4" />
+					
+						<Label xmlns="sap.m" id="idUseDynamicParametersCheckBoxLabel" width="100%">
+						</Label>
+						<HBox
+							alignItems="Start"
+							justifyContent="Start">
+							<items>
+								<CheckBox xmlns="sap.m" id="idUseDynamicParametersCheckBox"
+				 					select="handleChangeForUseDynamicParameters"/>
+								<Button xmlns="sap.m" type="Transparent" id="idDisplayHelpAboutDynamicParameters" press="displayHelpAboutDynamicParameters" icon="sap-icon://sys-help"/>
+							</items>
+						</HBox>
+						<VBox id="idNavigationParameterBox">
 							<layoutData>
 								<l:GridData span="L12 M12 S12" />
 							</layoutData>
-						</ObjectHeader>
+						</VBox>
+						<!-- NAVIGATION TARGET TYPE -->
+						<core:Title id="idNavigationTargetTypeHeaderLabel" level="H4" />
 						<Label xmlns="sap.m" id="idNavigationTargetTypeLabel" />
 						<Select xmlns="sap.m" id="idNavigationTargetTypeField"
 							visible="true" enabled="true" width="100%" type="Default"
@@ -57,13 +68,8 @@
 							<core:Item key="{stepKey}" text="{stepName}" />
 						</MultiComboBox>
 						<!-- NAVIGATION TARGET FILETR MAPPING -->
-						<ObjectHeader id="idContextMapping" condensed="true"
-							backgroundDesign="Transparent">
-							<layoutData>
-								<l:GridData span="L12 M12 S12" />
-							</layoutData>
-						</ObjectHeader>
-						</f:content>
+						<core:Title id="idContextMapping" level="H4" />
+					</f:content>
 				</f:SimpleForm>
 				<VBox id="idContextMappingVBox" />
 			</ScrollContainer>

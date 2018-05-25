@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's UserDefaultParameterPersistence service provides
  *               read and write access to a per user storage of per user
@@ -15,15 +15,14 @@
  *
  *               This is *not* an application facing service, but for Shell
  *               Internal usage.
- * @version
- * 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*jslint nomen: true, bitwise: false */
     /*jshint bitwise: false */
     /*global jQuery, sap, setTimeout, clearTimeout, window */
-    jQuery.sap.declare("sap.ushell.services.UserDefaultParameterPersistence");
 
     var aValidProperties = [
         "value",  // the single value
@@ -56,13 +55,13 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.services.UserDefaultParameterPersistence = function (oAdapter, oContainerInterface, sParameter, oConfig) {
+    function UserDefaultParameterPersistence (oAdapter, oContainerInterface, sParameter, oConfig) {
         this._oAdapter = oAdapter;
         this._oData = {};
     };
 
 
-    sap.ushell.services.UserDefaultParameterPersistence.prototype._cleanseValue = function(oValue) {
+    UserDefaultParameterPersistence.prototype._cleanseValue = function(oValue) {
         var res = jQuery.extend(true, {} ,oValue),
             a;
         for  (a in res) {
@@ -75,7 +74,7 @@
         return res;
     };
 
-    sap.ushell.services.UserDefaultParameterPersistence.prototype._testValue = function(oValue) {
+    UserDefaultParameterPersistence.prototype._testValue = function(oValue) {
         return true;
     };
 
@@ -93,7 +92,7 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.services.UserDefaultParameterPersistence.prototype.loadParameterValue = function (sParameterName) {
+    UserDefaultParameterPersistence.prototype.loadParameterValue = function (sParameterName) {
         var oDeferred = new jQuery.Deferred(),
             that = this;
         if (this._oData[sParameterName]) {
@@ -126,8 +125,9 @@
      *
      * @since 1.32.0
      * @public
+     * @alias sap.ushell.services.UserDefaultParameterPersistence#saveParameterValue
      */
-    sap.ushell.services.UserDefaultParameterPersistence.prototype.saveParameterValue = function (sParameterName, oValueObject) {
+    UserDefaultParameterPersistence.prototype.saveParameterValue = function (sParameterName, oValueObject) {
         var oDeferred,
             oCleansedValueObject;
         if (!oValueObject) {
@@ -154,8 +154,9 @@
      *
      * @since 1.32.0
      * @public
+     * @alias sap.ushell.services.UserDefaultParameterPersistence#deleteParameter
      */
-    sap.ushell.services.UserDefaultParameterPersistence.prototype.deleteParameter = function (sParameterName) {
+    UserDefaultParameterPersistence.prototype.deleteParameter = function (sParameterName) {
         delete this._oData[sParameterName];
         return this._oAdapter.deleteParameter(sParameterName);
     };
@@ -170,7 +171,7 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.services.UserDefaultParameterPersistence.prototype.getStoredParameterNames = function () {
+    UserDefaultParameterPersistence.prototype.getStoredParameterNames = function () {
         var oDeferred = new jQuery.Deferred();
         this._oAdapter.getStoredParameterNames().done(function (aRes) {
             aRes.sort();
@@ -179,4 +180,7 @@
         return oDeferred.promise();
     };
 
-}());
+    UserDefaultParameterPersistence.hasNoAdapter = false;
+    return UserDefaultParameterPersistence;
+
+}, true /* bExport */);

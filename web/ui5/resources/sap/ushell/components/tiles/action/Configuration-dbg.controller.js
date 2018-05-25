@@ -1,9 +1,10 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-(function() {
-    "use strict";
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(['sap/ushell/components/tiles/utils'],
+	function(utils) {
+	"use strict";
+
     /* global jQuery, sap */
 
-    jQuery.sap.require("sap.ushell.components.tiles.utils");
     sap.ui.controller("sap.ushell.components.tiles.action.Configuration", {
 
         sEnterValuePlaceHolder: "",
@@ -22,7 +23,7 @@
         ],
 
         onConfigurationInputChange: function(oControlEvent) {
-            sap.ushell.components.tiles.utils.checkTMInput(this.getView(), oControlEvent);
+            utils.checkTMInput(this.getView(), oControlEvent);
         },
         onInit: function() {
             var oView = this.getView();
@@ -32,16 +33,16 @@
             var oAliasSelector = oView.byId("target_application_aliasInput");
             var oActionSelector = oView.byId("semantic_actionInput");
             var oTargetTypeSelector = oView.byId("targetTypeInput");
-            var oResourceModel = sap.ushell.components.tiles.utils.getResourceBundleModel();
+            var oResourceModel = utils.getResourceBundleModel();
 
             oView.setModel(oResourceModel, "i18n");
             oView.setViewName("sap.ushell.components.tiles.action.Configuration");
             // initialize semantic object input field
-            sap.ushell.components.tiles.utils.createSemanticObjectModel(this, oSemanticObjectSelector, this.aDefaultObjects);
-            sap.ushell.components.tiles.utils.createRoleModel(this, oRoleSelector, oInstanceSelector);
-            sap.ushell.components.tiles.utils.createAliasModel(this, oAliasSelector);
-            sap.ushell.components.tiles.utils.createActionModel(this, oActionSelector);
-            sap.ushell.components.tiles.utils.createNavigationProviderModel(this, oTargetTypeSelector);
+            utils.createSemanticObjectModel(this, oSemanticObjectSelector, this.aDefaultObjects);
+            utils.createRoleModel(this, oRoleSelector, oInstanceSelector);
+            utils.createAliasModel(this, oAliasSelector);
+            utils.createActionModel(this, oActionSelector);
+            utils.createNavigationProviderModel(this, oTargetTypeSelector);
             // make sure that the chose object is written back to the configuration
             oSemanticObjectSelector.attachChange(function(oControlEvent) {
                 var sValue = oControlEvent.getSource().getValue();
@@ -50,7 +51,7 @@
             oRoleSelector.attachChange(function(oControlEvent) {
                 var sValue = oControlEvent.getSource().getValue();
                 oView.getModel().setProperty("/config/navigation_provider_role", sValue);
-                sap.ushell.components.tiles.utils.updateAliasModel(oView, oAliasSelector);
+                utils.updateAliasModel(oView, oAliasSelector);
             });
             oInstanceSelector.attachChange(function(oControlEvent) {
                 var sValue = oControlEvent.getSource().getValue();
@@ -102,7 +103,7 @@
             var rows = oModel.getProperty('/config/rows');
 
             // Init a row template for adding new empty row to the params table (mapping signature)
-            var newParamRow = sap.ushell.components.tiles.utils.getEmptyRowObj();
+            var newParamRow = utils.getEmptyRowObj();
             rows.push(newParamRow);
             oModel.setProperty('/config/rows', rows);
         },
@@ -135,11 +136,11 @@
             var nameCol = sap.ui.getCore().byId(changeEvent.getParameter('id'));
             var sNewValue = changeEvent.getParameter('newValue');
 
-            if (sNewValue != "" && !(/^[\w-]+$/.test(sNewValue))) {
+            if (sNewValue != "" && !(/^[\w-/]+$/.test(sNewValue))) {
                 nameCol.setValueState(sap.ui.core.ValueState.Error);
                 sap.m.MessageBox.alert(this.sInvalidParmMsg, this.focusNameField.bind(nameCol), this.sDuplicateErrorTitle);
             }
-            if (sap.ushell.components.tiles.utils.tableHasDuplicateParameterNames(rows)) {
+            if (utils.tableHasDuplicateParameterNames(rows)) {
                 nameCol.setValueState(sap.ui.core.ValueState.Error);
                 sap.m.MessageBox.alert(this.sDuplicateErrorMsg, this.focusNameField.bind(nameCol), this.sDuplicateErrorTitle);
             } else {
@@ -155,25 +156,25 @@
         onValueHelpRequest: function(oEvent) {
             // Third parameter is to differentiate whether it's Tile Actions icon field or general icon field. If it's true, then it's tile actions
             // icon field, else general icon field.
-            sap.ushell.components.tiles.utils.objectSelectOnValueHelpRequest(this, oEvent, false);
+            utils.objectSelectOnValueHelpRequest(this, oEvent, false);
         },
         onActionValueHelpRequest: function(oEvent) {
-            sap.ushell.components.tiles.utils.actionSelectOnValueHelpRequest(this, oEvent);
+            utils.actionSelectOnValueHelpRequest(this, oEvent);
         },
         onRoleValueHelpRequest: function(oEvent) {
-            sap.ushell.components.tiles.utils.roleSelectOnValueHelpRequest(this, oEvent);
+            utils.roleSelectOnValueHelpRequest(this, oEvent);
         },
         onInstanceValueHelpRequest: function(oEvent) {
-            sap.ushell.components.tiles.utils.instanceSelectOnValueHelpRequest(this, oEvent);
+            utils.instanceSelectOnValueHelpRequest(this, oEvent);
         },
         instanceSuggest: function(oEvent) {
-            sap.ushell.components.tiles.utils.instanceSuggest(this, oEvent);
+            utils.instanceSuggest(this, oEvent);
         },
         aliasSuggest: function(oEvent) {
-            sap.ushell.components.tiles.utils.aliasSuggest(this, oEvent);
+            utils.aliasSuggest(this, oEvent);
         },
         onAliasValueHelpRequest: function(oEvent) {
-            sap.ushell.components.tiles.utils.applicationAliasSelectOnValueHelpRequest(this, oEvent);
+            utils.applicationAliasSelectOnValueHelpRequest(this, oEvent);
         },
         onFormFactorChange: function() {
             var oModel = this.getView().getModel();
@@ -184,8 +185,10 @@
         onApplicationTypeChange: function(oEvent) {
             var oParameter = oEvent.getParameters();
             if (oParameter.selectedItem) {
-                sap.ushell.components.tiles.utils.displayApplicationTypeFields(oParameter.selectedItem.getKey(), this.getView());
+                utils.displayApplicationTypeFields(oParameter.selectedItem.getKey(), this.getView());
             }
         }
     });
-}());
+
+
+}, /* bExport= */ true);

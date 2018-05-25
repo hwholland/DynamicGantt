@@ -1,46 +1,21 @@
 /* global $, jQuery, sap, window */
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper',
+    'sap/ushell/renderers/fiori2/search/SearchConfiguration',
+    'sap/m/Input',
+    'sap/ushell/renderers/fiori2/search/suggestions/SuggestionType'
+], function(SearchHelper, SearchConfiguration, Input, SuggestionType) {
     "use strict";
-
-    jQuery.sap.require('sap.m.Input');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    var searchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
-    sap.ushell.Container.getService("Search").getSina(); //ensure that sina is loaded
-    var sinaBaseModule = window.sap.bc.ina.api.sina.base;
-
-    // start search
-    // event               desktop+tablet         phone
-    // change              fired/not used a)d)   fired/used
-    // sapenter            fired/used            not fired/not used
-
-    // request suggestions
-    // event               desktop/tablet   phone
-    // liveChange          fired/used       fired/used
-
-    // mouseclick on suggestion
-    // sequence  event                         desktop/table        phone
-    // 1         change                        fired/not used a)    fired/not used b)
-    // 2         suggestionItemSelected        fired/used           fired/used
-    // 3         sapenter                      not fired            not fired
-
-    // enter on suggestion
-    // sequence  event                         desktop/table       phone (action not possible)
-    // 1         change                        fired/not used a)
-    // 2         suggestionItemSelected        fired/used
-    // 3         sapenter                      fired/not used c)
-
-    // a) prevented by if in change event handler
-    // b) prevented by time shift logic (setTimeout in handleChangeSearchInput)
-    // c) prevented by checking for event.originalEvent.suggestionItemSelected
-    // d) search input looses focus -> triggers change -> not wanted on desktop: do not register on change event instead register on sapenter event
 
     sap.m.Input.extend('sap.ushell.renderers.fiori2.search.controls.SearchInput', {
 
         constructor: function(sId, oOptions) {
             var that = this;
             oOptions = jQuery.extend({}, {
+                width: '100%',
                 showValueStateMessage: false,
                 showTableSuggestionValueHelp: false,
+                enableSuggestionsHighlighting: false,
                 showSuggestion: true,
                 filterSuggests: false,
                 suggestionColumns: [new sap.m.Column({})],
@@ -48,6 +23,8 @@
                     path: '/searchTermPlaceholder',
                     mode: sap.ui.model.BindingMode.OneWay
                 },
+                liveChange: this.handleLiveChange.bind(this),
+                suggestionItemSelected: this.handleSuggestionItemSelected.bind(this),
                 enabled: {
                     parts: [{
                         path: "/initializingObjSearch"
@@ -57,77 +34,60 @@
                     }
                 }
             }, oOptions);
+
+            // ugly hack disable fullscreen input on phone - start
+            var phone = sap.ui.Device.system.phone;
+            sap.ui.Device.system.phone = false;
             sap.m.Input.prototype.constructor.apply(this, [sId, oOptions]);
-            this.addEventDelegate({
-                onsapenter: function(oEvent) {
-                    if (oEvent.originalEvent && oEvent.originalEvent.suggestionItemSelected) {
-                        return;
-                    }
-                    oEvent.srcControl.getModel().invalidateQuery();
-                    that.triggerSearch(oEvent);
-                }
-            });
+            sap.ui.Device.system.phone = phone;
+            // ugly hack - end
+
             this.bindAggregation("suggestionRows", "/suggestions", function(sId, oContext) {
                 return that.suggestionItemFactory(sId, oContext);
             });
+
+            //this.attachLiveChange(this.handleLiveChange.bind(this))
             this.addStyleClass('searchInput');
 
-            // disable fullscreen input on mobile
+            //disable fullscreen input on phone
             this._bUseDialog = false;
             this._bFullScreen = false;
+
+            this._ariaDescriptionIdNoResults = sId + "-No-Results-Description";
         },
 
         renderer: 'sap.m.InputRenderer',
 
-        fireChange: function(oEvent) {
-            sap.m.Input.prototype.fireChange.apply(this, arguments);
-            if (sap.ui.Device.system.phone) {
-                this.triggerSearch(oEvent);
-            }
-        },
-
         onsapenter: function(event) {
-            if (this._oSuggestionPopup && this._oSuggestionPopup.isOpen()) {
-                if (this._iPopupListSelectedIndex >= 0) {
-                    event.originalEvent.suggestionItemSelected = true;
-                }
+            if (!(this._oSuggestionPopup && this._oSuggestionPopup.isOpen() && this._iPopupListSelectedIndex >= 0)) {
+                // check that enter happened in search input box and not on a suggestion item
+                // enter on a suggestion is not handled in onsapenter but in handleSuggestionItemSelected
+                this.getModel().invalidateQuery();
+                this.triggerSearch(event);
             }
             sap.m.Input.prototype.onsapenter.apply(this, arguments);
         },
 
         triggerSearch: function(oEvent) {
             var that = this;
-            // workaround: when selecting a suggestion two events are fired:
-            // 1) fireChange
-            // 2) doHandleSuggestionItemSelected
-            // we want to have only one event (the suggestion doHandleSuggestionItemSelected event)
-            // because only one query shall be executed
-            // --> shift fireChange to the future so that
-            // doHandleSuggestionItemSelected handler can abort fireChange
-            this.changeTimer = window.setTimeout(function() {
-                that.changeTimer = null;
-
-                searchHelper.subscribeOnlyOnce('triggerSearch', 'allSearchFinished', function() {
-                    that.getModel().autoStartApp();
-                }, that);
-                var searchBoxTerm = that.getValue();
-                if (searchBoxTerm.trim() === '') {
-                    searchBoxTerm = '*';
-                }
-                that.getModel().setSearchBoxTerm(searchBoxTerm, false);
-                that.navigateToSearchApp();
-
-                that.destroySuggestionRows();
-                that.getModel().abortSuggestions();
-            }, 100);
+            SearchHelper.subscribeOnlyOnce('triggerSearch', 'allSearchFinished', function() {
+                that.getModel().autoStartApp();
+            }, that);
+            var searchBoxTerm = that.getValue();
+            if (searchBoxTerm.trim() === '') {
+                searchBoxTerm = '*';
+            }
+            that.getModel().setSearchBoxTerm(searchBoxTerm, false);
+            that.navigateToSearchApp();
+            that.destroySuggestionRows();
+            that.getModel().abortSuggestions();
         },
 
-        fireLiveChange: function() {
-            sap.m.Input.prototype.fireLiveChange.apply(this, arguments);
+        handleLiveChange: function(oEvent) {
             var suggestTerm = this.getValue();
             var oModel = this.getModel();
             oModel.setSearchBoxTerm(suggestTerm, false);
-            if (oModel.getSearchBoxTerm().length > 0 && !sap.ui.Device.system.phone) {
+            if (oModel.getSearchBoxTerm().length > 0) {
                 oModel.doSuggestion();
             } else {
                 this.destroySuggestionRows();
@@ -135,65 +95,92 @@
             }
         },
 
-        fireSuggestionItemSelected: function(oEvent) {
-            sap.m.Input.prototype.fireSuggestionItemSelected.apply(this, arguments);
-            if (this.changeTimer) {
-                window.clearTimeout(this.changeTimer);
-                this.changeTimer = null;
-            }
-            this.doHandleSuggestionItemSelected(oEvent);
-        },
+        handleSuggestionItemSelected: function(oEvent) {
 
-        doHandleSuggestionItemSelected: function(oEvent) {
             var oModel = this.getModel();
             var searchBoxTerm = oModel.getSearchBoxTerm();
-            var suggestion = oEvent.selectedRow.getBindingContext().getObject();
-            var searchTerm = suggestion.labelRaw;
-            var dataSource = suggestion.dataSource;
+            var suggestion = oEvent.getParameter('selectedRow').getBindingContext().getObject();
+            var suggestionTerm = suggestion.searchTerm || '';
+            var dataSource = suggestion.dataSource || oModel.getDataSource();
             var targetURL = suggestion.url;
-            var type = suggestion.type;
+            var type = suggestion.uiSuggestionType;
+
+            oModel.eventLogger.logEvent({
+                type: oModel.eventLogger.SUGGESTION_SELECT,
+                suggestionType: type,
+                suggestionTerm: suggestionTerm,
+                searchTerm: searchBoxTerm,
+                targetUrl: targetURL,
+                dataSourceKey: dataSource ? dataSource.id : ''
+            });
+
+            // remove any selection
+            this.selectText(0, 0);
 
             switch (type) {
-                case sinaBaseModule.SuggestionType.APPS:
+                case SuggestionType.App:
                     // app suggestions -> start app
-                    oModel.analytics.logCustomEvent('FLP: Search', 'Suggestion Select App', [suggestion.title, targetURL, searchBoxTerm]);
-                    oModel.analytics.logCustomEvent('FLP: Application Launch point', 'Search Suggestions', [suggestion.title, targetURL, searchBoxTerm]);
+
+                    // starting the app by hash change closes the suggestion popup
+                    // closing the suggestion popup again triggers the suggestion item selected event
+                    // in order to avoid to receive the event twice the suggestions are destroyed
+                    this.destroySuggestionRows();
+                    oModel.abortSuggestions();
+
+
+
                     if (targetURL[0] === '#') {
-                        window.location.href = targetURL;
+                        if (targetURL.indexOf('#Action-search') === 0 && targetURL === decodeURIComponent(SearchHelper.getHashFromUrl())) {
+                            // ugly workaround
+                            // in case the app suggestion points to the search app with query identical to current query
+                            // --> do noting except: restore query term + focus again the first item in the result list
+                            oModel.setSearchBoxTerm(oModel.getLastSearchTerm(), false);
+                            sap.ui.getCore().getEventBus().publish("allSearchFinished");
+                            return;
+                        }
+                        if (window.hasher) {
+                            window.hasher.setHash(targetURL);
+                        } else {
+                            window.location.href = targetURL;
+                        }
                     } else {
                         window.open(targetURL, '_blank');
                         oModel.setSearchBoxTerm('', false);
                         this.setValue('');
                         this.focus();
                     }
+
+                    // close the search field if suggestion is not search app
+                    if (targetURL.indexOf('#Action-search') !== 0) {
+                        sap.ui.require("sap/ushell/renderers/fiori2/search/SearchShellHelper").setSearchState('COL');
+                    }
                     break;
-                case sinaBaseModule.SuggestionType.DATASOURCE:
+                case SuggestionType.DataSource:
                     // data source suggestions
                     // -> change datasource in dropdown
                     // -> do not start search
-                    oModel.analytics.logCustomEvent('FLP: Search', 'Suggestion Select Datasource', [dataSource.key, searchBoxTerm]);
                     oModel.setDataSource(dataSource, false);
                     oModel.setSearchBoxTerm('', false);
                     this.setValue('');
                     this.focus();
                     break;
-                case sinaBaseModule.SuggestionType.OBJECTDATA:
+                case SuggestionType.SearchTermData:
                     // object data suggestion
                     // -> change search term + change datasource + start search
-                    oModel.analytics.logCustomEvent('FLP: Search', 'Suggestion Select Object Data', [searchTerm, dataSource.key, searchBoxTerm]);
                     oModel.setDataSource(dataSource, false);
-                    oModel.setSearchBoxTerm(searchTerm, false);
+                    oModel.setSearchBoxTerm(suggestionTerm, false);
+                    this.getModel().invalidateQuery();
                     this.navigateToSearchApp();
-                    this.setValue(searchTerm);
+                    this.setValue(suggestionTerm);
                     break;
-                case sinaBaseModule.SuggestionType.HISTORY:
+                case SuggestionType.SearchTermHistory:
                     // history
                     // -> change search term + change datasource + start search
-                    oModel.analytics.logCustomEvent('FLP: Search', 'Suggestion Select History', [searchTerm, dataSource.key, searchBoxTerm]);
                     oModel.setDataSource(dataSource, false);
-                    oModel.setSearchBoxTerm(searchTerm, false);
+                    oModel.setSearchBoxTerm(suggestionTerm, false);
+                    this.getModel().invalidateQuery();
                     this.navigateToSearchApp();
-                    this.setValue(searchTerm);
+                    this.setValue(suggestionTerm);
                     break;
                 default:
                     break;
@@ -202,7 +189,7 @@
 
         suggestionItemFactory: function(sId, oContext) {
 
-            // prefix App only for app suggestions
+            // static prefix app only for app suggestions
             var that = this;
             var app = new sap.m.Label({
                 text: {
@@ -217,7 +204,7 @@
             }).addStyleClass('suggestText').addStyleClass('suggestNavItem').addStyleClass('suggestListItemCell');
             app.addEventDelegate({
                 onAfterRendering: function() {
-                    searchHelper.boldTagUnescaper(this.getDomRef());
+                    SearchHelper.boldTagUnescaper(this.getDomRef());
                 }
             }, app);
 
@@ -227,19 +214,27 @@
             }).addStyleClass('suggestIcon').addStyleClass('sapUshellSearchSuggestAppIcon').addStyleClass('suggestListItemCell');
 
             // create label with suggestions term
-            var label = new sap.m.Label({
-                text: "{label}"
+            var label = new sap.m.Text({
+                text: "{label}",
+                layoutData: new sap.m.FlexItemData({
+                    shrinkFactor: 1,
+                    minWidth: "4rem"
+                }),
+                wrapping: false
             }).addStyleClass('suggestText').addStyleClass('suggestNavItem').addStyleClass('suggestListItemCell');
             label.addEventDelegate({
                 onAfterRendering: function() {
-                    searchHelper.boldTagUnescaper(this.getDomRef());
+                    SearchHelper.boldTagUnescaper(this.getDomRef());
                 }
             }, label);
 
             // combine app, icon and label into cell
+
             var cell = new sap.m.CustomListItem({
                 type: sap.m.ListType.Active,
-                content: [app, icon, label]
+                content: new sap.m.FlexBox({
+                    items: [app, icon, label]
+                })
             });
             var suggestion = oContext.oModel.getProperty(oContext.sPath);
             cell.getText = function() {
@@ -249,16 +244,20 @@
                 cells: [cell],
                 type: "Active"
             });
-            if (suggestion.type === sinaBaseModule.SuggestionType.APPS) {
-                listItem.addStyleClass('searchAppSuggestion');
+            if (suggestion.uiSuggestionType === SuggestionType.App) {
+                if (suggestion.title && suggestion.title.indexOf("combinedAppSuggestion") >= 0) {
+                    listItem.addStyleClass('searchCombinedAppSuggestion');
+                } else {
+                    listItem.addStyleClass('searchAppSuggestion');
+                }
             }
-            if (suggestion.type === sinaBaseModule.SuggestionType.DATASOURCE) {
+            if (suggestion.uiSuggestionType === SuggestionType.DataSource) {
                 listItem.addStyleClass('searchDataSourceSuggestion');
             }
-            if (suggestion.type === sinaBaseModule.SuggestionType.OBJECTDATA) {
+            if (suggestion.uiSuggestionType === SuggestionType.SearchTermData) {
                 listItem.addStyleClass('searchBOSuggestion');
             }
-            if (suggestion.type === sinaBaseModule.SuggestionType.HISTORY) {
+            if (suggestion.uiSuggestionType === SuggestionType.SearchTermHistory) {
                 listItem.addStyleClass('searchHistorySuggestion');
             }
             listItem.addStyleClass('searchSuggestion');
@@ -279,12 +278,7 @@
 
         navigateToSearchApp: function() {
 
-            // continue?
-            /*if (this.getModel().getProperty('/uiFilter/searchTerms') === "") {
-                return;
-            }*/
-
-            if (searchHelper.isSearchAppActive()) {
+            if (SearchHelper.isSearchAppActive()) {
                 // app running -> just fire query
                 this.getModel()._firePerspectiveQuery();
             } else {
@@ -292,13 +286,41 @@
                 // change hash:
                 // -do not use Searchhelper.hasher here
                 // -this is starting the search app from outside
-                var sHash = this.getModel().createSearchURL();
+                var sHash = this.getModel().renderSearchURL();
                 window.location.hash = sHash;
             }
 
+        },
+
+        getAriaDescriptionIdForNoResults: function() {
+            return this._ariaDescriptionIdNoResults;
+        },
+
+        onAfterRendering: function(oEvent) {
+            var $input = $(this.getDomRef()).find("#searchFieldInShell-input-inner");
+            $(this.getDomRef()).find('input').attr('autocomplete', 'off');
+            $(this.getDomRef()).find('input').attr('autocorrect', 'off');
+            // additional hacks to show the "search" button on ios keyboards:
+            $(this.getDomRef()).find('input').attr('type', 'search');
+            $(this.getDomRef()).find('input').attr('name', 'search');
+            var $form = jQuery('<form action="" onsubmit="return false;"></form>');
+            $(this.getDomRef()).children('input').parent().append($form);
+            $(this.getDomRef()).children('input').detach().appendTo($form);
+            // end of iOS hacks
+            $input.attr("aria-describedby", $input.attr("aria-describedby") + " " + this._ariaDescriptionIdNoResults);
+        },
+
+        onValueRevertedByEscape: function(sValue) {
+            // this method is called if ESC was pressed and
+            // the value in it was not empty
+            if (SearchHelper.isSearchAppActive()) {
+                // dont delete the value if search app is active
+                return;
+            }
+            this.setValue(" "); // add space as a marker for following ESC handler
         }
 
 
     });
 
-})();
+});

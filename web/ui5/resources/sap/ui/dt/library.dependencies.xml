@@ -7,7 +7,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/dt/AggregationOverlay.js" size="7124" compressedSize="2724">
+  <module name="sap/ui/dt/AggregationOverlay.js" size="7091" compressedSize="2735">
     <description>Provides class sap.ui.dt.AggregationOverlay.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -43,7 +43,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/dt/DesignTime.js" size="32450" compressedSize="12912">
+  <module name="sap/ui/dt/DesignTime.js" size="31909" compressedSize="12523">
     <description>! UI development toolkit for HTML5 (OpenUI5) (c) Copyright 2009-2018 SAP SE or an SAP affiliate company. Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</description>
     <requires>
       <module name="sap/ui/base/ManagedObject.js"/>
@@ -82,7 +82,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/dt/ElementOverlay.js" size="29616" compressedSize="12362">
+  <module name="sap/ui/dt/ElementOverlay.js" size="28031" compressedSize="11836">
     <description>Provides class sap.ui.dt.ElementOverlay.</description>
     <requires>
       <module name="sap/ui/core/Control.js"/>
@@ -150,7 +150,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/dt/Overlay.js" size="24379" compressedSize="9965">
+  <module name="sap/ui/dt/Overlay.js" size="24288" compressedSize="9892">
     <description>Provides class sap.ui.dt.Overlay.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -305,7 +305,7 @@
       <module name="sap/ui/dt/test/report/TableRenderer.js"/>
     </includes>
   </module>
-  <module name="sap/ui/dt/library-preload.js" size="165644">
+  <module name="sap/ui/dt/library-preload.js" size="164663">
     <requires>
       <module name="jquery.sap.global.js"/>
       <module name="sap/m/Button.js"/>

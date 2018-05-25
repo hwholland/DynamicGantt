@@ -5,7 +5,7 @@
 	
  */
 sap.ui.define([
-	"../SvgDefs"
+	"sap/gantt/def/SvgDefs"
 ], function (SvgDefs) {
 	"use strict";
 	
@@ -29,7 +29,7 @@ sap.ui.define([
 	 * @extends sap.gantt.def.SvgDefs
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public

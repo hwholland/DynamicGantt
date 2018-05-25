@@ -15,20 +15,10 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 (function() {
 	"use strict";
 	var oParams, oTextReader, oConfigurationHandler, oConfigurationEditor, oTextPool, oCategory, viewValidatorForCategory;
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
-	//Enables 'Auto Complete Feature' to the input fields in the view
-	function _enableAutoComplete(oController) {
-		var oInputControl = oController.byId("idCategoryTitle");
-		var oTextPoolHelper = new sap.apf.modeler.ui.utils.TextPoolHelper(oTextPool);
-		var oDependenciesForText = {
-			oTranslationFormat : sap.apf.modeler.ui.utils.TranslationFormatMap.CATEGORY_TITLE,
-			type : "text"
-		};
-		oTextPoolHelper.setAutoCompleteOn(oInputControl, oDependenciesForText);
-	}
+	var nullObjectChecker = sap.apf.modeler.ui.utils.nullObjectChecker;
 	// Sets static texts in UI
 	function _setDisplayText(oController) {
-		oController.byId("idCategoryBasicData").setTitle(oTextReader("categoryData"));
+		oController.byId("idCategoryBasicData").setText(oTextReader("categoryData"));
 		oController.byId("idCategoryTitleLabel").setText(oTextReader("categoryTitle"));
 		oController.byId("idCategoryTitle").setPlaceholder(oTextReader("newCategory"));
 		oController.byId("idTotalStepsLabel").setText(oTextReader("totalSteps"));
@@ -103,7 +93,6 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 			}
 			viewValidatorForCategory = new sap.apf.modeler.ui.utils.ViewValidator(oController.getView());
 			_setDisplayText(oController);
-			_enableAutoComplete(oController);
 			_retrieveOrCreateCategoryObject(oController);
 			oController.setDetailData();
 			viewValidatorForCategory.addField("idCategoryTitle");
@@ -122,19 +111,28 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		},
 		// Handler for change event on chartTypes dropdown
 		handleChangeDetailValue : function(oEvent) { //event handler to check if any value is changed in the category form
-			var oController = this, sCategoryTitleId, categoryObj;
+			var oController = this, categoryObj;
 			var sCategoryTitle = oController.byId("idCategoryTitle").getValue().trim();
 			var oTranslationFormat = sap.apf.modeler.ui.utils.TranslationFormatMap.CATEGORY_TITLE;
 			if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(sCategoryTitle)) {
-				sCategoryTitleId = oTextPool.setText(sCategoryTitle, oTranslationFormat);
-				categoryObj = {
-					labelKey : sCategoryTitleId
-				};
-				oConfigurationEditor.setCategory(categoryObj, oCategory.getId());
-				_updateTreeNodeOnCategory(oController, sCategoryTitle);
-				_updateBreadCrumbOnCategoryChange(oController, sCategoryTitle);
+				oTextPool.setTextAsPromise(sCategoryTitle, oTranslationFormat).done(function(sCategoryTitleId ){
+					categoryObj = {
+							labelKey : sCategoryTitleId
+						};
+					oConfigurationEditor.setCategory(categoryObj, oCategory.getId());
+					_updateTreeNodeOnCategory(oController, sCategoryTitle);
+					_updateBreadCrumbOnCategoryChange(oController, sCategoryTitle);
+					oConfigurationEditor.setIsUnsaved();
+				});	
+			} else {
+				oConfigurationEditor.setIsUnsaved();
 			}
-			oConfigurationEditor.setIsUnsaved();
+		},
+		// handler for suggestions
+		handleSuggestions : function(oEvent) {
+			var oTranslationFormat = sap.apf.modeler.ui.utils.TranslationFormatMap.CATEGORY_TITLE;
+			var oSuggestionTextHandler = new sap.apf.modeler.ui.utils.SuggestionTextHandler(oTextPool);
+			oSuggestionTextHandler.manageSuggestionTexts(oEvent, oTranslationFormat);
 		},
 		// Updates category object and config editor on reset
 		updateSubViewInstancesOnReset : function(oConfigEditor) {

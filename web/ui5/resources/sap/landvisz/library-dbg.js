@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.landvisz (1.38.6)
+ * Initialization Code and shared classes of library sap.landvisz (1.54.0)
  */
 jQuery.sap.declare("sap.landvisz.library");
 jQuery.sap.require("sap.ui.core.Core");
@@ -71,7 +71,7 @@ sap.ui.getCore().initLibrary({
 		"sap.landvisz.internal.TreeField"
 	],
 	elements: [],
-	version: "1.38.6"
+	version: "1.54.0"
 });
 
 /*!
@@ -90,7 +90,7 @@ jQuery.sap.declare("sap.landvisz.ActionType");
 /**
  * @class Action Type of a action
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -126,7 +126,7 @@ jQuery.sap.declare("sap.landvisz.ComponentType");
 /**
  * @class [Enter description for ComponentType]
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -168,7 +168,7 @@ jQuery.sap.declare("sap.landvisz.ConnectionLine");
 /**
  * @class type file for ps, ts and mob soln
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -204,7 +204,7 @@ jQuery.sap.declare("sap.landvisz.ConnectionType");
 /**
  * @class type file for ps, ts and mob soln
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -246,7 +246,7 @@ jQuery.sap.declare("sap.landvisz.DependencyType");
 /**
  * @class View type of landscape viewer
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -282,7 +282,7 @@ jQuery.sap.declare("sap.landvisz.DependencyVisibility");
 /**
  * @class View Visibility of landscape viewer
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -324,7 +324,7 @@ jQuery.sap.declare("sap.landvisz.EntityCSSSize");
 /**
  * @class System Size supported
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -396,7 +396,7 @@ jQuery.sap.declare("sap.landvisz.LandscapeObject");
 /**
  * @class Type of object in the landscape
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -462,7 +462,7 @@ jQuery.sap.declare("sap.landvisz.ModelingStatus");
 /**
  * @class sampl doc
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -504,7 +504,7 @@ jQuery.sap.declare("sap.landvisz.OptionType");
 /**
  * @class Action Type of a action
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -540,7 +540,7 @@ jQuery.sap.declare("sap.landvisz.SelectionViewPosition");
 /**
  * @class position of selection view
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -582,7 +582,7 @@ jQuery.sap.declare("sap.landvisz.SolutionType");
 /**
  * @class View type of landscape viewer
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -618,7 +618,7 @@ jQuery.sap.declare("sap.landvisz.TechnicalSystemType");
 /**
  * @class sampl doc
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -762,7 +762,7 @@ jQuery.sap.declare("sap.landvisz.ViewType");
 /**
  * @class View type of landscape viewer
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -804,7 +804,7 @@ jQuery.sap.declare("sap.landvisz.internal.ContainerType");
 /**
  * @class ContainerType
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel

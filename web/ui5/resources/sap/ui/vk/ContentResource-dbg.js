@@ -23,7 +23,7 @@ sap.ui.define([
 	 * @param {object} [oScope] scope An object for resolving string-based type and formatter references in bindings.
 	 * @public
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 * @extends sap.ui.base.ManagedObject
 	 * @alias sap.ui.vk.ContentResource
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
@@ -62,7 +62,12 @@ sap.ui.define([
 				/**
 				 * The name of the node created for this content resource.
 				 */
-				name: "string"
+				name: "string",
+
+				/**
+				 * The password to use when opening the resource.
+				 */
+				password: "string"
 			},
 
 			aggregations: {
@@ -73,13 +78,13 @@ sap.ui.define([
 			},
 
 			publicMethods: [
-				"getNodeProxy"
+				"getNodeProxy",
+				"getSourceProperties"
 			]
 		},
 
 		constructor: function(sId, mSettings, oScope) {
 			ManagedObject.apply(this, arguments);
-			this._nodeProxy = null;
 		}
 	});
 
@@ -88,7 +93,6 @@ sap.ui.define([
 	};
 
 	ContentResource.prototype.destroy = function() {
-		this._nodeProxy = null;
 		ManagedObject.prototype.destroy.call(this);
 	};
 
@@ -99,6 +103,30 @@ sap.ui.define([
 		}
 		this.setProperty("localMatrix", value, true);
 		return this;
+	};
+
+	/**
+	 * Gets content resource source properties.
+	 *
+	 * The content resource source properties depend on the content resource source type. They are different for VDS and PNG for example.
+	 * The list of possible source properties:
+	 * <ul>
+	 *   <li>version - object
+	 *     <ul>
+	 *       <li>major - number</li>
+	 *       <li>minor - number</li>
+	 *     </ul>
+	 *   </li>
+	 *   <li>compressed - boolean</li>
+	 *   <li>encrypted - boolean</li>
+	 * </ul>
+	 * The source properties are optional and the list might be extended in future versions.
+	 *
+	 * @returns {object} A JSON like object containing the content resource source properties.
+	 * @public
+	 */
+	ContentResource.prototype.getSourceProperties = function() {
+		return this._shadowContentResource && this._shadowContentResource.sourceProperties || {};
 	};
 
 	/**
@@ -121,6 +149,7 @@ sap.ui.define([
 	 * @returns {sap.ui.vk.ContentResourceSourceCategory[]} The array of distinct content resource categories.
 	 * @static
 	 * @public
+	 * @deprecated Since version 1.50.0.
 	 */
 	ContentResource.collectCategories = function(resources) {
 		var categories = [];

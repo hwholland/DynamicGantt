@@ -1,17 +1,15 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's ClientSideTargetResolutionAdapter for the local
  *               platform.
  *
- * @version
- * 1.38.26
+ * @version 1.54.3
  */
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*jslint nomen: true*/
     /*global jQuery, sap, setTimeout */
-    jQuery.sap.declare("sap.ushell.adapters.local.ClientSideTargetResolutionAdapter");
-
     /**
      * @fileOverview
      * <p>Constructs a new instance of the ClientSideTargetResolutionAdapter for the local
@@ -69,7 +67,7 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.adapters.local.ClientSideTargetResolutionAdapter = function (oSystem, sParameters, oConfig) {
+    var ClientSideTargetResolutionAdapter = function (oSystem, sParameters, oConfig) {
         this._oConfig = oConfig && oConfig.config;
         this._aInbounds = [];
         if (!this._oConfig) {
@@ -103,7 +101,7 @@
      * @private
      * @since 1.34.0
      */
-    sap.ushell.adapters.local.ClientSideTargetResolutionAdapter.prototype.getInbounds = function () {
+    ClientSideTargetResolutionAdapter.prototype.getInbounds = function () {
         var oDeferred = new jQuery.Deferred(),
             that = this;
 
@@ -126,7 +124,7 @@
      *
      * @private
      */
-    sap.ushell.adapters.local.ClientSideTargetResolutionAdapter.prototype.resolveSystemAlias =
+    ClientSideTargetResolutionAdapter.prototype.resolveSystemAlias =
             function (sSystemAlias) {
         var oDeferred = new jQuery.Deferred(),
             that = this;
@@ -156,7 +154,7 @@
      * @private
      * @since 1.34.0
      */
-    sap.ushell.adapters.local.ClientSideTargetResolutionAdapter.prototype._transformApplicationsToInbounds = function (oApplications) {
+    ClientSideTargetResolutionAdapter.prototype._transformApplicationsToInbounds = function (oApplications) {
         var sIntentName,
             aInbounds = [],
             oApplication,
@@ -245,7 +243,7 @@
      * @private
      * @since 1.34.0
      */
-    sap.ushell.adapters.local.ClientSideTargetResolutionAdapter.prototype._transformInboundsObjectToInboundsArray = function (oInbounds) {
+    ClientSideTargetResolutionAdapter.prototype._transformInboundsObjectToInboundsArray = function (oInbounds) {
         var sIntentName,
             aInbounds = [],
             oInbound;
@@ -282,4 +280,8 @@
         return aInbounds;
     };
 
-}());
+
+
+	return ClientSideTargetResolutionAdapter;
+
+}, /* bExport= */ true);

@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.smartvariants.SmartVariantManagementUi2.
@@ -12,10 +13,9 @@ sap.ui.define([
 
 	/**
 	 * Constructor for a new SmartVariantManagementUi2.
-	 * 
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
-	 * @class The SmartVariantManagementUi2 control is a specialization of the {@link "sap.ui.comp.variants.VariantManagement VariantManagement}
+	 * @class The SmartVariantManagementUi2 control is a specialization of the {@link sap.ui.comp.variants.VariantManagement VariantManagement}
 	 *        control and communicates with the Ui2 personalization layer to manage the variants.
 	 * @extends sap.ui.comp.variants.VariantManagement
 	 * @constructor
@@ -31,8 +31,8 @@ sap.ui.define([
 			aggregations: {
 
 				/**
-				 * All controls that rely on variant handling have to be added to this aggregation. The only consumer currently known is the FilterBar
-				 * control.
+				 * All controls that rely on variant handling have to be added to this aggregation. The only consumer currently known is the
+				 * <code>FilterBar</code> control.
 				 */
 				personalizableControl: {
 					type: "sap.ui.comp.smartvariants.PersonalizableInfo",
@@ -42,8 +42,8 @@ sap.ui.define([
 			events: {
 
 				/**
-				 * Once the SmartVariantManagement control has been initialized, and especially after retrieving the variants via the UI2
-				 * personalization service, the registered consumer will be notified that this phase has completed
+				 * Once the <code>SmartVariantManagementUi2</code> control has been initialized, and especially after retrieving the variants via
+				 * the UI2 personalization service, the registered consumer will be notified that this phase has completed
 				 */
 				initialise: {},
 
@@ -59,35 +59,6 @@ sap.ui.define([
 
 	});
 
-	/**
-	 * Sets the current variant ID. In case an invalid ID is passed, a standard variant is set.
-	 * 
-	 * @name sap.ui.comp.smartvariants.SmartVariantManagementUi2#setCurrentVariantId
-	 * @function
-	 * @param {string} sSVariantId Retrieves the current variant; if a standard variant is the current one, an empty string is returned.
-	 * @param {boolean} bBDoNotApplyVariant if set to true the applyVariant method will not be executed yet. Relevant during navigation, where the
-	 *        pers-controller sets the variant id, but the initialise - sequence triggers the applyVariant method
-	 * @type void
-	 * @public
-	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
-	 */
-
-	/**
-	 * Retrieves the current variant ID. If a standard variant is the current one, an empty string is returned.
-	 * 
-	 * @name sap.ui.comp.smartvariants.SmartVariantManagementUi2#getCurrentVariantId
-	 * @function
-	 * @type string
-	 * @public
-	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
-	 */
-
-	/**
-	 * Control initialization.
-	 * 
-	 * @public
-	 * @since 1.28.0
-	 */
 	SmartVariantManagementUi2.prototype.init = function() {
 		VariantManagement.prototype.init.apply(this); // Call base class
 
@@ -105,8 +76,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Determines if the SmartVariantManagement instance is a page variant.
-	 * 
+	 * Determines if the <code>SmartVariantManagementUi3</code> instance is a page variant.
 	 * @public
 	 * @return {boolean} always returns <code>false</code>
 	 */
@@ -116,7 +86,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the variant content.
-	 * 
 	 * @public
 	 * @param {sap.ui.core.Control} oControl current control
 	 * @param {string} sKey the variant key
@@ -145,7 +114,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the current variant ID. For a standard variant, an empty string is returned.
-	 * 
 	 * @public
 	 * @returns {string} Current variant ID
 	 */
@@ -163,8 +131,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Sets the current variant ID.
-	 * 
+	 * Sets the current variant ID. In case an invalid ID is passed, a standard variant is set.
 	 * @public
 	 * @param {string} sVariantId ID of the variant
 	 * @param {boolean} bDoNotApplyVariant If set to <code>true</code>, the <code>applyVariant</code> method is not executed yet. Relevant during
@@ -197,10 +164,10 @@ sap.ui.define([
 	};
 
 	/**
-	 * Registers all controls interested and relying on variant handling.
-	 * 
+	 * Registers all controls interested and relying on variant handling. Each control has to be registered separately.
 	 * @public
-	 * @param {sap.ui.comp/smartvariants/PersonalizableInfo} oCurrentControlInfo control providing the required aggregation for flex-layer
+	 * @param {sap.ui.comp.smartvariants.PersonalizableInfo} oCurrentControlInfo control providing the required aggregation for flex-layer
+	 * @returns {sap.ui.comp.smartvariants.SmartVariantManagementUi2} the current instance
 	 */
 	SmartVariantManagementUi2.prototype.addPersonalizableControl = function(oCurrentControlInfo) {
 		this.setAggregation("personalizableControl", oCurrentControlInfo, true);
@@ -210,12 +177,12 @@ sap.ui.define([
 		}
 
 		this._sKeyName = oCurrentControlInfo.getKeyName();
+		return this;
 	};
 
 	/**
 	 * Initializes the UI2 personalization layer by retrieving the list of variants. Once the initialization has been completed, the control for
 	 * personalization is informed via the initialise event.
-	 * 
 	 * @public
 	 */
 	SmartVariantManagementUi2.prototype.initialise = function() {
@@ -260,7 +227,6 @@ sap.ui.define([
 	/**
 	 * Obtains from the variant management the current selected entry ands applies the corresponding variant. In case nothing was selected variant
 	 * management returns null -> no variant will be applied
-	 * 
 	 * @private
 	 */
 	SmartVariantManagementUi2.prototype._setSelectedVariant = function() {
@@ -280,7 +246,6 @@ sap.ui.define([
 
 	/**
 	 * Create the variant items.
-	 * 
 	 * @private
 	 */
 	SmartVariantManagementUi2.prototype._reCreateVariantEntries = function() {
@@ -317,7 +282,6 @@ sap.ui.define([
 
 	/**
 	 * Reads the variant adapter.
-	 * 
 	 * @private
 	 * @returns {object} the variant set adapter
 	 */
@@ -335,7 +299,6 @@ sap.ui.define([
 
 	/**
 	 * Reads the variant container and create the variant items.
-	 * 
 	 * @private
 	 */
 	SmartVariantManagementUi2.prototype._createVariantEntries = function() {
@@ -354,7 +317,6 @@ sap.ui.define([
 
 	/**
 	 * Reads the personalization.
-	 * 
 	 * @private
 	 * @param {object} oContainer personalization conmteiner
 	 */
@@ -369,7 +331,6 @@ sap.ui.define([
 
 	/**
 	 * Handling the save of the personalization container.
-	 * 
 	 * @private
 	 */
 	SmartVariantManagementUi2.prototype._savePersonalizationContainer = function() {
@@ -393,8 +354,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Eventhandler for the VariantManagement save event.
-	 * 
+	 * Eventhandler for the <code>SmartVariantManagementUi2</code> save event.
 	 * @private
 	 * @param {object} oVariantInfo Describes the variant to be saved
 	 */
@@ -435,9 +395,9 @@ sap.ui.define([
 
 					oVariant.setItemValue("filterBarVariant", oVariantContent.filterBarVariant);
 					oVariant.setItemValue("filterbar", oVariantContent.filterbar);
-
+					oVariant.setItemValue("basicSearch", "");
 					if (oVariantContent.basicSearch) {
-						oVariant.basicSearch = oVariantContent.basicSearch;
+						oVariant.setItemValue("basicSearch", oVariantContent.basicSearch);
 					}
 
 					sVariantKey = oVariant.getVariantKey();
@@ -467,7 +427,6 @@ sap.ui.define([
 
 	/**
 	 * Stores the STANDARD variant.
-	 * 
 	 * @private
 	 */
 	SmartVariantManagementUi2.prototype._setStandardVariant = function() {
@@ -481,7 +440,6 @@ sap.ui.define([
 
 	/**
 	 * returns a previously stored representation of the standard variant. Only relevant for the UI2 personalization-service
-	 * 
 	 * @private
 	 * @returns {object} json compatible object representing the standard variant
 	 */
@@ -493,7 +451,6 @@ sap.ui.define([
 	};
 	/**
 	 * Workaround for missing Variant feature 'setVariantName' with U2 < 1.24.0.
-	 * 
 	 * @private
 	 * @param {object} oVariant the original variant
 	 * @param {string} sVariantKey the key of the original variant
@@ -528,9 +485,12 @@ sap.ui.define([
 
 	};
 
+	SmartVariantManagementUi2.prototype._getVariantNamesAndKeys = function() {
+		return this._oVariantSet.getVariantNamesAndKeys();
+	};
+
 	/**
-	 * Eventhandler for the VariantManagement manage event.
-	 * 
+	 * Eventhandler for the <code>SmartVariantManagementUi2</code> manage event.
 	 * @private
 	 * @param {object} oVariantInfo Describes the variants, which will be deleted/renamed
 	 */
@@ -591,8 +551,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Eventhandler for the VariantManagement select event.
-	 * 
+	 * Eventhandler for the <code>SmartVariantManagementUi2</code> select event.
 	 * @private
 	 * @param {object} oVariantInfo Describes the selected variant
 	 */
@@ -619,7 +578,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves variant content.
-	 * 
 	 * @private
 	 * @param {object} oVariant json object representing the variant data
 	 * @returns {object} the variant content
@@ -634,8 +592,9 @@ sap.ui.define([
 					filterBarVariant: oVariant.getItemValue("filterBarVariant")
 				};
 
-				if (oVariant.basicSearch) {
-					oContent.basicSearch = oVariant.basicSearch;
+				var sBasicSearch = oVariant.getItemValue("basicSearch");
+				if (sBasicSearch) {
+					oContent.basicSearch = sBasicSearch;
 				}
 			} else {
 				oContent = oVariant; // STANDARD variant
@@ -648,7 +607,6 @@ sap.ui.define([
 
 	/**
 	 * Apply a variant.
-	 * 
 	 * @private
 	 * @param {object} oVariant json object representing the variant data
 	 */
@@ -661,7 +619,6 @@ sap.ui.define([
 
 	/**
 	 * Apply a variant.
-	 * 
 	 * @private
 	 * @param {object} oContent json object representing the variant data
 	 */
@@ -674,7 +631,6 @@ sap.ui.define([
 
 	/**
 	 * Fetch a variant.
-	 * 
 	 * @private
 	 * @returns {object} json object representing the content of a variant
 	 */
@@ -689,7 +645,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the persistency key.
-	 * 
 	 * @private
 	 * @returns {string} persistency key value
 	 */
@@ -704,7 +659,6 @@ sap.ui.define([
 
 	/**
 	 * Sets an error state on the variant management control.
-	 * 
 	 * @private
 	 * @param {string} sText describing the error reason
 	 */
@@ -712,11 +666,6 @@ sap.ui.define([
 		this.setEnabled(false);
 	};
 
-	/**
-	 * Destroys the control.
-	 * 
-	 * @public
-	 */
 	SmartVariantManagementUi2.prototype.exit = function() {
 		VariantManagement.prototype.exit.apply(this, arguments);
 

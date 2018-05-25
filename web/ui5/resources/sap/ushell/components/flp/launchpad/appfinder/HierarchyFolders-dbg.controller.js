@@ -1,7 +1,8 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, jQuery, sap, window */
     /*jslint nomen: true */
 
@@ -10,6 +11,7 @@
         onInit: function () {
             this.oDialog = null;
             this.getView().setModel(this.getView().getViewData().easyAccessSystemsModel,"easyAccessSystems");
+            this.getView().setModel(this.getView().getViewData().subHeaderModel,"subHeaderModel");
             this.getSelectedSystem().then(function (oSystem) {
                 if (oSystem) {
                     this.setSystemSelected(oSystem);
@@ -28,6 +30,16 @@
             if (this.oDialog) {
                 this.destroyDialog();
             }
+        },
+
+        onAfterRendering: function () {
+
+            // making sure that on every click anywhere on the left panel which is basically
+            // the hierarchy-folders view (this view), we invoke exit search mode (if necessary)
+            var jqThis = jQuery('#' + this.getView().getId());
+            jqThis.on("click", function(event) {
+                this.exitSearchMode();
+            }.bind(this));
         },
 
         getPersonalizer: function () {
@@ -228,14 +240,22 @@
         systemSelectorTextFormatter : function (systemSelected) {
             if (systemSelected) {
                 if (systemSelected.systemName) {
-                    return this.getView().translationBundle.getText("easyAccessSelectSystemTextWithSystem", systemSelected.systemName);
+                    return systemSelected.systemName;
                 } else {
-                    return this.getView().translationBundle.getText("easyAccessSelectSystemTextWithSystem", systemSelected.systemId);
+                    return systemSelected.systemId;
                 }
             } else {
                 return this.getView().translationBundle.getText("easyAccessSelectSystemTextWithoutSystem");
             }
+        },
+
+        exitSearchMode : function () {
+            var oSubHeaderModel = this.getView().getModel('subHeaderModel');
+            oSubHeaderModel.setProperty('/search/searchMode', false);
+            oSubHeaderModel.refresh(true);
         }
 
     });
-}());
+
+
+}, /* bExport= */ true);

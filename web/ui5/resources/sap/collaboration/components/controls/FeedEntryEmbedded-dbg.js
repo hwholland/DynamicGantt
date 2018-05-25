@@ -1,5 +1,7 @@
 /*
-* ! @copyright@
+* ! SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
 */
 sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/collaboration/components/utils/LanguageBundle', 'sap/collaboration/components/controls/PlaceholderUtility', 'sap/collaboration/components/utils/MediaTypeToSAPIcon'],
 	function(jQuery, Control, LanguageBundle, PlaceholderUtility, MediaTypeToSAPIcon) {

@@ -1,4 +1,0 @@
-sap.ui.require.preload({
-	"web/ui5/test-resources/sap/m/demokit/sample/RadioButton/Component.js": "sap.ui.define([\"sap/ui/core/UIComponent\"],function(e){\"use strict\";return e.extend(\"sap.m.sample.RadioButton.Component\",{metadata:{rootView:\"sap.m.sample.RadioButton.V\",dependencies:{libs:[\"sap.m\",\"sap.ui.layout\"]},config:{sample:{files:[\"V.view.xml\"]}}}})});",
-	"web/ui5/test-resources/sap/m/demokit/sample/RadioButton/V.view.xml": "<mvc:View\n\txmlns:l=\"sap.ui.layout\"\n\txmlns:mvc=\"sap.ui.core.mvc\"\n\txmlns=\"sap.m\"><VBox binding=\"{/ProductCollection}\"><RadioButton groupName=\"GroupA\" text=\"Option 1\" selected=\"true\" /><RadioButton groupName=\"GroupA\" text=\"Option 2\" /><RadioButton groupName=\"GroupA\" text=\"Option 3\" /><RadioButton groupName=\"GroupA\" text=\"Option 4\" /><RadioButton groupName=\"GroupA\" text=\"Option 5\" /></VBox></mvc:View>"
-}, "web/ui5/test-resources/sap/m/demokit/sample/RadioButton/Component-preload");

@@ -8,7 +8,7 @@ is eligible for aggregation content of a {@link sap.m.semantic.SemanticPage}.</d
     <since>1.30.0</since>
     <baseType>sap.m/semantic/SemanticButton</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="text">
             <documentation>Button text</documentation>
         </property>
     </properties>

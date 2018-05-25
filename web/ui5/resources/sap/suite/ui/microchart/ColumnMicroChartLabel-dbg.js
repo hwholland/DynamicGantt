@@ -1,8 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // This control displays the history of values as a line mini chart or an area mini chart.
@@ -20,7 +19,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * Displays or hides the labels of a column micro chart.
 	 * @extends sap.ui.core.Control
 	 *
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -44,7 +43,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 			}
 		}
 	});
-	
+
 	return ColumnMicroChartLabel;
 
 });

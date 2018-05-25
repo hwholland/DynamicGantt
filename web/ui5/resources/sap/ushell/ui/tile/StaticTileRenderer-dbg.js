@@ -1,19 +1,16 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 
-(function () {
-    "use strict";
-
-    jQuery.sap.declare("sap.ushell.ui.tile.StaticTileRenderer");
-    jQuery.sap.require("sap.ushell.ui.tile.TileBaseRenderer");
-    jQuery.sap.require("sap.ui.core.Renderer");
+sap.ui.define(['sap/ui/core/Renderer','./TileBaseRenderer'],
+	function(Renderer, TileBaseRenderer) {
+	"use strict";
 
     /**
      * @name sap.ushell.ui.tile.StaticTileRenderer
      * @static
      * @private
      */
-    sap.ushell.ui.tile.StaticTileRenderer = sap.ui.core.Renderer.extend(sap.ushell.ui.tile.TileBaseRenderer);
+    var StaticTileRenderer = Renderer.extend(TileBaseRenderer);
 
     /**
      * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
@@ -23,7 +20,7 @@
      *
      * @private
      */
-    sap.ushell.ui.tile.StaticTileRenderer.renderPart = function (oRm, oControl) {
+    StaticTileRenderer.renderPart = function (oRm, oControl) {
         // write the HTML into the base classes' render manager
         oRm.write("<span");
         oRm.addClass("sapUshellStaticTile");
@@ -33,4 +30,8 @@
         // span element
         oRm.write("</span>");
     };
-}());
+
+
+	return StaticTileRenderer;
+
+}, /* bExport= */ true);

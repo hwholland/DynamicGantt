@@ -26,8 +26,7 @@ sap.ui.define([
 	 * @alias sap.ui.vbm.Cluster
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
-	var Cluster = Control.extend("sap.ui.vbm.Cluster", /** @lends sap.ui.vbm.Cluster.prototype */
-	{
+	var Cluster = Control.extend("sap.ui.vbm.Cluster", /** @lends sap.ui.vbm.Cluster.prototype */ {
 		metadata: {
 
 			library: "sap.ui.vbm",
@@ -75,11 +74,9 @@ sap.ui.define([
 	// This file defines behavior for the control,...............................//
 	// ...........................................................................//
 
-	Cluster.prototype.exit = function() {
-	};
+	Cluster.prototype.exit = function() {};
 
-	Cluster.prototype.init = function() {
-	};
+	Cluster.prototype.init = function() {};
 
 	// ...........................................................................//
 
@@ -88,45 +85,33 @@ sap.ui.define([
 		if (this.$oldContent.length > 0) {
 			this.$().append(this.$oldContent);
 		}
-		var col = this.getColor();
-		var type = this.getType();
-		if (col && type == sap.ui.vbm.SemanticType.None) {
+		if (this.getColor() && (this.getType() === sap.ui.vbm.SemanticType.None)) {
 			// color manipulation needed
 
-			var Id1 = this.getId() + "-" + "backgroundcircle";
-			var Id2 = Id1 + "-" + "innercircle";
+			//getting the background circle and inner circle DOM id
+			var backgroundCircleId = this.getId() + "-" + "backgroundcircle",
+				innerCircleId = backgroundCircleId + "-" + "innercircle";
 
-			var backgroundcircle = document.getElementById(Id1);
-			var innercircle = document.getElementById(Id2);
-			var c = jQuery(backgroundcircle).css("border-bottom-color");
-			var rgba = Cluster.prototype.string2rgba(c);
+			//getting the background circle and inner circle by element id
+			var backgroundCircle = document.getElementById(backgroundCircleId),
+				innerCircle = document.getElementById(innerCircleId);
+
+			//getting the bottom border color
+			var bottomBorderColor = jQuery(backgroundCircle).css("border-bottom-color");
+			//converting the RGB to RGBA
+			var rgba = this.string2rgba(bottomBorderColor);
+			//setting the 0.5 transparency
 			rgba = "rgba(" + rgba[0] + "," + rgba[1] + "," + rgba[2] + "," + 0.5 + ")";
-			jQuery(backgroundcircle).css("border-color", rgba);
-			jQuery(innercircle).css("border-color", rgba);
 
+			//updating the HTML elements
+			backgroundCircle.style.borderColor = rgba;
+			innerCircle.style.borderColor = rgba;
 		}
-
 	};
 
 	Cluster.prototype.onBeforeRendering = function() {
 		// this is called before the renderer is called...........................//
-
 		this.$oldContent = sap.ui.core.RenderManager.findPreservedContent(this.getId());
-	};
-
-	// ...........................................................................//
-	// re implement property setters.............................................//
-
-	Cluster.prototype.setColor = function(col) {
-		this.setProperty("color", col);
-	};
-
-	Cluster.prototype.setIcon = function(ic) {
-		this.setProperty("icon", ic);
-	};
-
-	Cluster.prototype.setText = function(txt) {
-		this.setProperty("text", txt);
 	};
 
 	Cluster.prototype.string2rgba = function(a) {

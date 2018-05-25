@@ -19,7 +19,7 @@ For further hints about usage restrictions for this control, see also the docume
 &lt;code&gt;content&lt;/code&gt; property.</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="content" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="content">
             <documentation>HTML content to be displayed, defined as a string.
 
 The content is converted to DOM nodes with a call to &lt;code&gt;new jQuery(content)&lt;/code&gt;, so any
@@ -36,14 +36,14 @@ Some of these restrictions (there might be others!) are:
 Please consider to consult the jQuery documentation as well.
 
 The HTML control currently doesn't prevent the usage of multiple root nodes in its DOM content
-(e.g. &lt;code&gt;setContent("&amp;lt;div/&gt;&amp;lt;div/&gt;")&lt;/code&gt;), but this is not a guaranteed feature.
+(e.g. &lt;code&gt;setContent(&quot;&amp;lt;div/&gt;&amp;lt;div/&gt;&quot;)&lt;/code&gt;), but this is not a guaranteed feature.
 The accepted content might be restricted to single root nodes in future versions.
 To notify applications about this fact, a warning is written in the log when multiple root nodes are used.
 
 When changing the content dynamically, ensure that the ID of the root node remains the same as the HTML
 control's ID. Otherwise it cannot be guaranteed that certain lifecycle events take place.</documentation>
         </property>
-        <property name="preferDOM" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="preferDOM">
             <documentation>Whether existing DOM content is preferred over the given content string.
 
 There are two scenarios where this flag is relevant (when set to true):
@@ -59,23 +59,23 @@ There are two scenarios where this flag is relevant (when set to true):
 
 As preserving the existing DOM is the most common use case of the HTML control, the default value is true.</documentation>
         </property>
-        <property name="sanitizeContent" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
+        <property group="Misc" defaultValue="false" type="sap.ui.core/boolean" name="sanitizeContent">
             <documentation>Whether to run the HTML sanitizer once the content (HTML markup) is applied or not.
 
 To configure allowed URLs please use the whitelist API via jQuery.sap.addUrlWhitelist.</documentation>
         </property>
-        <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="visible">
             <documentation>Specifies whether the control is visible. Invisible controls are not rendered.</documentation>
         </property>
     </properties>
     <events>
-        <event name="afterRendering" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="afterRendering">
             <documentation>Fired after the HTML control has been rendered. Allows to manipulate the resulting DOM.
 
 When the control doesn't have string content and no preserved DOM existed for this control,
 then this event will fire, but there won't be a DOM node for this control.</documentation>
             <parameters>
-                <parameter name="isPreservedDOM" type="sap.ui.core/boolean">
+                <parameter type="sap.ui.core/boolean" name="isPreservedDOM">
                     <documentation>Whether the current DOM of the control has been preserved (true) or not (e.g.
 rendered from content property or it is an empty HTML control).</documentation>
                 </parameter>

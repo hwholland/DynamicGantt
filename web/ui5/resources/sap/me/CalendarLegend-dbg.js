@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
+        (c) Copyright 2009-2018 SAP SE. All rights reserved
     
  */
 
@@ -231,9 +231,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	
 	};
 	CalendarLegend.prototype._createIcon = function() {
-		var sName = this.getExpanded() ? "Collapse" : "Expand";
-		// The following line retrieves lower case "expand" or "collapse" from the global.less in openui5
-		var sIconName = Parameters.get("sapMeCalendarLegendIcon"+sName);
+		var sIconName = this.getExpanded() ? "collapse" : "expand";
 		var sColor = Parameters.get("sapUiLightIcon");
 		var sActiveBgColor = Parameters.get("sapUiHighlight");
 		var sActiveColor = Parameters.get("sapUiIconInverted");
@@ -255,14 +253,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 	
 	CalendarLegend.prototype._changeIconSrc =function () {
-		var sName = null;
-		if(this.getExpanded() || !this.getExpandable()){
-			sName = "Collapse"; 
-		}
-		else{
-			sName = "Expand"; 
-		}
-		var sIconName = Parameters.get("sapMeCalendarLegendIcon"+sName);
+		var sIconName = this.getExpanded() ? "collapse" : "expand";
 		this.getAggregation("icon").setSrc(IconPool.getIconURI(sIconName));
 	};
 

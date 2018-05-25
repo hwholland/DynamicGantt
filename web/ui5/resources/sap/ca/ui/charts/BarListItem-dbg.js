@@ -56,7 +56,7 @@ jQuery.sap.require("sap.m.ListItemBase");
  * @extends sap.m.ListItemBase
  *
  * @author SAP SE
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

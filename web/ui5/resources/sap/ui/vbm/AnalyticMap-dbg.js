@@ -4,8 +4,8 @@
 
 // Provides control sap.ui.vbm.AnalyticMap.
 sap.ui.define([
-	'sap/ui/core/theming/Parameters', './GeoMap', './library'
-], function(Parameters, GeoMap, library) {
+	'sap/ui/core/theming/Parameters', './GeoMap', './library', './VoBase'
+], function(Parameters, GeoMap, library, VoBase) {
 	"use strict";
 
 	/**
@@ -442,7 +442,13 @@ sap.ui.define([
 			"tooltip.bind": "Regions.ToolTip",
 			"hotDeltaColor.bind": "Regions.HotDeltaColor",
 			"altBorderDeltaColor.bind": "Regions.AltBorderColor",
-			"select.bind": "Regions.VB:s"
+			"select.bind": "Regions.VB:s",
+			"labelText.bind": "Regions.LT",
+			"labelPos.bind": "Regions.LP",
+			"labelBgColor.bind": "Regions.LBC",
+			"labelBorderColor.bind": "Regions.LBBC",
+			"labelArrow.bind": "Regions.AR",
+			"labelType.bind": "Regions.LabelType"
 		};
 	};
 
@@ -484,6 +490,30 @@ sap.ui.define([
 				"name": "VB:s", // selection flag
 				"alias": "S",
 				"type": "boolean"
+			}, {
+				"name": "LT", // label text
+				"alias": "LT",
+				"type": "string"
+			}, {
+				"name": "LP", // label position
+				"alias": "LP",
+				"type": "string"
+			}, {
+				"name": "LBC",
+				"alias": "LBC", // label background color
+				"type": "color"
+			}, {
+				"name": "LBBC",
+				"alias": "LBBC", // label border color,
+				"type": "color"
+			}, {
+				"name": "AR",
+				"alias": "AR", // label arrow
+				"type": "boolean"
+			}, {
+				"name": "LabelType",
+				"alias": "LabelType", // label semantic type
+				"type": "string"
 			}
 		];
 		return {
@@ -526,7 +556,46 @@ sap.ui.define([
 				if ((tmp = oRegion.getTooltip())) {
 					item.T = tmp;
 				}
+				item.LT = oRegion.getLabelText();
+
 				item.S = oRegion.getSelect();
+
+				// Label Position 0 means CENTERED
+				item.LP = "0";
+
+				item.LBC = oRegion.getLabelBgColor();
+
+				item.LBBC = oRegion.getLabelBorderColor();
+
+				item.AR = oRegion.getLabelArrow();
+
+				var type = oRegion.getLabelType();
+
+				// Applying changes according to the label type
+				var oElem = VoBase.prototype.getLabelProps(type);
+				if (oElem && item.LT) {
+					if (oElem.LBC) {
+						item.LBC = oElem.LBC;
+					}
+					if (oElem.LBBC) {
+						item.LBBC = oElem.LBBC;
+					}
+					if (oElem.LIC) {
+						item.LIC = oElem.LIC;
+					}
+					if (oElem.LICC) {
+						item.LICC = oElem.LICC;
+					}
+					if (oElem.LICTC) {
+						item.LICTC = oElem.LICTC;
+					}
+				}
+				if (!item.LBC) {
+					item.LBC = "rgba(255,255,255,1.0)";
+				}
+				if (item.LBBC == "") {
+					item.LBBC = item.LBC;
+				}
 
 				aElementsRegions.push(item);
 			} else {

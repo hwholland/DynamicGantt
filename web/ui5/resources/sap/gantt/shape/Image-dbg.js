@@ -26,7 +26,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -38,15 +38,16 @@ sap.ui.define([
 				tag: {type: "string", defaultValue: "image"},
 				
 				image: {type: "string"},
-				x: {type: "number"},
-				y: {type: "number"},
-				width: {type: "number", defaultValue : 20},
-				height: {type: "number", defaultValue : 20}
+				x: {type: "float"},
+				y: {type: "float"},
+				width: {type: "float", defaultValue : 20},
+				height: {type: "float", defaultValue : 20}
 			}
 		}
 	});
 	
 	Image.prototype.init = function() {
+		Shape.prototype.init.apply(this, arguments);
 		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
 		this.setProperty("ariaLabel", oRb.getText("ARIA_IMAGE"));
 	};

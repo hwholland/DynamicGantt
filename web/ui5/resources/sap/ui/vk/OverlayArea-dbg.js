@@ -7,13 +7,13 @@
 
 // Provides control sap.ui.vk.OverlayArea.
 sap.ui.define([
-	'./library', 'sap/ui/core/Element'
+	"./library", "sap/ui/core/Element"
 ], function(library, Element) {
 	"use strict";
 
 	/**
 	 * Constructor for a new OverlayArea.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Aggregation element for the Overlay Control
@@ -92,7 +92,7 @@ sap.ui.define([
 				deltaColorHot: {
 					type: "string",
 					group: "Misc",
-					defaultValue: 'RHLSA(0;1.3;1.0;1.0)'
+					defaultValue: "RHLSA(0;1.3;1.0;1.0)"
 				},
 
 				/**
@@ -237,7 +237,7 @@ sap.ui.define([
 
 	/**
 	 * open the context menu
-	 * 
+	 *
 	 * @param {object} oMenu the context menu to be opened
 	 * @returns {void}
 	 * @public
@@ -271,10 +271,10 @@ sap.ui.define([
 		if (oBindInfo.TT) {
 			oElement.TT = this.getTooltip();
 		}
-		oElement['VB:s'] = this.getSelect();
+		oElement["VB:s"] = this.getSelect();
 		oElement.P = this.getPosition();
 		if (oBindInfo.M) {
-			oElement['VB:c'] = this.getChangeable();
+			oElement["VB:c"] = this.getChangeable();
 		}
 		return oElement;
 	};
@@ -293,29 +293,29 @@ sap.ui.define([
 		if (sActionName === "contextMenu" || sActionName === "edgeContextMenu" || sActionName === "handleContextMenu") {
 			var oParent = this.getParent();
 			this.mClickPos = [
-				event.Action.Params.Param[0]['#'], event.Action.Params.Param[1]['#']
+				event.Action.Params.Param[0]["#"], event.Action.Params.Param[1]["#"]
 			];
 			// create an empty menu
 			if (oParent.mVBIContext.m_Menus) {
 				oParent.mVBIContext.m_Menus.deleteMenu("DynContextMenu");
 			}
-			
+
 			sap.ui.getCore().loadLibrary("sap.ui.unified");
 			var oMenuObject = new sap.ui.unified.Menu();
-			oMenuObject.vbi_data = {};
-			oMenuObject.vbi_data.menuRef = "CTM";
-			oMenuObject.vbi_data.VBIName = "DynContextMenu";
+			oMenuObject["vbi_data"] = {};
+			oMenuObject["vbi_data"].menuRef = "CTM";
+			oMenuObject["vbi_data"].VBIName = "DynContextMenu";
 
 			// prepare own menu items for certian events
 			if (this.getChangeable()) {
 				if (sActionName === "edgeContextMenu") {
-					var sEdge = event.Action.Params.Param[2]['#'];
+					var sEdge = event.Action.Params.Param[2]["#"];
 					oParent.mAddMenuItems.push(new sap.ui.unified.MenuItem({
 						text: sap.ui.vk.getResourceBundle().getText("OVL_AREA_EDGE_SPLIT"),
 						select: this._handleCtxFunction.bind(this, "SPLIT", sEdge)
 					}));
 				} else if (sActionName === "handleContextMenu") {
-					var sHandle = event.Action.Params.Param[2]['#'];
+					var sHandle = event.Action.Params.Param[2]["#"];
 					oParent.mAddMenuItems.push(new sap.ui.unified.MenuItem({
 						text: sap.ui.vk.getResourceBundle().getText("OVL_AREA_HANDLE_REMOVE"),
 						select: this._handleCtxFunction.bind(this, "REMOVE", sHandle)
@@ -331,7 +331,7 @@ sap.ui.define([
 					});
 				} else {
 					this[funcname]({
-						index: event.Action.Params.Param[2]['#'],
+						index: event.Action.Params.Param[2]["#"],
 						menu: oMenuObject
 					});
 				}
@@ -339,21 +339,19 @@ sap.ui.define([
 				oParent._openContextMenu(event.Action.object, this, oMenuObject);
 			}
 
+		} else if (sActionName == "click") {
+			this.mClickPos = event.Action.AddActionProperties.AddActionProperty[0]["#"];
+			this.fireClick({
+				clientX: event.Action.Params.Param[0]["#"],
+				clientY: event.Action.Params.Param[1]["#"]
+			});
+		} else if (sActionName.indexOf("Click") > -1) {
+			// edgeClick or handleClick
+			this[funcname]({
+				index: event.Action.Params.Param[2]["#"]
+			});
 		} else {
-			if (sActionName == "click") {
-				this.mClickPos = event.Action.AddActionProperties.AddActionProperty[0]['#'];
-				this.fireClick({
-					clientX: event.Action.Params.Param[0]['#'],
-					clientY: event.Action.Params.Param[1]['#']
-				});
-			} else if (sActionName.indexOf("Click") > -1) {
-				// edgeClick or handleClick
-				this[funcname]({
-					index: event.Action.Params.Param[2]['#']
-				});
-			} else {
-				this[funcname]();
-			}
+			this[funcname]();
 		}
 	};
 
@@ -387,7 +385,7 @@ sap.ui.define([
 			];
 			aPos.splice(offset + 3, 0, midPoint[0].toString(), midPoint[1].toString(), "0");
 		}
-		this.setPosition(aPos.toString().replace(/,/g, ';'));
+		this.setPosition(aPos.toString().replace(/,/g, ";"));
 	};
 
 	return OverlayArea;

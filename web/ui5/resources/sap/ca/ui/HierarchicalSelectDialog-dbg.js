@@ -56,7 +56,7 @@ jQuery.sap.require("sap.m.Dialog");
  * @extends sap.m.Dialog
  *
  * @author Bruno Vicente
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

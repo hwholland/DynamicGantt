@@ -7,28 +7,14 @@
 
 /* START "BarListCard.less" */
 .sapOvpBarListDataField {
-  color: @sapUiDarkText;
   font-size: @sapMFontMediumSize;
 }
 
-.sapOvpBarListProgressIndicator {
-  background-color: inherit;
-  .sapMPIText {
-    font-size: @sapMFontMediumSize;
-  }
-}
-
-.sapOvpBarListProgressIndicatorBackground {
-  background-color: @sapUiLightBG;
-}
-
 .sapOvpBarListObjectNumberWithoutState {
-  color: @sapUiDarkText;
   font-size: @sapMFontMediumSize;
 }
 
 .sapOvpExtendedBarListFirstDataField {
-  color: @sapUiDarkText;
   font-size: @sapMFontHeader5Size;
 }
 
@@ -53,9 +39,9 @@
   font-size: @sapUiFontHeader3Size;
 }
 
-.sapOvpCardHeader .sapOvpCardTitle {
+/*.sapOvpCardHeader .sapOvpCardTitle {
   margin-bottom: 0.3rem;
-}
+}*/
 
 .sapOvpCardContentContainer {
   border-top: 1px solid @sapUiListBorderColor;
@@ -75,6 +61,11 @@
   color : @sapUiGroupTitleTextColor;
   font-size: @sapMFontHeader3Size;
 }
+
+.sapMCrsl:focus {
+    outline: 1px auto #000479;
+}
+
 .sapOvpCardFooter {
   color: @sapUiContentLabelColor;
   font-size: @sapMFontHeader6Size;
@@ -88,32 +79,30 @@
   background-color: @sapUiTileBackground;
 }
 
-.sapOvpBaseCard tr {
-  &:hover {
-    background: #f0f0f0;
-  }
-}
-
 .sapMListShowSeparatorsAll .sapMListTblSubRow:last-child>td, .sapMListShowSeparatorsAll .sapMLIBShowSeparator:last-child>td {
   border-bottom-color: @sapUiLightBG;
 }
 
-.sapOvpStackCardContent{
-  background-color: @sapUiTileBackground;
-  border-left: 1px solid @sapUiListBorderColor;
-  &> .sapMFlexItem, .sapMLabel {
-    color: @sapUiHighlight;
+.sapOvpCardContentContainer {
+  .sapOvpStackCardContent {
+    & > .sapMFlexItem, .sapMLabel {
+      color: @sapUiHighlight;
+    }
   }
-  &:hover {
-    background-color: @sapUiListHoverBackground;
-    border-color: @sapUiListHoverBackground;
-  }
-  &:active {
-    background-color: @sapUiListActiveBackground;
-    border-color: @sapUiListActiveBackground;
-  }
-  &:active .sapOvpStackCardIcon, &:active label {
-    color: @sapUiTileBackground;
+  &.sapOvpCardNavigable {
+    background-color: @sapUiTileBackground;
+    border-left: 1px solid @sapUiListBorderColor;
+    &:hover {
+      background-color: @sapUiListHoverBackground;
+      border-color: @sapUiListHoverBackground;
+    }
+    &:active {
+      background-color: @sapUiListActiveBackground;
+      border-color: @sapUiListActiveBackground;
+    }
+    &:active .sapOvpStackCardIcon, &:active label, &:active .sapMText, &:active .sapMLabel {
+      color: @sapUiTileBackground;
+    }
   }
 }
 
@@ -127,9 +116,9 @@
   color: @sapUiContentLabelColor;
 }
 
-.sapOvpCardHeader .sapOvpCardSubtitle {
+/*.sapOvpCardHeader .sapOvpCardSubtitle {
   margin-bottom: 1rem;
-}
+}*/
 
 .sapOvpCarouselContentSubtitle {
   font-size : @sapMFontSmallSize;
@@ -149,17 +138,15 @@
 
 
 .sapOvpCardHeader .sapOvpKPIHeaderTitleStyle {
-	color: @sapUiGroupTitleTextColor;
+  color: @sapUiGroupTitleTextColor;
   font-size: @sapMFontHeader5Size;
 }
 
 .sapOvpCardHeader .sapOvpKPIHeaderDimensionStyle {
-	color: @sapUiLightText;
   font-size: @sapMFontSmallSize;
 }
 
 .sapOvpCardHeader .sapOvpKPIHeaderFilterStyle {
-	color: @sapUiLightText;
   font-size: @sapMFontSmallSize;
 }
 
@@ -168,29 +155,21 @@
 
 }
 
-.ovpCardResizeGhost {
-	position: absolute;
-	background-color: @sapUiContentShadowColor;
-	opacity: 0.1;
+.sapOvpCardHeaderBorder {
+  border-bottom: none;
 }
 
-.ovpResizeRubberBand {
-	position: absolute;
-	border-width: 3px; 
-	border-style: dashed;
-	border-color: @sapUiMediumBorder;
-	opacity: 1;
-	}
 /* END "Card.less" */
 
 /* START "ObjectStream.less" */
 .sapOvpStackedCardPopup {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0);
+  box-shadow: none;
   .sapMDialogSection {
     background-color: transparent;
   }
   .sapOvpObjectStreamHeader {
-    color: @sapUiInvertedElement;
+    color: @sapUiInvertedElement !important;
     font-size: @sapMFontHeader2Size
   }
   .sapOvpObjectStreamClose {
@@ -258,31 +237,17 @@
     background-color: @sapUiButtonStandardBG;
 }
 .sapOvpStackPlaceHolderIcon{
-  color: @sapUiDarkText;
+  color: @sapUiContentNonInteractiveIconColor;
 }
 
 .sapOvpStackPlaceHolderTextLine{
-  color: @sapUiDarkText;
-  font-size: @sapMFontHeader3Size;
-}
-/* TODO: Check if @sapUiTileBackground is the right one */
-.sapOvpStackPlaceHolderLabelsContainer{
-  background-color: @sapUiTileBackground;
-}
-
-.sapOvpStackPlaceHolderAppName{
-  font-size: @sapMFontHeader6Size;
+  color: @sapUiLink;
 }
 /* END "StackPlaceHolder.less" */
 
 /* START "DashboardLayout.less" */
-.sapOvpDashboardLayoutItem > .sapUiComponentContainer {
-    background-color:@sapUiTileBackground;
-}
-.sapOvpDasboardGhost {
-	position: absolute;
-	background-color: @sapUiContentShadowColor;
-	opacity: 0.1;
+.sapOvpDashboardLayoutItem.sapOvpMinHeightContainer .sapUiComponentContainer:hover {
+  background-color: #F7F9FA; //Temporary fix
 }
 /* END "DashboardLayout.less" */
 

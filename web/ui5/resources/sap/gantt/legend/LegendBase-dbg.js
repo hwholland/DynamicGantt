@@ -5,8 +5,8 @@
 	
  */
 sap.ui.define([
-	"sap/ui/core/Control", "sap/gantt/shape/cal/Calendar", "sap/gantt/misc/Utility", "../misc/AxisTime", "sap/ui/thirdparty/d3"
-], function (Control, Calendar, Utility, AxisTime) {
+	"sap/ui/core/Control", "sap/gantt/shape/cal/Calendar", "sap/gantt/misc/Utility", "sap/gantt/misc/Format", "../misc/AxisTime"
+], function (Control, Calendar, Utility, Format, AxisTime) {
 	"use strict";
 
 	/**
@@ -32,7 +32,7 @@ sap.ui.define([
 	 * @abstract
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -53,17 +53,17 @@ sap.ui.define([
 				/**
 				 * Width of a legend item.
 				 */
-				legendWidth: {type: "number", defaultValue: 32}, // width in pixels in compact mode
+				legendWidth: {type: "float", defaultValue: 32}, // width in pixels in compact mode
 
 				/**
 				 * Height of a legend item.
 				 */
-				legendHeight: {type: "number", defaultValue: 32}, // height in pixels in compact mode
+				legendHeight: {type: "float", defaultValue: 32}, // height in pixels in compact mode
 
 				/**
 				 * Font size of legend item texts.
 				 */
-				fontSize: {type: "number", defaultValue: 16} // font size for legend text
+				fontSize: {type: "int", defaultValue: 16} // font size for legend text
 			}
 		}
 	});
@@ -74,8 +74,8 @@ sap.ui.define([
 	LegendBase.prototype.TIME = "20160102000000";
 
 	LegendBase.prototype.init = function () {
-		this._aTimeRange = [d3.time.format("%Y%m%d%H%M%S").parse(this.TIME_RANGE[0]),
-			d3.time.format("%Y%m%d%H%M%S").parse(this.TIME_RANGE[1])];
+		this._aTimeRange = [Format.getTimeStampFormatter().parse(this.TIME_RANGE[0]),
+			Format.getTimeStampFormatter().parse(this.TIME_RANGE[1])];
 	};
 
 

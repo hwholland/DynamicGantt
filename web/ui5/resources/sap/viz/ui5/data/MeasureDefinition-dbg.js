@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.data.MeasureDefinition.
@@ -58,7 +58,11 @@ sap.ui.define(['sap/ui/core/Element','sap/viz/library'],
 			/**
 			 * Value range
 			 */
-			range: {type: "any[]", group: "Misc", defaultValue: []}
+			range: {type: "any[]", group: "Misc", defaultValue: []},
+			/**
+			 * Unit of measure
+			 */
+			unit: {type: "string", group: "Misc", defaultValue: null}
 		}
 	}});
 
@@ -74,44 +78,58 @@ sap.ui.define(['sap/ui/core/Element','sap/viz/library'],
 				return oValue; 
 			};
 		}
-	
+		
+		fnFormatter = oBindingInfo.formatter;
 		// otherwise ensure a simple property binding for now
 		if ( oBindingInfo.parts.length > 1 ) {
-			throw new Error("MeasureDefinition doesn't support calculated bindings yet");
-		}
+		    if(fnFormatter){
+		        return function(oContext) {
+		            var oValues = [], oValue;
+		            oBindingInfo.parts.forEach(function(oInfo, i){
+		                var oValue = oContext.getProperty(oInfo.path);
+		                if (oType) {
+		                    oValue = oType.formatValue(oValue, "string"); //TODO discuss internal type
+		                }
+		                oValues.push(oValue);
+	                });
+		            return fnFormatter.call(that, oValues, oContext);
+		        }
+		    }else{
+		        throw new Error("MeasureDefinition doesn't support calculated bindings yet");
+		    }
+		}else{
 	
-		sPath = oBindingInfo.parts[0].path;
-		oType = oBindingInfo.parts[0].type;
-		fnFormatter = oBindingInfo.formatter;
-	
-		// for simple binding just resolve the value
-		if ( !(oType || fnFormatter) ) {
-			return function(oContext) {
-				return oContext.getProperty(sPath);
-			}
+    		sPath = oBindingInfo.parts[0].path;
+    		oType = oBindingInfo.parts[0].type;
+    	
+    		// for simple binding just resolve the value
+    		if ( !(oType || fnFormatter) ) {
+    			return function(oContext) {
+    				return oContext.getProperty(sPath);
+			};
+    		}
+    
+    		// else apply type and/or formatter
+    		return function(oContext) {
+    			var oValue = oContext.getProperty(sPath);
+    			if (oType) {
+    				oValue = oType.formatValue(oValue, "string"); //TODO discuss internal type
+    			}
+    			if (fnFormatter) {
+    				oValue = fnFormatter.call(that, oValue, oContext);
+    			}
+    			return oValue;
+    		};
 		}
+	};
 
-		// else apply type and/or formatter
-		return function(oContext) {
-			var oValue = oContext.getProperty(sPath);
-			if (oType) {
-				oValue = oType.formatValue(oValue, "string"); //TODO discuss internal type
-			}
-			if (fnFormatter) {
-				oValue = fnFormatter.call(that, oValue, oContext);
-			}
-			return oValue;
-		};
-
-	}
-
-	MeasureDefinition.prototype.setUnit = function(sVal) {
-		this._sUnit = sVal;
+	MeasureDefinition.prototype._setUnitBinding = function(sVal) {
+		this._sUnitBinding = sVal;
 	};
 	
-	MeasureDefinition.prototype.getUnit = function() {
-		return this._sUnit;
-	}
+	MeasureDefinition.prototype._getUnitBinding = function() {
+		return this._sUnitBinding;
+	};
 
 	return MeasureDefinition;
 

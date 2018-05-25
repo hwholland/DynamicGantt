@@ -17,20 +17,24 @@
 			return "sap.apf.ui.reuse.controller.smartFilterBar";
 		},
 		createContent : function(oController) {
-			var oView = this, sEntityType, sSmartFilterBarId, sPersistencyKey, oSmartFilterBar;
-			sEntityType = oView.getViewData().oSmartFilterBarConfiguration.entityType;
+			var oView = this, sEntitySet, sSmartFilterBarId, sPersistencyKey, oSmartFilterBar;
+			sEntitySet = oView.getViewData().oSmartFilterBarConfiguration.entitySet;
 			sSmartFilterBarId = oView.getViewData().oSmartFilterBarConfiguration.id;
 			sPersistencyKey = oView.getViewData().oCoreApi.getSmartFilterBarPersistenceKey(sSmartFilterBarId);
 			oSmartFilterBar = new sap.ui.comp.smartfilterbar.SmartFilterBar(oController.createId("idAPFSmartFilterBar"), {
-				entityType : sEntityType,
+				entitySet : sEntitySet,
 				controlConfiguration : oView.getViewData().controlConfiguration,
-				initialized : oController.registerSFBInstanceWithCore.bind(oController),
+				initialized : oController.afterInitialization.bind(oController),
 				search : oController.handlePressOfGoButton.bind(oController),
 				persistencyKey : sPersistencyKey,
+				considerAnalyticalParameters : true,
 				customData: {
 					key: "dateFormatSettings",
 					value: {"UTC":true}
-				}
+				},
+				useDateRangeType: true,
+				liveMode: true,
+				filterChange: oController.validateFilters.bind(oController)
 			});
 			oView.setParent(oView.getViewData().parent);
 			return oSmartFilterBar;

@@ -1,18 +1,59 @@
 // iteration 0 : Holger
 /* global sap,window,$,jQuery */
 
-(function() {
+sap.ui.define(['sap/ushell/renderers/fiori2/search/SearchModel'], function(SearchModel) {
     "use strict";
 
-    sap.ui.core.Control.extend("sap.ushell.renderers.fiori2.search.controls.SearchRelatedObjectsToolbar", {
+    var module = sap.ui.core.Control.extend("sap.ushell.renderers.fiori2.search.controls.SearchRelatedObjectsToolbar", {
         metadata: {
             properties: {
-                relatedObjects: "object"
+                itemId: "string",
+                navigationObjects: {
+                    type: "object",
+                    multiple: true
+                },
+                positionInList: "int"
+            },
+            aggregations: {
+                _relatedObjectActionsToolbar: {
+                    type: "sap.m.Toolbar",
+                    multiple: false,
+                    visibility: "hidden"
+                }
             }
         },
 
-        init: function(properties) {
-            this.oCrossAppNav = sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("CrossApplicationNavigation");
+        init: function() {
+            var that = this;
+
+            if (sap.ui.core.Control.prototype.init) { // check whether superclass implements the method
+                sap.ui.core.Control.prototype.init.apply(that, arguments); // call the method with the original arguments
+            }
+
+            sap.ushell.renderers.fiori2.search.controls.SearchRelatedObjectsToolbar._allOfMyCurrentInstances.push(that);
+
+            that.setAggregation("_relatedObjectActionsToolbar", new sap.m.Toolbar({
+                    design: sap.m.ToolbarDesign.Solid
+                })
+                .data("sap-ui-fastnavgroup", "false", true /* write into DOM */ )
+                .addStyleClass("sapUshellSearchResultListItem-RelatedObjectsToolbar-Toolbar")
+            );
+        },
+
+        exit: function() {
+            var that = this;
+
+            if (sap.ui.core.Control.prototype.exit) { // check whether superclass implements the method
+                sap.ui.core.Control.prototype.exit.apply(that, arguments); // call the method with the original arguments
+            }
+
+            var allOfMyCurrentInstances = sap.ushell.renderers.fiori2.search.controls.SearchRelatedObjectsToolbar._allOfMyCurrentInstances;
+            for (var i = 0; i < allOfMyCurrentInstances.length; i++) {
+                if (allOfMyCurrentInstances[i] == that) {
+                    allOfMyCurrentInstances.splice(i, 1);
+                    break;
+                }
+            }
         },
 
         renderer: function(oRm, oControl) {
@@ -31,71 +72,65 @@
             var that = this;
             var i;
 
-            var createPressHandler = function(link) {
+            var _relatedObjectActionsToolbar = that.getAggregation("_relatedObjectActionsToolbar");
+            _relatedObjectActionsToolbar.destroyContent();
+
+            var createPressHandler = function(navigationObject) {
                 return function() {
-                    var model = sap.ushell.renderers.fiori2.search.getModelSingleton();
-                    model.analytics.logCustomEvent('FLP: Search', 'Launch Related Object', [link]);
+                    that._performNavigation(navigationObject, {
+                        trackingOnly: true
+                    });
                 };
             };
 
-            var relatedObjects = that.getRelatedObjects();
+            var navigationObjects = that.getNavigationObjects();
 
-            if (relatedObjects.length > 0) {
+            if (navigationObjects.length > 0) {
 
-                var relatedObjectsLinks = [];
-                for (i = 0; i < relatedObjects.length; i++) {
-                    var relatedObject = relatedObjects[i];
+                var navigationObjectsLinks = [];
+                for (i = 0; i < navigationObjects.length; i++) {
+                    var navigationObject = navigationObjects[i];
                     var link = new sap.m.Link({
-                        text: relatedObject.label,
-                        href: relatedObject.href,
+                        text: navigationObject.getText(),
+                        href: navigationObject.getHref(),
                         layoutData: new sap.m.ToolbarLayoutData({
                             shrinkable: false
                         }),
-                        press: createPressHandler(relatedObject.href)
+                        press: createPressHandler(navigationObject)
                     });
+                    var target = navigationObject.getTarget();
+                    if (target) {
+                        link.setTarget(target);
+                    }
                     link.addStyleClass("sapUshellSearchResultListItem-RelatedObjectsToolbar-Element");
-                    relatedObjectsLinks.push(link);
+                    navigationObjectsLinks.push(link);
                 }
-
-                var toolbarContent = [];
 
                 var toolbarSpacer = new sap.m.ToolbarSpacer();
-                toolbarContent.push(toolbarSpacer);
+                toolbarSpacer.addStyleClass("sapUshellSearchResultListItem-RelatedObjectsToolbar-Spacer");
+                _relatedObjectActionsToolbar.addContent(toolbarSpacer);
 
-                for (i = 0; i < relatedObjectsLinks.length; i++) {
-                    toolbarContent.push(relatedObjectsLinks[i]);
+                for (i = 0; i < navigationObjectsLinks.length; i++) {
+                    _relatedObjectActionsToolbar.addContent(navigationObjectsLinks[i]);
                 }
 
-                that.overFlowButton = new sap.m.Button({
+                that._overFlowButton = new sap.m.Button({
                     icon: sap.ui.core.IconPool.getIconURI("overflow")
                 });
-                that.overFlowButton.addStyleClass("sapUshellSearchResultListItem-RelatedObjectsToolbar-OverFlowButton");
-                toolbarContent.push(that.overFlowButton);
+                that._overFlowButton.addStyleClass("sapUshellSearchResultListItem-RelatedObjectsToolbar-OverFlowButton");
+                _relatedObjectActionsToolbar.addContent(that._overFlowButton);
 
-                that.overFlowSheet = new sap.m.ActionSheet({
+                that._overFlowSheet = new sap.m.ActionSheet({
                     placement: sap.m.PlacementType.Top
                 });
 
-                that.overFlowButton.attachPress(function() {
-                    that.overFlowSheet.openBy(that.overFlowButton);
+                that._overFlowButton.attachPress(function() {
+                    that._overFlowSheet.openBy(that._overFlowButton);
                 });
 
-                that.relatedObjectActionsToolbar = new sap.m.Toolbar({
-                    design: sap.m.ToolbarDesign.Solid,
-                    content: toolbarContent
-                });
-
-                // define group for F6 handling
-                that.relatedObjectActionsToolbar.data("sap-ui-fastnavgroup", "false", true /* write into DOM */ );
-
-                that.relatedObjectActionsToolbar.addStyleClass("sapUshellSearchResultListItem-RelatedObjectsToolbar-Toolbar");
-
-                oRm.renderControl(that.relatedObjectActionsToolbar);
+                oRm.renderControl(_relatedObjectActionsToolbar);
             }
         },
-
-
-
 
 
         // after rendering
@@ -103,33 +138,29 @@
         onAfterRendering: function() {
             var that = this;
 
-            if (that.overFlowButton) {
-                var $overFlowButton = $(that.overFlowButton.getDomRef());
-                $overFlowButton.css("display", "none");
-            }
+            // if (that._overFlowButton) {
+            //     var $overFlowButton = $(that._overFlowButton.getDomRef());
+            //     $overFlowButton.css("display", "none");
+            // }
 
-            $(window).on("resize", function() {
-                that._layoutToolbarElements();
-            });
             that._layoutToolbarElements();
         },
-
-
-
 
         _layoutToolbarElements: function() {
             var that = this;
 
-            if (!(that.getDomRef() && that.relatedObjectActionsToolbar.getDomRef())) {
+            var _relatedObjectActionsToolbar = that.getAggregation("_relatedObjectActionsToolbar");
+            if (!(that.getDomRef() && _relatedObjectActionsToolbar.getDomRef())) {
                 return;
             }
 
-            var $toolbar = $(that.relatedObjectActionsToolbar.getDomRef());
+            var $toolbar = $(_relatedObjectActionsToolbar.getDomRef());
             var toolbarWidth = $toolbar.innerWidth();
 
-            if (toolbarWidth === 0 || (that.toolbarWidth && that.toolbarWidth === toolbarWidth)) {
-                return;
-            }
+            // TODO: following return can cause issues in case of control being rendered more than once immediately after the first render
+            // if (toolbarWidth === 0 || (that.toolbarWidth && that.toolbarWidth === toolbarWidth)) {
+            //     return;
+            // }
 
             if ($(that.getDomRef()).css("display") === "none" || $toolbar.css("display") === "none") {
                 return;
@@ -137,13 +168,13 @@
 
             that.toolbarWidth = toolbarWidth;
 
-            var $overFlowButton = $(that.overFlowButton.getDomRef());
+            var $overFlowButton = $(that._overFlowButton.getDomRef());
             $overFlowButton.css("display", "none");
 
             var toolbarElementsWidth = 0;
 
-            var pressButton = function(event, externalTarget) {
-                that.oCrossAppNav.toExternal(externalTarget);
+            var pressButton = function(event, _navigationObject) {
+                that._performNavigation(_navigationObject);
             };
 
             var $toolbarElements = $toolbar.find(".sapUshellSearchResultListItem-RelatedObjectsToolbar-Element");
@@ -166,26 +197,78 @@
                         }
                     }
 
-                    var relatedObjects = that.getRelatedObjects();
-                    that.overFlowSheet.destroyButtons();
+                    var navigationObjects = that.getNavigationObjects();
+                    that._overFlowSheet.destroyButtons();
 
+                    i = (i >= 0) ? i : 0;
                     for (; i < $toolbarElements.length; i++) {
                         $element = $($toolbarElements[i]);
                         $element.css("display", "none");
 
-                        var relatedObject = relatedObjects[i];
+                        var navigationObject = navigationObjects[i];
 
                         var button = new sap.m.Button({
-                            text: relatedObject.label
+                            text: navigationObject.getText()
                         });
-                        button.attachPress(relatedObject, pressButton);
-                        that.overFlowSheet.addButton(button);
+                        button.attachPress(navigationObject, pressButton);
+                        that._overFlowSheet.addButton(button);
                     }
                     break;
                 }
                 toolbarElementsWidth = _toolbarElementsWidth;
             }
+
+            that._setupItemNavigation();
+        },
+
+        _setupItemNavigation: function() {
+            var that = this;
+
+            if (!that.theItemNavigation) {
+                that.theItemNavigation = new sap.ui.core.delegate.ItemNavigation();
+                that.addDelegate(that.theItemNavigation);
+            }
+            that.theItemNavigation.setCycling(false);
+            that.theItemNavigation.setRootDomRef(that.getDomRef());
+            var itemDomRefs = [];
+            var _relatedObjectActionsToolbar = that.getAggregation("_relatedObjectActionsToolbar");
+            var content = _relatedObjectActionsToolbar.getContent();
+            for (var i = 0; i < content.length; i++) {
+                if (!content[i].hasStyleClass("sapUshellSearchResultListItem-RelatedObjectsToolbar-Element")) {
+                    continue;
+                }
+                if (!$(content[i].getDomRef()).attr("tabindex")) {
+                    var tabindex = "-1";
+                    if (content[i].getPressed && content[i].getPressed()) {
+                        tabindex = "0";
+                    }
+                    $(content[i].getDomRef()).attr("tabindex", tabindex);
+                }
+                itemDomRefs.push(content[i].getDomRef());
+            }
+
+            var _overflowButton = that._overFlowButton.getDomRef();
+            itemDomRefs.push(_overflowButton);
+            $(_overflowButton).attr("tabindex", "-1");
+
+            that.theItemNavigation.setItemDomRefs(itemDomRefs);
+        },
+
+        _performNavigation: function(navigationTarget, params) {
+            var trackingOnly = params && params.trackingOnly || false;
+            navigationTarget.performNavigation({
+                trackingOnly: trackingOnly
+            });
         }
     });
 
-})();
+    module._allOfMyCurrentInstances = [];
+
+    $(window).on("resize", function() {
+        for (var i = 0; i < this._allOfMyCurrentInstances.length; i++) {
+            this._allOfMyCurrentInstances[i]._layoutToolbarElements();
+        }
+    }.bind(module));
+
+    return module;
+});

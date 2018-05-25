@@ -5,8 +5,8 @@
 	<vendor>SAP SE</vendor>
 	<copyright>SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved</copyright>
-	<version>1.38.33</version>
+(c) Copyright 2009-2018 SAP SE. All rights reserved</copyright>
+	<version>1.54.3</version>
 
 	<documentation>Smart viz control based on Vizframe</documentation>
 

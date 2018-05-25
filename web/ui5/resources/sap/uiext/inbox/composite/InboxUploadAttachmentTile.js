@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.composite.InboxUploadAttachmentTile");jQuery.sap.require("sap.uiext.inbox.library");jQuery.sap.require("sap.ui.core.Control");sap.ui.core.Control.extend("sap.uiext.inbox.composite.InboxUploadAttachmentTile",{metadata:{library:"sap.uiext.inbox",properties:{"fileName":{type:"string",group:"Misc",defaultValue:null},"fileTypeIcon":{type:"sap.ui.core.URI",group:"Misc",defaultValue:null}},events:{"uploadSelectedFile":{}}}});sap.uiext.inbox.composite.InboxUploadAttachmentTile.M_EVENTS={'uploadSelectedFile':'uploadSelectedFile'};
 /*!

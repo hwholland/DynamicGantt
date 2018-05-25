@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 /**
  * @class PlusTile renderer.
@@ -6,17 +6,16 @@
  * 
  * @private
  */
-(function () {
-    "use strict";
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.declare("sap.ushell.ui.launchpad.PlusTileRenderer");
+sap.ui.define(['sap/ushell/resources'],
+	function(resources) {
+	"use strict";
 
     /**
      * @class PlusTile renderer.
      * @static
      */
-    sap.ushell.ui.launchpad.PlusTileRenderer = {};
-    var translationBundle = sap.ushell.resources.i18n;
+    var PlusTileRenderer = {};
+    var translationBundle = resources.i18n;
 
     /**
      * Renders the HTML for the given control, using the provided
@@ -29,17 +28,22 @@
      *            oControl an object representation of the control that should be
      *            rendered
      */
-    sap.ushell.ui.launchpad.PlusTileRenderer.render = function (oRm, oControl) {
+    PlusTileRenderer.render = function (oRm, oControl) {
         oRm.write("<li");
         oRm.writeAttribute("tabindex", "-1");
         oRm.writeControlData(oControl);
         oRm.addClass("sapUshellTile");
         oRm.addClass("sapUshellPlusTile");
+        oRm.addClass("sapContrastPlus");
+        oRm.addClass("sapMGT");
         oRm.writeClasses();
         oRm.writeAccessibilityState(oControl, {label : translationBundle.getText("TilePlus_label")});
         oRm.write(">");
         oRm.renderControl(oControl.oIcon);
-
         oRm.write("</li>");
     };
-}());
+
+
+	return PlusTileRenderer;
+
+}, /* bExport= */ true);

@@ -11,7 +11,7 @@ sap.ui.define([
 
 	/**
 	 * Constructor for a new VBI.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The VBI control. This is the Visual Business base control, which is mainly intended to communicate directly with the Visual Business
@@ -75,7 +75,7 @@ sap.ui.define([
 					group: "Misc",
 					defaultValue: false
 				},
-				
+
 				/**
 				 * Defines whether the rectangular selection mode is active or not
 				 */
@@ -101,6 +101,22 @@ sap.ui.define([
 					type: "boolean",
 					group: "Misc",
 					defaultValue: false
+				},
+				/**
+				 * Allow repeating of keyboard events when key is pressed and hold.
+				 */
+				allowKeyEventRepeat: {
+					type: "boolean",
+					group: "Behavior",
+					defaultValue: true
+				},
+				/**
+				 * Miminum delay between keyboard events. Used to reduce frequency of keyboard events.
+				 */
+				keyEventDelay: {
+					type: "int",
+					group: "Behavior",
+					defaultValue: 250
 				}
 			},
 			events: {
@@ -213,8 +229,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * The event is raised before a Visual Business window is opened. It is intended to be used to place arbitrary content in e.g.
-				 * a Detail Window. This event is not supported in plugin mode.
+				 * The event is raised before a Visual Business window is opened. It is intended to be used to place arbitrary content in e.g. a
+				 * Detail Window. This event is not supported in plugin mode.
 				 */
 				openWindow: {
 					parameters: {
@@ -256,10 +272,10 @@ sap.ui.define([
 						}
 					}
 				},
-				
+
 				/**
-				 * The event is raised when a Visual Business container VO instance is created. It is intended to be used to place arbitrary content in e.g.
-				 * other controls. This event is not supported in plugin mode.
+				 * The event is raised when a Visual Business container VO instance is created. It is intended to be used to place arbitrary content
+				 * in e.g. other controls. This event is not supported in plugin mode.
 				 */
 				containerCreated: {
 					parameters: {
@@ -300,7 +316,7 @@ sap.ui.define([
 							type: "string"
 						}
 					}
-				}				
+				}
 			}
 		}
 	});
@@ -346,7 +362,7 @@ sap.ui.define([
 			}
 			if (ctx.m_Windows) {
 				ctx.m_Windows.NotifyResize();
-			}			
+			}
 		}
 	};
 
@@ -359,14 +375,14 @@ sap.ui.define([
 			this.mVBIContext = new VBI.VBIContext(this);
 		}
 		this.resizeID = "";
-		
+
 		this.m_renderList = [];
 	};
-	
+
 	/**
 	 * Load application JSON for plugin
+	 * @param {string | object} dat Application JSON
 	 * @private
-	 * @param dat Application JSON
 	 */
 	VBI1.prototype.loadNative = function(dat) {
 		var l_vbiId = this.getId();
@@ -403,21 +419,23 @@ sap.ui.define([
 				elem.Load(txt);
 				elem.OnSubmit = sf.bind(this);
 			} catch (e) {
+				// TODO: handle error?
 			}
 		} else if (jQuery.type(dat) == 'string') {
 			try {
 				elem.Load(dat);
 				elem.OnSubmit = sf.bind(this);
 			} catch (e) {
+				// TODO: handle error?
 			}
 		}
 	};
 
 	/**
 	 * Load application JSON for HTML5 version
+	 * @param {string | object} data Application JSON
 	 * @private
-	 * @param dat Application JSON
-	 */	
+	 */
 	VBI1.prototype.loadHtml = function(data) {
 		var l_vbiId = this.getId();
 
@@ -426,9 +444,9 @@ sap.ui.define([
 		// ensure that data is converted to a json object.........................//
 		// when this is a string, due ABAP servers sometimes sets a BOM at the....//
 		// beginning of the string we try to skip this............................//
-		if (typeof data == 'string') {
+		if (typeof data === 'string') {
 			dat = JSON.parse(data.indexOf('{') ? data.substr(data.indexOf('{')) : data);
-		} else if (typeof data == 'object') {
+		} else if (typeof data === 'object') {
 			dat = data; // this is already an object
 		}
 		// return immediately when data can not be interpreted....................//
@@ -447,15 +465,19 @@ sap.ui.define([
 			}
 		}
 
-		// todo: do correct handling when change flags get set....................//
+		/*
+		 * TO DO:
+		 * do correct handling when change flags get set
+		 */
 		var bModifiedData = false;
 		var bModifiedScenes = false;
 		var bModifiedWindows = false;
 		var bModifiedResources = false;
 		var bModifiedClustering = false;
+		var bModifiedMapConfig = false;
 
 		// the data can be a json object..........................................//
-		if (jQuery.type(dat) == 'object') {
+		if (jQuery.type(dat) === 'object') {
 			if (dat.SAPVB) {
 				// process configuration ...........................................//
 				if (dat.SAPVB.Config) {
@@ -494,8 +516,8 @@ sap.ui.define([
 					if (!this.mVBIContext.m_MapProviders) {
 						this.mVBIContext.m_MapProviders = new VBI.MapProviders();
 					}
-
 					this.mVBIContext.m_MapProviders.load(dat.SAPVB.MapProviders, this.mVBIContext);
+					bModifiedMapConfig = true;
 				}
 				// process maplayerstacks...........................................//
 				if (dat.SAPVB.MapLayerStacks) {
@@ -503,8 +525,8 @@ sap.ui.define([
 					if (!this.mVBIContext.m_MapLayerStackManager) {
 						this.mVBIContext.m_MapLayerStackManager = new VBI.MapLayerStackManager(this.mVBIContext);
 					}
-
 					this.mVBIContext.m_MapLayerStackManager.load(dat.SAPVB.MapLayerStacks, this.mVBIContext);
+					bModifiedMapConfig = true;
 				}
 				// process windows..................................................//
 				if (dat.SAPVB.Windows) {
@@ -553,8 +575,15 @@ sap.ui.define([
 					}
 					this.mVBIContext.m_SceneManager.load(dat.SAPVB.Scenes, this.mVBIContext);
 					bModifiedScenes = true;
+				} else if (bModifiedMapConfig) {
+					// update GeoScenes only, to refresh internal variables
+					var scenes = this.mVBIContext.m_SceneManager.m_SceneArray;
+					for (var i = 0; i < scenes.length; ++i) {
+						if (scenes[i].RefreshMapLayerStack) {
+							scenes[i].RefreshMapLayerStack();
+						}
+					}
 				}
-
 			}
 
 			// notify framework about data modifications...........................//
@@ -586,7 +615,7 @@ sap.ui.define([
 	 * High level load function. The function accepts a json string or an already parsed json object. This can be a Visual Business application, any
 	 * delta operations on the application or other hierachical data that can be mapped by the Visual Business data provider to the inner Visual
 	 * Business data context.
-	 * 
+	 *
 	 * @param {string} dat Application JSON to process
 	 * @returns {void}
 	 * @public
@@ -621,7 +650,7 @@ sap.ui.define([
 	 * of the Canvas excluding map, copyright info, navigation control, scaler, legend, detail windows, container elements. Analytic Maps are returned
 	 * as they are not treated as "maps" internally. Modes 2 & 3 are experimental, trying to load the map (this may work on inhouse servers with
 	 * adapted settings, standard configurations should fail)
-	 * 
+	 *
 	 * @param {int} [iMode] 0: Overlay only; 1 (default) and 3: include Labels; 2 and 3: try to include maps (will return "" if not possible)
 	 * @returns {string} Base64 encoded picture (PNG format) on success, "" otherwise
 	 * @public
@@ -638,7 +667,7 @@ sap.ui.define([
 
 	/**
 	 * Minimize to Thumbnail.
-	 * 
+	 *
 	 * @param {int} iNewWidth Width of the thumbnail
 	 * @param {int} iNewHeight Height of the thumbnail
 	 * @param {int} [iFullWidth] Width of the underlying VBI control. If ommitted or zero, current width is taken
@@ -679,7 +708,7 @@ sap.ui.define([
 
 	/**
 	 * Maximize from Thumbnail.
-	 * 
+	 *
 	 * @param {int} [iFullWidth] Width of the underlying VBI control. If ommitted current width is taken
 	 * @param {int} [iFullHeight] Height of the underlying control. If ommitted current width is taken
 	 * @returns {void}
@@ -714,7 +743,7 @@ sap.ui.define([
 
 	/**
 	 * Zoom to one or multiple geo positions. This function works only for the main geo scene in the Visual Business control.
-	 * 
+	 *
 	 * @param {float} fLon Longitude in degrees. This can also be an array of longitude values.
 	 * @param {float} fLat Latitude in degrees. This can also be an array of latitude values.
 	 * @param {int} iLod Level of detail, usually between 0 and 20. This will be limited by the map provider capabilities.
@@ -744,12 +773,11 @@ sap.ui.define([
 
 	/**
 	 * Zoom to one or multiple Areas. This function works only for the main geo scene in the Visual Business control.
-	 * 
+	 *
 	 * @param {array} aAreaList List of Area Ids to zoom to.
-	 * @param {float} corr . This correction factor deals with the space which is reserved to the div borders.
-	 * The Correction factor can be expressed either in a fracture (e.g. 0.9, this means 10% space to the borders)
-	 * or array of pixel values (order left, top, right, bottom) for the added margin of the calculated zoom area, e.g. [450,150,0,0]
-	 * which keeps a left border of 450 pixels and a top border of 150 pixels.
+	 * @param {float} corr . This correction factor deals with the space which is reserved to the div borders. The Correction factor can be expressed
+	 *        either in a fracture (e.g. 0.9, this means 10% space to the borders) or array of pixel values (order left, top, right, bottom) for the
+	 *        added margin of the calculated zoom area, e.g. [450,150,0,0] which keeps a left border of 450 pixels and a top border of 150 pixels.
 	 * @returns {void}
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -765,7 +793,7 @@ sap.ui.define([
 	/**
 	 * Retrieve information on a specific cluster object . Type : 0 : contained VOs 1 : child clusters (tree clustering only) 2 : parent Node (tree
 	 * clustering only) 10 : Information on Node 11 : Edges of the Voronoi Area (tree clustering only, not merged with rectangle)
-	 * 
+	 *
 	 * @param {string} sIdent Cluster Id
 	 * @param {sap.ui.vbm.ClusterInfoType} iType Type of information which should be returned
 	 * @returns {oClusterInfo} Cluster Info Object with requested info according to given Cluster Info Type
@@ -783,8 +811,8 @@ sap.ui.define([
 
 	/**
 	 * Set Tracking Mode for Rectangular Selection on/off.
-	 * 
-	 * @param {boolean} bSet to start or stop tracking mode
+	 *
+	 * @param { boolean	} bSet to start or stop tracking mode
 	 * @returns {sap.ui.vbm.VBI} This allows method chaining
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -808,7 +836,7 @@ sap.ui.define([
 
 	/**
 	 * Set Tracking Mode for Lasso Selection on/off.
-	 * 
+	 *
 	 * @param {boolean} bSet to start or stop tracking mode
 	 * @returns {sap.ui.vbm.VBI} This allows method chaining
 	 * @public
@@ -833,7 +861,7 @@ sap.ui.define([
 
 	/**
 	 * Set Tracking Mode for Rectangular Zoom on/off.
-	 * 
+	 *
 	 * @param {boolean} bSet to start or stop tracking mode
 	 * @returns {sap.ui.vbm.VBI} This allows method chaining
 	 * @public
@@ -855,12 +883,12 @@ sap.ui.define([
 		this.setProperty("rectZoom", bSet);
 		return this;
 	};
-		
+
 	// ...........................................................................//
 	// once VBI control is rendered, we attach navigation bar and map it self....//
 
 	VBI1.prototype.onAfterRendering = function() {
-				
+
 		// when there is preserved content restore it.............................//
 		if (this.$oldContent.length > 0) {
 			// insert preserved control DOM content
@@ -887,16 +915,20 @@ sap.ui.define([
 		if (this.mVBIContext.m_Windows) {
 			this.mVBIContext.m_Windows.Awake(l_vbiId);
 		}
-		
+
 		// move elements from hidden area to there final location
 		var aElems = jQuery(this.getDomRef()).children(".vbi-hidden").children();
 		for (var i = 0, oEntry; i < aElems.length; ++i) {
 			oEntry = aElems[i];
 			// Note: We cannot use a jQuery selector, since it fails with the artifical ID for cluster objects
-			//jQuery("#" + oEntry.attributes.getNamedItem("data").nodeValue).append(oEntry.firstChild);
-			document.getElementById(oEntry.attributes.getNamedItem("data").nodeValue).appendChild(oEntry.firstChild);
-			oEntry.parentNode.removeChild(oEntry);
-		}		
+			// jQuery("#" + oEntry.attributes.getNamedItem("data").nodeValue).append(oEntry.firstChild);
+			var oDomref = document.getElementById(oEntry.attributes.getNamedItem("data").nodeValue);
+			if (oDomref) {
+				oDomref.appendChild(oEntry.firstChild);
+				oEntry.parentNode.removeChild(oEntry);
+			}
+
+		}
 	};
 
 	VBI1.prototype.onBeforeRendering = function() {
@@ -945,12 +977,13 @@ sap.ui.define([
 			this.setProperty("height", val);
 		}
 	};
-	
+
 	/**
-	 * Add dependant child control for rendering. 
+	 * Add dependant child control for rendering.
+	 *
+	 * @param {object} oControl Child control to render
+	 * @param {string} targetElemId ID of DOM element the child to append to
 	 * @protected
-	 * @param oControl Child control to render
-	 * @param targetElemId ID of DOM element the child to append to
 	 */
 	VBI1.prototype.addRenderItem = function(oControl, targetElemId) {
 		this.m_renderList.push({
@@ -963,4 +996,3 @@ sap.ui.define([
 	return VBI1;
 
 });
-

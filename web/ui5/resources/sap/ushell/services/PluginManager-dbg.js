@@ -1,18 +1,23 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's PluginManager service, which allows you to handle the loading of Fiori Launchpad plugins.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.services.PluginManager");
 
     var S_COMPONENT_NAME = "sap.ushell.services.PluginManager",
         S_PLUGIN_TYPE_PARAMETER = "sap-ushell-plugin-type",
         S_DEFAULT_PLUGIN_CATEGORY = "RendererExtensions",
-        aSupportedPluginCategories = [S_DEFAULT_PLUGIN_CATEGORY, "UserDefaults"];
+        S_FLP_AREAS_PLUGIN_COMPONENT = "sap.ushell.components.shell.defaults", // contains Me Area and Notifications Area
+        aSupportedPluginCategories = [
+            S_DEFAULT_PLUGIN_CATEGORY,
+            "UserDefaults",
+            "UserImage",
+            "ContentProvider"];
 
     /**
      * The unified shell's PluginManager service, which allows you to handle the loading
@@ -26,7 +31,7 @@
      * @since 1.38
      * @private
      */
-    sap.ushell.services.PluginManager = function () {
+    function PluginManager () {
         var that = this;
         this._oPluginCollection = {};
         this._oCategoryLoadingProgress = {};
@@ -87,6 +92,87 @@
         };
 
         /**
+         * Filename to be requested in XHR Auth scenario.
+         * Encapsulated in case it must be overwritten or modified.
+         * @returns {string}
+         *  returns "Component-preload.js"
+         * @private
+         */
+        this._getFileNameForXhrAuth = function () {
+            return "Component-preload.js";
+        }
+
+        /**
+         * Triggers an XHR request for authentication if the plugin configuration has
+         * the property &quot;sap-ushell-xhr-authentication&quot; set to &quot;true&quot;
+         * or &quot;X&quot;.
+         * <p>
+         * This is needed for integrating plug-ins which restrict access to their code to authenticated users
+         * (copilot for instance), as UI5 will add the plugin's scripts via script tag,
+         * which is not covered by the FLP XHR interception.
+         * <p>
+         * Note: Component-preload.js is required; If not available the Plugin will fail loading with
+         * XHR authentication (without there is the UI5 fallback to Component.js).
+         *
+         * @param {object} [oApplicationConfiguration]
+         *     The application configuration (might be null or undefined)
+         * @param {string} sComponentUrl
+         *     The URL for loading the component
+         *
+         * @returns {jQuery.Deferred}
+         *     A jQuery promise which is resolved after the XHR request is done in case
+         *     of XHR authentication or resolved immediately, if not active
+         *
+         * @since 1.46.3
+         * @private
+         */
+        this._handleXhrAuthentication = function (oApplicationConfiguration, sComponentUrl) {
+            var iXhrLogonTimeout;
+
+            if (oApplicationConfiguration &&
+                ["true", true, "X"].indexOf(oApplicationConfiguration["sap-ushell-xhr-authentication"]) > -1) {
+
+                if (!sComponentUrl) {
+                        jQuery.sap.log.error(
+                            [
+                                "Illegal state: configuration parameter 'sap-ushell-xhr-authentication-timeout' set, but no component URL specified.",
+                                "XHR authentication request will not be sent. Please check the target mapping definitions for plug-ins",
+                                "and the application index."
+                            ].join(" "),
+                            undefined,
+                            S_COMPONENT_NAME
+                        );
+
+                    // we still resolve the promise directly
+                    return jQuery.when();
+                }
+                if (oApplicationConfiguration.hasOwnProperty("sap-ushell-xhr-authentication-timeout")) {
+                    // configuration parameters could be strings
+                    iXhrLogonTimeout = parseInt(oApplicationConfiguration["sap-ushell-xhr-authentication-timeout"], 10);
+                    if (isNaN(iXhrLogonTimeout)) {
+                        jQuery.sap.log.error(
+                            [
+                                "Invalid value for configuration parameter 'sap-ushell-xhr-authentication-timeout' for plug-in component with URL '",
+                                sComponentUrl,
+                                "': '",
+                                oApplicationConfiguration["sap-ushell-xhr-authentication-timeout"],
+                                "' is not a number. Timeout will be ignored."
+                            ].join(""),
+                            undefined,
+                            S_COMPONENT_NAME
+                        );
+                    } else {
+                        sap.ushell.Container.setXhrLogonTimeout(sComponentUrl, iXhrLogonTimeout);
+                    }
+                }
+                return jQuery.ajax(sComponentUrl + "/" + this._getFileNameForXhrAuth());
+            } else {
+                // just resolve the promise directly if no xhr-authentication required
+                return jQuery.when();
+            }
+        }
+
+        /**
          * Instantiates a UI5 component and makes sure the passed
          * parameters are aligned with the asynchronous plugin use case.
          *
@@ -101,11 +187,39 @@
          * @private
          */
         this._instantiateComponent = function (oPlugin, oPluginDeferred) {
-            var oComponentOptions = jQuery.extend(true, {}, oPlugin),
+            var oDeferred = new jQuery.Deferred(),
+                oComponentOptions = jQuery.extend(true, {}, oPlugin),
                 oApplicationProperties = {
                     ui5ComponentName: oComponentOptions.component,
                     url: oComponentOptions.url
                 };
+
+            function getRejectHandler(sErrorLogMessage) {
+                return function (oError) {
+                    sErrorLogMessage = sErrorLogMessage || "Cannot create UI5 plugin component: (componentId/appdescrId :" +  oApplicationProperties.ui5ComponentName + ")\n" + oError + " properties " + JSON.stringify(oApplicationProperties) + "\n This indicates a plugin misconfiguration, see e.g. Note 2316443.";
+
+                    // errors always logged per component
+                    oError = oError || "";
+                    jQuery.sap.log.error(sErrorLogMessage,
+                        oError.stack,  // stacktrace not only available for all browsers
+                        S_COMPONENT_NAME);
+                    if (oPluginDeferred) {
+                        oPluginDeferred.reject.apply(this, arguments);
+                    }
+                    oDeferred.reject.apply(this, arguments);
+                };
+            }
+
+            function loadComponent() { // not functional
+                sap.ushell.Container.getService("Ui5ComponentLoader").createComponent(oApplicationProperties)
+                    .done(function(oLoadedComponent) {
+                        if (oPluginDeferred) {
+                            oPluginDeferred.resolve();
+                        }
+                        oDeferred.resolve.apply(this, arguments);
+                    })
+                    .fail(getRejectHandler());
+            }
 
             // fix component name according to UI5 API
             oComponentOptions.name = oComponentOptions.component;
@@ -120,41 +234,15 @@
                 oApplicationProperties.applicationConfiguration = oComponentOptions.config;
                 delete oComponentOptions.config;
             }
-            
+
             // disable loading of default dependencies for plugins (only used for old apps w/o manifest)
             oApplicationProperties.loadDefaultDependencies = false;
 
-            return sap.ushell.Container.getService("Ui5ComponentLoader").createComponent(oApplicationProperties)
-                .done(function(oLoadedComponent) {
-                    if (oPluginDeferred) {
-                        oPluginDeferred.resolve();
-                    }
-                }).fail(function(oError) {
-                    // errors always logged per component
-                    oError = oError || "";
-                    jQuery.sap.log.error("Cannot create UI5 plugin component: " + oError,
-                        oError.stack,  // stacktrace not only available for all browsers
-                        S_COMPONENT_NAME);
-                    if (oPluginDeferred) {
-                        oPluginDeferred.reject(oError);
-                    }
-                });
-//            return sap.ui.component(oComponentOptions).then(
-//                    function () {
-//                        if (oPluginDeferred) {
-//                            oPluginDeferred.resolve();
-//                        }
-//                    },
-//                    function (oError) {
-//                        // errors always logged per component
-//                        oError = oError || "";
-//                        jQuery.sap.log.error("Cannot create UI5 plugin component: " + oError,
-//                            oError.stack,  // stacktrace not only available for all browsers
-//                            S_COMPONENT_NAME);
-//                        if (oPluginDeferred) {
-//                            oPluginDeferred.reject(oError);
-//                }
-//            });
+            this._handleXhrAuthentication(oApplicationProperties.applicationConfiguration, oComponentOptions.url)
+                .done(loadComponent)
+                .fail(getRejectHandler("XHR logon for FLP plugin failed"));
+
+            return oDeferred.promise();
         };
 
         /**
@@ -216,6 +304,16 @@
                 oCurrentPlugin = oPlugins[sPluginName] || {};
                 oPluginConfig = oCurrentPlugin.config || {};
 
+                // Prevent the loading of the plugin in case it specifies
+                // the 'enabled' property with false as part of its definition
+                if (oCurrentPlugin.enabled === false) {
+                    return;
+                }
+
+                if (oCurrentPlugin.enabled === undefined) {
+                    oCurrentPlugin.enabled = true;
+                }
+
                 // module mechanism (modules should be required immediatly)
                 if (oCurrentPlugin && oCurrentPlugin.hasOwnProperty("module")) {
                     jQuery.sap.log.error("Plugin " + sPluginName
@@ -265,7 +363,7 @@
         /**
          * Triggers the loading of a certain plugin category.
          * Possible and supported plugin categories are <code>RendererExtensions</code>
-         * and <code>UserDefaults</code>.
+         * and <code>UserDefaults</code> and <code>ContentProvider</code>.
          *
          * @param {string} sPluginCategory
          *   Category of plugins which should be loaded.
@@ -281,7 +379,8 @@
         this.loadPlugins = function (sPluginCategory) {
             var that = this,
                 aPluginPromises,
-                oPluginDeferred;
+                oPluginDeferred,
+                aPluginIds;
 
             sap.ushell.utils.addTime("PluginManager.startLoadPlugins[" + sPluginCategory + "]");
             // check category for supportability
@@ -296,9 +395,20 @@
                 // check whether plugins are existing in the respective category
                 if (Object.keys(that._oPluginCollection[sPluginCategory]).length > 0) {
                     aPluginPromises = [];
+                    aPluginIds = Object.keys(that._oPluginCollection[sPluginCategory]);
+
+                    if( jQuery.sap.getUriParameters().get("sap-ushell-xx-pluginmode") === "discard"
+                            && sPluginCategory === "RendererExtensions") {
+                        // instrumentation to not load any extension plugin for performance testing
+                        aPluginIds = aPluginIds.filter(function (sId) {
+                            // skip all plugins apart from the one containing Me Area and Notifications Area
+                            return that._oPluginCollection[sPluginCategory][sId].component
+                                === S_FLP_AREAS_PLUGIN_COMPONENT;
+                        })
+                    }
 
                     // loop over plugins in respective plugin category which should be loaded
-                    Object.keys(that._oPluginCollection[sPluginCategory]).forEach(function (sPluginName) {
+                    aPluginIds.forEach(function (sPluginName) {
                         oPluginDeferred = new jQuery.Deferred();
                         aPluginPromises.push(oPluginDeferred.promise());
                         that._handlePluginCreation(sPluginCategory, sPluginName, oPluginDeferred);
@@ -324,5 +434,7 @@
         };
     };
 
-    sap.ushell.services.PluginManager.hasNoAdapter = true;
-}());
+    PluginManager.hasNoAdapter = true;
+    return PluginManager;
+
+}, true /* bExport */);

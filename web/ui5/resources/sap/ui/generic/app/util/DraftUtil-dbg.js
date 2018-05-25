@@ -1,8 +1,7 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define([	"jquery.sap.global" ], function(jQuery) {
@@ -11,7 +10,7 @@ sap.ui.define([	"jquery.sap.global" ], function(jQuery) {
 	/**
 	 * Constructor for generic utility for draft instance handling.
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.30.0
 	 * @alias sap.ui.generic.app.util.DraftUtil
 	 * @private

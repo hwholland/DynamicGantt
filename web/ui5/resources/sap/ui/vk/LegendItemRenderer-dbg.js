@@ -5,7 +5,9 @@
     
  */
 
-sap.ui.define(['sap/m/StandardListItemRenderer', 'sap/ui/core/Renderer'], function(BaseItemRenderer, Renderer) {
+sap.ui.define([
+	"sap/m/StandardListItemRenderer", "sap/ui/core/Renderer"
+], function(BaseItemRenderer, Renderer) {
 	"use strict";
 
 	/*
@@ -14,7 +16,7 @@ sap.ui.define(['sap/m/StandardListItemRenderer', 'sap/ui/core/Renderer'], functi
 	var LegendItemRenderer = Renderer.extend(BaseItemRenderer);
 
 
-	
+
 	LegendItemRenderer.renderLIContent = function(oRm, oControl) {
 		var squareColor = oControl.getColor();
 		var type = oControl.getSemanticSpotType();
@@ -26,9 +28,9 @@ sap.ui.define(['sap/m/StandardListItemRenderer', 'sap/ui/core/Renderer'], functi
 			oRm.writeStyles();
 			oRm.writeClasses();
 			oRm.write(">");
-			oRm.write("</span>");	
-		}		
-		if ( type ) {
+			oRm.write("</span>");
+		}
+		if (type) {
 			switch (type) {
 				case sap.ui.vbm.SemanticType.Error:
 					oImg = sap.ui.resource("sap.ui.vbm", "themes/base/img/Pin_Red.png");
@@ -48,15 +50,15 @@ sap.ui.define(['sap/m/StandardListItemRenderer', 'sap/ui/core/Renderer'], functi
 				default:
 					break;
 			}
-			if ( oImg ){
+			if (oImg){
 				oControl.addStyleClass("sapUiVkLegendItemSpotType");
 				oControl.setIcon(oImg);
 			}
-		}		
-		
+		}
+
 		BaseItemRenderer.renderLIContent(oRm, oControl);
 	};
-	
+
 	return LegendItemRenderer;
 
 }, /* bExport= */true);

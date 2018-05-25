@@ -66,7 +66,7 @@ sap.ui.jsview("sap.apf.ui.reuse.view.step", {
 			textAlign : sap.ui.core.TextAlign.Center,
 			wrapping : true,
 			width : "200px"
-		});
+		}).addStyleClass('stepTitle');
 		this.oVChartLayout = new sap.m.VBox({
 			items : [ this.oThumbnailVLayout, this.oStepTitle ],
 			width : "200px"
@@ -84,7 +84,6 @@ sap.ui.jsview("sap.apf.ui.reuse.view.step", {
 						self.oUiApi.getLayoutView().byId("detailFooter").removeAllContentLeft();
 						self.oUiApi.getLayoutView().byId("applicationView").backToTopMaster();
 					},
-					lite : true,
 					type : "Transparent"
 				});
 				//Events for hover and touch on step
@@ -99,14 +98,14 @@ sap.ui.jsview("sap.apf.ui.reuse.view.step", {
 				//which appears on double tap or hold on step
 				jQuery(htmlWrapper.getDomRef()).on("touchstart", function(e) {
 					//On Double Tap disable Zoom text focus and application 
-					var t2 = e.timeStamp, t1 = $(this).data('lastTouch') || t2, dt = t2 - t1, fingers = e.originalEvent.touches.length;
-					$(this).data('lastTouch', t2);
+					var t2 = e.timeStamp, t1 = jQuery(this).data('lastTouch') || t2, dt = t2 - t1, fingers = e.originalEvent.touches.length;
+					jQuery(this).data('lastTouch', t2);
 					if (!dt || dt > 500 || fingers > 1) {
 						return; // not double-tap
 					}
 					e.preventDefault(); // double tap - prevent the zoom
 					// also synthesize click events we just swallowed up
-					$(this).trigger('click').trigger('click');
+					jQuery(this).trigger('click').trigger('click');
 					jQuery(this).addClass("sapThemeBarBG");
 					jQuery(this).css({
 						"opacity" : "0"
@@ -141,7 +140,7 @@ sap.ui.jsview("sap.apf.ui.reuse.view.step", {
 		this.oVChartTiltleLayout = new sap.m.VBox({
 			items : [ htmlWrapper, this.oVChartLayout ],
 			width : "200px"
-		}).addStyleClass("sapUiTableCCnt");
+		}).addStyleClass("sapAPFSelectedStep");
 		return this.oVChartTiltleLayout;
 	},
 	createContent : function(oController) {

@@ -6,8 +6,9 @@
  */
 
 // Provides control sap.ui.vk.FlexibleControl.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/EnabledPropagator', './library'],
-	function(jQuery, Control, EnabledPropagator, library) {
+sap.ui.define([
+	"jquery.sap.global", "sap/ui/core/Control", "sap/ui/core/EnabledPropagator", "./library"
+], function(jQuery, Control, EnabledPropagator, library) {
 	"use strict";
 
 	/**
@@ -21,7 +22,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/EnabledP
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 *
 	 * @constructor
 	 * @public
@@ -30,34 +31,32 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/EnabledP
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
 	 */
-	var FlexibleControl = Control.extend("sap.ui.vk.FlexibleControl", /** @lends sap.ui.vk.FlexibleControl.prototype */ { metadata : {
+	var FlexibleControl = Control.extend("sap.ui.vk.FlexibleControl", /** @lends sap.ui.vk.FlexibleControl.prototype */ {
+		metadata: {
+			library: "sap.ui.vk",
+			properties: {
+				/**
+				 * CSS width of the vertical layout.
+				 */
+				width: { type: "sap.ui.core.CSSSize", group: "Dimension", defaultValue: null },
+				height: { type: "sap.ui.core.CSSSize", group: "Dimension", defaultValue: null },
 
-		library : "sap.ui.vk",
-		properties : {
-
-			/**
-			 * CSS width of the vertical layout.
-			 */
-			width : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : null},
-			height : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : null},
-
-			layout: {type: "string", group: "Behavior", defaultValue : "Stacked"},
-			/**
-			 *
-			 * If not enabled all controls inside are not enabled automatically.
-			 */
-			enabled : {type : "boolean", group : "Behavior", defaultValue : true}
-		},
-		defaultAggregation : "content",
-		aggregations : {
-
-			/**
-			 * Child Controls within the layout.
-			 */
-			content : {type : "sap.ui.core.Control", multiple : true, singularName : "content"}
-		},
-		designTime : true
-	}});
+				layout: { type: "string", group: "Behavior", defaultValue: "Stacked" },
+				/**
+				 * If not enabled all controls inside are not enabled automatically.
+				 */
+				enabled: { type: "boolean", group: "Behavior", defaultValue: true }
+			},
+			defaultAggregation: "content",
+			aggregations: {
+				/**
+				 * Child Controls within the layout.
+				 */
+				content: { type: "sap.ui.core.Control", multiple: true, singularName: "content" }
+			},
+			designTime: true
+		}
+	});
 
 
 	EnabledPropagator.call(FlexibleControl.prototype);

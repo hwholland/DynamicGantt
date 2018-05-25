@@ -962,6 +962,7 @@ sap.ui.base.Object.extend("sap.ca.scfld.md.app.MasterHeaderFooterHelper", {
 				sTitleId = this.oCommonHeaderFooterHelper.createId(oController, sTitleId);
 			}
 			oController._oControlStore.oMasterTitle = new sap.m.Title(sTitleId, {level: sap.ui.core.TitleLevel.H2});
+			oController.getList().addAriaLabelledBy(oController._oControlStore.oMasterTitle);
 			oCustHeader.addContentMiddle(oController._oControlStore.oMasterTitle);
 		}
 		this.setMasterTitle(oController, iCount);
@@ -1116,7 +1117,7 @@ if ( !jQuery.sap.isDeclared('sap.ca.scfld.md.library') ) {
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.ca.scfld.md (1.38.5)
+ * Initialization Code and shared classes of library sap.ca.scfld.md (1.54.0)
  */
 jQuery.sap.declare("sap.ca.scfld.md.library");
 jQuery.sap.require('sap.ui.core.Core'); // unlisted dependency retained
@@ -1147,7 +1148,7 @@ sap.ui.getCore().initLibrary({
 	controls: [],
 	elements: [],
 	noLibraryCSS: true,
-	version: "1.38.5"
+	version: "1.54.0"
 });
 
 

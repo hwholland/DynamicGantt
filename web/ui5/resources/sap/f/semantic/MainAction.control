@@ -7,7 +7,7 @@
     <since>1.46.0</since>
     <baseType>sap.f/semantic/SemanticButton</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="text">
             <documentation>Defines &lt;code&gt;MainAction&lt;/code&gt; text</documentation>
         </property>
     </properties>

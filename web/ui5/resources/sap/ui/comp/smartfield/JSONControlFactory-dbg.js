@@ -1,25 +1,18 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 /**
- * Factory class to create controls that are hosted by <code>sap.ui.comp.SmartField</code>.
- * 
- * @private
+ * Factory class to create controls that are hosted by <code>sap.ui.comp.smartfield.SmartField</code>.
+ *
  * @name sap.ui.comp.smartfield.JSONControlFactory
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
+ * @private
  * @since 1.28.0
- * @param {jquery.sap.global} jQuery a reference to the jQuery implementation.
- * @param {sap.m.CheckBox} CheckBox a reference to the check box implementation.
- * @param {sap.m.ComboBox} ComboBox a reference to the combo box implementation.
- * @param {sap.m.DatePicker} DatePicker a reference to the DatePicker implementation.
- * @param {sap.m.Input} Input a reference to the Input implementation.
- * @param {sap.m.Text} Text a reference to the Text implementation.
- * @param {sap.ui.comp.smartfield.ControlFactoryBase} ControlFactoryBase a reference to the control factory base class implementation.
- * @param {sap.ui.comp.smartfield.JSONTypes} JSONTypes a reference to the JSON type implementation.
  * @returns {sap.ui.comp.smartfield.JSONControlFactory} new control factory instance.
  */
 sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/DatePicker", "sap/m/Input", "sap/m/Text", "sap/ui/comp/smartfield/ControlFactoryBase", "sap/ui/comp/smartfield/JSONTypes" ], function(jQuery, CheckBox, ComboBox, DatePicker, Input, Text, ControlFactoryBase, JSONTypes) {
@@ -47,7 +40,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 
 	/**
 	 * Returns the name of a method to create a control.
-	 * 
+	 *
 	 * @returns {string} the name of the factory method to create the control.
 	 * @private
 	 */
@@ -75,7 +68,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 	/**
 	 * Creates a control instance to edit a model property of type <code>String</code>, <code>Integer</code> or <code>Float</code>. Either
 	 * <code>sap.m.Input</code> is returned or <code>sap.m.Combobox</code> depending on configuration.
-	 * 
+	 *
 	 * @returns {sap.ui.core.Control} the new control instance.
 	 * @private
 	 */
@@ -91,7 +84,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 		// get the configuration properties.
 		bNoValueHelp = !this._oParent.getShowValueHelp();
 		bNoTypeAhead = !this._oParent.getShowSuggestion();
-		
+
 		// create and return a combo box, if it has been configured.
 		if (bNoValueHelp) {
 			if (((this._oParent.data("controlType") === "dropDownList"))) {
@@ -119,7 +112,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 
 	/**
 	 * Creates an instance of <code>sap.m.Combobox</code> based on OData meta data.
-	 * 
+	 *
 	 * @param {object} oValueHelp the value help configuration.
 	 * @param {object} oValueHelp.annotation the value help annotation.
 	 * @param {object} oValueHelp.noDialog if set to <code>true</code> the creation of a value help dialog is omitted.
@@ -150,7 +143,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 
 	/**
 	 * Creates a control instance to edit a model property that is of type <code>Boolean</code>
-	 * 
+	 *
 	 * @returns {sap.m.CheckBox} the new control instance.
 	 * @private
 	 */
@@ -172,7 +165,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 
 	/**
 	 * Creates a control instance to edit a model property of type <code>Date</code>.
-	 * 
+	 *
 	 * @returns {sap.m.DatePicker} the new control instance.
 	 * @private
 	 */
@@ -198,7 +191,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 
 	/**
 	 * Creates a control instance for display-only use cases.
-	 * 
+	 *
 	 * @returns {sap.m.Text} the new control instance.
 	 * @private
 	 */
@@ -215,7 +208,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 
 	/**
 	 * Event handler, that is invoked after successful creation of a nested control.
-	 * 
+	 *
 	 * @param {sap.ui.core.Control} oControl the new control.
 	 * @param {map} mParams parameters to further define the behavior of the event handler.
 	 * @private
@@ -237,7 +230,7 @@ sap.ui.define([ "jquery.sap.global", "sap/m/CheckBox", "sap/m/ComboBox", "sap/m/
 
 	/**
 	 * Frees all resources claimed during the life-time of this instance.
-	 * 
+	 *
 	 * @public
 	 */
 	JSONControlFactory.prototype.destroy = function() {

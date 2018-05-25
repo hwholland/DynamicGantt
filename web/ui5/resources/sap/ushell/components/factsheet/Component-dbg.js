@@ -1,23 +1,23 @@
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 //define a root UIComponent which exposes the main view
-jQuery.sap.declare("sap.ushell.components.factsheet.Component");
-jQuery.sap.require("sap.ui.core.UIComponent");
+sap.ui.define(['sap/ui/core/UIComponent'],
+	function(UIComponent) {
+	"use strict";
 
-sap.ui.core.UIComponent.extend("sap.ushell.components.factsheet.Component", {
-
+var Component = UIComponent.extend("sap.ushell.components.factsheet.Component", {
     oMainView : null,
 
     // use inline declaration instead of component.json to save 1 round trip
-    metadata : {
-        version : "1.38.26",
+    metadata: {
+        version : "1.54.3",
         library : "sap.ushell.components.factsheet",
-        includes : [ "css/custom.css" ],
         dependencies : {
             libs : [ "sap.m", "sap.ui.vbm", "sap.suite.ui.commons", "sap.ui.layout", "sap.viz" ],
             components : []
         }
     },
 
-    createContent : function () {
+    createContent: function () {
         var oComponentData = this.getComponentData();
         // startup parameters are passed as a property bag as componentData.startupParameters
         var oStartupParameters = ( oComponentData && oComponentData.startupParameters) || {};
@@ -32,14 +32,18 @@ sap.ui.core.UIComponent.extend("sap.ushell.components.factsheet.Component", {
         return this.oMainView;
     },
 
-    exit : function () {
+    exit: function () {
         window.console.log("On Exit of factsheet Component.js called : this.getView().getId()" + this.getId());
     },
 
     // this event does not exist !?
-    onExit : function () {
+    onExit: function () {
         window.console.log("On Exit of factsheet Component.js called : this.getView().getId()" + this.getId());
     }
 });
 
-jQuery.sap.setObject("factsheet.Component", sap.ushell.components.factsheet.Component);
+jQuery.sap.setObject("factsheet.Component", Component);
+
+	return Component;
+
+});

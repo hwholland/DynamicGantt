@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.VizContainer.
@@ -13,7 +13,7 @@ sap.ui.define([
 		'./controls/common/BaseControl',
 		'./controls/common/feeds/AnalysisObject',
 		'./controls/common/feeds/FeedItem',
-		'./controls/common/helpers/VizControlsHelper'
+		'./container/VizControlsHelper'
 	], function(library, sapviz, rgbcolor_static, sapvizcontrolsvizcontainer, BaseControl, AnalysisObject, FeedItem, VizControlsHelper) {
 	"use strict";
 
@@ -669,10 +669,7 @@ sap.ui.define([
 
 	// need to validateSize in case the host(browser/control) size change.
 	VizContainer.prototype._validateSize = function() {
-		var size = {
-			'width' : this.$().width(),
-			'height' : this.$().height()
-		};
+
 		if (this._uiConfig.layout === 'horizontal') {
 			this._app$.css({
 				'min-width' : '560px',
@@ -697,7 +694,7 @@ sap.ui.define([
 		var appSize = {
 			'width' : this._app$.width(),
 			'height' : this._app$.height()
-		}
+		};
 
 		if (this._uiConfig.layout === 'horizontal' && this._vizFrame) {
 			var buiderWidth = this._vizBuilder$.width();

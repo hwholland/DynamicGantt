@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap, window*/
 // Provides control sap.ushell.ui.shell.SplitContainer.
@@ -18,7 +18,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
          * @extends sap.ui.core.Control
          *
          * @author SAP SE
-         * @version ${version}
+         * @version 1.54.3
          *
          * @constructor
          * @private
@@ -30,51 +30,51 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
          */
         var SplitContainer = Control.extend("sap.ushell.ui.shell.SplitContainer", /** @lends sap.ushell.ui.shell.SplitContainer.prototype */ { metadata : {
 
-                library: "sap.ushell.ui.shell",
-                properties: {
-                    /**
-                     * Shows / Hides the secondary area.
-                     */
-                    showSecondaryContent: {type: "boolean", group: "Appearance", defaultValue: null},
-                    /**
-                     * The width if the secondary content. The height is always 100%.
-                     */
-                    secondaryContentSize: {type: "sap.ui.core.CSSSize", group: "Appearance", defaultValue: '250px'},
-                    /**
-                     * Do not use. Use secondaryContentSize instead.
-                     * @deprecated Since version 1.22.
-                     *
-                     * Only available for backwards compatibility.
-                     */
+            library : "sap.ushell.ui.shell",
+            properties : {
+                /**
+                 * Shows / Hides the secondary area.
+                 */
+                showSecondaryContent : {type : "boolean", group : "Appearance", defaultValue : null},
+                /**
+                 * The width if the secondary content. The height is always 100%.
+                 */
+                secondaryContentSize : {type : "sap.ui.core.CSSSize", group : "Appearance", defaultValue : '250px'},
+                /**
+                 * Do not use. Use secondaryContentSize instead.
+                 * @deprecated Since version 1.22.
+                 *
+                 * Only available for backwards compatibility.
+                 */
                 secondaryContentWidth : {type : "sap.ui.core.CSSSize", group : "Appearance", defaultValue : '250px', deprecated: true},
-                    /**
-                     * Whether to show the secondary content on the left ("Horizontal", default) or on the top ("Vertical").
-                     * @since 1.22.0
-                     */
+                /**
+                 * Whether to show the secondary content on the left ("Horizontal", default) or on the top ("Vertical").
+                 * @since 1.22.0
+                 */
                 orientation : {type : "sap.ui.core.Orientation", group : "Appearance", defaultValue : sap.ui.core.Orientation.Horizontal}
-                },
-                defaultAggregation: "content",
-                aggregations: {
-                    /**
-                     * The content to appear in the main area.
-                     */
-                    content: {type: "sap.ui.core.Control", multiple: true, singularName: "content"},
-                    /**
-                     * The secondary content to appear in the secondary area.
-                     */
-                    secondaryContent: {type: "sap.ui.core.Control", multiple: true, singularName: "secondaryContent"},
-                    /**
-                     * The sub header to appear in the main area.
-                     */
-                    subHeader: {type: "sap.ui.core.Control", multiple: true, singularName: "subHeader"}
-                }
+            },
+            defaultAggregation : "content",
+            aggregations : {
+                /**
+                 * The content to appear in the main area.
+                 */
+                content : {type : "sap.ui.core.Control", multiple : true, singularName : "content"},
+                /**
+                 * The secondary content to appear in the secondary area.
+                 */
+                secondaryContent : {type : "sap.ui.core.Control", multiple : true, singularName : "secondaryContent"},
+                /**
+                 * The sub header to appear in the main area.
+                 */
+                subHeader : {type : "sap.ui.core.Control", multiple : true, singularName : "subHeader"}
+            }
         }});
 
         (function (window) {
-            ////////////////////////////////////////// Public Methods //////////////////////////////////////////
+        ////////////////////////////////////////// Public Methods //////////////////////////////////////////
 
             SplitContainer.prototype.init = function () {
-                this.bRtl = sap.ui.getCore().getConfiguration().getRTL();
+                this.bRtl  = sap.ui.getCore().getConfiguration().getRTL();
 
                 this._paneRenderer = new sap.ushell.ui.shell.shell_ContentRenderer(this, this.getId() + "-panecntnt", "secondaryContent");
                 this._subHeadersRenderer = new sap.ushell.ui.shell.shell_ContentRenderer(this, this.getId() + "-canvassubHeader", "subHeader");
@@ -95,7 +95,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                 delete this._contentContainer;
                 delete this._secondaryContentContainer;
             };
-            ////////////////////////////////////////// onEvent Methods /////////////////////////////////////////
+        ////////////////////////////////////////// onEvent Methods /////////////////////////////////////////
 
             SplitContainer.prototype.onAfterRendering = function () {
                 // Shortcuts to the main DOM containers
@@ -106,12 +106,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                 this._applySecondaryContentSize();
             };
 
-            ////////////////////////////////////////// Private Methods /////////////////////////////////////////
-            /**
-             * Applies the current status to the content areas (CSS left and width properties).
-             *
-             * @private
-             */
+        ////////////////////////////////////////// Private Methods /////////////////////////////////////////
+        /**
+         * Applies the current status to the content areas (CSS left and width properties).
+         *
+         * @private
+         */
             SplitContainer.prototype._applySecondaryContentSize = function () {
                 // Only set if rendered...
                 if (this.getDomRef()) {
@@ -124,13 +124,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                     if (bVertical) {
                         // Vertical mode
                         sSize = "height";
-                        sOtherSize = "width";
+                        sOtherSize =  "width";
                         sDir = "top";
                         sOtherDir = this.bRtl ? "right" : "left";
                     } else {
                         // Horizontal mode
                         sSize = "width";
-                        sOtherSize = "height";
+                        sOtherSize =  "height";
                         sDir = this.bRtl ? "right" : "left";
                         sOtherDir = "top";
                     }
@@ -208,9 +208,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                 return sContentSize;
             };
 
-            //////////////////////////////////////// Overridden Methods ////////////////////////////////////////
+        //////////////////////////////////////// Overridden Methods ////////////////////////////////////////
 
-            //////////////////////////// Property "showSecondaryContent" ///////////////////////////////
+        //////////////////////////// Property "showSecondaryContent" ///////////////////////////////
 
             SplitContainer.prototype.setShowSecondaryContent = function (bShow) {
                 var bRendered = this.getDomRef();
@@ -220,7 +220,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                 return this;
             };
 
-            ///////////////////////////// Property "secondaryContentSize" /////////////////////////////
+        ///////////////////////////// Property "secondaryContentSize" /////////////////////////////
 
             SplitContainer.prototype.setSecondaryContentSize = function (sSize) {
                 this.setProperty("secondaryContentSize", sSize, true);
@@ -228,7 +228,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                 return this;
             };
 
-            // Backwards compatibility with old property name
+        // Backwards compatibility with old property name
 
             SplitContainer.prototype.getSecondaryContentWidth = function () {
                 jQuery.sap.log.warning(
@@ -246,7 +246,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                 return this.setSecondaryContentSize.apply(this, arguments);
             };
 
-            /////////////////////////////////// Aggregation "content" //////////////////////////////////
+        /////////////////////////////////// Aggregation "content" //////////////////////////////////
 
             SplitContainer.prototype.insertContent = function (oContent, iIndex) {
                 return this._modifyAggregationOrProperty(function (bRendered) {
@@ -274,7 +274,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                 }, this._canvasRenderer);
             };
 
-            ////////////////////////////// Aggregation "secondaryContent" //////////////////////////////
+        ////////////////////////////// Aggregation "secondaryContent" //////////////////////////////
 
             SplitContainer.prototype.insertSecondaryContent = function (oContent, iIndex) {
                 return this._modifyAggregationOrProperty(function (bRendered) {
@@ -291,7 +291,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
                     return this.removeAggregation("secondaryContent", vIndex, bRendered);
                 }, this._paneRenderer);
             };
-            SplitContainer.prototype.removeAllSecondaryContent = function () {
+            SplitContainer.prototype.removeAllSecondaryContent = function( ) {
                 return this._modifyAggregationOrProperty(function (bRendered) {
                     return this.removeAllAggregation("secondaryContent", bRendered);
                 }, this._paneRenderer);
@@ -304,9 +304,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/theming/
 
             ////////////////////////////// Aggregation "subHeader" //////////////////////////////
 
-            SplitContainer.prototype.setSubHeader = function (oContent) {
+            SplitContainer.prototype.addSubHeader = function (oContent) {
                 return this._modifyAggregationOrProperty(function (bRendered) {
-                    return this.setAggregation("subHeader", oContent, bRendered);
+                    return this.addAggregation("subHeader", oContent, bRendered);
                 }, this._subHeadersRenderer);
             };
             SplitContainer.prototype.removeSubHeader = function () {

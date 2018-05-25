@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /**
@@ -13,8 +13,23 @@ sap.ui.define([
 	'sap/ui/core/library', // library dependency
 	'sap/viz/library',
 	'sap/chart/utils/RoleFitter',
-	'sap/chart/ChartType'
-], function(jQuery, ChartFormatter, corelib, vizlib, RoleFitter, ChartType) {
+	'sap/chart/ChartType',
+	'sap/chart/AutoScaleMode',
+	'sap/chart/ScaleBehavior',
+	'sap/chart/data/MeasureSemantics',
+	'sap/chart/coloring/CriticalityType',
+	'sap/chart/ColoringType'
+], function(
+	jQuery,
+	ChartFormatter,
+	corelib, 
+	vizlib, 
+	RoleFitter, 
+	ChartType, 
+	AutoScaleMode,
+	ScaleBehavior,
+	MeasureSemantics
+) {
 	"use strict";
 
 	/**
@@ -30,7 +45,7 @@ sap.ui.define([
 		name: "sap.chart",
 		dependencies: ["sap.ui.core", "sap.viz"],
 		types: [
-
+			"sap.chart.data.MeasureSemantics"
 		],
 		interfaces: [],
 		controls: [
@@ -39,10 +54,11 @@ sap.ui.define([
 		elements: [
 			"sap.chart.data.Dimension",
 			"sap.chart.data.TimeDimension",
+			"sap.chart.data.HierarchyDimension",
 			"sap.chart.data.Measure"
 		],
 		noLibraryCSS: true,
-		version: "1.38.33"
+		version: "1.54.3"
 	});
 
 
@@ -65,11 +81,58 @@ sap.ui.define([
 		 * @public
 		 */
 		Single: "SINGLE",
-        /**
-         * None selection mode, no data points can be selected.
-         * @public
-         */
-        None : "NONE"
+		/**
+		 * None selection mode, no data points can be selected.
+		 * @public
+		 */
+		None : "NONE"
+	};
+
+	/**
+	 * @class
+	 * Enumeration for supported selection behavior in analytical chart
+	 *
+	 * @static
+	 * @public
+	 * @alias sap.chart.SelectionBehavior
+	 */
+	sap.chart.SelectionBehavior = {
+		/**
+		 * Data point selection behavior, only one data point can be selected at once.
+		 * @public
+		 */
+		DataPoint: "DATAPOINT",
+		/**
+		 * Category selection behavior, one category of data points can be selected at once.
+		 * @public
+		 */
+		Category: "CATEGORY",
+		/**
+		 * Series selection behavior, one seies of data points can be selected at once.
+		 * @public
+		 */
+		Series: "SERIES"
+	};
+	
+	/**
+	 * @class
+	 * Enumeration for supported message types in analytical chart.
+	 *
+	 * @static
+	 * @public
+	 * @alias sap.chart.MessageId
+	 */
+	sap.chart.MessageId = {
+		/**
+		 * No data message, metadata is defined but all data values are empty.
+		 * @public
+		 */
+		NoData: "NO_DATA",
+		/**
+		 * Multiple units message, multiple unites are not allowed in one measure for analytical chart.
+		 * @public
+		 */
+		MultipleUnits: "MULTIPLE_UNITS"
 	};
 
 	/**
@@ -97,7 +160,174 @@ sap.ui.define([
 			return oMap;
 		}, {});
 	};
-	
+
+	/**
+	 * Package with additional chart data APIs
+	 * @namespace
+	 * @public
+	 */
+	sap.chart.data = sap.chart.data || {};
+
+	/**
+	 * Package with colorings enumeration
+	 * @namespace
+	 * @public
+	 */
+	sap.chart.coloring = sap.chart.coloring || {};
+
+	/**
+	* Enumeration for supported ImprovementDirection types in analytical chart
+	*
+	* @enum {string}
+	* @public
+	* @alias sap.chart.coloring.ImprovementDirectionType
+	*/
+	sap.chart.coloring.ImprovementDirectionType = {
+		/**
+		 * Lower is better.
+		 * 
+		 * Positive if the value is lower than or equal to <code>AcceptanceRangeHighValue</code>.
+		 * 
+		 * Neutral if the value is greater than <code>AcceptanceRangeHighValue</code> and lower than or equal to <code>ToleranceRangeHighValue</code>.
+		 * 
+		 * Critical if the value is greater than <code>ToleranceRangeHighValue</code> and lower than or equal to <code>DeviationRangeHighValue</code>.
+		 * 
+		 * Negative if the value is greater than <code>DeviationRangeHighValue</code>.
+		 * @public
+		 */
+		Minimize: "Minimize",
+
+		/**
+		 * Closer to the target is better.
+		 * 
+		 * Positive if the value is greater than or equal to <code>AcceptanceRangeLowValue</code> and lower than or equal to <code>AcceptanceRangeHighValue</code>.
+		 * 
+		 * Neutral if the value is greater than or equal to <code>ToleranceRangeLowValue</code> and lower than <code>AcceptanceRangeLowValue</code> OR greater than <code>AcceptanceRangeHighValue</code> and lower than or equal to <code>ToleranceRangeHighValue</code>.
+		 * 
+		 * Critical if the value is greater than or equal to <code>DeviationRangeLowValue</code> and lower than <code>ToleranceRangeLowValue</code> OR greater than <code>ToleranceRangeHighValue</code> and lower than or equal to <code>DeviationRangeHighValue</code>.
+		 * 
+		 * Negative if the value is lower than <code>DeviationRangeLowValue</code> or greater than <code>DeviationRangeHighValue</code>.
+		 * @public
+		 */
+		Target: "Target",
+
+		/**
+		 * Higher is better.
+		 * 
+		 * Positive if the value is greater than or equal to <code>AcceptanceRangeLowValue</code>.
+		 * 
+		 * Neutral if the value is lower than <code>AcceptanceRangeLowValue</code> and greater than or equal to <code>ToleranceRangeLowValue</code>.
+		 *
+		 * Critical if the value is lower than <code>ToleranceRangeLowValue</code> and greater than or equal to <code>DeviationRangeLowValue</code>.
+		 * 
+		 * Negative if the value is lower than <code>DeviationRangeLowValue</code>.
+		 * @public
+		 */
+		Maximize: "Maximize"
+	};
+
+	/**
+     * Enumeration for supported Gradation single color scheme in analytical chart
+     *
+     * @enum {string}
+     * @public
+     * @alias sap.chart.coloring.GradationSingleColorScheme
+     */
+    sap.chart.coloring.GradationSingleColorScheme = {
+        /**
+         * NoSemantics
+         * @public
+         */
+        NoSemantics: "NoSemantics",
+
+        /**
+         * Positive
+         * @public
+         */
+        Positive: "Positive",
+
+        /**
+         * Negative
+         * @public
+         */
+        Negative: "Negative"
+    };
+
+    /**
+     * Enumeration for supported Gradation diverging color scheme in analytical chart
+     *
+     * @enum {string}
+     * @public
+     * @alias sap.chart.coloring.GradationDivergingColorScheme
+     */
+    sap.chart.coloring.GradationDivergingColorScheme = {
+        /**
+         * NoSemantics
+         * @public
+         */
+        NoSemantics: "NoSemantics",
+
+        /**
+         * PositiveToNegative
+         * @public
+         */
+        PositiveToNegative: "PositiveToNegative",
+
+        /**
+         * NegativeToPositive
+         * @public
+         */
+        NegativeToPositive: "NegativeToPositive",
+
+        /**
+         * PositiveToNegative
+         * @public
+         */
+        ColdToHot: "ColdToHot",
+
+        /**
+         * HotToCold
+         * @public
+         */
+        HotToCold: "HotToCold"
+    };
+
+    /**
+     * Enumeration for supported Gradation target color scheme in analytical chart
+     *
+     * @enum {string}
+     * @public
+     * @alias sap.chart.coloring.GradationTargetColorScheme
+     */
+    sap.chart.coloring.GradationTargetColorScheme = {
+        /**
+         * PositiveTarget
+         * @public
+         */
+        PositiveTarget: "PositiveTarget"
+    };
+
+    /**
+     * Enumeration for supported Gradation color saturation in analytical chart
+     *
+     * @enum {string}
+     * @public
+     * @alias sap.chart.coloring.GradationSaturation
+     */
+    sap.chart.coloring.GradationSaturation = {
+        /**
+         * LightToDark
+         * @public
+         */
+        LightToDark: "LightToDark",
+
+        /**
+         * DarkToLight
+         * @public
+         */
+        DarkToLight: "DarkToLight"
+    };
+
 	/**
 	 * Get the Dimensions and Measures layout for a certain ChartType with provided Dimensions and Measures.
 	 *
@@ -159,28 +389,8 @@ sap.ui.define([
 		};
 	};
 
-	var FIORI_LABEL_SHORTFORMAT_10 = "__UI5__ShortIntegerMaxFraction10";
-	var FIORI_LABEL_FORMAT_2 = "__UI5__FloatMaxFraction2";
-	var FIORI_LABEL_SHORTFORMAT_2 = "__UI5__ShortIntegerMaxFraction2";
-
 	var chartFormatter = ChartFormatter.getInstance();
-	chartFormatter.registerCustomFormatter(FIORI_LABEL_SHORTFORMAT_10, function(value) {
-		var fixedInteger = sap.ui.core.format.NumberFormat.getIntegerInstance({style: "short",
-			maxFractionDigits: 10});
-		return fixedInteger.format(value);
-	});
-	chartFormatter.registerCustomFormatter(FIORI_LABEL_FORMAT_2, function(value) {
-		var fixedFloat = sap.ui.core.format.NumberFormat.getFloatInstance({style: 'Standard',
-			maxFractionDigits: 2});
-		return fixedFloat.format(value);
-	});
-	chartFormatter.registerCustomFormatter(FIORI_LABEL_SHORTFORMAT_2, function(value) {
-		var fixedInteger = sap.ui.core.format.NumberFormat.getIntegerInstance({style: "short",
-			maxFractionDigits: 2});
-		return fixedInteger.format(value);
-	});
-	this._oChartForamtter = chartFormatter;
-		
+
 	if (!(sap.viz.api.env.Format.numericFormatter() instanceof ChartFormatter)) {
 		sap.viz.api.env.Format.numericFormatter(chartFormatter);
 	}

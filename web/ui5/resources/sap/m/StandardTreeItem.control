@@ -7,10 +7,10 @@
     <since>1.42.0</since>
     <baseType>sap.m/TreeItemBase</baseType>
     <properties>
-        <property name="title" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="title">
             <documentation>Defines the title of the item.</documentation>
         </property>
-        <property name="icon" type="sap.ui.core/URI" group="Misc">
+        <property group="Misc" type="sap.ui.core/URI" name="icon">
             <documentation>Defines the tree item icon.</documentation>
         </property>
     </properties>

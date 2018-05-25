@@ -1,18 +1,14 @@
 /* global jQuery, sap, window, document */
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper'
+], function(Helper) {
     "use strict";
 
-    // =======================================================================
-    // import packages
-    // =======================================================================
-    jQuery.sap.declare('sap.ushell.renderers.fiori2.search.controls.SearchTileHighlighter');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    var Tester = sap.ushell.renderers.fiori2.search.SearchHelper.Tester;
-    var Helper = sap.ushell.renderers.fiori2.search.SearchHelper;
+    var Tester = Helper.Tester;
 
     // =======================================================================
     // tile highlighter
-    // =======================================================================    
+    // =======================================================================
     var Highlighter = sap.ushell.renderers.fiori2.search.controls.SearchTileHighlighter = function() {
         this.init.apply(this, arguments);
     };
@@ -61,7 +57,7 @@
             node.parentNode.insertBefore(spanNode, node);
             node.parentNode.removeChild(node);
         }
-
     };
 
-})();
+    return Highlighter;
+});

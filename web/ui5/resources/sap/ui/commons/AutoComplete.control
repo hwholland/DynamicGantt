@@ -8,16 +8,16 @@
     <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.commons/ComboBox</baseType>
     <properties>
-        <property name="enableScrolling" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="enableScrolling">
             <documentation>Determines whether scrolling should be enabled when the number of items is higher than maxPopupItems.
 If set to false only the first n items (n=maxPopupItems) are shown.</documentation>
         </property>
     </properties>
     <events>
-        <event name="suggest" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="suggest">
             <documentation>Fired when the user has changed the value and a suggestion list update should occur.</documentation>
             <parameters>
-                <parameter name="suggestValue" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="suggestValue">
                     <documentation>The current value which was typed in.</documentation>
                 </parameter>
             </parameters>
@@ -34,7 +34,7 @@ function(sValue, oItem){
 }
 &lt;/code&gt;</documentation>
             <parameters>
-                <parameter name="filter" type="sap.ui.core/any">
+                <parameter type="sap.ui.core/any" name="filter">
                     <documentation>The filter function. If not set the default filter function will be used.</documentation>
                 </parameter>
             </parameters>

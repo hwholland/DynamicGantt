@@ -1,13 +1,14 @@
-/*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
+/*
+ * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
-	function(jQuery, FormatUtil) {
+sap.ui.define([
+	'jquery.sap.global', 'sap/ui/comp/util/FormatUtil'
+], function(jQuery, FormatUtil) {
 	"use strict";
-
 
 	/**
 	 * Constructs a class to map key/object pairs
@@ -19,7 +20,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 	var ItemsCollection = function() {
 		this.items = {};
 	};
-	
+
 	/**
 	 * Add or overwrite a key in the map and the associated obj.
 	 * 
@@ -30,7 +31,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 	ItemsCollection.prototype.add = function(sKey, obj) {
 		this.items[sKey] = obj;
 	};
-	
+
 	/**
 	 * Removes the key in the map and the associated obj.
 	 * 
@@ -40,7 +41,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 	ItemsCollection.prototype.remove = function(sKey) {
 		delete this.items[sKey];
 	};
-	
+
 	/**
 	 * Removes all the items.
 	 * 
@@ -49,7 +50,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 	ItemsCollection.prototype.removeAll = function() {
 		this.items = {};
 	};
-	
+
 	/**
 	 * Returns the obj of the key on the map.
 	 * 
@@ -60,7 +61,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 	ItemsCollection.prototype.getItem = function(sKey) {
 		return this.items[sKey];
 	};
-	
+
 	/**
 	 * returns an array of all keys in the map
 	 * 
@@ -74,13 +75,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 		}
 		return aKeys;
 	};
-	
+
 	/**
 	 * Returns an array of all selected tokens in the map.
 	 * 
 	 * @param {string} sKey - the property name of the obj in the map which will be used for the Display Key in the tokens returned in the array
 	 * @param {string} sDescriptionKey - the property name of the obj in the map which will be returned in the array
-	 * @param {string} sDisplayBehaviour - the behaviour/format of the token text (See: sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR)
+	 * @param {string} sDisplayBehaviour - the behaviour/format of the token text (See: sap.ui.comp.smartfilterbar.DisplayBehaviour)
 	 * @returns {sap.m.Token[]} array of tokens with the given key and the text value
 	 * @public
 	 */
@@ -89,30 +90,30 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 		for ( var sItemKey in this.items) {
 			var oItem = this.items[sItemKey];
 			var sText, sDisplayKey;
-			
+
 			if (typeof oItem === "string") {
 				sDisplayKey = sItemKey;
 				sText = oItem;
 			} else {
 				sDisplayKey = oItem[sKey];
 				sText = oItem[sDescriptionKey];
-	
+
 				if (sText === undefined) {
 					sText = this.items[sItemKey];
 				} else {
 					if (!sDisplayBehaviour) {
 						sDisplayBehaviour = "descriptionAndId";
 					}
-					sText = FormatUtil.getFormattedExpressionFromDisplayBehaviour(sDisplayBehaviour, sDisplayKey, sText);					
+					sText = FormatUtil.getFormattedExpressionFromDisplayBehaviour(sDisplayBehaviour, sDisplayKey, sText);
 				}
 			}
-			
+
 			var oToken = new sap.m.Token({
-				key: sDisplayKey,
-				text: sText,
-				tooltip: sText
+				key: sDisplayKey
 			});
-			
+			oToken.setText( sText);
+			oToken.setTooltip(typeof sText === "string" ? sText : "");
+
 			if (typeof oItem !== "string") {
 				oToken.data("row", oItem);
 				oToken.data("longKey", sItemKey);
@@ -121,7 +122,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 		}
 		return aTokens;
 	};
-	
+
 	/**
 	 * Returns an array of all objects in the map.
 	 * 
@@ -141,8 +142,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/util/FormatUtil'],
 		}
 		return aModelItems;
 	};
-	
 
 	return ItemsCollection;
 
-}, /* bExport= */ true);
+}, /* bExport= */true);

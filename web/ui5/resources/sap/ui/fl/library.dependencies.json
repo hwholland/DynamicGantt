@@ -466,247 +466,247 @@
     },
     {
       "name" : "sap/ui/fl/messagebundle_ar.properties",
-      "size" : 8661,
+      "size" : 8489,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_bg.properties",
-      "size" : 10143,
+      "size" : 10067,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_ca.properties",
-      "size" : 5940,
+      "size" : 5717,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_cs.properties",
-      "size" : 6156,
+      "size" : 5958,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_da.properties",
-      "size" : 5848,
+      "size" : 5616,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_de.properties",
-      "size" : 6119,
+      "size" : 5902,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_el.properties",
-      "size" : 10283,
+      "size" : 10208,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_en.properties",
-      "size" : 5749,
+      "size" : 6136,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_en_US_sappsd.properties",
-      "size" : 12134,
+      "size" : 11468,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_en_US_saptrc.properties",
-      "size" : 6871,
+      "size" : 6612,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_es.properties",
-      "size" : 5982,
+      "size" : 5758,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_et.properties",
-      "size" : 5851,
+      "size" : 5618,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_fi.properties",
-      "size" : 6137,
+      "size" : 5910,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_fr.properties",
-      "size" : 6089,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_hi.properties",
-      "size" : 9629,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_hr.properties",
-      "size" : 5904,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_hu.properties",
-      "size" : 6339,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_it.properties",
-      "size" : 5884,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_iw.properties",
-      "size" : 8365,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_ja.properties",
-      "size" : 7337,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_kk.properties",
-      "size" : 9816,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_ko.properties",
-      "size" : 7060,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_lt.properties",
-      "size" : 6206,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_lv.properties",
-      "size" : 6201,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_ms.properties",
-      "size" : 5795,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_nl.properties",
-      "size" : 5873,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/ui/fl/messagebundle_no.properties",
       "size" : 5856,
       "required" : [],
       "includes" : []
     },
     {
+      "name" : "sap/ui/fl/messagebundle_hi.properties",
+      "size" : 9541,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_hr.properties",
+      "size" : 5682,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_hu.properties",
+      "size" : 6130,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_it.properties",
+      "size" : 5657,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_iw.properties",
+      "size" : 8229,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_ja.properties",
+      "size" : 7147,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_kk.properties",
+      "size" : 9674,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_ko.properties",
+      "size" : 6852,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_lt.properties",
+      "size" : 5992,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_lv.properties",
+      "size" : 5984,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_ms.properties",
+      "size" : 5564,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_nl.properties",
+      "size" : 5642,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/fl/messagebundle_no.properties",
+      "size" : 5624,
+      "required" : [],
+      "includes" : []
+    },
+    {
       "name" : "sap/ui/fl/messagebundle_pl.properties",
-      "size" : 6249,
+      "size" : 6031,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_pt.properties",
-      "size" : 6076,
+      "size" : 5861,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_ro.properties",
-      "size" : 6137,
+      "size" : 5902,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_ru.properties",
-      "size" : 9840,
+      "size" : 9813,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_sh.properties",
-      "size" : 5841,
+      "size" : 5621,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_sk.properties",
-      "size" : 6293,
+      "size" : 6087,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_sl.properties",
-      "size" : 5897,
+      "size" : 5663,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_sv.properties",
-      "size" : 5900,
+      "size" : 5669,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_th.properties",
-      "size" : 9690,
+      "size" : 9608,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_tr.properties",
-      "size" : 6274,
+      "size" : 6052,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_uk.properties",
-      "size" : 9830,
+      "size" : 9839,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_vi.properties",
-      "size" : 7133,
+      "size" : 6952,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_zh_CN.properties",
-      "size" : 6401,
+      "size" : 6187,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/ui/fl/messagebundle_zh_TW.properties",
-      "size" : 6393,
+      "size" : 6191,
       "required" : [],
       "includes" : []
     },

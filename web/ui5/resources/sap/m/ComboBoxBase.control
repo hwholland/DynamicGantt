@@ -8,7 +8,7 @@
     <abstract/>
     <baseType>sap.m/ComboBoxTextField</baseType>
     <events>
-        <event name="loadItems" since="1.38" allowPreventDefault="false">
+        <event allowPreventDefault="false" since="1.38" name="loadItems">
             <documentation>This event is fired when the end user clicks the combo box button to open the dropdown list and
 the data used to display items is not already loaded.
 Alternatively, it is fired after the user moves the cursor to the combo box text
@@ -25,10 +25,10 @@ loaded and assistive technology software also has to announce the state changes
         </event>
     </events>
     <aggregations default="items">
-        <aggregation name="items" type="sap.ui.core/Item" cardinality="0..n" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..n" type="sap.ui.core/Item" name="items">
             <documentation>Defines the items contained within this control.</documentation>
         </aggregation>
-        <aggregation name="picker" type="sap.ui.core/PopupInterface" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.core/PopupInterface" name="picker">
             <documentation>Internal aggregation to hold the inner picker popup.</documentation>
         </aggregation>
     </aggregations>

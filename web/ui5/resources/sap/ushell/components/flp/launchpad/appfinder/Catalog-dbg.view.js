@@ -1,23 +1,35 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define([
+		'sap/ui/core/HTML',
+		'sap/ui/core/IconPool',
+		'sap/ushell/ui/appfinder/AppBox',
+		'sap/ushell/ui/appfinder/PinButton',
+		'sap/ushell/ui/launchpad/CatalogEntryContainer',
+		'sap/ushell/ui/launchpad/CatalogTileContainer',
+		'sap/ushell/ui/launchpad/CatalogsContainer',
+		'sap/ushell/ui/launchpad/Panel',
+		'sap/ushell/ui/launchpad/Tile',
+		'sap/ushell/ui/launchpad/TileContainerUtils'
+	], function(HTML, IconPool, AppBox, PinButton, CatalogEntryContainer, CatalogTileContainer, CatalogsContainer, Panel, Tile, TileContainerUtils) {
+	"use strict";
+
     /*global jQuery, sap, $ */
     /*jslint nomen: true */
-
-    jQuery.sap.require("sap.ui.core.IconPool");
-    jQuery.sap.require("sap.ushell.ui.launchpad.Tile");
-    jQuery.sap.require("sap.ushell.ui.launchpad.CatalogTileContainer");
-    jQuery.sap.require("sap.ushell.ui.launchpad.Panel");
 
     sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.Catalog", {
 
         oController: null,
 
         createContent: function (oController) {
-            this.parentComponent = this.getViewData().parentComponent;
+            var that = this;
+
+            this.oViewData = this.getViewData();
+            this.parentComponent = this.oViewData.parentComponent;
+
             var oModel = this.parentComponent.getModel();
             this.setModel(oModel);
+            this.setModel(this.oViewData.subHeaderModel, "subHeaderModel");
             this.oController = oController;
 
             function iflong(sLong) {
@@ -26,20 +38,6 @@
             function to_int(v) {
                 return parseInt(v, 10) || 0;
             }
-            function get_icon(aGroupsIDs, sGroupContextModelPath, sGroupContextId) {
-                var sIconName;
-
-                if (sGroupContextModelPath) {
-
-                   // If in group context - the icon is determined according to whether this catalog tile exists in the group or not   
-                    var iCatalogTileInGroup = $.inArray(sGroupContextId, aGroupsIDs);
-                    sIconName = iCatalogTileInGroup !== -1 ? "accept" : "add";
-                } else {
-                    sIconName = (aGroupsIDs && aGroupsIDs.length > 0) ? "accept" : "add";
-                }
-                return sap.ui.core.IconPool.getIconURI(sIconName);
-            }
-
             function get_tooltip(sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, sGroupContextModelPath, sGroupContextId, sGroupContextTitle) {
                 var sTooltip;
 
@@ -54,34 +52,81 @@
                 return sTooltip;
             }
 
-            var oButton = new sap.m.Button({
-                icon : {
-                    // The "parts" array includes /groupContext/path and associatedGroups/length in order to support tile footer icon change in two cases:
-                    //  1. When the catalog is in the context of a group, and the user navigates back to the dashboard  
-                    //      and then opens the catalog again, but this time not in a context of a group.
-                    //      In this case the footer icons should be changed  and the trigger is the change in /groupContext property in the model.    
-                    //  2. When the catalog is in the context of a group, and the user clicks a tile's footer.
-                    //     In this case the icon should be changed, and the trigger is the item that is added/removed to/from associatedGroups 
-                    //     (i.e. the change in the length of associatedGroups of the relevant catalog tile model)
+            var oTilePinButton  = new PinButton({
+                icon: 'sap-icon://pushpin-off',
+                selected: {
                     parts: ["associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id"],
                     formatter : function (aAssociatedGroups, associatedGroupsLength, sGroupContextModelPath, sGroupContextId) {
-                        return get_icon(aAssociatedGroups, sGroupContextModelPath, sGroupContextId);
+                        if (sGroupContextModelPath) {
+                            // If in group context - the icon is determined according to whether this catalog tile exists in the group or not
+                            var iCatalogTileInGroup = $.inArray(sGroupContextId, aAssociatedGroups);
+                            return iCatalogTileInGroup !== -1;
+                        } else {
+                            return !!associatedGroupsLength;
+                        }
                     }
                 },
                 tooltip: {
-                    parts: ["i18n>addTileToGroup", "i18n>addAssociatedTileToGroup", "associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id", "/groupContext/title"],
+                    parts: ["i18n>EasyAccessMenu_PinButton_UnToggled_Tooltip", "i18n>EasyAccessMenu_PinButton_Toggled_Tooltip", "associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id", "/groupContext/title"],
                     formatter : function (sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, associatedGroupsLength, sGroupContextModelPath, sGroupContextId, sGroupContextTitle) {
                         return get_tooltip(sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, sGroupContextModelPath, sGroupContextId, sGroupContextTitle);
                     }
                 },
-                press : [ oController.onTileFooterClick, oController ]
-            }), oTileTemplate = new sap.ushell.ui.launchpad.Tile({
-                afterRendering : [ oController.onTileAfterRendering, oController ],
+                press : [ oController.onTilePinButtonClick, oController ]
+            });
+
+            var oAppBoxPinButton  = new PinButton({
+                icon: 'sap-icon://pushpin-off',
+                selected: {
+                    parts: ["associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id"],
+                    formatter : function (aAssociatedGroups, associatedGroupsLength, sGroupContextModelPath, sGroupContextId) {
+                        if (sGroupContextModelPath) {
+                            // If in group context - the icon is determined according to whether this catalog tile exists in the group or not
+                            var iCatalogTileInGroup = $.inArray(sGroupContextId, aAssociatedGroups);
+                            return iCatalogTileInGroup !== -1;
+                        } else {
+                            return !!associatedGroupsLength;
+                        }
+                    }
+                },
+                tooltip: {
+                    parts: ["i18n>EasyAccessMenu_PinButton_UnToggled_Tooltip", "i18n>EasyAccessMenu_PinButton_Toggled_Tooltip", "associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id", "/groupContext/title"],
+                    formatter : function (sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, associatedGroupsLength, sGroupContextModelPath, sGroupContextId, sGroupContextTitle) {
+                        return get_tooltip(sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, sGroupContextModelPath, sGroupContextId, sGroupContextTitle);
+                    }
+                },
+                press : [ oController.onTilePinButtonClick, oController ]
+            });
+
+            this.oAppBoxesTemplate = new AppBox({
+                title:'{title}',
+                icon:'{icon}',
+                subtitle: '{subtitle}',
+                url: '{url}',
+                navigationMode: '{navigationMode}',
+                pinButton: oAppBoxPinButton,
+                press: [ oController.onAppBoxPressed, oController ]
+            });
+
+            oAppBoxPinButton.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "tabindex",
+                value: "-1",
+                writeToDom: true
+            }));
+            oAppBoxPinButton.addStyleClass("sapUshellPinButton");
+
+            oTilePinButton.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "tabindex",
+                value: "-1",
+                writeToDom: true
+            }));
+            oTilePinButton.addStyleClass("sapUshellPinButton");
+
+            this.oTileTemplate = new Tile({
                 tileViews : {
                     path : "content",
                     factory : function (sId, oContext) { return oContext.getObject(); }
                 },
-                footItems : [oButton],
                 "long" : {
                     path : "size",
                     formatter : iflong
@@ -91,111 +136,58 @@
                     formatter : to_int
                 },
                 tileCatalogId : "{id}",
-                press : [ oController.catalogTilePress, oController ]
-            }), tilesContainer = new sap.ushell.ui.launchpad.CatalogTileContainer("catalogTiles", {
-                showHeader : false,
-                showPlaceholder : false,
-                showGroupHeader : "{/showCatalogHeaders}",
-                noDataText: "{/catalogsNoDataText}",
-                groupHeaderLevel : sap.m.HeaderLevel.H3,
-                showNoData : true,
-                tiles : {
-                    path : "/catalogTiles",
-                    template : oTileTemplate,
-                    sorter : new sap.ui.model.Sorter("catalogIndex", false, function (oContext) {
-                        return (oContext && oContext.getProperty("catalog")) || "";
-                    })
-                },
-                afterRendering : function (oEvent) {
-                    var oModel = this.getModel(),
-                        buttons,
-                        i;
-                    //because the catalog can be loaded with a filter in the URL we also have to
-                    //check if tiles exist in the model, and not just in the UI control
-                    if (this.getTiles().length || oModel.getProperty('/catalogTiles/length')) {
-                        //Enable tiles search/filter only after tiles are rendered.
-                        //Timeout needed because of some bug in UI5 that doesn't enable control on this point.
-                        setTimeout(function () {
-                            sap.ui.getCore().byId("catalogSearch").setEnabled(true);
-                        });
-                        oModel.setProperty("/catalogsNoDataText", sap.ushell.resources.i18n.getText('noFilteredItems'));
-                        sap.ui.getCore().getEventBus().publish("launchpad", "contentRendered");
-                        if (!sap.ui.Device.os.ios) {
-                            sap.ui.getCore().getEventBus().publish("launchpad", "contentRefresh");
-                        }
-                    }
-                    jQuery.sap.byId("catalogTiles").removeAttr("tabindex", 0);
-                    jQuery.sap.byId("catalogTilesPage-intHeader-BarPH").removeAttr("tabindex", 0);
-
-                    // disable '+/v' buttons tabindex so the won't be part of the TAB cycle
-                    buttons = jQuery(".sapUshellTile button");
-                    for (i = 0; i < buttons.length; i++) {
-                        buttons[i].setAttribute("tabindex", -1);
-                    }
-                }
+                pinButton: oTilePinButton,
+                press : [ oController.catalogTilePress, oController ],
+                afterRendering: oController.onTileAfterRendering
             });
 
-            tilesContainer.addStyleClass('sapUshellCatalogTileContainer');
-            tilesContainer.addEventDelegate({
-                onsapskipback: function (oEvent) {
+            this.oCatalogSelect = new sap.m.List("catalogSelect", {
+                    visible: "{/catalogSelection}",
+                    name : "Browse",
+                    rememberSelections: true,
+                    mode: "SingleSelectMaster",
+                    // width: sap.ui.Device.system.phone ? "100%" : "17rem",
+                    items : {
+                        path : "/masterCatalogs",
+                        template : new sap.m.StandardListItem({
+                            type: "Active",
+                            title : "{title}"
+                        })
+                        /* filters: [oFilterVisibleTiles],*/
+                    },
+                    showNoData: false,
+                    itemPress: [ oController._handleCatalogListItemPress, oController ]
+                });
+                /*
+                 override original onAfterRendering as currently sap.m.Select
+                 does not support afterRendering handler in the constructor
+                 this is done to support tab order accessibility
+                 */
+
+            this.getCatalogSelect = function () {
+                return this.oCatalogSelect;
+            };
+
+            var origCatalogSelectOnAfterRendering = this.oCatalogSelect.onAfterRendering;
+            this.oCatalogSelect.addEventDelegate({
+                onsaptabnext: function (oEvent) {
                     try {
                         oEvent.preventDefault();
-                        var nextElement = jQuery("#catalogSelect");
-                        nextElement.focus();
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                        sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
+                        //var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
+                        //firstTile.focus();
                     } catch (e) {
                         // continue regardless of error
                     }
-                }
-            });
-
-            oButton.constructor.prototype.setIcon = function (v) {
-                this.setProperty("icon", v, true);          // set property, but suppress rerendering
-                if (v && this._image && this._image.setSrc) {
-                    this._image.setSrc(v);                  // set property of internal control
-                }
-                return this;
-            };
-
-            var oFilterVisibleTiles = new sap.ui.model.Filter("numIntentSupportedTiles", sap.ui.model.FilterOperator.NE, 0),
-                oCatalogSelect = new sap.m.Select("catalogSelect", {
-                    visible: "{/catalogSelection}",
-                    name : "Browse",
-                    tooltip: "{i18n>catalogSelect_tooltip}",
-                    width: "17rem",
-                    items : {
-                        path : "/catalogs",
-                        template : new sap.ui.core.ListItem({
-                            text : "{title}"
-                        }),
-                        filters: [oFilterVisibleTiles]
-                    },
-                    change : [ oController.onCategoryFilter, oController ]
-                }),
-
-            /*
-             override original onAfterRendering as currently sap.m.Select
-             does not support afterRendering handler in the constructor
-             this is done to support tab order accessibility
-             */
-                origCatalogSelectOnAfterRendering = oCatalogSelect.onAfterRendering;
-            oCatalogSelect.addEventDelegate({
+                },
                 onsapskipforward: function (oEvent) {
                     try {
                         oEvent.preventDefault();
                         sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
                         sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
-                        var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
-                        firstTile.focus();
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsaptabprevious: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
-                        var nextElement = jQuery("#catalogTilesPage header button")[0];
-                        nextElement.focus();
+                        //var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
+                        //firstTile.focus();
                     } catch (e) {
                         // continue regardless of error
                     }
@@ -204,8 +196,12 @@
                     try {
                         oEvent.preventDefault();
                         sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
-                        var nextElement = jQuery("#catalogTilesPage header button")[0];
-                        nextElement.focus();
+                        var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                        if (openCloseSplitAppButton.getVisible()) {
+                            openCloseSplitAppButton.focus();
+                        } else {
+                            sap.ushell.components.flp.ComponentKeysHandler.appFinderFocusMenuButtons(oEvent);
+                        }
                     } catch (e) {
                         // continue regardless of error
                     }
@@ -213,20 +209,58 @@
             });
             // if xRay is enabled
             if (oModel.getProperty("/enableHelp")) {
-                oCatalogSelect.addStyleClass('help-id-catalogCategorySelect');// xRay help ID
+                this.oCatalogSelect.addStyleClass('help-id-catalogCategorySelect');// xRay help ID
             }
-            oCatalogSelect.onAfterRendering = function () {
+
+            this.setCategoryFilterSelection = function (sSelection) {
+                var oCatalogSelection = that.getCatalogSelect(),
+                    aCatalogListItems = oCatalogSelection.getItems(),
+                    bTagMode = that.oController.oSubHeaderModel.getProperty('/tag/tagMode'),
+                    bSearchMode = that.oController.oSubHeaderModel.getProperty('/search/searchMode'),
+                    sSelected = sSelection;
+
+                if (bSearchMode || bTagMode) {
+                    oCatalogSelection.setSelectedItem();
+                } else {
+                    aCatalogListItems.forEach(function (oListItem, nIndex) {
+                        if (oListItem.getTitle() === sSelected) {
+                            oCatalogSelection.setSelectedItem(oListItem);
+                        }
+                    });
+                }
+            };
+
+            this.oCatalogSelect.onAfterRendering = function () {
+                //set the selected item.
+                var sSelected = that.oController.categoryFilter || sap.ushell.resources.i18n.getText('all');
+
+                that.setCategoryFilterSelection(sSelected);
+
                 if (origCatalogSelectOnAfterRendering) {
                     origCatalogSelectOnAfterRendering.apply(this, arguments);
                 }
-                jQuery.sap.byId("catalogSelect").attr("tabindex", 0);
+
+                if (!this.getSelectedItem()) {
+                    this.setSelectedItem(this.getItems()[0]);
+                }
+
+                //set focus on first segmented button
+                setTimeout(function() {
+                    var buttons = jQuery("#catalog, #userMenu, #sapMenu").filter("[tabindex=0]");
+                    if (buttons.length) {
+                        buttons.eq(0).focus();
+                    } else {
+                        jQuery("#catalog").focus();
+                    }
+                }, 0);
+
             };
 
             /*
              * setting followOf to false, so the popover won't close on IE.
              */
-            var origOnAfterRenderingPopover = oCatalogSelect._onAfterRenderingPopover;
-            oCatalogSelect._onAfterRenderingPopover = function () {
+            var origOnAfterRenderingPopover = this.oCatalogSelect._onAfterRenderingPopover;
+            this.oCatalogSelect._onAfterRenderingPopover = function () {
                 if (this._oPopover) {
                     this._oPopover.setFollowOf(false);
                 }
@@ -235,153 +269,204 @@
                 }
             };
 
-            var oCatalogSearch = new sap.m.SearchField("catalogSearch", {
-                    visible: "{/searchFiltering}",
-                    tooltip: "{i18n>catalogSearch_tooltip}",
-                    width: "17rem",
-                    enabled: false, //we Disable search/filtering of tiles till they will be rendered, to avoid bugs.
-                    value: {path: "/catalogSearchFilter"},
-                    placeholder: "{i18n>search_catalog}",
-                    liveChange : [ oController.onLiveFilter, oController ]
-                }).addStyleClass("sapUshellCatalogSearch"),
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                sDeatailPageId,
+                fnUpdateMasterDetail = function () {
+                    this.splitApp.toMaster('catalogSelect','show');
+                    if (!sap.ui.Device.system.phone) {
+                        sDeatailPageId = this._calculateDetailPageId();
+                        if (sDeatailPageId != this.splitApp.getCurrentDetailPage().getId()) {
+                            this.splitApp.toDetail(sDeatailPageId);
+                        }
+                    }
+                };
 
-                /*
-                 override original onAfterRendering as currently sap.m.Select
-                 does not support afterRendering handler in the constructor,
-                 this is done to support tab order accessibility
-                */
-                origCatalogSearchOnAfterRendering = oCatalogSearch.onAfterRendering;
+            oEventBus.subscribe("launchpad", "catalogContentLoaded", function() {
+                setTimeout(fnUpdateMasterDetail.bind(this), 500);
+            }, this);
+            oEventBus.subscribe("launchpad", "afterCatalogSegment", fnUpdateMasterDetail, this);
 
-            // if xRay is enabled
-            if (oModel.getProperty("/enableHelp")) {
-                oCatalogSearch.addStyleClass('help-id-catalogSearch');// xRay help ID
-            }
-            oCatalogSearch.onAfterRendering = function () {
-                origCatalogSearchOnAfterRendering.apply(this, arguments);
-                jQuery.sap.byId("catalogSearch").find("input").attr("tabindex", 0);
-                //set as large element for F6 keyboard navigation
-                this.data("sap-ui-fastnavgroup", "true", true /*Write into DOM*/);
+            var oAccessibilityTileText = new HTML("sapUshellCatalogAccessibilityTileText", {
+                content:
+                "<div style='height: 0px; width: 0px; overflow: hidden; float: left;'>" + sap.ushell.resources.i18n.getText("tile") + "</div>"
+            });
+
+            //This renderes the catalogs.
+            var oCatalogTemplate = new CatalogEntryContainer({
+                header: "{title}",
+//                catalogSearchTerm: "{/catalogSearchFilter}",
+                customTilesContainer : {
+                    path : "customTiles",
+                    template : this.oTileTemplate,
+                    templateShareable: true
+                },
+                appBoxesContainer : {
+                    path : "appBoxes",
+                    template : this.oAppBoxesTemplate,
+                    templateShareable: true
+                }
+            });
+
+            // create message-page as invisible by default
+            this.oMessagePage = new sap.m.MessagePage({
+                visible: true,
+                showHeader: false,
+                text: sap.ushell.resources.i18n.getText('EasyAccessMenu_NoAppsToDisplayMessagePage_Text'),
+                description: ''
+            });
+
+            //This renderes the catalogs.
+            this.oCatalogsContainer = new CatalogsContainer("catalogTiles", {
+                categoryFilter: "{/categoryFilter}",
+//                categoryAllocateTiles: "{/categoryAllocateTiles}",
+                catalogs : {
+                    path: "/catalogs",
+                    templateShareable: true,
+                    template : oCatalogTemplate
+                    //here add the filter for the catalog.
+                },
+                busy: true
+            });
+
+            this.oCatalogsContainer.addStyleClass('sapUshellCatalogTileContainer');
+
+            this.oCatalogsContainer.addEventDelegate({
+                onsaptabprevious: function (oEvent) {
+                    var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader"),
+                        jqCurrentElement = jQuery(oEvent.srcControl.getDomRef());
+                    if (openCloseSplitAppButton.getVisible() && !openCloseSplitAppButton.getPressed() &&
+                        !jqCurrentElement.hasClass("sapUshellPinButton")) {
+                        oEvent.preventDefault();
+                        var appFinderSearch = sap.ui.getCore().byId("appFinderSearch");
+                        appFinderSearch.focus();
+                    }
+                },
+                onsapskipback: function (oEvent) {
+                    var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                    if (openCloseSplitAppButton.getVisible() && !openCloseSplitAppButton.getPressed()) {
+                        oEvent.preventDefault();
+                        openCloseSplitAppButton.focus();
+                    }
+                }
+            });
+
+            this.oCatalogsContainer.onAfterRendering = function () {
+                var oCatalogTilesDetailedPage = sap.ui.getCore().byId('catalogTilesDetailedPage');
+                if (!this.getBusy()) {
+                    oCatalogTilesDetailedPage.setBusy(false);
+                    jQuery.sap.measure.end("FLP:AppFinderLoadingStartToEnd");
+                } else {
+                    oCatalogTilesDetailedPage.setBusy(true);
+                }
+
+                jQuery("#catalogTilesDetailedPage-cont").scroll(function () {
+                    var oPage = sap.ui.getCore().byId('catalogTilesDetailedPage'),
+                        scroll = oPage.getScrollDelegate(),
+                        currentPos = scroll.getScrollTop(),
+                        max = scroll.getMaxScrollTop();
+
+                    if (max - currentPos <= 30 + that.oController.PagingManager.getTileHeight()) {
+                        that.oController.allocateNextPage();
+                    }
+                });
+
             };
 
-            oCatalogSearch.addEventDelegate({
-                onsapskipback: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        var nextElement = jQuery("#catalogTilesPage header button")[0];
-                        nextElement.focus();
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsapskipforward: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
-                        sap.ushell.components.flp.ComponentKeysHandler.setTileFocus(firstTile);
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsaptabnext: function (oEvent) {
-                    try {
-                        if (!oCatalogTagFilter.getVisible()) {
-                            oEvent.preventDefault();
-                            var aVisibleTiles = jQuery(".sapUshellTile:visible"),
-                                jqTile = jQuery(aVisibleTiles[0]);
-                            sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
-                            jqTile.focus();
-                        }
-                    } catch (e) {
-                        // continue regardless of error
-                    }
+            this.oCatalogEntrySearchContainer = new CatalogEntryContainer({
+                header: "{i18n>results_count}"
+            });
+
+            this.oCatalogEntrySearchContainer.addStyleClass('sapUshellCatalogTileContainer');
+
+            //This renderes the catalogs.
+            this.oCatalogsSearchContainer = new CatalogsContainer("catalogSearchContainer", {
+                catalogs: [this.oCatalogEntrySearchContainer]
+            });
+
+            this.wrapCatalogsContainerInDetailPage = function (aCatalogsContainerContnet, sId) {
+                var oDetailPage1 = new sap.m.Page(sId, {
+                    showHeader : false,
+                    showFooter : false,
+                    showNavButton : false,
+                    content : [ new Panel({
+                        translucent : true,
+                        content : aCatalogsContainerContnet
+                    }).addStyleClass("sapUshellCatalogPage")]
+                });
+
+                return oDetailPage1
+            },
+
+                this.getCatalogContainer = function () {
+                    return this.oCatalogsContainer;
                 }
-            });
 
-            var oCatalogTagFilter = new sap.m.MultiComboBox("catalogTagFilter", {
-                visible: "{/tagFiltering}",
-                selectedKeys: {
-                    path: "/selectedTags",
-                    mode: sap.ui.model.BindingMode.TwoWay
-                },
-                tooltip: "{i18n>catalogTilesTagfilter_tooltip}",
-                width: "17rem",
-                placeholder: "{i18n>catalogTilesTagfilter_HintText}",
-                //Use catalogs model as a demo content until the real model is implemented
-                items : {
-                    path : "/tagList",
-                    sorter : new sap.ui.model.Sorter("tag", false, false),
-                    template : new sap.ui.core.ListItem({
-                        text : "{tag}",
-                        key : "{tag}"
-                    })
-                },
-                selectionChange : [ oController.onTagsFilter, oController ]
-            });
-
-            // if xRay is enabled
-            if (oModel.getProperty("/enableHelp")) {
-                oCatalogTagFilter.addStyleClass('help-id-catalogTagFilter');// xRay help ID
-            }
-            oCatalogTagFilter.addEventDelegate({
-                onsaptabnext: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        var aVisibleTiles = jQuery(".sapUshellTile:visible"),
-                            jqTile = jQuery(aVisibleTiles[0]);
-                        sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
-                        jqTile.focus();
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsapskipback: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        jQuery("#catalogSelect").focus();
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsapskipforward: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
-                        sap.ushell.components.flp.ComponentKeysHandler.setTileFocus(firstTile);
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                }
-            });
-
-            var oDetailPage = new sap.m.Page("catalogTilesPage", {
+            new sap.m.Page({
                 showHeader : false,
                 showFooter : false,
                 showNavButton : false,
-                content : [ new sap.ushell.ui.launchpad.Panel({
+                content : [ new Panel({
                     translucent : true,
-                    headerText : "",
-                    headerLevel : sap.m.HeaderLevel.H2,
-                    headerBar : new sap.m.Bar("catalogHeader", {
-                        translucent : true,
-                        tooltip: "{i18n>tile_catalog_header_tooltip}",
-                        contentLeft : [ oCatalogSelect, oCatalogSearch, oCatalogTagFilter]
-                    }).addStyleClass("sapUshellCatalogHeaderBar"),
-                    content : [ tilesContainer]
+                    content : [oAccessibilityTileText, this.getCatalogContainer()]
                 }).addStyleClass("sapUshellCatalogPage")]
             });
+            var oCatalogDetailedPage = this.wrapCatalogsContainerInDetailPage([oAccessibilityTileText, this.getCatalogContainer()], 'catalogTilesDetailedPage'),
+                oCatalogMessage = new sap.m.Page('catalogMessagePage', {
+                    showHeader : false,
+                    showFooter : false,
+                    showNavButton : false,
+                    content : [this.oMessagePage]
+                }),
+                oCatalogSearchPage = this.wrapCatalogsContainerInDetailPage([this.oCatalogsSearchContainer], 'catalogTilesSearchPage');
 
-            oDetailPage.addDelegate({
-                onAfterRendering: function () {
-                    //set initial focus
-                    jQuery("#catalogTilesPage header button").attr("tabindex", -1);
+            oCatalogSearchPage.addEventDelegate({
+                onAfterShow: function (oEvent) {
+                    jQuery(".sapUshellTile").find('[tabindex*=0]').attr("tabindex", -1);
+                    jQuery(".sapUshellAppBox:visible, .sapUshellTile:visible").first().attr("tabindex", 0);
                 }
             });
 
-            return oDetailPage;
+            var oSelectBusyIndicator = new sap.m.BusyIndicator('catalogSelectBusyIndicator', {size: "1rem"});
+            this.splitApp = new sap.m.SplitApp('catalogViewMasterDetail',{
+                masterPages: [oSelectBusyIndicator, this.oCatalogSelect],
+                detailPages: [oCatalogDetailedPage, oCatalogSearchPage, oCatalogMessage]
+            });
+
+            //Remove this: intended for testing porpuses.
+            document.toSearch = function () {
+                this.splitApp.toDetail('catalogTilesSearchPage');
+            }.bind(this);
+            document.toDetail = function () {
+                this.splitApp.toDetail('catalogTilesDetailedPage');
+            }.bind(this);
+            document.toMessage = function () {
+                this.splitApp.toDetail('catalogMessagePage');
+            }.bind(this);
+
+            return this.splitApp;
+        },
+
+        // calculate what is the relevant current detail page according to configuration and state of the view
+        _calculateDetailPageId: function() {
+            var oSubHeaderModel = this.getModel('subHeaderModel');
+            var bSearchMode = oSubHeaderModel.getProperty('/search/searchMode');
+            var bTagMode = oSubHeaderModel.getProperty('/tag/tagMode');
+            var aCatalogs = this.getModel().getProperty("/catalogs");
+            var sId;
+            if (bSearchMode || bTagMode) {
+                sId = this.getController().bSearchResults ? 'catalogTilesSearchPage' : 'catalogMessagePage';
+            } else if (aCatalogs && !aCatalogs.length) {
+                sId = "catalogMessagePage";
+            } else {
+                sId = "catalogTilesDetailedPage";
+            }
+            return sId;
         },
 
         getControllerName: function () {
             return "sap.ushell.components.flp.launchpad.appfinder.Catalog";
         }
     });
-}());
+
+
+}, /* bExport= */ false);

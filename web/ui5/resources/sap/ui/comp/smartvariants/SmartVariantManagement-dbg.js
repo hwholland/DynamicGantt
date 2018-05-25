@@ -1,13 +1,17 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.smartvariants.SmartVariantManagement.
+// To avoid loading the fl lib in every case it is only "lazy"-loaded on lib level and loaded explicitly here:
+sap.ui.getCore().loadLibrary('sap.ui.fl');
+
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/comp/library', './PersonalizableInfo', 'sap/ui/comp/variants/VariantItem', 'sap/ui/comp/variants/VariantManagement', 'sap/ui/fl/Change', 'sap/ui/fl/Persistence', 'sap/ui/fl/Utils'
-], function(jQuery, library, PersonalizableInfo, VariantItem, VariantManagement, Change, Persistence, FlexUtils) {
+	'jquery.sap.global', 'sap/ui/comp/library', './PersonalizableInfo', './SmartVariantManagementAdapter', 'sap/ui/comp/variants/VariantItem', 'sap/ui/comp/variants/VariantManagement', 'sap/ui/comp/odata/MetadataAnalyser', 'sap/ui/fl/Change', 'sap/ui/fl/Persistence', 'sap/ui/fl/Utils', 'sap/ui/fl/transport/TransportSelection'
+], function(jQuery, library, PersonalizableInfo, SmartVariantManagementAdapter, VariantItem, VariantManagement, MetadataAnalyser, Change, Persistence, FlexUtils, TransportSelection) {
 	"use strict";
 
 	/**
@@ -19,7 +23,6 @@ sap.ui.define([
 	 * <b>Note:</b> the function callback has to be defined in the personalizable control.<BR>
 	 * The old behavior, where the control has to register to the <code>initialise</code> event, before the <code>initialise</code> method call,
 	 * should not be used any longer and is not supported at all for the page variant scenarios.
-	 * 
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The SmartVariantManagement control is a specialization of the {@link sap.ui.comp.variants.VariantManagement VariantManagement} control
@@ -29,6 +32,7 @@ sap.ui.define([
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.smartvariants.SmartVariantManagement
+	 * @see {@link topic:06a4c3ac1cf545a7b51864e7f3aa02da Smart Variant Management}
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var SmartVariantManagement = VariantManagement.extend("sap.ui.comp.smartvariants.SmartVariantManagement", /** @lends sap.ui.comp.smartvariants.SmartVariantManagement.prototype */
@@ -36,11 +40,21 @@ sap.ui.define([
 		metadata: {
 
 			library: "sap.ui.comp",
+			designtime: "sap/ui/comp/designtime/smartvariants/SmartVariantManagement.designtime",
 			properties: {
 				/**
 				 * Key used to access personalization data.
 				 */
 				persistencyKey: {
+					type: "string",
+					group: "Misc",
+					defaultValue: null
+				},
+
+				/**
+				 * The OData entity set whose metadata is used to create the variant items based on the SelectionPresentationVariant annotation.
+				 */
+				entitySet: {
 					type: "string",
 					group: "Misc",
 					defaultValue: null
@@ -61,15 +75,25 @@ sap.ui.define([
 
 				/**
 				 * This event is fired when the SmartVariantManagement control is initialized.
-				 * 
 				 * @deprecated Since version 1.38.0. Replaced by providing the personalizable control and the callback via the <code>initialise</code>-method.
 				 */
 				initialise: {},
 
 				/**
-				 * This event is fired after a variant has been saved. This event can be used to retrieve the ID of the saved variant.
+				 * This event is fired after a variant has been saved.
 				 */
-				afterSave: {}
+				afterSave: {
+					parameters: {
+						/**
+						 * If the property <code>showCreateTile</code> is set, the Create Tile checkbox is shown and its value is passed to this
+						 * event parameter.<br>
+						 * If the property <code>showCreateTile</code> is not set, this event parameter is skipped.
+						 */
+						tile: {
+							type: "boolean"
+						}
+					}
+				}
 			}
 		},
 
@@ -78,37 +102,6 @@ sap.ui.define([
 		}
 	});
 
-	/**
-	 * Sets the current variant ID.
-	 * 
-	 * @name sap.ui.comp.smartvariants.SmartVariantManagement#setCurrentVariantId
-	 * @function
-	 * @param {string} sVariantKey The variant key
-	 * @param {boolean} bDoNotApplyVariant If set to <code>true</code>, the <code>applyVariant</code> method is not executed yet. Relevant during
-	 *        navigation, when called before the initialise event has been executed.
-	 * @type void
-	 * @public
-	 * @since 1.28.1
-	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
-	 */
-
-	/**
-	 * Retrieves the current variant ID. If a standard variant is currently set, an empty string is returned.
-	 * 
-	 * @name sap.ui.comp.smartvariants.SmartVariantManagement#getCurrentVariantId
-	 * @function
-	 * @type string
-	 * @public
-	 * @since 1.28.1
-	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
-	 */
-
-	/**
-	 * control initialization
-	 * 
-	 * @public
-	 * @since 1.26.1
-	 */
 	SmartVariantManagement.prototype.init = function() {
 		VariantManagement.prototype.init.apply(this); // Call base class
 
@@ -116,10 +109,14 @@ sap.ui.define([
 
 		this._oStandardVariant = null;
 		this._oControlPersistence = null;
-		// this._oControlComponent = null;
+
+		this._oMetadataPromise = null;
 		this._oControlPromise = null;
+
 		this._oPersoControl = null;
 		this._sAppStandardVariantKey = null;
+
+		this._oSelectionVariantHandler = {};
 
 		this._oAppStdContent = null;
 
@@ -129,14 +126,77 @@ sap.ui.define([
 			this.setLifecycleSupport(true);
 		}
 		this._setBackwardCompatibility(false);
+		this._oAdapter = null;
+
+		this._bApplyingUIState = false;
 
 		this.setSupportExecuteOnSelectOnSandardVariant(true);
+	};
+
+	/**
+	 * It could happen that the entity type information is set already in the view, but there is no model attached yet. This method is called once the
+	 * model is set on the parent and can be used to initialise the metadata, from the model, and finally create the filter controls.
+	 * @private
+	 */
+	SmartVariantManagement.prototype.propagateProperties = function() {
+		VariantManagement.prototype.propagateProperties.apply(this, arguments);
+		this._initializeMetadata();
+	};
+
+	/**
+	 * Initialises the OData metadata necessary to create the filter bar
+	 * @private
+	 */
+	SmartVariantManagement.prototype._initializeMetadata = function() {
+
+		var oModel = this.getModel();
+
+		if (oModel && !this._oMetadataPromise) {
+
+			this._oMetadataPromise = new Promise(function(resolve, reject) {
+				if (!this.getEntitySet()) {
+					resolve();
+				} else {
+					oModel.getMetaModel().loaded().then(function() {
+						this._onMetadataInitialised();
+						resolve();
+					}.bind(this));
+				}
+			}.bind(this));
+		}
+
+	};
+
+	/**
+	 * Called once the necessary Model metadata is available
+	 * @private
+	 */
+	SmartVariantManagement.prototype._onMetadataInitialised = function() {
+		var oMetadataAnalyser, sEntitySet = this.getEntitySet();
+
+		oMetadataAnalyser = new MetadataAnalyser(this.getModel());
+		if (oMetadataAnalyser && sEntitySet) {
+			this._oAdapter = new SmartVariantManagementAdapter({
+				selectionPresentationVariants: oMetadataAnalyser.getSelectionPresentationVariantAnnotationList(sEntitySet)
+			});
+		}
+
+	};
+
+	SmartVariantManagement.prototype.applySettings = function(mSettings) {
+
+		if (!mSettings || !mSettings.hasOwnProperty("useFavorites")) {
+			this.setUseFavorites(true);
+		}
+
+		VariantManagement.prototype.applySettings.apply(this, arguments);
 	};
 
 	SmartVariantManagement.prototype._createControlWrapper = function(oCurrentControlInfo) {
 		var oControlInfo = null;
 		var oControl = sap.ui.getCore().byId(oCurrentControlInfo.getControl());
 		if (oControl) {
+			/* eslint-disable new-cap */
 			oControlInfo = {
 				control: oControl,
 				type: oCurrentControlInfo.getType(),
@@ -144,6 +204,7 @@ sap.ui.define([
 				keyName: oCurrentControlInfo.getKeyName(),
 				loaded: jQuery.Deferred()
 			};
+			/* eslint-enable new-cap */
 		}
 
 		return oControlInfo;
@@ -164,9 +225,9 @@ sap.ui.define([
 
 	/**
 	 * Registers all controls interested and relying on variant handling.
-	 * 
 	 * @public
-	 * @param {sap.ui.comp.smartvariants.PersonalizableInfo} oCurrentControlInfo Provides information about the personalizable control.
+	 * @param {sap.ui.comp.smartvariants.PersonalizableInfo} oCurrentControlInfo Wrapper for the personalizable control
+	 * @returns {sap.ui.comp.smartvariants.SmartVariantManagement} Current instance
 	 */
 	SmartVariantManagement.prototype.addPersonalizableControl = function(oCurrentControlInfo) {
 		var oControlWrapper, oControl = null, sControlId = oCurrentControlInfo.getControl();
@@ -174,7 +235,7 @@ sap.ui.define([
 		oControl = sap.ui.getCore().byId(sControlId);
 		if (!oControl) {
 			jQuery.sap.log.error("couldn't obtain the control with the id=" + sControlId);
-			return;
+			return this;
 		}
 
 		this.addAggregation("personalizableControls", oCurrentControlInfo, true);
@@ -185,11 +246,21 @@ sap.ui.define([
 		}
 
 		if (this.isPageVariant()) {
-			return;
+			return this;
 		}
 
 		this._setPersControler(oControl);
 
+		return this;
+	};
+
+	/**
+	 * Registers all controls interested and relying on variant handling.
+	 * @private
+	 * @returns {sap.ui.fl.transport.TransportSelection} TransportSelection dialog.
+	 */
+	SmartVariantManagement.prototype.getTransportSelection = function() {
+		return new TransportSelection();
 	};
 
 	SmartVariantManagement.prototype._setPersControler = function(oControl) {
@@ -203,23 +274,18 @@ sap.ui.define([
 		this.setProperty("persistencyKey", sKey);
 
 		this._setPersControler(this);
-		// this._addPersistenceController(this);
+		return this;
 	};
 
 	SmartVariantManagement.prototype._addPersistenceController = function(oControl) {
-
 		if (oControl) {
 			this._oControlPersistence = new Persistence(oControl, "persistencyKey");
-
-			// this._oControlComponent = FlexUtils.getComponentClassName(oControl);
-
 			this._handleGetChanges(oControl);
 		}
 	};
 
 	/**
-	 * Determines if the SmartVariantManagement instance is a page variant.
-	 * 
+	 * Determines if the <code>SmartVariantManagement</code> instance is a page variant.
 	 * @public
 	 * @return {boolean} <code>true</code> if it is a page variant, otherwise <code>false</code>
 	 */
@@ -231,12 +297,15 @@ sap.ui.define([
 		return false;
 	};
 
+	SmartVariantManagement.prototype._getAdapter = function() {
+		return this._oAdapter;
+	};
+
 	SmartVariantManagement.prototype._handleGetChanges = function(oControl) {
 		var that = this;
 
 		if (oControl && this._oControlPersistence) {
 
-			this._oControlPromise = {};
 			this._oControlPromise = new Promise(function(resolve, reject) {
 				that._oControlPersistence.getChanges().then(function(mVariants) {
 					resolve(mVariants);
@@ -250,7 +319,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the variant content.
-	 * 
 	 * @public
 	 * @param {sap.ui.core.Control} oControl Current personalizable control
 	 * @param {string} sKey The variant key
@@ -290,17 +358,16 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the variant with the requested ID.
-	 * 
 	 * @private
-	 * @param {string} id the variant key
+	 * @param {string} sId the variant key
 	 * @returns {sap.ui.fl.Change} object representing the variant
 	 */
-	SmartVariantManagement.prototype._getChange = function(id) {
+	SmartVariantManagement.prototype._getChange = function(sId) {
 
 		var oChange = null;
 
 		if (this._oControlPersistence) {
-			oChange = this._oControlPersistence.getChange(id);
+			oChange = this._oControlPersistence.getChange(sId);
 		}
 
 		return oChange;
@@ -308,7 +375,6 @@ sap.ui.define([
 
 	/**
 	 * Returns all registered providers.
-	 * 
 	 * @private
 	 * @returns {array} a list of all registered controls
 	 */
@@ -318,8 +384,65 @@ sap.ui.define([
 	};
 
 	/**
+	 * Removes all registered personalizable controls.
+	 * @public
+	 */
+	SmartVariantManagement.prototype.removeAllPersonalizableControls = function() {
+
+		this.removeAllAggregation("personalizableControls");
+		this._aPersonalizableControls = [];
+	};
+
+	/**
+	 * Removes a registered personalizable control.
+	 * @public
+	 * @param {sap.ui.comp.smartvariants.PersonalizableInfo} oCurrentControlInfo wrapper for the personalizable control
+	 * @returns {object} removed wrapper for the personalizable control
+	 */
+	SmartVariantManagement.prototype.removePersonalizableControl = function(oCurrentControlInfo) {
+
+		var oPersonalizableInfo = this.removeAggregation("personalizableControls", oCurrentControlInfo);
+
+		if (oPersonalizableInfo) {
+
+			this._aPersonalizableControls.some(function(oPerso, index) {
+				if (oPerso.control.getId() === oPersonalizableInfo.getControl()) {
+					this._aPersonalizableControls.splice(index, 1);
+					return true;
+				}
+
+				return false;
+			}.bind(this));
+		}
+
+		return oPersonalizableInfo;
+	};
+
+	/**
+	 * Removes a registered personalizable control.
+	 * @public
+	 * @param {sap.ui.control} oControl the personalizable control
+	 */
+	SmartVariantManagement.prototype.removePersonalizableControlById = function(oControl) {
+
+		var aPersonalizableControls = this.getAggregation("personalizableControls");
+
+		if (aPersonalizableControls) {
+
+			aPersonalizableControls.some(function(oPerso, index) {
+				if (oPerso.getControl() === oControl.getId()) {
+					this.removePersonalizableControl(oPerso);
+					return true;
+				}
+
+				return false;
+			}.bind(this));
+
+		}
+	};
+
+	/**
 	 * Creates entries into the variant management control, based on the list of variants.
-	 * 
 	 * @private
 	 * @param {map} mVariants list of variants, as determined by the flex layer
 	 * @returns {array} containing all variant keys
@@ -327,11 +450,12 @@ sap.ui.define([
 	SmartVariantManagement.prototype._createVariantEntries = function(mVariants) {
 
 		var n = null;
-		var sVariantKey, sUserName, sStandardVariantKey = null;
+		var sVariantKey, sStandardVariantKey = null;
 		var oVariant, oVariantItem;
 		var aVariantKeys = [];
+		var aFavoriteChanges = [];
 
-		this.removeAllItems();
+		this.removeAllVariantItems();
 
 		if (mVariants) {
 			for (n in mVariants) {
@@ -339,11 +463,9 @@ sap.ui.define([
 					oVariant = mVariants[n];
 					if (oVariant.isVariant()) {
 
-						sUserName = this._getLRepUser(oVariant);
-
 						oVariantItem = new VariantItem({
 							key: oVariant.getId(),
-							text: oVariant.getText("variantName"),
+							// text: oVariant.getText("variantName"), // issue with curly brackets
 							global: !oVariant.isUserDependent(),
 							executeOnSelection: this._getExecuteOnSelection(oVariant),
 							lifecycleTransportId: oVariant.getRequest(),
@@ -351,8 +473,9 @@ sap.ui.define([
 							namespace: oVariant.getNamespace(),
 							readOnly: this._isReadOnly(oVariant),
 							labelReadOnly: oVariant.isLabelReadOnly(),
-							author: sUserName
+							author: this._getLRepUser(oVariant)
 						});
+						oVariantItem.setText(oVariant.getText("variantName"));
 
 						if (this._hasStoredStandardVariant(oVariant)) {
 							sStandardVariantKey = oVariant.getId();
@@ -361,6 +484,12 @@ sap.ui.define([
 						this.addVariantItem(oVariantItem);
 
 						aVariantKeys.push(oVariant.getId());
+					} else {
+						/* eslint-disable no-lonely-if */
+						if ((oVariant.getChangeType() === sap.ui.comp.smartvariants.ChangeHandlerType.addFavorite) || (oVariant.getChangeType() === sap.ui.comp.smartvariants.ChangeHandlerType.removeFavorite)) {
+							aFavoriteChanges.push(oVariant);
+						}
+						/* eslint-enable no-lonely-if */
 					}
 				}
 			}
@@ -399,7 +528,136 @@ sap.ui.define([
 			}
 		}
 
+		// favorites handling
+		this._aFavoriteChanges = aFavoriteChanges;
+		this.applyDefaultFavorites(aVariantKeys);
+
 		return aVariantKeys;
+	};
+
+	/**
+	 * Applies the favorites.
+	 * @protected
+	 * @param {array} aVariantKeys Contains the added variant keys
+	 * @param {boolean} bSelectionVariants Defines if this is the SelectionVariant scenario
+	 */
+	SmartVariantManagement.prototype.applyDefaultFavorites = function(aVariantKeys, bSelectionVariants) {
+		if (this._aFavoriteChanges && (this._aFavoriteChanges.length > 0)) {
+			this._applyFavorites(this._aFavoriteChanges);
+		} else {
+			/* eslint-disable no-lonely-if */
+			if (!bSelectionVariants) {
+				this._applyDefaultFavorites(aVariantKeys);
+			} else {
+				this._applyDefaultFavoritesForSelectionVariants(aVariantKeys);
+			}
+			/* eslint-enable no-lonely-if */
+		}
+	};
+
+	SmartVariantManagement.prototype._applyDefaultFavoritesForSelectionVariants = function(aVariantKeys) {
+
+		aVariantKeys.forEach(function(sVariantKey) {
+			var oVariantItem = this.getItemByKey(sVariantKey);
+			if (oVariantItem) {
+				this._setFavorite(sVariantKey);
+			}
+
+		}.bind(this));
+
+	};
+
+	SmartVariantManagement.prototype._applyDefaultFavorites = function(aVariantKeys) {
+
+		if (!this._sAppStandardVariantKey) {
+			this.setStandardFavorite(true);
+			this._setFavorite(this.STANDARDVARIANTKEY);
+		}
+
+		aVariantKeys.forEach(function(sVariantKey) {
+			var oChange = this._getChange(sVariantKey);
+			var oVariantItem = this.getItemByKey(sVariantKey);
+			if (oChange && oVariantItem) {
+				if (!this._isReadOnly(oChange)) {
+					this._setFavorite(sVariantKey);
+				} else if (oChange.getLayer() === "VENDOR") {
+					this._setFavorite(sVariantKey);
+				}
+			}
+
+		}.bind(this));
+
+	};
+
+	SmartVariantManagement.prototype._applyFavorites = function(aFavoriteChanges) {
+
+		aFavoriteChanges.forEach(function(oChange) {
+			var oVariantItem, oContent = oChange.getContent();
+			if (oContent && oContent.key) {
+				if (oContent.key === this.STANDARDVARIANTKEY) {
+					this.setStandardFavorite(oContent.visible);
+				} else {
+					oVariantItem = this.getItemByKey(oContent.key);
+					if (oVariantItem) {
+						oVariantItem.setFavorite(oContent.visible);
+					}
+				}
+			}
+		}.bind(this));
+	};
+
+	/**
+	 * @param {object[]} aChanges - Format: {key: {string}, visible: {boolean}}
+	 * @private
+	 */
+	SmartVariantManagement.prototype._addFavorites = function(aChanges) {
+		var aAddedFavorites = aChanges.filter(function(oFavorite) {
+			return oFavorite.visible === true;
+		});
+		var aRemovedFavorites = aChanges.filter(function(oFavorite) {
+			return oFavorite.visible === false;
+		});
+
+		this._createFavoriteTypeChanges(aAddedFavorites, aRemovedFavorites);
+	};
+
+	/**
+	 * Creates changes for the variant favorites handling.
+	 * @param {array} aAddedFavorites containing added favorites
+	 * @param {array} aRemovedFavorites containing removed favorites
+	 * @private
+	 */
+	SmartVariantManagement.prototype._createFavoriteTypeChanges = function(aAddedFavorites, aRemovedFavorites) {
+		if (!aAddedFavorites.length && !aRemovedFavorites.length) {
+			return;
+		}
+
+		this._createFavoriteChanges(aAddedFavorites, sap.ui.comp.smartvariants.ChangeHandlerType.addFavorite);
+		this._createFavoriteChanges(aRemovedFavorites, sap.ui.comp.smartvariants.ChangeHandlerType.removeFavorite);
+	};
+
+	/**
+	 * Creates flexibility changes in the USER layer.
+	 * @param {array} aFavorites Array of objects of format {key: {string}, visible: {boolean}}
+	 * @param {string} sChangeType Registered type of ChangeHandler in sap.ui.comp.library.js
+	 * @private
+	 */
+	SmartVariantManagement.prototype._createFavoriteChanges = function(aFavorites, sChangeType) {
+		var oObj = this._oControlPersistence;
+		if (!oObj || !aFavorites.length) {
+			return;
+		}
+		if (!sChangeType) {
+			throw new Error("sChangeType should be filled");
+		}
+
+		aFavorites.forEach(function(oFavorite) {
+			oObj.addChange({
+				type: sChangeType,
+				content: oFavorite,
+				isUserDependent: true
+			});
+		});
 	};
 
 	SmartVariantManagement.prototype._isReadOnly = function(oChange) {
@@ -428,7 +686,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the list of known variants via access to
-	 * 
 	 * @private
 	 * @param {Function} fCallBack will be called once the promise is full filled
 	 */
@@ -466,8 +723,8 @@ sap.ui.define([
 					fCallBack(aVariants);
 				}, function(args) {
 					var sError = "'getChanges' failed:";
-					if (args && args[0] && args[0].messages && args[0].messages[0]) {
-						sError += (' ' + args[0].messages[0]);
+					if (args && args.message) {
+						sError += (' ' + args.message);
 					}
 					that._setErrorValueState(that.oResourceBundle.getText("VARIANT_MANAGEMENT_READ_FAILED"), sError);
 
@@ -482,27 +739,27 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the current variant ID. For a standard variant, an empty string is returned.
-	 * 
 	 * @public
 	 * @since 1.28.1
 	 * @returns {string} Current variant ID
 	 */
 	SmartVariantManagement.prototype.getCurrentVariantId = function() {
-		var sKey = "";
-		var oItem = this._getSelectedItem();
-		if (oItem) {
-			sKey = oItem.getKey();
-			if (sKey === this.STANDARDVARIANTKEY) {
-				sKey = "";
-			}
+		var sKey = this._getCurrentVariantId();
+		if (sKey === this.STANDARDVARIANTKEY) {
+			sKey = "";
 		}
+
+		return sKey;
+	};
+
+	SmartVariantManagement.prototype._getCurrentVariantId = function() {
+		var sKey = this.getSelectionKey();
 
 		return sKey;
 	};
 
 	/**
 	 * Sets the current variant ID.
-	 * 
 	 * @public
 	 * @since 1.28.1
 	 * @param {string} sVariantId ID of the variant
@@ -535,9 +792,9 @@ sap.ui.define([
 				if (!bDoNotApplyVariant) {
 
 					if (this.isPageVariant()) {
-						this._applyVariants(oContent);
+						this._applyVariants(oContent, "SET_VM_ID");
 					} else {
-						this._applyVariant(this._oPersoControl, oContent);
+						this._applyVariant(this._oPersoControl, oContent, "SET_VM_ID");
 					}
 				}
 			}
@@ -563,16 +820,12 @@ sap.ui.define([
 	/**
 	 * Initializes the SAPUI5 layer with the flexibility services by retrieving the list of variants. Once the initialization has been completed, the
 	 * control for personalization is informed via the initialise event.
-	 * 
 	 * @public
 	 * @param {function} fCallback Function will be called whenever the data for the personalizable control is received
 	 * @param {sap.ui.core.Control} oPersoControl Current control that can be personalized
 	 */
 	SmartVariantManagement.prototype.initialise = function(fCallback, oPersoControl) {
-		var oCurrentControlWrapper = null, oDefaultContent, that = this, sKey, bFlag;
-		var parameter = {
-			variantKeys: []
-		};
+		var oCurrentControlWrapper, that = this;
 
 		try {
 
@@ -596,67 +849,87 @@ sap.ui.define([
 
 			if (this._oControlPromise && this._oPersoControl && oCurrentControlWrapper) {
 
-				this._oControlPromise.then(function(mVariants) {
+				// this._oControlPromise.then(function(mVariants) {
+				Promise.all([
+					this._oMetadataPromise, this._oControlPromise
+				]).then(function(aVariants) {
 
-					if (!that._bIsInitialized) {
-						that._bIsInitialized = true;
-
-						parameter.variantKeys = that._createVariantEntries(mVariants);
-
-						bFlag = that._getExecuteOnSelectOnStandardVariant();
-						if (bFlag !== null) {
-							that._executeOnSelectForStandardVariantByUser(bFlag);
-						}
-
-						sKey = that._getDefaultVariantKey();
-						if (sKey) {
-							oDefaultContent = that._getChangeContent(sKey);
-							if (oDefaultContent) {
-								that.setDefaultVariantKey(sKey); // set the default variant
-								that.setInitialSelectionKey(sKey); // set the current selected variant
-							}
-						}
-
-						if (that._sAppStandardVariantKey) {
-							that._oAppStdContent = that._getChangeContent(that._sAppStandardVariantKey);
-						}
-
-					}
-					that._initialize(parameter, oCurrentControlWrapper);
+					that._dataReceived(aVariants[1], oCurrentControlWrapper);
 
 				}, function(args) {
 					var sError = "'getChanges' failed:";
-					if (args && args.messages && args.messages[0]) {
-						sError += (' ' + args.messages[0]);
+					if (args && args.message) {
+						sError += (' ' + args.messages);
 					}
-					that._setErrorValueState(that.oResourceBundle.getText("VARIANT_MANAGEMENT_READ_FAILED"), sError);
 
-					if (fCallback && oPersoControl) {
-						fCallback.call(oPersoControl);
-					} else {
-						that.fireEvent("initialise", parameter);
-					}
+					that._errorHandling(sError, fCallback, oPersoControl);
 				});
 
 			} else {
-				this._setErrorValueState(this.oResourceBundle.getText("VARIANT_MANAGEMENT_READ_FAILED"), "'initialise' no personalizable component available");
-
-				if (fCallback && oPersoControl) {
-					fCallback.call(oPersoControl);
-				} else {
-					that.fireEvent("initialise", parameter);
-				}
+				this._errorHandling("'initialise' no personalizable component available", fCallback, oPersoControl);
 			}
 
 		} catch (ex) {
-			this._setErrorValueState(this.oResourceBundle.getText("VARIANT_MANAGEMENT_READ_FAILED"), "'getChanges' throws an exception");
-
-			if (fCallback && oPersoControl) {
-				fCallback.call(oPersoControl);
-			} else {
-				that.fireEvent("initialise", parameter);
-			}
+			this._errorHandling("'getChanges' throws an exception", fCallback, oPersoControl);
 		}
+	};
+
+	SmartVariantManagement.prototype._errorHandling = function(sErrorText, fCallback, oPersoControl) {
+		var parameter = {
+			variantKeys: []
+		};
+
+		this._setErrorValueState(this.oResourceBundle.getText("VARIANT_MANAGEMENT_READ_FAILED"), sErrorText);
+
+		if (fCallback && oPersoControl) {
+			fCallback.call(oPersoControl);
+		} else {
+			this.fireEvent("initialise", parameter);
+		}
+
+		if (oPersoControl.variantsInitialized) {
+			oPersoControl.variantsInitialized();
+		}
+	};
+
+	SmartVariantManagement.prototype._dataReceived = function(mVariants, oCurrentControlWrapper) {
+		var oDefaultContent, sKey, bFlag, parameter = {
+			variantKeys: []
+		};
+		var oAdapter = this._getAdapter();
+
+		if (this._bIsBeingDestroyed) {
+			return;
+		}
+
+		if (!this._bIsInitialized) {
+			this._bIsInitialized = true;
+
+			parameter.variantKeys = this._createVariantEntries(mVariants);
+			if (oAdapter) {
+				oAdapter.createSelectionPresentationVariants(this);
+			}
+
+			bFlag = this._getExecuteOnSelectOnStandardVariant();
+			if (bFlag !== null) {
+				this._executeOnSelectForStandardVariantByUser(bFlag);
+			}
+
+			sKey = this._getDefaultVariantKey();
+			if (sKey) {
+				oDefaultContent = this._getChangeContent(sKey);
+				if (oDefaultContent) {
+					this.setDefaultVariantKey(sKey); // set the default variant
+					this.setInitialSelectionKey(sKey); // set the current selected variant
+				}
+			}
+
+			if (this._sAppStandardVariantKey) {
+				this._oAppStdContent = this._getChangeContent(this._sAppStandardVariantKey);
+			}
+
+		}
+		this._initialize(parameter, oCurrentControlWrapper);
 	};
 
 	SmartVariantManagement.prototype._initialize = function(parameter, oCurrentControlWrapper) {
@@ -687,6 +960,11 @@ sap.ui.define([
 			oContent = this._getChangeContent(sKey);
 		} else if (this._oAppStdContent) {
 			oContent = this._oAppStdContent;
+
+			if ((oCurrentControlWrapper.type === "table") || (oCurrentControlWrapper.type === "chart")) {
+				// chart and table are already applied with with STANDARD context
+				oContent = null;
+			}
 		}
 
 		if (this._sAppStandardVariantKey) {
@@ -696,23 +974,34 @@ sap.ui.define([
 		}
 
 		if (oContent) {
-
 			if (bIsPageVariant) {
-				this._applyControlVariant(oCurrentControlWrapper.control, oContent, null, true);
+				this._applyControlVariant(oCurrentControlWrapper.control, oContent, "INIT", true);
 			} else {
-				this._applyVariant(oCurrentControlWrapper.control, oContent, null, true);
+				this._applyVariant(oCurrentControlWrapper.control, oContent, "INIT", true);
 			}
 		}
 
-		if (oCurrentControlWrapper.control.fireInitialized) {
-			oCurrentControlWrapper.control.fireInitialized();
+		if (oCurrentControlWrapper.control.variantsInitialized) {
+			oCurrentControlWrapper.control.variantsInitialized();
 		}
 
-		if (this.getStandardVariantKey()) {
-			if (oCurrentControlWrapper.control.search && this.getExecuteOnSelectForStandardVariant()) {
-				// this.setInitialSelectionKey(sKey);
+		if ((this._getCurrentVariantId() === this.getStandardVariantKey()) && this.getExecuteOnSelectForStandardVariant()) {
+			if (oCurrentControlWrapper.control.search) {
 				oCurrentControlWrapper.control.search();
 			}
+		}
+
+	};
+
+	SmartVariantManagement.prototype.setInitialState = function() {
+
+		var sKey = this._getDefaultVariantKey() || this.getStandardVariantKey();
+		if (sKey) {
+
+			this.setInitialSelectionKey(sKey);
+
+			this._triggerSelectVariant(sKey, "INIT_STATE");
+
 		}
 
 	};
@@ -778,7 +1067,7 @@ sap.ui.define([
 
 	SmartVariantManagement.prototype._newVariant = function(oVariantInfo) {
 
-		var sId, oContent, oChange;
+		var sId, oContent, oChange, bIsStandardVariant = false;
 
 		if (oVariantInfo && this._oControlPersistence) {
 
@@ -796,14 +1085,17 @@ sap.ui.define([
 				sTransportId = oVariantInfo.lifecycleTransportId;
 			}
 
+			sId = this._isVariantDownport() ? oVariantInfo.key : null;
+			// if (this._isIndustrySolutionModeAndVendorLayer() && ((this.getStandardVariantKey() === this.STANDARDVARIANTKEY) &&
+			// this._isVariantDownport())) {
+			if (this._isIndustrySolutionModeAndVendorLayer() && (this.getStandardVariantKey() === this.STANDARDVARIANTKEY)) {
+				if ((sTransportId || sPackage) && (oVariantInfo.name === this.oResourceBundle.getText("VARIANT_MANAGEMENT_STANDARD"))) {
+					this.setStandardVariantKey(sId);
+					bIsStandardVariant = true;
+				}
+			}
 			oContent = this._fetchContent();
-
-			// var oContent = oCurrentControlInfo.control.fetchVariant();
 			if (oContent) {
-
-// sContent = JSON.stringify(oContent);
-// oContent = JSON.parse(sContent);
-
 				if (oVariantInfo.exe) {
 					oContent.executeOnSelection = oVariantInfo.exe;
 				}
@@ -814,13 +1106,12 @@ sap.ui.define([
 				if (oContent.standardvariant !== undefined) {
 					delete oContent.standardvariant;
 				}
-				if (this._isIndustrySolutionModeAndVendorLayer() && oVariantInfo.key === this.STANDARDVARIANTKEY) {
+				// if (this._isIndustrySolutionModeAndVendorLayer() && ((oVariantInfo.key === this.STANDARDVARIANTKEY) || this._isVariantDownport()))
+				// {
+				if (bIsStandardVariant) {
 					oContent.standardvariant = true;
 				}
-
 			}
-
-			sId = this._isVariantDownport() ? oVariantInfo.key : null;
 
 			var mParams = {
 				type: oTypeDataSource.type,
@@ -839,7 +1130,8 @@ sap.ui.define([
 			this.replaceKey(oVariantInfo.key, sId);
 			this.setInitialSelectionKey(sId);
 
-			if (this.getIndustrySolutionMode() && oVariantInfo.key === this.STANDARDVARIANTKEY) {
+			// if (this.getIndustrySolutionMode() && oVariantInfo.key === this.STANDARDVARIANTKEY) {
+			if (this._isIndustrySolutionModeAndVendorLayer() && ((oVariantInfo.key === this.STANDARDVARIANTKEY) || this._isVariantDownport())) {
 				this.setStandardVariantKey(sId);
 			}
 
@@ -856,7 +1148,25 @@ sap.ui.define([
 			if (oVariantInfo.def === true) {
 				this._setDefaultVariantKey(sId);
 			}
+
+			// new variants are always created with favorite flag set
+			this._setFavorite(sId);
+
 		}
+	};
+
+	SmartVariantManagement.prototype._setFavorite = function(sId) {
+		var oItem = this.getItemByKey(sId);
+		if (oItem) {
+			oItem.setFavorite(true);
+		}
+
+		this._addFavorites([
+			{
+				key: sId,
+				visible: true
+			}
+		]);
 	};
 
 	SmartVariantManagement.prototype._fetchContent = function() {
@@ -908,11 +1218,19 @@ sap.ui.define([
 		var sPersKey = null;
 
 		if (oCurrentControlInfo.keyName) {
-			sPersKey = oCurrentControlInfo.control.getProperty(oCurrentControlInfo.keyName);
+			if (oCurrentControlInfo.keyName === "id") {
+				sPersKey = oCurrentControlInfo.control.getId();
+			} else {
+				sPersKey = oCurrentControlInfo.control.getProperty(oCurrentControlInfo.keyName);
+			}
 		} else {
 			var oControlWrapper = this._getControlWrapper(oCurrentControlInfo);
-			if (oControlWrapper.keyName) {
-				sPersKey = oCurrentControlInfo.getProperty(oControlWrapper.keyName);
+			if (oControlWrapper && oControlWrapper.keyName) {
+				if (oControlWrapper.keyName === "id") {
+					sPersKey = oControlWrapper.control.getId();
+				} else {
+					sPersKey = oControlWrapper.control.getProperty(oControlWrapper.keyName);
+				}
 			}
 		}
 
@@ -936,7 +1254,6 @@ sap.ui.define([
 					sPersKey = this._getControlPersKey(oCurrentControlInfo);
 					if (sPersKey) {
 						oControlContent = {};
-						// oControlContent[sPersKey] = oContent;
 						oControlContent = this._assignContent(oControlContent, oContent, sPersKey);
 					} else {
 						jQuery.sap.log.error("no persistancy key retrieved");
@@ -958,11 +1275,6 @@ sap.ui.define([
 		var oItem = this.getItemByKey(sId);
 
 		if (oItem) {
-			// sPackage = oItem.getLifecyclePackage();
-			// if (sPackage === null || sPackage === undefined) {
-			// sPackage = "";
-			// }
-
 			sTransportId = oItem.getLifecycleTransportId();
 			if (sTransportId === null || sTransportId === undefined) {
 				sTransportId = "";
@@ -996,8 +1308,15 @@ sap.ui.define([
 
 			for (i = 0; i < aVariantInfo.length; i++) {
 
+				// delete on standard variant only possible in vendor layer
 				if (aVariantInfo[i] === this.getStandardVariantKey()) {
-					continue;
+
+					if (!this._isIndustrySolutionModeAndVendorLayer()) {
+						continue;
+					} else {
+						// reset to STANDARD
+						this.setStandardVariantKey(this.STANDARDVARIANTKEY);
+					}
 				}
 
 				var oChange = this._getChange(aVariantInfo[i]);
@@ -1145,11 +1464,11 @@ sap.ui.define([
 
 	/**
 	 * Save all variants.
-	 * 
 	 * @private
 	 * @param {boolean} bNewVariant indicates, if the save was triggered after new variant creation
+	 * @param {boolean} bIgnoreVariantHandling indicates, if the save was triggered after new variant creation
 	 */
-	SmartVariantManagement.prototype._save = function(bNewVariant) {
+	SmartVariantManagement.prototype._save = function(bNewVariant, bIgnoreVariantHandling) {
 
 		var that = this;
 
@@ -1157,15 +1476,18 @@ sap.ui.define([
 			try {
 				this._oControlPersistence.saveAll().then(function() {
 
-					if (bNewVariant) {
-						that._updateUser();
+					if (!bIgnoreVariantHandling) {
+
+						if (bNewVariant) {
+							that._updateUser();
+						}
+						that.fireEvent("afterSave");
 					}
-					that.fireEvent("afterSave");
 
 				}, function(args) {
 					var sError = "'_save' failed:";
-					if (args && args[0] && args[0].messages && args[0].messages[0]) {
-						sError += (' ' + args[0].messages[0]);
+					if (args && args.message) {
+						sError += (' ' + args.message);
 					}
 					that._setErrorValueState(that.oResourceBundle.getText("VARIANT_MANAGEMENT_SAVE_FAILED"), sError);
 				});
@@ -1193,22 +1515,25 @@ sap.ui.define([
 	};
 
 	/**
-	 * Eventhandler for the save event of the VariantManagement control.
-	 * 
-	 * @public
+	 * Eventhandler for the save event of the <code>SmartVariantManagement</code> control.
 	 * @param {object} oVariantInfo Describes the variant to be saved
 	 */
 	SmartVariantManagement.prototype.fireSave = function(oVariantInfo) {
 
-		var bSave = false;
-		var bNewVariant = true;
+		var bSave = false, bNewVariant = true;
+		var oEvent = {};
 
 		if (oVariantInfo) {
+
+			if (oVariantInfo.hasOwnProperty("tile")) {
+				oEvent.tile = oVariantInfo.tile;
+			}
+
 			if (oVariantInfo.overwrite) {
 				if (this._isIndustrySolutionModeAndVendorLayer() || (oVariantInfo.key !== this.getStandardVariantKey())) { // Prohibit save on
 					// standard variant
 
-					this.fireEvent("save");
+					this.fireEvent("save", oEvent);
 
 					if (oVariantInfo.key === this.STANDARDVARIANTKEY) {
 						this._newVariant(oVariantInfo);
@@ -1221,7 +1546,7 @@ sap.ui.define([
 				}
 			} else {
 
-				this.fireEvent("save");
+				this.fireEvent("save", oEvent);
 				this._newVariant(oVariantInfo);
 				bSave = true;
 			}
@@ -1233,9 +1558,8 @@ sap.ui.define([
 	};
 
 	/**
-	 * Eventhandler for the manage event of the VariantManagement control. Raises the base class event for spacial handlings like save tile.
-	 * 
-	 * @public
+	 * Eventhandler for the manage event of the <code>SmartVariantManagement</code> control. Raises the base class event for spacial handlings like
+	 * save tile.
 	 * @param {object} oVariantInfo Describes the variants that will be deleted/renamed
 	 */
 	SmartVariantManagement.prototype.fireManage = function(oVariantInfo) {
@@ -1267,8 +1591,14 @@ sap.ui.define([
 				}
 			}
 
+			if (oVariantInfo.fav && (oVariantInfo.fav.length > 0)) {
+				this._addFavorites(oVariantInfo.fav);
+			}
+
 			if ((oVariantInfo.deleted && oVariantInfo.deleted.length > 0) || (oVariantInfo.renamed && oVariantInfo.renamed.length > 0) || (oVariantInfo.exe && oVariantInfo.exe.length > 0) || oVariantInfo.def) {
 				this._save();
+			} else if (oVariantInfo.fav && (oVariantInfo.fav.length > 0)) {
+				this._save(false, true);
 			}
 
 			this.fireEvent("manage", oVariantInfo);
@@ -1277,27 +1607,81 @@ sap.ui.define([
 	};
 
 	/**
-	 * Eventhandler for the select event of the VariantManagement control.
-	 * 
-	 * @public
+	 * Eventhandler for the select event of the <code>SmartVariantManagement</code> control.
 	 * @param {object} oVariantInfo Describes the selected variant
+	 * @param {strinf} sContext context
 	 */
-	SmartVariantManagement.prototype.fireSelect = function(oVariantInfo) {
+	SmartVariantManagement.prototype.fireSelect = function(oVariantInfo, sContext) {
 
 		if (this._oPersoControl && oVariantInfo && oVariantInfo.key) {
-			this._triggerSelectVariant(oVariantInfo.key);
+			this._triggerSelectVariant(oVariantInfo.key, sContext);
+
+			this.fireEvent("select", oVariantInfo);
 		}
 	};
 
-	SmartVariantManagement.prototype._selectVariant = function(sVariantKey) {
+	SmartVariantManagement.prototype._selectVariant = function(sVariantKey, sContext) {
 		this.fireSelect({
 			key: sVariantKey
-		});
+		}, sContext);
 	};
 
-	SmartVariantManagement.prototype._triggerSelectVariant = function(sVariantKey) {
-		var oContent = this._getChangeContent(sVariantKey);
+	SmartVariantManagement.prototype._checkForSelectionHandler = function(sVariantKey) {
 
+		var oHandler = null, aHandler = Object.keys(this._oSelectionVariantHandler);
+
+		if (aHandler.length > -1) {
+
+			aHandler.some(function(oKey) {
+				if (sVariantKey.indexOf(oKey) === 0) {
+					oHandler = this._oSelectionVariantHandler[oKey];
+					return true;
+				}
+
+				return false;
+			}.bind(this));
+
+		}
+
+		return oHandler;
+	};
+
+	SmartVariantManagement.prototype._triggerSelectVariant = function(sVariantKey, sContext) {
+
+		var oContent, oHandler = this._checkForSelectionHandler(sVariantKey);
+
+		if (this._getAdapter() && (sVariantKey.substring(0, 1) === "#")) {
+
+			this._applyUiState(sVariantKey, sContext);
+			return;
+		}
+
+		// TODO: replace oHandler with the adapter
+		// standard handling
+		if (oHandler) {
+			oContent = this._triggerSpecialSelectVariant(sVariantKey, sContext, oHandler);
+		} else {
+			oContent = this._triggerGeneralSelectVariant(sVariantKey, sContext);
+		}
+
+		if (oContent) {
+			if (this.isPageVariant()) {
+				this._applyVariants(oContent, sContext);
+			} else {
+				this._applyVariant(this._oPersoControl, oContent, sContext);
+			}
+		}
+	};
+
+	SmartVariantManagement.prototype._triggerSpecialSelectVariant = function(sVariantKey, sContext, oHandler) {
+
+		return oHandler.callback.call(oHandler.handler, sVariantKey, sContext);
+
+	};
+
+	SmartVariantManagement.prototype._triggerGeneralSelectVariant = function(sVariantKey, sContext) {
+
+		var oContent = this._getChangeContent(sVariantKey);
 		if (oContent) {
 			var sContent = JSON.stringify(oContent);
 			oContent = JSON.parse(sContent);
@@ -1305,11 +1689,49 @@ sap.ui.define([
 			if ((sVariantKey === this.STANDARDVARIANTKEY) && this.getExecuteOnSelectForStandardVariant()) {
 				oContent.executeOnSelection = this.getExecuteOnSelectForStandardVariant();
 			}
+		}
 
-			if (this.isPageVariant()) {
-				this._applyVariants(oContent);
-			} else {
-				this._applyVariant(this._oPersoControl, oContent);
+		return oContent;
+	};
+
+	/**
+	 * Sets the dirty flag of the current variant.
+	 * @public
+	 * @param {boolean} bFlag The value indicating the dirty state of the current variant
+	 */
+	SmartVariantManagement.prototype.currentVariantSetModified = function(bFlag) {
+
+		if (!this._bApplyingUIState) {
+			VariantManagement.prototype.currentVariantSetModified.apply(this, arguments);
+		}
+	};
+
+	SmartVariantManagement.prototype._applyControlUiState = function(oControlWrapper, oContent) {
+		if (oControlWrapper && oContent) {
+			oControlWrapper.loaded.then(function() {
+
+				this._bApplyingUIState = true;
+
+				if (oControlWrapper.control.setUiStateAsVariant) {
+					oControlWrapper.control.setUiStateAsVariant(oContent);
+				}
+
+				this._bApplyingUIState = false;
+			}.bind(this));
+		}
+	};
+
+	SmartVariantManagement.prototype._applyUiState = function(sVariantKey, sContext) {
+
+		var i, oAdapter = this._getAdapter(), oContent = null, aCurrentControls = this._getAllPersonalizableControls();
+
+		if (oAdapter) {
+			oContent = oAdapter.getUiState(sVariantKey);
+
+			for (i = 0; i < aCurrentControls.length; i++) {
+				if (aCurrentControls[i] && aCurrentControls[i].control && aCurrentControls[i].loaded) {
+					this._applyControlUiState(aCurrentControls[i], oContent, sContext);
+				}
 			}
 		}
 	};
@@ -1336,7 +1758,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the standard variant from the ui - control.
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.smartvariants.PersonalizableInfo} oCurrentControlInfo information about the control to be personalized
 	 */
@@ -1358,7 +1779,7 @@ sap.ui.define([
 
 		var oRetContent = oContent;
 
-		if (this.isPageVariant()) {
+		if (this.isPageVariant() && oContent) {
 			oRetContent = oContent[sPersKey];
 			if (!oRetContent && (sPersKey === this.getPersistencyKey()) && this._aPersonalizableControls && this._aPersonalizableControls.length === 1) {
 				oRetContent = oContent;
@@ -1436,7 +1857,6 @@ sap.ui.define([
 
 	/**
 	 * Returns the standard variant.
-	 * 
 	 * @public
 	 * @param {sap.ui.core.Control} oCurrentControl Current personalizable control
 	 * @returns {Object} The standard variant.
@@ -1473,7 +1893,6 @@ sap.ui.define([
 
 	/**
 	 * Appliance of the the standard variant.
-	 * 
 	 * @private
 	 * @param {sap.ui.core.Control} oCurrentControl Personalizable Control
 	 * @param {object} oContent JSON object
@@ -1489,30 +1908,15 @@ sap.ui.define([
 		}
 	};
 
-	SmartVariantManagement.prototype._applyVariants2 = function(oContent, sContext) {
-
-		var i, aCurrentControls = this._getAllPersonalizableControls();
-		for (i = 0; i < aCurrentControls.length; i++) {
-			if (aCurrentControls[i] && aCurrentControls[i].control) {
-				this._applyControlVariant(aCurrentControls[i].control, oContent, sContext);
-			}
-		}
-	};
-
 	SmartVariantManagement.prototype._applyControlVariant = function(oControl, oContent, sContext, bInitial) {
 		var oControlContent, sPersKey;
 
 		sPersKey = this._getControlPersKey(oControl);
 		if (sPersKey) {
-			// oControlContent = oContent[sPersKey];
 			oControlContent = this._retrieveContent(oContent, sPersKey);
 
 			if (oControlContent) {
-
-				// if (oContent.executeOnSelection && oControl.type === "filterBar") {
 				oControlContent.executeOnSelection = oContent.executeOnSelection;
-				// }
-
 				this._applyVariant(oControl, oControlContent, sContext, bInitial);
 			}
 		}
@@ -1520,36 +1924,85 @@ sap.ui.define([
 	};
 
 	/**
+	 * Registers for a givven key prefix a select variant handler. For a givven key prefix only one handler is possible.
+	 * @private
+	 * @param {sap.ui.core.Control} oHandler receives the selectEvent
+	 * @param {string} sKeyPrefix handler identifier
+	 */
+	SmartVariantManagement.prototype.registerSelectionVariantHandler = function(oHandler, sKeyPrefix) {
+		this._oSelectionVariantHandler[sKeyPrefix] = oHandler;
+	};
+
+	/**
+	 * Unregisters a select variant handler.
+	 * @private
+	 * @param {sap.ui.core.Control} oHandler receives the selectEvent
+	 * @param {string} sKeyPrefix handler identifier
+	 */
+	SmartVariantManagement.prototype.unregisterSelectionVariantHandler = function(oHandler) {
+
+		var sEntryToBeDeleted = null;
+
+		if (!this._oSelectionVariantHandler) {
+			return;
+		}
+
+		if (typeof oHandler === 'string') {
+			sEntryToBeDeleted = oHandler;
+		} else {
+
+			Object.keys(this._oSelectionVariantHandler).some(function(oKey) {
+				if (this._oSelectionVariantHandler[oKey].handler === oHandler) {
+					sEntryToBeDeleted = oKey;
+					return true;
+				}
+				return false;
+			}.bind(this));
+		}
+
+		if (sEntryToBeDeleted) {
+			delete this._oSelectionVariantHandler[sEntryToBeDeleted];
+		}
+
+	};
+
+	/**
 	 * Sets an error state on the variant management control.
-	 * 
 	 * @private
 	 * @param {string} sText describing the error reason
 	 * @param {string} sLogText describing the error reason for logging
 	 */
 	SmartVariantManagement.prototype._setErrorValueState = function(sText, sLogText) {
-		this.setEnabled(false);
+		this.setInErrorState(true);
 
 		if (sLogText) {
 			jQuery.sap.log.error(sLogText);
 		}
 	};
 
-	/**
-	 * Destroys the control.
-	 * 
-	 * @public
-	 */
 	SmartVariantManagement.prototype.exit = function() {
 		VariantManagement.prototype.exit.apply(this, arguments);
 
 		this._aPersonalizableControls = null;
 
 		this._oControlPersistence = null;
-		// this._oControlComponent = null;
+
+		this._oMetadataPromise = null;
 		this._oControlPromise = null;
+
 		this._oPersoControl = null;
 
 		this._oAppStdContent = null;
+		this._sAppStandardVariantKey = null;
+
+		this._oSelectionVariantHandler = null;
+
+		this._aFavoriteChanges = null;
+
+		if (this._oAdapter) {
+			this._oAdapter.destroy();
+			this._oAdapter = null;
+		}
 	};
 
 	return SmartVariantManagement;

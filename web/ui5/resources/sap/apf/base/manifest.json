@@ -32,9 +32,6 @@
                 "sap.ui.core": {
                     "minVersion": "1.30.0"
                 },
-                "sap.ca.ui": {
-                    "minVersion": "1.30.0"
-                },
                 "sap.m": {
                     "minVersion": "1.30.0"
                 },
@@ -49,6 +46,12 @@
                 },
                 "sap.ui.comp": {
                 	"minVersion": "1.30.0"
+                },
+                "sap.suite.ui.commons": {
+                	"minVersion": "1.30.0"
+                },
+                "sap.ui.export" : {
+                	"minVersion" : "1.50.0"
                 }
             }
         },

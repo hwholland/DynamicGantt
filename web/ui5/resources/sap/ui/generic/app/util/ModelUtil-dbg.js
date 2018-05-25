@@ -1,8 +1,7 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define([	"jquery.sap.global" ], function(jQuery) {
@@ -16,7 +15,7 @@ sap.ui.define([	"jquery.sap.global" ], function(jQuery) {
 	 * @classdesc
 	 * Generic utility for model access.
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.30.0
 	 * @alias sap.ui.generic.app.util.ModelUtil
 	 * @param {sap.ui.model.odata.ODataModel} oModel The OData model currently used
@@ -57,7 +56,12 @@ sap.ui.define([	"jquery.sap.global" ], function(jQuery) {
 			sEntitySet = sPath.substring(1);
 		}
 
-		return sEntitySet;
+		if (sEntitySet == null) {
+			return null;
+		} else {
+			return oContext.getModel().getMetaModel().getODataEntitySet(sEntitySet) 
+				&& oContext.getModel().getMetaModel().getODataEntitySet(sEntitySet).name;
+		}
 	};
 	
 	/**

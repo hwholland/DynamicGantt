@@ -2,10 +2,11 @@ jQuery.sap.registerPreloadedModules({
 "name":"sap/makit/library-preload",
 "version":"2.0",
 "modules":{
+	"sap/makit/manifest.json":'{"_version":"1.9.0","sap.app":{"id":"sap.makit","type":"library","embeds":[],"applicationVersion":{"version":"1.54.3"},"title":"Mobile Chart controls based on the Sybase MAKIT charting lib.","description":"Mobile Chart controls based on the Sybase MAKIT charting lib.","resources":"resources.json","offline":true},"sap.ui":{"technology":"UI5","supportedThemes":["base","sap_bluecrystal"]},"sap.ui5":{"dependencies":{"minUI5Version":"1.54","libs":{"sap.ui.core":{"minVersion":"1.54.3"}}},"library":{"i18n":"messagebundle.properties"}}}',
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 	"sap/makit/ChartRenderer.js":function(){jQuery.sap.declare("sap.makit.ChartRenderer");sap.makit.ChartRenderer={};
 sap.makit.ChartRenderer.render=function(r,c){r.write("<div id=\"sap-ui-dummy-"+c.getId()+"\" style=\"display:none\">");r.write("<div");r.writeControlData(c);r.writeAttribute("data-sap-ui-preserve",c.getId());r.addClass("sapMakitChart");r.writeClasses();r.write(">");r.write("</div>");r.write("</div>");};
@@ -13,7 +14,7 @@ sap.makit.ChartRenderer.render=function(r,c){r.write("<div id=\"sap-ui-dummy-"+c
 	"sap/makit/CombinationChartRenderer.js":function(){jQuery.sap.declare("sap.makit.CombinationChartRenderer");sap.makit.CombinationChartRenderer={};
 sap.makit.CombinationChartRenderer.render=function(r,c){r.write("<div id=\"sap-ui-dummy-"+c.getId()+"\" style=\"display:none\">");r.write("<div");r.writeControlData(c);r.writeAttribute("data-sap-ui-preserve",c.getId());r.addClass("sapMakitChart");r.writeClasses();r.write(">");r.write("</div>");r.write("</div>");};
 },
-	"sap/makit/library.js":function(){jQuery.sap.declare("sap.makit.library");jQuery.sap.require("sap.ui.core.Core");jQuery.sap.require("sap.ui.core.library");sap.ui.getCore().initLibrary({name:"sap.makit",dependencies:["sap.ui.core"],types:["sap.makit.ChartType","sap.makit.LegendPosition","sap.makit.SortOrder","sap.makit.ValueBubblePosition","sap.makit.ValueBubbleStyle"],interfaces:[],controls:["sap.makit.Chart","sap.makit.CombinationChart"],elements:["sap.makit.Axis","sap.makit.Category","sap.makit.CategoryAxis","sap.makit.Column","sap.makit.Layer","sap.makit.MakitLib","sap.makit.Row","sap.makit.Series","sap.makit.Value","sap.makit.ValueAxis","sap.makit.ValueBubble"],version:"1.38.33"});jQuery.sap.declare("sap.makit.ChartType");sap.makit.ChartType={Column:"Column",Line:"Line",Bubble:"Bubble",Bar:"Bar",Pie:"Pie",Donut:"Donut",StackedColumn:"StackedColumn",HundredPercentStackedColumn:"HundredPercentStackedColumn",WaterfallColumn:"WaterfallColumn",WaterfallBar:"WaterfallBar"};jQuery.sap.declare("sap.makit.LegendPosition");sap.makit.LegendPosition={Top:"Top",Left:"Left",Bottom:"Bottom",Right:"Right",None:"None"};jQuery.sap.declare("sap.makit.SortOrder");sap.makit.SortOrder={Ascending:"Ascending",Descending:"Descending",Partial:"Partial",None:"None"};jQuery.sap.declare("sap.makit.ValueBubblePosition");sap.makit.ValueBubblePosition={Top:"Top",Side:"Side"};jQuery.sap.declare("sap.makit.ValueBubbleStyle");sap.makit.ValueBubbleStyle={Top:"Top",Float:"Float",FloatTop:"FloatTop"};
+	"sap/makit/library.js":function(){jQuery.sap.declare("sap.makit.library");jQuery.sap.require("sap.ui.core.Core");jQuery.sap.require("sap.ui.core.library");sap.ui.getCore().initLibrary({name:"sap.makit",dependencies:["sap.ui.core"],types:["sap.makit.ChartType","sap.makit.LegendPosition","sap.makit.SortOrder","sap.makit.ValueBubblePosition","sap.makit.ValueBubbleStyle"],interfaces:[],controls:["sap.makit.Chart","sap.makit.CombinationChart"],elements:["sap.makit.Axis","sap.makit.Category","sap.makit.CategoryAxis","sap.makit.Column","sap.makit.Layer","sap.makit.MakitLib","sap.makit.Row","sap.makit.Series","sap.makit.Value","sap.makit.ValueAxis","sap.makit.ValueBubble"],version:"1.54.3"});jQuery.sap.declare("sap.makit.ChartType");sap.makit.ChartType={Column:"Column",Line:"Line",Bubble:"Bubble",Bar:"Bar",Pie:"Pie",Donut:"Donut",StackedColumn:"StackedColumn",HundredPercentStackedColumn:"HundredPercentStackedColumn",WaterfallColumn:"WaterfallColumn",WaterfallBar:"WaterfallBar"};jQuery.sap.declare("sap.makit.LegendPosition");sap.makit.LegendPosition={Top:"Top",Left:"Left",Bottom:"Bottom",Right:"Right",None:"None"};jQuery.sap.declare("sap.makit.SortOrder");sap.makit.SortOrder={Ascending:"Ascending",Descending:"Descending",Partial:"Partial",None:"None"};jQuery.sap.declare("sap.makit.ValueBubblePosition");sap.makit.ValueBubblePosition={Top:"Top",Side:"Side"};jQuery.sap.declare("sap.makit.ValueBubbleStyle");sap.makit.ValueBubbleStyle={Top:"Top",Float:"Float",FloatTop:"FloatTop"};
 },
 	"sap/makit/Axis.js":function(){jQuery.sap.declare("sap.makit.Axis");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");
 sap.ui.core.Element.extend("sap.makit.Axis",{metadata:{deprecated:true,library:"sap.makit",properties:{"showLabel":{type:"boolean",group:"Appearance",defaultValue:true},"showPrimaryLine":{type:"boolean",group:"Appearance",defaultValue:true},"showGrid":{type:"boolean",group:"Appearance",defaultValue:false},"thickness":{type:"float",group:"Appearance",defaultValue:1},"color":{type:"string",group:"Appearance",defaultValue:'gray'}}}});
@@ -25,7 +26,7 @@ sap.ui.core.Element.extend("sap.makit.Axis",{metadata:{deprecated:true,library:"
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Category");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");
 sap.ui.core.Element.extend("sap.makit.Category",{metadata:{deprecated:true,library:"sap.makit",properties:{"column":{type:"string",group:"Misc",defaultValue:null},"displayName":{type:"string",group:"Misc",defaultValue:null},"format":{type:"string",group:"Misc",defaultValue:null}}}});
@@ -37,7 +38,7 @@ sap.ui.core.Element.extend("sap.makit.Category",{metadata:{deprecated:true,libra
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.CategoryAxis");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.makit.Axis");
 sap.makit.Axis.extend("sap.makit.CategoryAxis",{metadata:{deprecated:true,library:"sap.makit",properties:{"sortOrder":{type:"sap.makit.SortOrder",group:"Misc",defaultValue:sap.makit.SortOrder.None},"displayLastLabel":{type:"boolean",group:"Misc",defaultValue:false},"displayAll":{type:"boolean",group:"Misc",defaultValue:true}}}});
@@ -51,7 +52,7 @@ sap.makit.CategoryAxis.prototype.init=function(){this.setShowGrid(false);this.se
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Chart");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Control");
 sap.ui.core.Control.extend("sap.makit.Chart",{metadata:{deprecated:true,publicMethods:["getSelectedCategory","getSelectedSeries","getNumberOfCategories","getSelectedCategoryGroup"],library:"sap.makit",properties:{"width":{type:"sap.ui.core.CSSSize",group:"Dimension",defaultValue:'100%'},"height":{type:"sap.ui.core.CSSSize",group:"Dimension",defaultValue:'100%'},"type":{type:"sap.makit.ChartType",group:"Appearance",defaultValue:sap.makit.ChartType.Column},"showRangeSelector":{type:"boolean",group:"Appearance",defaultValue:true},"showTableView":{type:"boolean",group:"Misc",defaultValue:false},"legendPosition":{type:"sap.makit.LegendPosition",group:"Misc",defaultValue:null},"lineThickness":{type:"float",group:"Misc",defaultValue:1},"showTableValue":{type:"boolean",group:"Misc",defaultValue:true},"maxSliceCount":{type:"int",group:"Misc",defaultValue:12},"primaryColorPalette":{type:"any",group:"Misc",defaultValue:null},"showTotalValue":{type:"boolean",group:"Misc",defaultValue:false},"numberOfVisibleCategories":{type:"int",group:"Misc",defaultValue:null},"rangeSelectorStartPosition":{type:"int",group:"Misc",defaultValue:0}},aggregations:{"rows":{type:"sap.makit.Row",multiple:true,singularName:"row",bindable:"bindable",deprecated:true},"columns":{type:"sap.makit.Column",multiple:true,singularName:"column",bindable:"bindable",deprecated:true},"series":{type:"sap.makit.Series",multiple:false,deprecated:true},"values":{type:"sap.makit.Value",multiple:true,singularName:"value",deprecated:true},"categoryRegions":{type:"sap.makit.Category",multiple:true,singularName:"categoryRegion",deprecated:true},"category":{type:"sap.makit.Category",multiple:false,deprecated:true},"categoryAxis":{type:"sap.makit.CategoryAxis",multiple:false,deprecated:true},"valueAxis":{type:"sap.makit.ValueAxis",multiple:false,deprecated:true},"valueBubble":{type:"sap.makit.ValueBubble",multiple:false,deprecated:true}},events:{"doubletap":{},"tap":{},"longpress":{}}}});
@@ -111,7 +112,7 @@ sap.makit.Chart.prototype.getSelectedCategoryGroup=function(){var s=undefined;if
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Column");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");
 sap.ui.core.Element.extend("sap.makit.Column",{metadata:{deprecated:true,library:"sap.makit",properties:{"name":{type:"string",group:"Identification",defaultValue:null},"value":{type:"any",group:"Data",defaultValue:null},"type":{type:"string",group:"Misc",defaultValue:'string'}}}});
@@ -123,7 +124,7 @@ sap.ui.core.Element.extend("sap.makit.Column",{metadata:{deprecated:true,library
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.CombinationChart");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Control");
 sap.ui.core.Control.extend("sap.makit.CombinationChart",{metadata:{deprecated:true,publicMethods:["getSelectedCategory","getNumberOfCategories","getSelectedCategoryGroup"],library:"sap.makit",properties:{"width":{type:"sap.ui.core.CSSSize",group:"Dimension",defaultValue:'100%'},"height":{type:"sap.ui.core.CSSSize",group:"Dimension",defaultValue:'100%'},"showRangeSelector":{type:"boolean",group:"Appearance",defaultValue:true},"legendPosition":{type:"sap.makit.LegendPosition",group:"Misc",defaultValue:sap.makit.LegendPosition.Left},"primaryColorPalette":{type:"any",group:"Misc",defaultValue:null},"secondaryColorPalette":{type:"any",group:"Misc",defaultValue:null},"showTableValue":{type:"boolean",group:"Misc",defaultValue:true},"numberOfVisibleCategories":{type:"int",group:"Misc",defaultValue:null},"rangeSelectorStartPosition":{type:"int",group:"Misc",defaultValue:0}},aggregations:{"categoryRegions":{type:"sap.makit.Category",multiple:true,singularName:"categoryRegion",deprecated:true},"layers":{type:"sap.makit.Layer",multiple:true,singularName:"layer",deprecated:true},"categoryAxis":{type:"sap.makit.CategoryAxis",multiple:false,deprecated:true},"primaryValueAxis":{type:"sap.makit.ValueAxis",multiple:false,deprecated:true},"secondaryValueAxis":{type:"sap.makit.ValueAxis",multiple:false,deprecated:true},"valueBubble":{type:"sap.makit.ValueBubble",multiple:false,deprecated:true}},events:{"doubletap":{},"tap":{},"longpress":{}}}});
@@ -171,7 +172,7 @@ sap.makit.CombinationChart.prototype.getSelectedCategoryGroup=function(){var s=u
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Layer");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");
 sap.ui.core.Element.extend("sap.makit.Layer",{metadata:{deprecated:true,publicMethods:["getSelectedSeries"],library:"sap.makit",properties:{"type":{type:"sap.makit.ChartType",group:"Appearance",defaultValue:sap.makit.ChartType.Column},"lineThickness":{type:"float",group:"Appearance",defaultValue:1},"primaryColorPalette":{type:"any",group:"Misc",defaultValue:null},"drawOnSecondaryAxis":{type:"boolean",group:"Misc",defaultValue:false}},aggregations:{"rows":{type:"sap.makit.Row",multiple:true,singularName:"row",bindable:"bindable"},"columns":{type:"sap.makit.Column",multiple:true,singularName:"column",bindable:"bindable"},"series":{type:"sap.makit.Series",multiple:false},"values":{type:"sap.makit.Value",multiple:true,singularName:"value"}}}});
@@ -208,7 +209,7 @@ sap.makit.Layer.prototype.getSelectedSeries=function(){var p=this.getParent();if
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Row");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");
 sap.ui.core.Element.extend("sap.makit.Row",{metadata:{deprecated:true,library:"sap.makit",aggregations:{"cells":{type:"sap.makit.Column",multiple:true,singularName:"cell"}}}});
@@ -224,7 +225,7 @@ sap.makit.Row.prototype.onCellChanged=function(e){if(e.mParameters['name']==="na
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Series");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");
 sap.ui.core.Element.extend("sap.makit.Series",{metadata:{deprecated:true,library:"sap.makit",properties:{"column":{type:"string",group:"Data",defaultValue:null},"displayName":{type:"string",group:"Appearance",defaultValue:null},"format":{type:"string",group:"Misc",defaultValue:null}}}});
@@ -236,7 +237,7 @@ sap.ui.core.Element.extend("sap.makit.Series",{metadata:{deprecated:true,library
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Value");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");
 sap.ui.core.Element.extend("sap.makit.Value",{metadata:{deprecated:true,library:"sap.makit",properties:{"expression":{type:"string",group:"Misc",defaultValue:null},"displayName":{type:"string",group:"Misc",defaultValue:null},"format":{type:"string",group:"Misc",defaultValue:null},"locale":{type:"string",group:"Misc",defaultValue:null}}}});
@@ -248,7 +249,7 @@ sap.ui.core.Element.extend("sap.makit.Value",{metadata:{deprecated:true,library:
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.ValueAxis");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.makit.Axis");
 sap.makit.Axis.extend("sap.makit.ValueAxis",{metadata:{deprecated:true,library:"sap.makit",properties:{"min":{type:"string",group:"Misc",defaultValue:null},"max":{type:"string",group:"Misc",defaultValue:null}}}});
@@ -262,7 +263,7 @@ sap.makit.ValueAxis.prototype.init=function(){this.setShowGrid(true);this.setSho
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.ValueBubble");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");
 sap.ui.core.Element.extend("sap.makit.ValueBubble",{metadata:{deprecated:true,library:"sap.makit",properties:{"showCategoryText":{type:"boolean",group:"Misc",defaultValue:true},"showCategoryDisplayName":{type:"boolean",group:"Misc",defaultValue:true},"showValueDisplayName":{type:"boolean",group:"Misc",defaultValue:true},"showValueOnPieChart":{type:"boolean",group:"Misc",defaultValue:false},"showLegendLabel":{type:"boolean",group:"Misc",defaultValue:true},"showNullValue":{type:"boolean",group:"Misc",defaultValue:true},"position":{type:"sap.makit.ValueBubblePosition",group:"Misc",defaultValue:sap.makit.ValueBubblePosition.Top},"style":{type:"sap.makit.ValueBubbleStyle",group:"Misc",defaultValue:sap.makit.ValueBubbleStyle.Top},"visible":{type:"boolean",group:"Appearance",defaultValue:true}}}});
@@ -273,3 +274,4 @@ sap.ui.core.Element.extend("sap.makit.ValueBubble",{metadata:{deprecated:true,li
 sap.makit.ValueBubble.prototype.toObject=function(){var o={};o.showCategoryText=this.getShowCategoryText();o.showCategoryDisplayName=this.getShowCategoryDisplayName();o.showValueDisplayName=this.getShowValueDisplayName();o.showValueOnPieChart=this.getShowValueOnPieChart();o.showLegendLabel=this.getShowLegendLabel();o.showNullValue=this.getShowNullValue();o.style=this.getStyle().toLowerCase();o.position=this.getPosition().toLowerCase();o.visible=this.getVisible();return o;};
 }
 }});
+//# sourceMappingURL=library-preload.js.map

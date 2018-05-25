@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
+        (c) Copyright 2009-2018 SAP SE. All rights reserved
     
  */
 sap.ui.define(['jquery.sap.global', './CalendarDate', 'sap/ui/core/LocaleData', 'sap/ui/core/format/DateFormat', 'sap/ui/core/date/UniversalDate'],
@@ -68,140 +68,32 @@ sap.ui.define(['jquery.sap.global', './CalendarDate', 'sap/ui/core/LocaleData', 
 	};
 
 	/**
-	 * Formats a given date according to a given pattern.
-	 *
-	 * @param {Date} oDate The date to format
-	 * @param {string} sPattern the pattern to use to format the date
-	 *
-	 * @return {String} The formatted date string
-	 *
-	 * @private
-	 */
-	CalendarRenderer._formatDate = function (oDate, sPattern) {
-		if (!sPattern || sPattern.trim() === "{0}") {
-			// if the pattern we receive is the default pattern, fallback to english
-			sPattern = "MMM y";
-		}
-		var dateInstance = DateFormat.getDateTimeInstance({pattern:sPattern});
-		return dateInstance.format(oDate);
-	};
-
-	/**
-	 * Formats a date interval according to the given dates.
-	 *
-	 * @param {object} oDate1 First date of the interval
-	 * @param {object} oDate2 Second date
-	 * @param {object} oControl The control being rendered
-	 *
-	 * @return {string} The formatted date interval string.
-	 *
-	 * @private
-	 * @experimental Since 1.16.4
-	 */
-	CalendarRenderer._getDateIntervalText = function (oDate1, oDate2, oControl) {
-		var orDate1, orDate2;
-		if (oDate1.getTime() <= oDate2.getTime()) {
-			orDate1 = new Date(oDate1.getTime());
-			orDate2 = new Date(oDate2.getTime());
-		} else {
-			orDate1 = new Date(oDate2.getTime());
-			orDate2 = new Date(oDate1.getTime());
-		}
-		// in enUS: intervalFormat-yMMM-y: "MMM y – MMM y"
-		var sIntervalPattern = oControl._getIntervalPattern("yMMM-y");
-		var sIntervalSeparator = this._getIntervalSeparator(sIntervalPattern, oControl);
-
-		// split the pattern on the separator => 2 elements in the array, left pattern, right pattern.
-		var aPatterns = sIntervalPattern.split(sIntervalSeparator);
-		// Fix for 554404 2017 and 4664 2018
-		if (/^(nl|pt|it)/i.test(oControl._oLocale.getLanguage())) {
-			sIntervalSeparator = " \u2013 ";
-			aPatterns = ["MMM y", "MMM y"];
-		}
-		// The potential whitespaces (trimmed earlier) around the separator are in the patterns in the array.
-		return this._formatDate(orDate1, aPatterns[0]) + sIntervalSeparator + this._formatDate(orDate2, aPatterns[1]);
-	};
-
-	/**
-	 * Only for Fiori2/wave2 use, until the official implementation is available.
-	 *
-	 * @deprecated This will most likely return an invalid date string for the Islamic calendar.
-	 * Since Arabic is not supported in Fiori2, I've been coerced into coding it.
-	 *
-	 * @param {Date} oDate The date to format using this pattern (EN shown here): "MMM y"
-	 * @param {Object} oControl The control being rendered.
-	 *
-	 * @return {string} The formatted date with month and year, as a string.
-	 *
-	 * @private
-	 */
-	CalendarRenderer._getMonthAndYear = function (oDate, oControl) {
-		var sPattern = oControl._getIntervalPattern("yMMM-y");
-		var sIntervalSeparator = this._getIntervalSeparator(sPattern, oControl);
-		var aPatterns = sPattern.split(sIntervalSeparator);
-		// Fix for 554404 2017 and 4664 2018
-		if (/^(nl|pt|it)/i.test(oControl._oLocale.getLanguage())) {
-			aPatterns = ["MMM y"];
-		}
-		return this._formatDate(oDate, aPatterns[0]);
-	};
-
-	CalendarRenderer._getIntervalSeparator = function (sPattern, oControl) {
-		// intervalFormatFallback: "{0} – {1}"
-		var sFallbackPattern = oControl._getIntervalPattern("");
-
-		// The separator that looks like -, but is in fact String.fromCharCode(8211), might be something else in other languages.
-		// Assumption: this character is unique in the format string
-		// It's not a "-" in:
-		//	  bn          unicode
-		//	  es_*        "a el",
-		//	  fa          the format looks like it's missing an opening curly bracket,
-		//	  fr_be       "au"
-		//	  fr_ch       "au"
-		//	  ja          tilde
-		//	  root        unicode (looks similar to bn)
-		//	  zh_Hans_SG  unicode symbol
-		//	  sh_Hant     unicode symbol
-		var sIntervalSeparator = sFallbackPattern.replace("{0}", "").replace("{1}", "").trim();
-
-		// CSS 0120061532 0001225837 2014
-		if (oControl._checkLanguageRegion("zh", "CN")) {
-			// The interval separator found in the fallback pattern is not
-			// the one used in the interval pattern, try another one.
-			if (sPattern.indexOf(sIntervalSeparator === -1)) {
-				// In zh_CN, the "MMM-M" pattern is similar to "LLLxLLL"
-				// x represents the character that means "to" in zhCN, it's not the actual character.
-				sIntervalSeparator = oControl._getIntervalPattern("MMM-M").replace(/L/g, "").trim();
-			}
-		}
-
-		return sIntervalSeparator;
-	};
-
-	/**
 	 *
 	 * @param {UniversalDate} currentDate
 	 * @param {sap.me.Calendar} oControl The Calendar control
-	 * @param {integer} iCurrentDate The current's date day of the month.
-	 * @param {boolean} bSingleRow Is the calendar displayed on a single row (true/false)? This changes the format string,
-	 * as for a single row, the span of dates displayed may be across 2 different months.
 	 * @param {integer} iTotalDays The total number of days displayed.
 	 * @returns {string} A formatted string to display the month above the calendar.
 	 * @private
 	 */
-	CalendarRenderer._getMonthTitle = function (currentDate, oControl, iCurrentDate, bSingleRow, iTotalDays) {
-		var sMonthTitle = this._getMonthAndYear(currentDate, oControl);
+	CalendarRenderer._getMonthTitle = function (oCurrentDate, bSingleRow, iTotalDays) {
+		var oFormatOption = {
+			format: "yMMM"
+		};
+
+		var oFormat;
+		var oTempDate;
 
 		if (bSingleRow) {
-			var tempDate = new UniversalDate(currentDate.getTime());
-			tempDate.setDate(tempDate.getDate() + iTotalDays - 1);
+			oTempDate = new UniversalDate(oCurrentDate.getTime());
+			oTempDate.setDate(oTempDate.getDate() + iTotalDays - 1);
 
-			// change the displayed date to be an interval if the month or the year are different
-			if (currentDate.getFullYear() !== tempDate.getFullYear() || currentDate.getMonth() !== tempDate.getMonth()) {
-				sMonthTitle = this._getDateIntervalText(currentDate, tempDate, oControl);
-			}
+			// change the displayed date to be an interval
+			oFormatOption.interval = true;
 		}
-		return sMonthTitle;
+
+		oFormat = DateFormat.getDateInstance(oFormatOption);
+
+		return oFormatOption.interval ? oFormat.format([oCurrentDate, oTempDate]) : oFormat.format(oCurrentDate);
 	};
 
 	/**
@@ -256,7 +148,7 @@ sap.ui.define(['jquery.sap.global', './CalendarDate', 'sap/ui/core/LocaleData', 
 		}
 
 		// default title (in en_US, for instance): MMM y
-		var sMonthTitle = this._getMonthTitle(currentDate, oControl, iCurrentDate, bSingleRow, iTotalDays);
+		var sMonthTitle = this._getMonthTitle(currentDate, bSingleRow, iTotalDays);
 
 		if (!bSingleRow) {
 			currentDate.setDate(iCurrentDate - iDaysToGoBack + 1);

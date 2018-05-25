@@ -1,17 +1,18 @@
-sap.ui.define([], function() {
+sap.ui.define(['sap/ovp/cards/CommonUtils'], function(CommonUtils) {
 		"use strict";
 
-		var LayoutModel = function(uiModel, iColCount) {
-			this.uiModel = uiModel;
-			this.setColCount(iColCount);
-			this.aCards = [];
-			this.oLayoutVars = null;
-			this.oUndoBuffer = {};
-			this.bSequenceLayout = null;
-			this.oCurrLayoutVar = null;
-			this.sManifestLayoutsJSON = null;
-			this.iDisplaceRow = 9999;
-		};
+        var LayoutModel = function (uiModel, iColCount, iRowHeightPx, iCardBorderPx) {
+            this.uiModel = uiModel;
+            this.setColCount(iColCount);
+            this.aCards = [];
+            this.oLayoutVars = null;
+            this.oUndoBuffer = {};
+            this.bSequenceLayout = null;
+            this.iDisplaceRow = null;
+            this.iDummyRow = 999;
+            this.iRowHeightPx = iRowHeightPx;
+            this.iCardBorderPx = iCardBorderPx;
+        };
 
 		/**
 		 * set number of columns
@@ -26,13 +27,11 @@ sap.ui.define([], function() {
 			} else if (iColCount !== this.iColCount) {
 				//extract current changed layout variant for later use
 				if (this.bLayoutChanged) {
-					this._updateCurrentLayoutVariant();
 					this.oUndoBuffer = {};
 					this.bLayoutChanged = false;
 				}
+                this.iPreviousColCount = this.iColCount;
 				this.iColCount = iColCount;
-
-				//console.log("colCount: " + this.iColCount);
 			}
 		};
 
@@ -43,32 +42,14 @@ sap.ui.define([], function() {
 		 * @method setLayoutVars
 		 * @param {Object} oLayoutVars - object containing layout variants
 		 */
-		LayoutModel.prototype.setLayoutVars = function(oLayoutVars) {
-			var layoutKey = null;
-			var sCurrentId = null;
-			if (this.oCurrLayoutVar && this.oCurrLayoutVar.__ovpDBLVarId) {
-				sCurrentId = this.oCurrLayoutVar.__ovpDBLVarId;
-			}
-			for (layoutKey in oLayoutVars) {
-				if (oLayoutVars.hasOwnProperty(layoutKey) && oLayoutVars[layoutKey]) {
-					//overwrite existing ones
-					this.oLayoutVars[layoutKey] = oLayoutVars[layoutKey];
-				}
-			}
-			if (sCurrentId) {
-				this.oCurrLayoutVar = this.oLayoutVars[sCurrentId];
-			}
-
-			//build layout based on new variant
-			this._buildGrid();
-
-			//condense empty rows (includes update of current layout variant)
-			this.condenseEmptyRows();
-		};
-
-		LayoutModel.prototype.setManifestLayoutsJSON = function(sManifestJSON) {
-			this.sManifestLayoutsJSON = sManifestJSON;
-		};
+        LayoutModel.prototype.setLayoutVars = function (oLayoutVars) {
+            //Check for the empty LREP content
+            if (Array.isArray(oLayoutVars) && oLayoutVars.length !== 0) {
+                this.oLayoutVars = oLayoutVars;
+            }
+            //build layout based on new variant
+            this._buildGrid();
+        };
 
 		/**
 		 * update visibility of given cards
@@ -77,33 +58,24 @@ sap.ui.define([], function() {
 		 * @method updateCardVisibility
 		 * @param {Array} aChgCards - array containing card ids and visibility state
 		 */
-		LayoutModel.prototype.updateCardVisibility = function(aChgCards) {
-			var i = 0;
-			var layoutKey;
-			var layoutVar;
-
-			//extract current layout
-			this.oLayoutVars["C" + this.iColCount] = this.extractCurrentLayoutVariant();
-
-			for (i = 0; i < aChgCards.length; i++) {
-				for (layoutKey in this.oLayoutVars) {
-					if (this.oLayoutVars[layoutKey].hasOwnProperty(aChgCards[i].id)) {
-						layoutVar = this.oLayoutVars[layoutKey];
-						if (layoutVar[aChgCards[i].id].hasOwnProperty("visible") && layoutVar[aChgCards[i].id].visible === false && aChgCards[i].visibility) {
-							//init cell coordinates - will be handled later in setCardsLayoutFromVariant
-							layoutVar[aChgCards[i].id].col = 0;
-							layoutVar[aChgCards[i].id].row = 0;
-						}
-						layoutVar[aChgCards[i].id].visible = aChgCards[i].visibility;
-					}
-				}
-				this.oCurrLayoutVar = this.oLayoutVars["C" + this.iColCount];
-			}
-			this._setCardsLayoutFromVariant(this.aCards, this.oCurrLayoutVar);
-
-			//condense empty rows (includes update of current layout variant)
-			this.condenseEmptyRows();
-		};
+        LayoutModel.prototype.updateCardVisibility = function (aChgCards) {
+            var oCardVariant, oCardLayoutVariant;
+            for (var i = 0; i < aChgCards.length; i++) {
+                oCardVariant = this.oLayoutVars.filter(function (item) {
+                    return item.id === aChgCards[i].id;
+                });
+                oCardLayoutVariant = this.aCards.filter(function (item) {
+                    return item.id === aChgCards[i].id;
+                });
+                //If the card visibility property is changed then move the card at the end
+                if (!aChgCards[i].visibility) {
+                    oCardVariant[0].dashboardLayout['C' + this.iColCount].row = this._findHighestOccupiedRow();
+                    oCardLayoutVariant[0].dashboardLayout.row = oCardVariant[0].dashboardLayout['C' + this.iColCount].row;
+                }
+                oCardVariant[0].visibility = aChgCards[i].visibility;
+                oCardLayoutVariant[0].dashboardLayout.visible = aChgCards[i].visibility;
+            }
+        };
 
 		/**
 		 * return number of columns
@@ -119,11 +91,10 @@ sap.ui.define([], function() {
 		 * get cards in current layout
 		 *
 		 * @method getCards
-		 * @param {Int} (optional) iColCount - number of columns
+		 * @param {Int} iColCount (optional)- number of columns
 		 * @returns {Array} array containing cards in layout
 		 */
 		LayoutModel.prototype.getCards = function(iColCount) {
-
 			//build grid if cards array was not filled before or the number of columns has changed
 			if (this.aCards.length === 0 || iColCount && iColCount !== this.iColCount) {
 				if (iColCount) {
@@ -132,64 +103,29 @@ sap.ui.define([], function() {
 				//build grid for this.iColCount columns
 				this._buildGrid();
 			}
-
 			return this.aCards;
 		};
 
 		/**
-		 * get card by its id
+		 * Return the card by id
 		 *
 		 * @method getCardById
-		 * @param {ID} cardId
-		 * @returns {Object} card
+		 * @param {String} cardId - cardId
+		 * @returns {Object} oCard - Card object
 		 */
-		LayoutModel.prototype.getCardById = function(cardId) {
-
-			var oCard = null;
-			var i = 0;
-			for (i = 0; i < this.aCards.length; i++) {
-				oCard = this.aCards[i];
-				if (oCard.id === cardId) {
-					break;
-				}
-			}
-			return oCard;
-		};
+        LayoutModel.prototype.getCardById = function (cardId) {
+            var oCard = null;
+            var i = 0;
+            for (i = 0; i < this.aCards.length; i++) {
+                oCard = this.aCards[i];
+                if (oCard.id === cardId) {
+                    break;
+                }
+            }
+            return oCard;
+        };
 
 		/**
-		 * get cards that are (partly) located in given grid
-		 *
-		 * @method getCardsByGrid
-		 * @param {Object} grid
-		 * @param {String} ignoreId - (optional) id of card that should be skipped
-		 * @returns {Array} of cards
-		 */
-		LayoutModel.prototype.getCardsByGrid = function(gridSpan, ignoreId) {
-			var oCardSpan = {};
-			var i = 0;
-			var oCard = {};
-			var aMatches = [];
-
-			for (i = 0; i < this.aCards.length; i++) {
-				oCard = this.aCards[i];
-
-				if (oCard.id === ignoreId || !oCard.dashboardLayout.visible) {
-					continue;
-				}
-
-				oCardSpan.y1 = oCard.dashboardLayout.row;
-				oCardSpan.x1 = oCard.dashboardLayout.column;
-				oCardSpan.y2 = oCard.dashboardLayout.row + oCard.dashboardLayout.rowSpan - 1;
-				oCardSpan.x2 = oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan - 1;
-
-				if (this._checkOverlap(oCardSpan, gridSpan)) {
-					aMatches.push(oCard);
-				}
-			}
-			return aMatches;
-		};
-
-		/** 
 		 * get the DashboardLayout variants in JSON format
 		 * (only variants that were changed manually or originate from lrep)
 		 * 
@@ -197,103 +133,73 @@ sap.ui.define([], function() {
 		 * @returns {Object} JSON containing the layout variants
 		 */
 		LayoutModel.prototype.getLayoutVariants4Pers = function() {
-			//return this.oLayoutVars;
-
-			var variant = null;
-			//clone this.oLayoutVars and remove variants that were not changed manually
-			var oPersVars = JSON.parse(JSON.stringify(this.oLayoutVars));
-			for (variant in oPersVars) {
-				if (oPersVars[variant].__ovpDBLVarSource === "auto" || oPersVars[variant].__ovpDBLVarSource === "manifest") {
-					//delete unchanged variants
-					delete oPersVars[variant];
-				}
-			}
-			return oPersVars;
+			return JSON.parse(JSON.stringify(this.oLayoutVars));
 		};
 
-		/**
-		 * get card that resides at given grid position
-		 *
-		 * @method getCardByGridPos
-		 * @param {Object} gridPos - column and row
-		 * @returns {Object} card residing at grid position
-		 */
-		LayoutModel.prototype.getCardByGridPos = function(gridPos) {
-
-			this._sortCardsByCol(this.aCards); // can we trust that's already sorted correctly??? not sure...
-
-			var i = 0;
-			var oCard = {};
-
-			for (i = 0; i < this.aCards.length; i++) {
-				oCard = this.aCards[i];
-
-				if (oCard.dashboardLayout.column <= gridPos.column && (oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan - 1) >= gridPos.column &&
-					oCard.dashboardLayout.row <= gridPos.row && (oCard.dashboardLayout.row + oCard.dashboardLayout.rowSpan - 1) >= gridPos.row) {
-					return oCard;
-				}
-			}
-		};
-
-		/** 
-		 * read layout variants from ui model
-		 * @method _readVariants
-		 * @param {Boolean} bUseManifest - use manifest versions
-		 */
-		LayoutModel.prototype._readVariants = function(bUseManifest) {
-			var oVariant = {};
-			this.oLayoutVars = {};
-			var oLayoutRaw = null;
-
-			if (!this.sManifestLayoutsJSON) {
-				//this is the initial call, lrep merge not yet done --> "decouple" manifest variants by storing JSON, lrep merge might overwrite later
-				oLayoutRaw = this.uiModel.getProperty("/dashboardLayout");
-				if (oLayoutRaw) {
-					this.sManifestLayoutsJSON = JSON.stringify(oLayoutRaw);
-				}
-			}
-
-			if (bUseManifest) {
-				//these variants are purely manifest based (see above)
-				oLayoutRaw = JSON.parse(this.sManifestLayoutsJSON);
-			} else {
-				//these variants can contain local changes
-				oLayoutRaw = this.uiModel.getProperty("/dashboardLayout");
-			}
-
-			//pre-set bSequenceLayout; if no variants exist, grid will be build from cards sequence
-			this.bSequenceLayout = true;
-
-			if (!oLayoutRaw) {
-				return;
-			}
-			for (var layoutKey in oLayoutRaw) {
-				if (oLayoutRaw.hasOwnProperty(layoutKey) && oLayoutRaw[layoutKey]) {
-					oVariant = oLayoutRaw[layoutKey];
-					oVariant.id = layoutKey;
-
-					if (bUseManifest) {
-						oVariant.__ovpDBLVarSource = "manifest";
-						oVariant.__ovpDBLVarId = "C" + parseInt(oVariant.id.replace(/[^0-9\.]/g, ""), 10);
-					}
-					this.oLayoutVars["C" + parseInt(oVariant.id.replace(/[^0-9\.]/g, ""), 10)] = oVariant;
-					//variant exists --> no fallback to cards sequence
-					this.bSequenceLayout = false;
-
-				}
-			}
-		};
+        /**
+         * If the user has given variant details in the manifest then use the same variant
+         * @method _readVariants
+         */
+        LayoutModel.prototype._readVariants = function () {
+            var oVariant,
+                oLayoutRaw = this.uiModel.getProperty('/dashboardLayout');
+            if (!!oLayoutRaw) {
+                //Copy the user given manifest settings for different layout like cols_3/cols_5/C3/C5
+                for (var layoutKey in oLayoutRaw) {
+                    if (oLayoutRaw.hasOwnProperty(layoutKey) && oLayoutRaw[layoutKey]) {
+                        oVariant = oLayoutRaw[layoutKey];
+                        oVariant.id = layoutKey;
+                        for (var item in oVariant) {
+                            var oLayoutCard = this.oLayoutVars.filter(function (element) {
+                                return element.id === item;
+                            });
+                            //If the variant for the card already present
+                            if (Array.isArray(oLayoutCard) && oLayoutCard.length > 0) {
+                                //Remove all characters of the key except integer one
+                                var sLayoutKey = 'C' + +oVariant.id.replace(/[^0-9\.]/g, "");
+                                var oCardLayoutObj = oLayoutCard[0].dashboardLayout[sLayoutKey];
+                                var oCard = this.aCards.filter(function (ele) {
+                                    return ele.id === item;
+                                });
+                                if (Array.isArray(oCard) && oCard.length > 0) {
+                                    //If variant for the same layout present then copy the values of row, col,colSpan and noOfItems
+                                    if (oCardLayoutObj) {
+                                        oCardLayoutObj.row = oVariant[item].row;
+                                        oCardLayoutObj.col = oVariant[item].col;
+                                        oCardLayoutObj.colSpan = oCard[0].template === 'sap.ovp.cards.stack' ? 1 : Math.min(oVariant[item].colSpan, this.iColCount);
+                                        oCardLayoutObj.maxColSpan = oVariant[item].maxColSpan;
+                                        oCardLayoutObj.noOfItems = oVariant[item].rowSpan;
+                                    } else {
+                                        //Else create the layout with the values of row, col,colSpan and noOfItems
+                                        oLayoutCard[0].dashboardLayout[sLayoutKey] = {
+                                            row: oVariant[item].row,
+                                            col: oVariant[item].col,
+                                            colSpan: oCard[0].template === 'sap.ovp.cards.stack' ? 1 : Math.min(oVariant[item].colSpan, this.iColCount),
+                                            maxColSpan: oVariant[item].maxColSpan,
+                                            noOfItems: oVariant[item].rowSpan,
+                                            autoSpan: oCard[0].template === 'sap.ovp.cards.stack' ? false : true
+                                        }
+                                    }
+                                    oLayoutCard[0].visibility = oVariant[item].visible ? oVariant[item].visible : true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
 
 		/** 
 		 * drop layout variants and reload manifest variants
 		 * @method resetToManifest
 		 */
-		LayoutModel.prototype.resetToManifest = function() {
-			this.oCurrLayoutVar = null;
-			this.oLayoutVars = null;
-
-			this._buildGrid( /*bUseManifest*/ true);
-		};
+        LayoutModel.prototype.resetToManifest = function () {
+            this.oLayoutVars = null;
+            for (var i = 0; i < this.aCards.length; i++) {
+                this.aCards[i].dashboardLayout = {};
+            }
+            this._buildGrid(/*bUseManifest*/ true);
+        };
 
 		/**
 		 * find best matching layout variant (or create one) and update card dashboardLayout
@@ -301,281 +207,292 @@ sap.ui.define([], function() {
 		 * @method _buildGrid
 		 * @param {Boolean} bUseManifest - use manifest layout variants for read variants (needed for reset)
 		 */
-		LayoutModel.prototype._buildGrid = function(bUseManifest) {
+        LayoutModel.prototype._buildGrid = function (bUseManifest) {
+            if (this.aCards.length === 0) {
+                //read cards if not yet done
+                this.aCards = jQuery.extend(true, [], this.uiModel.getProperty("/cards"));
+            }
+            if (!this.oLayoutVars || bUseManifest) {
+                this.oLayoutVars = [];
+                //pre-set bSequenceLayout; if no variants exist, grid will be build from cards sequence
+                this.bSequenceLayout = true;
+            }
 
-			var i = 0;
-			var oLayoutVar = null;
+            //if the layout is loaded for the first time or easyscan variant is provided
+            if (this.bSequenceLayout || this.oLayoutVars[0] && !this.oLayoutVars[0].dashboardLayout) {
+                this._sliceSequenceSausage();
+                this.bSequenceLayout = false;
+            } else {
+                //If there is already a variant present
+                this._sliceSequenceSausage(this.oLayoutVars);
+            }
+            //Use the variants given by user if present
+            this._readVariants();
+            // set card grid data from layout variant
+            this._setCardsLayoutFromVariant(this.aCards, this.oLayoutVars);
+        };
 
-			if (this.aCards.length === 0) {
-				//read cards if not yet done
-				this.aCards = this.uiModel.getProperty("/cards");
-			}
-			if (!this.oLayoutVars || bUseManifest) {
-				//read layout variants is not yet done
-				this._readVariants(bUseManifest);
-			}
+        /**
+         * Copy the variant data to respective card object
+         *
+         * @method _setCardsLayoutFromVariant
+         * @param {Array} aCards - cards object
+         * @parama {Array} oLayoutVariant - Layout variant
+         */
 
-			//find best matching layout variant
-			if (this.bSequenceLayout) {
-				this._sliceSequenceSausage();
-				oLayoutVar = this.oLayoutVars["C" + this.iColCount];
-				oLayoutVar.__ovpDBLVarSource = "auto";
-				this.bSequenceLayout = false;
-				// }
-			} else if (this.oLayoutVars["C" + this.iColCount]) {
-				//get matching variant -- BEST MATCH
-				oLayoutVar = this.oLayoutVars["C" + this.iColCount];
-			} else if (this.oCurrLayoutVar) {
-				//slice current layout variant
-				this._sliceSequenceSausage(this.oCurrLayoutVar);
-				oLayoutVar = this.oLayoutVars["C" + this.iColCount];
-				oLayoutVar.__ovpDBLVarSource = "auto";
-			} else {
-				//use layout variants for smaller colCounts
-				for (i = this.iColCount; i > 0; i--) {
-					if (this.oLayoutVars["C" + i]) {
-						this._sliceSequenceSausage(this.oLayoutVars["C" + i]);
-						oLayoutVar = this.oLayoutVars["C" + this.iColCount];
-						oLayoutVar.__ovpDBLVarSource = "auto";
-						break;
-					}
-				}
-			}
-			if (!oLayoutVar) {
-				//last chance: take first variant in object
-				for (var oLVar in this.oLayoutVars) {
-					//slice this layout variant (the number of columns != this.iColCount)
-					this._sliceSequenceSausage(this.oLayoutVars[oLVar]);
-					oLayoutVar = this.oLayoutVars["C" + this.iColCount];
-					oLayoutVar.__ovpDBLVarSource = "auto";
-					break;
-				}
-			}
+        LayoutModel.prototype._setCardsLayoutFromVariant = function (aCards, oLayoutVariant) {
+            var oCard = {}, oLayoutCard = {}, oCardObj = {}, oCardProp = null;
+            for (var i = 0; i < aCards.length; i++) {
+                oCard = aCards[i];
+                oLayoutCard = oLayoutVariant.filter(function (item) {
+                    return item.id === oCard.id;
+                });
+                if (Array.isArray(oLayoutCard) && oLayoutCard.length > 0) {
+                    oCard.dashboardLayout = {};
+                    oCardObj = oLayoutCard[0].dashboardLayout["C" + this.iColCount];
+                    oCardProp = this._getDefaultCardItemHeightAndCount(oCard);
+                    oCard.dashboardLayout.colSpan = oCardObj.colSpan ? oCardObj.colSpan : 1;
+                    oCard.dashboardLayout.maxColSpan = oCardObj.maxColSpan;
+                    oCard.dashboardLayout.rowSpan = oCardObj.rowSpan ? oCardObj.rowSpan : 12;
+                    oCard.dashboardLayout.noOfItems = oCardObj.noOfItems ? oCardObj.noOfItems : oCardProp.noOfItems;
+                    oCard.dashboardLayout.itemHeight = oCardProp.itemHeight;
+                    oCard.dashboardLayout.headerHeight = oCardProp.headerHeight;
+                    oCard.dashboardLayout.autoSpan = oCardObj.autoSpan;
+                    oCard.dashboardLayout.showOnlyHeader = oCardObj.showOnlyHeader;
+                    oCard.dashboardLayout.column = oCardObj.col;
+                    oCard.dashboardLayout.row = oCardObj.row;
+                    if (oLayoutCard[0].hasOwnProperty("visibility") && !oLayoutCard[0].visibility) {
+                        oCard.dashboardLayout.visible = false;
+                    } else {
+                        oCard.dashboardLayout.visible = true;
+                    }
+                }
+                //layout verification; if data is inconsistent (non existing column, too wide) put card to the end
+                if (oCard.dashboardLayout.column > this.iColCount) {
+                    //card is located in invalid column
+                    this._displaceCardToEnd(oCard);
+                    jQuery.sap.log.warning("DashboardLayout: card (" + oCard.id + ") in invalid column -> moved to end");
+                }
+                if (oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan - 1 > this.iColCount) {
+                    //card is too wide for its position
+                    oCard.dashboardLayout.colSpan = Math.min(oCard.dashboardLayout.colSpan, this.iColCount);
+                    this._displaceCardToEnd(oCard);
+                    jQuery.sap.log.warning("DashboardLayout: card (" + oCard.id + ") too wide -> moved to end");
+                }
+            }
+        };
 
-			this.oCurrLayoutVar = oLayoutVar;
+        /**
+         * Method to align a card in the layout if it's out of the layout or added for th first time
+         *
+         * @method _displaceCardToEnd
+         * @param {Object} oCard - Card object containing all the properties
+         */
+        LayoutModel.prototype._displaceCardToEnd = function (oCard) {
+            oCard.dashboardLayout.column = 1;
+            if (!this.iDisplaceRow) {
+                this.iDisplaceRow = this._findHighestOccupiedRow();
+            }
+            oCard.dashboardLayout.row = this.iDisplaceRow;
+            this.iDisplaceRow += oCard.dashboardLayout.rowSpan;
+            var oLayoutCard = this.oLayoutVars.filter(function (item) {
+                return item.id === oCard.id;
+            });
+            //Copy the row value of card.dashboardLayout to variant
+            if (Array.isArray(oLayoutCard) && oLayoutCard.length > 0) {
+                oLayoutCard[0].dashboardLayout["C" + this.iColCount].row = oCard.dashboardLayout.row;
+            }
+        };
 
-			// set card grid data from layout variant
-			this._setCardsLayoutFromVariant(this.aCards, this.oCurrLayoutVar);
-			this._sortCardsByCol(this.aCards);
-		};
+        /**
+         * Method to set all the default properties for card in resizable layout. Properties are
+         *                 1) rowSpan - Defines height of card
+         *                 2) colSpan- Defines width of card
+         *                 3) noOfItems - Defines how many items to be shown in card(applicable for List/Table/Link List card)
+         *                 4) autoSpan - Defines card should grow automatically or it would have fixed height
+         *                 5) visible - Defines visibility of card
+         *                 6) itemHeight - Defines each item height shown in card(applicable for List/Table/Link List card)
+         *                 7) headerHeight - Defines header height[All variation of header like Normal/KPI header, Tittle/Subtitle line length,
+         *                                   showSortingInHeader/showFilterInHeader flag]
+         *
+         * @method _setCardSpanFromDefault
+         * @param {Object} oCard - Card object containing all the properties and settings from manifest
+         */
+        LayoutModel.prototype._setCardSpanFromDefault = function (oCard) {
+            if (!oCard.dashboardLayout) {
+                oCard.dashboardLayout = {};
+            }
+            var oCardProp = this._getDefaultCardItemHeightAndCount(oCard);
+            //No default span is mentioned so, no of items will be default
+            if (!oCard.settings.defaultSpan) {
+                if (oCard.template === 'sap.ovp.cards.linklist') {
+                    oCard.dashboardLayout.rowSpan = 1;
+                } else {
+                    oCard.dashboardLayout.rowSpan = 12;
+                }
+                oCard.dashboardLayout.colSpan = 1;
+                oCard.dashboardLayout.noOfItems = oCardProp.noOfItems;
+                oCard.dashboardLayout.autoSpan = true;
+                oCard.dashboardLayout.showOnlyHeader = false;
+                oCard.dashboardLayout.maxColSpan = oCard.dashboardLayout.colSpan;
+            } else {
+                //User wants to show till header
+                if (oCard.settings.defaultSpan.showOnlyHeader) {
+                    oCard.dashboardLayout.rowSpan = Math.ceil((oCardProp.headerHeight + 2 * this.iCardBorderPx) / this.iRowHeightPx);
+                    oCard.dashboardLayout.noOfItems = 0;
+                    oCard.dashboardLayout.autoSpan = false;
+                    oCard.dashboardLayout.showOnlyHeader = true;
+                } else {
+                    if (oCard.template === 'sap.ovp.cards.linklist') {
+                        oCard.dashboardLayout.rowSpan = oCard.settings.defaultSpan.rows ? oCard.settings.defaultSpan.rows : 1;
+                        oCard.dashboardLayout.autoSpan = false;
+                    } else {
+                        oCard.dashboardLayout.rowSpan = 12;
+                        oCard.dashboardLayout.autoSpan = true;
+                    }
+                    oCard.dashboardLayout.noOfItems = oCard.settings.defaultSpan.rows ? oCard.settings.defaultSpan.rows : oCardProp.noOfItems;
+                    oCard.dashboardLayout.showOnlyHeader = false;
+                }
+                oCard.dashboardLayout.colSpan = oCard.template === 'sap.ovp.cards.stack' ? 1 : (oCard.settings.defaultSpan.cols ? Math.min(oCard.settings.defaultSpan.cols, this.iColCount) : 1);
+                oCard.dashboardLayout.maxColSpan = oCard.settings.defaultSpan.cols ? oCard.settings.defaultSpan.cols: 1;
+            }
+            oCard.dashboardLayout.visible = true;
+            oCard.dashboardLayout.itemHeight = oCardProp.itemHeight;
+            oCard.dashboardLayout.headerHeight = oCardProp.headerHeight;
+        };
 
-		LayoutModel.prototype._setCardsLayoutFromVariant = function(aCards, oLayoutVariant) {
-			var oCard = {};
-			var oLayoutCard = {};
-			var i = 0;
-			var bCondenseRequired = false;
+        /**
+         * Method to create variant for different column layouts like C2, C3,C5 and validate the layout
+         *
+         * @method _sliceSequenceSausage
+         * @param {Object} oUseVariant - layout variant to use
+         */
+        LayoutModel.prototype._sliceSequenceSausage = function (oUseVariant) {
+            var i = 0, j = 0, iCol = 0, iColEnd = 0, iMaxRows = 0, oCard = {}, aSliceCols = [];
+            if (!oUseVariant) {
+                this._sortCardsSausage(this.aCards);
+            }
+            // array to remember occupied columns
+            for (i = 0; i < this.iColCount; i++) {
+                aSliceCols.push({
+                    col: i + 1,
+                    rows: 0
+                });
+            }
+            for (i = 0; i < this.aCards.length; i++) {
+                oCard = this.aCards[i];
+                // span data from card settings
+                if (!oCard.dashboardLayout) {
+                    oCard.dashboardLayout = {};
+                }
+                if (!oUseVariant) {
+                    //set defaults variant as there is no variant present
+                    this._setCardSpanFromDefault(oCard);
+                } else {
+                    //else take the variant for particular card from the variants
+                    var oLayoutCard = oUseVariant.filter(function (item) {
+                        return item.id === oCard.id;
+                    });
+                    //If the variant for the card already present
+                    if (Array.isArray(oLayoutCard) && oLayoutCard.length > 0) {
+                        //Copy the data for particular column layout
+                        var oCardObj = oLayoutCard[0].dashboardLayout["C" + this.iColCount];
+                        //If there is no layout present then read the variants for the previous layout
+                        // e.g - In case you are loading C4 for the first time from C5
+                        if (!oCardObj) {
+                            //Get the variant from previous layout
+                            var aLayoutkeys = Object.keys(oLayoutCard[0].dashboardLayout);
+                            if (aLayoutkeys.length > 0) {
+                                var oPreviousLREPData = oLayoutCard[0].dashboardLayout[aLayoutkeys[0]];
+                                if (!oPreviousLREPData) {
+                                    this._setCardSpanFromDefault(oCard);
+                                } else {
+                                    //Copy variant to the present layout except row and column as it can not be accomodated in all the cases
+                                    // e.g -  Loading C5 data to C2 layout and any card has colspan = 3/4/5
+                                    oCard.dashboardLayout.rowSpan = oPreviousLREPData.rowSpan;
+                                    oCard.dashboardLayout.colSpan = oPreviousLREPData.colSpan;
+                                    oCard.dashboardLayout.maxColSpan = oPreviousLREPData.maxColSpan;
+                                    oCard.dashboardLayout.noOfItems = oPreviousLREPData.noOfItems;
+                                    oCard.dashboardLayout.autoSpan = oPreviousLREPData.autoSpan;
+                                    oCard.dashboardLayout.showOnlyHeader = oPreviousLREPData.showOnlyHeader;
+                                }
+                            }
+                        } else {
+                            //If variant already present for the layout, then just copy
+                            oCard.dashboardLayout.rowSpan = oCardObj.rowSpan;
+                            oCard.dashboardLayout.colSpan = oCardObj.colSpan;
+                            oCard.dashboardLayout.maxColSpan = oCardObj.maxColSpan;
+                            oCard.dashboardLayout.noOfItems = oCardObj.noOfItems;
+                            oCard.dashboardLayout.autoSpan = oCardObj.autoSpan;
+                            oCard.dashboardLayout.row = oCardObj.row;
+                            oCard.dashboardLayout.column = oCardObj.col;
+                            oCard.dashboardLayout.showOnlyHeader = oCardObj.showOnlyHeader;
+                            continue;
+                        }
+                    } else {
+                        //There may be case where the card is newly added to manifest and there is no variant data present
+                        //So crete new variant and push it
+                        oCard.dashboardLayout.row = this.iDummyRow;
+                        oCard.dashboardLayout.column = 1;
+                        var dashboardLayoutObj = {};
+                        var layoutKey = {
+                            row: oCard.dashboardLayout.row,
+                            col: oCard.dashboardLayout.column,
+                            rowSpan: oCard.dashboardLayout.rowSpan,
+                            colSpan: oCard.dashboardLayout.colSpan,
+                            maxColSpan: oCard.dashboardLayout.maxColSpan,
+                            noOfItems: oCard.dashboardLayout.noOfItems,
+                            autoSpan: oCard.dashboardLayout.autoSpan,
+                            showOnlyHeader: oCard.dashboardLayout.showOnlyHeader
+                        };
+                        dashboardLayoutObj["C" + this.iColCount] = layoutKey;
+                        oUseVariant.push({
+                            id: oCard.id,
+                            visibility: oCard.dashboardLayout.visible,
+                            selectedKey: oCard.settings.selectedKey,
+                            dashboardLayout: dashboardLayoutObj
+                        });
+                        continue;
+                    }
+                }
+                //Check that the card is not going out of the layout
+                oCard.dashboardLayout.colSpan = oCard.dashboardLayout.maxColSpan;
+                oCard.dashboardLayout.colSpan = oCard.dashboardLayout.colSpan > this.iColCount ? this.iColCount : oCard.dashboardLayout.colSpan;
+                iCol = iColEnd < this.iColCount ? iColEnd + 1 : 1;
 
-			for (i = 0; i < aCards.length; i++) {
-				oCard = aCards[i];
-				oLayoutCard = oLayoutVariant[oCard.id];
-				if (oLayoutCard) {
-					oCard.dashboardLayout = {};
-					if (oLayoutCard.colSpan) {
-						oCard.dashboardLayout.colSpan = oLayoutCard.colSpan;
-					} else {
-						oCard.dashboardLayout.colSpan = 1;
-					}
-					if (oLayoutCard.rowSpan) {
-						oCard.dashboardLayout.rowSpan = oLayoutCard.rowSpan;
-					} else {
-						oCard.dashboardLayout.rowSpan = 1;
-					}
+                //check end col
+                if (iCol + oCard.dashboardLayout.colSpan - 1 > this.iColCount) {
+                    oCard.dashboardLayout.colSpan = this.iColCount - iCol + 1;
+                }
+                iColEnd = iCol + oCard.dashboardLayout.colSpan - 1;
+                oCard.dashboardLayout.column = iCol;
 
-					if (oLayoutCard.hasOwnProperty("visible") && oLayoutCard.visible === false) {
-						oCard.dashboardLayout.column = 0;
-						oCard.dashboardLayout.row = 0;
-						oCard.dashboardLayout.visible = false;
-						bCondenseRequired = true;
-					} else {
-						oCard.dashboardLayout.visible = true;
-
-						if (oLayoutCard.col === 0 || oLayoutCard.row === 0) {
-							//card was invisible before --> put it at the very end (empty rows will be condensed later)
-							this._displaceCardToEnd(oCard);
-							bCondenseRequired = true;
-						} else {
-							oCard.dashboardLayout.column = oLayoutCard.col;
-							oCard.dashboardLayout.row = oLayoutCard.row;
-						}
-
-						if (oLayoutCard.autoSpan) {
-							oCard.dashboardLayout.autoSpan = oLayoutCard.autoSpan;
-						}
-						if (oCard.dashboardLayout.colSpan > this.iColCount) {
-							oCard.dashboardLayout.colSpan = this.iColCount;
-						}
-					}
-				} else {
-					//card is not maintained in layout --> put it at the very end
-					//get default span from card settings
-					this._setCardSpanFromDefault(oCard);
-					this._displaceCardToEnd(oCard);
-					bCondenseRequired = true;
-
-					//add card to layout variant
-					oLayoutVariant[oCard.id] = {
-						col: oCard.dashboardLayout.column,
-						row: oCard.dashboardLayout.row,
-						colSpan: oCard.dashboardLayout.colSpan,
-						rowSpan: oCard.dashboardLayout.rowSpan
-					};
-					oLayoutVariant.__ovpDBLVarSource = "auto";
-				}
-
-				//layout verification; if data is inconsistent (non existing column, too wide) put card to the end
-				if (oCard.dashboardLayout.column > this.iColCount) {
-					//card is located in invalid column
-					this._displaceCardToEnd(oCard);
-					bCondenseRequired = true;
-					jQuery.sap.log.error("DashboardLayout: card (" + oCard.id + ") in invalid column -> moved to end");
-				}
-				if (oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan - 1 > this.iColCount) {
-					//card is too wide for its position
-					oCard.dashboardLayout.colSpan = Math.min(oCard.dashboardLayout.colSpan, this.iColCount);
-					this._displaceCardToEnd(oCard);
-					bCondenseRequired = true;
-					jQuery.sap.log.error("DashboardLayout: card (" + oCard.id + ") too wide -> moved to end");
-				}
-			}
-			if (bCondenseRequired) {
-				//condense empty rows (includes update of current layout variant)
-				this.condenseEmptyRows();
-			}
-
-			//finally ensure a consistent grid
-			this.validateGrid( /*bRepair*/ true);
-		};
-
-		LayoutModel.prototype._displaceCardToEnd = function(oCard) {
-			oCard.dashboardLayout.column = 1;
-			oCard.dashboardLayout.row = this.iDisplaceRow;
-			this.iDisplaceRow += oCard.dashboardLayout.rowSpan;
-		};
-
-		LayoutModel.prototype._setCardSpanFromDefault = function(oCard) {
-			if (!oCard.dashboardLayout) {
-				oCard.dashboardLayout = {};
-			}
-			if (!oCard.settings.defaultSpan || oCard.settings.defaultSpan === "auto") {
-				oCard.dashboardLayout.autoSpan = true;
-				oCard.dashboardLayout.colSpan = 1;
-				oCard.dashboardLayout.rowSpan = 1;
-			} else {
-				if (oCard.settings.defaultSpan && oCard.settings.defaultSpan.cols) {
-					oCard.dashboardLayout.colSpan = Math.min(oCard.settings.defaultSpan.cols, this.iColCount);
-				} else {
-					oCard.dashboardLayout.colSpan = 1;
-				}
-				if (oCard.settings.defaultSpan && oCard.settings.defaultSpan.rows) {
-					oCard.dashboardLayout.rowSpan = oCard.settings.defaultSpan.rows;
-				} else {
-					oCard.dashboardLayout.rowSpan = 1;
-				}
-			}
-		};
+                // get max rows of all affected rows
+                iMaxRows = 0;
+                //If the card is hidden in another layout like C5,C3 then also move the card to the bottom.
+                if (Array.isArray(oLayoutCard) && oLayoutCard.length && !oLayoutCard[0].visibility) {
+                    oCard.dashboardLayout.row = this.iDummyRow;
+                } else {
+                    for (j = oCard.dashboardLayout.column; j < oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan; j++) {
+                        if (aSliceCols[j - 1].rows > iMaxRows) {
+                            iMaxRows = aSliceCols[j - 1].rows;
+                        }
+                    }
+                    oCard.dashboardLayout.row = iMaxRows + 1;
+                    // set rows count of all affected columns
+                    for (j = oCard.dashboardLayout.column; j < oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan; j++) {
+                        aSliceCols[j - 1].rows = iMaxRows + oCard.dashboardLayout.rowSpan;
+                    }
+                }
+            }
+            this.extractCurrentLayoutVariant();
+        };
 
 		/**
+		 * LayoutModel _sortCardsSausage
 		 *
-		 *
-		 * @method
-		 */
-		LayoutModel.prototype._sliceSequenceSausage = function(oUseVariant) {
-			// fallback grid
-			var i = 0;
-			var j = 0;
-			var iCol = 0;
-			var iColEnd = 0;
-			var iMaxRows = 0;
-			var oCard = {};
-			var aSliceCols = [];
-
-			if (!oUseVariant) {
-				this._sortCardsSausage(this.aCards);
-			}
-
-			// array to remember occupied columns
-			for (i = 0; i < this.iColCount; i++) {
-				aSliceCols.push({
-					col: i + 1,
-					rows: 0
-				});
-			}
-
-			for (i = 0; i < this.aCards.length; i++) {
-				oCard = this.aCards[i];
-
-				// span data from card settings
-				if (!oCard.dashboardLayout) {
-					oCard.dashboardLayout = {};
-				}
-
-				if (!oUseVariant || !oUseVariant.hasOwnProperty(oCard.id)) {
-					//set defaults if variant not given or card is not included in variant
-					this._setCardSpanFromDefault(oCard);
-				} else {
-					if (oUseVariant[oCard.id].hasOwnProperty("visible")) {
-						oCard.dashboardLayout.visible = oUseVariant[oCard.id].visible;
-					}
-					if (oUseVariant[oCard.id].colSpan && oUseVariant[oCard.id].colSpan > 0) {
-						oCard.dashboardLayout.colSpan = oUseVariant[oCard.id].colSpan;
-					} else {
-						oCard.dashboardLayout.colSpan = 1;
-					}
-					if (oUseVariant[oCard.id].rowSpan && oUseVariant[oCard.id].rowSpan > 0) {
-						oCard.dashboardLayout.rowSpan = oUseVariant[oCard.id].rowSpan;
-					} else {
-						oCard.dashboardLayout.rowSpan = 1;
-					}
-				}
-
-				if (oCard.dashboardLayout.hasOwnProperty("visible") && oCard.dashboardLayout.visible === false) {
-					oCard.dashboardLayout.column = 0;
-					oCard.dashboardLayout.row = 0;
-					continue;
-				} else if (!oCard.dashboardLayout.hasOwnProperty("visible")) {
-					oCard.dashboardLayout.visible = true;
-				}
-
-				if (oCard.dashboardLayout.colSpan > this.iColCount) {
-					oCard.dashboardLayout.colSpan = this.iColCount;
-				}
-
-				if (iColEnd < this.iColCount) {
-					iCol = iColEnd + 1;
-				} else {
-					iCol = 1;
-				}
-				//iCol = (i % this.iColCount) + 1;
-
-				//check end col
-				if (iCol + oCard.dashboardLayout.colSpan - 1 > this.iColCount) {
-					iCol = 1;
-				}
-				iColEnd = iCol + oCard.dashboardLayout.colSpan - 1;
-				oCard.dashboardLayout.column = iCol;
-
-				// get max rows of all affected rows
-				iMaxRows = 0;
-				for (j = oCard.dashboardLayout.column; j < oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan; j++) {
-					if (aSliceCols[j - 1].rows > iMaxRows) {
-						iMaxRows = aSliceCols[j - 1].rows;
-					}
-				}
-				oCard.dashboardLayout.row = iMaxRows + 1;
-
-				// set rows count of all affected columns
-				for (j = oCard.dashboardLayout.column; j < oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan; j++) {
-					aSliceCols[j - 1].rows = iMaxRows + oCard.dashboardLayout.rowSpan;
-				}
-			}
-
-			this.oLayoutVars["C" + this.iColCount] = this.extractCurrentLayoutVariant();
-		};
-
-		/**
-		 *
-		 *
-		 * @method
+		 * @method _sortCardsSausage
+		 * @param {Array} aCards - cards array
 		 */
 		LayoutModel.prototype._sortCardsSausage = function(aCards) {
 			aCards.sort(function(card1, card2) {
@@ -607,9 +524,10 @@ sap.ui.define([], function() {
 		};
 
 		/**
+		 * sort and order cards by column
 		 *
-		 *
-		 * @method
+		 * @method _sortCardsByCol
+		 * @param {Array} aCards - cards array
 		 */
 		LayoutModel.prototype._sortCardsByCol = function(aCards) {
 
@@ -638,9 +556,10 @@ sap.ui.define([], function() {
 		};
 
 		/**
+		 * sort and order cards by row
 		 *
-		 *
-		 * @method
+		 * @method _sortCardsByRow
+		 * @param {Array} aCards - cards array
 		 */
 		LayoutModel.prototype._sortCardsByRow = function(aCards) {
 
@@ -668,547 +587,271 @@ sap.ui.define([], function() {
 			});
 		};
 
-		LayoutModel.prototype._checkOverlap = function(a, b) {
-			var bX, bY = false;
-
-			if ((a.x1 >= b.x1 && a.x1 <= b.x2) || // overlaps a from the left
-				(a.x2 >= b.x1 && a.x2 <= b.x2) || // overlaps a from the right
-				(b.x1 >= a.x1 && b.x2 <= a.x2) // inside a
-			) {
-				bX = true;
-			}
-
-			if ((a.y1 >= b.y1 && a.y1 <= b.y2) || // overlaps from top
-				(a.y2 >= b.y1 && a.y2 <= b.y2) || // overlaps from bottom
-				(b.y1 >= a.y1 && b.y2 <= a.y2) // inside a
-			) {
-				bY = true;
-			}
-			return (bX && bY);
-		};
-
 		/**
-		 *
-		 *
-		 * @method
+		 * rewind last card arrangement
+		 * using undo buffer
 		 */
-		LayoutModel.prototype.undoLastChange = function() {
-			if (this.oUndoBuffer.layoutVariant) {
-				this.oLayoutVars["C" + this.iColCount] = this.oUndoBuffer.layoutVariant;
-				this.oUndoBuffer = {};
-			}
-		};
+        LayoutModel.prototype.undoLastChange = function () {
+            if (this.oUndoBuffer.layoutVariant) {
+                this.oLayoutVars = this.oUndoBuffer.layoutVariant;
+                this.oUndoBuffer = {};
+            }
+        };
 
-		/**
-		 *
-		 *
-		 * @method moveCardToGrid
-		 * @param {Boolean} bInProgress - function is called internally (reuse), model not stable -> do not update variant
-		 */
-		LayoutModel.prototype.moveCardToGrid = function(floaterId, cell, bPushHorizontal, oFloaterCard, bInProgress) {
+        /**
+         * Method to handle resize of card
+         *
+         * @method {Public} resizeCard
+         * @param {String} cardId - Card Id which is resized
+         * @param {object} oSpan - Updated rowspan and colspan of the card
+         * @param {boolean} bManualResize - Flag to check that if the card is resized by user or the initial loading
+         * @param {object} aDragOrResizeChanges - Array to record personalization changes during resize
+         * @return {Object}   {resizeCard : , affectedCards: } - Object containing the Updated card properties and affected cards
+         */
+        LayoutModel.prototype.resizeCard = function (cardId, oSpan, bManualResize, aDragOrResizeChanges) {
 
-			if (!bInProgress) {
-				//internal call, model not stable
-				this._registerChange("move");
-			}
-			var aAffectedCards = [];
-			var aCondenseCards = [];
+            this._registerChange("resize");
+            var oRCard = this.getCardById(cardId);
+            if (!oRCard) {
+                return [];
+            }
+            var deltaH = oSpan.colSpan - oRCard.dashboardLayout.colSpan;
+            var deltaV = oSpan.rowSpan - oRCard.dashboardLayout.rowSpan;
+            oRCard.dashboardLayout.showOnlyHeader = oSpan.showOnlyHeader;
 
-			var oFloater = null;
-			if (oFloaterCard) {
-				oFloater = oFloaterCard;
-			} else {
-				oFloater = this.getCardById(floaterId);
-			}
-			if (!oFloater) {
-				return [];
-			}
+            if (deltaH === 0 && deltaV === 0) {
+                return {
+                    resizeCard: oRCard,
+                    affectedCards: []
+                };
+            } else if (bManualResize && oRCard.dashboardLayout.autoSpan) {
+                oRCard.dashboardLayout.autoSpan = false;
+            }
 
-			if (cell.column < 1 || cell.column + oFloater.dashboardLayout.colSpan - 1 > this.iColCount) {
-				//invalid call! --> move card back to its model position
-				return [oFloater];
-			}
+            if (!bManualResize || (deltaV && deltaH === 0)) {
+                this._arrangeCards(oRCard, {
+                    "row": oSpan.rowSpan,
+                    "column": oRCard.dashboardLayout.colSpan
+                }, 'resize', aDragOrResizeChanges);
+            } else {
+                this._arrangeCards(oRCard, {
+                    "row": oSpan.rowSpan,
+                    "column": oSpan.colSpan
+                }, 'resize', aDragOrResizeChanges);
+            }
+            return {
+                resizeCard: oRCard,
+                //affectedCards: this.aCards
+                affectedCards: this._removeSpaceBeforeCard(aDragOrResizeChanges)
+            };
+        };
 
-			oFloater.dashboardLayout.column = cell.column;
-			oFloater.dashboardLayout.row = cell.row;
+        /**
+         * Method to remove the unnesessary spaces before card
+         *
+         * @method {Private} _removeSpaceBeforeCard
+         * @return {Array of Objects} this.aCards - Updated position of array of cards object
+         */
+        LayoutModel.prototype._removeSpaceBeforeCard = function (aDragOrResizeChanges) {
+            this._sortCardsByRow(this.aCards);
+            var delta = {};
 
-			//get overlapped cards
-			var oGrid = {
-				x1: oFloater.dashboardLayout.column,
-				y1: oFloater.dashboardLayout.row,
-				x2: oFloater.dashboardLayout.column + oFloater.dashboardLayout.colSpan - 1,
-				y2: oFloater.dashboardLayout.row + oFloater.dashboardLayout.rowSpan - 1
-			};
-			var aOverlaps = this.getCardsByGrid(oGrid, oFloater.id);
-			//calculate min col/row and aggregated row/col span
-			var oPushGrid = this._getPushGrid(aOverlaps);
-			var oInsertSpan = {};
+            for (var i = 1; i <= this.iColCount; i++) {
+                delta[i] = 1;
+            }
 
-			if (bPushHorizontal) {
-				oInsertSpan.rowSpan = oPushGrid.rowSpan;
-				oInsertSpan.colSpan = oFloater.dashboardLayout.column + oFloater.dashboardLayout.colSpan - oPushGrid.column;
-			} else {
-				oInsertSpan.rowSpan = oFloater.dashboardLayout.row + oFloater.dashboardLayout.rowSpan - oPushGrid.row;
-				oInsertSpan.colSpan = oPushGrid.colSpan;
-			}
+            for (var j = 0; j < this.aCards.length; j++) {
+                var lowerLimit = this.aCards[j].dashboardLayout.column;
+                var upperLimit = this.aCards[j].dashboardLayout.column + this.aCards[j].dashboardLayout.colSpan - 1;
+                if (this.aCards[j].dashboardLayout.visible) {
+                    if (this.aCards[j].dashboardLayout.colSpan > 1) {
+                        var tempArr = [];
+                        for (var k = lowerLimit; k <= upperLimit; k++) {
+                            tempArr.push(delta[k]);
+                        }
+                        var maxRow = Math.max.apply(Math, tempArr);
+                        for (var l = lowerLimit; l <= upperLimit; l++) {
+                            delta[l] = maxRow + this.aCards[j].dashboardLayout.rowSpan;
+                        }
+                        if (aDragOrResizeChanges) {
+                            aDragOrResizeChanges.push({
+                                changeType: "dragOrResize",
+                                content: {
+                                    cardId: this.aCards[j].id,
+                                    dashboardLayout: {
+                                        row: maxRow,
+                                        oldRow: this.aCards[j].dashboardLayout.row
+                                    }
+                                },
+                                isUserDependent: true
+                            });
+                        }
+                        this.aCards[j].dashboardLayout.row = maxRow;
+                    } else {
+                        if ((this.aCards[j].dashboardLayout.row !== delta[lowerLimit])) {
+                            if (aDragOrResizeChanges) {
+                                aDragOrResizeChanges.push({
+                                    changeType: "dragOrResize",
+                                    content: {
+                                        cardId: this.aCards[j].id,
+                                        dashboardLayout: {
+                                            row: delta[lowerLimit],
+                                            oldRow: this.aCards[j].dashboardLayout.row
+                                        }
+                                    },
+                                    isUserDependent: true
+                                });
+                            }
+                            this.aCards[j].dashboardLayout.row = delta[lowerLimit];
+                        }
+                        delta[lowerLimit] = this.aCards[j].dashboardLayout.row + this.aCards[j].dashboardLayout.rowSpan;
+                    }
+                }
+            }
+            return this.aCards;
+        };
 
-			aAffectedCards = this._pushCards({
-				column: oPushGrid.column,
-				row: oPushGrid.row
-			}, oInsertSpan, oFloater.id, bPushHorizontal, aOverlaps);
+        /**
+         * Method called to update new position of cards upon drag or resize
+         *
+         * @method {Private} _arrangeCards
+         * @param {Object} oCard - Card object
+         * @param {Object} newCardPosition - If the card is dragged then newCardPosition is the new starting point of the card
+         *                                 - If the card is resized then newCardPosition is the changes in the rowspan and colspan
+         * @param {Boolean} dragOrResize - Flag to distiguish between drag and drop or resize
+         */
+        LayoutModel.prototype._arrangeCards = function (oCard, newCardPosition, dragOrResize, aDragOrResizeChanges) {
+            var originalCardCopy = jQuery.extend(true, {}, oCard);
+            var verticalDragFlag = false;
+            if ('drag' === dragOrResize && oCard.dashboardLayout.column === newCardPosition.column &&
+                newCardPosition.row !== oCard.dashboardLayout.row) {
+                verticalDragFlag = true;
+            }
+            this._sortCardsByRow(this.aCards);
+            var affectedCards = [];
+            var flag = false;
+            var oldRow;
+            //If the card is dragged then newCardPosition is the new starting point of the card
+            if (dragOrResize === "drag") {
+                oCard.dashboardLayout.row = newCardPosition.row;
+                oCard.dashboardLayout.column = newCardPosition.column;
+                //If the card is resized then newCardPosition is the changes in the rowspan and colspan
+            } else if (dragOrResize === "resize") {
+                oCard.dashboardLayout.rowSpan = newCardPosition.row;
+                oCard.dashboardLayout.colSpan = newCardPosition.column;
+            }
 
-			if (!bInProgress) {
-				//condense empty rows (includes update of current layout variant)
-				aCondenseCards = this.condenseEmptyRows();
-				if (aCondenseCards.length > 0) {
-					aAffectedCards = aAffectedCards.concat(aCondenseCards);
-					aAffectedCards = this.condenseCardArray(aAffectedCards);
-				}
-			}
+            affectedCards.push(oCard);
+            for (var i = 0; i < affectedCards.length; i++) {
+                for (var j = 0; j < this.aCards.length; j++) {
+                    if (affectedCards[i].id === this.aCards[j].id || !affectedCards[i].dashboardLayout.visible) {
+                        continue;
+                    } else {
+                        flag = this._checkOverlapOfCards(affectedCards[i], this.aCards[j]);
+                        if (flag === true) {
+                            //In case you are dragging a card horizontally
+                            if (verticalDragFlag) {
+                                //To check for moving a card upward
+                                if (newCardPosition.row < originalCardCopy.dashboardLayout.row && newCardPosition.row === this.aCards[j].dashboardLayout.row) {
+                                    affectedCards[i].dashboardLayout.row = this.aCards[j].dashboardLayout.row;
+                                    oldRow = this.aCards[j].dashboardLayout.row;
+                                    this.aCards[j].dashboardLayout.row = affectedCards[i].dashboardLayout.row + affectedCards[i].dashboardLayout.rowSpan;
+                                    if (aDragOrResizeChanges) {
+                                        aDragOrResizeChanges.push({
+                                            changeType: "dragOrResize",
+                                            content: {
+                                                cardId: this.aCards[j].id,
+                                                dashboardLayout: {
+                                                    row: this.aCards[j].dashboardLayout.row,
+                                                    oldRow: oldRow
+                                                }
+                                            },
+                                            isUserDependent: true
+                                        });
+                                    }
+                                    //To check for moving a card downward
+                                } else if (newCardPosition.row > originalCardCopy.dashboardLayout.row + this.aCards[j].dashboardLayout.rowSpan) {
+                                    oldRow = this.aCards[j].dashboardLayout.row;
+                                    this.aCards[j].dashboardLayout.row = originalCardCopy.dashboardLayout.row;
+                                    affectedCards[i].dashboardLayout.row = this.aCards[j].dashboardLayout.row + this.aCards[j].dashboardLayout.rowSpan;
+                                    affectedCards.push(affectedCards[i]);
+                                    if (aDragOrResizeChanges) {
+                                        aDragOrResizeChanges.push({
+                                            changeType: "dragOrResize",
+                                            content: {
+                                                cardId: this.aCards[j].id,
+                                                dashboardLayout: {
+                                                    row: this.aCards[j].dashboardLayout.row,
+                                                    oldRow: oldRow
+                                                }
+                                            },
+                                            isUserDependent: true
+                                        });
+                                    }
+                                } else {
+                                    //Not a valid scenario
+                                }
+                                //In case you are dragging a card vertically
+                            } else {
+                                oldRow = this.aCards[j].dashboardLayout.row;
+                                this.aCards[j].dashboardLayout.row = affectedCards[i].dashboardLayout.row + affectedCards[i].dashboardLayout.rowSpan;
+                                affectedCards.push(this.aCards[j]);
+                                if (aDragOrResizeChanges) {
+                                    aDragOrResizeChanges.push({
+                                        changeType: "dragOrResize",
+                                        content: {
+                                            cardId: this.aCards[j].id,
+                                            dashboardLayout: {
+                                                row: this.aCards[j].dashboardLayout.row,
+                                                oldRow: oldRow
+                                            }
+                                        },
+                                        isUserDependent: true
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
 
-			return aAffectedCards;
-		};
+        /**
+         * Method to check that if two cards are colliding or not
+         *
+         * @method {Private} _checkOverlapOfCards
+         * @param {Object} originalCard - Original card object
+         * @param {Object} affectedCard - The card with which needs to be checked object
+         * @return {Boolean} collideX && collideY - collide in x-direction and collide in y-direction
+         */
+        LayoutModel.prototype._checkOverlapOfCards = function (originalCard, affectedCard) {
+            var originalCardStartRow = originalCard.dashboardLayout.row;
+            var originalCardEndRow = originalCard.dashboardLayout.row + originalCard.dashboardLayout.rowSpan;
+            var originalCardStartColumn = originalCard.dashboardLayout.column;
+            var originalCardEndColumn = originalCard.dashboardLayout.column + originalCard.dashboardLayout.colSpan;
 
-		/**
-		 *
-		 *
-		 * @method
-		 */
-		LayoutModel.prototype._getPushGrid = function(aCards) {
-			var oPushGrid = {};
-			var i = 0;
+            var affectedCardStartRow = affectedCard.dashboardLayout.row;
+            var affectedCardEndRow = affectedCard.dashboardLayout.row + affectedCard.dashboardLayout.rowSpan;
+            var affectedCardStartColumn = affectedCard.dashboardLayout.column;
+            var affectedCardEndColumn = affectedCard.dashboardLayout.column + affectedCard.dashboardLayout.colSpan;
 
-			var minRow = 99999;
-			var maxRow = 1;
-			var minCol = this.iColCount;
-			var maxCol = 1;
+            var collideX = false,
+                collideY = false;
+            //Collision in X-direction
 
-			if (!aCards && aCards.length === 0) {
-				return oPushGrid;
-			}
-
-			for (i = 0; i < aCards.length; i++) {
-				if (aCards[i].dashboardLayout.row < minRow) {
-					minRow = aCards[i].dashboardLayout.row;
-				}
-				if (aCards[i].dashboardLayout.row + aCards[i].dashboardLayout.rowSpan - 1 > maxRow) {
-					maxRow = aCards[i].dashboardLayout.row + aCards[i].dashboardLayout.rowSpan - 1;
-				}
-				if (aCards[i].dashboardLayout.column < minCol) {
-					minCol = aCards[i].dashboardLayout.column;
-				}
-				if (aCards[i].dashboardLayout.column + aCards[i].dashboardLayout.colSpan - 1 > maxCol) {
-					maxCol = aCards[i].dashboardLayout.column + aCards[i].dashboardLayout.colSpan - 1;
-				}
-			}
-
-			oPushGrid.column = minCol;
-			oPushGrid.row = minRow;
-			oPushGrid.colSpan = maxCol - minCol + 1;
-			oPushGrid.rowSpan = maxRow - minRow + 1;
-
-			return oPushGrid;
-		};
-
-		/**
-		 *
-		 *
-		 * @method
-		 */
-		LayoutModel.prototype._updateGapDelta = function(oGapDelta) {
-
-			if (oGapDelta.cardLayout[oGapDelta.axis] > oGapDelta.curr) {
-				//new column/row - check for empty columns/rows before it
-				oGapDelta.curr = oGapDelta.cardLayout[oGapDelta.axis];
-
-				if (oGapDelta.max > 0 && oGapDelta.curr > oGapDelta.max + 1) {
-					//there is at least one empty col/row between
-					oGapDelta.delta += oGapDelta.curr - 1 - oGapDelta.max;
-				}
-				//set max col for new column/row
-				oGapDelta.max = oGapDelta.cardLayout[oGapDelta.axis] + oGapDelta.cardLayout[oGapDelta.span] - 1;
-			} else {
-				if (oGapDelta.cardLayout[oGapDelta.axis] + oGapDelta.cardLayout[oGapDelta.span] - 1 > oGapDelta.max) {
-					//this card has more columns/rows
-					oGapDelta.max = oGapDelta.cardLayout[oGapDelta.axis] + oGapDelta.cardLayout[oGapDelta.span] - 1;
-				}
-			}
-		};
-
-		/**
-		 *
-		 *
-		 * @method
-		 */
-		LayoutModel.prototype._pushCards = function(oUpperLeftCell, oInsertSpan, floaterId, bPushHorizontal, aOverlapCards) {
-
-			var i = 0;
-			var j = 0;
-			var iNew1 = 0;
-			var iNew2 = 0;
-			var iEndRow = 0;
-			var oGapDelta = {
-				curr: 0,
-				max: 0,
-				delta: 0
-			};
-			var oInsertGrid = {
-				column: oUpperLeftCell.column,
-				row: oUpperLeftCell.row
-			};
-
-			var aAffectedCards = [];
-			var aPushedDownCards = [];
-
-			//-------- HORIZONTAL --------------------------------------------------------
-			if (bPushHorizontal) {
-				var aFallDownCards = [];
-				oGapDelta.axis = "column";
-				oGapDelta.span = "colSpan";
-				oGapDelta.curr = oUpperLeftCell.column - 1;
-				oGapDelta.max = oUpperLeftCell.column - 1;
-
-				oInsertGrid.rowSpan = oInsertSpan.rowSpan;
-				oInsertGrid.colSpan = 0;
-
-				if (aOverlapCards && aOverlapCards.length > 0) {
-					//get followers based onn add cards
-					for (j in aOverlapCards) {
-						if (aOverlapCards[j].dashboardLayout) {
-							aAffectedCards = aAffectedCards.concat(this._getHorizontalFollower(aOverlapCards[j].dashboardLayout, floaterId));
-						}
-					}
-					aAffectedCards = this.condenseCardArray(aAffectedCards);
-				} else {
-					//get followers using insert grid
-					aAffectedCards = this._getHorizontalFollower(oInsertGrid, floaterId);
-				}
-
-				for (i = 0; i < aAffectedCards.length; i++) {
-
-					oGapDelta.cardLayout = aAffectedCards[i].dashboardLayout;
-					this._updateGapDelta(oGapDelta);
-
-					iNew1 = aAffectedCards[i].dashboardLayout.column + oInsertSpan.colSpan - oGapDelta.delta;
-					iNew2 = iNew1 + aAffectedCards[i].dashboardLayout.colSpan - 1;
-
-					if (iNew1 > aAffectedCards[i].dashboardLayout.column) {
-						if (iNew2 <= this.iColCount) {
-							aAffectedCards[i].dashboardLayout.column = iNew1;
-							iEndRow = aAffectedCards[i].dashboardLayout.row + aAffectedCards[i].dashboardLayout.rowSpan - 1;
-						} else {
-							aFallDownCards.push(aAffectedCards[i]);
-						}
-					}
-				}
-				if (aFallDownCards.length > 0) {
-					if (iEndRow === 0) {
-						//insert cards after last card in row; if no card was pushed directly, take insertGrid data
-						var oFloaterCard = this.getCardById(floaterId);
-						if (oFloaterCard) {
-							iEndRow = oFloaterCard.dashboardLayout.row + oFloaterCard.dashboardLayout.rowSpan - 1;
-						} else {
-							iEndRow = oInsertGrid.row + oInsertGrid.rowSpan - 1;
-						}
-					}
-					aPushedDownCards = this._pushFallDownCards(iEndRow + 1, floaterId, aFallDownCards);
-
-					if (aPushedDownCards.length > 0) {
-						aAffectedCards = this.condenseCardArray(aAffectedCards.concat(aPushedDownCards));
-					}
-				}
-
-			} else {
-				//-------- VERTICAL --------------------------------------------------------
-				oGapDelta.axis = "row";
-				oGapDelta.span = "rowSpan";
-				oGapDelta.curr = oUpperLeftCell.row - 1;
-				oGapDelta.max = oUpperLeftCell.row - 1;
-
-				oInsertGrid.rowSpan = 0;
-				oInsertGrid.colSpan = oInsertSpan.colSpan;
-
-				if (aOverlapCards && aOverlapCards.length > 0) {
-					//get followers based onn add cards
-					for (j in aOverlapCards) {
-						if (aOverlapCards[j].dashboardLayout) {
-							aAffectedCards = aAffectedCards.concat(this._getVerticalFollower(aOverlapCards[j].dashboardLayout, floaterId));
-						}
-					}
-					aAffectedCards = this.condenseCardArray(aAffectedCards);
-					this._sortCardsByRow(aAffectedCards);
-				} else {
-					//get followers using insert grid
-					aAffectedCards = this._getVerticalFollower(oInsertGrid, floaterId);
-				}
-
-				for (i = 0; i < aAffectedCards.length; i++) {
-
-					oGapDelta.cardLayout = aAffectedCards[i].dashboardLayout;
-					this._updateGapDelta(oGapDelta);
-
-					iNew1 = aAffectedCards[i].dashboardLayout.row + oInsertSpan.rowSpan - oGapDelta.delta;
-
-					if (iNew1 > aAffectedCards[i].dashboardLayout.row) {
-						aAffectedCards[i].dashboardLayout.row = iNew1;
-					}
-				}
-			}
-			return aAffectedCards;
-		};
-
-		/**
-		 *
-		 *
-		 * @method
-		 */
-		LayoutModel.prototype.resizeCard = function(cardId, oSpan, bManualResize) {
-
-			this._registerChange("resize");
-
-			var oRCard = this.getCardById(cardId);
-			if (!oRCard) {
-				return [];
-			}
-			var deltaH = oSpan.colSpan - oRCard.dashboardLayout.colSpan;
-			var deltaV = oSpan.rowSpan - oRCard.dashboardLayout.rowSpan;
-
-			if (deltaH === 0 && deltaV === 0) {
-				return {
-					resizeCard: oRCard,
-					affectedCards: []
-				};
-			} else if (bManualResize && oRCard.dashboardLayout.autoSpan) {
-				oRCard.dashboardLayout.autoSpan = false;
-			}
-
-			var aAffectedCards = [];
-			var aAffectedCardsV = [];
-
-			// 1) push horizontally
-			if (deltaH > 0) {
-
-				if (deltaV < 0) {
-					//special case: if size is reduced: push with NEW size!
-					// copy resize card layout data, don't use original data reference!
-					aAffectedCards = this._pushCards({
-						column: oRCard.dashboardLayout.column + oRCard.dashboardLayout.colSpan,
-						row: oRCard.dashboardLayout.row
-					}, {
-						colSpan: deltaH,
-						rowSpan: oSpan.rowSpan
-					}, cardId, true);
-				} else {
-					aAffectedCards = this._pushCards({
-						column: oRCard.dashboardLayout.column + oRCard.dashboardLayout.colSpan,
-						row: oRCard.dashboardLayout.row
-					}, {
-						colSpan: deltaH,
-						rowSpan: oSpan.rowSpan
-					}, cardId, true);
-				}
-			}
-			oRCard.dashboardLayout.colSpan = oSpan.colSpan;
-			//2) push vertically
-			if (deltaV > 0) {
-
-				if (deltaH < 0) {
-					//special case: if size is reduced: push with NEW size!
-					// copy resize card layout data, don't use original data reference!
-					aAffectedCardsV = this._pushCards({
-						column: oRCard.dashboardLayout.column,
-						row: oRCard.dashboardLayout.row + oRCard.dashboardLayout.rowSpan
-					}, {
-						colSpan: oSpan.colSpan,
-						rowSpan: deltaV
-					}, cardId, false);
-				} else {
-					aAffectedCardsV = this._pushCards({
-						column: oRCard.dashboardLayout.column,
-						row: oRCard.dashboardLayout.row + oRCard.dashboardLayout.rowSpan
-					}, {
-						colSpan: oSpan.colSpan,
-						rowSpan: deltaV
-					}, cardId, false);
-				}
-			}
-
-			oRCard.dashboardLayout.rowSpan = oSpan.rowSpan;
-
-			// concat arrays
-			aAffectedCards = aAffectedCards.concat(aAffectedCardsV);
-			aAffectedCards = this.condenseCardArray(aAffectedCards);
-
-			//condense empty rows (includes update of current layout variant)
-			aAffectedCardsV = this.condenseEmptyRows();
-			if (aAffectedCardsV.length > 0) {
-				aAffectedCards = aAffectedCards.concat(aAffectedCardsV);
-				aAffectedCards = this.condenseCardArray(aAffectedCards);
-			}
-
-			return {
-				resizeCard: oRCard,
-				affectedCards: aAffectedCards
-			};
-		};
-
-		/**
-		 *
-		 *
-		 * @method
-		 */
-		LayoutModel.prototype._pushFallDownCards = function(insRow, ignoreId, aPCards) {
-			//move cards to grid pos
-			var i = 0;
-			var oNextRowData = {};
-			var oTargetCell = {};
-			var aAffectedCards = [];
-			var aAggrAffectedCards = [];
-			for (i = aPCards.length - 1; i >= 0; i--) {
-				//preset target row
-				aPCards[i].dashboardLayout.row = insRow;
-				//get next possible insert row (and the cards that collide)
-				oNextRowData = this._getNextPossibleRowAndColliders(insRow, aPCards[i]);
-				oTargetCell.column = this.iColCount - aPCards[i].dashboardLayout.colSpan + 1;
-				oTargetCell.row = oNextRowData.row;
-				aAffectedCards = this.moveCardToGrid(aPCards[i].id, oTargetCell, /*bHoriz*/ false, aPCards[i], /*bInProgress*/ true);
-				aAggrAffectedCards = aAggrAffectedCards.concat(aAffectedCards);
-			}
-			aAggrAffectedCards = this.condenseCardArray(aAggrAffectedCards);
-			return aAggrAffectedCards;
-		};
-
-		/**
-		 * find next possible insertion row and the cards, that collide with it
-		 *
-		 * @method _getNextPossibleRowAndColliders
-		 * @param {Int} insRow - intended insertion row
-		 * @param {Int} column - grid column
-		 * @param {Int} colSpan -  column span
-		 * @returns {Object} Object containing the target row and the colliding cards
-		 */
-		LayoutModel.prototype._getNextPossibleRowAndColliders = function(insRow, insCard) {
-			var i = 0;
-			var oCard;
-			var iTargetRow = insRow;
-			var aCollidingCards = [];
-			for (i = insCard.dashboardLayout.column; i <= insCard.dashboardLayout.column + insCard.dashboardLayout.colSpan - 1; i++) {
-				oCard = this.getCardByGridPos({
-					column: i,
-					row: insRow
-				});
-				if (oCard && oCard.dashboardLayout && oCard.id !== insCard.id) {
-					if (oCard.dashboardLayout.row === insRow) {
-						//card starts here -> can be inserted before
-						//remember card, it has to be pushed down below iTargetRow later
-						aCollidingCards.push(oCard);
-					} else if (oCard.dashboardLayout.row + oCard.dashboardLayout.rowSpan + 1 > iTargetRow) {
-						//insert after this card
-						iTargetRow = oCard.dashboardLayout.row + oCard.dashboardLayout.rowSpan + 1;
-					}
-				}
-			}
-			return {
-				row: iTargetRow,
-				collidingCards: aCollidingCards
-			};
-		};
-
-		/**
-		 * collect all cards that needs to be rearranged in horizontal direction after floater insertion
-		 *
-		 * @method getHorizontalFollower
-		 * @param {Object} insertMarker - insertion marker position and size
-		 * @param {ID} floaterId - ID of the floater card
-		 * @returns {Array} aHFollow - Array with all members from this.aCards that needs to be shifted to the right
-		 */
-		LayoutModel.prototype._getHorizontalFollower = function(insertMarker, floaterId) {
-			this._sortCardsByCol(this.aCards);
-			var aHFollow = [];
-			var extStartRow = insertMarker.row; //start of pusher
-			var extEndRow = insertMarker.row + insertMarker.rowSpan - 1; //end of pusher. Initial value is floater height
-			var i = 0;
-			var oCard = {};
-			var cardEndRow = 0;
-
-			if (insertMarker.column <= this.iColCount + insertMarker.colSpan) { //no insert marker at right grid border 
-				for (i = 0; i < this.aCards.length; i++) {
-					oCard = this.aCards[i];
-					if (oCard.id === floaterId || !oCard.dashboardLayout.visible) {
-						continue; //skip floater and invisible cards
-					}
-					cardEndRow = oCard.dashboardLayout.row + oCard.dashboardLayout.rowSpan - 1;
-					if (oCard.dashboardLayout.column >= insertMarker.column && oCard.dashboardLayout.row <= extEndRow && cardEndRow >= extStartRow) {
-
-						if (cardEndRow > extEndRow) {
-							extEndRow = cardEndRow; //resize pusher height to cover all cards to the right which overlap with the biggest card in the row
-						}
-						if (oCard.dashboardLayout.row < extStartRow) {
-							extStartRow = oCard.dashboardLayout.row;
-						}
-						aHFollow.push(oCard);
-					}
-				}
-			}
-			return aHFollow;
-		};
-
-		/**
-		 * collect all cards that needs to be rearranged in vertical direction after floater insertion
-		 *
-		 * @method getVerticalFollower
-		 * @param {Object} insertMarker - insertion marker position and size
-		 * @param {ID} floaterId - ID of the floater card
-		 * @returns {Array} aVFollow - Array with all members from this.aCards that needs to be shifted to the right
-		 */
-		LayoutModel.prototype._getVerticalFollower = function(insertMarker, floaterId) {
-			var aVFollow = [];
-			this._sortCardsByRow(this.aCards);
-			var extStartCol = insertMarker.column; //start of pusher
-			var extEndCol = insertMarker.column + insertMarker.colSpan - 1; //end of pusher. Initial value is floater width
-			var i = 0;
-			var oCard = {};
-			var cardEndCol = 0;
-
-			for (i = 0; i < this.aCards.length; i++) {
-				oCard = this.aCards[i];
-				if (oCard.id === floaterId || !oCard.dashboardLayout.visible) {
-					continue; //skip floater and invisible cards
-				}
-				cardEndCol = oCard.dashboardLayout.column + oCard.dashboardLayout.colSpan - 1;
-				if (oCard.dashboardLayout.row >= insertMarker.row && oCard.dashboardLayout.column <= extEndCol && cardEndCol >= extStartCol) {
-
-					if (cardEndCol > extEndCol) {
-						extEndCol = cardEndCol; //resize pusher height to cover all cards to the right which overlap with the biggest card in the row
-					}
-					if (oCard.dashboardLayout.column < extStartCol) {
-						extStartCol = oCard.dashboardLayout.column;
-					}
-					aVFollow.push(oCard);
-				}
-			}
-
-			return aVFollow;
-		};
-
-		/**
-		 * drop duplicate entries in given array
-		 *
-		 * @method condenseCardArray
-		 * @param {Array} array of cards
-		 * @return {Array} resulting condensed array
-		 */
-		LayoutModel.prototype.condenseCardArray = function(array) {
-			//array.sort();
-			this._sortCardsByCol(array);
-			return array.reduce(function(collect, current) {
-				if (collect.indexOf(current) < 0) {
-					collect.push(current);
-				}
-				return collect;
-			}, []);
-			//return this._sortCardsByCol(array);
-		};
+            if ((affectedCardStartColumn >= originalCardStartColumn && affectedCardStartColumn < originalCardEndColumn) ||
+                (affectedCardEndColumn > originalCardStartColumn && affectedCardEndColumn <= originalCardEndColumn) ||
+                (affectedCardStartColumn <= originalCardStartColumn && affectedCardEndColumn >= originalCardEndColumn)) {
+                collideX = true;
+            }
+            //Collision in Y-direction
+            if ((affectedCardStartRow >= originalCardStartRow && affectedCardStartRow < originalCardEndRow) ||
+                (affectedCardEndRow > originalCardStartRow && affectedCardEndRow <= originalCardEndRow) ||
+                (affectedCardStartRow <= originalCardStartRow && affectedCardEndRow >= originalCardEndRow)) {
+                collideY = true;
+            }
+            return collideX && collideY;
+        };
 
 		/**
 		 * extract the current layout variant into a new object
@@ -1216,203 +859,227 @@ sap.ui.define([], function() {
 		 * @method extractCurrentLayoutVariant
 		 * @returns {Object} new object containing current layout variant data
 		 */
-		LayoutModel.prototype.extractCurrentLayoutVariant = function() {
-			var i = 0;
-			var oCard = {};
-			var oVariant = {};
 
-			for (i = 0; i < this.aCards.length; i++) {
-				oCard = this.aCards[i];
-				oVariant[oCard.id] = {
-					col: oCard.dashboardLayout.column,
-					row: oCard.dashboardLayout.row,
-					colSpan: oCard.dashboardLayout.colSpan,
-					rowSpan: oCard.dashboardLayout.rowSpan,
-					visible: oCard.dashboardLayout.visible
-				};
-				if (oCard.dashboardLayout.autoSpan) {
-					oVariant[oCard.id].autoSpan = oCard.dashboardLayout.autoSpan;
-				}
-			}
-			if (this.oCurrLayoutVar && this.oCurrLayoutVar.__ovpDBLVarSource) {
-				oVariant.__ovpDBLVarSource = this.oCurrLayoutVar.__ovpDBLVarSource;
-			}
-			oVariant.__ovpDBLVarId = "C" + this.iColCount;
-			return oVariant;
-		};
+        LayoutModel.prototype.extractCurrentLayoutVariant = function () {
+            var i = 0;
+            var oCard = {};
+            var oCardVariant = [];
 
-		/**
-		 * update the current layout variant
-		 *
-		 * @method _updateCurrentLayoutVariant
-		 */
-		LayoutModel.prototype._updateCurrentLayoutVariant = function() {
-			this.oCurrLayoutVar = this.extractCurrentLayoutVariant();
-			this.oLayoutVars["C" + this.iColCount] = this.oCurrLayoutVar;
-		};
+            for (i = 0; i < this.aCards.length; i++) {
+                oCard = this.aCards[i];
+                oCardVariant = this.oLayoutVars.filter(function (item) {
+                    return item.id === oCard.id;
+                });
+                var dashboardLayoutObj = {};
+                var cardProperties = {
+                    row: oCard.dashboardLayout.row,
+                    col: oCard.dashboardLayout.column,
+                    rowSpan: oCard.dashboardLayout.rowSpan,
+                    colSpan: oCard.dashboardLayout.colSpan,
+                    maxColSpan: oCard.dashboardLayout.maxColSpan,
+                    noOfItems: oCard.dashboardLayout.noOfItems,
+                    autoSpan: oCard.dashboardLayout.autoSpan,
+                    showOnlyHeader: oCard.dashboardLayout.showOnlyHeader
+                };
+                dashboardLayoutObj["C" + this.iColCount] = cardProperties;
+                //If the variant for any card is not present at all
+                if (!(Array.isArray(oCardVariant) && oCardVariant.length !== 0 )) {
+                    this.oLayoutVars.push({
+                        id: oCard.id,
+                        visibility: oCard.dashboardLayout.visible,
+                        selectedKey: oCard.settings.selectedKey,
+                        dashboardLayout: dashboardLayoutObj
+                    });
+                } else {
+                    oCardVariant[0].selectedKey = oCard.settings.selectedKey || oCardVariant[0].selectedKey;
+                    oCardVariant[0].dashboardLayout = {};
+                    oCardVariant[0].dashboardLayout["C" + this.iColCount] = cardProperties;
+                }
+            }
+        };
 
-		/**
-		 * get the current layout variant
-		 *
-		 * @method _getCurrentLayoutVariant
-		 * @returns current layout variant
-		 */
-		LayoutModel.prototype._getCurrentLayoutVariant = function() {
-			//return this.oLayoutVars["C" + this.iColCount];
-			return this.oCurrLayoutVar;
-		};
-
-		LayoutModel.prototype._registerChange = function(action) {
-			this.bLayoutChanged = true;
-			this.oCurrLayoutVar.__ovpDBLVarSource = "user";
-			this.oUndoBuffer.action = action;
-			this.oUndoBuffer.layoutVariant = this.extractCurrentLayoutVariant();
-		};
+        LayoutModel.prototype._registerChange = function (action) {
+            this.bLayoutChanged = true;
+            this.oUndoBuffer.action = action;
+            this.extractCurrentLayoutVariant();
+            this.oUndoBuffer.layoutVariant = this.oLayoutVars;
+        };
 
 		/**
-		 * get an array containing all occupied grid cells and their "tenant"
-		 *
-		 * @method _extractGrid
-		 * @param sortBy - "col" or "row"
-		 * @returns array of cells
-		 */
-		LayoutModel.prototype._extractGrid = function(sortBy) {
-			var first = sortBy;
-			var second = "";
+         * Method which returns the highest occupied row in the layout
+         *
+         * @method _findHighestOccupiedRow
+         * @return {Integer} iHighestRow - Highest ever row which is occupied in the layout
+         */
+        LayoutModel.prototype._findHighestOccupiedRow = function () {
+            var iHighestRow = 0, maxHeightArr = [];
 
-			if (first === "col") {
-				second = "row";
-			} else if (first === "row") {
-				second = "col";
-			} else {
-				jQuery.sap.log.error("DashboardLayoutModel._getCurrentLayoutVariant: param sortBy has to be col or row!");
-			}
+            function filterByColCount(element) {
+                return element.dashboardLayout.column === iCount;
+            }
 
-			//get occupied cells first
-			var aCells = [];
-			var i = 0;
-			var ri = 0;
-			var ci = 0;
+            function findCardwithMaxRowCount(element, index, array) {
+                return element.dashboardLayout.row ===
+                    Math.max.apply(Math, array.map(function (ele) {
+                        return ele.dashboardLayout.row;
+                    }));
+            }
 
-			for (i = 0; i < this.aCards.length; i++) {
-				var cardLayout = this.aCards[i].dashboardLayout;
-				if (cardLayout.visible === false) {
-					continue;
-				}
-				for (ri = cardLayout.row; ri < cardLayout.row + cardLayout.rowSpan; ri++) {
-					for (ci = cardLayout.column; ci < cardLayout.column + cardLayout.colSpan; ci++) {
-						aCells.push({
-							col: ci,
-							row: ri,
-							card: this.aCards[i]
-						});
-					}
-				}
-			}
+            for (var iCount = 1; iCount <= this.iColCount; iCount++) {
+                //get the list of cards for each column
+                var aArray = this.aCards.filter(filterByColCount);
+                if (!!aArray) {
+                    //For particular column find the card which has row count is maximum
+                    //if row count is maximum means the card is present at the bottom for that column
+                    var oObj = aArray.filter(findCardwithMaxRowCount)[0];
+                    if (!!oObj) {
+                        //For each column push the column height into the array
+                        //Height of the column = margin-top of the card which is present at bottom + height of the card which is present at bottom
+                        maxHeightArr.push(+oObj.dashboardLayout.row + +oObj.dashboardLayout.rowSpan);
+                    }
+                }
+            }
+            //Take the maximum height from the array which is equal to the height of the container
+            iHighestRow = Math.max.apply(Math, maxHeightArr.map(function (ele) {
+                return ele;
+            }));
+            return iHighestRow;
+        };
 
-			//sort by given attribute
-			aCells.sort(function(cell1, cell2) {
-				// defaults for cards without dashboardLayout data
-				if (cell1[first] === cell2[first]) {
-					if (cell1[second] < cell2[second]) {
-						return -1;
-					} else if (cell1[second] > cell2[second]) {
-						return 1;
-					}
-				} else {
-					return cell1[first] - cell2[first];
-				}
-			});
-			return aCells;
-		};
-
-		/**
-		 * get the current layout variant
-		 *
-		 * @method validateGrid
-		 * @param bRepair - repair grid (put inconistent cards at the end)
-		 * @returns bGridValid - indicates the validity
-		 */
-		LayoutModel.prototype.validateGrid = function(bRepair) {
-			var bGridValid = true;
-			var i = 0;
-			var aCells = this._extractGrid("row");
-			var prev = aCells[0];
-			var curr = {};
-			var aDisplaceCards = [];
-
-			for (i = 1; i < aCells.length; i++) {
-				curr = aCells[i];
-				if (curr.col > this.iColCount || curr.col < 0) {
-					bGridValid = false;
-					aDisplaceCards.push(curr.card);
-					jQuery.sap.log.error("DashboardLayout: Cell is outside (col/row): " + curr.col + "/" + curr.row);
-				}
-				if (curr.col === prev.col && curr.row === prev.row) {
-					bGridValid = false;
-					aDisplaceCards.push(curr.card);
-					jQuery.sap.log.error("DashboardLayout: Cell has two tenants (col/row//id1/id2: " + curr.col + "/" + curr.row + "//" + prev.card.id +
-						"/" + curr
-						.card.id);
-				}
-				prev = curr;
-			}
-
-			//repair grid
-			if (bRepair && aDisplaceCards.length > 0) {
-				aDisplaceCards = this.condenseCardArray(aDisplaceCards);
-				for (i = 0; i < aDisplaceCards.length; i++) {
-					this._displaceCardToEnd(aDisplaceCards[i]);
-				}
-				this.condenseEmptyRows();
-				bGridValid = true;
-				jQuery.sap.log.info("DashboardLayout: invalid grid repaired");
-			}
-
-			return bGridValid;
-		};
-
-		LayoutModel.prototype.condenseEmptyRows = function() {
-			var aCells = this._extractGrid("row");
-			var i = 0;
-			var prevRow = 0;
-			var currRow = 0;
-			var iAggDelta = 0;
-			var prevCard = {};
-			var cell = {};
-			var aAffectedCards = [];
-
-			for (i = 0; i < aCells.length; i++) {
-				cell = aCells[i];
-
-				if (currRow !== cell.row) {
-					prevRow = currRow;
-					currRow = cell.row;
-					if (prevRow === 0 && currRow > 1) {
-						//empty first rows will be condensed to 0
-						iAggDelta += currRow - 1;
-					} else if (currRow - prevRow > 2) {
-						iAggDelta += currRow - prevRow - 2;
-					}
-				}
-
-				// there are at least two empty rows --> move up
-				if (prevCard !== cell.card) {
-					if (cell.row === cell.card.dashboardLayout.row) {
-						//move each card only once!
-						cell.card.dashboardLayout.row -= iAggDelta;
-						prevCard = cell.card;
-						aAffectedCards.push(cell.card);
-					}
-				}
-			}
-			this._updateCurrentLayoutVariant();
-
-			//reset displace start row
-			this.iDisplaceRow = 9999;
-
-			return aAffectedCards;
-		};
+        /**
+         * Method which returns no of items to display based upon card type / list type and flavour
+         *
+         * @method _getItemLength
+         * @param {Object} oCard - card object which is the object of card properties model
+         * @return {Integer} iNoOfItems - No of items to fetch in batch call(default)
+         */
+        LayoutModel.prototype._getDefaultCardItemHeightAndCount = function (oCardProperties) {
+            var densityStyle = CommonUtils._setCardpropertyDensityAttribute();
+            //the id build by Type-ListType-flavor
+            var CARD_PROPERTY = {
+                "List_condensed": {
+                    itemLength: 5,
+                    itemHeight: 64
+                },
+                "List_condensed_imageSupported_cozy": {
+                    itemLength: 5,
+                    itemHeight: 72
+                },
+                "List_condensed_imageSupported_compact": {
+                    itemLength: 5,
+                    itemHeight: 60
+                },
+                "List_extended": {
+                    itemLength: 3,
+                    itemHeight: 97
+                },
+                "List_condensed_bar": {
+                    itemLength: 5,
+                    itemHeight: 65
+                },
+                "List_extended_bar": {
+                    itemLength: 3,
+                    itemHeight: 95
+                },
+                "Table": {
+                    itemLength: 5,
+                    itemHeight: 62
+                },
+                "Linklist": {
+                    itemLength: 6,
+                    itemHeight: 0
+                }
+            };
+            var headerHeight = {
+                "KPIHeader": {
+                    "1": {
+                        "1": 158,
+                        "2": 174
+                    },
+                    "2": {
+                        "1": 179,
+                        "2": 195
+                    },
+                    "3": {
+                        "1": 201,
+                        "2": 223
+                    }
+                }, "NormalHeader": {
+                    "1": {
+                        "1": 82,
+                        "2": 98
+                    },
+                    "2": {
+                        "1": 103,
+                        "2": 119
+                    },
+                    "3": {
+                        "1": 125,
+                        "2": 141
+                    }
+                }
+            };
+            var SHOW_FILTER_IN_HEADER_HEIGHT = 22;
+            var SHOW_SHORTING_IN_HEADER_HEIGHT = 21;
+            var iHeaderHeight = 0;
+            if (oCardProperties) {
+                var cardType = oCardProperties.template,
+                    listType = oCardProperties.settings.listType,
+                    flavor = oCardProperties.settings.listFlavor,
+                    imageSupported = oCardProperties.settings.imageSupported,
+                    iNoOfItems = 0, iItemHeight = 0;
+                if (cardType == "sap.ovp.cards.list") {
+                    if (listType == "extended") {
+                        if (flavor == "bar") {
+                            iNoOfItems = CARD_PROPERTY["List_extended_bar"]["itemLength"];
+                            iItemHeight = CARD_PROPERTY["List_extended_bar"]["itemHeight"];
+                        } else {
+                            iNoOfItems = CARD_PROPERTY["List_extended"]["itemLength"];
+                            iItemHeight = CARD_PROPERTY["List_extended"]["itemHeight"];
+                        }
+                    } else {
+                        if (flavor == "bar") {
+                            iNoOfItems = CARD_PROPERTY["List_condensed_bar"]["itemLength"];
+                            iItemHeight = CARD_PROPERTY["List_condensed_bar"]["itemHeight"];
+                        } else {
+                            if (imageSupported === 'true') {
+                                if (densityStyle === 'cozy') {
+                                    iItemHeight = CARD_PROPERTY["List_condensed_imageSupported_cozy"]["itemHeight"];
+                                } else {
+                                    iItemHeight = CARD_PROPERTY["List_condensed_imageSupported_compact"]["itemHeight"];
+                                }
+                            } else {
+                                iItemHeight = CARD_PROPERTY["List_condensed"]["itemHeight"];
+                            }
+                            iNoOfItems = CARD_PROPERTY["List_condensed"]["itemLength"];
+                        }
+                    }
+                } else if (cardType == "sap.ovp.cards.table") {
+                    iNoOfItems = CARD_PROPERTY["Table"]["itemLength"];
+                    iItemHeight = CARD_PROPERTY["Table"]["itemHeight"];
+                } else if (cardType === "sap.ovp.cards.linklist") {
+                    iNoOfItems = CARD_PROPERTY["Linklist"]["itemLength"];
+                    iItemHeight = CARD_PROPERTY["Linklist"]["itemHeight"];
+                }
+                var titleRow = oCardProperties.settings.defaultSpan && oCardProperties.settings.defaultSpan.minimumTitleRow ? oCardProperties.settings.defaultSpan.minimumTitleRow : 1;
+                var subTitleRow = oCardProperties.settings.defaultSpan && oCardProperties.settings.defaultSpan.minimumSubTitleRow ? oCardProperties.settings.defaultSpan.minimumSubTitleRow : 1;
+                var headerType = (oCardProperties.settings.dataPointAnnotationPath || (oCardProperties.settings.tabs && oCardProperties.settings.tabs[0].dataPointAnnotationPath)) ? "KPIHeader" : "NormalHeader";
+                iHeaderHeight = headerHeight[headerType][titleRow][subTitleRow];
+                if (headerType === "KPIHeader") {
+                    if (oCardProperties.settings.showFilterInHeader === true) {
+                        iHeaderHeight += SHOW_FILTER_IN_HEADER_HEIGHT;
+                    }
+                    if (oCardProperties.settings.showSortingInHeader === true) {
+                        iHeaderHeight += SHOW_SHORTING_IN_HEADER_HEIGHT;
+                    }
+                }
+                return {
+                    noOfItems: iNoOfItems,
+                    itemHeight: iItemHeight,
+                    headerHeight: iHeaderHeight
+                };
+            }
+        };
 
 		return LayoutModel;
 

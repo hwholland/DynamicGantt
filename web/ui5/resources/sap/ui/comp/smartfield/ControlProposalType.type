@@ -4,7 +4,7 @@
     <derived/>
     <documentation>Enumeration of the different control proposals supported by the Smart Field, if it is using an OData model.</documentation>
     <enumeration>
-        <value name="None" value="">
+        <value value="" name="None">
             <documentation>No special context is selected. The Smart Field applies its internal defaults.</documentation>
         </value>
         <value name="ObjectNumber">

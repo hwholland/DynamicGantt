@@ -1,9 +1,9 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:uxap="sap.uxap"
 						 xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
 						 xmlns:build="sap.build">
-
+	<!-- The navigationBar is only shown when the shell service is not available -->
 	<uxap:navigationBar>
-		<Bar>
+		<Bar id="template::NavigationBar" visible="{_templPrivGlobal>/generic/shellServiceUnavailable}">
 			<contentLeft>
 				<Button id="back" icon="sap-icon://nav-back" press="._templateEventHandlers.onBack"
 						customData:popoverBelow="true" tooltip="{i18n>BACK}"/>
@@ -11,33 +11,9 @@
 			<contentMiddle>
 				<Title id="objectTypeName"
 					  text="{path: 'entityType>com.sap.vocabularies.UI.v1.HeaderInfo/TypeName', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"
-					  build:metadata="#pattern:Header;prop:text:HeaderBarText">
-					<!-- Helper -->
-					<customData>
-						<core:CustomData id="idObjectTitle" key="objectTitle"
-										 value="{path: 'entityType>com.sap.vocabularies.UI.v1.HeaderInfo/Title/Value', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.formatWithExpandSimple'}"
-										 writeToDom="false"/>
-					</customData>
-				</Title>
+					  build:metadata="#pattern:Header;prop:text:HeaderBarText" />
 			</contentMiddle>
             <contentRight>
-				<HBox id="template::UpAndDownNavigation"
-					  visible="{= ${path: 'parameter>/settings/routeConfig/name', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.hasBreadCrumbs'} ? 'true' : 'false'}">
-					<uxap:ObjectPageHeaderActionButton icon="sap-icon://navigation-up-arrow"
-													   visible="{_templPriv>/objectPage/navBtnsVisible}"
-													   enabled="{_templPriv>/objectPage/navUpEnabled}"
-													   tooltip="{_templPriv>/objectPage/navUpTooltip}"
-													   press="._templateEventHandlers.handleShowPrevObject"
-													   type="Transparent"
-													   importance="High"/>
-					<uxap:ObjectPageHeaderActionButton icon="sap-icon://navigation-down-arrow"
-													   visible="{_templPriv>/objectPage/navBtnsVisible}"
-													   enabled="{_templPriv>/objectPage/navDownEnabled}"
-													   tooltip="{_templPriv>/objectPage/navDownTooltip}"
-													   press="._templateEventHandlers.handleShowNextObject"
-													   type="Transparent"
-													   importance="High"/>
-				</HBox>
             </contentRight>
 		</Bar>
 	</uxap:navigationBar>

@@ -1,7 +1,4 @@
-// ...........................................................................//
-// mapmanager object.........................................................//
-// ...........................................................................//
-
+// mapmanager object
 // Author: Ulrich Roegelein
 
 VBI.MapManager = (function() {
@@ -17,22 +14,18 @@ VBI.MapManager = (function() {
 	mapmanager.m_limitRequests = 12;
 	mapmanager.m_requestQueue = [];
 	mapmanager.m_renderQueue = [];
-	mapmanager.m_renderTimer = 0;
+	mapmanager.m_renderRequestID = 0;
 	mapmanager.m_failedSendTimer = 0;
 	mapmanager.m_renderJunksize = 100;
-
-	// ........................................................................//
-	// image is loaded........................................................//
+	// image is loaded
 
 	mapmanager.onAbort = function(event) {
-		mapmanager.CheckReqQueue();
-
 		var image = event.srcElement;
 
 		if (VBI.m_bTrace) {
 			VBI.Trace("onAbort " + image.src);
 		}
-
+		mapmanager.CheckReqQueue();
 		// unlink the image from within the image chain
 		mapmanager.UnlinkImage(image);
 		mapmanager.CheckTmpCanvas(image.m_Target, image.m_nRequest, image.m_nLayersAbove);
@@ -44,24 +37,23 @@ VBI.MapManager = (function() {
 		}
 		mapmanager.m_runningRequests--;
 		mapmanager.m_bRequestError = true;
+
 		if (!mapmanager.m_failedSendTimer) {
 			mapmanager.m_failedSendTimer = setInterval(function() {
 				mapmanager.RetrySending();
 			}, 750);
 		}
-
 	};
 
 	mapmanager.onError = function(event) {
-		mapmanager.CheckReqQueue();
-
 		var image = event.srcElement;
-		var imageRender = null;
 
 		if (VBI.m_bTrace) {
 			VBI.Trace("onError " + image.src);
 		}
+		mapmanager.CheckReqQueue();
 
+		var imageRender = null;
 		// inherit the fillstyle
 		if (image.m_Next != null) {
 			image.m_Next.m_FillStyle = image.m_FillStyle;
@@ -70,34 +62,31 @@ VBI.MapManager = (function() {
 		if (image.m_Prev == null && image.m_Next != null && image.m_Next.complete == true) {
 			imageRender = image.m_Next;
 		}
-
 		// unlink the image from within the image chain
 		mapmanager.UnlinkImage(image);
-
-		// when the image is the first in current and would be rendered........//
+		// when the image is the first in current and would be rendered
 		if (imageRender != null) {
 			mapmanager.m_renderQueue.push(imageRender);
-			if (!mapmanager.m_renderTimer) {
-				mapmanager.m_renderTimer = setInterval(function() {
-					mapmanager.RenderTiles();
-				}, 1);
+			if (!mapmanager.m_renderRequestID) {
+				mapmanager.m_renderRequestID = window.requestAnimationFrame(mapmanager.RenderTiles);
 			}
 		} else {
 			mapmanager.CheckTmpCanvas(image.m_Target, image.m_nRequest, image.m_nLayersAbove);
 		}
-
 	};
 
 	mapmanager.onLoad = function(event) {
-		mapmanager.CheckReqQueue();
+		var image = event.target;
 
-		var image = event.srcElement || event.target;
-
+		if (!image.complete) { //skip odd onload event from IE where image is not loaded yet
+			return;
+		}
 		if (VBI.m_bTrace) {
 			VBI.Trace("VBI.MapManager: onLoad  " + image.src);
 		}
+		mapmanager.CheckReqQueue();
 
-		var bChainComplete = true; // i for myself am complete as I am in onLoad.
+		var bChainComplete = true; // I for myself am complete as I am in onLoad.
 		var item;
 		for (item = image.m_Prev; item != null; item = item.m_Prev) {
 			bChainComplete &= item.complete;
@@ -111,12 +100,10 @@ VBI.MapManager = (function() {
 			}
 			return;
 		}
-		// mapmanager.RenderTile( image );
+		// mapmanager.RenderTile(image);
 		mapmanager.m_renderQueue.push(image);
-		if (!mapmanager.m_renderTimer) {
-			mapmanager.m_renderTimer = setInterval(function() {
-				mapmanager.RenderTiles();
-			}, 1);
+		if (!mapmanager.m_renderRequestID) {
+			mapmanager.m_renderRequestID = window.requestAnimationFrame(mapmanager.RenderTiles);
 		}
 	};
 
@@ -154,11 +141,7 @@ VBI.MapManager = (function() {
 		for (var i = 0; i < nCount; ++i) {
 			mapmanager.RenderTile(mapmanager.m_renderQueue.shift());
 		}
-
-		if (!mapmanager.m_renderQueue.length) {
-			clearInterval(mapmanager.m_renderTimer);
-			mapmanager.m_renderTimer = 0;
-		}
+		mapmanager.m_renderRequestID = mapmanager.m_renderQueue.length > 0 ? window.requestAnimationFrame(mapmanager.RenderTiles) : 0;
 	};
 
 	mapmanager.RenderTile = function(image) {
@@ -188,7 +171,7 @@ VBI.MapManager = (function() {
 
 			var nRow = image.m_nReqY - context.canvas.m_nCurrentY;
 
-			// unlink and return when image request is outdated....................//
+			// unlink and return when image request is outdated
 			if (image.m_bOutdated || (nCol < 0) || (nRow < 0) || (nCol >= image.m_numCol) || (nRow >= image.m_numRow) || (image.m_nLOD != targetCanvas.m_nCurrentLOD || targetCanvas.m_bInvalid)) {
 				mapmanager.UnlinkImage(image);
 
@@ -202,13 +185,11 @@ VBI.MapManager = (function() {
 			if (VBI.m_bTrace) {
 				VBI.Trace("VBI.MapManager: RenderTile  " + image.src);
 			}
-
-			// do regular work.....................................................//
-
+			// do regular work
 			var nWidth = currentScene.m_nWidthCanvas;
 			var nHeight = currentScene.m_nHeightCanvas;
 
-			// size it down to prevent from fragments..............................//
+			// size it down to prevent from fragments
 			targetCanvas.setPixelWidth(nWidth);
 			targetCanvas.setPixelHeight(nHeight);
 
@@ -219,27 +200,24 @@ VBI.MapManager = (function() {
 			var picWidth = image.m_nXExpansion * tilewidth;
 			var picHeight = image.m_nYExpansion * tileheight;
 
-			// draw chained images in sequence.....................................//
+			// draw chained images in sequence
 			var imageTemp = image;
 			var tmpFillStyle;
 			while (imageTemp.m_Prev != null) {
 				imageTemp = imageTemp.m_Prev;
 			}
 			while (imageTemp != null && imageTemp.complete == true) {
-				// optional draw the image background into the canvas...............//
+				// optional draw the image background into the canvas
 				if (imageTemp.m_FillStyle != null) {
 					if (VBI.m_bTrace) {
 						VBI.Trace("RenderTile fillRect " + imageTemp.src);
 					}
-
 					tmpFillStyle = context.fillStyle;
 					context.fillStyle = imageTemp.m_FillStyle;
 					context.fillRect(left, top, picWidth, picHeight);
 					context.fillStyle = tmpFillStyle;
 				}
-
-				// as soon as an image is rendererd set the parent of the next......//
-				// to null..........................................................//
+				// as soon as an image is rendererd set the parent of the next to null
 				if (VBI.m_bTrace) {
 					VBI.Trace("RenderTile drawImage " + imageTemp.src);
 				}
@@ -251,11 +229,10 @@ VBI.MapManager = (function() {
 				if (imageTemp.m_Next != null) {
 					imageTemp.m_Next.m_Prev = null;
 				}
-
 				imageTemp = imageTemp.m_Next;
 			}
 
-			// draw debug information on tile......................................//
+			// draw debug information on tile
 			if (VBI.m_bTrace) {
 				tmpFillStyle = context.fillStyle;
 				context.fillStyle = "#FF0000";
@@ -263,12 +240,11 @@ VBI.MapManager = (function() {
 				context.fillText(image.m_nRequest + "." + image.m_nCount + ":" + image.m_nLOD + "/" + image.m_nReqX + "/" + image.m_nReqY + "@(" + (left / 256) + "," + (top / 256) + ")", left + 10, top + 30);
 				context.fillStyle = tmpFillStyle;
 			}
-
-			// size it up again....................................................//
+			// size it up again
 			targetCanvas.setPixelWidth(canvasWidth);
 			targetCanvas.setPixelHeight(canvasHeight);
 
-			// raise the changed event.............................................//
+			// raise the changed event
 			if (targetCanvas.onTileLoaded) {
 				targetCanvas.onTileLoaded(image);
 			}
@@ -291,10 +267,7 @@ VBI.MapManager = (function() {
 		}
 
 	};
-
-	// ........................................................................//
-	// request the tiles......................................................//
-
+	// request the tiles
 	mapmanager.RequestTiles = function(targetCanvas, maplayerstack, x, y, nx, ny, leftOffset, topOffset, rightOffset, bottomOffset, lod, bclear) {
 		mapmanager.m_bRequestError = false;
 		if (lod < 0) {
@@ -332,7 +305,7 @@ VBI.MapManager = (function() {
 		targetCanvas.m_nRequest = mapmanager.m_nRequest++;
 		targetCanvas.m_bInvalid = false; // the request makes it valid
 
-		// store current requested tile information in the canvas..............//
+		// store current requested tile information in the canvas
 		targetCanvas.m_nCurrentX = x;
 		targetCanvas.m_nCurrentY = y;
 		targetCanvas.m_nCurrentLOD = lod;
@@ -371,57 +344,53 @@ VBI.MapManager = (function() {
 					}
 					nCurrentXExpansion = maplayerstack.m_bSingleBMP ? Math.min(nXMax - nReqX, ni - i) : 1;
 
-					// iterate over all map providers................................//
+					// iterate over all map providers
 					for (var s = 0; s < nLayerArrayLen; ++s) {
 						var maplayer = maplayerarray[s];
 
-						// remember the maplayer fill style...........................//
-						// to inherit the style when image chain gets shortened due...//
-						// to LOD limits..............................................//
-
-						if (maplayer.fillStyle) {
-							fillStyle = maplayer.fillStyle;
+						// remember the maplayer fill style
+						// to inherit the style when image chain gets shortened due to LOD limits
+						if (maplayerstack.fillStyle) {
+							fillStyle = maplayerstack.fillStyle;
+						} else if (maplayerstack.m_colBkgnd) {
+							fillStyle = maplayerstack.m_colBkgnd;
 						}
-
-						// create the chained list only in the vaild LOD range........//
+						// create the chained list only in the vaild LOD range
 						if ((maplayer.GetMinLOD() > lod) || (maplayer.GetMaxLOD() < lod)) {
 							continue;
 						}
+						var image = new Image();
 
-						var imageObj = new Image();
+						// enhance image object
+						image.m_nLayersAbove = nLayerArrayLen - s - 1;
+						image.m_nXOrigin = x;
+						image.m_nYOrigin = y;
+						image.m_nCol = i + leftOffset; // remember column
+						image.m_nRow = k + topOffset; // remember row
+						image.m_numCol = nx; // remember column count
+						image.m_numRow = ny; // remember row count
+						image.m_Target = targetCanvas; // canvas to render into
+						image.m_nRequest = targetCanvas.m_nRequest;
+						// image.m_MapProvider = maplayer.GetMapProvider();
+						image.m_Opacity = maplayer.m_fOpacity;
+						image.m_bOutdated = false;
 
-						// enhance image object.......................................//
-						imageObj.m_nLayersAbove = nLayerArrayLen - s - 1;
-						imageObj.m_nXOrigin = x;
-						imageObj.m_nYOrigin = y;
-						imageObj.m_nCol = i + leftOffset; // remember column
-						imageObj.m_nRow = k + topOffset; // remember row
-						imageObj.m_numCol = nx; // remember column count
-						imageObj.m_numRow = ny; // remember row count
-						imageObj.m_Target = targetCanvas; // canvas to render into
-						imageObj.m_nRequest = targetCanvas.m_nRequest;
-						// imageObj.m_MapProvider = maplayer.GetMapProvider();
-						imageObj.m_Opacity = maplayer.m_fOpacity;
-						imageObj.m_bOutdated = false;
-
-						// do image linkage...........................................//
-						// this leads to a uplink and downlink chain..................//
-						imageObj.m_Prev = imagePrev;
+						// do image linkage
+						// this leads to a uplink and downlink chain
+						image.m_Prev = imagePrev;
 						if (imagePrev != null) {
-							imagePrev.m_Next = imageObj;
+							imagePrev.m_Next = image;
+						}
+						// set the inherited fill style only when image is the chain root
+						if (image.m_Prev == null) {
+							image.m_FillStyle = fillStyle;
 						}
 
-						// set the inherited fill style only when image is the chain..//
-						// root.......................................................//
-						if (imageObj.m_Prev == null) {
-							imageObj.m_FillStyle = fillStyle;
-						}
-
-						imageObj.m_nReqX = nReqX;
-						imageObj.m_nReqY = nReqY;
-						imageObj.m_nXExpansion = nCurrentXExpansion;
-						imageObj.m_nYExpansion = nYExpansion;
-						imageObj.m_nLOD = lod;
+						image.m_nReqX = nReqX;
+						image.m_nReqY = nReqY;
+						image.m_nXExpansion = nCurrentXExpansion;
+						image.m_nYExpansion = nYExpansion;
+						image.m_nLOD = lod;
 
 						var mapProv = maplayer.GetMapProvider();
 						var url;
@@ -435,40 +404,36 @@ VBI.MapManager = (function() {
 							];
 							// VBI.Trace("Requesting "+nReqX+","+nReqY+" with Extension "+nCurrentXExpansion+". Coordinates :
 							// "+leftupper[0]+"-->"+rightlower[0]+","+rightlower[1]);
-
 							url = mapProv.CombineUrlWPos(nReqX, nReqY, lod, fTileSize, leftupper, rightlower, nCurrentXExpansion, nYExpansion, mapmanager.m_requestTileWidth, mapmanager.m_requestTileHeight);
 						} else {
 							url = mapProv.CombineUrl(nReqX, nReqY, lod);
 						}
+						image.onload = mapmanager.onLoad;
+						image.onerror = mapmanager.onError;
+						image.onabort = mapmanager.onAbort;
 
-						// subscribe to events........................................//
-						imageObj.onload = mapmanager.onLoad;
-						imageObj.onabort = mapmanager.onAbort;
-						imageObj.onerror = mapmanager.onError;
 						if ((mapmanager.m_runningRequests < mapmanager.m_limitRequests) && (!mapmanager.m_bRequestError)) {
 							mapmanager.m_runningRequests++;
 							try {
-								imageObj.src = url;
+								image.src = url;
 							} catch (e) {
-								imageObj.src2execute = url;
-								mapmanager.m_requestQueue.push(imageObj);
-								mapmanager.onFailedSend(imageObj);
+								image.src2execute = url;
+								mapmanager.m_requestQueue.push(image);
+								mapmanager.onFailedSend(image);
 							}
 						} else {
-							imageObj.src2execute = url;
-							mapmanager.m_requestQueue.push(imageObj);
+							image.src2execute = url;
+							mapmanager.m_requestQueue.push(image);
 						}
-
-						imageObj.m_nCount = nCount;
+						image.m_nCount = nCount;
 
 						if (VBI.m_bTrace) {
 							VBI.Trace("RequestTiles " + url);
 						}
-
-						// remember previous image....................................//
-						imagePrev = imageObj;
-						// VBI.Trace("Requesting from origin ("+x+","+y+") m_col/row:("+lod+"/"+imageObj.m_nCol+","+imageObj.m_nRow+")
-						// m_NumCol/Row:"+imageObj.m_numCol+","+imageObj.m_numRow+")\n");
+						// remember previous image
+						imagePrev = image;
+						// VBI.Trace("Requesting from origin ("+x+","+y+") m_col/row:("+lod+"/"+image.m_nCol+","+image.m_nRow+")
+						// m_NumCol/Row:"+image.m_numCol+","+image.m_numRow+")\n");
 					}
 				}
 			}
@@ -499,5 +464,145 @@ VBI.MapManager = (function() {
 		}
 	};
 
+	mapmanager.GetPreviewImage = function(lon, lat, lod, maplayerstack, scene, callback) {
+		//extend layer configuration object with preview location object which is {lat, lon, lod}
+		if (!callback || !maplayerstack  || !lon || !lod || !lat || !scene ) { //check that parameters are valid
+			return;
+		}
+
+		var exactLod = Math.min(Math.max(lod, scene.GetMinLOD()), scene.GetMaxLOD()); // clamp [min lod...max lod]
+		lod = Math.floor(exactLod); //avoid fractional lod
+
+		var tileWidth = scene.m_MapManager.m_tileWidth; //get proper tile width
+		var tileHeight = scene.m_MapManager.m_tileHeight; //get proper tile height
+		var xyRatio = scene.m_Proj.m_nXYRatio; //ratio from  current projection
+		var lodDistance = (1 << lod); //how many tiles on a particular lod?
+		var tileSize = 2.0 / lodDistance; //???
+		var lonlat = VBI.MathLib.DegToRad([parseFloat(lon),parseFloat(lat)]); //from degrees to radians
+		var uxy = [lodDistance * tileWidth, lodDistance * tileHeight]; //prepare conversion from lat,lon
+		scene.m_Proj.LonLatToUCS(lonlat, uxy); // to User Coordinate System (pixel space of a target lod)
+		var x = Math.floor(uxy[0] / tileWidth); // calculate X tile coordinate
+		var y = Math.floor(uxy[1] / tileHeight); //calculate Y tile coordinate
+
+		var mapLayerArray = maplayerstack.m_MapLayerArray;
+
+		var context = {
+			m_Callback: callback,
+			m_Images: [],
+			m_ImagesRemain: mapLayerArray.length,
+			m_MapLayerStack: maplayerstack,
+
+			compose: function() {
+				this.m_ImagesRemain -= 1;
+
+				if (this.m_ImagesRemain <= 0) { //all images processes (succeeded, failed or aborted)
+					//create canvas to store image
+					var canvas = document.createElement('canvas');
+					context = canvas.getContext('2d');
+
+					var background = this.m_MapLayerStack.m_colBkgnd;
+					context.fillStyle = background; //respect background colour
+					context.fillRect(0, 0, canvas.width, canvas.height);
+
+					for (var i = 0; i < this.m_Images.length; ++i) {
+						if (this.m_Images[i]) { //skip failed images
+
+							// respect transparency
+							context.globalAlpha = this.m_Images[i].m_Opacity;
+
+							// X and Y Starting positions of the clipping
+							var clipPosX = 0;
+							var clipPosY = 0;
+
+							// Portion of image you want to clip.
+							var clipWidth = this.m_Images[i].width;
+							var clipHeight = this.m_Images[i].height;
+
+							//	Draw image onto canvas
+							var offsetX = 0;
+							var offsetY = 0;
+
+							// Scale to stretch
+							var stretchX = canvas.width;
+							var stretchY = canvas.height;
+
+							// Draw image based on measurments
+							context.drawImage(this.m_Images[i],clipPosX,clipPosY,clipWidth,clipHeight, offsetX,offsetY, stretchX, stretchY); //draw image to canvas
+						}
+					}
+					var tileImages = new Image();
+					// convert into image
+					tileImages.src = canvas.toDataURL();
+					callback(tileImages);
+				}
+			}
+		};
+
+		var onImageLoad = function(event) {
+			if (VBI.m_bTrace) {
+				VBI.Trace("onLoad " + event.target.src);
+			}
+			var image = event.target;
+			image.m_Context.compose();
+		};
+
+		var onImageAbort = function(event) {
+			if (VBI.m_bTrace) {
+				VBI.Trace("onAbort " + event.target.src);
+			}
+			var image = event.target;
+			image.m_Context.m_Images[image.m_Index] = null;
+			image.m_Context.compose();
+		};
+
+		var onImageError = function(event) {
+			if (VBI.m_bTrace) {
+				VBI.Trace("onError " + event.target.src);
+			}
+			var image = event.target;
+			image.m_Context.m_Images[image.m_Index] = null;
+			image.m_Context.compose();
+		};
+
+		for (var i = 0; i < mapLayerArray.length; ++i) {
+			var layer = mapLayerArray[i];
+			var provider = layer.GetMapProvider();
+
+			if (layer.GetMinLOD() > lod || layer.GetMaxLOD() < lod) { //skip if provider doesn't support required lod
+				continue;
+			}
+			var url;
+
+			if (provider.m_bPosRequired) {
+				var leftUpper = [x * tileSize / xyRatio - 1, y * tileSize - 1];
+				var rightLower = [(x + 1) * tileSize / xyRatio - 1, (y + 1) * tileSize - 1];
+				url = provider.CombineUrlWPos(x, y, lod, tileSize, leftUpper, rightLower, 1, 1, tileWidth, tileHeight);
+			} else {
+				url = provider.CombineUrl(x, y, lod);
+			}
+			var image = new Image();
+			image.setAttribute('crossOrigin', 'anonymous');
+			context.m_Images[i] = image;
+			image.m_Index = i;
+			image.m_Context = context;
+
+			if (layer.m_fOpacity) {
+				image.m_Opacity = layer.m_fOpacity;
+			}
+			image.onload = onImageLoad;
+			image.onabort = onImageAbort;
+			image.onerror = onImageError;
+
+			try {
+				image.src = url;
+			} catch (ex) {
+				if (VBI.m_bTrace) {
+					VBI.Trace("GetPreviewImage " + ex);
+				}
+				image.m_Context.m_Images[image.m_Index] = null;
+				image.m_Context.compose();
+			}
+		}
+	};
 	return mapmanager;
 })();

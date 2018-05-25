@@ -1,5 +1,7 @@
 /*
-* ! @copyright@
+* ! SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
 */
 sap.ui.define(["sap/ui/base/Object", "sap/ui/model/Filter", "sap/ui/model/FilterOperator", "sap/ui/core/Fragment", "sap/collaboration/components/utils/CommonUtil"], function(Object, Filter, FilterOperator, Fragment, CommonUtil) {
 	

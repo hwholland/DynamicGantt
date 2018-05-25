@@ -1,18 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(['sap/m/ButtonRenderer','sap/ui/core/Renderer'],
+	function(ButtonRenderer, Renderer) {
+	"use strict";
+
     /*global jQuery, sap*/
 
-    jQuery.sap.declare("sap.ushell.ui.footerbar.JamShareButtonRenderer");
-    jQuery.sap.require("sap.ui.core.Renderer");
-    jQuery.sap.require("sap.m.ButtonRenderer");
     /**
      * @name sap.ushell.ui.footerbar.JamShareButtonRenderer
      * @static
      * @private
      */
-    sap.ushell.ui.footerbar.JamShareButtonRenderer = sap.ui.core.Renderer.extend(sap.m.ButtonRenderer);
+    var JamShareButtonRenderer = Renderer.extend(ButtonRenderer);
 
     /**
      * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
@@ -21,4 +20,8 @@
      * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
      */
     //sap.ushell.ui.footerbar.JamShareButtonRenderer.render = ;
-}());
+
+
+	return JamShareButtonRenderer;
+
+}, /* bExport= */ true);

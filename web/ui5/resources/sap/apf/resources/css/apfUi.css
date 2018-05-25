@@ -6,7 +6,6 @@
 }
 
 #apfPrintArea {
-	display: none;
 	margin-left: -999px;
 }
 
@@ -40,12 +39,8 @@
 	overflow: auto;
 }
 
-.facetFilterHeight {
-	height: 50px;
-}
-
 .ChartArea {
-	overflow: hidden;
+	overflow: hidden !important;
 }
 
 .thumbnailTableImage {
@@ -54,19 +49,6 @@
 	outline: none;
 	margin: 0px auto;
 	display: block;
-}
-
-.stepContainer {
-	width: 100%;
-	height: 100% !important;
-}
-
-.stepContainer>div.sapUiVltCell:nth-child(2) {
-	height: 100%;
-}
-
-.stepContainer, .stepContainer>div.sapUiVltCell:nth-child(2) {
-	min-height: 670px;
 }
 
 .thumbnailLayout {
@@ -85,11 +67,12 @@
 	border-color: #e5e5e5 !important;
 }
 
-.saveStyle, .textStyle {
-	margin: 10% 4% 10% 4%;
-	width: 92% !important;
-	padding-left: 7%;
-	padding-right: 7%;
+.saveDialog .sapMDialogSection {
+	overflow: hidden !important;
+}
+
+.textStyle {
+	padding: 10% !important;
 }
 
 .scrollContainerEle,.sapApfObjectHeader .sapMText,.sapApfStepLayout .sapMText,.sapApfMasterTitle,.sapApfDetailTitle,.showSelection,.resetSelection
@@ -123,7 +106,7 @@
 	cursor: move;
 	z-index: 1;
 	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
-	filter: alpha(opacity =       60);
+	filter: alpha(opacity =           60);
 	opacity: 0.6;
 	transition: transform 0s;
 	-webkit-transition: -webkit-transform 0s;
@@ -134,7 +117,7 @@
 /*  Dnd Css ends */
 
 /* Layout CSS */
-.sapApf, .sapApfHeader {
+.sapApf,.sapApfHeader {
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
@@ -146,16 +129,16 @@
 /* Layout CSS ends */
 .loadMoreLink {
 	font-size: 18px;
-	margin: 10px 15px;
+	margin-left: 5px;
 }
 
 .bottomLayout {
-	padding: 2% 4% 2% 4%;
+	padding: 4% 4% 0% 4%;
 	text-transform: uppercase;
 }
 
 .topLayout {
-	padding: 1% 4% 0% 4%;
+	padding: 3% 4% 0% 4%;
 	text-transform: uppercase;
 }
 
@@ -167,8 +150,7 @@
 	white-space: pre-wrap;
 }
 
-.thumbnailNoData
-{
+.thumbnailNoData {
 	visibility: hidden;
 }
 
@@ -206,7 +188,7 @@
 }
 
 .activeStepThumbnail {
-	border: 1px solid #718789;
+	border: 1.5px solid;
 }
 
 .lineSeparator {
@@ -220,4 +202,28 @@
 
 .facetfilter>div {
 	padding-top: 10px;
+}
+
+.tableRepresentation .sapUiTableHdrTitle,.treeTableRepresentation .sapUiTableHdrTitle
+	{
+	padding: 1% 0% 0% 1%;
+}
+
+.treeTableRepresentation {
+	padding-bottom: 3%;
+}
+
+.sapTableSelectionForPrint {
+	background: #e6f2f9;
+}
+
+.apfAppPage>section {
+	overflow-y : visible;
+}
+
+.chartContainerResetStyle {
+	margin-right : 5px !important;
+}
+.facetFilterInitialAlign {
+	padding-left: 1%;
 }

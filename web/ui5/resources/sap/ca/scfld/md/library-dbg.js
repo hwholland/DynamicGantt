@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.ca.scfld.md (1.38.5)
+ * Initialization Code and shared classes of library sap.ca.scfld.md (1.54.0)
  */
 jQuery.sap.declare("sap.ca.scfld.md.library");
 jQuery.sap.require("sap.ui.core.Core");
@@ -37,6 +37,6 @@ sap.ui.getCore().initLibrary({
 	controls: [],
 	elements: [],
 	noLibraryCSS: true,
-	version: "1.38.5"
+	version: "1.54.0"
 });
 

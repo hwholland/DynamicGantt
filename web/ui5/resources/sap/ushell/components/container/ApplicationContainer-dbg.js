@@ -1,19 +1,18 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The UI integration's SAPUI5 control which supports application embedding.
- * @version 1.38.26
+ * @version 1.54.3
  */
 (function () {
     "use strict";
     /*jslint nomen:true */
-    /*global  addEventListener, removeEventListener, document, localStorage, jQuery, sap, URI*/
+    /* global  addEventListener, removeEventListener, document, localStorage, jQuery, sap, URI, Promise */
 
     var sPREFIX = "sap.ushell.components.container.",
         sCOMPONENT = sPREFIX + "ApplicationContainer",
         sDIRTY_STATE_PREFIX = "sap.ushell.Container.dirtyState.",
         mLogouts, /* {sap.ushell.utils.Map} */
-        oResourceBundle,
-        bFirstLoadOfApplicationContainer = true;
+        oResourceBundle;
 
     // Do not use the variables so that UI5 optimizers recognize this declaration
     jQuery.sap.declare("sap.ushell.components.container.ApplicationContainer");
@@ -21,7 +20,7 @@
     jQuery.sap.require("sap.ushell.utils");
     jQuery.sap.require("sap.ushell.library");
     jQuery.sap.require("sap.ui.core.UIComponent");
-    jQuery.sap.require("sap.m.MessagePopover");
+
 
     /**
      * Method to adapt the CrossApplicationNavigation service method
@@ -42,6 +41,23 @@
             oToBeValidated.promise.resolve({ "allowed" : false, "id" : oToBeValidated.id });
         });
     }
+
+    function initializeMessagePopover(){
+        jQuery.sap.require("sap.m.MessagePopover");
+        //Hook CrossApplicationNavigation URL validation logic into the sap.m.MessagePopover control
+        var oMessageConceptDefaultHandlers = {
+            "asyncURLHandler" : sap.ushell.components.container.ApplicationContainer.prototype._adaptIsUrlSupportedResultForMessagePopover
+        };
+        if (sap.m.MessagePopover && sap.m.MessagePopover.setDefaultHandlers) {
+            sap.m.MessagePopover.setDefaultHandlers(oMessageConceptDefaultHandlers);
+        }
+    }
+
+    /* MessagePopover and its dependent controls resources are ~200K. In order to minimize core-min file
+     * it is bundled in core-ext file. Therefore we need to wait for 'coreResourcesFullyLoaded' event that
+     * indicate that all resorces are loaded, before we initialize the MessagePopober
+     */
+    sap.ui.getCore().getEventBus().subscribe("sap.ushell", "coreResourcesFullyLoaded", initializeMessagePopover);
 
     mLogouts = new sap.ushell.utils.Map();
 
@@ -362,14 +378,9 @@
             sUrl += '/'; // ensure URL ends with a slash
         }
         // the root component's name is also the namespace for all component-internal modules; so
-        // we register the URL (which must point to the component's folder) as module path;
+        // we register the URL (which must poi   nt to the component's folder) as module path;
         // TODO: clarify if there are requirements for additional path components
         jQuery.sap.registerModulePath(sComponentName, sUrl);
-
-        // applications require these but should not load it, to degrade carefully
-        // when running outside of the shell, so we must require this
-        // TODO: check if this is still really necessary
-        jQuery.sap.require("sap.ushell.services.CrossApplicationNavigation");
 
         // destroy the child control before creating a new control with the same ID
         sap.ushell.components.container.ApplicationContainer.prototype._destroyChild(oContainer);
@@ -405,18 +416,7 @@
             id: oContainer.getId() + "-content",
             component: oComponent
         });
-        if (oComponent.navigationRedirect) {
-            var oNavRedirPromise = oComponent.navigationRedirect();
-            if (oNavRedirPromise) {
-                oComponentContainer.setVisible(false);
-                oNavRedirPromise.done(function(sNextHash) {
-                    sap.ushell.Container.getService("ShellNavigation").toExternal( { target : { shellHash : sNextHash } }, undefined, false);
-                    // TODO: when navigation fails, we have to do a *real* back navigation ( or prevent eviction before);
-                }).fail(function() {
-                    oComponentContainer.setVisible(true);
-                });
-            }
-        }
+
         oComponentContainer.setHeight(oContainer.getHeight());
         oComponentContainer.setWidth(oContainer.getWidth());
         oComponentContainer.addStyleClass("sapUShellApplicationContainer");
@@ -531,6 +531,35 @@
         return bTrusted;
     }
 
+    /**
+     * Callback for the back button registered via
+     * <code>sap.ushell.ui5service.ShellUIService#setBackNavigation</code>
+     *
+     * Sends a postMessage request to the source window for triggering the
+     * back navigation in the application.
+     *
+     * @param {object} oSourceWindow
+     *   the source window object
+     * @param {string} sServiceName
+     *   the service name returned from the previous setBackNavigation
+     *   postMessage request
+     * @param {string} sOrigin
+     *   a string identifying the origin where the message is sent from
+     */
+    function backButtonPressedCallback(oSourceWindow, sServiceName, sOrigin) {
+        var sRequestData = JSON.stringify({
+            type: "request",
+            service: sServiceName,
+            request_id: jQuery.sap.uid(),
+            body: {}
+        });
+
+        jQuery.sap.log.debug("Sending post message request to origin ' " + sOrigin + "': " + sRequestData,
+                null,
+                "sap.ushell.components.container.ApplicationContainer");
+
+        oSourceWindow.postMessage(sRequestData, sOrigin);
+    }
 
     /**
      * Helper method for handling service invocation via post message events
@@ -565,10 +594,16 @@
             sService = oMessageData && oMessageData.service,
             sServiceName;
 
+        jQuery.sap.log.debug("Received post message request from origin '" + oMessage.origin + "': "
+            + JSON.stringify(oMessageData),
+            null,
+            "sap.ushell.components.container.ApplicationContainer");
+
         if (oMessageData.type !== "request" || !sService || (
                 sService.indexOf("sap.ushell.services.CrossApplicationNavigation") !== 0
+                && sService.indexOf("sap.ushell.CrossApplicationNavigation") !== 0
                 && sService.indexOf("sap.ushell.ui5service.ShellUIService") !== 0
-                && sService.indexOf("sap.ushell.services.ShellUIService") !== 0
+                && sService.indexOf("sap.ushell.services.Container") !== 0
         )) {
             // silently ignore any other messages
             return;
@@ -586,8 +621,9 @@
 
         if (!sap.ushell.components.container.ApplicationContainer.prototype._isTrustedPostMessageSource(oContainer, oMessage)) {
             // log w/ warning level, message would normally processed by us
-            jQuery.sap.log.warning("Received message from untrusted origin: " + oMessage.origin,
-                    oMessage.data, "sap.ushell.components.container.ApplicationContainer");
+            jQuery.sap.log.warning("Received message from untrusted origin '" + oMessage.origin + "': "
+                + JSON.stringify(oMessage.data),
+                null, "sap.ushell.components.container.ApplicationContainer");
             return;
         }
 
@@ -595,13 +631,43 @@
          * Sends the response message in the expected format
          */
         function sendResponseMessage(sStatus, oBody) {
-            oMessage.source.postMessage(JSON.stringify({
+            var sResponseData = JSON.stringify({
                 type: "response",
                 service: oMessageData.service,
                 request_id: oMessageData.request_id,
                 status: sStatus,
                 body: oBody
-            }), oMessage.origin);
+            });
+
+            jQuery.sap.log.debug("Sending post message response to origin ' " + oMessage.origin + "': "
+                + sResponseData,
+                null,
+                "sap.ushell.components.container.ApplicationContainer");
+
+            if (typeof oMessage.source !== "object") {
+                jQuery.sap.log.debug("Cannot send response message to origin ' " + oMessage.origin,
+                    "`source` member of request message is not an object",
+                    "sap.ushell.components.container.ApplicationContainer");
+
+                return;
+            }
+
+            oMessage.source.postMessage(sResponseData, oMessage.origin);
+        }
+
+        function executeSetBackNavigationService(oMessage, oMessageData) {
+            var oDeferred = new jQuery.Deferred(),
+                fnCallback;
+            if (oMessageData.body && oMessageData.body.callbackMessage && oMessageData.body.callbackMessage.service) {
+                fnCallback = sap.ushell.components.container.ApplicationContainer.prototype._backButtonPressedCallback.bind(
+                    null,
+                    oMessage.source,
+                    oMessageData.body.callbackMessage.service,
+                    oMessage.origin
+                );
+            } // empty body or callback message will call the setBackNavigation with undefined, this should reset the back button callback
+            oDeferred.resolve(oContainer.getShellUIService().setBackNavigation(fnCallback));
+            return oDeferred.promise();
         }
 
         /**
@@ -625,15 +691,28 @@
                 return sap.ushell.Container.getService("CrossApplicationNavigation").isNavigationSupported(oMessageData.body.aIntents);
             case "sap.ushell.services.CrossApplicationNavigation.toExternal":
                 return new jQuery.Deferred().resolve(sap.ushell.Container.getService("CrossApplicationNavigation").toExternal(oMessageData.body.oArgs)).promise();
+            case "sap.ushell.CrossApplicationNavigation.backToPreviousApp":
+                sap.ushell.Container.getService("CrossApplicationNavigation").backToPreviousApp();
+                return new jQuery.Deferred().resolve().promise();
+            case "sap.ushell.services.CrossApplicationNavigation.backToPreviousApp":
+                sap.ushell.Container.getService("CrossApplicationNavigation").backToPreviousApp();
+                return new jQuery.Deferred().resolve().promise();
+            case "sap.ushell.services.CrossApplicationNavigation.historyBack":
+                sap.ushell.Container.getService("CrossApplicationNavigation").historyBack(oMessageData.body.iSteps);
+                return new jQuery.Deferred().resolve().promise();
             case "sap.ushell.services.CrossApplicationNavigation.getAppStateData":
                 // note: sAppStateKey may be an array of argument arrays
                 return sap.ushell.Container.getService("CrossApplicationNavigation").getAppStateData(oMessageData.body.sAppStateKey);
             case "sap.ushell.ui5service.ShellUIService.setTitle":
                 return new jQuery.Deferred().resolve(oContainer.getShellUIService().setTitle(oMessageData.body.sTitle)).promise();
-            case "sap.ushell.services.ShellUIService.setTitle":
-                return new jQuery.Deferred().resolve(oContainer.getShellUIService().setTitle(oMessageData.body.sTitle)).promise();
+            case "sap.ushell.ui5service.ShellUIService.setBackNavigation":
+                return executeSetBackNavigationService(oMessage, oMessageData);
+            case "sap.ushell.services.Container.setDirtyFlag":
+                sap.ushell.Container.setDirtyFlag(oMessageData.body.bIsDirty);
+                return new jQuery.Deferred().resolve().promise();
             default:
-                return undefined;
+                var sError = "Unknown service name: '" + sServiceName + "'";
+                return new jQuery.Deferred().reject(sError).promise();
             }
         }
 
@@ -661,6 +740,16 @@
      *
      */
     function handleMessageEvent(oContainer, oMessage) {
+        var sUi5ComponentName = oContainer && oContainer.getUi5ComponentName && oContainer.getUi5ComponentName();
+        if (typeof sUi5ComponentName === "string") {
+            jQuery.sap.log.debug(
+                "Skipping handling of postMessage 'message' event on container of UI5 application '" + sUi5ComponentName + "'",
+                "Only non UI5 application containers can handle 'message' postMessage event",
+                "sap.ushell.components.container.ApplicationContainer"
+            );
+            return;
+        }
+
         var oMessageData = oMessage.data;
 
         if (typeof oMessageData === "string") {
@@ -751,6 +840,60 @@
     }
 
     /**
+     * Appends a sap-shell parameter to the given URL to
+     * indicate the FLP version to legacy applications.
+     *
+     * <p>
+     * This method should be called only when it is
+     * necessary to add the sap-shell parameter to the
+     * URL.
+     * </p>
+     *
+     * @param {string} sUrl
+     *    the url to be amended
+     * @param {string} sApplicationType
+     *    the application type for the given URL
+     * @return {string}
+     *    the URL where the parameter should be appended to.
+     * @private
+     */
+    function appendSapShellParam(sUrl, sApplicationType) {
+        var sUrlSuffix = sApplicationType === "TR"
+            ? ""
+            : "-NWBC";
+
+        var sVersion,
+            getVersion = function () {
+                var sVersion,
+                    oMatch;
+
+                try { // in the sandbox localhost scenario, sap.ui.getVersionInfo() triggers an exception
+                    sVersion = sap.ui.getVersionInfo().version;
+                } catch (e) {
+                    jQuery.sap.log.error("sap ui version could not be determined, using sap.ui.version (core version) as fallback " + e);
+                    sVersion = window.sap && sap.ui && sap.ui.version;
+                }
+
+                oMatch = /\d+\.\d+\.\d+/.exec(sVersion);
+                if (oMatch && oMatch[0]) {
+                    sVersion = oMatch[0];
+                } else {
+                    sVersion = undefined;
+                }
+
+                return sVersion;
+            };
+
+        sVersion = getVersion();
+        if (sVersion) {
+            // we pass it either completely or not at all
+            sUrl += sUrl.indexOf("?") >= 0 ? "&" : "?"; // FIXME: This is a bug.
+            sUrl += "sap-shell=" + encodeURIComponent("FLP" + sVersion + sUrlSuffix);
+        }
+        return sUrl;
+    }
+
+    /**
      * Amends the NavTargetResolution response with theme, sap-ushell-version, accessibility and post parameters if present.
      * Theme and accessibility information is only added for the NWBC application type.
      *
@@ -758,11 +901,13 @@
      *   Already resolved url (NavTargetResolution response)
      * @param {string} sUrlApplicationType
      *   The application type of <code>sUrl</code>
+     * @param {string} sTargetNavigationMode
+     *   The (external) navigation mode to add in the sap-target-navmode parameter
      * @returns {string}
      *   Modified url having additional parameters
      * @private
      */
-    function adjustNwbcUrl(sUrl, sUrlApplicationType) {
+    function adjustNwbcUrl(sUrl, sUrlApplicationType, sTargetNavigationMode, bReuseSession) {
         var sTheme,
             getAccessibility = function () {
                 var vUrl = sap.ushell.utils.getParameterValueBoolean("sap-accessibility");
@@ -771,53 +916,54 @@
                 }
                 return sap.ushell.Container.getUser().getAccessibilityMode();
             },
-            sVersion,
-            getVersion = function () {
-                try { // in the sandbox localhost scenario, sap.ui.getVersionInfo() triggers an exception
-                    var sVersion = sap.ui.getVersionInfo().version,
-                        oMatch = /\d+\.\d+\.\d+/.exec(sVersion);
-                    if (oMatch && oMatch[0]) {
-                        sVersion = oMatch[0];
-                    }
-                } catch (e) {
-                    jQuery.sap.log.error("sap ui version could not be determined " + e);
-                    sVersion = "";
-                }
-                return sVersion;
+            getStatistics = function () {
+                var bAddStatistics = false,
+                    oResolvedUrlParameters = jQuery.sap.getUriParameters(sUrl) || { mParams : {}};
+
+                // To take care of the precedence of the intent over UI5 configuration
+                 bAddStatistics = sap.ui.getCore().getConfiguration().getStatistics()
+                     && !oResolvedUrlParameters.mParams.hasOwnProperty("sap-statistics");
+                return bAddStatistics;
             };
+
         // force IE to edge mode
         sUrl += sUrl.indexOf("?") >= 0 ? "&" : "?";
         sUrl += "sap-ie=edge";
         // transport sap-theme to NWBC HTML
         sTheme = sap.ushell.Container.getUser()
             .getTheme(sap.ushell.User.prototype.constants.themeFormat.NWBC);
+
         if (sTheme) {
             sUrl += sUrl.indexOf("?") >= 0 ? "&" : "?";
             sUrl += "sap-theme=" + encodeURIComponent(sTheme);
-            //TODO replace existing URL parameter?
+            // note, we do not replace existing parameters
+        }
+        if (sTargetNavigationMode) {
+            sUrl += sUrl.indexOf("?") >= 0 ? "&" : "?";
+            sUrl += "sap-target-navmode=" + encodeURIComponent(sTargetNavigationMode);
+            // note, we do not replace existing parameters
         }
         if (getAccessibility()) {
             // propagate accessibility mode
+            // Note: This is handled by the WebGUI/WDA framework which expects a value of "X"!
             sUrl += sUrl.indexOf("?") >= 0 ? "&" : "?";
             sUrl += "sap-accessibility=X";
-            //TODO replace existing URL parameter?
+            // note, we do not replace existing parameters
         }
-
-        if (sUrlApplicationType === "TR") {
-            return sUrl;
-        }
-
-        /*
-         * Non-TR specific adjustments past this point
-         */
-
-        sVersion = getVersion();
-        if (sVersion) {
-            // we pass it either completely or not at all
+        if (getStatistics()) {
+            // propagate statistics = true
+            // Note: This is handled by the IFC handler on ABAP, which expects a value of "true" (not "X")
             sUrl += sUrl.indexOf("?") >= 0 ? "&" : "?";
-            sUrl += "sap-shell=" + encodeURIComponent("FLP" + sVersion + "-NWBC");
+            sUrl += "sap-statistics=true";
+            // note, we do not replace existing parameters
         }
-        return sUrl;
+
+        if (bReuseSession) {
+            sUrl += sUrl.indexOf("?") >= 0 ? "&" : "?";
+            sUrl += "sap-keepclientsession=1";
+        }
+
+        return appendSapShellParam(sUrl, sUrlApplicationType);
     }
 
     /**
@@ -918,8 +1064,10 @@
         }
 
         if (sap.ushell.utils.isApplicationTypeNWBCRelated(sApplicationType)) {
+            var sTargetNavigationMode = oContainer.getTargetNavigationMode();
+
             // amend already resolved url with additional parameters
-            sUrl = sap.ushell.components.container.ApplicationContainer.prototype._adjustNwbcUrl(sUrl, sApplicationType);
+            sUrl = sap.ushell.components.container.ApplicationContainer.prototype._adjustNwbcUrl(sUrl, sApplicationType, sTargetNavigationMode, oContainer.getIsStateful());
 
             // add this container to list of NWBC-containing containers
             sap.ushell.utils.localStorageSetItem(oContainer.globalDirtyStorageKey,
@@ -1087,6 +1235,7 @@
                 applicationType: {defaultValue: "URL", type: sPREFIX + "ApplicationType"},
                 height: {defaultValue: "100%", type: "sap.ui.core.CSSSize"},
                 navigationMode: {defaultValue : "", type: "string"},
+                targetNavigationMode: {defaultValue : "", type: "string"},
                 text: {defaultValue : "", type: "string"},
                 url: {defaultValue: "", type: "string"},
                 visible: {defaultValue: true, type: "boolean"},
@@ -1095,7 +1244,10 @@
                 componentHandle : {type : "object"},
                 ui5ComponentName : {type : "string"},
                 width: {defaultValue: "100%", type: "sap.ui.core.CSSSize"},
-                shellUIService: { type: "object" }
+                shellUIService: { type: "object" },
+                reservedParameters: { type: "object" },
+                coreResourcesFullyLoaded: { type: "boolean" },
+                isStateful: { defaultValue: false, type: "boolean" }
             },
             events: {
                 "applicationConfiguration": {}
@@ -1149,6 +1301,7 @@
          * Initialization of <code>ApplicationContainer</code> instance.
          */
         init: function () {
+
             var that = this;
             that.globalDirtyStorageKey = sDIRTY_STATE_PREFIX + jQuery.sap.uid();
 
@@ -1181,17 +1334,6 @@
 
             that._messageEventListener = sap.ushell.components.container.ApplicationContainer.prototype._handleMessageEvent.bind(null, that);
             addEventListener('message', that._messageEventListener);
-
-            if (bFirstLoadOfApplicationContainer) {
-                //Hook CrossApplicationNavigation URL validation logic into the sap.m.MessagePopover control
-                var oMessageConceptDefaultHandlers = {
-                    "asyncURLHandler" : sap.ushell.components.container.ApplicationContainer.prototype._adaptIsUrlSupportedResultForMessagePopover
-                };
-                if (sap.m.MessagePopover && sap.m.MessagePopover.setDefaultHandlers) {
-                    sap.m.MessagePopover.setDefaultHandlers(oMessageConceptDefaultHandlers);
-                }
-                bFirstLoadOfApplicationContainer = false;
-            }
         },
 
         /**
@@ -1312,6 +1454,178 @@
         setProperty(this, "applicationType", sValue);
     };
 
+    sap.ushell.components.container.ApplicationContainer.prototype.createPostMessageRequest = function (sServiceName, oMessageBody) {
+        var sRequestId = Date.now().toString();
+
+        return {
+            "type": "request",
+            "request_id": sRequestId,
+            "service": sServiceName,
+            "body": oMessageBody
+        };
+    };
+
+    sap.ushell.components.container.ApplicationContainer.prototype.setNewTRApplicationContext = function (sUrl) {
+        var oIFrame = this.getDomRef();
+        if (!oIFrame || !oIFrame.tagName === "IFRAME") {
+            return Promise.reject({
+                message: "Expected an exisiting TR application application frame but found none."
+            });
+        }
+
+        sUrl = appendSapShellParam(sUrl);
+        var oRequestMessage = this.createPostMessageRequest("sap.its.startService", {
+            "url": sUrl
+        });
+
+        return this.postMessageToIframe(oRequestMessage, oIFrame, true /* bWaitForResponse */).catch(function (oEventData) {
+            return Promise.reject({
+                eventData: oEventData,
+                message: "Failed to change application context."
+            });
+        });
+    };
+
+    /**
+     * Sends a postMessage to the given IFrame following a specific Post
+     * Message Protocol, waiting for a response.
+     *
+     * @param {object} oMessage
+     *  A message object like:
+     *  <pre>
+     *   {
+     *       "type": "request",
+     *       "request_id": "1234567",
+     *       "service": "some.target.serviceName",
+     *       "body": {
+     *           // ...
+     *       }
+     *   };
+     *  </pre>
+     *
+     * @param {object} oIFrame
+     *  The IFrame to post the message to.
+     *
+     * @param {boolean} [bWaitForResponse]
+     *  Whether to wait for response or just send the message.
+     *
+     * @return {Promise}
+     *  If <code>bWaitForResponse</code> is false, returns a promise that
+     *  resolves to undefined after posting the message to the iframe.
+     *  If <code>bWaitForResponse</code> is true, returns a promise resolving
+     *  or rejecting with the response from the sent message. The promise is
+     *  only rejected when it is certain that the operation is unsuccessful
+     *  (i.e., the endpoint genuinely flagged the failure occurred). The
+     *  promise is not rejected when the response cannot be parsed. In this
+     *  case a debug and a warning message is logged. The called service can
+     *  send another response in this case.
+     *
+     *  The called service cannot post multiple responses if a valid
+     *  (successful or unsuccessful) response was already posted.
+     *
+     * @private
+     */
+    sap.ushell.components.container.ApplicationContainer.prototype.postMessageToIframe = function (oMessage, oIFrame, bWaitForResponse) {
+
+        var sRequestId = oMessage.request_id;
+
+        return new Promise(function (fnNotifySuccess, fnNotifyError) {
+
+            function fnProcessClientMessage(oEvent) {
+                var oEventData;
+
+                try {
+                    oEventData = JSON.parse(oEvent.data);
+
+                    if (sRequestId !== oEventData.request_id) {
+                        return;
+                    }
+
+                    if ("success" === oEventData.status) {
+                        fnNotifySuccess(oEventData);
+                    } else {
+                        fnNotifyError(oEventData);
+                    }
+
+                    window.removeEventListener("message", fnProcessClientMessage);
+                } catch (e) {
+                    // Not gonna break because of a potential quirk in the framework that responded to postMessage
+                    fnNotifySuccess();
+
+                    jQuery.sap.log.warning("Obtained bad response from framework in response to message " + oMessage.request_id);
+                    jQuery.sap.log.debug("Underlying framework returned invalid response data: '" + oEvent.data + "'");
+                }
+            }
+
+            if (bWaitForResponse) {
+                window.addEventListener("message", fnProcessClientMessage, false);
+                oIFrame.contentWindow.postMessage(JSON.stringify(oMessage), "*");
+            } else {
+                oIFrame.contentWindow.postMessage(JSON.stringify(oMessage), "*");
+                fnNotifySuccess();
+            }
+        });
+    };
+
+    sap.ushell.components.container.ApplicationContainer.prototype.setNewApplicationContext = function (sApplicationType, sUrl) {
+        // Consider that we can have different procedures for setting a new context
+        // for applications of different types e.g. TR, UI5, NWBC, WDA etc.
+        //
+        // In general an arbitrary application type identified as 'XYZ' should
+        // conventionally have a method that implements setting a new context
+        // for it with the name 'setNewXYZApplicationContext'.
+        //
+        // So, we dynamically find the method for handling the respective type as
+        // follows:
+        var fn = this["setNew" + sApplicationType + "ApplicationContext"];
+
+        if (fn) {
+            return fn.call(this, sUrl);
+        }
+
+        return Promise.reject({
+            message: "Unsupported application type"
+        });
+    };
+
+    /**
+     * Method called by the shell controller after the next application is
+     * opened.
+     *
+     * @param {string} sNextApplicationType
+     *   The application type of the currently opened application.
+     *
+     * @private
+     */
+    sap.ushell.components.container.ApplicationContainer.prototype.onApplicationOpened = function(sNextApplicationType) {
+        var bIsStatefulContainer = this.getIsStateful();
+        if (!bIsStatefulContainer) {
+            return Promise.resolve();
+        }
+
+        var sMyApplicationType = this.getApplicationType();
+        if (sMyApplicationType === "TR" && sNextApplicationType !== "TR") {
+
+            var oIFrame = this.getDomRef();
+            if (!oIFrame || !oIFrame.tagName === "IFRAME") {
+                return Promise.reject({
+                    message: "Expected an exisiting TR application application frame but found none."
+                });
+            }
+
+            var oRequestMessage = this.createPostMessageRequest("sap.gui.triggerCloseSession", {});
+
+            return this.postMessageToIframe(oRequestMessage, oIFrame, false /* bWaitForResponse */).catch(function (oEventData) {
+                return Promise.reject({
+                    eventData: oEventData,
+                    message: "Failed to change application context."
+                });
+            });
+        }
+
+        return Promise.resolve();
+    };
+
     //Attach private functions which should be testable via unit tests to the prototype of the ApplicationContainer
     //to make them available outside for testing.
     sap.ushell.components.container.ApplicationContainer.prototype._adaptIsUrlSupportedResultForMessagePopover = adaptIsUrlSupportedResultForMessagePopover;
@@ -1332,4 +1646,6 @@
     sap.ushell.components.container.ApplicationContainer.prototype._renderControlInDiv = renderControlInDiv;
     sap.ushell.components.container.ApplicationContainer.prototype._adjustNwbcUrl = adjustNwbcUrl;
     sap.ushell.components.container.ApplicationContainer.prototype._render = render;
+    sap.ushell.components.container.ApplicationContainer.prototype._backButtonPressedCallback = backButtonPressedCallback;
+
 }());

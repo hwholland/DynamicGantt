@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
 * @fileOverview Implementation of FLP User Activity Log.
 * Records the User's last _maxLoggedMessages (currently set to 30) Actions and Errors,
@@ -24,12 +24,11 @@
 *
 */
 
-(function () {
-    "use strict";
-    /*global jQuery, sap, hasher*/
-    jQuery.sap.declare("sap.ushell.UserActivityLog");
-    jQuery.sap.require("sap.ushell.utils");
+sap.ui.define(['./utils'],
+	function(utils) {
+	"use strict";
 
+    /*global jQuery, sap, hasher*/
     //Constructor
     var UserActivityLogClass =  function () {};
 
@@ -48,7 +47,7 @@
                                     "moveGroup",
                                     "addTile",
                                     "deleteTile",
-                                    "moveTile",
+                                    "movetile",
                                     "externalSearch",
                                     "appOpened",
                                     "addBookmarkTile"],
@@ -142,7 +141,7 @@
                 shellState: this._getShellState(),
                 navigationData: this._getLastNavActionFromStorage(),
                 userLog: this.getLog(),
-                formFactor: sap.ushell.utils.getFormFactor()
+                formFactor: utils.getFormFactor()
             };
             return result;
         },
@@ -319,8 +318,12 @@
                     sMessage = "Open application " + oData.action;
                     var lastNavigationActionData = this._getLastNavActionFromStorage();
 
+                    // TODO, clone, we are mutating an present object?
                     // Add the applicationInformation to the navigation data that was collected before the openApp event
-                    lastNavigationActionData.applicationInformation = oData;
+                    lastNavigationActionData.applicationInformation = {};
+                    ["applicationType","ui5ComponentName","url","additionalInformation","text"].forEach(function(sProp) {
+                        lastNavigationActionData.applicationInformation[sProp] = oData[sProp];
+                    });
 
                     // Check if the hash kept in lastNavigationActionData (the hash of the last app launching action)
                     // equals the current hash.
@@ -453,5 +456,9 @@
         }
     };
 
-    sap.ushell.UserActivityLog = new UserActivityLogClass();
-})();
+    var UserActivityLog = new UserActivityLogClass();
+
+
+	return UserActivityLog;
+
+}, /* bExport= */ true);

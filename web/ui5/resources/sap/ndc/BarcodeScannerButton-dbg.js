@@ -1,8 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.ndc.BarcodeScannerButton.
@@ -109,7 +108,8 @@ sap.ui.define(['jquery.sap.global', './BarcodeScanner', './library', 'sap/ui/cor
 		
 		this.setAggregation("_btn", new sap.m.Button({
 			icon: "sap-icon://bar-code",
-			press: jQuery.proxy(this._onBtnPressed, this)
+			press: jQuery.proxy(this._onBtnPressed, this),
+			width: "100%"
 		}));
 		
 		oBarcodeStatus = BarcodeScanner.getStatusModel();
@@ -154,12 +154,6 @@ sap.ui.define(['jquery.sap.global', './BarcodeScanner', './library', 'sap/ui/cor
 		}
 	
 		return this;
-	};
-	
-	BarcodeScannerButton.prototype.setWidth = function (width) {		
-        this.setProperty("width", width, true);
-        this.getAggregation("_btn").setWidth(this.getWidth());
-        return this;				
 	};
 
 	return BarcodeScannerButton;

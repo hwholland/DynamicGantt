@@ -10,58 +10,58 @@ Please use the sap.m.IconTabBar instead!
 This control will not be supported anymore.</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="selectedTab" type="sap.ui.core/int" group="Data">
+        <property group="Data" type="sap.ui.core/int" name="selectedTab">
             <documentation>Return the index of the selected tab</documentation>
         </property>
-        <property name="badgeInfo" type="sap.ui.core/int" group="Data">
+        <property group="Data" type="sap.ui.core/int" name="badgeInfo">
             <documentation>The number to display in the badge for the info tab</documentation>
         </property>
-        <property name="badgeNotes" type="sap.ui.core/int" group="Data">
+        <property group="Data" type="sap.ui.core/int" name="badgeNotes">
             <documentation>The number to display in the badge for the notes tab</documentation>
         </property>
-        <property name="badgeAttachments" type="sap.ui.core/int" group="Data">
+        <property group="Data" type="sap.ui.core/int" name="badgeAttachments">
             <documentation>The number to display in the badge for the attachments tab</documentation>
         </property>
-        <property name="badgePeople" type="sap.ui.core/int" group="Data">
+        <property group="Data" type="sap.ui.core/int" name="badgePeople">
             <documentation>The number to display in the badge for the people tab</documentation>
         </property>
-        <property name="expandable" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="expandable">
             <documentation>Indicates if the tab can be collapsed and expanded</documentation>
         </property>
-        <property name="expanded" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="expanded">
             <documentation>Indicates if the actual tab is expanded or not</documentation>
         </property>
-        <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="visible">
             <documentation>setter for visible property</documentation>
         </property>
     </properties>
     <events>
-        <event name="select" allowPreventDefault="true">
+        <event allowPreventDefault="true" name="select">
             <documentation>Indicates that the selected tab has changed</documentation>
         </event>
-        <event name="expand" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="expand">
             <documentation>Indicates that the tab will expand</documentation>
         </event>
-        <event name="collapse" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="collapse">
             <documentation>Indicates that the tab will collapse</documentation>
         </event>
     </events>
     <aggregations>
-        <aggregation name="tabs" type="sap.ui.core/Icon" cardinality="0..n" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..n" type="sap.ui.core/Icon" name="tabs">
             <documentation>The tab icons in order</documentation>
         </aggregation>
-        <aggregation name="contentInfo" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="contentInfo">
             <documentation>The info tab</documentation>
         </aggregation>
-        <aggregation name="contentAttachments" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="contentAttachments">
             <documentation>The attachments tab</documentation>
         </aggregation>
-        <aggregation name="contentNotes" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="contentNotes">
             <documentation>The notes tab</documentation>
         </aggregation>
-        <aggregation name="contentPeople" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="contentPeople">
             <documentation>The people tab</documentation>
         </aggregation>
-        <aggregation name="badges" type="sap.ui.core/Control" cardinality="0..n" visibility="hidden"/>
+        <aggregation visibility="hidden" cardinality="0..n" type="sap.ui.core/Control" name="badges"/>
     </aggregations>
 </control>

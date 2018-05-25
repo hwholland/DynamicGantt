@@ -1,8 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /**
@@ -19,14 +18,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library'],
 	 * @namespace 
 	 * @name sap.ui.generic.app
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @public
 	 */
 	
 	// delegate further initialization of this library to the Core
 	sap.ui.getCore().initLibrary({
 		name : "sap.ui.generic.app",
-		version: "1.38.33",
+		version: "1.54.3",
 		dependencies : ["sap.ui.core"],
 		types: 	[
 				"sap.ui.generic.app.navigation.service.NavType",
@@ -104,9 +103,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library'],
 	/**
 	 * A static enumeration type which indicates whether semantic attributes with values <code>null</code>,
 	 * <code>undefined</code> or <code>""</code> (empty string) shall be suppressed, before they are mixed in to the selection variant in the
-	 * method {@link sap.ui.generic.app.navigation.service..NavigationHandler.mixAttributesAndSelectionVariant mixAttributesAndSelectionVariant}
-	 * of the {@link sap.ui.generic.app.navigation.service..NavigationHandler NavigationHandler}
-	 * @enum {integer}
+	 * method {@link sap.ui.generic.app.navigation.service.NavigationHandler.mixAttributesAndSelectionVariant mixAttributesAndSelectionVariant}
+	 * of the {@link sap.ui.generic.app.navigation.service.NavigationHandler NavigationHandler}
+	 * @enum {int}
 	 * @name sap.ui.generic.app.navigation.service.SuppressionBehavior
 	 * @readonly
 	 * @public

@@ -1,20 +1,20 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 
-(function () {
-    "use strict";
-    jQuery.sap.require("sap.ui.core.Renderer");
-    jQuery.sap.declare("sap.ushell.ui.tile.DynamicTileRenderer");
-    jQuery.sap.require("sap.ushell.ui.tile.TileBaseRenderer");
-    jQuery.sap.require("sap.ushell.ui.tile.State");
-    jQuery.sap.require("sap.ui.core.format.NumberFormat");
+sap.ui.define([
+		'sap/ui/core/Renderer',
+		'sap/ui/core/format/NumberFormat',
+		'./State',
+		'./TileBaseRenderer'
+	], function(Renderer, NumberFormat, State, TileBaseRenderer) {
+	"use strict";
 
     /**
      * @name sap.ushell.ui.tile.DynamicTileRenderer.
      * @static
      * @private
      */
-    sap.ushell.ui.tile.DynamicTileRenderer = sap.ui.core.Renderer.extend(sap.ushell.ui.tile.TileBaseRenderer);
+    var DynamicTileRenderer = Renderer.extend(TileBaseRenderer);
     var translationBundle = sap.ushell.resources.i18n;
 
     /**
@@ -23,7 +23,7 @@
      * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
      * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
      */
-    sap.ushell.ui.tile.DynamicTileRenderer.renderPart = function (oRm, oControl) {
+    DynamicTileRenderer.renderPart = function (oRm, oControl) {
         var numValue = oControl.getNumberValue(),
             numberFactor = oControl.getNumberFactor(),
             displayNumber = numValue.toString();
@@ -38,7 +38,7 @@
             numberFactor = oNormalizedNumberData.numberFactor;
             displayNumber = oNormalizedNumberData.displayNumber;
         } else if (displayNumber !== "") {
-            var oNForm = sap.ui.core.format.NumberFormat.getFloatInstance({maxFractionDigits: maxCharactersInDisplayNumber});
+            var oNForm = NumberFormat.getFloatInstance({maxFractionDigits: maxCharactersInDisplayNumber});
             displayNumber = oNForm.format(numValue);
         }
         // write the HTML into the render manager
@@ -51,7 +51,7 @@
         oRm.write("<div");
         oRm.addClass("sapUshellDynamicTileData");
         oRm.addClass((oControl.getNumberState() ? "sapUshellDynamicTileData" + oControl.getNumberState() :
-        "sapUshellDynamicTileData" + sap.ushell.ui.tile.State.Neutral));
+        "sapUshellDynamicTileData" + State.Neutral));
         oRm.writeClasses();
         oRm.write(">");
 
@@ -105,12 +105,12 @@
         oRm.write("</div>");
     };
 
-    sap.ushell.ui.tile.DynamicTileRenderer._normalizeNumber = function (numValue, maxCharactersInDisplayNumber, numberFactor, oControl) {
+    DynamicTileRenderer._normalizeNumber = function (numValue, maxCharactersInDisplayNumber, numberFactor, oControl) {
         var number;
         if (isNaN(numValue)) {
             number = numValue;
         } else {
-            var oNForm = sap.ui.core.format.NumberFormat.getFloatInstance({maxFractionDigits: oControl.getNumberDigits()});
+            var oNForm = NumberFormat.getFloatInstance({maxFractionDigits: oControl.getNumberDigits()});
 
             if (!numberFactor) {
                 if (numValue >= 1000000000) {
@@ -140,7 +140,7 @@
         };
     };
 
-    sap.ushell.ui.tile.DynamicTileRenderer._shouldProcessDigits = function (sDisplayNumber, oControl) {
+    DynamicTileRenderer._shouldProcessDigits = function (sDisplayNumber, oControl) {
         var nDigitsToDisplay = oControl.getNumberDigits(), nNumberOfDigits;
         if (sDisplayNumber.indexOf('.') !== -1) {
             nNumberOfDigits = sDisplayNumber.split(".")[1].length;
@@ -151,7 +151,11 @@
         return false;
     };
 
-    sap.ushell.ui.tile.DynamicTileRenderer.getInfoPrefix = function (oControl) {
+    DynamicTileRenderer.getInfoPrefix = function (oControl) {
         return oControl.getNumberUnit();
     };
-}());
+
+
+	return DynamicTileRenderer;
+
+}, /* bExport= */ true);

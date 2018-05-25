@@ -9,9 +9,9 @@
     <since>1.16</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="" group="Appearance">
+        <property group="Appearance" defaultValue="" type="sap.ui.core/CSSSize" name="width">
             <documentation>Defines the width of the horizontal space.
-Note: Empty("") value makes the space flexible which means it covers the remaining space between toolbar items.
+Note: Empty(&quot;&quot;) value makes the space flexible which means it covers the remaining space between toolbar items.
 This feature can be used to push next item to the edge of the toolbar.</documentation>
         </property>
     </properties>

@@ -6,9 +6,7 @@
  */
 
 // Provides an exception class for DVL errors.
-sap.ui.define([
-	"jquery.sap.global", "sap/ui/base/Exception"
-], function(jQuery, Exception) {
+sap.ui.define([ "sap/ui/base/Exception" ], function(Exception) {
 	"use strict";
 
 	/**
@@ -20,7 +18,7 @@ sap.ui.define([
 	 * @param {string} message The error message.
 	 * @private
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 * @extends sap.ui.base.Exception
 	 * @alias sap.ui.vk.DvlException
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
@@ -30,7 +28,7 @@ sap.ui.define([
 		this.code = code;
 		this.message = message;
 	};
-	DvlException.prototype = jQuery.sap.newObject(Exception.prototype);
+	DvlException.prototype = Object.create(Exception.prototype);
 
 	return DvlException;
 });

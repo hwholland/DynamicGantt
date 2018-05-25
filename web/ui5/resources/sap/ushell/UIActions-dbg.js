@@ -1,11 +1,9 @@
 /*global jQuery, sap, clearTimeout, console, window */
 /*global jQuery, sap, clearTimeout, console, window */
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
 
-    jQuery.sap.declare("sap.ushell.UIActions");
-
-    sap.ushell.UIActions = function(cfg) {
+    var UIActions = function(cfg) {
 
         if (!cfg || !cfg.rootSelector || !cfg.containerSelector || !cfg.draggableSelector) {
             throw new Error("No configuration object to initialize User Interaction module.");
@@ -26,6 +24,7 @@
         this.contextMenuEvent = null;          // {String} `contextmenu` event for Windows 8 Chrome
         this.debug = null;                     // {Boolean} for debug mode
         this.defaultDragStartEvent = null;     // {String} `dragStart` event which we need to prevent its default behavior
+        this.defaultMouseMoveEvent = null;     // {String} `mousemove` event which we need to prevent its default behavior
         this.deltaTop = 0;                     // (Number)  the 'delta' value in px to shift the top position of the clone element
         this.disabledDraggableSelector = null; //{String} name of css class to avoid drag (e.g. locked tiles class identifier)
         this.dragAndScrollCallback = null;     // {Function} Callback function executes while drag mode is active
@@ -38,6 +37,7 @@
         this.doubleTapCallback = null;         // {Function} Callback function execute when double tap
         this.doubleTapDelay = null;            // {Number} number of milliseconds to recognize double tap
         this.element = null;                   // {Element} draggable element
+        this.endDragAndScrollCallback          // {Function} Callback function which decides whather to continue with drag and scroll action
         this.endX = null;                      // {Number} X coordinate of end event
         this.endY = null;                      // {Number} Y coordinate of end event
         this.isLayoutEngine = null;            // {Boolean} is layout engine available
@@ -71,6 +71,7 @@
         this.scrollHandler = null;             // {Function} scroll event handler
         this.touchCancelEvent = null;          // {String} `touchcanel` event
         this.dragCallback = null;              // {Function} Callback function execute when drag mode is active
+        this.onBeforeCreateClone = null;       // {Function} Callback function execute on before clone is created
         this.endCallback = null;               // {Function} Callback function execute after capture `touchend` or `mouseup` event
         this.touchEndEvent = null;             // {String} `touchend`
         this.touchMoveEvent = null;            // {String} `touchmove`
@@ -130,7 +131,9 @@
             this.doubleTapCallback = typeof cfg.doubleTapCallback === 'function' ? cfg.doubleTapCallback : this.noop;
             this.endCallback = typeof cfg.endCallback === 'function' ? cfg.endCallback : this.noop;
             this.dragCallback = typeof cfg.dragCallback === 'function' ? cfg.dragCallback : this.noop;
+            this.onBeforeCreateClone = typeof cfg.onBeforeCreateClone === 'function' ? cfg.onBeforeCreateClone : this.noop;
             this.dragAndScrollCallback = typeof cfg.dragAndScrollCallback === 'function' ? cfg.dragAndScrollCallback : this.noop;
+            this.endDragAndScrollCallback = typeof cfg.endDragAndScrollCallback === 'function' ? cfg.endDragAndScrollCallback : this.noop;
             this.scrollCallback = typeof cfg.scrollCallback === 'function' ? cfg.scrollCallback : this.noop;
             this.doubleTapDelay = cfg.doubleTapDelay || 500;
             this.wrapperRect = this.wrapper.getBoundingClientRect();
@@ -144,6 +147,7 @@
             this.contextMenuEvent = 'contextmenu';
             this.touchCancelEvent = 'touchcancel';
             this.defaultDragStartEvent = 'dragstart';
+            this.defaultMouseMoveEvent =  'mousemove';
             this.clickEvent = 'click';
             this.isVerticalDragOnly = cfg.isVerticalDragOnly || false;
             this.draggableElement = cfg.draggableElement;
@@ -155,6 +159,11 @@
             this.disabledDraggableSelector = cfg.disabledDraggableSelector;
             this.onDragStartUIHandler = typeof cfg.onDragStartUIHandler === 'function' ? cfg.onDragStartUIHandler : this.noop;
             this.onDragEndUIHandler = typeof cfg.onDragEndUIHandler === 'function' ? cfg.onDragEndUIHandler : this.noop;
+
+            this.defaultMouseMoveHandler = cfg.defaultMouseMoveHandler || function (evt) {
+                //prevent the Native Drag behavior of the browser
+                evt.preventDefault();
+            };
         };
 
         /* PRIVATE METHODS */
@@ -272,8 +281,8 @@
 
             if (eventObj) {
                 this.element = this.getDraggableElement(eventObj.target);
-                this.startX = eventObj.pageX;
-                this.startY = eventObj.pageY;
+                this.startX = this.moveX = eventObj.pageX;
+                this.startY = this.moveY = eventObj.pageY;
                 this.lastMoveX = 0;
                 this.lastMoveY = 0;
                 //Check if it is a doubletap flow or single tap
@@ -318,6 +327,7 @@
                             if (!jQuery(this.element).hasClass(this.disabledDraggableSelector)) {
                                 this.log('mode switched to drag');
                                 this.mode = 'drag';
+                                this.onBeforeCreateClone(evt, this.element);
                                 this.createClone();
                                 this.dragCallback(evt, this.element);
                             } else {
@@ -362,8 +372,7 @@
             this.log('moveHandler');
             this.captureMove(evt);
             switch (this.mode) {
-            case 'normal':
-                if ((Math.abs(this.startX - this.moveX) > this.moveTolerance || Math.abs(this.startY - this.moveY) > this.moveTolerance)) {
+            case 'normal':if ((Math.abs(this.startX - this.moveX) > this.moveTolerance || Math.abs(this.startY - this.moveY) > this.moveTolerance)) {
                     if (this.isTouch || this.isTouchEvent) {
                         this.log('-> normal');
                         clearTimeout(this.timer);
@@ -373,6 +382,7 @@
                         if (!jQuery(this.element).hasClass(this.disabledDraggableSelector)) {
                             this.log('mode switched to drag');
                             this.mode = 'drag';
+                            this.onBeforeCreateClone(evt, this.element);
                             this.createClone();
                         } else {
                             //In case the element has the disable draggable selector, we prevent the drag action and in addition make sure to prevent the click from being executed.
@@ -454,7 +464,7 @@
          * @private
          */
         this.contextMenuHandler = function (evt) {
-            if (this.isTouch || this.isCombi) {
+            if (this.isTouch) {
                 evt.preventDefault();
             }
 
@@ -487,6 +497,15 @@
             }.bind(this), 100);
         };
 
+        this.endCallbackAdapter = function (evt, element, optional) {
+            var endResult = this.endCallback.apply(null, arguments);
+            jQuery.when(endResult).then(function () {
+                this.removeClone(element, optional.clone);
+                this.onDragEndUIHandler(evt);
+            }.bind(this));
+            this.preventClick();
+        };
+
         /**
          * Handler for `mouseup` or `touchend`
          *
@@ -497,36 +516,28 @@
             this.captureEnd(evt);
             switch (this.mode) {
             case 'normal':
-                this.onDragEndUIHandler();
+                this.onDragEndUIHandler(evt);
                 this.log('-> normal');
                 break;
             case 'drag':
                 this.log('-> drag');
-                this.removeClone();
-                this.endCallback(evt, this.element);
-                this.onDragEndUIHandler();
-                this.preventClick();
+                this.endCallbackAdapter(evt, this.element, {clone: this.clone});
                 break;
             case 'drag-and-scroll':
                 this.log('-> drag-and-scroll');
                 window.removeEventListener(this.mouseUpEvent, this.endHandler, true);
-                this.removeClone();
-                this.endCallback(evt, this.element, {
+                this.endCallbackAdapter(evt, this.element, {
                     deltaX: this.moveX - this.startX,
-                    deltaY: this.moveY - this.startY
+                    deltaY: this.moveY - this.startY,
+                    clone: this.clone
                 });
-                this.onDragEndUIHandler();
-                this.preventClick();
                 evt.stopPropagation();
                 evt.preventDefault();
                 break;
             case 'vertical-drag':
                 this.log('-> vertical-drag');
                 window.removeEventListener(this.mouseUpEvent, this.endHandler, true);
-                this.removeClone();
-                this.endCallback(evt, this.element);
-                this.onDragEndUIHandler();
-                this.preventClick();
+                this.endCallbackAdapter(evt, this.element, {clone: this.clone});
                 evt.stopPropagation();
                 evt.preventDefault();
                 break;
@@ -542,11 +553,12 @@
             this.lastMoveX = 0;
             this.lastMoveY = 0;
             this.element = null;
+            this.clone = null;
             this.mode = 'normal';
         }.bind(this);
 
         this.defaultDragStartHandler = function (evt) {
-            //prevent the Native Drag behavior of the browser
+            //prevent the Native Move behavior of the browser
             evt.preventDefault();
         };
 
@@ -569,8 +581,17 @@
                 rect;
 
             this.preventClickFlag = true;
-            rect = this.element.getBoundingClientRect();
+            if (sap.ui.getCore().byId(this.element.id) && sap.ui.getCore().byId(this.element.id).getBoundingRects) {
+                rect = sap.ui.getCore().byId(this.element.id).getBoundingRects()[0];
+                rect.top = rect.offset.y;
+                rect.left = rect.offset.x;
+                rect.width += 5;
+            } else {
+                rect = this.element.getBoundingClientRect();
+            }
             this.clone = this.element.cloneNode(true);
+            this.clone.removeAttribute("id");
+            this.clone.removeAttribute("data-sap-ui");
             this.clone.className += (' ' + this.cloneClass);
             this.element.className += (' ' + this.placeHolderClass);
             style = this.clone.style;
@@ -597,12 +618,11 @@
          *
          * @private
          */
-        this.removeClone = function () {
+        this.removeClone = function (element, clone) {
             this.preventClick();
-            this.element.className = this.element.className.split(' ' + this.placeHolderClass).join('');
-            this.clone.parentElement.removeChild(this.clone);
+            element.className = element.className.split(' ' + this.placeHolderClass).join('');
+            clone.parentElement.removeChild(clone);
             // unset reference to DOM element of the clone, otherwise it will remain DOM fragment
-            this.clone = null;
             this.log('removeClone');
         };
 
@@ -694,6 +714,9 @@
             }
 
             function isScrollPossible() {
+                if (that.endDragAndScrollCallback(that.moveY)) {
+                    return false;
+                }
                 //Down
                 if (deltaY < 0) {
                     //Calculate the difference between (document - wrapper) and (difference between : document - wrapper + container height + wrapper height )
@@ -850,6 +873,7 @@
             this.root.addEventListener(this.contextMenuEvent, this.contextMenuHandler, false);
             this.root.addEventListener(this.clickEvent, this.clickHandler, true);
             this.root.addEventListener(this.defaultDragStartEvent, this.defaultDragStartHandler, true);
+            this.root.addEventListener(this.defaultMouseMoveEvent, this.defaultMouseMoveHandler, true);
             this.wrapper.addEventListener(this.scrollEvent, this.scrollHandler, false);
             //Add event listeners for custom draggable selectors for floating container
             if (this.elementsToCapture.length) {
@@ -883,13 +907,13 @@
             this.disable();
 
             this.dragCallback = null;
+            this.onBeforeCreateClone = null;
             this.endCallback = null;
             this.startCallback = null;
             this.scrollCallback = null;
             this.doubleTapCallback = null;
             this.clickCallback = null;
             this.dragAndScrollCallback = null;
-
             delete this;
         };
 
@@ -921,6 +945,8 @@
             this.root.removeEventListener(this.mouseMoveEvent, this.moveHandler, true);
             this.root.removeEventListener(this.contextMenuEvent, this.contextMenuHandler, false);
             this.root.removeEventListener(this.clickEvent, this.clickHandler, true);
+            this.root.removeEventListener(this.defaultDragStartEvent, this.defaultDragStartHandler, true);
+            this.root.removeEventListener(this.defaultMouseMoveEvent, this.defaultMouseMoveHandler, true);
             this.wrapper.removeEventListener(this.scrollEvent, this.scrollHandler, false);
 
             return this;
@@ -939,4 +965,8 @@
             return {x: this.moveX, y: this.moveY};
         };
     };
-})();
+
+
+	return UIActions;
+
+}, /* bExport= */ true);

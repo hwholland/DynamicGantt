@@ -1,6 +1,6 @@
 (function () {
-	
 	"use strict";
+
 sap.ui.controller("tiles.indicatorDualComparison.DualComparison", {
 
 	/* TODO: remove the comments and fix the bugs */

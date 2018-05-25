@@ -7,7 +7,7 @@
     <deprecation since="1.19">This Property has been deprecated. This interface will be removed from the SAPUI5 delivery in one of the next releases.</deprecation>
     <baseType>sap.viz/ui5/core/BaseStructuredType</baseType>
     <properties>
-        <property name="visible" type="sap.ui.core/boolean" defaultValue="true">
+        <property defaultValue="true" type="sap.ui.core/boolean" name="visible">
             <documentation>Set the visibility of the hoverline.</documentation>
         </property>
     </properties>

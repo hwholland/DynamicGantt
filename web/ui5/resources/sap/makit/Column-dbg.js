@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ jQuery.sap.require("sap.ui.core.Element");
  * @extends sap.ui.core.Element
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -73,8 +73,23 @@ sap.ui.core.Element.extend("sap.makit.Column", { metadata : {
 	deprecated : true,
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * The name representing the Column
+		 */
 		"name" : {type : "string", group : "Identification", defaultValue : null},
+
+		/**
+		 * The value mapped to this Column (User should map this using data binding)
+		 */
 		"value" : {type : "any", group : "Data", defaultValue : null},
+
+		/**
+		 * The data type of the Column:
+		 * number
+		 * string
+		 * datetime
+		 */
 		"type" : {type : "string", group : "Misc", defaultValue : 'string'}
 	}
 }});

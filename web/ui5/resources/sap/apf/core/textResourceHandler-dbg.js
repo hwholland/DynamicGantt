@@ -16,12 +16,13 @@ jQuery.sap.require("jquery.sap.resources");
 	 */
 	sap.apf.core.TextResourceHandler = function(oInject) {
 		var oMessageHandler = oInject.instances.messageHandler;
-		var oCoreApi = oInject.instances.coreApi;
-		var oResourceModel;
+		var resourceBundle;
 		var oHashedTextElements = new sap.apf.utils.Hashtable(oMessageHandler);
 		var oHashedDatabaseTextElements = new sap.apf.utils.Hashtable(oMessageHandler);
 		var oHashedInvalidKeys =  new sap.apf.utils.Hashtable(oMessageHandler);
 		var registeredTexts = {};
+		var ResourceModel = ( oInject.constructors &&  oInject.constructors.ResourceModel ) || sap.ui.model.resource.ResourceModel;
+		var oResourceModel;
 		/**
 		 * @description retrieves the not encoded text by label object
 		 * @param {object} oLabel - label object from configuration
@@ -62,8 +63,7 @@ jQuery.sap.require("jquery.sap.resources");
 		 * @returns {string}
 		 */
 		this.getMessageText = function(sRessourceKey, aParameters) {
-			loadResourceModel();
-			return oResourceModel.getResourceBundle().getText(sRessourceKey, aParameters, false);
+			return getTextFromResourceBundle(sRessourceKey, aParameters, false);
 		};
 		/**
 		 * @description called from ressource path handler to load the application texts, that come from the data base
@@ -84,42 +84,78 @@ jQuery.sap.require("jquery.sap.resources");
 		this.registerTextWithKey = function(key, text) {
 			registeredTexts[key] = text;
 		};
-		// Private Functions 
-		function loadResourceModel() {
-			if (!oResourceModel) {
-				var sApfBundleUrl = oCoreApi.getResourceLocation(sap.apf.core.constants.resourceLocation.apfUiTextBundle);
-				var sApplicationUIBundleUrl = oCoreApi.getResourceLocation(sap.apf.core.constants.resourceLocation.applicationUiTextBundle);
-				var sApplicationBundleURL =  oCoreApi.getResourceLocation(sap.apf.core.constants.resourceLocation.applicationMessageTextBundle);
+		/**
+		 * @description Initialises the textResourceHandler 
+		 * @description creates a ui5 resource model which contains: APF-Texts, Application-UI-Texts, Applciation-Message-Texts from static properties files
+		 * @returns jQuery.Deferred Will be resolved when the resourceModel is loaded
+		 */
+		this.loadResourceModelAsPromise = function(sApfBundleUrl, sApplicationUIBundleUrl, sApplicationMessageBundleURL) {
+			var deferred = jQuery.Deferred();
 
-				oResourceModel = new sap.ui.model.resource.ResourceModel({bundleUrl: sApfBundleUrl});
+			oResourceModel = new ResourceModel({bundleUrl: sApfBundleUrl, async : true});
 
-				if (sApplicationUIBundleUrl !== undefined && sApplicationUIBundleUrl != "") {
-					oResourceModel.enhance({bundleUrl: sApplicationUIBundleUrl});
-				}
+			if (sApplicationUIBundleUrl !== undefined && sApplicationUIBundleUrl !== "") {
 
-				if (sApplicationBundleURL !== undefined && sApplicationBundleURL !== "") {
-					oResourceModel.enhance({bundleUrl: sApplicationBundleURL});
-				}
+				oResourceModel.enhance({bundleUrl: sApplicationUIBundleUrl, async : true}).then(function(){
+					if (sApplicationMessageBundleURL !== undefined && sApplicationMessageBundleURL !== "") {
+						oResourceModel.enhance({bundleUrl: sApplicationMessageBundleURL, async : true}).then(function(){
+							oResourceModel.getResourceBundle().then(function(bundle){
+								resourceBundle = bundle;
+								deferred.resolve();
+							});
+							
+						});
+					} else {
+						oResourceModel.getResourceBundle().then(function(bundle){
+							resourceBundle = bundle;
+							deferred.resolve();
+						});
+					}
+				});
+			} else if (sApplicationMessageBundleURL !== undefined && sApplicationMessageBundleURL !== "") {
+				oResourceModel.enhance({bundleUrl: sApplicationMessageBundleURL, async : true}).then(function(){
+					oResourceModel.getResourceBundle().then(function(bundle){
+						resourceBundle = bundle;
+						deferred.resolve();
+					});
+				});
+			} else {
+				oResourceModel.getResourceBundle().then(function(bundle){
+					resourceBundle = bundle;
+					deferred.resolve();	
+				});
 			}
+
+			return deferred.promise();	
+		};
+		// Private Functions
+		
+		function getTextFromResourceBundle(key, aParameters, bCustomBundle) {
+			//Prevent using the sap ui5 formatter if not required
+			if (aParameters && aParameters.length === 0) {
+				return resourceBundle.getText(key, undefined, bCustomBundle);
+			}
+			return resourceBundle.getText(key, aParameters, bCustomBundle);
 		}
 		function handleKeyOnlyKind(key, aParameters) {
 			var sText;
 			if (key === sap.apf.core.constants.textKeyForInitialText) {
 				return "";
 			} else if (registeredTexts[key]) {
-				return jQuery.sap.formatMessage(registeredTexts[key], aParameters);
+				if (aParameters && aParameters.length > 0) {
+					return jQuery.sap.formatMessage(registeredTexts[key], aParameters);
+				}
+				return registeredTexts[key];
 			} else if (oHashedDatabaseTextElements.hasItem(key)) {
-				loadResourceModel();
-				sText = oResourceModel.getResourceBundle().getText(key, aParameters, true);
+				sText = getTextFromResourceBundle(key, aParameters, true);
 				if (typeof sText !== "string" || sText === key) {
-					return oHashedDatabaseTextElements.getItem(key);	
+					return oHashedDatabaseTextElements.getItem(key);
 				}
 				return sText;
 			} else if (oHashedInvalidKeys.hasItem(key)) {
 				return oHashedInvalidKeys.getItem(key);
 			}
-			loadResourceModel();
-			sText = oResourceModel.getResourceBundle().getText(key, aParameters, true);
+			sText = getTextFromResourceBundle(key, aParameters, true);
 
 			if (typeof sText === "string") {
 				return sText;

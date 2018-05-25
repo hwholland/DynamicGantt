@@ -41,8 +41,8 @@ sap.ui.define([
 			iChartHeight = Math.max.apply(null, $Chart.map(function(){ return jQuery(this).height(); }).get());
 //			iWindowHeight = document.body.clientHeight;
 		// 1month, 1day etc
-		var sInternalKey = this.oAxisTime.getCurrentTickTimeIntervalKey();
-		var aTickTimeIntervals = this.oAxisTime.getTickTimeIntervalLabel(sInternalKey, null, [0, iChartWidth]);
+		var oZoomStrategy = this.oAxisTime.getZoomStrategy();
+		var aTickTimeIntervals = this.oAxisTime.getTickTimeIntervalLabel(oZoomStrategy.getTimeLineOption(), null, [0, iChartWidth]);
 
 		// the second item have all the tick time info
 		var aTicks = aTickTimeIntervals[1];

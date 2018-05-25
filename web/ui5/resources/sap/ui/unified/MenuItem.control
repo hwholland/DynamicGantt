@@ -8,10 +8,10 @@ it can provide a submenu to organize the actions hierarchically.</documentation>
     <since>1.21.0</since>
     <baseType>sap.ui.unified/MenuItemBase</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" defaultValue="" group="Appearance">
+        <property group="Appearance" defaultValue="" type="sap.ui.core/string" name="text">
             <documentation>Defines the text which should be displayed on the item.</documentation>
         </property>
-        <property name="icon" type="sap.ui.core/URI" defaultValue="" group="Appearance">
+        <property group="Appearance" defaultValue="" type="sap.ui.core/URI" name="icon">
             <documentation>Defines the icon of the {@link sap.ui.core.IconPool sap.ui.core.IconPool} or an image which should be displayed on the item.</documentation>
         </property>
     </properties>

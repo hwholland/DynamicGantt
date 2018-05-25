@@ -133,24 +133,6 @@
       "size" : 288,
       "required" : [],
       "includes" : []
-    },
-    {
-      "name" : "sap/tnt/messagebundle_en.properties",
-      "size" : 222,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/tnt/messagebundle_en_US_sappsd.properties",
-      "size" : 421,
-      "required" : [],
-      "includes" : []
-    },
-    {
-      "name" : "sap/tnt/messagebundle_en_US_saptrc.properties",
-      "size" : 268,
-      "required" : [],
-      "includes" : []
     }
   ]
 }

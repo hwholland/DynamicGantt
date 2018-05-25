@@ -1,7 +1,8 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 sap.ui.define([
@@ -13,7 +14,7 @@ sap.ui.define([
 	 * Change handler for adding a smart form group.
 	 * @alias sap.ui.fl.changeHandler.AddGroup
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @experimental Since 1.27.0
 	 */
 	var AddGroup = { };
@@ -22,10 +23,12 @@ sap.ui.define([
 	 * Adds a smart form group.
 	 *
 	 * @param {sap.ui.fl.Change} oChange change object with instructions to be applied on the control map
-	 * @param {sap.ui.comp.smartform.SmartForm} oForm smart form control that matches the change selector for applying the change
+	 * @param {sap.ui.comp.smartform.SmartForm|Element} oForm smart form control that matches the change selector for applying the change
 	 * @param {object} oControlMap flat list of ids that point to control instances
 	 * @param {object} mPropertyBag
-	 * @param {object} mPropertyBag.modifier - modifier for the controls
+	 * @param {sap.ui.fl.changeHandler.BaseTreeModifier} mPropertyBag.modifier - modifier for the controls
+	 * @param {sap.ui.core.UIComponent} mPropertyBag.appComponent - component in which the change should be applied
+	 * @param {object} mPropertyBag.view - view object or xml element representing an ui5 view
 	 * @public
 	 */
 	AddGroup.applyChange = function(oChange, oForm, mPropertyBag) {
@@ -38,6 +41,7 @@ sap.ui.define([
 			var iInsertIndex = oChangeDefinition.content.group.index;
 			var oGroup = oModifier.createControl("sap.ui.comp.smartform.Group", oAppComponent, oView, oChangeDefinition.content.group.selector || oChangeDefinition.content.group.id);
 
+			oModifier.setProperty(oGroup, "visible", true);
 			oModifier.setProperty(oGroup, "label", sLabelText);
 			oModifier.insertAggregation(oForm, "groups", oGroup, iInsertIndex, oView);
 
@@ -60,8 +64,8 @@ sap.ui.define([
 		var oChangeDefinition = oChange.getDefinition();
 		var oAppComponent = mPropertyBag.appComponent;
 
-		if (oSpecificChangeInfo.groupLabel) {
-			Base.setTextInChange(oChangeDefinition, "groupLabel", oSpecificChangeInfo.groupLabel, "XFLD");
+		if (oSpecificChangeInfo.newLabel) {
+			Base.setTextInChange(oChangeDefinition, "groupLabel", oSpecificChangeInfo.newLabel, "XFLD");
 		} else {
 			throw new Error("oSpecificChangeInfo.groupLabel attribute required");
 		}

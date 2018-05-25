@@ -189,6 +189,9 @@ jQuery.sap.require('sap.apf.utils.utils');
 	 */
 	sap.apf.core.utils.FilterTerm.prototype.getHash = function () {
 		var sString = this.propertyName + this.operator + this.value;
+		if(this.highValue){
+			sString += this.highValue;
+		}
 		return sap.apf.utils.hashCode(sString);
 	};
 	/**
@@ -274,18 +277,18 @@ jQuery.sap.require('sap.apf.utils.utils');
 	 */
 	sap.apf.core.utils.FilterTerm.prototype.mapToSapUI5FilterExpression = function () {
 		if (this.operator === sap.apf.core.constants.FilterOperators.BT) {
-			return {
-				sPath: this.propertyName,
-				sOperator: this.operator,
-				oValue1: this.value,
-				oValue2: this.highValue
-			};
+			return new sap.ui.model.Filter({
+			    path: this.propertyName,
+			    operator: this.operator,
+			    value1: this.value,
+			    value2: this.highValue
+			  });
 		}
-		return {
-			sPath: this.propertyName,
-			sOperator: this.operator,
-			oValue1: this.value
-		};
+		return new sap.ui.model.Filter({
+			    path: this.propertyName,
+			    operator: this.operator,
+			    value1:this.value
+			  });
 	};
 	/**
 	 * Structural traversal and application of a visitor, base case for FilterTerm.

@@ -1,10 +1,10 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
 /* eslint-disable no-cond-assign */
 
-(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.components.flp.ComponentKeysHandler");
+sap.ui.define(['sap/ushell/ui/launchpad/AccessibilityCustomData'],
+	function(AccessibilityCustomData) {
+	"use strict";
 
     var componentKeysHandler = function () {
         this.aTileWrapperClasses = ['.sapUshellTile', '.sapUshellLinkTile'];
@@ -13,12 +13,41 @@
     componentKeysHandler.prototype = {
         keyCodes: jQuery.sap.KeyCodes,
 
+        // this static member represents tab-index 0 for the tile-to-focus on
+        // (see setTileFocus method)
+        tileFocusCustomData : new AccessibilityCustomData({
+            key: "tabindex",
+            value: "0",
+            writeToDom: true
+        }),
+
         handleCatalogKey: function () {
             this.oRouter.navTo("appFinder", {'menu': 'catalog'});
         },
 
         handleHomepageKey: function () {
             this.oRouter.navTo("home");
+            //close MeAre or notifications view if opened
+            var oMeAreaButton = sap.ui.getCore().byId("meAreaHeaderButton");
+            if (oMeAreaButton && oMeAreaButton.getSelected()) {
+                oMeAreaButton.firePress();
+                return;
+            }
+            var oNotificationsButton = sap.ui.getCore().byId("NotificationsCountButton");
+            if (oNotificationsButton && oNotificationsButton.getSelected()) {
+                oNotificationsButton.firePress();
+            }
+        },
+
+        handleDoneEditMode: function () {
+            var bIsActionsModeActive = this.oModel.getProperty('/tileActionModeActive');
+
+            if (bIsActionsModeActive) {
+                var oDoneButton = sap.ui.getCore().byId("sapUshellDashboardFooterDoneBtn");
+                if (oDoneButton) {
+                    oDoneButton.firePress();
+                }
+            }
         },
 
         getNumberOfTileInRow: function (pageName, bIsLink) {
@@ -36,40 +65,76 @@
             return numberTilesInRow;
         },
 
-        goToTileContainer: function (keyup, bGoToFirstTileInSelectedGroup) {
+        goToTileContainer: function (keyup) {
             var bIsActionsModeActive = this.oModel.getProperty('/tileActionModeActive');
 
             if (bIsActionsModeActive) {
-                sap.ushell.components.flp.ComponentKeysHandler.goToFirstVisibleTileContainer();
+                ComponentKeysHandler.goToFirstVisibleTileContainer();
             } else {
-                sap.ushell.components.flp.ComponentKeysHandler.goToEdgeTile('first', bGoToFirstTileInSelectedGroup);
+                ComponentKeysHandler.goToLastVisitedTile();
             }
             return true;
         },
 
-        goToEdgeTile: function (selector, bGoToFirstOrLastTileInSelectedGroup) {
-            var jqTileContainers = jQuery('#dashboardGroups').find('.sapUshellTileContainer:visible'),
-                topGroupInViewPortIndex = this.oModel.getProperty("/topGroupInViewPortIndex"),
-                tileContainer = jqTileContainers.get(topGroupInViewPortIndex),
-                tileToSelect = jQuery(tileContainer).find('.sapUshellTile:visible')[selector](),
-                lastVisitedTile = jQuery("div.sapUshellTile:visible[tabindex='0']"),
-                lastVisitedLink = jQuery("div.sapUshellLinkTile:visible[tabindex='0']");
+        /*  Go to last visited tile.
+            In general, FLP should remember last focused tile, and refocus it when tabbing into the tiles container.
+            There are cases where there is no-last focused tile, and in those cases a default behavior will be applied,
+            that is, selecting the first tile.
 
-            if (!tileToSelect.length && !lastVisitedTile.length && !lastVisitedLink.length) {
+            In addition this method also recieves 2 parameters;
+            - jqTileContainerToLookUnder
+            - bLookForLastVisitedInSameGroup
+
+            in case a tile container supplied :
+                the fallback (choosing first tile) will be made on this container instead of the first container
+
+            in case bLookForLastVisitedInSameGroup is supplied and true :
+                this means we search for the last focused tile only in the supplied tile container and not entire tile-containers
+
+         */
+        goToLastVisitedTile: function (jqTileContainerToLookUnder, bLookForLastVisitedInSameGroup) {
+
+            var jqTileContainers = jQuery('#dashboardGroups').find('.sapUshellTileContainer:visible'),
+                topGroupInViewPortIndex = this.oModel.getProperty("/topGroupInViewPortIndex");
+
+            // resolving and setting the tile-container under which we will look
+            var jqTileContainer = jqTileContainerToLookUnder || jQuery(jqTileContainers.get(topGroupInViewPortIndex));
+
+            // setting the default tile to select - under the resolved-tile container
+            var defaultTileToSelect = jqTileContainer.find('.sapUshellTile:visible')["first"](),
+                lastVisitedTile,lastVisitedLink;
+
+
+            // in case we were supplied with both a tile-container to look under, and a flag which states that we must
+            // focus a tile under the same group (and not overall groups which may happen)
+            if (jqTileContainer && bLookForLastVisitedInSameGroup) {
+
+                // we look for the last visited items under the supplied tile-container
+                lastVisitedTile = jqTileContainer.find(".sapUshellTile:visible[tabindex='0']");
+                lastVisitedLink = jqTileContainer.find(".sapMGTLineMode:visible[tabindex='0']");
+            } else {
+
+                // we look for the last visited items under all containers
+                lastVisitedTile = jQuery(".sapUshellTile:visible[tabindex='0']");
+                lastVisitedLink = jQuery(".sapMGTLineMode:visible[tabindex='0']");
+            }
+
+
+            if (!defaultTileToSelect.length && !lastVisitedTile.length && !lastVisitedLink.length) {
                 return false;
             }
 
-            if (lastVisitedTile.length && !bGoToFirstOrLastTileInSelectedGroup) {
+            if (lastVisitedTile.length) {
                 this.setTileFocus(lastVisitedTile);
                 return true;
             }
 
-            if (lastVisitedLink.length && !bGoToFirstOrLastTileInSelectedGroup) {
+            if (lastVisitedLink.length) {
                 this.setTileFocus(lastVisitedLink);
                 return true;
             }
 
-            this.setTileFocus(tileToSelect);
+            this.setTileFocus(defaultTileToSelect);
             return true;
         },
 
@@ -86,105 +151,195 @@
         },
 
         goToFirstTileOfSiblingGroup: function (selector, e) {
+            // Prevent page scrolling.
             e.preventDefault();
+
+            // Get current group container.
             var currentGroup = jQuery(document.activeElement).closest(".sapUshellDashboardGroupsContainerItem");
-            if (!currentGroup.length) {
-                return;
-            }
-            var nextGroup = currentGroup[selector + "All"](".sapUshellDashboardGroupsContainerItem:has(.sapUshellTile:visible):not(.sapUshellCloneArea)");
-            var tileSelector = 'first';
+            if (!currentGroup.length) return;
+
+            // get next group container.
+            var tileSelector = 'first',
+                nextGroup = currentGroup[selector + "All"](
+                    ".sapUshellDashboardGroupsContainerItem:has(.sapUshellTile:visible):not(.sapUshellCloneArea)");
+
             if (!nextGroup.length) {
                 nextGroup = currentGroup;
                 tileSelector = ( selector === "next" ) ? 'last' : 'first';
             } else {
                 nextGroup = nextGroup.first();
             }
-            var jqTileToSelect = nextGroup.find(".sapUshellTile:visible")[tileSelector]();
-            this.moveScrollDashboard(jqTileToSelect);
 
+            // scroll next group into view.
+            var jqTileToSelect = nextGroup.find(".sapUshellTile:visible")[tileSelector]();
+
+            this.moveScrollDashboard(jqTileToSelect);
             return false;
         },
 
-        goToFirstTileOfSiblingGroupInCatalog: function (selector, e) {
-            e.preventDefault();
-            var jqTileContainer = this.getFocusOnTile(jQuery(document.activeElement));
-            if (!jqTileContainer) {
-                return;
+        animateTileMoveInGroup: function (group, firstTile, secondTile) {
+            var deferred = jQuery.Deferred();
+            sap.ushell.Layout.initGroupDragMode(group);
+            var tiles = group.getTiles().slice();
+            var firstTileIndex = tiles.indexOf(firstTile);
+            var secondTileIndex = tiles.indexOf(secondTile);
+            //insert the first tile in the seconde tile index
+            tiles.splice(secondTileIndex, 1, firstTile);
+            //insert the second tile in the first tile index
+            tiles.splice(firstTileIndex, 1, secondTile);
+
+            var currentGroupMatrix = sap.ushell.Layout.organizeGroup(tiles);
+            setTimeout(function () {
+                sap.ushell.Layout.renderLayoutGroup(group, currentGroupMatrix);
+            }, 0);
+            setTimeout(function () {
+                sap.ushell.Layout.endDragMode();
+                deferred.resolve();
+            }, 300);
+            return deferred.promise();
+        },
+        _getTileMode: function (tile) {
+            return tile.getMode ? tile.getMode() : 'ContentMode';
+        },
+
+        _moveTileInGroup: function (group, firstTile, secondTile, direction) {
+            var firstTileMode = this._getTileMode(firstTile),
+                secondTileMode = this._getTileMode(secondTile),
+                oEventBus = sap.ui.getCore().getEventBus();
+            if (firstTileMode === secondTileMode) {
+                oEventBus.publish("launchpad", "movetile", this._getTileMoveInfo({group: group, dstGroup: group, firstTile: firstTile, secondTile: secondTile}));
+            } else {
+                oEventBus.publish("launchpad", "convertTile", this._getTileConvertInfo({group: group, firstTile: firstTile, secondTile: secondTile, direction: direction}));
             }
-
-            var jqTileToFocus;
-
-            if (selector == "next") {
-                var isLastGroup = jqTileContainer.nextAll("h3").length ? false : true;
-                if (!isLastGroup) {
-                    jqTileToFocus = jqTileContainer.nextAll("h3").first().nextAll().filter(":visible").first();
-                } else {
-                    jqTileToFocus = jqTileContainer.nextAll(".sapUshellTile").last();
+        },
+        _getDestinationTileIndex: function (moveInfo) {
+            var groupModelObj = moveInfo.group.getBindingContext().getObject(),
+                tileIndex,
+                groupTiles = moveInfo.dstGroup ? this._getGroupTiles(moveInfo.dstGroup, moveInfo.secondTile) : this._getGroupTiles(moveInfo.group, moveInfo.secondTile),
+                firstTileMode = moveInfo.firstTile.getMode ? moveInfo.firstTile.getMode() : 'ContentMode',
+                secondTileMode = moveInfo.secondTile.getMode ? moveInfo.secondTile.getMode() : 'ContentMode',
+                changedArea = firstTileMode !== secondTileMode;
+            if (changedArea || moveInfo.dstGroup !== moveInfo.group) {
+                if (moveInfo.direction && (moveInfo.direction === "left" || moveInfo.direction === "up")) {
+                    tileIndex = groupTiles.length;
+                } else if (moveInfo.direction) {
+                    tileIndex = 0;
                 }
             } else {
-                var isFirstGroup = jqTileContainer.prevAll("h3").length === 1 ? true : false;
-                if (!isFirstGroup) {
-                    jqTileToFocus = jQuery(jqTileContainer.prevAll("h3")[1]).next();
+                if (secondTileMode === 'LineMode') {
+                    tileIndex = moveInfo.secondTile.getBindingContext()? groupModelObj.links.indexOf(moveInfo.secondTile.getBindingContext().getObject()) : 0;
                 } else {
-                    jqTileToFocus = jqTileContainer.prevAll("h3").last().next();
+                    tileIndex  = moveInfo.secondTile.getBindingContext()? groupModelObj.tiles.indexOf(moveInfo.secondTile.getBindingContext().getObject()) : 0;
                 }
             }
 
-            this.setTileFocus(jqTileToFocus);
-            this.moveScrollCatalog(jqTileToFocus);
-
-            return false;
+            return tileIndex;
         },
 
-        moveTileInGroup: function (group, firstTile, secondTile) {
-            if (this.oModel.getProperty("/personalization")) {
-                var groupModelObj = group.getBindingContext().getObject();
-                var firstTileIndex = groupModelObj.tiles.indexOf(firstTile.getBindingContext().getObject());
-                var secondTileIndex = groupModelObj.tiles.indexOf(secondTile.getBindingContext().getObject());
-                var firstTileModelObj = groupModelObj.tiles.splice(firstTileIndex, 1);
-                groupModelObj.tiles.splice(secondTileIndex, 0, firstTileModelObj[0]);
-                var groupPath = group.getBindingContext().getPath();
-                group.getModel().setProperty(groupPath, groupModelObj);
+        moveTileInGroup: function (group, firstTile, secondTile, direction) {
+            var firstTileMode = this._getTileMode(firstTile),
+                secondTileMode = this._getTileMode(secondTile);
+            document.activeElement.blur(); //this will prevent tile move from interruption, focus will be returned after action
+            if (sap.ushell.Layout.isAnimationsEnabled() && (firstTileMode === secondTileMode)) {
+                this.animateTileMoveInGroup(group, firstTile, secondTile, direction).then(function () {
+                    this._moveTileInGroup(group, firstTile, secondTile, direction);
+                }.bind(this));
+            } else {
+                this._moveTileInGroup(group, firstTile, secondTile, direction);
             }
         },
 
-        moveTileToDifferentGroup: function (sourceGroup, destGroup, curTile, direction) {
-            if (this.oModel.getProperty("/personalization")) {
-                if (sourceGroup.getIsGroupLocked() || destGroup.getIsGroupLocked()) {
-                    return;
-                }
-                var sourceGroupModelObj = sourceGroup.getBindingContext().getObject();
-                var destGroupModelObj = destGroup.getBindingContext().getObject();
-                var tileIndex = sourceGroupModelObj.tiles.indexOf(curTile.getBindingContext().getObject());
-                //removing tile from source group & add tile to destination group
-                if (direction === "left" || direction === "up" || direction === "down") {
-                    destGroupModelObj.tiles.push(sourceGroupModelObj.tiles[tileIndex]);
-                }
-                if (direction === "right") {
-                    destGroupModelObj.tiles.splice(0, 0, sourceGroupModelObj.tiles[tileIndex]);
-                }
-                sourceGroupModelObj.tiles.splice(tileIndex, 1);
+        animateMoveTileToDifferentGroup: function (sourceGroup, destGroup, curTile, direction) {
+            var deferred = jQuery.Deferred();
+            sap.ushell.Layout.initGroupDragMode(sourceGroup);
+            sap.ushell.Layout.initGroupDragMode(destGroup);
+            var srcTiles = sourceGroup.getTiles().slice();
+            var dstTiles = destGroup.getTiles().slice();
+            var tileIndex = srcTiles.indexOf(curTile);
 
-                //update model
-                var groupPath1 = destGroup.getBindingContext().getPath();
-                destGroup.getModel().setProperty(groupPath1, destGroupModelObj);
+            if (direction === "left" || direction === "up") {
+                dstTiles.push(srcTiles.splice(tileIndex, 1)[0]);
+            }
+            if (direction === "right" || direction === "down") {
+                dstTiles.unshift(srcTiles.splice(tileIndex, 1)[0]);
+            }
+            var srcGroupMatrix = sap.ushell.Layout.organizeGroup(srcTiles);
+            var dstGroupMatrix = sap.ushell.Layout.organizeGroup(dstTiles);
 
-                var groupPath2 = sourceGroup.getBindingContext().getPath();
-                sourceGroup.getModel().setProperty(groupPath2, sourceGroupModelObj);
+            //clone tile to dashboardGroups, hide real one, and animate it to further place
+            var tilePosInMatrix = sap.ushell.Layout.getTilePositionInMatrix(curTile, dstGroupMatrix);
+            var destGroupRect = destGroup.getDomRef().querySelector(".sapUshellInner").getBoundingClientRect();
+            var tileTranslateOffset = sap.ushell.Layout.calcTranslate(tilePosInMatrix.row, tilePosInMatrix.col);
+            var futureTileRectLeft = destGroupRect.left + tileTranslateOffset.x; //tile future rect position
+            var futureTileRectTop = destGroupRect.top + tileTranslateOffset.y;  //in destination group
+            var jqDashboardGroups = jQuery("#dashboardGroups");
+            var DGroupsRect = jqDashboardGroups.get(0).getBoundingClientRect();
+            var curTileRect = curTile.getDomRef().getBoundingClientRect();
+            var curTileY = (-DGroupsRect.top) + curTileRect.top;
+            var curTileX = (-DGroupsRect.left) + curTileRect.left;
+            var futureTileY = (-DGroupsRect.top) + futureTileRectTop;
+            var futureTileX = (-DGroupsRect.left) + futureTileRectLeft;
+            jqDashboardGroups.css("position", "relative");
+            var jqFirstTileClone = curTile.$().clone().removeAttr("id data-sap-ui").css({
+                "transform": "translate3d(" + curTileX + "px, " + curTileY + "px, 0px)",
+                "list-style-type": "none",
+                "transition": "transform 0.3s cubic-bezier(0.46, 0, 0.44, 1)",
+                position: "absolute",
+                left: 0,
+                top: 0
+            });
+            jqDashboardGroups.append(jqFirstTileClone);
+            curTile.$().css("visibility", "hidden");
+            jqFirstTileClone.height();
+            jqFirstTileClone.css("transform", "translate3d(" + futureTileX + "px, " + futureTileY + "px, 0px)");
 
-                var groupTiles = destGroup.getTiles();
+            setTimeout(function () {
+                sap.ushell.Layout.renderLayoutGroup(sourceGroup, srcGroupMatrix);
+                sap.ushell.Layout.renderLayoutGroup(destGroup, dstGroupMatrix);
+            });
+            setTimeout(function () {
+                sap.ushell.Layout.endDragMode();
+                jqFirstTileClone.remove();
+                jqDashboardGroups.removeAttr("style");
+                deferred.resolve();
+            }, 300);
+            return deferred.promise();
+        },
 
-                if (direction === "left" || direction === "up" || direction === "down") {
-                    return groupTiles[groupTiles.length - 1];
+        _moveTileToDifferentGroup: function (sourceGroup, destGroup, curTile, nextTile, direction) {
+                var tileMoveInfo = this._getTileMoveInfo({group: sourceGroup, dstGroup: destGroup, firstTile: curTile, secondTile: nextTile, direction: direction}),
+                    tileConvertInfo = this._getTileConvertInfo({group: sourceGroup, dstGroup: destGroup, firstTile: curTile, secondTile: nextTile, direction: direction}),
+                    oEventBus = sap.ui.getCore().getEventBus(),
+                    firstTileMode= curTile.getMode ? curTile.getMode() : "ContentMode",
+                    secondTileMode = nextTile.getMode ? nextTile.getMode() : 'ContentMode';
+                if (firstTileMode === secondTileMode) {
+                    oEventBus.publish("launchpad", "movetile", tileMoveInfo);
                 } else {
-                    return groupTiles[0];
+                    oEventBus.publish("launchpad", "convertTile", tileConvertInfo);
                 }
+
+        },
+
+        moveTileToDifferentGroup:function (sourceGroup, destGroup, curTile, nextTile,  direction) {
+            var firstTileMode = this._getTileMode(curTile),
+                secondTileMode = this._getTileMode(nextTile);
+
+            document.activeElement.blur(); //this will prevent tile move from interruption, focus will be returned after action
+            if (sap.ushell.Layout.isAnimationsEnabled() && (secondTileMode === firstTileMode)) {
+                this.animateMoveTileToDifferentGroup(sourceGroup, destGroup, curTile, nextTile, direction).then(function() {
+                    this._moveTileToDifferentGroup(sourceGroup, destGroup, curTile, nextTile, direction);
+                }.bind(this));
+            } else {
+                this._moveTileToDifferentGroup(sourceGroup, destGroup, curTile, nextTile, direction);
             }
         },
 
         moveTile: function (direction) {
             var jqDashboard = jQuery(".sapUshellDashboardView"),
-                dashboardView = sap.ui.getCore().byId(jqDashboard.attr("id"));
+                dashboardView = sap.ui.getCore().byId(jqDashboard.attr("id")),
+                oPageBuilderService = sap.ushell.Container.getService("LaunchPage"),
+                oTile,
+                bIsLinkPersonalizationSupported;
             dashboardView.getModel().setProperty('/isInDrag', true);
             setTimeout(function () {
                 dashboardView.getModel().setProperty('/isInDrag', false);
@@ -195,30 +350,180 @@
                 if (!info || info.group.getProperty('isGroupLocked')) {
                     return;
                 }
-
+                oTile = info.curTile.getBindingContext().getObject().object;
+                bIsLinkPersonalizationSupported = oPageBuilderService.isLinkPersonalizationSupported(oTile);
                 var bMoveTile = true,
                     bIsActionsModeActive,
-                    nextTile = this.getNextTile(direction, info, bIsActionsModeActive, bMoveTile);
+                    nextTile = this.getNextTile(direction, info, bIsActionsModeActive, bMoveTile, !bIsLinkPersonalizationSupported);
 
                 if (!nextTile) {
                     return;
-                } else {
+                }  else {
                     var nextTileGroup = nextTile.getParent();
                 }
 
                 if (nextTileGroup === info.group) {
-                    this.moveTileInGroup(info.group, info.curTile, nextTile);
+                    this.moveTileInGroup(info.group, info.curTile, nextTile, direction);
                 } else {
-                    nextTile = this.moveTileToDifferentGroup(info.group, nextTileGroup, info.curTile, direction);
+                    this.moveTileToDifferentGroup(info.group, nextTileGroup, info.curTile, nextTile, direction);
                 }
-
-                setTimeout(function () {//setTimeout because we have to wait until the asynchronous "moveTile" flow ends
-                    if (nextTile) {
-                        this.setTileFocus(jQuery(nextTile.getDomRef()));
-                    }
-                }.bind(this), 100);
             }
         },
+
+        _getTileMoveInfo: function (moveInfo) {
+            var firstTileMode = moveInfo.firstTile.getMode ? moveInfo.firstTile.getMode() : 'ContentMode',
+                secondTileIndex = this._getDestinationTileIndex(moveInfo),
+                jqDashboard = jQuery(".sapUshellDashboardView"),
+                dashboardView = sap.ui.getCore().byId(jqDashboard.attr("id")),
+                dashboardController = dashboardView.getController(),
+                tileUuid = dashboardController._getTileUuid(moveInfo.firstTile),
+                groupTiles = moveInfo.dstGroup ? this._getGroupTiles(moveInfo.dstGroup, moveInfo.secondTile) : this._getGroupTiles(moveInfo.group, moveInfo.secondTile),
+                oGroup = moveInfo.dstGroup ? moveInfo.dstGroup : moveInfo.group,
+                oTileMoveInfo;
+            oTileMoveInfo = {
+                    sTileId: tileUuid,
+                    sToItems: firstTileMode === 'LineMode' ? 'links' : 'tiles',
+                    sFromItems: firstTileMode === 'LineMode' ? 'links' : 'tiles',
+                    sTileType: firstTileMode === 'LineMode' ? 'link' : 'tile',
+                    toGroupId: oGroup.getGroupId ? oGroup.getGroupId() : oGroup.groupId,
+                    toIndex: secondTileIndex,
+                    callBack: function (oTile) {
+                        setTimeout(function() {
+                            this.setTileFocus(jQuery(oTile.getDomRef()));
+                        }.bind(this), 100);
+                    }.bind(this)
+                };
+            return oTileMoveInfo;
+        },
+        _getGroupTiles: function (oGroup, oTile) {
+            var tileMode = this._getTileMode(oTile);
+            return tileMode === 'LineMode' ? oGroup.getLinks() : oGroup.getTiles();
+
+        },
+        _getTileConvertInfo: function (moveInfo) {
+            var oDstGroup = moveInfo.dstGroup ? moveInfo.dstGroup : moveInfo.group,
+                secondTileIndex = this._getDestinationTileIndex(moveInfo),
+                oTileConvertInfo = {
+                    toGroupId: oDstGroup.getGroupId ? oDstGroup.getGroupId() : oDstGroup.groupId,
+                    toIndex: secondTileIndex,
+                    tile: moveInfo.firstTile,
+                    srcGroupId: moveInfo.group.getGroupId ? moveInfo.group.getGroupId() : moveInfo.group.groupId,
+                    longDrop: false,
+                    callBack: function (oTile) {
+                        setTimeout(function() {
+                            this.setTileFocus(jQuery(oTile.getDomRef()));
+                        }.bind(this), 100);
+                    }.bind(this)
+                };
+            return oTileConvertInfo;
+        },
+
+        _findClosestTile: function (direction, tiles, curTile) {
+            var jqCurHelpers;
+            //this part of code responsible for links accessibility
+            //links could be in wrapped state, it means that link will be braked down to second line,
+            //when in happens bouncingRectangle of such link will return us height of 2 lines, and width of 100%, which could not be used for calculations.
+            //to handle cases with wrapped links we have to use special API for them, which return "Helpers", div's which represent every string of link
+            //and give us real sizes of strings belonged to link
+            //currently we don't have API for that, so we just use jQuery to get them, when API will be submitted it has to be changed.
+            if (curTile.getMode && curTile.getMode() === "LineMode" && (jqCurHelpers = curTile.$().find(".sapMGTLineStyleHelper"))) {
+                if (jqCurHelpers.length === 1) {
+                    var curTileRect = jqCurHelpers.get(0).getBoundingClientRect();
+                } else if (direction === "down"){
+                    var curTileRect = jqCurHelpers.get(jqCurHelpers.length - 1).getBoundingClientRect();
+                } else if (direction === "up") {
+                    var curTileRect = jqCurHelpers.get(0).getBoundingClientRect();
+                }
+            } else {
+                var curTileRect = (curTile instanceof HTMLElement) ? curTile.getBoundingClientRect() : curTile.getDomRef().getBoundingClientRect();
+            }
+            var curCenter = curTileRect.right - ((curTileRect.right - curTileRect.left) / 2);
+            if (curTile.getMode && curTile.getMode() === "LineMode") {
+                var multilineLink = curTile.$().height() > parseInt(curTile.$().css("line-height"), 10);
+                if (multilineLink) {
+                    //when link is wrapped down key select closest last tile, and otherwise.
+                    curCenter = (direction === "down") ? curTileRect.right : curTileRect.left;
+                }
+            }
+
+            var curTileIndex = tiles.indexOf(curTile);
+            var step = direction === "down" ? 1 : -1;
+            var nextTile, closestTile, rowTop;
+            var minDiff = Infinity;
+            for (var i = curTileIndex + step; !nextTile; i += step) {
+                var tile = tiles[i];
+                if (!tile) {
+                    break;
+                }
+                //this part of code responsible for links accessibility
+                //please read explanation for wrapped links above.
+                var jqHelpers;
+                if (tile.getMode && tile.getMode() === "LineMode" && (jqHelpers = tile.$().find(".sapMGTLineStyleHelper"))) {
+                    if (jqHelpers.length === 1) {
+                        var tileRect = jqHelpers.get(0).getBoundingClientRect();
+                    } else if (direction === "down"){
+                        for (var i = 0; i < jqHelpers.length; i++) {
+                            if (curTileRect.bottom < jqHelpers.get(i).getBoundingClientRect().bottom) {
+                                var tileRect = jqHelpers.get(i).getBoundingClientRect();
+                                break;
+                            }
+                        }
+                    } else if (direction === "up"){
+                        for (var i = jqHelpers.length-1; i >= 0; i--) {
+                            if (curTileRect.top > jqHelpers.get(i).getBoundingClientRect().top) {
+                                var tileRect = jqHelpers.get(i).getBoundingClientRect();
+                                break;
+                            }
+                        }
+                    }
+
+                } else {
+                    var tileRect = (tile instanceof HTMLElement) ? tile.getBoundingClientRect() : tile.getDomRef().getBoundingClientRect();
+                }
+
+                if (direction === "down" && curTileRect.bottom >= tileRect.bottom) {
+                    continue;
+                }
+                if (direction === "up" && curTileRect.top <= tileRect.top) {
+                    continue;
+                }
+                if (closestTile && rowTop != tileRect.top) {
+                    nextTile = closestTile;
+                    break;
+                }
+                rowTop = tileRect.top;
+                var lDiff =  Math.abs(tileRect.left - curCenter);
+                var rDiff =  Math.abs(tileRect.right - curCenter);
+                var tileDiff =  lDiff > rDiff ? rDiff : lDiff;
+                if (minDiff > tileDiff) {
+                    minDiff = tileDiff;
+                    closestTile = tile;
+                    rowTop = tileRect.top;
+                } else {
+                    nextTile = closestTile;
+                }
+            }
+
+            return nextTile || closestTile;
+        },
+
+        getNextUpDownTileWithScreenPosition: function (direction, info, bMoveTile, bPreventTileConvert) {
+            var groupTiles = !(bPreventTileConvert && bMoveTile) ? info.tiles.concat(info.links) : info.tiles;
+            if (!groupTiles.length) {
+                groupTiles.push(info.group.oPlusTile)
+            }
+            var nextGroup = this.getNextGroup(direction, info);
+            if (nextGroup) {
+                var nextGroupTiles = !(bPreventTileConvert && bMoveTile) ? nextGroup.getTiles().concat(nextGroup.getLinks()) : nextGroup.getTiles();
+                if (!nextGroupTiles.length) {
+                    nextGroupTiles.push(nextGroup.oPlusTile);
+                }
+            }
+            nextGroupTiles = nextGroupTiles ? nextGroupTiles : [];
+            var allTiles = direction === "down" ? groupTiles.concat(nextGroupTiles) : nextGroupTiles.concat(groupTiles);
+            return this._findClosestTile(direction, allTiles, info.curTile);
+        },
+
 
         getNextUpDownTileWithLayout: function (direction, info, bMoveTile) {
             var nextTile, nextGroup;
@@ -229,17 +534,11 @@
             var aLinks = info.group.getLinks();
             var layoutMatrix = sap.ushell.Layout.organizeGroup(info.curTile.isLink ? info.links : info.tiles, info.curTile.isLink);
             var tPos = sap.ushell.Layout.getTilePositionInMatrix(info.curTile, layoutMatrix);
-            var bIsLastLineFull = this.isLastLineFull(layoutMatrix);
-            var bIsActionsModeActive = this.oModel.getProperty('/tileActionModeActive');
             if (!tPos && !isEmptyGroup && !bIsPlusTile) {
                 return;
             }
             //Handle the case in which the user has reached the last line of the currently navigated tile aggregation (whether it's a regular tile aggregation or link).
             if (!layoutMatrix[tPos.row + nDirection]) {
-                //Handle the case in which the last line within the tileContainer has only Plus Tile
-                if (bIsActionsModeActive && !bIsGroupLocked && !bIsPlusTile && bIsLastLineFull && direction === "down") {
-                    return info.group.oPlusTile;
-                }
                 //Handle the case in which the focus is on one of the tiles in the last row and the tile container contains links.
                 if (!info.curTile.isLink && aLinks.length && direction === 'down') {
                     // In case actionMode is active
@@ -249,7 +548,7 @@
                 }
                 //Handle the case in which the focus is on one of the links in the fist row and the direction is 'up'.
                 if (info.curTile.isLink && info.tiles.length && direction === 'up') {
-                    return info.tiles[0];
+                    return info.tiles[info.tiles.length - 1];
                 }
                 tPos = isEmptyGroup || bIsPlusTile ? {row: 0, col: 0} : tPos;
                 nextGroup = this.getNextGroup(direction, info);
@@ -286,25 +585,37 @@
         _isNextTileLink: function (aTileAggregation) {
             if (aTileAggregation && aTileAggregation.length) {
                 var jqFirstTileInAgg = jQuery(aTileAggregation[0].getDomRef());
-                return jqFirstTileInAgg.hasClass("sapUshellLinkTile");
+                return jqFirstTileInAgg.hasClass("sapUshellLinkTile") || jqFirstTileInAgg.hasClass("sapMGTLineMode");
             }
             return false;
         },
 
-        _getAggregationToFocusInNextGroup: function (nextGroup, direction) {
-            if (direction === "down" || direction === "right") {
+        _getAggregationToFocusInNextGroup: function (nextGroup, direction, bMoveTile, bPreventTileConvert) {
+            var getTilesItems = function () {
                 if (nextGroup.getTiles().length) {
                     return nextGroup.getShowPlaceholder() ? [].concat(nextGroup.getTiles(), nextGroup.oPlusTile) : nextGroup.getTiles();
                 }
+            };
+
+            var getTilesLinks = function () {
                 if (nextGroup.getLinks().length) {
-                    return nextGroup.getLinks();
+                    return !(bPreventTileConvert && bMoveTile) ? nextGroup.getLinks() : undefined;
                 }
-            } else if (direction === "up" || direction === "left") {
-                if (nextGroup.getLinks().length) {
-                    return nextGroup.getLinks();
+            };
+
+
+            var bIsRTL = sap.ui.getCore().getConfiguration().getRTL();
+            if (bIsRTL) {
+                if (direction === "down" || direction === "left") {
+                    return getTilesItems() || getTilesLinks();
+                } else if (direction === "up" || direction === "right") {
+                    return getTilesLinks() || getTilesItems();
                 }
-                if (nextGroup.getTiles().length) {
-                    return nextGroup.getShowPlaceholder() ? [].concat(nextGroup.getTiles(), nextGroup.oPlusTile) : nextGroup.getTiles();
+            } else {
+                if (direction === "down" || direction === "right") {
+                    return getTilesItems() || getTilesLinks();
+                } else if (direction === "up" || direction === "left") {
+                    return  getTilesLinks() || getTilesItems();
                 }
             }
         },
@@ -340,55 +651,13 @@
             return layoutMatrix[newRow][column];
         },
 
-        getNextTile: function (direction, info, bIsActionsModeActive, bMoveTile) {
+        getNextTile: function (direction, info, bIsActionsModeActive, bMoveTile, bPreventTileConvert) {
             var nextTile,
-                currentTileRow,
-                nearTilesArr,
-                startIndex,
-                tileElement,
-                leftOffset,
-                width,
-                leftAndWidth,
-                origTileLeftOffset,
                 nRTL = sap.ui.getCore().getConfiguration().getRTL() ? -1 : 1,
-                isEmptyGroup = !info.tiles.length,
                 nDirection = direction === "right" ? 1 : -1;
 
             if (info.pageName === 'catalog') { // In catalog mode
-                if (direction == 'right' || direction == 'left') {
-                    nextTile = !isEmptyGroup ? info.tiles[info.curTileIndex + ( nRTL * nDirection )] : undefined;
-                    return nextTile;
-                }
-
-                if (info.curTileIndex === '0' && direction === 'up') {
-                    return undefined;
-                }
-
-                currentTileRow = this.whichTileRow(info.curTileIndex, info);
-                origTileLeftOffset = parseFloat(info.curTile.getDomRef().offsetLeft);
-                if (direction == "down") {
-                    nearTilesArr = info.tiles.slice(info.curTileIndex + 1, info.curTileIndex + (info.sizeOfLine * 2));
-                } else {
-                    startIndex = (startIndex > 0) ? startIndex : 0;
-                    nearTilesArr = info.tiles.slice(startIndex, info.curTileIndex).reverse();
-                }
-                for (var i = 0, length = nearTilesArr.length; i < length; i++) {
-                    tileElement = nearTilesArr[i].getDomRef();
-                    leftOffset = parseFloat(tileElement.offsetLeft);
-                    width = parseFloat(tileElement.offsetWidth);
-                    leftAndWidth = leftOffset + width;
-
-                    if (leftOffset <= origTileLeftOffset && leftAndWidth >= origTileLeftOffset) {
-                        nextTile = nearTilesArr[i];
-
-                        return nextTile;
-                    }
-                }
-
-                if (this.nextRowIsShorter(direction, currentTileRow, info)) {
-                    nextTile = this.getNextTileInShorterRow(direction, currentTileRow, info);
-                    return nextTile;
-                }
+                nextTile = this.getNextTileInCatalog(info, direction);
                 // In dashboard mode
             } else {
                 if (direction === "left" || direction === "right") {
@@ -404,11 +673,20 @@
                     if (nextTile) {
                         return nextTile;
                     }
-                    if (direction === "right" && !info.curTile.isLink && info.links.length && !bMoveTile) {
-                        return info.links[0];
-                    }
-                    if (direction === "left" && info.curTile.isLink && info.tiles.length) {
-                        return info.group.getShowPlaceholder() ? info.group.oPlusTile : info.tiles[info.tiles.length - 1];
+                    if (nRTL == 1) {
+                        if (direction === "right" && !info.curTile.isLink && info.links.length && !bPreventTileConvert) {
+                            return info.links[0];
+                        }
+                        if (direction === "left" && info.curTile.isLink && info.tiles.length) {
+                            return info.group.getShowPlaceholder() ? info.group.oPlusTile : info.tiles[info.tiles.length - 1];
+                        }
+                    } else {
+                        if (direction === "left" && !info.curTile.isLink && info.links.length && !bPreventTileConvert) {
+                            return info.links[0];
+                        }
+                        if (direction === "right" && info.curTile.isLink && info.tiles.length) {
+                            return info.group.getShowPlaceholder() ? info.group.oPlusTile : info.tiles[info.tiles.length - 1];
+                        }
                     }
 
                     // if next tile wasn't exist in the current group need to look on next one
@@ -416,7 +694,7 @@
                     if (!nextGroup) {
                         return;
                     } else {
-                        var nextGroupTiles = this._getAggregationToFocusInNextGroup(nextGroup, direction);
+                        var nextGroupTiles = this._getAggregationToFocusInNextGroup(nextGroup, direction, bMoveTile, bPreventTileConvert);
                         if (nextGroupTiles && nextGroupTiles.length) {
                             var last = nextGroupTiles.length - 1;
                             if (direction === "right") {
@@ -431,10 +709,58 @@
                 }
 
                 if (direction === "down" || direction === "up") {
-                    nextTile = this.getNextUpDownTileWithLayout(direction, info, bMoveTile);
+                    nextTile = this.getNextUpDownTileWithScreenPosition(direction, info, bMoveTile, bPreventTileConvert);
                 }
             }
             return nextTile;
+        },
+        getNextTileInCatalog: function (info, direction) {
+            var nextTile,
+                currentTileRow,
+                nearTilesArr,
+                startIndex,
+                tileElement,
+                leftOffset,
+                width,
+                leftAndWidth,
+                origTileLeftOffset,
+                nRTL = sap.ui.getCore().getConfiguration().getRTL() ? -1 : 1,
+                isEmptyGroup = !info.tiles.length,
+                nDirection = direction === "right" ? 1 : -1;
+            if (direction == 'right' || direction == 'left') {
+                nextTile = !isEmptyGroup ? info.tiles[info.curTileIndex + ( nRTL * nDirection )] : undefined;
+                return nextTile;
+            }
+
+            if (info.curTileIndex === '0' && direction === 'up') {
+                return undefined;
+            }
+
+            currentTileRow = this.whichTileRow(info.curTileIndex, info);
+            origTileLeftOffset = parseFloat(info.curTile.getDomRef().offsetLeft);
+            if (direction == "down") {
+                nearTilesArr = info.tiles.slice(info.curTileIndex + 1, info.curTileIndex + (info.sizeOfLine * 2));
+            } else {
+                startIndex = (startIndex > 0) ? startIndex : 0;
+                nearTilesArr = info.tiles.slice(startIndex, info.curTileIndex).reverse();
+            }
+            for (var i = 0, length = nearTilesArr.length; i < length; i++) {
+                tileElement = nearTilesArr[i].getDomRef();
+                leftOffset = parseFloat(tileElement.offsetLeft);
+                width = parseFloat(tileElement.offsetWidth);
+                leftAndWidth = leftOffset + width;
+
+                if (leftOffset <= origTileLeftOffset && leftAndWidth >= origTileLeftOffset) {
+                    nextTile = nearTilesArr[i];
+
+                    return nextTile;
+                }
+            }
+
+            if (this.nextRowIsShorter(direction, currentTileRow, info)) {
+                nextTile = this.getNextTileInShorterRow(direction, currentTileRow, info);
+                return nextTile;
+            }
         },
 
         getNextTileInShorterRow: function (direction, currentRow, info) {
@@ -507,29 +833,26 @@
             if (!jqTile.length) {
                 return;
             }
+            if (!jqTile.hasClass("sapUshellTile") && !jqTile.hasClass("sapUshellLinkTile")) {
+                jqTile = jqTile.closest(".sapUshellTile, .sapUshellLinkTile");
+            }
             var curTile = sap.ui.getCore().byId(jqTile.attr('id'));
-            var group = curTile.getParent();
+            var jqQroup = jqTile.closest(".sapUshellTileContainer");
+            var group = sap.ui.getCore().byId(jqQroup.attr('id'));
             var rowsData;
             var tiles;
             var links;
             if (!group.getTiles) {
+                curTile = group;
                 group = group.getParent();
             }
-            curTile.isLink = jqTile.hasClass('sapUshellLinkTile');
-            if (pageName == "catalog") {
-                rowsData = this.getCatalogLayoutData();
-                tiles = [];
-                var jqTiles = jQuery('#catalogTiles').find('.sapUshellTile:visible');
-                for (var i = 0; i < jqTiles.length; i++) {
-                    tiles.push(sap.ui.getCore().byId(jqTiles[i].id));
-                }
-            } else {
-                if (group.getTiles) {
-                    tiles = group.getTiles();
-                    links = group.getLinks();
-                    if (group.getShowPlaceholder() && !curTile.isLink) {
-                        tiles.push(group.oPlusTile);
-                    }
+            curTile.isLink = jqTile.hasClass('sapUshellLinkTile') || jqTile.hasClass('sapMGTLineMode');
+
+            if (group.getTiles) {
+                tiles = group.getTiles();
+                links = group.getLinks();
+                if (group.getShowPlaceholder() && !curTile.isLink) {
+                    tiles.push(group.oPlusTile);
                 }
             }
 
@@ -544,33 +867,6 @@
                 group: group,
                 rowsData: rowsData
             };
-        },
-
-        getCatalogLayoutData: function () {
-            var jqCatalogContiner = jQuery('#catalogTiles .sapUshellInner').children(':visible'),
-                maxTilesInLine = this.getNumberOfTileInRow('catalog'),
-                rowsIndex = [],
-                countTiles = 0;
-
-            for (var i = 1; i < jqCatalogContiner.length; i++) {
-
-                if (jQuery(jqCatalogContiner[i]).hasClass("sapUshellTile")) {
-                    countTiles++;
-                }
-                if (jQuery(jqCatalogContiner[i]).hasClass("sapUshellHeaderTile")) {
-                    rowsIndex.push(countTiles);
-                    countTiles = 0;
-                }
-                if (countTiles >= maxTilesInLine) {
-                    rowsIndex.push(countTiles);
-                    countTiles = 0;
-                }
-            }
-            if (countTiles > 0) {
-                rowsIndex.push(countTiles);
-            }
-
-            return rowsIndex;
         },
 
         whichTileRow: function (id, info) {
@@ -616,7 +912,7 @@
                     //Thus the next arrow down navigation should be to the descending Tile Container.
                     if (jqFirstTileInTileContainer.length) {
                         var tile = jQuery(jqFirstTileInTileContainer);
-                        this.scrollToTileAndSetFocus(tile, pageName);
+                        this.moveScrollDashboard(tile);
 
                     } else {
                         this._goToNextTileContainer(jqTileContainerElement, direction);
@@ -778,7 +1074,7 @@
                     bIsSameTileContainer = jqCurrentTileContainer.length && jqNextTileContainer.length && (jqCurrentTileContainer.attr('id') === jqNextTileContainer.attr('id'));
                     if (bIsSameTileContainer) {
                         var tile = jQuery(nextTile.getDomRef());
-                        this.scrollToTileAndSetFocus(tile, pageName);
+                        this.moveScrollDashboard(tile);
                     } else {
                         if (direction === 'down' || direction === 'right') {
                             if (!this._goToTileContainerAfterContent(jqCurrentTileContainer)) {
@@ -795,18 +1091,6 @@
                 }
             } else if (nextTile) {
                 var tile = jQuery(nextTile.getDomRef());
-                this.scrollToTileAndSetFocus(tile, pageName);
-            }
-        },
-
-        scrollToTileAndSetFocus: function (tile, pageName) {
-            var tileBottom = tile.offset().top + tile.height();
-            if (pageName === "catalog") {
-                var offset = (tileBottom - jQuery("body").height()) - jQuery("#catalogTilesPage").offset().top + 200;
-                jQuery('#catalogTilesPage section').animate({scrollTop: offset}, 0, function () {
-                    this.setTileFocus(tile);
-                }.bind(this));
-            } else {
                 this.moveScrollDashboard(tile);
             }
         },
@@ -826,10 +1110,20 @@
                 nextTile = info.group.oPlusTile;
             }
             if (nextTile) {
-                this.setTileFocus(jQuery(nextTile.getDomRef()));
+                if (!info.curTile.isLink) {
+                    this.setTileFocus(jQuery(nextTile.getDomRef()));
+                }
                 setTimeout(function (group, nextTileUuid) {
                     var tiles = group.getTiles();
                     if (!tiles.length) {
+                        if (info.links.length && info.curTile.isLink) {
+                            nextTile = this.getNextTile("right", info);
+                            if (!nextTile || (nextTile && nextTile.getParent() != info.group)) {
+                                nextTile = info.curTile;
+                            }
+                            this.setTileFocus(jQuery(nextTile.getDomRef()));
+                            return;
+                        }
                         if (info.group.getProperty('defaultGroup')) {
                             var nextGroup = this.getNextGroup("right", info);
                             nextTile = nextGroup.getTiles()[0] || nextGroup.oPlusTile;
@@ -895,26 +1189,50 @@
 
                 jqFocusables = jqTile.find('[tabindex]');
                 if (bIsInCatalog) {
-                    var handler = sap.ushell.components.flp.ComponentKeysHandler;
+                    var handler = ComponentKeysHandler;
                     handler.setFocusOnCatalogTile(jqFocusables.eq(0));
                 }
             }
 
             //remove tablindex from all tiles
             jQuery(".sapUshellTile").attr("tabindex", -1);
+            jQuery(".sapMGTLineMode").attr("tabindex", -1);
             jQuery(".sapUshellLinkTile").attr("tabindex", -1);
             jqTile.attr("tabindex", 0);
-            var jqLoadingDialog = jQuery("#loadingDialog")[0];
+            var jqLoadingDialog = jQuery("#Fiori2LoadingDialog")[0];
             if (!jqLoadingDialog || jqLoadingDialog.style.visibility === "hidden") {
+
+                // on ABAP - link is wrapped by Div - so we take the first child which is span
+                if (jqTile.prop("tagName") === "DIV" && jQuery(jqTile).hasClass("sapUshellLinkTile") && jqTile.getMode == undefined){
+                    jqTile = jqTile.find("a").length ? jqTile.find("a")[0] : jqTile;
+                }
                 jqTile.focus();
+
+                // setting a custom data on the Tile control object, so it would be kept after re-rendering
+                // (e.g. switching edit mode/non edit mode scenario for example)
+                var oTile;
+                if (jqTile[0] && jqTile[0].id) {
+                    var oTile = sap.ui.getCore().byId(jqTile[0].id);
+
+                    // as we always set the static member created which represents tab-index 0 for the tile-to-focus on
+                    // we gain the consistency which ensures us only one tile will have tab-index 0
+                    // as setting the same instance of a different tile removes it from its previous parent
+                    var customDataParent = this.tileFocusCustomData.getParent && this.tileFocusCustomData.getParent();
+                    if (customDataParent) {
+                        customDataParent.removeAggregation("customData", this.tileFocusCustomData, true);
+                    }
+
+                    if (oTile && sap.ui.getCore().byId(oTile.getId()) && this.tileFocusCustomData && sap.ui.getCore().byId(this.tileFocusCustomData.getId())) {
+                        oTile.addAggregation("customData", this.tileFocusCustomData, true);
+                    }
+                }
             }
         },
 
         setFocusOnCatalogTile: function(jqTile){
             var oPrevFirsTile = jQuery(".sapUshellTile[tabindex=0]"),
                 aAllTileFocusableElements,
-                aVisibleTiles,
-                jqParentTile;
+                aVisibleTiles;
 
             if (oPrevFirsTile.length) {
                 //remove tabindex attribute to all tile's elements in TAB cycle if exists
@@ -924,19 +1242,18 @@
             }
 
             if (!jqTile){
-                aVisibleTiles = jQuery(".sapUshellTile:visible");
+                aVisibleTiles = jQuery(".sapUshellTile:visible,.sapUshellAppBox:visible");
                 if (aVisibleTiles.length) {
-                    jqParentTile = jQuery(aVisibleTiles[0]);
-                    jqTile = jqParentTile.find('[tabindex], a').eq(0);
+                    jqTile = jQuery(aVisibleTiles[0]);
                 } else {
                     return;
                 }
             }
 
             //add tabindex attribute to all tile's elements in TAB cycle
-            jqTile.closest(".sapUshellTile").attr("tabindex", 0);
             jqTile.attr("tabindex", 0);
-            jqTile.closest(".sapUshellTile").find("button").attr("tabindex", 0);
+            jqTile.find("button").attr("tabindex", 0);
+            jqTile.focus();
         },
 
         moveScrollDashboard: function (jqTileSelected) {
@@ -946,13 +1263,6 @@
             jQuery('#sapUshellDashboardPage section').stop().animate({scrollTop: iY}, 0, function () {
                 this.setTileFocus(jqTileSelected);
             }.bind(this));
-        },
-
-        moveScrollCatalog: function (jqTileSelected) {
-            var jqDashboardPageCont = jQuery("#catalogTilesPage-cont");
-            var iTopSpacing = jQuery('#shell-hdr').height() + jQuery('.sapMPageHeader').height() + (parseInt(jQuery('.sapMPanelHdr').css('margin-top'), 10) * 2);
-            var iY = jqTileSelected.offset().top + jqDashboardPageCont.scrollTop() - iTopSpacing;
-            sap.ui.getCore().byId("catalogTilesPage").scrollTo(iY, 200);
         },
 
         moveGroupFromDashboard: function(direction, jqGroup) {
@@ -1024,11 +1334,6 @@
             }
         },
 
-        upDownButtonsHandler: function (direction, pageName) {
-            var jqFocused = jQuery(document.activeElement);
-
-            this.goFromFocusedTile(direction, jqFocused, pageName);
-        },
         arrowsButtonsHandler: function (direction, e) {
 
             var jqFocused = jQuery(document.activeElement),
@@ -1050,6 +1355,15 @@
             }
         },
 
+        _preventBrowserDefaultScrollingBehavior: function (oEvent) {
+            //prevent browser event ctrl+up/down from scrolling page
+            //created by user `keydown` native event needs to be cancelled so browser will not make default action, which is scroll.
+            //Instead we clone same event and dispatch it programmatic, so all handlers expecting to this event will still work
+            oEvent.preventDefault();
+            oEvent.stopPropagation();
+            oEvent.stopImmediatePropagation();
+        },
+
         handleAnchorNavigationItemsArrowKeys: function(direction) {
             var anchorItems = jQuery(".sapUshellAnchorItem:visible"),
                 jqFocused = jQuery(document.activeElement),
@@ -1061,16 +1375,62 @@
                 direction = direction === 'left' ? 'right' : 'left';
             }
 
-            if (direction === "left" || direction === "down") {
+            if (direction === "left" || direction === "up") {
                 if (indexOfFocusedItem > 0) {
                     nextElement = anchorItems.get(indexOfFocusedItem - 1);
                 }
-            } else if (direction === "right" || direction === "up") {
+            } else if (direction === "right" || direction === "down") {
                 if (indexOfFocusedItem < anchorItems.length - 1) {
                     nextElement = anchorItems.get(indexOfFocusedItem + 1);
                 }
             }
-            jQuery(nextElement).focus();
+
+            this.setAnchorItemFocus(jQuery(nextElement));
+        },
+
+        setAnchorItemFocus: function(jqAnchorItem) {
+            //remove tablindex from all tiles
+            jQuery(".sapUshellAnchorItem").attr("tabindex", -1);
+            jqAnchorItem.attr("tabindex", 0);
+            jqAnchorItem.focus();
+        },
+
+        appFinderHomeEndButtonsHandler: function (direction, keyup) {
+            keyup.preventDefault();
+            var aVisibleCatalogEntries = jQuery(".sapUshellTile:visible,.sapUshellAppBox:visible"),
+                jqCurrentFocus = jQuery(document.activeElement),
+                jqFocusElement;
+            if (aVisibleCatalogEntries.length) {
+                if (direction === "home") {
+                    jqFocusElement = jQuery(aVisibleCatalogEntries.get(0));
+                }
+                if (direction === "end") {
+                    jqFocusElement = jQuery(aVisibleCatalogEntries.get(aVisibleCatalogEntries.length - 1));
+                }
+            }
+            if (jqFocusElement) {
+                this.appFinderFocusAppBox(jqCurrentFocus, jqFocusElement);
+            }
+        },
+
+        appFinderPageUpDownButtonsHandler: function (direction, keyup) {
+            keyup.preventDefault();
+            var jqFocused = jQuery(document.activeElement);
+            var jqCatalogContainer = jQuery(jqFocused.parents()[2]);
+
+            var nextCatalog = this.getNextCatalog(direction, jqCatalogContainer);
+            if (nextCatalog) {
+                var nextCatalogEnrtiesList = nextCatalog.find("li"),
+                    firstEntryInNextCatalog = jQuery(nextCatalogEnrtiesList.get(0));
+            }
+            if (firstEntryInNextCatalog.length) {
+                this.appFinderFocusAppBox(jqFocused, firstEntryInNextCatalog);
+            } else if (direction === "down"){
+                //find last element in current catalog
+                var currentCatalogEntries = jqCatalogContainer.find("li"),
+                    lastEntryInCurrentCatalog = jQuery(currentCatalogEntries.get(currentCatalogEntries.length - 1));
+                this.appFinderFocusAppBox(jqFocused, lastEntryInCurrentCatalog);
+            }
         },
 
         homeEndButtonsHandler: function (selector, e) {
@@ -1079,11 +1439,10 @@
 
             if (jqFocused.hasClass("sapUshellAnchorItem")) {
                 e.preventDefault();
-                var jqAnchorItemToSelect = jQuery(".sapUshellAnchorItem:visible:" + selector);
-                jqAnchorItemToSelect.focus();
+                this.setAnchorItemFocus(jQuery(".sapUshellAnchorItem:visible:" + selector));
                 return;
             }
-            if (jqFocused.hasClass("sapUshellTile") && (jqFocused.closest("#dashboardGroups").length || jqFocused.closest("#catalogTiles").length)) {
+            if (jqFocused.hasClass("sapUshellTile") && jqFocused.closest("#dashboardGroups").length) {
                 e.preventDefault();
                 if (e.ctrlKey === true) {
                     tileToSelect = jQuery(".sapUshellTile:visible:not('.sapUshellPlusTile')")[selector]();
@@ -1108,12 +1467,11 @@
             }
         },
 
-        ctrlPlusArrowKeyButtonsHandler: function (selector) {
+        ctrlPlusArrowKeyButtonsHandler: function (direction) {
             var jqElement,
-                jqFocused = jQuery(document.activeElement),
-                bFocusElementIsLink = jQuery(jqFocused).hasClass('sapUshellLinkTile');
-            if (!bFocusElementIsLink && (jqElement = this.getFocusOnTile(jqFocused))) {
-                this.moveTile(selector);
+                jqFocused = jQuery(document.activeElement);
+            if ((jqElement = this.getFocusOnTile(jqFocused))) {
+                this.moveTile(direction);
                 return;
             }
             if (jqElement = this.getFocusTileContainerHeader(jqFocused)) {
@@ -1123,7 +1481,7 @@
                 if (jqFocusGroupContentElement.hasClass('sapUshellTileContainerDefault') || jqFocusGroupContentElement.hasClass('sapUshellTileContainerLocked')) {
                     return;
                 } else {
-                    this.moveGroupFromDashboard(selector, jqElement);
+                    this.moveGroupFromDashboard(direction, jqElement);
                 }
             }
         },
@@ -1147,24 +1505,17 @@
             }
         },
 
-        goToFirstCatalogTile: function () {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
-            handler.setTileFocus(firstTile);
-        },
-
-        goToFirstCatalogHeaderItem: function () {
-            var nextElement = jQuery("#catalogTilesPage header button")[0];
-            nextElement.focus();
-        },
-
         goToFirstAnchorNavigationItem: function () {
-            var jqElement = jQuery(".sapUshellAnchorItem:visible:first");
-            jqElement.focus();
+            this.setAnchorItemFocus(jQuery(".sapUshellAnchorItem:visible:first"));
+        },
+
+        goToSelectedAnchorNavigationItem: function () {
+            this.setAnchorItemFocus(jQuery(".sapUshellAnchorItemSelected"));
+            return jQuery(document.activeElement).hasClass("sapUshellAnchorItemSelected");
         },
 
         handleFocusOnMe: function(keyup, bFocusPassedFirstTime) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler,
+            var handler = ComponentKeysHandler,
                 oNavContainerFlp = sap.ui.getCore().byId('navContainerFlp'),
                 oCurrentPage = oNavContainerFlp.getCurrentPage(),
                 oCurrentViewName = oCurrentPage.getViewName();
@@ -1174,9 +1525,17 @@
                 // we got the focus from the shell
                 if (bFocusPassedFirstTime) {
                     if (keyup.shiftKey) {
-                        handler.goToTileContainer(keyup);
+                        var floatingFooterDoneBtn = jQuery("#sapUshellDashboardFooterDoneBtn:visible");
+                        if (floatingFooterDoneBtn.length) {
+                            floatingFooterDoneBtn.focus();
+                        } else {
+                            handler.goToTileContainer(keyup);
+                        }
                     } else {
-                        handler.goToFirstAnchorNavigationItem();
+                        if (!handler.goToSelectedAnchorNavigationItem()) {
+                            //when focus on anchor bar failed, we pass it to tile
+                            ComponentKeysHandler.goToLastVisitedTile()
+                        }
                     }
                 } else {
                     handler.mainKeydownHandler(keyup);
@@ -1186,27 +1545,22 @@
 
             //we in appFinder
             if (oCurrentViewName == "sap.ushell.components.flp.launchpad.appfinder.AppFinder") {
-                //if appFinder handled keyDown, no need to pass it to other functions
-                if (handler.appFinderKeydownHandler(keyup, bFocusPassedFirstTime)) {
-                    return;
-                }
-
-                var menuName = oCurrentPage.getController().getCurrentMenuName();
-                //we are in catalog
-                if (menuName === "catalog") {
-                    // we got the focus from the shell
-                    if (bFocusPassedFirstTime) {
-                        if (keyup.shiftKey) {
-                            handler.goToFirstCatalogTile();
+                // we got the focus from the shell
+                if (bFocusPassedFirstTime) {
+                    //forward navigation
+                    if (!keyup.shiftKey) {
+                        var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                        if (openCloseSplitAppButton && openCloseSplitAppButton.getVisible()) {
+                            openCloseSplitAppButton.focus();
                         } else {
-                            handler.goToFirstCatalogHeaderItem();
+                            handler.appFinderFocusMenuButtons(keyup);
                         }
-                    } else {
-                        handler.mainKeydownHandler(keyup);
-                        handler.catalogKeydownHandler(keyup);
+                    } else { //backwards navigation
+                        handler.setFocusOnCatalogTile();
                     }
                 } else {
-                    handler.easyAccessKeydownHandler(keyup);
+                    handler.mainKeydownHandler(keyup);
+                    handler.appFinderKeydownHandler(keyup);
                 }
             }
         },
@@ -1224,11 +1578,11 @@
         },
 
         handleShortcuts: function (oEvent) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
+            var handler = ComponentKeysHandler;
 
             if (oEvent.altKey) {
                 switch (String.fromCharCode(oEvent.keyCode)) {
-                    case 'C':
+                    case 'A':
                         if (handler.oModel.getProperty("/personalization")) {
                             handler.handleCatalogKey();
                         }
@@ -1237,6 +1591,10 @@
                         handler.handleHomepageKey();
                         break;
                 }
+            }
+            // ctrl + Enter
+            if (oEvent.ctrlKey && oEvent.keyCode === 13) {
+                handler.handleDoneEditMode();
             }
         },
 
@@ -1256,28 +1614,35 @@
             }
         },
 
-        catalogKeydownHandler: function (keyup) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            var pageName = "catalog";
-            switch (keyup.keyCode) {
-                case handler.keyCodes.ARROW_UP: //Up
-                    handler.upDownButtonsHandler("up", pageName);
-                    break;
-                case handler.keyCodes.ARROW_DOWN: //Down
-                    handler.upDownButtonsHandler("down", pageName);
-                    break;
-                case handler.keyCodes.ARROW_RIGHT: // Right ->
-                    handler.goFromFocusedTile("right","",pageName);
-                    break;
-                case handler.keyCodes.ARROW_LEFT: // Left <-
-                    handler.goFromFocusedTile("left","",pageName);
-                    break;
-                case handler.keyCodes.PAGE_UP: //Page Up button
-                    handler.goToFirstTileOfSiblingGroupInCatalog('prev', keyup);
-                    break;
-                case handler.keyCodes.PAGE_DOWN: //Page Down
-                    handler.goToFirstTileOfSiblingGroupInCatalog('next', keyup);
-                    break;
+        appFinderKeydownHandler: function (keyup) {
+            var handler = ComponentKeysHandler;
+            if (keyup.srcElement.id != "appFinderSearch-I") {
+                switch (keyup.keyCode) {
+                    case handler.keyCodes.ARROW_UP: //Up
+                        handler.appFinderUpDownHandler("up", keyup);
+                        break;
+                    case handler.keyCodes.ARROW_DOWN: //Down
+                        handler.appFinderUpDownHandler("down", keyup);
+                        break;
+                    case handler.keyCodes.ARROW_RIGHT: // Right ->
+                        handler.appFinderRightLeftHandler("right", keyup);
+                        break;
+                    case handler.keyCodes.ARROW_LEFT: // Left <-
+                        handler.appFinderRightLeftHandler("left", keyup);
+                        break;
+                    case handler.keyCodes.PAGE_UP: //Page Up button
+                        handler.appFinderPageUpDownButtonsHandler('up', keyup);
+                        break;
+                    case handler.keyCodes.PAGE_DOWN: //Page Down
+                        handler.appFinderPageUpDownButtonsHandler('down', keyup);
+                        break;
+                    case handler.keyCodes.HOME:
+                        handler.appFinderHomeEndButtonsHandler("home", keyup);
+                        break;
+                    case handler.keyCodes.END:
+                        handler.appFinderHomeEndButtonsHandler("end", keyup);
+                        break;
+                }
             }
         },
 
@@ -1287,102 +1652,107 @@
             jqNextAppBox.attr("tabindex", "0").focus();
         },
 
-        appFinderKeydownHandler: function (keyup, bFocusPassedFirstTime) {
-            if (!bFocusPassedFirstTime) {
-                return;
-            }
+        appFinderFocusMenuButtons: function (keyup) {
             var buttons = jQuery("#catalog, #userMenu, #sapMenu").filter("[tabindex=0]");
             if (buttons.length) {
                 buttons.eq(0).focus();
+                keyup.preventDefault();
                 return true;
+            } else {
+                return false;
             }
+
         },
 
-        easyAccessRightLeftHandler: function (direction, keyup) {
+        appFinderUpDownHandler: function (direction, keyup) {
             keyup.preventDefault();
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            var siblingDirection = direction == "right" ? "next" : "prev";
+
             var jqFocused = jQuery(document.activeElement);
-            if (!jqFocused.hasClass("sapUshellAppBox")) {
+            if (!jqFocused.is(".sapUshellAppBox, .sapUshellTile")) {
                 return;
             }
-            var nextAppBox = jqFocused.parent()[siblingDirection]();
-            if (nextAppBox.length) {
-                handler.appFinderFocusAppBox(jqFocused, nextAppBox.children());
+            var jqCatalogContainer = jQuery(jqFocused.parents()[2]);
+            var catalogEnrtiesList = jqCatalogContainer.find("li.sapUshellAppBox, li.sapUshellTile"),
+                aCatalogEnrties = jQuery.makeArray(catalogEnrtiesList),
+                aNextCatalogEnrties = [];
+
+            var nextCatalog = this.getNextCatalog(direction, jqCatalogContainer);
+            if (nextCatalog) {
+                var nextCatalogEnrtiesList = nextCatalog.find("li.sapUshellAppBox, li.sapUshellTile"),
+                    aNextCatalogEnrties = jQuery.makeArray(nextCatalogEnrtiesList);
             }
+            var allCatalogEntries = direction === "down" ? aCatalogEnrties.concat(aNextCatalogEnrties) : aNextCatalogEnrties.concat(aCatalogEnrties);
+
+            var jqNextFocused = jQuery(this._findClosestTile(direction, allCatalogEntries, jqFocused.get(0)));
+            this.appFinderFocusAppBox(jqFocused, jqNextFocused);
         },
 
-        easyAccessUpDownHandler: function (direction, keyup) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            keyup.preventDefault();
-            var focused = document.activeElement;
-            var jqFocused = jQuery(document.activeElement);
-            if (!jqFocused.hasClass("sapUshellAppBox")) {
+        getNextCatalog: function (direction, currentCatalog) {
+            var nextCatalog;
+
+            if (direction === "down") {
+                nextCatalog = currentCatalog.next();
+            }
+            if (direction === "up") {
+                nextCatalog = currentCatalog.prev();
+            }
+
+            if (!nextCatalog) {
                 return;
             }
-            var focusedRect = focused.getBoundingClientRect();
-            var appBoxList = [].slice.call(document.querySelectorAll(".sapUshellAppBox"));
-            if (direction == "up") {
-                appBoxList.reverse();
+
+            return nextCatalog;
+        },
+
+        appFinderRightLeftHandler: function (direction, keyup) {
+            keyup.preventDefault();
+            var jqFocused = jQuery(document.activeElement);
+            if (!jqFocused.is(".sapUshellAppBox, .sapUshellTile")) {
+                return;
             }
-            appBoxList.splice(0, appBoxList.indexOf(focused) + 1);
-            var nextAppBox;
-            for (var i = 0; i < appBoxList.length; i++) {
-                var rect = appBoxList[i].getBoundingClientRect();
-                var horizontalIntersection = (rect.left < focusedRect.right && rect.right > focusedRect.left);
-                if (horizontalIntersection) {
-                    nextAppBox = appBoxList[i];
-                    break;
+            var jqCatalogContainer = jQuery(jqFocused.parents()[2]);
+            var aCatalogItems = jqCatalogContainer.find("li.sapUshellAppBox, li.sapUshellTile");
+            var indexOfCurrentItem = aCatalogItems.index(jqFocused);
+            var indexOfNextItem = direction === "right" ? indexOfCurrentItem + 1 : indexOfCurrentItem - 1,
+                jqNextFocused;
+
+            //same catalog
+            if (indexOfNextItem >= 0 && indexOfNextItem < aCatalogItems.length) {
+                //set Focus on the next entry
+                jqNextFocused = jQuery(aCatalogItems[indexOfNextItem]);
+            } else if (indexOfNextItem < 0) {
+            //prev catalog
+                //TODO:
+                var nextCatalog = this.getNextCatalog("up", jqCatalogContainer);
+                if (nextCatalog) {
+                    var nextCatalogEnrtiesList = nextCatalog.find("li.sapUshellAppBox, li.sapUshellTile");
+
+                    if (nextCatalogEnrtiesList.length) {
+                        jqNextFocused = jQuery(nextCatalogEnrtiesList.get(nextCatalogEnrtiesList.length - 1));
+                    } else {
+                        return;
+                    }
+                }
+            } else if (indexOfNextItem === aCatalogItems.length) {
+            //next catalog
+                //TODO:
+                var nextCatalog = this.getNextCatalog("down", jqCatalogContainer);
+                if (nextCatalog) {
+                    var nextCatalogEnrtiesList = nextCatalog.find("li");
+
+                    if (nextCatalogEnrtiesList.length) {
+                        jqNextFocused = jQuery(nextCatalogEnrtiesList.get(0));
+                    } else {
+                        return;
+                    }
                 }
             }
-            if (nextAppBox) {
-                handler.appFinderFocusAppBox(jqFocused, jQuery(nextAppBox));
-            }
-        },
 
-        easyAccessHomeEndHandler: function (direction, keyup) {
-            keyup.preventDefault();
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            var siblingDirection = direction == "home" ? "first" : "last";
-            var jqFocused = jQuery(document.activeElement);
-            if (!jqFocused.hasClass("sapUshellAppBox")) {
-                return;
-            }
-            var nextAppBox = jqFocused.parent().parent().children()[siblingDirection]().children();
-            if (jqFocused == nextAppBox) {
-                return;
-            }
-            handler.appFinderFocusAppBox(jqFocused, jQuery(nextAppBox));
-        },
-
-        easyAccessKeydownHandler: function (keyup) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            switch (keyup.keyCode) {
-                case handler.keyCodes.ARROW_UP:
-                    handler.easyAccessUpDownHandler("up", keyup);
-                    break;
-                case handler.keyCodes.ARROW_DOWN:
-                    handler.easyAccessUpDownHandler("down", keyup);
-                    break;
-                case handler.keyCodes.ARROW_RIGHT:
-                    handler.easyAccessRightLeftHandler("right", keyup);
-                    break;
-                case handler.keyCodes.ARROW_LEFT:
-                    handler.easyAccessRightLeftHandler("left", keyup);
-                    break;
-                case handler.keyCodes.HOME:
-                case handler.keyCodes.PAGE_UP:
-                    handler.easyAccessHomeEndHandler("home", keyup);
-                    break;
-                case handler.keyCodes.END:
-                case handler.keyCodes.PAGE_DOWN:
-                    handler.easyAccessHomeEndHandler("end", keyup);
-                    break;
-            }
+            this.appFinderFocusAppBox(jqFocused, jqNextFocused);
         },
 
         dashboardKeydownHandler: function (keyup) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
+            var handler = ComponentKeysHandler;
             switch (keyup.keyCode) {
                 case handler.keyCodes.F2:
                     handler.renameGroup();
@@ -1398,6 +1768,7 @@
                     break;
                 case handler.keyCodes.ARROW_UP: //Up
                     if (keyup.ctrlKey === true) {
+                        handler._preventBrowserDefaultScrollingBehavior(keyup);
                         handler.ctrlPlusArrowKeyButtonsHandler("up");
                     } else {
                         handler.arrowsButtonsHandler("up", keyup);
@@ -1405,6 +1776,7 @@
                     break;
                 case handler.keyCodes.ARROW_DOWN: //Down
                     if (keyup.ctrlKey === true) {
+                        handler._preventBrowserDefaultScrollingBehavior(keyup);
                         handler.ctrlPlusArrowKeyButtonsHandler("down");
                     } else {
                         handler.arrowsButtonsHandler("down", keyup);
@@ -1441,5 +1813,8 @@
         }
     };
 
-    sap.ushell.components.flp.ComponentKeysHandler = new componentKeysHandler();
-}());
+    var ComponentKeysHandler = new componentKeysHandler();
+
+    return ComponentKeysHandler
+
+}, /* bExport= */ true);

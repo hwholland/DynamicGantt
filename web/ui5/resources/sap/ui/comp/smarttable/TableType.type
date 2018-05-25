@@ -2,7 +2,7 @@
 <simple-type xmlns="http://www.sap.com/sap.ui.library.xsd">
     <name>smarttable/TableType</name>
     <derived/>
-    <documentation>Provides enumeration sap.ui.comp.smarttable.TableType A subset of table types that fit to a simple API returning one string.</documentation>
+    <documentation>Provides enumeration sap.ui.comp.smarttable.TableType. A subset of table types that fit to a simple API returning one string.</documentation>
     <enumeration>
         <value name="Table">
             <documentation>A table (sap.ui.table.Table) control shall be created as the content of the SmartTable, if no table already exists (default)</documentation>
@@ -15,7 +15,7 @@ already exists</documentation>
             <documentation>An analytical table (sap.ui.table.AnalyticalTable) control shall be created as the content of the SmartTable, if no table already exists</documentation>
         </value>
         <value name="TreeTable">
-            <documentation>A tree table (sap.ui.table.TreeTable) control shall be created as the content of the SmartTable, if no table already exists (TODO)</documentation>
+            <documentation>A tree table (sap.ui.table.TreeTable) control shall be created as the content of the SmartTable, if no table already exists</documentation>
         </value>
     </enumeration>
 </simple-type>

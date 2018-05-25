@@ -1,10 +1,16 @@
+/*!
+ * SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
+ */
+
 /* -----------------------------------------------------------------------------------
  * Hint: This is a derived (generated) file. Changes should be done in the underlying
  * source files only (*.type, *.js) or they will be lost after the next generation.
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.collaboration (1.38.7)
+ * Initialization Code and shared classes of library sap.collaboration (1.54.0)
  */
 jQuery.sap.declare("sap.collaboration.library");
 jQuery.sap.require("sap.ui.core.Core");
@@ -33,8 +39,14 @@ sap.ui.getCore().initLibrary({
 	interfaces: [],
 	controls: [],
 	elements: [],
-	version: "1.38.7"
+	version: "1.54.0"
 });
+
+/*!
+ * SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
+ */
 
 /* ----------------------------------------------------------------------------------
  * Hint: This is a derived (generated) file. Changes should be done in the underlying 
@@ -46,7 +58,7 @@ jQuery.sap.declare("sap.collaboration.AppType");
 /**
  * @class Application Type (Mode)
  *
- * @version 1.38.7
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -66,6 +78,12 @@ sap.collaboration.AppType = {
 	widget : "widget"
 
 };
+/*!
+ * SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
+ */
+
 /* ----------------------------------------------------------------------------------
  * Hint: This is a derived (generated) file. Changes should be done in the underlying 
  * source files only (*.type, *.js) or they will be lost after the next generation.
@@ -76,7 +94,7 @@ jQuery.sap.declare("sap.collaboration.DisplayFeedType");
 /**
  * @class Feed Types to be displayed by the Social Timeline
  *
- * @version 1.38.7
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -96,6 +114,12 @@ sap.collaboration.DisplayFeedType = {
 	GroupFeedsWhereBusinessRecordIsLinked : "GroupFeedsWhereBusinessRecordIsLinked"
 
 };
+/*!
+ * SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
+ */
+
 /* ----------------------------------------------------------------------------------
  * Hint: This is a derived (generated) file. Changes should be done in the underlying 
  * source files only (*.type, *.js) or they will be lost after the next generation.
@@ -106,7 +130,7 @@ jQuery.sap.declare("sap.collaboration.FeedType");
 /**
  * @class Feed Types
  *
- * @version 1.38.7
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel

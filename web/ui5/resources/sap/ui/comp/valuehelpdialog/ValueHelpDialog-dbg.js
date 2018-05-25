@@ -1,12 +1,14 @@
-/*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
+/*
+ * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.valuehelpdialog.ValueHelpDialog.
-sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/MultiInput', 'sap/m/Token', 'sap/ui/comp/library', './ItemsCollection', 'sap/ui/core/Control', 'sap/ui/core/format/DateFormat', 'sap/ui/core/format/NumberFormat', 'sap/m/VBox', 'sap/m/HBox', 'sap/m/ButtonType', 'sap/ui/comp/util/FormatUtil', 'sap/m/DialogRenderer'],
-	function(jQuery, Dialog, MessageBox, MultiInput, Token, library, ItemsCollection, Control, DateFormat, NumberFormat, VBox, HBox, ButtonType, FormatUtil, DialogRenderer) {
+sap.ui.define([
+	'jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/MultiInput', 'sap/m/Token', 'sap/ui/comp/library', './ItemsCollection', 'sap/ui/core/Control', 'sap/ui/core/format/DateFormat', 'sap/ui/core/format/NumberFormat', 'sap/m/VBox', 'sap/m/HBox', 'sap/m/ButtonType', 'sap/ui/comp/util/FormatUtil', 'sap/m/DialogRenderer'
+], function(jQuery, Dialog, MessageBox, MultiInput, Token, library, ItemsCollection, Control, DateFormat, NumberFormat, VBox, HBox, ButtonType, FormatUtil, DialogRenderer) {
 	"use strict";
 
 	/**
@@ -14,194 +16,285 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	 *
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
-	 *
-	 * @class
-	 * The ValueHelpDialog control can be used to implement a value help for an input field.
+	 * @class The ValueHelpDialog control can be used to implement a value help for an input field.
 	 * @extends sap.m.Dialog
-	 *
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.valuehelpdialog.ValueHelpDialog
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
-	var ValueHelpDialog = Dialog.extend("sap.ui.comp.valuehelpdialog.ValueHelpDialog", /** @lends sap.ui.comp.valuehelpdialog.ValueHelpDialog.prototype */ { metadata : {
+	var ValueHelpDialog = Dialog.extend("sap.ui.comp.valuehelpdialog.ValueHelpDialog", /** @lends sap.ui.comp.valuehelpdialog.ValueHelpDialog.prototype */ {
+		metadata: {
 
-		library : "sap.ui.comp",
-		properties : {
-			/**
-			 * Defines the value for the basic search field.
-			 * The value is set into the basic search field of the filter bar used.
-			 * @since 1.24
-			 */
-			basicSearchText : {type : "string", group : "Misc", defaultValue : null},
+			library: "sap.ui.comp",
+			properties: {
+				/**
+				 * Defines the value for the basic search field. The value is set into the basic search field of the filter bar used.
+				 *
+				 * @since 1.24
+				 */
+				basicSearchText: {
+					type: "string",
+					group: "Misc",
+					defaultValue: ""
+				},
 
-			/**
-			 * Enables multi-selection in the table used.
-			 * @since 1.24
-			 */
-			supportMultiselect : {type : "boolean", group : "Misc", defaultValue : true},
+				/**
+				 * Enables multi-selection in the table used.
+				 *
+				 * @since 1.24
+				 */
+				supportMultiselect: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: true
+				},
 
-			/**
-			 * Enables the ranges (conditions) feature in the dialog.
-			 * @since 1.24
-			 */
-			supportRanges : {type : "boolean", group : "Misc", defaultValue : false},
+				/**
+				 * Enables the ranges (conditions) feature in the dialog.
+				 *
+				 * @since 1.24
+				 */
+				supportRanges: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
+				},
 
-			/**
-			 * If this property is set to true, the value help dialog only supports the ranges (conditions) feature.
-			 * @since 1.24
-			 */
-			supportRangesOnly : {type : "boolean", group : "Misc", defaultValue : false},
+				/**
+				 * If this property is set to <code>true</code>, the value help dialog only supports the ranges (conditions) feature.
+				 *
+				 * @since 1.24
+				 */
+				supportRangesOnly: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
+				},
 
-			/**
-			 * Defines the key of the column used for the internal key handling. The value of the column is used for the token key and also to identify the row in the table.
-			 * @since 1.24
-			 */
-			key : {type : "string", group : "Misc", defaultValue : null},
+				/**
+				 * Defines the key of the column used for the internal key handling. The value of the column is used for the token key and also to
+				 * identify the row in the table.
+				 *
+				 * @since 1.24
+				 */
+				key: {
+					type: "string",
+					group: "Misc",
+					defaultValue: ""
+				},
 
-			/**
-			 * Defines the list of additional keys of the column used for the internal key handling.
-			 * @since 1.24
-			 */
-			keys : {type : "string[]", group : "Misc", defaultValue : null},
+				/**
+				 * Defines the list of additional keys of the column used for the internal key handling.
+				 *
+				 * @since 1.24
+				 */
+				keys: {
+					type: "string[]",
+					group: "Misc",
+					defaultValue: null
+				},
 
-			/**
-			 * Defines the key of the column used for the token text.
-			 * @since 1.24
-			 */
-			descriptionKey : {type : "string", group : "Misc", defaultValue : null},
+				/**
+				 * Defines the key of the column used for the token text.
+				 *
+				 * @since 1.24
+				 */
+				descriptionKey: {
+					type: "string",
+					group: "Misc",
+					defaultValue: ""
+				},
 
-			/**
-			 * Defines the maximum number of include ranges.
-			 * @since 1.24
-			 */
-			maxIncludeRanges : {type : "string", group : "Misc", defaultValue : '-1'}, // TODO string -->int
+				/**
+				 * Defines the maximum number of include ranges.
+				 *
+				 * @since 1.24
+				 */
+				maxIncludeRanges: {
+					type: "string",
+					group: "Misc",
+					defaultValue: '-1'
+				},
 
-			/**
-			 * Defines the maximum number of exclude ranges.
-			 * @since 1.24
-			 */
-			maxExcludeRanges : {type : "string", group : "Misc", defaultValue : '-1'},  // TODO string -->int
+				/**
+				 * Defines the maximum number of exclude ranges.
+				 *
+				 * @since 1.24
+				 */
+				maxExcludeRanges: {
+					type: "string",
+					group: "Misc",
+					defaultValue: '-1'
+				},
 
-			/**
-			 * Represents the display format of the range values. With the <code>displayFormat</code> value UpperCase, the entered value of the range (condition) is converted to uppercase letters.
-			 * @since 1.24
-			 */
-			displayFormat : {type : "string", group : "Misc", defaultValue : null},
+				/**
+				 * Represents the display format of the range values. With the <code>displayFormat</code> value UpperCase, the entered value of the
+				 * range (condition) is converted to uppercase letters.
+				 *
+				 * @since 1.24
+				 */
+				displayFormat: {
+					type: "string",
+					group: "Misc",
+					defaultValue: ""
+				},
 
-			/**
-			 * Represents how the item token text should be displayed in ValueHelpDialog.
-			 * Use one of the valid sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR values.
-			 * @since 1.24
-			 */
-			tokenDisplayBehaviour : {type : "string", group : "Misc", defaultValue : null},
+				/**
+				 * Represents how the item token text should be displayed in ValueHelpDialog. Use one of the valid
+				 * <code>sap.ui.comp.smartfilterbar.DisplayBehaviour</code> values.
+				 *
+				 * @since 1.24
+				 */
+				tokenDisplayBehaviour: {
+					type: "string",
+					group: "Misc",
+					defaultValue: ""
+				},
 
-			/**
-			 * Sets the dialog into a filter mode, which only shows ranges (conditions) and hides the tokens.
-			 * @since 1.24
-			 */
-			filterMode : {type : "boolean", group : "Misc", defaultValue : false}
-		},
-		aggregations : {
-
-			/**
-			 *  Allows you to add a {@link sap.ui.comp.filterbar.FilterBar FilterBar} or {@link sap.ui.comp.smartfilterbar.SmartFilterBar SmartFilterBar} control to the value help dialog.
-			 */
-			filterBar : {type : "sap.ui.comp.filterbar.FilterBar", multiple : false}
-		},
-		events : {
-
-			/**
-			 * This event is fired when the OK button is pressed.
-			 * @since 1.24
-			 */
-			ok : {
-				parameters: {
-					/**
-					*  The array of tokens created or modified on the ValueHelpDialog.
-				 	*/
-					tokens: { type : "sap.m.Token[]" }
+				/**
+				 * Sets the dialog into a filter mode, which only shows ranges (conditions) and hides the tokens.
+				 *
+				 * @since 1.24
+				 */
+				filterMode: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
 				}
 			},
+			aggregations: {
 
-			/**
-			 * This event is fired when the Cancel button is pressed.
-			 * @since 1.24
-			 */
-			cancel : {},
-
-			/**
-			 * This event is fired when the user selects an item in the items table.
-			 * The event will only be raised when the dialog gets a table instance from outside via setTable.
-			 * @since 1.32
-			 */
-			selectionChange : {
-				parameters: {
-					/**
-					*  The RowSelectionChange event parameter from the hosted table that contains the selected items.
-				 	*/
-					tableSelectionParams : { type : "object" },
-
-					/**
-					*  Returns an array of objects which represents all selected row tokens.
-					*  The object contains the token key, the row object data from the model, and the information if the token is selected.
-					*  <code>
-					*  [{sKey, oRow, bSelect}, ...]
-					*  </code>
-				 	*/
-					updateTokens : { type : "object[]" },
-
-					/**
-					*  Can be set to true to execute the default behaviour of the ValueHelpDialog.
-				 	*/
-					useDefault : { type : "boolean", defaultValue : false }
+				/**
+				 * Allows you to add a {@link sap.ui.comp.filterbar.FilterBar FilterBar} or
+				 * {@link sap.ui.comp.smartfilterbar.SmartFilterBar SmartFilterBar} control to the value help dialog.
+				 */
+				filterBar: {
+					type: "sap.ui.comp.filterbar.FilterBar",
+					multiple: false
 				}
 			},
+			events: {
 
-			/**
-			 * This event is fired when the user removes one or multiple existing token(s) from the dialog.
-			 * The event will only be raised when the dialog gets a table instance from outside via setTable.
-			 * @since 1.32
-			 */
-			tokenRemove: {
-				parameters: {
-					/**
-					*  The array of token keys that has been removed.
-				 	*/
-					tokenKeys : { type : "string[]" },
+				/**
+				 * This event is fired when the OK button is pressed.
+				 *
+				 * @since 1.24
+				 */
+				ok: {
+					parameters: {
+						/**
+						 * The array of tokens created or modified on the ValueHelpDialog.
+						 */
+						tokens: {
+							type: "sap.m.Token[]"
+						}
+					}
+				},
 
-					/**
-					*  Can be set to true to execute the default behaviour of ValueHelpDialog.
-				 	*/
-					useDefault : { type : "boolean", defaultValue : false }
+				/**
+				 * This event is fired when the Cancel button is pressed.
+				 *
+				 * @since 1.24
+				 */
+				cancel: {},
+
+				/**
+				 * This event is fired when the user selects an item in the items table.
+				 *
+				 * <b>Note:</b> The event will only be raised when the dialog gets a table
+				 * instance from outside via <code>setTable</code>.
+				 *
+				 * @since 1.32
+				 */
+				selectionChange: {
+					parameters: {
+						/**
+						 * The RowSelectionChange event parameter from the hosted table that contains the selected items.
+						 */
+						tableSelectionParams: {
+							type: "object"
+						},
+
+						/**
+						 * Returns an array of objects which represents all selected row tokens. The object contains the token key, the row object
+						 * data from the model, and the information if the token is selected. <code>
+						 *  [{sKey, oRow, bSelect}, ...]
+						 *  </code>
+						 */
+						updateTokens: {
+							type: "object[]"
+						},
+
+						/**
+						 * Can be set to <code>true</code> to execute the default behaviour of the ValueHelpDialog.
+						 */
+						useDefault: {
+							type: "boolean",
+							defaultValue: false
+						}
+					}
+				},
+
+				/**
+				 * This event is fired when the user removes one or multiple existing token(s) from the dialog.
+				 *
+				 * <b>Note:</b> The event will only be raised when the dialog gets a table
+				 * instance from outside via <code>setTable</code>.
+				 *
+				 * @since 1.32
+				 */
+				tokenRemove: {
+					parameters: {
+						/**
+						 * The array of token keys that has been removed.
+						 */
+						tokenKeys: {
+							type: "string[]"
+						},
+
+						/**
+						 * Can be set to true to execute the default behaviour of ValueHelpDialog.
+						 */
+						useDefault: {
+							type: "boolean",
+							defaultValue: false
+						}
+					}
+
+				},
+
+				/**
+				 * This event is fired when the table gets an update and all existing tokens must be selected in the table.
+				 *
+				 * <b>Note:</b> The event will only be raised when the dialog gets a table
+				 * instance from outside via <code>setTable</code>.
+				 *
+				 * @since 1.32
+				 */
+				updateSelection: {
+					parameters: {
+						/**
+						 * The array of existing token keys for which the selection in the table has to be updated.
+						 */
+						tokenKeys: {
+							type: "string[]"
+						},
+
+						/**
+						 * Can be set to true to execute the default behavior of ValueHelpDialog.
+						 */
+						useDefault: {
+							type: "boolean",
+							defaultValue: false
+						}
+					}
+
 				}
-
-			},
-
-			/**
-			 * This event is fired when the table gets an update and all existing tokens must be selected in the table.
-			 * The event will only be raised when the dialog gets a table instance from outside via setTable.
-			 * @since 1.32
-			 */
-			updateSelection: {
-				parameters: {
-					/**
-					*  The array of existing token keys for which the selection in the table has to be updated.
-				 	*/
-					tokenKeys : { type : "string[]" },
-
-					/**
-					*  Can be set to true to execute the default behavior of ValueHelpDialog.
-				 	*/
-					useDefault : { type : "boolean", defaultValue : false }
-				}
-
 			}
-		}
-	},
-	  renderer: DialogRenderer.render
+		},
+		renderer: DialogRenderer.render
 	});
-
 
 	ValueHelpDialog.prototype.setSupportMultiselect = function(bEnabled) {
 		this.setProperty("supportMultiselect", bEnabled);
@@ -215,22 +308,19 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 	ValueHelpDialog.prototype._updatePropertySupportMultiselect = function(bEnabled) {
 		if (!this._oTable) {
-			return;
+			return undefined;
 		}
 
 		if (!this._isPhone()) {
 			if (this._oTable.setSelectionMode) {
 				this._oTable.setSelectionMode(bEnabled ? sap.ui.table.SelectionMode.MultiToggle : sap.ui.table.SelectionMode.Single);
 			}
-		} else {
-			if (this._oTable.setMode) {
-				this._oTable.setMode(bEnabled ? sap.m.ListMode.MultiSelect : sap.m.ListMode.SingleSelectLeft);
-			}
+		} else if (this._oTable.setMode) {
+			this._oTable.setMode(bEnabled ? sap.m.ListMode.MultiSelect : sap.m.ListMode.SingleSelectLeft);
 		}
 
 		return this;
 	};
-
 
 	ValueHelpDialog.prototype.setSupportRanges = function(bEnabled) {
 		this.setProperty("supportRanges", bEnabled);
@@ -240,14 +330,12 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		return this;
 	};
 
-
 	ValueHelpDialog.prototype.setSupportRangesOnly = function(bEnabled) {
 		this.setProperty("supportRangesOnly", bEnabled);
 
 		this._updateNavigationControl();
 		return this;
 	};
-
 
 	// Sets the Title of the dialog.
 	// The value is used for the different titles which we display during runtime on the dialog header.
@@ -256,8 +344,9 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		this.setProperty("title", sTitle);
 
 		this._updateDlgTitle();
-	};
 
+		return this;
+	};
 
 	ValueHelpDialog.prototype.setFilterBar = function(oCtrl) {
 		this.setAggregation("filterBar", oCtrl);
@@ -270,12 +359,10 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					this._oFilterBar.detachInitialise(this._handleFilterBarInitialize);
 				}
 
-			} else {
-				if (this._oFilterBar) {
-					// Remove the old filterbar.
-					this._oMainLayout.removeItem(this._oFilterBar);
-					this._oFilterBar.detachInitialise(this._handleFilterBarInitialize);
-				}
+			} else if (this._oFilterBar) {
+				// Remove the old filterbar.
+				this._oMainLayout.removeItem(this._oFilterBar);
+				this._oFilterBar.detachInitialise(this._handleFilterBarInitialize);
 			}
 
 			this._oFilterBar = oCtrl;
@@ -291,32 +378,31 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					var oSearchField = sap.ui.getCore().byId(this._oFilterBar.getBasicSearch());
 					if (oSearchField instanceof sap.m.SearchField) {
 						oSearchField.setShowSearchButton(true);
-						oSearchField.attachSearch( jQuery.proxy( function(oEvent) {
-							if (oEvent.mParameters.refreshButtonPressed !== undefined) { // Workaround to ignore the remove icon click on the Search control.
+						oSearchField.attachSearch(function(oEvent) {
+							if (oEvent.mParameters.refreshButtonPressed !== undefined) { // Workaround to ignore the remove icon click on the
+								// Search control.
 								this.getFilterBar().search();
 							}
-						}, this));
+						}.bind(this));
 					}
 					this._oFilterBar.setShowGoOnFB(false);
-
 
 					// Add the Collective Search as first item into the VBox.
 					this._oColSearchBox.setLayoutData(new sap.m.FlexItemData({
 						shrinkFactor: 0
 					}));
-					this._oVBox.insertItem( this._oColSearchBox, 0);
+					this._oVBox.insertItem(this._oColSearchBox, 0);
 
 					// The Filterbar with the Basic Search is the second item.
 					this._oFilterBar.setLayoutData(new sap.m.FlexItemData({
 						shrinkFactor: 0
 					}));
-					this._oVBox.insertItem( this._oFilterBar, 1);
+					this._oVBox.insertItem(this._oFilterBar, 1);
 
 					// On the phone listen on the Search event to show the LIST_VIEW.
-					this._oFilterBar.attachSearch(jQuery.proxy( function(oEvent) {
+					this._oFilterBar.attachSearch(function(oEvent) {
 						this._updateView(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_LIST_VIEW);
-					}, this));
-
+					}.bind(this));
 
 					if (this._currentViewMode === sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_LIST_VIEW) {
 						// update the Filterbar states
@@ -331,6 +417,11 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				}
 			}
 
+			// set the initial Focus on the Search/Go button
+			if (this._oFilterBar._oSearchButton) {
+				this.setInitialFocus(this._oFilterBar._oSearchButton);
+			}
+
 			// Try to fill the basic search text into the SmartFilterBar and set the initial Focus.
 			if (this._oFilterBar._oBasicSearchField) {
 				var oBasicSearchField = this._oFilterBar._oBasicSearchField;
@@ -339,6 +430,8 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				this.setInitialFocus(oBasicSearchField);
 			}
 		}
+
+		return this;
 	};
 
 	ValueHelpDialog.prototype._handleFilterBarInitialize = function() {
@@ -361,46 +454,46 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		if (this._oFilterBar && this._oFilterBar._oBasicSearchField) {
 			this._oFilterBar._oBasicSearchField.setValue(sText);
 		}
+
+		return this;
 	};
 
-
 	/**
-	 * Sets the array of tokens. The sap.m.Tokens are added to the dialog tokenizer Selected Items or Excluded Items.
-	 * Normal tokens are added to the Selected Items tokenizer only and are selected in the table.
-	 *
-	 * <code>
+	 * Sets the array of tokens. The <code>sap.m.Tokens</code> are added to the dialog tokenizer Selected Items or Excluded Items. Normal tokens are added to the
+	 * Selected Items tokenizer only and are selected in the table. <code>
 	 * new sap.m.Token({key: "0001", text:"SAP A.G. (0001)"});
-	 * </code>
-	 *
-	 * Tokens with the extra data with value 'range' are handled as range tokens or exclude range tokens.
-	 *
-	 * <code>
+	 * </code> Tokens with
+	 * the extra data with value 'range' are handled as range tokens or exclude range tokens. <code>
 	 * new sap.m.Token({key: "i1", text: "ID: a..z"}).data("range", { "exclude": false, "operation": sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.BT, "keyField": "CompanyCode", "value1": "a", "value2": "z"});
 	 * </code>
-	 *
 	 * The selected items or range tokens are returned in the event parameters of the Ok event.
 	 *
 	 * @public
 	 * @since 1.24
-	 * @param {sap.m.Token[]} aTokens
-	 * 							An array of token controls
+	 * @param {sap.m.Token[]} aTokens An array of token controls
 	 */
 	ValueHelpDialog.prototype.setTokens = function(aTokens) {
+		var bUpdateTokens = true;
+
 		if (aTokens.length) {
-			var n = 0, sKey;
+			var n = 0,
+				sKey;
 			for (var i = 0; i < aTokens.length; i++) {
 				var token = aTokens[i];
 				if (token.data("range")) {
 					var range = token.data("range");
 					sKey = token.getKey();
 					if (!sKey) {
-						sKey = "range_" + n;
-						n++;
+						do {
+							sKey = "range_" + n;
+							n++;
+						} while (this._oSelectedRanges[sKey]);
 					}
 					var theTokenText = this._getFormatedRangeTokenText(range.operation, range.value1, range.value2, range.exclude, range.keyField);
 					this._addToken2Tokenizer(sKey, theTokenText, range.exclude ? this._oExcludedTokens : this._oSelectedTokens);
 
 					this._oSelectedRanges[sKey] = range;
+					bUpdateTokens = false; // because is done in _addToken2Tokenizer
 				} else {
 					sKey = token.getKey();
 					var sText = token.getText();
@@ -409,22 +502,31 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					if (!sLongKey) {
 						sLongKey = sKey;
 					}
+
 					this._oSelectedItems.add(sLongKey, oRowData ? oRowData : token.getText());
 
-					this._oSelectedTokens.addToken(new Token({
-						key: sLongKey,
-						text: sText,
-						tooltip: sText
-					}));
+					var oToken = new Token({
+						key: sLongKey
+					});
+					oToken.setText(sText);
+					oToken.setTooltip(sText);
+					this._oSelectedTokens.addToken(oToken);
 				}
 			}
 		} else {
 			this._oSelectedItems.removeAll();
 			this._oSelectedRanges = {};
+			this._oSelectedTokens.destroyTokens();
+			this._oExcludedTokens.destroyTokens();
+		}
+
+		if (bUpdateTokens) {
+			this._updateTokenizer();
 		}
 	};
 
 	ValueHelpDialog.prototype.open = function() {
+		this._bIgnoreSelectionChange = false;
 
 		// take the current visibility of the title and button for the visibility of the colSearchBox
 		this.bCollectiveSearchActive = this.oSelectionTitle.getVisible() && this.oSelectionButton.getVisible();
@@ -435,10 +537,8 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		if (!this._isPhone()) {
 			if (this.getSupportRangesOnly() || this.getFilterMode()) {
 				this._updateView(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_CONDITIONS_VIEW);
-			} else {
-				if (!this._oTable) {
-					this._createDefaultTable();
-				}
+			} else if (!this._oTable) {
+				this._createDefaultTable();
 			}
 
 			// set the default dialog width for Tablet/Desktop
@@ -451,6 +551,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		}
 
 		Dialog.prototype.open.apply(this);
+		return this;
 	};
 
 	/**
@@ -471,18 +572,19 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	/**
 	 * Sets the table used in the value help dialog. If not used, the dialog creates a sap.ui.table.Table or sap.m.Table instance internally.
 	 *
-	 * @public
+	 * @param {object} oTable The used table control instance
+	 *
 	 * @since 1.32
-	 * @param {object} aTable The used table control instance
+	 * @public
 	 */
-	ValueHelpDialog.prototype.setTable = function( oTable) {
+	ValueHelpDialog.prototype.setTable = function(oTable) {
 		if (this._oTable) {
 			//jQuery.sap.log.error("ValueHelpDialog", "oTable exist");
-			this._oMainLayout.removeItem(this._oTable);   
+			this._oMainLayout.removeItem(this._oTable);
 		}
-		
+
 		this._bTableCreatedInternal = (arguments.length > 1) && (arguments[1] == true);
-		
+
 		if (oTable instanceof sap.ui.comp.smarttable.SmartTable) {
 			this._oTable = oTable.getTable();
 		} else {
@@ -520,7 +622,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	 *
 	 * @private
 	 * @since 1.24
-	*/
+	 */
 	ValueHelpDialog.prototype.resetTableState = function() {
 		if (this._oTable) {
 			if (this._oTable.unbindRows) {
@@ -543,6 +645,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	/**
 	 * Changes the table NoDataText.
 	 *
+	 * @param {string} sNoDataText Text for "no data" information
 	 * @private
 	 * @since 1.40
 	 */
@@ -576,15 +679,14 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		this._updateNoDataText(this._oRb.getText("VALUEHELPDLG_TABLE_SEARCHING"));
 	};
 
-	/**
+	/*
 	 * Initializes the control.
-	 * @private
 	 */
 	ValueHelpDialog.prototype.init = function() {
 		Dialog.prototype.init.apply(this);
 
 		this._bTableCreatedInternal = false;
-		
+
 		this._aIncludeRangeOperations = {};
 		this._aExcludeRangeOperations = {};
 
@@ -614,12 +716,16 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		this._createTokenizer();
 		this._updateTokenizer();
 
-		this._oVBox = new VBox( { fitContainer: true });
+		this._oVBox = new VBox({
+			fitContainer: true
+		});
 		this.addContent(this._oVBox);
 
 		this._oMainLayout = new VBox({
 			fitContainer: true,
-			items: [this._oFilterBar],
+			items: [
+				this._oFilterBar
+			],
 			layoutData: new sap.m.FlexItemData({
 				growFactor: 1,
 				shrinkFactor: 0
@@ -637,17 +743,16 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 		this._createFooterControls();
 
-
 		// vertical scrolling of the dialog content is disabled to get the expected layout of the used VBox in the content.
-		// scrolling itself is enabled  via css overflow-y: auto
+		// scrolling itself is enabled via css overflow-y: auto
 		this.setVerticalScrolling(false);
 		this.setHorizontalScrolling(false);
 
 		// to support touch scrolling we have to set the event to marked, otherwise when using a sap.m.App touch events are not handled.
 		if (!sap.ui.Device.system.desktop) {
 			this._oVBox.attachBrowserEvent("touchmove", function(event) {
-		        event.setMarked();
-		    });
+				event.setMarked();
+			});
 		}
 
 		if (!this._isPhone()) {
@@ -655,10 +760,8 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		}
 	};
 
-
 	/**
-	 * Update the visible view of the dialog.
-	 * The method is changing the visibility of the used controls to only show the required parts of the view.
+	 * Update the visible view of the dialog. The method is changing the visibility of the used controls to only show the required parts of the view.
 	 *
 	 * @private
 	 * @param {sap.ui.comp.valuehelpdialog._ValueHelpViewMode} newViewMode View mode which should be shown
@@ -670,7 +773,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 		switch (newViewMode) {
 			case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_LIST_VIEW:
-				this._validateRanges(jQuery.proxy(function() {
+				this._validateRanges(function() {
 					// when valid show the Items Table
 					this._oTokenizerGrid.setVisible(this.getSupportMultiselect());
 					this._oMainLayout.removeAllItems();
@@ -680,11 +783,11 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					this._oMainLayout.addItem(this._oFilterBar);
 					this._oMainLayout.addItem(this._oTable);
 					this._updateDlgTitle();
-				}, this), jQuery.proxy(function() {
+				}.bind(this), function() {
 					// if not valid go back to the Ranges Tab
 					this._oTabBar.setSelectedKey(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_CONDITIONS_VIEW);
 					this._updateView(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_CONDITIONS_VIEW);
-				}, this));
+				}.bind(this));
 				break;
 
 			case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_CONDITIONS_VIEW:
@@ -713,7 +816,8 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				this._updateNavigationControl();
 				this._oAdvancedSearchLink.setVisible(false);
 				if (this._oFilterBar) {
-					this._oFilterBar.setVisible(false); this._oFilterBar.setFilterBarExpanded(false);
+					this._oFilterBar.setVisible(false);
+					this._oFilterBar.setFilterBarExpanded(false);
 				}
 				this._oTable.setVisible(false);
 
@@ -733,9 +837,10 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				this._oBackButton.setVisible(false);
 
 				this._bNoneMainView = false;
-				// if we do not show the Tokenizer (Selected/Excluded Items and only have either a List or the Condition part as ListItem we directly open the List or Condition view in the dialog
+				// if we do not show the Tokenizer (Selected/Excluded Items and only have either a List or the Condition part as ListItem we directly
+				// open the List or Condition view in the dialog
 				if (!this._oTokenizerGrid.getVisible() && !(this._oSelectItemLI.getVisible() && this._oDefineConditionsLI.getVisible())) {
-					this._bNoneMainView = true;  // used to not show the backbutton on the list and condition view
+					this._bNoneMainView = true; // used to not show the backbutton on the list and condition view
 					if (this._oSelectItemLI.getVisible()) {
 						// make the Selection Table visible by default
 						this._updateView(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_LIST_VIEW);
@@ -758,7 +863,8 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					var bShowAdvancedSearch = this._oFilterBar && this._oFilterBar.getFilterGroupItems() && this._oFilterBar.getFilterGroupItems().length > 0;
 					this._oAdvancedSearchLink.setVisible(bShowAdvancedSearch);
 					this._oFilterBar.setShowGoButton(!(this._oFilterBar && this._oFilterBar.getBasicSearch()));
-					this._oFilterBar.setVisible(true); this._oFilterBar.setFilterBarExpanded(false);
+					this._oFilterBar.setVisible(true);
+					this._oFilterBar.setFilterBarExpanded(false);
 				}
 				this._oTable.setVisible(true);
 				this._oTokenizerGrid.setVisible(false);
@@ -779,7 +885,8 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				this._oColSearchBox.setVisible(false);
 				this._oMainListMenu.setVisible(false);
 				if (this._oFilterBar) {
-					this._oFilterBar.setVisible(true); this._oFilterBar.setFilterBarExpanded(true);
+					this._oFilterBar.setVisible(true);
+					this._oFilterBar.setFilterBarExpanded(true);
 				}
 				this._oAdvancedSearchLink.setVisible(false);
 				this._oTable.setVisible(false);
@@ -854,7 +961,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			if (rows) {
 				if (rows.aKeys) {
 					for (i = 0; i < rows.aKeys.length; i++) {
-						if (rows.aKeys[i] === sKey) {
+						if (decodeURIComponent(rows.aKeys[i]) === sKey) {
 							if (bSelect) {
 								oTable.addSelectionInterval(i, i);
 							} else {
@@ -902,14 +1009,15 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	};
 
 	/**
-	 * Updates the selection of rows in the table. This function must be called after a first binding or binding update of the table.
-	 * It will set a table row as selected if a token for this row exists.
+	 * Updates the selection of rows in the table. This function must be called after a first binding or binding update of the table. It will set a
+	 * table row as selected if a token for this row exists.
 	 *
 	 * @public
 	 * @since 1.24
-	*/
+	 */
 	ValueHelpDialog.prototype.update = function() {
 		var i, j, oRow, oContext;
+		var sKey;
 		var aItems = this._oSelectedItems.getItems();
 		var eventArgs = {
 			tokenKeys: aItems,
@@ -920,16 +1028,12 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 		if (this._hasListeners("updateSelection")) {
 			this.fireUpdateSelection(eventArgs);
-
-//			if (eventArgs.useDefault) {
-//				sap.m.MessageToast.show("useDefault");
-//			}
-
 		} else {
 			eventArgs.useDefault = true;
 		}
 
 		if (eventArgs.useDefault) {
+
 			if (sap.ui.table.Table && this._oTable instanceof sap.ui.table.Table) {
 
 				this.oRows = this._oTable.getBinding("rows");
@@ -941,7 +1045,14 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 					// in case of an oDataModel binding the aKeys exist and the row will be found via the keys.
 					for (j = 0; j < aItems.length; j++) {
-						var sKey = aItems[j];
+						sKey = aItems[j];
+						//sKeyEncoded = encodeURIComponent(sKey); //key of the item must be encoded before we search the item in the table row keys.
+
+						//TODO instead of using encodeURI of the Token key we could try to use the oDataModel.createKey function to build the row key from the Token
+						//var sPath = this.oRows.sPath.slice(1);
+						//var oRowData = this._oSelectedItems.getItem(aItems[j]);
+						//var sKey2 = this.getModel().createKey(sPath, oRowData);
+
 						var sRowKeyPart = sRowKeyPartPrefix + "'" + sKey + "'";
 
 						for (i = 0; i < this.oRows.aKeys.length; i++) {
@@ -949,12 +1060,13 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 							if (sRowKey === undefined) { 
 								continue;
 							}
+							sRowKey = decodeURIComponent(sRowKey);
 							var bIsRow = sRowKey === sKey;
 							if (bIsRow || // either the rowKey is equal the token key or we search if the main key with the value is part of the rowKey
 								sRowKey.indexOf(sRowKeyPart) >= 0) {
 
 								if (!bIsRow) { // in this case we will update the old key and use the longKey from the rows
-									this._oSelectedItems.remove(sKey); // remove the old  key
+									this._oSelectedItems.remove(sKey); // remove the old key
 									// and update the Token key
 									var token = this._getTokenByKey(sKey, this._oSelectedTokens);
 									if (token) {
@@ -975,21 +1087,19 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 							}
 						}
 					}
-				} else {
-					if (this.oRows.aIndices) {
-						this._oTable.clearSelection();
+				} else if (this.oRows.aIndices) {
+					this._oTable.clearSelection();
 
-						for (j = 0; j < aItems.length; j++) {
-							var key = aItems[j];
-							for (i = 0; i < this.oRows.aIndices.length; i++) {
-								oContext = this._oTable.getContextByIndex(this.oRows.aIndices[i]);
-								if (oContext) {
-									oRow = oContext.getObject();
-									if (oRow[this.getKey()] === key) {
-										this._oSelectedItems.add(oRow[this.getKey()], oRow);
-										this._oTable.addSelectionInterval(i, i);
-										break;
-									}
+					for (j = 0; j < aItems.length; j++) {
+						var key = aItems[j];
+						for (i = 0; i < this.oRows.aIndices.length; i++) {
+							oContext = this._oTable.getContextByIndex(this.oRows.aIndices[i]);
+							if (oContext) {
+								oRow = oContext.getObject();
+								if (oRow[this.getKey()] === key) {
+									this._oSelectedItems.add(oRow[this.getKey()], oRow);
+									this._oTable.addSelectionInterval(i, i);
+									break;
 								}
 							}
 						}
@@ -1000,7 +1110,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				// Handle selection update of the m.table
 				var oTable = this._oTable;
 				for (j = 0; j < aItems.length; j++) {
-					var sKey = aItems[j];
+					sKey = aItems[j];
 					for (i = 0; i < oTable.getItems().length; i++) {
 						var oColListItem = oTable.getItems()[i];
 						var oRowData = oColListItem.getBindingContext().getObject();
@@ -1032,13 +1142,13 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			oBackButton = new sap.m.Button({
 				visible: false,
 				type: ButtonType.Back,
-				press:  jQuery.proxy( function(oEvent) {
+				press: function(oEvent) {
 					if (this._currentViewMode === sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_SEARCH_VIEW) {
 						this._updateView(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_LIST_VIEW);
 					} else {
 						this._updateView(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_MAIN_VIEW);
 					}
-				}, this)
+				}.bind(this)
 			});
 
 			this._oBackButton = oBackButton;
@@ -1050,9 +1160,8 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		}));
 	};
 
-
 	/**
-	 * Creates the collective search elements which are placed beside the filter bar.
+	 * Creates the collective search elements which are placed beside the <code>FilterBar</code>.
 	 *
 	 * @private
 	 */
@@ -1065,17 +1174,19 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 		this.oSelectionButton = new sap.m.Button({
 			icon: "sap-icon://arrow-down",
-			tooltip: this._oRb.getText("VALUEHELPVALDLG_SEARCHTEMPLATES_TOOLTIP"), //"Search Templates",
+			tooltip: this._oRb.getText("VALUEHELPVALDLG_SEARCHTEMPLATES_TOOLTIP"), // "Search Templates",
 			type: sap.m.ButtonType.Transparent,
 			visible: false,
 			ariaLabelledBy: this.oSelectionTitle
 		}).addStyleClass("compVHColSearchBtn");
 
-		this._oColSearchBox = new HBox( {
+		this._oColSearchBox = new HBox({
 			fitContainer: true,
 			visible: this.oSelectionButton.getVisible(),
-			items: [this.oSelectionTitle, this.oSelectionButton]
-		});
+			items: [
+				this.oSelectionTitle, this.oSelectionButton
+			]
+		}).addStyleClass("compVHColSearchVBox");
 	};
 
 	/**
@@ -1086,31 +1197,39 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	ValueHelpDialog.prototype._createFooterControls = function() {
 		this._oButtonOk = new sap.m.Button({
 			text: this._oRb.getText("VALUEHELPDLG_OK"),
-			press: jQuery.proxy(this._onCloseAndTakeOverValues, this),
+			press: this._onCloseAndTakeOverValues.bind(this),
 			visible: this.getSupportMultiselect(),
-			layoutData: new sap.m.OverflowToolbarLayoutData({priority: sap.m.OverflowToolbarPriority.NeverOverflow})
+			layoutData: new sap.m.OverflowToolbarLayoutData({
+				priority: sap.m.OverflowToolbarPriority.NeverOverflow
+			})
 		});
 
 		this._oButtonCancel = new sap.m.Button({
 			text: this._oRb.getText("VALUEHELPDLG_CANCEL"),
-			press: jQuery.proxy(this._onCancel, this),
-			layoutData: new sap.m.OverflowToolbarLayoutData({priority: sap.m.OverflowToolbarPriority.NeverOverflow})
+			press: this._onCancel.bind(this),
+			layoutData: new sap.m.OverflowToolbarLayoutData({
+				priority: sap.m.OverflowToolbarPriority.NeverOverflow
+			})
 		});
 
 		if (this._isPhone()) {
 			this._oButtonGo = new sap.m.Button({
 				text: this._oRb.getText("VALUEHELPDLG_GO"),
 				type: sap.m.ButtonType.Emphasized,
-				press: jQuery.proxy(this._onGo, this),
+				press: this._onGo.bind(this),
 				visible: false,
-				layoutData: new sap.m.OverflowToolbarLayoutData({priority: sap.m.OverflowToolbarPriority.NeverOverflow})
+				layoutData: new sap.m.OverflowToolbarLayoutData({
+					priority: sap.m.OverflowToolbarPriority.NeverOverflow
+				})
 			});
 
 			this._oButtonClear = new sap.m.Button({
 				text: this._oRb.getText("VALUEHELPDLG_CLEAR"),
-				press: jQuery.proxy(this._onClear, this),
+				press: this._onClear.bind(this),
 				visible: false,
-				layoutData: new sap.m.OverflowToolbarLayoutData({priority: sap.m.OverflowToolbarPriority.NeverOverflow})
+				layoutData: new sap.m.OverflowToolbarLayoutData({
+					priority: sap.m.OverflowToolbarPriority.NeverOverflow
+				})
 			});
 
 			this.addButton(this._oButtonGo);
@@ -1131,26 +1250,27 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			return this._oTokenizerGrid;
 		}
 
-		//this._oSelectedTokenTitle = new sap.m.Text().addStyleClass("compVHSelectedItemsText");
+		// this._oSelectedTokenTitle = new sap.m.Text().addStyleClass("compVHSelectedItemsText");
 		this._oSelectedTokenTitle = new sap.ui.core.InvisibleText();
 
 		this._oSelectedTokens = new sap.m.Tokenizer({
-			tokenChange: jQuery.proxy( function(oControlEvent) {
+			tokenUpdate: function(oControlEvent) {
 				if (this._ignoreRemoveToken) {
 					return;
 				}
 
-				if (oControlEvent.getParameter("type") === sap.m.MultiInput.TokenChangeType.TokensChanged) {
+				if (oControlEvent.getParameter("type") === sap.m.Tokenizer.TokenChangeType.Removed) {
 					var aRemovedTokens = oControlEvent.getParameter("removedTokens");
 					var aTokenKeys = [];
 					var aRangeTokenKeys = [];
 
-					for ( var j = 0; j < aRemovedTokens.length; j++) {
+					for (var j = 0; j < aRemovedTokens.length; j++) {
 						var oToken = aRemovedTokens[j];
 						var sKey = oToken.getKey();
 
 						if (this._oSelectedRanges && this._oSelectedRanges[sKey]) {
 							aRangeTokenKeys.push(sKey);
+							this._removeToken(sKey);
 						} else {
 							aTokenKeys.push(sKey);
 
@@ -1162,7 +1282,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 					// remove range tokens
 					this._removeRangeByKey(aRangeTokenKeys, false);
-					this._updateTitles();
+					// this._updateTitles();
 
 					var eventArgs = {
 						tokenKeys: aTokenKeys,
@@ -1174,49 +1294,48 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 						this.fireTokenRemove(eventArgs);
 						this._bIgnoreSelectionChange = false;
 
-//						if (eventArgs.useDefault) {
-//							sap.m.MessageToast.show("useDefault");
-//						}
+						// if (eventArgs.useDefault) {
+						// sap.m.MessageToast.show("useDefault");
+						// }
 
 					} else {
 						eventArgs.useDefault = true;
 					}
 
 					if (eventArgs.useDefault) {
-						aTokenKeys.forEach(jQuery.proxy(function(sTokenKey) {
+						aTokenKeys.forEach(function(sTokenKey) {
 							this._changeTableRowSelectionForKey(sTokenKey, false);
-						}, this));
+						}.bind(this));
 					}
 
 					// try to set the focus to other token - Workaround because the Tokenizer does not set the focus to other token
 					if (aRemovedTokens.length === 1) {
-						setTimeout( jQuery.proxy( function() {
+						setTimeout(function() {
 							if (this._oSelectedTokens.getTokens()) {
 								var i = this._oSelectedTokens.getTokens().length - 1;
 								if (i >= 0) {
 									this._oSelectedTokens.getTokens()[i].focus();
 								}
 							}
-						}, this));
+						}.bind(this));
 					}
 
 					this._updateTitles();
 				}
 
-			}, this),
+			}.bind(this),
 			ariaLabelledBy: this._oSelectedTokenTitle
 		}).addStyleClass("compVHTokensDiv");
-
 
 		// this "remove all" button is a workaround and should be part of the Tokenizer itself
 		this._oRemoveAllSelectedItemsBtn = new sap.m.Button({
 			type: sap.m.ButtonType.Transparent,
 			icon: sap.ui.core.IconPool.getIconURI("sys-cancel"),
 			tooltip: this._oRb.getText("VALUEHELPVALDLG_REMOVETOKENS_TOOLTIP"),
-			press: jQuery.proxy( function() {
+			press: function() {
 				this._oSelectedTokens.destroyTokens();
 
-				this._removeRangeByKey(Object.keys( this._oSelectedRanges), false);
+				this._removeRangeByKey(Object.keys(this._oSelectedRanges), false);
 
 				this._oSelectedItems.removeAll();
 				this._bIgnoreSelectionChange = true;
@@ -1229,7 +1348,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				this._bIgnoreSelectionChange = false;
 
 				this._updateTitles();
-			}, this),
+			}.bind(this),
 			ariaLabelledBy: this._oSelectedTokenTitle
 		}).addStyleClass("compVHRemoveAllBtn");
 
@@ -1252,16 +1371,24 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		this._oExcludedTokenTitle = new sap.m.Text().addStyleClass("compVHSelectedItemsText");
 
 		this._oExcludedTokens = new sap.m.Tokenizer({
-			tokenChange: jQuery.proxy( function(oControlEvent) {
+			tokenChange: function(oControlEvent) {
 				if (this._ignoreRemoveToken) {
 					return;
 				}
 
-				if (oControlEvent.getParameter("type") === sap.m.MultiInput.TokenChangeType.TokensChanged) {
+				if (oControlEvent.getParameter("type") === sap.m.Tokenizer.TokenChangeType.Removed || oControlEvent.getParameter("type") === sap.m.Tokenizer.TokenChangeType.RemovedAll) {
 					var aRemovedTokens = oControlEvent.getParameter("removedTokens");
 					var aTokenKeys = [];
 
-					for ( var j = 0; j < aRemovedTokens.length; j++) {
+					if (!aRemovedTokens || aRemovedTokens.length == 0) {
+						aRemovedTokens = [oControlEvent.getParameter("token")];
+					}
+
+					if (!aRemovedTokens || aRemovedTokens.length == 0) {
+						aRemovedTokens = [oControlEvent.getParameter("tokens")];
+					}
+
+					for (var j = 0; j < aRemovedTokens.length; j++) {
 						var oToken = aRemovedTokens[j];
 						var sKey = oToken.getKey();
 						if (this._oSelectedRanges && this._oSelectedRanges[sKey]) {
@@ -1274,7 +1401,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					this._updateTitles();
 				}
 
-			}, this),
+			}.bind(this),
 			ariaLabelledBy: this._oExcludedTokenTitle
 		}).addStyleClass("compVHTokensDiv");
 
@@ -1283,15 +1410,14 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			type: sap.m.ButtonType.Transparent,
 			icon: sap.ui.core.IconPool.getIconURI("sys-cancel"),
 			tooltip: this._oRb.getText("VALUEHELPVALDLG_REMOVETOKENS_TOOLTIP"),
-			press: jQuery.proxy( function() {
+			press: function() {
 				this._oExcludedTokens.destroyTokens();
 
-				this._removeRangeByKey(Object.keys( this._oSelectedRanges), true);
+				this._removeRangeByKey(Object.keys(this._oSelectedRanges), true);
 				this._updateTitles();
-			}, this),
+			}.bind(this),
 			ariaLabelledBy: this._oExcludedTokenTitle
 		}).addStyleClass("compVHRemoveAllBtn");
-
 
 		var oHContainer2 = new sap.ui.layout.HorizontalLayout({
 			content: [
@@ -1312,29 +1438,30 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		// only on tablet and desktop we use the expandable panel
 		this._oTokenizerPanel = new sap.m.Panel({
 			expanded: sap.ui.Device.system.desktop,
-			expandable: true, //this._isPhone() ? false : true,
+			expandable: true, // this._isPhone() ? false : true,
 			expandAnimation: true,
 			headerText: "",
 			width: "auto",
-			content: [this._oIncludeTokenGrid, this._oExcludeTokenGrid],
-			expand: jQuery.proxy(function (oEvent) {
+			content: [
+				this._oIncludeTokenGrid, this._oExcludeTokenGrid
+			],
+			expand: function(oEvent) {
 				this._updateTokenizer();
 
 				if (oEvent.mParameters.expand && !(this._oTable instanceof sap.m.Table)) {
 					// when we open the tokens scroll the dialog content to the end
-					var sId = "#" + this.getId() + "-scrollCont";
-					var oScrollDiv = this.$().find(sId);
+					var oScrollDiv = jQuery.sap.domById(this.getId() + "-scrollCont");
 					if (oScrollDiv && oScrollDiv.scrollTop) {
 						oScrollDiv.stop().animate({
-							  scrollTop: "1000" //oScrollDiv.prop("scrollHeight") - oScrollDiv.height()
+							scrollTop: "1000" // oScrollDiv.prop("scrollHeight") - oScrollDiv.height()
 						}, 1000);
 					}
 				}
-			}, this)
-		}).addStyleClass("compVHBackgroundTransparent").addStyleClass("compVHTokensPanel");
+			}.bind(this)
+		}).addStyleClass("compVHBackgroundTransparent").addStyleClass("compVHTokensPanel").addStyleClass("compValueHelpDialogTokens");
 
 		if (this._isPhone()) {
-			//workaround to get a vertical layout of the Tokens in the tokenizer
+			// workaround to get a vertical layout of the Tokens in the tokenizer
 			this._oSelectedTokens.addStyleClass("sapMTokenizerMultiLine");
 			this._oExcludedTokens.addStyleClass("sapMTokenizerMultiLine");
 		}
@@ -1359,22 +1486,21 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	 * @param {sap.m.Tokenizer} oTokenizer the Tokenizer which contain the token
 	 */
 	ValueHelpDialog.prototype._addToken2Tokenizer = function(sKey, sText, oTokenizer) {
-		var token = this._getTokenByKey(sKey, oTokenizer);
-
 		var sTooltip = (typeof sText === "string") ? sText : "";
-
-		if (token) {
-			// update existing token
-			token.setText(sText);
-			token.setTooltip(sTooltip);
-		} else {
+		var oToken = this._getTokenByKey(sKey, oTokenizer);
+		if (!oToken) {
 			// create a new token
-			oTokenizer.addToken(new Token({
-				key: sKey,
-				text: sText,
-				tooltip: sTooltip
-			}));
+			oToken = new Token({
+				key: sKey
+			});
+			oTokenizer.addToken(oToken);
 			this._updateTokenizer();
+		}
+
+		if (oToken) {
+			// update existing/new token text
+			oToken.setText(sText);
+			oToken.setTooltip(sTooltip);
 		}
 	};
 
@@ -1415,7 +1541,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	 * @private
 	 * @param {string} sKey of the token
 	 * @param {sap.m.Tokenizer} oTokenizer the Tokenizer which contain the token
-	 * @returns {boolean} true when the token hase been foudna removed, else false
+	 * @returns {boolean} true when the token has been found and removed, else false
 	 */
 	ValueHelpDialog.prototype._removeTokenFromTokenizer = function(sKey, oTokenizer) {
 		var token = this._getTokenByKey(sKey, oTokenizer);
@@ -1438,7 +1564,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		var bExpanded = false;
 		if (this._oTokenizerPanel) {
 			bExpanded = this._oTokenizerPanel.getExpanded();
-			//this._oSelectedTokenTitle.setVisible(false);
+			// this._oSelectedTokenTitle.setVisible(false);
 		}
 
 		var n1 = this._oSelectedTokens.getTokens().length;
@@ -1458,14 +1584,18 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					sExcludedItemsText = this._oRb.getText("VALUEHELPDLG_EXCLUDEDITEMS_SHORT", n2.toString());
 				}
 				sText = "";
-				if (n1 !== 0) { sText = sSelectedItemsText; }
-				if (n2 !== 0) { sText += (n1 !== 0 ? " / " : "") + sExcludedItemsText; }
-				if (sText === "") { sText = sNoneSelectedItemsTitle; }
-			} else {
-				if (n1 === 0 && n2 !== 0) {
-					sText = sExcludedItemsText;
-					sExcludedItemsText = "";
+				if (n1 !== 0) {
+					sText = sSelectedItemsText;
 				}
+				if (n2 !== 0) {
+					sText += (n1 !== 0 ? " / " : "") + sExcludedItemsText;
+				}
+				if (sText === "") {
+					sText = sNoneSelectedItemsTitle;
+				}
+			} else if (n1 === 0 && n2 !== 0) {
+				sText = sExcludedItemsText;
+				sExcludedItemsText = "";
 			}
 			this._oTokenizerPanel.setHeaderText(sText);
 			this._oSelectedTokenTitle.setText(sText);
@@ -1473,9 +1603,9 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			this._oSelectedTokenTitle.setText(sText);
 		}
 		this._oRemoveAllSelectedItemsBtn.setEnabled(n1 !== 0);
+		this._oRemoveAllExcludeItemsBtn.setEnabled(n2 !== 0);
 
 		this._oExcludedTokenTitle.setText(sExcludedItemsText);
-
 
 		if (n1 === 0 && n2 !== 0) {
 			// hide all when only exclude items exist
@@ -1483,7 +1613,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			if (!this._isPhone()) {
 				this._oExcludedTokenTitle.addStyleClass("displayNone");
 			}
-		}else {
+		} else {
 			this._oIncludeTokenGrid.removeStyleClass("displayNone");
 			this._oExcludedTokenTitle.removeStyleClass("displayNone");
 		}
@@ -1494,7 +1624,6 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			this._oExcludeTokenGrid.removeStyleClass("displayNone");
 		}
 	};
-
 
 	/**
 	 * Create the TabBar or on Phone the ListItems as navigation control.
@@ -1511,16 +1640,15 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 						visible: true,
 						text: this._oRb.getText("VALUEHELPDLG_ITEMSTABLE"),
 						key: sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_LIST_VIEW
-					}),
-					new sap.m.IconTabFilter({
+					}), new sap.m.IconTabFilter({
 						visible: true,
 						text: this._oRb.getText("VALUEHELPDLG_RANGES"),
 						key: sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_CONDITIONS_VIEW
 					})
 				],
-				select: jQuery.proxy( function(oControlEvent) {
+				select: function(oControlEvent) {
 					this._updateView(oControlEvent.getParameters().key);
-				}, this)
+				}.bind(this)
 			});
 
 			this._oTabBar.setLayoutData(new sap.m.FlexItemData({
@@ -1532,7 +1660,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 			this._oSelectItemLI = new sap.m.StandardListItem({
 				type: sap.m.ListType.Navigation,
-			    title: this._oRb.getText("VALUEHELPDLG_ITEMSTABLE")
+				title: this._oRb.getText("VALUEHELPDLG_ITEMSTABLE")
 			}).data("key", sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_LIST_VIEW);
 
 			this._oDefineConditionsLI = new sap.m.StandardListItem({
@@ -1542,12 +1670,14 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 			this._oMainListMenu = new sap.m.List({
 				mode: sap.m.ListMode.None,
-				items: [this._oSelectItemLI, this._oDefineConditionsLI],
-				itemPress:  jQuery.proxy( function(oEvent) {
+				items: [
+					this._oSelectItemLI, this._oDefineConditionsLI
+				],
+				itemPress: function(oEvent) {
 					if (oEvent) {
 						this._updateView(oEvent.mParameters.listItem.data("key"));
 					}
-				}, this)
+				}.bind(this)
 			});
 
 			this._oMainListMenu.setLayoutData(new sap.m.FlexItemData({
@@ -1555,12 +1685,11 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			}));
 			this._oVBox.addItem(this._oMainListMenu);
 
-
-			this._oAdvancedSearchLink = new sap.m.Link(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_SEARCH_VIEW, {
+			this._oAdvancedSearchLink = new sap.m.Link({
 				text: this._oRb.getText("VALUEHELPDLG_ADVANCEDSEARCH"),
-				press: jQuery.proxy(function() {
+				press: function() {
 					this._updateView(sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_SEARCH_VIEW);
-				}, this)
+				}.bind(this)
 			}).addStyleClass("compVHAdvancedSearchLink");
 
 			this._oAdvancedSearchLink.setLayoutData(new sap.m.FlexItemData({
@@ -1569,7 +1698,6 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			this._oVBox.addItem(this._oAdvancedSearchLink);
 		}
 	};
-
 
 	/**
 	 * Update the TabBar or on Phone the Listitems.
@@ -1583,7 +1711,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		if (this._oTabBar) {
 
 			var aTabItems = this._oTabBar.getItems();
-			aTabItems[0].setVisible(bListTabVisible );
+			aTabItems[0].setVisible(bListTabVisible);
 			aTabItems[1].setVisible(bRangesTabVisible);
 
 			this._oTabBar.setVisible(bListTabVisible && bRangesTabVisible);
@@ -1597,20 +1725,21 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 	};
 
-
-
 	/**
 	 * Remove a single/multiple range(s) from the UI and the internal selectedRanges list.
 	 *
-	 * @private
-	 * @param {string|array} single or multiple sKey of the range
+	 * @param {string|array} sKey Single or multiple sKey of the range
 	 * @param {boolean} isExclude specifies if the removed range must be an included or excluded range
+	 *
+	 * @private
 	 */
 	ValueHelpDialog.prototype._removeRangeByKey = function(sKey, isExclude) {
 		var aKeys = sKey;
 
 		if (typeof aKeys === "string") {
-			aKeys = [ aKeys ];
+			aKeys = [
+				aKeys
+			];
 		}
 
 		aKeys.forEach(function(sKey, index, aKeys) {
@@ -1620,10 +1749,10 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					delete this._oSelectedRanges[sKey];
 
 					if (this._oFilterPanel) {
-						var oConditionPanel =  range.exclude ? this._oFilterPanel._oExcludeFilterPanel : this._oFilterPanel._oIncludeFilterPanel;
+						var oConditionPanel = range.exclude ? this._oFilterPanel._oExcludeFilterPanel : this._oFilterPanel._oIncludeFilterPanel;
 
 						if (aKeys.length == 1) {
-							// only in case  of a single key we remove the condition
+							// only in case of a single key we remove the condition
 							oConditionPanel.removeCondition(sKey);
 						} else {
 							// to make it faster we only remove the key from the internal oConditionMap and later make a refresh on the conditionPanel
@@ -1635,12 +1764,11 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		}, this);
 
 		if (aKeys.length > 1 && this._oFilterPanel) {
-			var oConditionPanel =  isExclude ? this._oFilterPanel._oExcludeFilterPanel : this._oFilterPanel._oIncludeFilterPanel;
+			var oConditionPanel = isExclude ? this._oFilterPanel._oExcludeFilterPanel : this._oFilterPanel._oIncludeFilterPanel;
 			oConditionPanel._clearConditions();
 			oConditionPanel._fillConditions();
 		}
 	};
-
 
 	// ################################################################################
 	// Start Ranges handling
@@ -1674,7 +1802,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			maxIncludes: this.getMaxIncludeRanges(),
 			maxExcludes: this.getMaxExcludeRanges(),
 			containerQuery: true,
-			addFilterItem: jQuery.proxy(function(oEvent) {
+			addFilterItem: function(oEvent) {
 				// sap.m.MessageToast.show("AddFilterItem");
 
 				var params = oEvent.mParameters;
@@ -1691,22 +1819,23 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				oRange.value1 = this._convertValue2Object(oRange.value1, oCurrentKeyField.type);
 				oRange.value2 = this._convertValue2Object(oRange.value2, oCurrentKeyField.type);
 
-				// the new added filterItemData instance must be passed back into the filterpanel aggregation, otherwise the index of the add, update or remove events is not correct.
+				// the new added filterItemData instance must be passed back into the filterpanel aggregation, otherwise the index of the add, update
+				// or remove events is not correct.
 				this._oFilterPanel.addFilterItem(params.filterItemData);
 
 				var sTokenText = this._getFormatedRangeTokenText(oRange.operation, oRange.value1, oRange.value2, oRange.exclude, oRange.keyField);
 				this._addToken2Tokenizer(params.key, sTokenText, oRange.exclude ? this._oExcludedTokens : this._oSelectedTokens);
 				this._updateTokenizer();
-			}, this),
-			removeFilterItem: jQuery.proxy(function(oEvent) {
+			}.bind(this),
+			removeFilterItem: function(oEvent) {
 				// sap.m.MessageToast.show("RemoveFilterItem");
 
 				var params = oEvent.mParameters;
 				delete this._oSelectedRanges[params.key];
 				this._removeToken(params.key);
 				this._updateTokenizer();
-			}, this),
-			updateFilterItem: jQuery.proxy(function(oEvent) {
+			}.bind(this),
+			updateFilterItem: function(oEvent) {
 				// sap.m.MessageToast.show("UpdateFilterItem");
 
 				var params = oEvent.mParameters;
@@ -1724,7 +1853,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				var sTokenText = this._getFormatedRangeTokenText(oRange.operation, oRange.value1, oRange.value2, oRange.exclude, oRange.keyField);
 				this._addToken2Tokenizer(params.key, sTokenText, oRange.exclude ? this._oExcludedTokens : this._oSelectedTokens);
 				this._updateTokenizer();
-			}, this)
+			}.bind(this)
 		});
 
 		this._oFilterPanel._oIncludeFilterPanel.setDisplayFormat(this.getDisplayFormat());
@@ -1735,26 +1864,27 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 		this._oFilterPanel._oIncludeFilterPanel._sAddRemoveIconTooltipKey = "CONDITION";
 		this._oFilterPanel._oExcludeFilterPanel._sAddRemoveIconTooltipKey = "CONDITION";
-
+		var sType;
 		if (this._aIncludeRangeOperations) {
-			for ( var sType in this._aIncludeRangeOperations) {
+			for (sType in this._aIncludeRangeOperations) {
 				this._oFilterPanel.setIncludeOperations(this._aIncludeRangeOperations[sType], sType);
 			}
 		}
 		if (this._aExcludeRangeOperations) {
-			for ( var sType in this._aExcludeRangeOperations) {
+			for (sType in this._aExcludeRangeOperations) {
 				this._oFilterPanel.setExcludeOperations(this._aExcludeRangeOperations[sType], sType);
 			}
 		}
 
 		// this._oFilterPanel.setKeyFields([{key: "KeyField1", text: "Field1"}, {key: "KeyField2", text: "Field2", type : "date", isDefault: true}]);
 		if (this._aRangeKeyFields) {
-			this._aRangeKeyFields.forEach( function(item) {
+			this._aRangeKeyFields.forEach(function(item) {
 				this._oFilterPanel.addItem(new sap.m.P13nItem({
 					columnKey: item.key,
 					text: item.label,
 					type: item.type,
 					maxLength: item.maxLength,
+					formatSettings: item.formatSettings,
 					scale: item.scale,
 					precision: item.precision,
 					isDefault: item.isDefault,
@@ -1764,16 +1894,17 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		}
 
 		if (this._oSelectedRanges) {
-			for ( var rangeId in this._oSelectedRanges) {
+			for (var rangeId in this._oSelectedRanges) {
 				var rangeData = this._oSelectedRanges[rangeId];
-				this._oFilterPanel.addFilterItem(new sap.m.P13nFilterItem({
+				var oFilterItem = new sap.m.P13nFilterItem({
 					key: rangeId,
 					exclude: rangeData.exclude,
 					columnKey: rangeData.keyField,
-					operation: rangeData.operation,
-					value1: rangeData.value1,
-					value2: rangeData.value2
-				}));
+					operation: rangeData.operation
+				});
+				oFilterItem.setValue1(rangeData.value1);
+				oFilterItem.setValue2(rangeData.value2);
+				this._oFilterPanel.addFilterItem(oFilterItem);
 			}
 		}
 
@@ -1794,7 +1925,6 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		return oRangeFieldsGrid;
 	};
 
-
 	ValueHelpDialog.prototype.suggest = function(fSuggestProviderCallback) {
 		this._fSuggestCallback = fSuggestProviderCallback;
 
@@ -1808,9 +1938,9 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		}
 	};
 
-
 	/**
 	 * creates an array for boolean value representation (using the odata.type.Boolean) used on the selected control for boolean conditions.
+	 *
 	 * @returns {string[]} ["", "No", "Yes"]
 	 */
 	ValueHelpDialog.prototype._getBooleanValues = function() {
@@ -1826,13 +1956,13 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		return aBooleanValues;
 	};
 
-
 	/**
 	 * converts a string value back into a real object.
-  	 * @private
+	 *
+	 * @private
 	 * @param {string} sValue string representation of the value
 	 * @param {string} sType supported type string, date, time or boolean
-	 * @returns string, date or float
+	 * @returns {string|date|float} Value as object
 	 */
 	ValueHelpDialog.prototype._convertValue2Object = function(sValue, sType) {
 		if (!sValue) {
@@ -1845,6 +1975,9 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			value = new Date(sValue);
 		}
 		if (sType === "time") {
+			value = new Date(sValue);
+		}
+		if (sType === "datetime") {
 			value = new Date(sValue);
 		}
 		if (sType === "numeric") {
@@ -1863,13 +1996,18 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 	/**
 	 * returns the KeyField definition with the key sKey
-  	 * @private
+	 *
+	 * @param {string} sKey Key of the field
+	 *
+	 * @returns {object} Key field definition
+	 *
+	 * @private
 	 */
 	ValueHelpDialog.prototype._getKeyFieldByKey = function(sKey) {
 		var oCurrentKeyField;
 		if (this._aRangeKeyFields) {
 			// search the current KeyField
-			this._aRangeKeyFields.some( function(keyField) {
+			this._aRangeKeyFields.some(function(keyField) {
 				if (typeof keyField !== "string") {
 					if (keyField.key === sKey) {
 						oCurrentKeyField = keyField;
@@ -1882,14 +2020,13 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		return oCurrentKeyField;
 	};
 
-
 	/**
-	 * Check if the entered/modified ranges are correct, marks invalid fields yellow (Warning state) and opens a popup message dialog to give the user the
-	 * feedback that some values are wrong or missing.
+	 * Check if the entered/modified ranges are correct, marks invalid fields yellow (Warning state) and opens a popup message dialog to give the user
+	 * the feedback that some values are wrong or missing.
 	 *
 	 * @private
 	 * @param {function} fnCallback will be called when all ranges are valid or the user ignores the wrong/missing fields by pressing Ok on a message
-	 *         dialog
+	 *        dialog
 	 * @param {function} fnCancelCallback will be called when ranges are invalid and the user press Cancel on a message dialog
 	 */
 	ValueHelpDialog.prototype._validateRanges = function(fnCallback, fnCancelCallback) {
@@ -1910,7 +2047,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					actions: [
 						MessageBox.Action.OK, MessageBox.Action.CANCEL
 					],
-					styleClass: !!this.$().closest(".sapUiSizeCompact").length ? "sapUiSizeCompact" : "",
+					styleClass: this.$().closest(".sapUiSizeCompact").length ? "sapUiSizeCompact" : "",
 					onClose: function(sResult) {
 						if (sResult === MessageBox.Action.OK && fnCallback) {
 							fnCallback();
@@ -1935,6 +2072,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	/**
 	 * Setter for the singleRowCallback function.
 	 *
+	 * @param {function} fSingleRowCallback Callback function
 	 * @private
 	 * @deprecated
 	 * @since 1.30
@@ -1945,7 +2083,6 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		this._updateNavigationControl();
 	};
 
-
 	// ################################################################################
 	// Start main Table handling
 	// ################################################################################
@@ -1955,9 +2092,9 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			sap.ui.getCore().loadLibrary("sap.ui.table");
 			jQuery.sap.require("sap.ui.table.Table");
 
-			this.setTable( new sap.ui.table.Table(), true);
+			this.setTable(new sap.ui.table.Table(), true);
 		} else {
-			this.setTable( new sap.m.Table(), true);
+			this.setTable(new sap.m.Table(), true);
 			this.TableStateSearchData();
 		}
 	};
@@ -1971,25 +2108,24 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 		if (sap.ui.table.Table && this._oTable instanceof sap.ui.table.Table) {
 
-			this._oTable.setTitle( sap.ui.Device.system.desktop ? this._sTableTitleNoCount : null);
+			this._oTable.setTitle(sap.ui.Device.system.desktop ? this._sTableTitleNoCount : null);
 			if (this._bTableCreatedInternal) {
-				this._oTable.setSelectionBehavior( sap.ui.table.SelectionBehavior.Row);
+				this._oTable.setSelectionBehavior(sap.ui.table.SelectionBehavior.Row);
 			}
-			this._oTable.setSelectionMode( this.getSupportMultiselect() ? sap.ui.table.SelectionMode.MultiToggle : sap.ui.table.SelectionMode.Single);
-			this._updateNoDataText( this._oRb.getText("VALUEHELPDLG_TABLE_PRESSSEARCH"));
-			//initial we use Fixed mode to give the table the chance to render and calculate the correct height
-			this._oTable.setVisibleRowCountMode( sap.ui.table.VisibleRowCountMode.Fixed);
-			this._oTable.setMinAutoRowCount( sap.ui.Device.system.desktop ? 5 : 4);
+			this._oTable.setSelectionMode(this.getSupportMultiselect() ? sap.ui.table.SelectionMode.MultiToggle : sap.ui.table.SelectionMode.Single);
+			this._updateNoDataText(this._oRb.getText("VALUEHELPDLG_TABLE_PRESSSEARCH"));
+			// initial we use Fixed mode to give the table the chance to render and calculate the correct height
+			this._oTable.setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
+			this._oTable.setMinAutoRowCount(sap.ui.Device.system.desktop ? 5 : 4);
 
-			this._oTable.attachRowSelectionChange( jQuery.proxy(function(oControlEvent) {
+			this._oTable.attachRowSelectionChange(function(oControlEvent) {
 				if (this._bIgnoreSelectionChange || !oControlEvent.getParameter("userInteraction")) {
 					return;
 				}
 
-
 				var eventArgs = {
 					tableSelectionParams: oControlEvent.mParameters,
-					updateTokens: [], //[{sKey, oRow, bSelect}, {}],
+					updateTokens: [], // [{sKey, oRow, bSelect}, {}],
 					useDefault: false
 				};
 
@@ -1998,13 +2134,13 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					this.fireSelectionChange(eventArgs);
 					this._bIgnoreSelectionChange = false;
 
-//					if (eventArgs.useDefault) {
-//						sap.m.MessageToast.show("useDefault");
-//					}
+					// if (eventArgs.useDefault) {
+					// sap.m.MessageToast.show("useDefault");
+					// }
 
-					eventArgs.updateTokens.forEach(jQuery.proxy( function(currentValue) {
+					eventArgs.updateTokens.forEach(function(currentValue) {
 						this._addRemoveTokenByKey(currentValue.sKey, currentValue.oRow, currentValue.bSelected);
-					}, this));
+					}.bind(this));
 
 				} else {
 					eventArgs.useDefault = true;
@@ -2032,7 +2168,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 								actions: [
 									MessageBox.Action.OK
 								],
-								styleClass: !!this.$().closest(".sapUiSizeCompact").length ? "sapUiSizeCompact" : ""
+								styleClass: this.$().closest(".sapUiSizeCompact").length ? "sapUiSizeCompact" : ""
 							});
 							return;
 						}
@@ -2064,15 +2200,18 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				this._updateTitles();
 
 				if (!this.getSupportMultiselect()) {
-					// in case of single select we fireOk
+					// in case of single select we fireOk and close the dialog
+					this._bIgnoreSelectionChange = true; // set to true, to avoid a double(second) click and deselect the item.
 					this._onCloseAndTakeOverValues();
 				}
-			}, this));
+			}.bind(this));
 
 			this._oTable.addStyleClass("compVHMainTable");
 
-			if (!(this._oTable.getParent() instanceof sap.ui.comp.smarttable.SmartTable)) { // && !(this._oTable instanceof sap.ui.table.AnalyticalTable) && !(this._oTable instanceof sap.ui.table.TreeTable)) {
-				this._oTable.bindAggregation("columns", "columns>/cols", jQuery.proxy( function(sId, oContext) {
+			if (!(this._oTable.getParent() instanceof sap.ui.comp.smarttable.SmartTable)) { // && !(this._oTable instanceof
+				// sap.ui.table.AnalyticalTable) && !(this._oTable
+				// instanceof sap.ui.table.TreeTable)) {
+				this._oTable.bindAggregation("columns", "columns>/cols", function(sId, oContext) {
 					var ctrl, oTooltip;
 
 					// Tooltip is only possible for certain (string) fields
@@ -2104,7 +2243,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					if (this._oTable instanceof sap.ui.table.AnalyticalTable) {
 						return new sap.ui.table.AnalyticalColumn(sId, {
 							label: "{columns>label}",
-							tooltip: "{columns>label}",
+							tooltip: "{columns>tooltip}",
 							template: ctrl,
 							width: "{columns>width}",
 							hAlign: ctrl instanceof sap.m.CheckBox ? sap.ui.core.HorizontalAlign.Center : sap.ui.core.HorizontalAlign.Begin,
@@ -2114,24 +2253,25 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					} else {
 						return new sap.ui.table.Column(sId, {
 							label: "{columns>label}",
-							tooltip: "{columns>label}",
+							tooltip: "{columns>tooltip}",
 							template: ctrl,
 							width: "{columns>width}",
 							hAlign: ctrl instanceof sap.m.CheckBox ? sap.ui.core.HorizontalAlign.Center : sap.ui.core.HorizontalAlign.Begin,
 							// sorting is removed at the moment
-							// sortProperty: oContext.getProperty("sort"),
-							// sorted: oContext.getProperty("sorted"),
+							sortProperty: oContext.getProperty("sort"),
+							sorted: oContext.getProperty("sorted"),
+							sortOrder: oContext.getProperty("sortOrder"),
 							filterProperty: oContext.getProperty("filter")
 						});
 					}
-				}, this));
+				}.bind(this));
 			}
 		} else {
 
 			this._oTable.setMode(this.getSupportMultiselect() ? sap.m.ListMode.MultiSelect : sap.m.ListMode.SingleSelectLeft);
 			this._oTable.setGrowing(true);
 
-			this._oTable.attachSelectionChange( jQuery.proxy(function(oControlEvent) {
+			this._oTable.attachSelectionChange(function(oControlEvent) {
 				if (this._bIgnoreSelectionChange) {
 					return;
 				}
@@ -2140,7 +2280,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 				var eventArgs = {
 					tableSelectionParams: oControlEvent.mParameters,
-					updateTokens: [], //[{sKey, oRow, bSelect}, {}],
+					updateTokens: [], // [{sKey, oRow, bSelect}, {}],
 					useDefault: false
 				};
 
@@ -2149,13 +2289,13 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					this.fireSelectionChange(eventArgs);
 					this._bIgnoreSelectionChange = false;
 
-//					if (eventArgs.useDefault) {
-//						sap.m.MessageToast.show("useDefault");
-//					}
+					// if (eventArgs.useDefault) {
+					// sap.m.MessageToast.show("useDefault");
+					// }
 
-					eventArgs.updateTokens.forEach(jQuery.proxy( function(currentValue) {
+					eventArgs.updateTokens.forEach(function(currentValue) {
 						this._addRemoveTokenByKey(currentValue.sKey, currentValue.oRow, currentValue.bSelected);
-					}, this));
+					}.bind(this));
 
 				} else {
 					eventArgs.useDefault = true;
@@ -2181,39 +2321,39 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					// in case of single select we fireOk
 					this._onCloseAndTakeOverValues();
 				}
-			}, this));
+			}.bind(this));
 
-
-			if (!(this._oTable.getParent() instanceof sap.ui.comp.smarttable.SmartTable)) {  //this._bTableCreatedInternal) {
-				this._oTable.bindAggregation("columns", "columns>/cols", jQuery.proxy( function(sId, oContext) {
+			if (!(this._oTable.getParent() instanceof sap.ui.comp.smarttable.SmartTable)) { // this._bTableCreatedInternal) {
+				this._oTable.bindAggregation("columns", "columns>/cols", function(sId, oContext) {
 					var colLabel = oContext.getProperty("label");
 					var bDemandPopin = this._oTable.getColumns().length >= 2;
 
 					return new sap.m.Column({
-						header: new sap.m.Label({ text: colLabel }),
+						header: new sap.m.Label({
+							text: colLabel
+						}),
 						demandPopin: bDemandPopin,
-						//popinDisplay: sap.m.PopinDisplay.Inline,
+						// popinDisplay: sap.m.PopinDisplay.Inline,
 						minScreenWidth: bDemandPopin ? (this._oTable.getColumns().length + 1) * 10 + "rem" : "1px"
 					});
-				}, this));
+				}.bind(this));
 
-
-//				this._oTable.bindAggregation("items", "/", jQuery.proxy(function(sId, oContext) {
-//					var aCols = this._oTable.getModel("columns").getData().cols;
-//
-//					return new sap.m.ColumnListItem({
-//						cells: aCols.map(function (column) {
-//							var colname = column.template;
-//							return new sap.m.Label({ text: "{" + colname + "}" });
-//						})
-//					});
-//				}, this));
+				// this._oTable.bindAggregation("items", "/", jQuery.proxy(function(sId, oContext) {
+				// var aCols = this._oTable.getModel("columns").getData().cols;
+				//
+				// return new sap.m.ColumnListItem({
+				// cells: aCols.map(function (column) {
+				// var colname = column.template;
+				// return new sap.m.Label({ text: "{" + colname + "}" });
+				// })
+				// });
+				// }, this));
 			}
 		}
 	};
 
-
 	ValueHelpDialog.prototype._addRemoveTokenByKey = function(sKey, oRow, bAdd) {
+		sKey = decodeURIComponent(sKey); // key of the added or removed item must be decoded
 		if (bAdd) {
 			this._oSelectedItems.add(sKey, oRow);
 			this._addToken2Tokenizer(sKey, this._getFormatedTokenText(sKey), this._oSelectedTokens);
@@ -2222,7 +2362,6 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			this._removeTokenFromTokenizer(sKey, this._oSelectedTokens);
 		}
 	};
-
 
 	/**
 	 * Handler for the Ok close handling. The function prepares the list of all selected items and token and fires the Ok event.
@@ -2239,7 +2378,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			if (that._oSelectedRanges) {
 				var i = 0;
 				// if the user has changed the ranges we return the new ranges from the selectedRanges
-				for ( var rangeId in that._oSelectedRanges) {
+				for (var rangeId in that._oSelectedRanges) {
 					range = that._oSelectedRanges[rangeId];
 					var sTokenValue = range.tokenValue;
 					if (!sTokenValue) {
@@ -2247,18 +2386,18 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					}
 
 					if (!range._oGrid || range._oGrid.select.getSelected()) {
-						aTokens.push(new Token({
-							key: "range_" + i,
-							text: sTokenValue,
-							tooltip: typeof sTokenValue === "string" ? sTokenValue : null  // Token text must be of type string
+						var oToken = new Token({
+							key: "range_" + i
 						}).data("range", {
 							"exclude": range.exclude,
 							"operation": range.operation,
 							"keyField": range.keyField,
 							"value1": range.value1,
 							"value2": range.value2
-						}));
-
+						});
+						oToken.setText(sTokenValue);
+						oToken.setTooltip(typeof sTokenValue === "string" ? sTokenValue : null);
+						aTokens.push(oToken);
 						i++;
 					}
 				}
@@ -2324,53 +2463,46 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				// title handling on a normal dialog (on Dekstop and Tablet) when the tabBar is not visible
 				if (this._oTabBar.getSelectedKey() === sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_LIST_VIEW) {
 					sMsgKey = "VALUEHELPDLG_TITLE";
-				} else {
-					if (this._oTabBar.getSelectedKey() === sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_CONDITIONS_VIEW) {
+				} else if (this._oTabBar.getSelectedKey() === sap.ui.comp.valuehelpdialog._ValueHelpViewMode.DESKTOP_CONDITIONS_VIEW) {
+					if (this.getMaxIncludeRanges() === "1" && this.getMaxExcludeRanges() === "0") {
+						sMsgKey = "VALUEHELPDLG_SINGLECONDITION_TITLE";
+					} else {
+						sMsgKey = "VALUEHELPDLG_RANGESTITLE";
+					}
+				}
+			} else if (this._isPhone() && !this.getFilterMode()) {
+				// on a phone we show the title which depends on the current viewmode
+				switch (this._currentViewMode) {
+					case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_MAIN_VIEW:
+						sMsgKey = "";
+						break;
+					case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_LIST_VIEW:
+						sMsgKey = "VALUEHELPDLG_ITEMSTABLE";
+						break;
+					case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_SEARCH_VIEW:
+						sMsgKey = "VALUEHELPDLG_ADVANCEDSEARCH";
+						break;
+					case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_CONDITIONS_VIEW:
 						if (this.getMaxIncludeRanges() === "1" && this.getMaxExcludeRanges() === "0") {
 							sMsgKey = "VALUEHELPDLG_SINGLECONDITION_TITLE";
 						} else {
-							sMsgKey = "VALUEHELPDLG_RANGESTITLE";
+							sMsgKey = "VALUEHELPDLG_RANGES";
 						}
-					}
-				}
-
-			} else {
-				if (this._isPhone() && !this.getFilterMode()) {
-					// on a phone we show the title which depends on the current viewmode
-					switch (this._currentViewMode) {
-						  case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_MAIN_VIEW:
-							  sMsgKey = "";
-							  break;
-						  case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_LIST_VIEW:
-							  sMsgKey = "VALUEHELPDLG_ITEMSTABLE";
-							  break;
-						  case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_SEARCH_VIEW:
-							  sMsgKey = "VALUEHELPDLG_ADVANCEDSEARCH";
-							  break;
-						  case sap.ui.comp.valuehelpdialog._ValueHelpViewMode.PHONE_CONDITIONS_VIEW:
-							  if (this.getMaxIncludeRanges() === "1" && this.getMaxExcludeRanges() === "0") {
-								  sMsgKey = "VALUEHELPDLG_SINGLECONDITION_TITLE";
-							  } else {
-								  sMsgKey = "VALUEHELPDLG_RANGES";
-							  }
-							  break;
-						  default:
-							  break;
-					}
-
+						break;
+					default:
+						break;
 				}
 			}
 
-
-			if (!sMsg)  {
+			if (!sMsg) {
 				sMsg = this.getTitle();
 			}
 
-			if (sMsgKey)  {
+			if (sMsgKey) {
 				sMsg = this._oRb.getText(sMsgKey, sMsg);
 			}
 
-			if (sMsg)  {
+			if (sMsg) {
 				this._oTitle.setText(sMsg);
 			}
 		}
@@ -2403,8 +2535,12 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	};
 
 	/**
-	 * Setting the title of the table will remove the focus on a table cell.
-	 * Because of this we check if the Title control exist and set the Text of the title instead.
+	 * Setting the title of the table will remove the focus on a table cell. Because of this we check if the Title control exist and set the Text of
+	 * the title instead.
+	 *
+	 * @param {string} sTitle Title text for the table
+	 *
+	 * @private
 	 */
 	ValueHelpDialog.prototype._setTableTitle = function(sTitle) {
 		if (sap.ui.Device.system.desktop && !(this._oTable instanceof sap.m.Table)) {
@@ -2423,21 +2559,22 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			this._updateTitles();
 		}
 
-		if (!this._isPhone() &&  this.getContentHeight() === "") {
-			setTimeout(function() {
+		if (!this._isPhone() && this.getContentHeight() === "") {
+			if (this.getSupportRangesOnly() && (this.getMaxExcludeRanges() === "-1" || this.getMaxIncludeRanges() === "-1")) { //} && this._oSelectedTokens.getTokens().length <= 2) {
+				// in case of a conditions only with multiple condition rows we give the dialog a height of 70%
+				this.setContentHeight("70%");
+			} else {
 				// if the content height is not set we fetch the current clientHeight from the ScrollContainer and set it as fixed height
 				var oResizeDomRef = this.getDomRef("scroll");
 				var _iResizeDomHeight = oResizeDomRef.clientHeight;
 				this.setContentHeight(_iResizeDomHeight + "px");
-
-				// correct the minRowCount
-				if (sap.ui.table.Table && this._oTable && this._oTable instanceof sap.ui.table.Table) {
-					this._oTable.setVisibleRowCountMode( sap.ui.table.VisibleRowCountMode.Auto);
-				}
-			}.bind(this), 0);
+			}
+			// correct the minRowCount
+			if (sap.ui.table.Table && this._oTable && this._oTable instanceof sap.ui.table.Table) {
+				this._oTable.setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Auto);
+			}
 		}
 	};
-
 
 	// Overwriting the Dialog._getDialogOffset function. In our case we will return some other left and top margin values!
 	ValueHelpDialog.prototype._getDialogOffset = function(windowWidth) {
@@ -2446,7 +2583,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			small: 600,
 			large: 1024
 		};
-		var remToPixelMargin = function (rem) {
+		var remToPixelMargin = function(rem) {
 			var iRemInPx = parseInt(window.getComputedStyle(document.body).fontSize, 10);
 			return (rem * iRemInPx) * 2;
 		};
@@ -2463,7 +2600,6 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 			left: remToPixelMargin(rem)
 		};
 	};
-
 
 	ValueHelpDialog.prototype.exit = function() {
 
@@ -2517,17 +2653,19 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		if (this._oButtonClear) {
 			this._oButtonClear = destroyHelper(this._oButtonClear);
 		}
+		if (this._oColSearchBox) {
+			this._oColSearchBox = destroyHelper(this._oColSearchBox);
+		}
 	};
 
-
 	/**
-	 * Sets a RangeKeyFields array.
-	 * This method allows you to specify the KeyFields for the ranges. You can set an array of objects with Key and Label properties to define the key fields.
+	 * Sets a RangeKeyFields array. This method allows you to specify the KeyFields for the ranges. You can set an array of objects with Key and Label
+	 * properties to define the key fields.
 	 *
 	 * @public
 	 * @since 1.24
-	 * @param {object[]} aRangeKeyFields
-	 * 					An array of range KeyFields <code>[{key: "CompanyCode", label: "ID"}, {key:"CompanyName", label : "Name"}]</code>
+	 * @param {object[]} aRangeKeyFields An array of range KeyFields
+	 *        <code>[{key: "CompanyCode", label: "ID"}, {key:"CompanyName", label : "Name"}]</code>
 	 */
 	ValueHelpDialog.prototype.setRangeKeyFields = function(aRangeKeyFields) {
 		this._aRangeKeyFields = aRangeKeyFields;
@@ -2542,8 +2680,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	 *
 	 * @public
 	 * @since 1.24
-	 * @param {sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation[]} aOperation
-	 * 		An array of range operations
+	 * @param {sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation[]} aOperation An array of range operations
 	 * @param {string} sType the type for which the operations are defined
 	 */
 	ValueHelpDialog.prototype.setIncludeRangeOperations = function(aOperation, sType) {
@@ -2560,8 +2697,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 	 *
 	 * @public
 	 * @since 1.24
-	 * @param {sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation[]} aOperation
-	 * 		An array of range operations
+	 * @param {sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation[]} aOperation An array of range operations
 	 * @param {string} sType the type for which the operations are defined
 	 */
 	ValueHelpDialog.prototype.setExcludeRangeOperations = function(aOperation, sType) {
@@ -2591,12 +2727,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 				sTokenText = sKey;
 			}
 		} else {
-			if (sTokenText === "") {
-				sTokenText = sKey;
-			} else {
-				// format the token text
-				sTokenText = FormatUtil.getFormattedExpressionFromDisplayBehaviour(this.getTokenDisplayBehaviour() ? this.getTokenDisplayBehaviour() : sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR.descriptionAndId, sDisplayKey, sTokenText);
-			}
+			sTokenText = FormatUtil.getFormattedExpressionFromDisplayBehaviour(this.getTokenDisplayBehaviour() ? this.getTokenDisplayBehaviour() : sap.ui.comp.smartfilterbar.DisplayBehaviour.descriptionAndId, sDisplayKey, sTokenText);
 		}
 
 		return sTokenText;
@@ -2620,6 +2751,22 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 
 		if (oCurrentKeyField) {
 			switch (oCurrentKeyField.type) {
+				case "numc":
+					oFormatter = {
+						format: function(oValue) {
+							return this.oType.formatValue(oValue, "string");
+						},
+//						parse: function(sValue) {
+//							try {
+//								this.oType.validateValue(sValue);
+//							} catch (err) {
+//							    return NaN;
+//							}
+//							return this.oType.parseValue(sValue, "string");
+//						},
+						oType: new sap.ui.model.odata.type.String({}, oCurrentKeyField.formatSettings)
+					};
+					break;
 				case "numeric":
 					var oFloatFormatOptions;
 					if (oCurrentKeyField.precision || oCurrentKeyField.scale) {
@@ -2634,19 +2781,32 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 					oFormatter = NumberFormat.getFloatInstance(oFloatFormatOptions);
 					break;
 				case "date":
-					oFormatter = DateFormat.getDateInstance();
+					oFormatter = DateFormat.getDateInstance(jQuery.extend({}, oCurrentKeyField.formatSettings, {strictParsing: true}));
 					sValue1 = new Date(sValue1);
-					sValue2 = new Date(sValue2);
+					sValue2 = sValue2 !== "" ? new Date(sValue2) : null; // sValue2 can be "" string if the operation != BT.
 					break;
 				case "time":
-					oFormatter = DateFormat.getTimeInstance();
+					oFormatter = DateFormat.getTimeInstance(jQuery.extend({}, oCurrentKeyField.formatSettings, {strictParsing: true}));
 					sValue1 = new Date(sValue1);
-					sValue2 = new Date(sValue2);
+					sValue2 = sValue2 !== "" ? new Date(sValue2) : null;
+					break;
+				case "datetime":
+					oFormatter = DateFormat.getDateTimeInstance(jQuery.extend({}, oCurrentKeyField.formatSettings, {strictParsing: true}));
+					sValue1 = new Date(sValue1);
+					sValue2 = sValue2 !== "" ? new Date(sValue2) : null;
 					break;
 				case "boolean":
 					var aBooleanValues = this._getBooleanValues();
-					sValue1 = aBooleanValues[sValue1 ? 2 :  1];
-					sValue2 = aBooleanValues[sValue2 ? 2 :  1];
+					sValue1 = aBooleanValues[sValue1 ? 2 : 1];
+					sValue2 = aBooleanValues[sValue2 ? 2 : 1];
+					break;
+				case "stringdate":
+					if (sap.m.P13nConditionStringDateFormatter) {
+						oFormatter = new sap.m.P13nConditionStringDateFormatter(jQuery.extend({}, oCurrentKeyField.formatSettings, {strictParsing: true }));
+					}
+
+					break;
+				default:
 					break;
 			}
 
@@ -2703,6 +2863,9 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 						sTokenText = sValue1 + "..." + sValue2;
 						break;
 					}
+					break;
+				default:
+					break;
 			}
 
 		}
@@ -2730,74 +2893,17 @@ sap.ui.define(['jquery.sap.global', 'sap/m/Dialog', 'sap/m/MessageBox', 'sap/m/M
 		return this.hasListeners(sEventName);
 	};
 
+	ValueHelpDialog.prototype._rotateSelectionButtonIcon = function(bFlag) {
+		if (!sap.ui.Device.system.phone) {
+			//var oCtrl = this.oSelectionButton;
+			var oCtrl = sap.ui.getCore().byId(this.oSelectionButton.$("img")[0].id);
 
-	/**
-	 * The range operations supported by the ValueHelpDialog control.
-	 *
-	 * @enum {string}
-	 * @public
-	 */
-	sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation = {
-		/**
-		 * The Between operation for the ranges.
-		 *
-		 * @public
-		 */
-		BT: "BT",
-		/**
-		 * The Equals operation for the ranges.
-		 *
-		 * @public
-		 */
-		EQ: "EQ",
-		/**
-		 * The Contains operation for the ranges.
-		 *
-		 * @public
-		 */
-		Contains: "Contains",
-		/**
-		 * The StartsWith operation for the ranges.
-		 *
-		 * @public
-		 */
-		StartsWith: "StartsWith",
-		/**
-		 * The EndsWith operation for the ranges.
-		 *
-		 * @public
-		 */
-		EndsWith: "EndsWith",
-		/**
-		 * The Less operation for the ranges.
-		 *
-		 * @public
-		 */
-		LT: "LT",
-		/**
-		 * The Less or equals operation for the ranges.
-		 *
-		 * @public
-		 */
-		LE: "LE",
-		/**
-		 * The Greater operation for the ranges.
-		 *
-		 * @public
-		 */
-		GT: "GT",
-		/**
-		 * The Between or equals operation for the ranges.
-		 *
-		 * @public
-		 */
-		GE: "GE",
-		/**
-		 * The Initial operation for the ranges.
-		 *
-		 * @private
-		 */
-		Initial: "Initial"
+			if (bFlag) {
+				oCtrl.addStyleClass("sapUiVHImageExpand");
+			} else {
+				oCtrl.removeStyleClass("sapUiVHImageExpand");
+			}
+		}
 	};
 
 	sap.ui.comp.valuehelpdialog._ValueHelpViewMode = {

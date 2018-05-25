@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @extends sap.ui.core.Control
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -89,27 +89,119 @@ sap.ui.core.Control.extend("sap.makit.CombinationChart", { metadata : {
 	],
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * The width of the Chart
+		 */
 		"width" : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : '100%'},
+
+		/**
+		 * The height of the Chart
+		 */
 		"height" : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : '100%'},
+
+		/**
+		 * Specify whether the range selector should be visible.
+		 */
 		"showRangeSelector" : {type : "boolean", group : "Appearance", defaultValue : true},
+
+		/**
+		 * Legend position for Pie /Donut chart only.
+		 */
 		"legendPosition" : {type : "sap.makit.LegendPosition", group : "Misc", defaultValue : sap.makit.LegendPosition.Left},
+
+		/**
+		 * Allow a combination chart’s primary axis color palette to be modified without affecting other charts' color palette. If not set, the chart will use the default color palette defined in the theme.
+		 * Accept an array of color in string format or hex format. e.g.
+		 * 0xff0000
+		 * "red"
+		 * "rgb(255,0,0)"
+		 */
 		"primaryColorPalette" : {type : "any", group : "Misc", defaultValue : null},
+
+		/**
+		 * Allow a combination chart’s secondary axis color palette to be modified without affecting other charts' color palette. If not set, the chart will use the default color palette defined in the theme.
+		 * Accept an array of color in string format or hex format. e.g.
+		 * 0xff0000
+		 * "red"
+		 * "rgb(255,0,0)"
+		 */
 		"secondaryColorPalette" : {type : "any", group : "Misc", defaultValue : null},
+
+		/**
+		 * Toggle to display the table value on a Bar chart. Only applies to Bar chart.
+		 */
 		"showTableValue" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * The number of categories that will be visible on the chart at any time. The minimum value is 2. If not set, the number of visible categories will be automatically adjusted depending on the screen size
+		 */
 		"numberOfVisibleCategories" : {type : "int", group : "Misc", defaultValue : null},
+
+		/**
+		 * Specify the range selector start position, default value is 0.
+		 */
 		"rangeSelectorStartPosition" : {type : "int", group : "Misc", defaultValue : 0}
 	},
 	aggregations : {
+
+		/**
+		 * Data region property of the chart's Categories
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"categoryRegions" : {type : "sap.makit.Category", multiple : true, singularName : "categoryRegion", deprecated: true}, 
+
+		/**
+		 * The collection of charts
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"layers" : {type : "sap.makit.Layer", multiple : true, singularName : "layer", deprecated: true}, 
+
+		/**
+		 * Category Axis property of the Chart. Accepts only an instance of CategoryAxis element.
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"categoryAxis" : {type : "sap.makit.CategoryAxis", multiple : false, deprecated: true}, 
+
+		/**
+		 * Property of the Combination Chart's primary Value Axis. Accept only an instance of ValueAxis element.
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"primaryValueAxis" : {type : "sap.makit.ValueAxis", multiple : false, deprecated: true}, 
+
+		/**
+		 * Property of the Combination Chart's secondary Value Axis. Accept only an instance of ValueAxis element.
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"secondaryValueAxis" : {type : "sap.makit.ValueAxis", multiple : false, deprecated: true}, 
+
+		/**
+		 * Value Bubble property of the Chart. Accept only an instance of ValueBubble element.
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"valueBubble" : {type : "sap.makit.ValueBubble", multiple : false, deprecated: true}
 	},
 	events : {
+
+		/**
+		 * Double tap event on the chart
+		 */
 		"doubletap" : {}, 
+
+		/**
+		 * Single tap event on the chart
+		 */
 		"tap" : {}, 
+
+		/**
+		 * Long press event on the chart
+		 */
 		"longpress" : {}
 	}
 }});

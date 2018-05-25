@@ -1,7 +1,6 @@
 {
-  "_version": "1.2.0",
+  "_version": "1.9.0",
   "sap.app": {
-    "_version": "1.2.0",
     "id": "sap.collaboration",
     "type": "library",
     "embeds": [
@@ -15,7 +14,7 @@
       "components/feed"
     ],
     "applicationVersion": {
-      "version": "1.38.7"
+      "version": "1.54.0"
     },
     "title": "SAP UI library: SAP Collaboration for Social Media Integration.",
     "description": "SAP UI library: SAP Collaboration for Social Media Integration.",
@@ -24,7 +23,6 @@
     "offline": true
   },
   "sap.ui": {
-    "_version": "1.1.0",
     "technology": "UI5",
     "supportedThemes": [
       "base",
@@ -32,17 +30,19 @@
     ]
   },
   "sap.ui5": {
-    "_version": "1.1.0",
     "dependencies": {
-      "minUI5Version": "1.38",
+      "minUI5Version": "1.54",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.38.15"
+          "minVersion": "1.54.0"
         },
         "sap.suite.ui.commons": {
-          "minVersion": "1.38.20"
+          "minVersion": "1.54.0"
         }
       }
+    },
+    "library": {
+      "i18n": false
     }
   }
 }

@@ -170,87 +170,87 @@
   </module>
   <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n.properties" size="1325">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ar.properties" size="2246">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ar.properties" size="1728">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_bg.properties" size="2710">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_bg.properties" size="2192">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ca.properties" size="1375">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ca.properties" size="857">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_cs.properties" size="1385">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_cs.properties" size="867">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_da.properties" size="1282">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_da.properties" size="764">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_de.properties" size="1308">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_de.properties" size="790">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_el.properties" size="2582">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_el.properties" size="2064">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_en.properties" size="1269">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_en.properties" size="748">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_en_US_sappsd.properties" size="4067">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_en_US_sappsd.properties" size="2170">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_en_US_saptrc.properties" size="1657">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_en_US_saptrc.properties" size="1093">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_es.properties" size="1403">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_es.properties" size="885">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_et.properties" size="1341">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_et.properties" size="823">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_fi.properties" size="1352">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_fi.properties" size="834">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_fr.properties" size="1362">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_fr.properties" size="844">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_hi.properties" size="2410">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_hi.properties" size="1892">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_hr.properties" size="1352">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_hr.properties" size="834">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_hu.properties" size="1518">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_hu.properties" size="1000">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_it.properties" size="1298">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_it.properties" size="780">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_iw.properties" size="2073">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_iw.properties" size="1555">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ja.properties" size="1721">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ja.properties" size="1203">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_kk.properties" size="2692">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_kk.properties" size="2174">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ko.properties" size="1491">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ko.properties" size="973">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_lt.properties" size="1423">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_lt.properties" size="905">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_lv.properties" size="1458">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_lv.properties" size="940">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ms.properties" size="1320">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ms.properties" size="802">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_nl.properties" size="1325">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_nl.properties" size="807">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_no.properties" size="1291">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_no.properties" size="773">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_pl.properties" size="1396">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_pl.properties" size="878">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_pt.properties" size="1362">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_pt.properties" size="844">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ro.properties" size="1371">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ro.properties" size="853">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ru.properties" size="2594">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_ru.properties" size="2076">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_sh.properties" size="1382">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_sh.properties" size="864">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_sk.properties" size="1441">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_sk.properties" size="923">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_sl.properties" size="1347">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_sl.properties" size="829">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_sv.properties" size="1340">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_sv.properties" size="822">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_th.properties" size="2334">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_th.properties" size="1816">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_tr.properties" size="1462">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_tr.properties" size="944">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_uk.properties" size="2607">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_uk.properties" size="2089">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_vi.properties" size="1720">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_vi.properties" size="1202">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_zh_CN.properties" size="1530">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_zh_CN.properties" size="1012">
   </module>
-  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_zh_TW.properties" size="1542">
+  <module name="sap/ui/rta/appVariant/manageApps/webapp/i18n/i18n_zh_TW.properties" size="1024">
   </module>
   <module name="sap/ui/rta/appVariant/manageApps/webapp/manifest.json" size="1258">
   </module>
@@ -394,7 +394,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/rta/command/LREPSerializer.js" size="10615" compressedSize="4458">
+  <module name="sap/ui/rta/command/LREPSerializer.js" size="9990" compressedSize="4309">
     <description>! UI development toolkit for HTML5 (OpenUI5) (c) Copyright 2009-2018 SAP SE or an SAP affiliate company. Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</description>
     <requires>
       <module name="sap/ui/base/ManagedObject.js"/>
@@ -644,7 +644,7 @@
       <module name="sap/ui/rta/view/RemoveElementDialog.fragment.xml"/>
     </includes>
   </module>
-  <module name="sap/ui/rta/library-preload.js" size="197845" dynamicDependencies="true">
+  <module name="sap/ui/rta/library-preload.js" size="197695" dynamicDependencies="true">
     <requires>
       <module name="jquery.sap.global.js"/>
       <module name="sap/m/Button.js"/>
@@ -986,87 +986,87 @@
   </module>
   <module name="sap/ui/rta/messagebundle.properties" size="12367">
   </module>
-  <module name="sap/ui/rta/messagebundle_ar.properties" size="24273">
+  <module name="sap/ui/rta/messagebundle_ar.properties" size="24928">
   </module>
-  <module name="sap/ui/rta/messagebundle_bg.properties" size="30100">
+  <module name="sap/ui/rta/messagebundle_bg.properties" size="31076">
   </module>
-  <module name="sap/ui/rta/messagebundle_ca.properties" size="13230">
+  <module name="sap/ui/rta/messagebundle_ca.properties" size="13070">
   </module>
-  <module name="sap/ui/rta/messagebundle_cs.properties" size="13313">
+  <module name="sap/ui/rta/messagebundle_cs.properties" size="13192">
   </module>
-  <module name="sap/ui/rta/messagebundle_da.properties" size="12181">
+  <module name="sap/ui/rta/messagebundle_da.properties" size="11987">
   </module>
-  <module name="sap/ui/rta/messagebundle_de.properties" size="13107">
+  <module name="sap/ui/rta/messagebundle_de.properties" size="12994">
   </module>
-  <module name="sap/ui/rta/messagebundle_el.properties" size="29309">
+  <module name="sap/ui/rta/messagebundle_el.properties" size="30187">
   </module>
-  <module name="sap/ui/rta/messagebundle_en.properties" size="12331">
+  <module name="sap/ui/rta/messagebundle_en.properties" size="11737">
   </module>
-  <module name="sap/ui/rta/messagebundle_en_US_sappsd.properties" size="34538">
+  <module name="sap/ui/rta/messagebundle_en_US_sappsd.properties" size="33661">
   </module>
-  <module name="sap/ui/rta/messagebundle_en_US_saptrc.properties" size="15006">
+  <module name="sap/ui/rta/messagebundle_en_US_saptrc.properties" size="14607">
   </module>
-  <module name="sap/ui/rta/messagebundle_es.properties" size="13187">
+  <module name="sap/ui/rta/messagebundle_es.properties" size="13033">
   </module>
-  <module name="sap/ui/rta/messagebundle_et.properties" size="12638">
+  <module name="sap/ui/rta/messagebundle_et.properties" size="12482">
   </module>
-  <module name="sap/ui/rta/messagebundle_fi.properties" size="13289">
+  <module name="sap/ui/rta/messagebundle_fi.properties" size="13166">
   </module>
-  <module name="sap/ui/rta/messagebundle_fr.properties" size="13388">
+  <module name="sap/ui/rta/messagebundle_fr.properties" size="13266">
   </module>
-  <module name="sap/ui/rta/messagebundle_hi.properties" size="26528">
+  <module name="sap/ui/rta/messagebundle_hi.properties" size="27296">
   </module>
-  <module name="sap/ui/rta/messagebundle_hr.properties" size="13372">
+  <module name="sap/ui/rta/messagebundle_hr.properties" size="13250">
   </module>
-  <module name="sap/ui/rta/messagebundle_hu.properties" size="14559">
+  <module name="sap/ui/rta/messagebundle_hu.properties" size="14504">
   </module>
-  <module name="sap/ui/rta/messagebundle_it.properties" size="12620">
+  <module name="sap/ui/rta/messagebundle_it.properties" size="12437">
   </module>
-  <module name="sap/ui/rta/messagebundle_iw.properties" size="21522">
+  <module name="sap/ui/rta/messagebundle_iw.properties" size="21971">
   </module>
-  <module name="sap/ui/rta/messagebundle_ja.properties" size="17767">
+  <module name="sap/ui/rta/messagebundle_ja.properties" size="17937">
   </module>
-  <module name="sap/ui/rta/messagebundle_kk.properties" size="27281">
+  <module name="sap/ui/rta/messagebundle_kk.properties" size="28059">
   </module>
-  <module name="sap/ui/rta/messagebundle_ko.properties" size="16109">
+  <module name="sap/ui/rta/messagebundle_ko.properties" size="16206">
   </module>
-  <module name="sap/ui/rta/messagebundle_lt.properties" size="13658">
+  <module name="sap/ui/rta/messagebundle_lt.properties" size="13516">
   </module>
-  <module name="sap/ui/rta/messagebundle_lv.properties" size="14029">
+  <module name="sap/ui/rta/messagebundle_lv.properties" size="13963">
   </module>
-  <module name="sap/ui/rta/messagebundle_ms.properties" size="12327">
+  <module name="sap/ui/rta/messagebundle_ms.properties" size="12131">
   </module>
-  <module name="sap/ui/rta/messagebundle_nl.properties" size="12431">
+  <module name="sap/ui/rta/messagebundle_nl.properties" size="12250">
   </module>
-  <module name="sap/ui/rta/messagebundle_no.properties" size="12231">
+  <module name="sap/ui/rta/messagebundle_no.properties" size="12038">
   </module>
-  <module name="sap/ui/rta/messagebundle_pl.properties" size="13982">
+  <module name="sap/ui/rta/messagebundle_pl.properties" size="13904">
   </module>
-  <module name="sap/ui/rta/messagebundle_pt.properties" size="13055">
+  <module name="sap/ui/rta/messagebundle_pt.properties" size="12905">
   </module>
-  <module name="sap/ui/rta/messagebundle_ro.properties" size="13440">
+  <module name="sap/ui/rta/messagebundle_ro.properties" size="13279">
   </module>
-  <module name="sap/ui/rta/messagebundle_ru.properties" size="26730">
+  <module name="sap/ui/rta/messagebundle_ru.properties" size="27442">
   </module>
-  <module name="sap/ui/rta/messagebundle_sh.properties" size="13380">
+  <module name="sap/ui/rta/messagebundle_sh.properties" size="13253">
   </module>
-  <module name="sap/ui/rta/messagebundle_sk.properties" size="13790">
+  <module name="sap/ui/rta/messagebundle_sk.properties" size="13678">
   </module>
-  <module name="sap/ui/rta/messagebundle_sl.properties" size="12834">
+  <module name="sap/ui/rta/messagebundle_sl.properties" size="12645">
   </module>
-  <module name="sap/ui/rta/messagebundle_sv.properties" size="12738">
+  <module name="sap/ui/rta/messagebundle_sv.properties" size="12553">
   </module>
-  <module name="sap/ui/rta/messagebundle_th.properties" size="26732">
+  <module name="sap/ui/rta/messagebundle_th.properties" size="27602">
   </module>
-  <module name="sap/ui/rta/messagebundle_tr.properties" size="13575">
+  <module name="sap/ui/rta/messagebundle_tr.properties" size="13413">
   </module>
-  <module name="sap/ui/rta/messagebundle_uk.properties" size="28029">
+  <module name="sap/ui/rta/messagebundle_uk.properties" size="28739">
   </module>
-  <module name="sap/ui/rta/messagebundle_vi.properties" size="18728">
+  <module name="sap/ui/rta/messagebundle_vi.properties" size="18986">
   </module>
-  <module name="sap/ui/rta/messagebundle_zh_CN.properties" size="14836">
+  <module name="sap/ui/rta/messagebundle_zh_CN.properties" size="14775">
   </module>
-  <module name="sap/ui/rta/messagebundle_zh_TW.properties" size="15164">
+  <module name="sap/ui/rta/messagebundle_zh_TW.properties" size="15129">
   </module>
   <module name="sap/ui/rta/plugin/Combine.js" size="5782" compressedSize="2160">
     <description>Provides class sap.ui.rta.plugin.Combine.</description>

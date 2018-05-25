@@ -1,5 +1,7 @@
 /*
-* ! @copyright@
+* ! SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
 */
 
 jQuery.sap.declare("sap.collaboration.components.controls.ReplyPopover");
@@ -114,6 +116,9 @@ sap.collaboration.components.controls.ReplyPopover.prototype.exit = function () 
 sap.collaboration.components.controls.ReplyPopover.prototype.addReply = function(oReplyData) {
 	// checks whether oReplyData is empty before adding it
 	if (!jQuery.isEmptyObject(oReplyData)) {
+		if (oReplyData.Text) {
+			oReplyData.Text = this._replaceCarriageReturnWithBRTag(oReplyData.Text);
+		}
 		this._oJSONModelData.push(oReplyData);
 		this._oJSONModel.setData(this._oJSONModelData, true);
 	}
@@ -129,18 +134,21 @@ sap.collaboration.components.controls.ReplyPopover.prototype.addReply = function
 * @memberOf sap.collaboration.components.controls.ReplyPopover
 */
 sap.collaboration.components.controls.ReplyPopover.prototype.addReplies = function(oRepliesData) {
+	var aRepliesData = oRepliesData && oRepliesData.data;
 	// checks whether oRepliesData has 'data' and the length is not 0 before adding it
-	if (oRepliesData.data && oRepliesData.data.length !== 0) {	
+	if (aRepliesData && aRepliesData.length !== 0) {	
 		var iReplyListLength = this._oReplyList.getItems().length;
-		var iRepliesDataLength = oRepliesData.data.length;
-
-		for (var i = 0; i < oRepliesData.data.length; i++) {
-			if (oRepliesData.data[i].Text) {
-				oRepliesData.data[i].Text = "\u200E" + oRepliesData.data[i].Text + "\u200E";
+		var iRepliesDataLength = aRepliesData.length;
+		
+		// replace each return carriage in the Replies Data Text with <br>
+		for (var i = 0; i < aRepliesData.length; i++) {
+			if (aRepliesData[i].Text) {
+				aRepliesData[i].Text = this._replaceCarriageReturnWithBRTag(aRepliesData[i].Text);
+				aRepliesData[i].Text = "\u200E" + aRepliesData[i].Text + "\u200E";
 			}
 		}
 		
-		this._oJSONModelData = oRepliesData.data.concat(this._oJSONModelData);
+		this._oJSONModelData = aRepliesData.concat(this._oJSONModelData);
 		this._oJSONModel.setData(this._oJSONModelData, true);
 		
 		// if the reply list length before setting the data is not 0, it implies that the list already had replies 
@@ -459,6 +467,21 @@ sap.collaboration.components.controls.ReplyPopover.prototype._createMentionButto
 	
 	return oMentionButton;
 };
+
+/**
+* Replaces all the carriage returns ('\n', '\r') in a string with the br tag
+* @private
+* @param {string} text - the text to be formatted
+* @returns {string} sFormattedText - the formatted text
+* @memberOf sap.collaboration.components.controls.ReplyPopover
+*/
+sap.collaboration.components.controls.ReplyPopover.prototype._replaceCarriageReturnWithBRTag = function (text) {
+	var sFormattedText;
+	if (typeof text === "string") {
+		sFormattedText = text.replace(/[\n\r]/g, '<br>'); // check for '\n' or '\r'
+	}
+	return sFormattedText;
+}
 
 /********************
  * Event Handlers

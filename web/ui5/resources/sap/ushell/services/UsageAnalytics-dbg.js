@@ -1,13 +1,15 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
+sap.ui.define([
+    "sap/ui/layout/VerticalLayout",
+    "sap/m/Text",
+    "sap/m/Dialog",
+    "sap/m/Button"
+], function (VerticalLayout, Text, Dialog, Button) {
     "use strict";
     /*global jQuery, sap, window */
-    jQuery.sap.declare("sap.ushell.services.UsageAnalytics");
 
     /**
-     * @class A UShell service for tracking business flows and user actions.
-     *
      * The UsageAnalytics service exposes API for logging custom events and setting custom field values in the logged events.<br>
      * The data is sent via http and recorded on a server, whose URL is defined by the <code>baseUrl</code> service configuration property.<br>
      * The service configuration must also include the site ID from the <code>pubToken</code> attribute.<br>
@@ -24,6 +26,10 @@
      * Each tracked event (either automatic or custom) is represented by a database row, that includes 10 custom attributes named custom1...custom10.<br>
      *  Some of these values can be set using UsageAnalytics service API.<br>
      *
+     * @name sap.ushell.services.UsageAnalytics
+     *
+     * @class A UShell service for tracking business flows and user actions.
+     *
      * @param {object} oContainerInterface
      *     The interface provided by the container
      * @param {object} sParameter
@@ -37,7 +43,7 @@
      *
      * @public
      */
-    sap.ushell.services.UsageAnalytics = function (oContainerInterface, sParameter, oServiceProperties) {
+    function UsageAnalytics (oContainerInterface, sParameter, oServiceProperties) {
         var oServiceConfig = (oServiceProperties && oServiceProperties.config) || {},
             aDelayedEvents = [],
             bAnalyticsScriptLoaded = false,
@@ -57,6 +63,7 @@
          * @since 1.32.0
          *
          * @public
+         * @alias sap.ushell.services.UsageAnalytics#setLegalText
          */
         this.setLegalText = function (sText) {
             sLegalText = sText;
@@ -127,30 +134,32 @@
          */
         this.showLegalPopup = function () {
             setTimeout(function () {
-                jQuery.sap.require('sap.m.MessageBox');
-                var layout = new sap.ui.layout.VerticalLayout('usageAnalyticsPopUpLayout', {
-                    content: [new sap.m.Text({
+                var layout,
+                    dialog;
+
+                layout = new VerticalLayout('usageAnalyticsPopUpLayout', {
+                    content: [new Text({
                         text: sLegalText
                     })]
                 });
 
-                var dialog = new sap.m.Dialog('agreementMessageBox', {
+                dialog = new Dialog('agreementMessageBox', {
                     title: oInitParameters.usageAnalyticsTitle,
                     type: 'Message',
                     stretch: sap.ui.Device.system.phone,
-                    buttons: [new sap.m.Button('remindMeLaterButton', {
+                    buttons: [new Button('remindMeLaterButton', {
                         text: oInitParameters.remindMeLater,
                         press: function () {
                             dialog.close();
                         }
-                    }), new sap.m.Button('iAgreeButton', {
+                    }), new Button('iAgreeButton', {
                         text: oInitParameters.iAgree,
                         type: 'Accept',
                         press: function () {
                             sap.ushell.Container.getService("UsageAnalytics").setTrackUsageAnalytics(true);
                             dialog.close();
                         }
-                    }), new sap.m.Button('iDisagreeButton', {
+                    }), new Button('iDisagreeButton', {
                         text: oInitParameters.iDisagree,
                         press: function () {
                             sap.ushell.Container.getService("UsageAnalytics").setTrackUsageAnalytics(false);
@@ -177,6 +186,7 @@
          * @since 1.32.0
          *
          * @public
+         * @alias sap.ushell.services.UsageAnalytics#systemEnabled
          */
         this.systemEnabled = function () {
             if (!oServiceConfig.enabled || !oServiceConfig.pubToken || (this.isSetUsageAnalyticsPermitted() && !sLegalText)) {
@@ -203,6 +213,7 @@
          * @since 1.32.0
          *
          * @public
+         * @alias sap.ushell.services.UsageAnalytics#userEnabled
          */
         this.userEnabled = function () {
             var oUser = sap.ushell.Container.getUser();
@@ -282,6 +293,7 @@
          * @since 1.32.0
          *
          * @public
+         * @alias sap.ushell.services.UsageAnalytics#setCustomAttributes
          */
         this.setCustomAttributes = function (oCustomFieldValues) {
             var index,
@@ -443,5 +455,8 @@
             aDelayedEvents.push(oDelayedEvent);
         };
     };
-    sap.ushell.services.UsageAnalytics.hasNoAdapter = true;
-}());
+
+    UsageAnalytics.hasNoAdapter = true;
+    return UsageAnalytics;
+
+}, true /* bExport */);

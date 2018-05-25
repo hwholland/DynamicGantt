@@ -3,7 +3,7 @@
     <name>ObjectPageLazyLoader</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>A helper element that enables a "stashed-based" lazy loading approach for the content of
+    <documentation>A helper element that enables a &quot;stashed-based&quot; lazy loading approach for the content of
 the {@link sap.uxap.ObjectPageSubSection} control.
 
 &lt;code&gt;ObjectPageLazyLoader&lt;/code&gt; is intended to be used in a declarative way only
@@ -19,7 +19,7 @@ Wrapping the content of a subsection in an &lt;code&gt;ObjectPageLazyLoader&lt;/
     <since>1.38</since>
     <baseType>sap.ui.core/Element</baseType>
     <aggregations default="content">
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>Controls to be displayed after this element is unstashed</documentation>
         </aggregation>
     </aggregations>

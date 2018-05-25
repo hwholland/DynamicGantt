@@ -1,12 +1,16 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define([
+	"jquery.sap.global",
+	"./library",
+	"sap/ui/core/Control",
+	"sap/ui/Device",
+	"sap/m/FlexBox"
+], function(jQuery, library, Control, Device, FlexBox) {
 	"use strict";
 
 	/**
@@ -20,7 +24,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -28,158 +32,159 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @ui5-metamodel This control will also be described in the UI5 (legacy) design time metamodel
 	 */
 	var AreaMicroChart = Control.extend("sap.suite.ui.microchart.AreaMicroChart", /** @lends sap.suite.ui.microchart.AreaMicroChart.prototype */ {
-			metadata: {
-				library: "sap.suite.ui.microchart",
-				properties: {
-					/**
-					 * The width of the chart.
-					 */
-					width: {type: "sap.ui.core.CSSSize", group : "Misc", defaultValue : null},
+		metadata: {
+			library: "sap.suite.ui.microchart",
+			properties: {
+				/**
+				 * The width of the chart.
+				 */
+				width: { type: "sap.ui.core.CSSSize", group: "Misc", defaultValue: null },
 
-					/**
-					 * The height of the chart.
-					 */
-					height: {type: "sap.ui.core.CSSSize", group : "Misc", defaultValue : null},
+				/**
+				 * The height of the chart.
+				 */
+				height: { type: "sap.ui.core.CSSSize", group: "Misc", defaultValue: null },
 
-					/**
-					 * If this property is set it indicates the value X axis ends with.
-					 */
-					maxXValue: {type: "float", group : "Misc", defaultValue : null},
+				/**
+				 * If this property is set, it indicates the value the X-axis ends with.
+				 */
+				maxXValue: { type: "float", group: "Misc", defaultValue: null },
 
-					/**
-					 * If this property is set it indicates the value X axis ends with.
-					 */
-					minXValue: {type : "float", group : "Misc", defaultValue : null},
+				/**
+				 * If this property is set it indicates the value X axis ends with.
+				 */
+				minXValue: { type: "float", group: "Misc", defaultValue: null },
 
-					/**
-					 * If this property is set it indicates the value X axis ends with.
-					 */
-					maxYValue: {type: "float", group : "Misc", defaultValue : null},
+				/**
+				 * If this property is set it indicates the value X axis ends with.
+				 */
+				maxYValue: { type: "float", group: "Misc", defaultValue: null },
 
-					/**
-					 * If this property is set it indicates the value X axis ends with.
-					 */
-					minYValue: {type: "float", group : "Misc", defaultValue : null},
+				/**
+				 * If this property is set it indicates the value X axis ends with.
+				 */
+				minYValue: { type: "float", group: "Misc", defaultValue: null },
 
-					/**
-					 * The view of the chart.
-					 */
-					view: {type: "sap.suite.ui.microchart.AreaMicroChartViewType", group : "Appearance", defaultValue : "Normal"},
+				/**
+				 * The view of the chart.
+				 */
+				view: { type: "sap.suite.ui.microchart.AreaMicroChartViewType", group: "Appearance", defaultValue: "Normal" },
 
-					/**
-					 * The color palette for the chart. If this property is set,
-					 * semantic colors defined in AreaMicroChartItem are ignored.
-					 * Colors from the palette are assigned to each line consequentially.
-					 * When all the palette colors are used, assignment of the colors begins
-					 * from the first palette color.
-					 */
-					colorPalette: {type: "string[]", group : "Appearance", defaultValue : [] },
+				/**
+				 * The color palette for the chart. If this property is set,
+				 * semantic colors defined in AreaMicroChartItem are ignored.
+				 * As a result, colors of the palette are assigned to each line.
+				 * When all the palette colors are used up, assignment of the colors starts again from the beginning of the palette.
+				 */
+				colorPalette: { type: "string[]", group: "Appearance", defaultValue: [] },
 
-					/**
-					 * Determines if the labels are displayed or not.
-					 */
-					showLabel: { type: "boolean", group: "Misc", defaultValue: true },
+				/**
+				 * Determines if the labels are displayed or not.
+				 */
+				showLabel: { type: "boolean", group: "Misc", defaultValue: true },
 
-					/**
-					 * If this set to true, width and height of the control are determined by the width and height of the container in which the control is placed. Width and height properties are ignored in such case.
-					 * @since 1.38.0
-					 */
-					isResponsive: {type: "boolean", group: "Appearance", defaultValue: false}
+				/**
+				 * If this set to true, width and height of the control are determined by the width and height of the container in which the control is placed. Width and height properties are ignored in this case.
+				 * @since 1.38.0
+				 */
+				isResponsive: { type: "boolean", group: "Appearance", defaultValue: false }
 
-				},
-				events : {
+			},
+			events: {
 
-					/**
-					 * The event is triggered when the chart is pressed.
-					 */
-					press: {}
+				/**
+				 * The event is triggered when the chart is pressed.
+				 */
+				press: {}
 
-				},
-				defaultAggregation : "lines",
-				aggregations: {
-					/**
-					 * The configuration of the actual values line.
-					 * The color property defines the color of the line.
-					 * Points are rendered in the same sequence as in this aggregation.
-					 */
-					chart: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem", bindable : "bindable" },
+			},
+			defaultAggregation: "lines",
+			aggregations: {
+				/**
+				 * The configuration of the actual values line.
+				 * The color property defines the color of the line.
+				 * Points are rendered in the same sequence as in this aggregation.
+				 */
+				chart: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem", bindable: "bindable" },
 
-					/**
-					 * The configuration of the max threshold area. The color property defines the color of the area above the max threshold line. Points are rendered in the same sequence as in this aggregation.
-					 */
-					maxThreshold: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem" },
+				/**
+				 * The configuration of the max threshold area. The color property defines the color of the area above the max threshold line. Points are rendered in the same sequence as in this aggregation.
+				 */
+				maxThreshold: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem" },
 
-					/**
-					 * The configuration of the upper line of the inner threshold area. The color property defines the color of the area between inner thresholds. For rendering of the inner threshold area, both innerMaxThreshold and innerMinThreshold aggregations must be defined. Points are rendered in the same sequence as in this aggregation.
-					 */
-					innerMaxThreshold: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem" },
+				/**
+				 * The configuration of the upper line of the inner threshold area. The color property defines the color of the area between inner thresholds. For rendering of the inner threshold area, both innerMaxThreshold and innerMinThreshold aggregations must be defined. Points are rendered in the same sequence as in this aggregation.
+				 */
+				innerMaxThreshold: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem" },
 
-					/**
-					 * The configuration of the bottom line of the inner threshold area. The color property is ignored. For rendering of the inner threshold area, both innerMaxThreshold and innerMinThreshold aggregations must be defined. Points are rendered in the same sequence as in this aggregation.
-					 */
-					innerMinThreshold: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem" },
+				/**
+				 * The configuration of the bottom line of the inner threshold area. The color property is ignored. For rendering of the inner threshold area, both innerMaxThreshold and innerMinThreshold aggregations must be defined. Points are rendered in the same sequence as in this aggregation.
+				 */
+				innerMinThreshold: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem" },
 
-					/**
-					 * The configuration of the min threshold area. The color property defines the color of the area below the min threshold line. Points are rendered in the same sequence as in this aggregation.
-					 */
-					minThreshold: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem" },
+				/**
+				 * The configuration of the min threshold area. The color property defines the color of the area below the min threshold line. Points are rendered in the same sequence as in this aggregation.
+				 */
+				minThreshold: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem" },
 
-					/**
-					 * The configuration of the target values line. The color property defines the color of the line. Points are rendered in the same sequence as in this aggregation.
-					 */
-					target: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem", bindable : "bindable" },
+				/**
+				 * The configuration of the target values line. The color property defines the color of the line. Points are rendered in the same sequence as in this aggregation.
+				 */
+				target: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartItem", bindable: "bindable" },
 
-					/**
-					 * The label on X axis for the first point of the chart.
-					 */
-					firstXLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
+				/**
+				 * The label on X axis for the first point of the chart.
+				 */
+				firstXLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
 
-					/**
-					 * The label on Y axis for the first point of the chart.
-					 */
-					firstYLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
+				/**
+				 * The label on Y axis for the first point of the chart.
+				 */
+				firstYLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
 
-					/**
-					 * The label on X axis for the last point of the chart.
-					 */
-					lastXLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
+				/**
+				 * The label on X axis for the last point of the chart.
+				 */
+				lastXLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
 
-					/**
-					 * The label on Y axis for the last point of the chart.
-					 */
-					lastYLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
+				/**
+				 * The label on Y axis for the last point of the chart.
+				 */
+				lastYLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
 
-					/**
-					 * The label for the maximum point of the chart.
-					 */
-					maxLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
+				/**
+				 * The label for the maximum point of the chart.
+				 */
+				maxLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
 
-					/**
-					 * The label for the minimum point of the chart.
-					 */
-					minLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
+				/**
+				 * The label for the minimum point of the chart.
+				 */
+				minLabel: { multiple: false, type: "sap.suite.ui.microchart.AreaMicroChartLabel" },
 
-					/**
-					 * The set of lines.
-					 */
-					lines: { multiple: true, type: "sap.suite.ui.microchart.AreaMicroChartItem", bindable : "bindable" }
-				}
+				/**
+				 * The set of lines.
+				 */
+				lines: { multiple: true, type: "sap.suite.ui.microchart.AreaMicroChartItem", bindable: "bindable" }
+			}
 
 		}
 	});
 
 	// Constants
 	AreaMicroChart.EDGE_CASE_WIDTH_SHOWCHART = 32; // 2rem on the basis of design
+	AreaMicroChart.EDGE_CASE_HEIGHT_WIDE_VIEW_SHOWCHART = 27;
 	AreaMicroChart.EDGE_CASE_HEIGHT_SHOWCANVAS = 16; // 1rem on the basis of design
 	AreaMicroChart.EDGE_CASE_HEIGHT_SHOWBOTTOMLABEL = 16; // 1rem on the basis of design
 	AreaMicroChart.EDGE_CASE_HEIGHT_SHOWTOPLABEL = 32; // 2rem on the basis of design
 	AreaMicroChart.EDGE_CASE_HEIGHT_SHOWLABEL = 16; // 1rem on the basis of design
 	AreaMicroChart.EDGE_CASE_WIDTH_RESIZEFONT = 168; // Corresponds to M size 10.5rem
 	AreaMicroChart.EDGE_CASE_HEIGHT_RESIZEFONT = 72; // Corresponds to M size 4.5rem
+	AreaMicroChart.WIDE_MODE_LABEL_PADDING = 8; // 0.5rem on the basis of design
 	AreaMicroChart.ITEM_NEUTRAL_COLOR = "sapSuiteAMCSemanticColorNeutral";
 	AreaMicroChart.ITEM_NEUTRAL_NOTHRESHOLD_CSSCLASS = "sapSuiteAMCNeutralNoThreshold";
 
-	AreaMicroChart.prototype.init = function(){
+	AreaMicroChart.prototype.init = function() {
 		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.microchart");
 		this.setAggregation("tooltip", "{AltText}", true);
 		this._bThemeApplied = true;
@@ -189,8 +194,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		} else {
 			this._handleCoreInitialized();
 		}
-		if (sap.ui.Device.system.tablet || sap.ui.Device.system.phone) {
-			sap.ui.Device.orientation.attachHandler(this._onOrientationChange, this);
+		if (Device.system.tablet || Device.system.phone) {
+			Device.orientation.attachHandler(this._onOrientationChange, this);
 		}
 	};
 
@@ -203,9 +208,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 */
 	AreaMicroChart.prototype._handleCoreInitialized = function() {
 		this._bThemeApplied = sap.ui.getCore().isThemeApplied();
-		if (!this._bThemeApplied) {
-			sap.ui.getCore().attachThemeChanged(this._handleThemeApplied, this);
-		}
+		sap.ui.getCore().attachThemeChanged(this._handleThemeApplied, this);
 	};
 
 	/**
@@ -217,92 +220,125 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	AreaMicroChart.prototype._handleThemeApplied = function() {
 		this._bThemeApplied = true;
 		this.invalidate();
-		sap.ui.getCore().detachThemeChanged(this._handleThemeApplied, this);
 	};
 
+	/**
+	 * Retrieves the computed styles of the internally used CSS helper element.
+	 * In case the backgroundColor, outlineStyle, and outlineWidth styles do not exist, they are replaced by their hyphenated
+	 * equivalents.
+	 *
+	 * @returns {CSSStyleDeclaration} The CSS style declaration of the internal CSS helper element
+	 * @private
+	 */
 	AreaMicroChart.prototype._getCssValues = function() {
-		this._cssHelper.className = Array.prototype.slice.call(arguments).join(" ");
-		var oCsses = window.getComputedStyle(this._cssHelper);
+		this._$CssHelper.className = Array.prototype.slice.call(arguments).join(" ");
+		var oStyles = window.getComputedStyle(this._$CssHelper);
 
-		if (oCsses.backgroundColor == undefined) {
-			oCsses.backgroundColor = oCsses["background-color"];
+		if (!oStyles.backgroundColor) {
+			oStyles.backgroundColor = oStyles["background-color"];
 		}
 
-		if (oCsses.outlineStyle == undefined) {
-			oCsses.outlineStyle = oCsses["outline-style"];
+		if (!oStyles.outlineStyle) {
+			oStyles.outlineStyle = oStyles["outline-style"];
 		}
 
-		if (oCsses.outlineWidth == undefined) {
-			oCsses.outlineWidth = oCsses["outline-width"];
+		if (!oStyles.outlineWidth) {
+			oStyles.outlineWidth = oStyles["outline-width"];
 		}
-		return oCsses;
+		return oStyles;
 	};
 
-	AreaMicroChart.prototype.__fillThresholdArea = function(c, aPoints1, aPoints2, color) {
-		c.beginPath();
-		c.moveTo(aPoints1[0].x, aPoints1[0].y);
+	/**
+	 * Fills the area between the lines specified via points1 and points2 with the given color.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object[]} points1 The points array used for rendering the multi line.
+	 * @param {object[]} points2 The points array used for rendering the multi line.
+	 * @param {string} color The color to fill the area with.
+	 * @private
+	 */
+	AreaMicroChart.prototype.__fillThresholdArea = function(context, points1, points2, color) {
+		context.beginPath();
+		context.moveTo(points1[0].x, points1[0].y);
 
-		for (var i = 1, length = aPoints1.length; i < length; i++) {
-			c.lineTo(aPoints1[i].x, aPoints1[i].y);
+		for (var i = 1, length = points1.length; i < length; i++) {
+			context.lineTo(points1[i].x, points1[i].y);
 		}
 
-		for (var j = aPoints2.length - 1; j >= 0; j--) {
-			c.lineTo(aPoints2[j].x, aPoints2[j].y);
+		for (var j = points2.length - 1; j >= 0; j--) {
+			context.lineTo(points2[j].x, points2[j].y);
 		}
 
-		c.closePath();
+		context.closePath();
 
-		c.fillStyle = "white";
-		c.fill();
+		context.fillStyle = "white";
+		context.fill();
 
-		c.fillStyle = color;
-		c.fill();
+		context.fillStyle = color;
+		context.fill();
 
-		c.lineWidth = 1;
-		c.strokeStyle = "white";
-		c.stroke();
+		context.lineWidth = 1;
+		context.strokeStyle = "white";
+		context.stroke();
 
-		c.strokeStyle = color;
-		c.stroke();
+		context.strokeStyle = color;
+		context.stroke();
 	};
 
-	AreaMicroChart.prototype._renderDashedLine = function(c, aPoints, d, aDashes) {
-		if (c.setLineDash) {
-			c.setLineDash(aDashes);
-			this._renderLine(c, aPoints, d);
-			c.setLineDash([]);
+	/**
+	 * Renders a dashed line by using the context's native line dash functionality or a helper function.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object[]} points The points array used for rendering the multi line.
+	 * @param {int[]} dasharray The array containing the sequence of blanks and dashes as pixel values.
+	 * @private
+	 */
+	AreaMicroChart.prototype._renderDashedLine = function(context, points, dasharray) {
+		if (context.setLineDash) {
+			context.setLineDash(dasharray);
+			this._renderLine(context, points);
+			context.setLineDash([]);
 		} else {
-			c.beginPath();
-			for (var i = 0, length = aPoints.length - 1; i < length; i++) {
-				c._dashedLine(aPoints[i].x, aPoints[i].y, aPoints[i + 1].x, aPoints[i + 1].y, aDashes);
+			context.beginPath();
+			for (var i = 0, length = points.length - 1; i < length; i++) {
+				context._dashedLine(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, dasharray);
 			}
-			c.stroke();
+			context.stroke();
 		}
 	};
 
-	AreaMicroChart.prototype._renderLine = function(c, aPoints, d) {
-		c.beginPath();
-		c.moveTo(aPoints[0].x, aPoints[0].y);
+	/**
+	 * Renders a multi line using the given points array.
+	 * If a color is to be used, it has to be set prior to calling this function.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object[]} points The points array used for rendering the multi line.
+	 * @private
+	 */
+	AreaMicroChart.prototype._renderLine = function(context, points) {
+		context.beginPath();
+		context.moveTo(points[0].x, points[0].y);
 
-		for (var i = 1, length = aPoints.length; i < length; i++) {
-			c.lineTo(aPoints[i].x, aPoints[i].y);
+		for (var i = 1, length = points.length; i < length; i++) {
+			context.lineTo(points[i].x, points[i].y);
 		}
 
-		c.stroke();
+		context.stroke();
 	};
 
 	/**
 	 * Defines the color class based on the threshold values.
 	 *
 	 * @private
-	 * @param {object} canvasDimensions - the canvas' calculated dimensions object
-	 * @returns {String} - the CSS class used for line color
+	 * @param {object} canvasDimensions The canvas' calculated dimensions object.
+	 * @param {boolean} targetColor Flag indicating render target.
+	 * @returns {String} The CSS class used for line color.
 	 */
 	AreaMicroChart.prototype._getItemColor = function(canvasDimensions, targetColor) {
 		var sItemColor;
 		if (targetColor && this.getTarget()) {
 			sItemColor = "sapSuiteAMCSemanticColor" + this.getTarget().getColor();
-		} else if (!targetColor && this.getChart()){
+		} else if (!targetColor && this.getChart()) {
 			sItemColor = "sapSuiteAMCSemanticColor" + this.getChart().getColor();
 		}
 		if ((sItemColor === AreaMicroChart.ITEM_NEUTRAL_COLOR) && !this._isThresholdPresent(canvasDimensions)) {
@@ -330,90 +366,149 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return false;
 	};
 
-	AreaMicroChart.prototype._renderTarget = function(c, d) {
-		if (d.target.length > 1) {
-			var sColorClass = this._getItemColor(d, true);
-			var oCsses = this._getCssValues("sapSuiteAMCTarget", sColorClass);
-			c.strokeStyle = oCsses.color;
-			c.lineWidth = parseFloat(oCsses.width);
+	/**
+	 * Renders the target line onto the given rendering context.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object} dimensions The object containing the calculated and scaled dimensions of the chart.
+	 * @private
+	 */
+	AreaMicroChart.prototype._renderTarget = function(context, dimensions) {
+		if (dimensions.target.length > 1) {
+			var sColorClass = this._getItemColor(dimensions, true);
+			var oStyles = this._getCssValues("sapSuiteAMCTarget", sColorClass);
+			context.strokeStyle = oStyles.color;
+			context.lineWidth = parseFloat(oStyles.width);
 
-			if (oCsses.outlineStyle == "dotted") {
-				this._renderDashedLine(c, d.target, d, [parseFloat(oCsses.outlineWidth), 3]);
+			if (oStyles.outlineStyle == "dotted") {
+				this._renderDashedLine(context, dimensions.target, [ parseFloat(oStyles.outlineWidth), 3 ]);
 			} else {
-				this._renderLine(c, d.target, d);
+				this._renderLine(context, dimensions.target, dimensions);
 			}
-		} else if (d.target.length == 1) {
+		} else if (dimensions.target.length == 1) {
 			jQuery.sap.log.warning("Target is not rendered because only 1 point was given");
 		}
 	};
 
-	AreaMicroChart.prototype._renderThresholdLine = function(c, aPoints, d) {
-		if (aPoints && aPoints.length) {
-			var oCsses = this._getCssValues("sapSuiteAMCThreshold");
+	/**
+	 * Renders the threshold line with the given points onto the given rendering context.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object[]} points The points array used for rendering the multi line.
+	 * @private
+	 */
+	AreaMicroChart.prototype._renderThresholdLine = function(context, points) {
+		if (points && points.length) {
+			var oStyles = this._getCssValues("sapSuiteAMCThreshold");
 
-			c.strokeStyle = oCsses.color;
-			c.lineWidth = oCsses.width;
-			this._renderLine(c, aPoints, d);
+			context.strokeStyle = oStyles.color;
+			context.lineWidth = oStyles.width;
+			this._renderLine(context, points);
 		}
 	};
 
-	AreaMicroChart.prototype._fillMaxThreshold = function(c, d) {
-		if (d.maxThreshold.length > 1) {
-			var oCsses = this._getCssValues("sapSuiteAMCThreshold", "sapSuiteAMCSemanticColor" + this.getMaxThreshold().getColor());
-			this.__fillThresholdArea(c, d.maxThreshold, [
-				{x: d.maxThreshold[0].x, y: d.minY},
-				{x: d.maxThreshold[d.maxThreshold.length - 1].x, y: d.minY}
-			], oCsses.backgroundColor);
-			this._renderThresholdLine(c, d.maxThreshold, d);
-		} else if (d.maxThreshold.length == 1) {
+	/**
+	 * Renders a filled path and a threshold line for the 'max' threshold.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object} dimensions The object containing the calculated and scaled dimensions of the chart.
+	 * @private
+	 */
+	AreaMicroChart.prototype._fillMaxThreshold = function(context, dimensions) {
+		if (dimensions.maxThreshold.length > 1) {
+			var oStyles = this._getCssValues("sapSuiteAMCThreshold", "sapSuiteAMCSemanticColor" + this.getMaxThreshold().getColor());
+
+			this.__fillThresholdArea(context, dimensions.maxThreshold, [
+				{ x: dimensions.maxThreshold[0].x, y: dimensions.minY },
+				{ x: dimensions.maxThreshold[dimensions.maxThreshold.length - 1].x, y: dimensions.minY }
+			], oStyles.backgroundColor);
+
+			this._renderThresholdLine(context, dimensions.maxThreshold, dimensions);
+		} else if (dimensions.maxThreshold.length == 1) {
 			jQuery.sap.log.warning("Max Threshold is not rendered because only 1 point was given");
 		}
 	};
 
-	AreaMicroChart.prototype._fillMinThreshold = function(c, d) {
-		if (d.minThreshold.length > 1) {
-			var oCsses = this._getCssValues("sapSuiteAMCThreshold", "sapSuiteAMCSemanticColor" + this.getMinThreshold().getColor());
-			this.__fillThresholdArea(c, d.minThreshold, [
-				{x: d.minThreshold[0].x, y: d.maxY},
-				{x: d.minThreshold[d.minThreshold.length - 1].x, y: d.maxY}
-			], oCsses.backgroundColor);
-		} else if (d.minThreshold.length == 1) {
+	/**
+	 * Renders a filled path and a threshold line for the 'min' threshold.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object} dimensions The object containing the calculated and scaled dimensions of the chart.
+	 * @private
+	 */
+	AreaMicroChart.prototype._fillMinThreshold = function(context, dimensions) {
+		if (dimensions.minThreshold.length > 1) {
+			var oStyles = this._getCssValues("sapSuiteAMCThreshold", "sapSuiteAMCSemanticColor" + this.getMinThreshold().getColor());
+			this.__fillThresholdArea(context, dimensions.minThreshold, [
+				{ x: dimensions.minThreshold[0].x, y: dimensions.maxY },
+				{ x: dimensions.minThreshold[dimensions.minThreshold.length - 1].x, y: dimensions.maxY }
+			], oStyles.backgroundColor);
+		} else if (dimensions.minThreshold.length == 1) {
 			jQuery.sap.log.warning("Min Threshold is not rendered because only 1 point was given");
 		}
 	};
 
-	AreaMicroChart.prototype._fillThresholdArea = function(c, d) {
-		if (d.minThreshold.length > 1 && d.maxThreshold.length > 1) {
-			var oCsses = this._getCssValues("sapSuiteAMCThreshold", "sapSuiteAMCSemanticColorCritical");
+	/**
+	 * Renders a filled path and a threshold line for the 'min' threshold.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object} dimensions The object containing the calculated and scaled dimensions of the chart.
+	 * @private
+	 */
+	AreaMicroChart.prototype._fillThresholdArea = function(context, dimensions) {
+		if (dimensions.minThreshold.length > 1 && dimensions.maxThreshold.length > 1) {
+			var oStyles = this._getCssValues("sapSuiteAMCThreshold", "sapSuiteAMCSemanticColorCritical");
 
-			this.__fillThresholdArea(c, d.maxThreshold, d.minThreshold, oCsses.backgroundColor);
+			this.__fillThresholdArea(context, dimensions.maxThreshold, dimensions.minThreshold, oStyles.backgroundColor);
 		}
 	};
 
-	AreaMicroChart.prototype._fillInnerThresholdArea = function(c, d) {
-		if (d.innerMinThreshold.length > 1 && d.innerMaxThreshold.length > 1) {
-			var oCsses = this._getCssValues("sapSuiteAMCThreshold", "sapSuiteAMCSemanticColor" + this.getInnerMaxThreshold().getColor());
+	/**
+	 * Renders a filled path and a threshold line for the 'min' threshold.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object} dimensions The object containing the calculated and scaled dimensions of the chart.
+	 * @private
+	 */
+	AreaMicroChart.prototype._fillInnerThresholdArea = function(context, dimensions) {
+		if (dimensions.innerMinThreshold.length > 1 && dimensions.innerMaxThreshold.length > 1) {
+			var oStyles = this._getCssValues("sapSuiteAMCThreshold", "sapSuiteAMCSemanticColor" + this.getInnerMaxThreshold().getColor());
 
-			this.__fillThresholdArea(c, d.innerMaxThreshold, d.innerMinThreshold, oCsses.backgroundColor);
-		} else if (d.innerMinThreshold.length || d.innerMaxThreshold.length) {
+			this.__fillThresholdArea(context, dimensions.innerMaxThreshold, dimensions.innerMinThreshold, oStyles.backgroundColor);
+		} else if (dimensions.innerMinThreshold.length || dimensions.innerMaxThreshold.length) {
 			jQuery.sap.log.warning("Inner threshold area is not rendered because inner min and max threshold were not correctly set");
 		}
 	};
 
-	AreaMicroChart.prototype._renderChart = function(c, d) {
-		if (d.chart.length > 1) {
-			var sColorClass = this._getItemColor(d);
-			var oCsses = this._getCssValues("sapSuiteAMCChart", sColorClass);
-			c.strokeStyle = oCsses.color;
-			c.lineWidth = parseFloat(oCsses.width);
+	/**
+	 * Renders the chart line for actual value. This line's points are retrieved from the 'chart' aggregation.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object} dimensions The object containing the calculated and scaled dimensions of the chart.
+	 * @private
+	 */
+	AreaMicroChart.prototype._renderChart = function(context, dimensions) {
+		if (dimensions.chart.length > 1) {
+			var sColorClass = this._getItemColor(dimensions);
+			var oStyles = this._getCssValues("sapSuiteAMCChart", sColorClass);
+			context.strokeStyle = oStyles.color;
+			context.lineWidth = parseFloat(oStyles.width);
 
-			this._renderLine(c, d.chart, d);
-		} else if (d.chart.length == 1) {
+			this._renderLine(context, dimensions.chart, dimensions);
+		} else if (dimensions.chart.length == 1) {
 			jQuery.sap.log.warning("Actual values are not rendered because only 1 point was given");
 		}
 	};
 
-	AreaMicroChart.prototype._renderLines = function(c, d) {
+	/**
+	 * Renders the additional lines from the 'lines' aggregation onto the canvas.
+	 * The lines get a palette color or a semantic color, depending on their 'color' properties.
+	 *
+	 * @param {CanvasRenderingContext2D} context The rendering context of the HTML canvas.
+	 * @param {object} dimensions The object containing the calculated and scaled dimensions of the chart.
+	 * @private
+	 */
+	AreaMicroChart.prototype._renderLines = function(context, dimensions) {
 		var iCpLength = this.getColorPalette().length;
 		var iCpIndex = 0;
 		var that = this;
@@ -427,19 +522,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			}
 		};
 
-		var oCsses = this._getCssValues("sapSuiteAMCLine");
-		c.lineWidth = parseFloat(oCsses.width);
+		var oStyles = this._getCssValues("sapSuiteAMCLine");
+		context.lineWidth = parseFloat(oStyles.width);
 
-		var iLength = d.lines.length;
+		var iLength = dimensions.lines.length;
 		for (var i = 0; i < iLength; i++) {
-			if (d.lines[i].length > 1) {
+			if (dimensions.lines[i].length > 1) {
 				if (iCpLength) {
-					c.strokeStyle = fnNextColor();
+					context.strokeStyle = fnNextColor();
 				} else {
-					oCsses = this._getCssValues("sapSuiteAMCLine", "sapSuiteAMCSemanticColor" + this.getLines()[i].getColor());
-					c.strokeStyle = oCsses.color;
+					oStyles = this._getCssValues("sapSuiteAMCLine", "sapSuiteAMCSemanticColor" + this.getLines()[i].getColor());
+					context.strokeStyle = oStyles.color;
 				}
-				this._renderLine(c, d.lines[i], d);
+				this._renderLine(context, dimensions.lines[i], dimensions);
 			}
 		}
 	};
@@ -450,184 +545,200 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @private
 	 */
 	AreaMicroChart.prototype._renderCanvas = function() {
-		this._cssHelper = document.getElementById(this.getId() + "-css-helper");
+		this._$CssHelper = this.getDomRef("css-helper");
 
 		var $this = this.$();
 		var sLabelsWidth = $this.find(".sapSuiteAMCSideLabels").css("width");
 		$this.find(".sapSuiteAMCCanvas, .sapSuiteAMCLabels").css("right", sLabelsWidth).css("left", sLabelsWidth);
 
-		var canvas = document.getElementById(this.getId() + "-canvas");
-		var canvasSettings = window.getComputedStyle(canvas);
+		var oCanvas = this.getDomRef("canvas");
+		var oCanvasSettings = window.getComputedStyle(oCanvas);
 
-		var fWidth = parseFloat(canvasSettings.width);
-		canvas.setAttribute("width", fWidth ? fWidth : 360);
+		var fWidth = parseFloat(oCanvasSettings.width);
+		oCanvas.setAttribute("width", fWidth || 360);
 
-		var fHeight = parseFloat(canvasSettings.height);
-		canvas.setAttribute("height", fHeight ? fHeight : 242);
+		var fHeight = parseFloat(oCanvasSettings.height);
+		oCanvas.setAttribute("height", fHeight || 242);
 
-		var c = canvas.getContext("2d");
+		var oRenderContext = oCanvas.getContext("2d");
 
-		c.lineJoin = "round";
+		oRenderContext.lineJoin = "round";
+		oRenderContext._dashedLine = this._drawDashedLine;
 
-		c._dashedLine = function(x, y, x2, y2, dashArray) {
-			var dashCount = dashArray.length;
-			this.moveTo(x, y);
-			var dx = (x2 - x), dy = (y2 - y);
-			var slope = dx ? dy / dx : 1e15;
-			var distRemaining = Math.sqrt(dx * dx + dy * dy);
-			var dashIndex = 0, draw = true;
-			while (distRemaining >= 0.1) {
-				var dashLength = dashArray[dashIndex++ % dashCount];
-				if (dashLength > distRemaining) {
-					dashLength = distRemaining;
-				}
-				var xStep = Math.sqrt(dashLength * dashLength / (1 + slope * slope));
-				if (dx < 0) {
-					xStep = -xStep;
-				}
-				x += xStep;
-				y += slope * xStep;
-				this[draw ? 'lineTo' : 'moveTo'](x, y);
-				distRemaining -= dashLength;
-				draw = !draw;
-			}
-		};
-		var d = this._calculateDimensions(canvas.width, canvas.height);
+		var oDimensions = this._calculateDimensions(oCanvas.width, oCanvas.height);
 
-		if (this._isThresholdPresent(d)) {
+		if (this._isThresholdPresent(oDimensions)) {
 			$this.find(".sapSuiteAMCCanvas").addClass("sapSuiteAMCWithThreshold");
 		}
 
-		this._fillMaxThreshold(c, d);
-		this._fillMinThreshold(c, d);
-		this._fillThresholdArea(c, d);
-		this._renderThresholdLine(c, d.minThreshold, d);
-		this._renderThresholdLine(c, d.maxThreshold, d);
-		this._fillInnerThresholdArea(c, d);
-		this._renderThresholdLine(c, d.innerMinThreshold, d);
-		this._renderThresholdLine(c, d.innerMaxThreshold, d);
-		this._renderTarget(c, d);
-		this._renderChart(c, d);
-		this._renderLines(c, d);
+		this._fillMaxThreshold(oRenderContext, oDimensions);
+		this._fillMinThreshold(oRenderContext, oDimensions);
+		this._fillThresholdArea(oRenderContext, oDimensions);
+		this._renderThresholdLine(oRenderContext, oDimensions.minThreshold, oDimensions);
+		this._renderThresholdLine(oRenderContext, oDimensions.maxThreshold, oDimensions);
+		this._fillInnerThresholdArea(oRenderContext, oDimensions);
+		this._renderThresholdLine(oRenderContext, oDimensions.innerMinThreshold, oDimensions);
+		this._renderThresholdLine(oRenderContext, oDimensions.innerMaxThreshold, oDimensions);
+		this._renderTarget(oRenderContext, oDimensions);
+		this._renderChart(oRenderContext, oDimensions);
+		this._renderLines(oRenderContext, oDimensions);
 	};
 
 	/**
-	 * Calculates dimensions
+	 * Draws a single dashed line using the given dasharray from the first point with x and y to the
+	 * second point with x2 and y2.
 	 *
-	 * @param fWidth
-	 * @param fHeight
-	 * @returns {object}
+	 * @param {float} x The first x value of the line.
+	 * @param {float} y The first y value of the line.
+	 * @param {float} x2 The second x value of the line.
+	 * @param {float} y2 The second y value of the line.
+	 * @param {float[]} dasharray The array containing the sequence of blanks and dashes as pixel values.
+	 * @private
 	 */
-	AreaMicroChart.prototype._calculateDimensions = function(fWidth, fHeight) {
-		var maxX, maxY, minX, minY;
-		maxX = maxY = minX = minY = undefined;
-		var that = this;
+	AreaMicroChart.prototype._drawDashedLine = function(x, y, x2, y2, dasharray) {
+		var iDashCount = dasharray.length;
+		this.moveTo(x, y);
 
-		function calculateExtremums() {
-			if (!that._isMinXValue || !that._isMaxXValue || !that._isMinYValue || !that._isMaxYValue) {
-				var lines = that.getLines();
-				if (that.getMaxThreshold()) {
-					lines.push(that.getMaxThreshold());
+		var fDelta = (x2 - x), dy = (y2 - y),
+			fSlope = fDelta ? dy / fDelta : 1e15,
+			fRemainingDist = Math.sqrt(fDelta * fDelta + dy * dy),
+			i = 0,
+			bDraw = true;
+
+		while (fRemainingDist >= 0.1) {
+			var dashLength = dasharray[i++ % iDashCount];
+			if (dashLength > fRemainingDist) {
+				dashLength = fRemainingDist;
+			}
+			var fStep = Math.sqrt(dashLength * dashLength / (1 + fSlope * fSlope));
+			if (fDelta < 0) {
+				fStep = -fStep;
+			}
+			x += fStep;
+			y += fSlope * fStep;
+			this[bDraw ? "lineTo" : "moveTo"](x, y);
+			fRemainingDist -= dashLength;
+			bDraw = !bDraw;
+		}
+	};
+
+	/**
+	 * Calculates the dimensions of the chart.
+	 * The dimensions correspond to the current scaling given through control properties.
+	 *
+	 * @private
+	 * @param {float} width Canvas width
+	 * @param {float} height Canvas height
+	 * @returns {object} An object containing the dimensions calculation results
+	 */
+	AreaMicroChart.prototype._calculateDimensions = function(width, height) {
+		var fMaxX, fMaxY, fMinX, fMinY;
+
+		function calculateExtrema() {
+			if (!this._isMinXValue || !this._isMaxXValue || !this._isMinYValue || !this._isMaxYValue) {
+				var aLines = this.getLines();
+				if (this.getMaxThreshold()) {
+					aLines.push(this.getMaxThreshold());
 				}
 
-				if (that.getMinThreshold()) {
-					lines.push(that.getMinThreshold());
+				if (this.getMinThreshold()) {
+					aLines.push(this.getMinThreshold());
 				}
 
-				if (that.getChart()) {
-					lines.push(that.getChart());
+				if (this.getChart()) {
+					aLines.push(this.getChart());
 				}
 
-				if (that.getTarget()) {
-					lines.push(that.getTarget());
+				if (this.getTarget()) {
+					aLines.push(this.getTarget());
 				}
 
-				if (that.getInnerMaxThreshold()) {
-					lines.push(that.getInnerMaxThreshold());
+				if (this.getInnerMaxThreshold()) {
+					aLines.push(this.getInnerMaxThreshold());
 				}
 
-				if (that.getInnerMinThreshold()) {
-					lines.push(that.getInnerMinThreshold());
+				if (this.getInnerMinThreshold()) {
+					aLines.push(this.getInnerMinThreshold());
 				}
 
-				for (var i = 0, numOfLines = lines.length; i < numOfLines; i++) {
-					var aPoints = lines[i].getPoints();
+				for (var i = 0, iLines = aLines.length; i < iLines; i++) {
+					var aPoints = aLines[i].getPoints();
 
-					for (var counter = 0, a = aPoints.length; counter < a; counter++) {
-						var tmpVal = aPoints[counter].getXValue();
-						if (tmpVal > maxX || maxX === undefined) {
-							maxX = tmpVal;
+					for (var k = 0, a = aPoints.length; k < a; k++) {
+						var fValueX = aPoints[k].getXValue();
+						if (fValueX > fMaxX || fMaxX === undefined) {
+							fMaxX = fValueX;
 						}
-						if (tmpVal < minX || minX === undefined) {
-							minX = tmpVal;
+						if (fValueX < fMinX || fMinX === undefined) {
+							fMinX = fValueX;
 						}
 
-						tmpVal = aPoints[counter].getYValue();
-						if (tmpVal > maxY || maxY === undefined) {
-							maxY = tmpVal;
+						var fValueY = aPoints[k].getYValue();
+						if (fValueY > fMaxY || fMaxY === undefined) {
+							fMaxY = fValueY;
 						}
-						if (tmpVal < minY || minY === undefined) {
-							minY = tmpVal;
+						if (fValueY < fMinY || fMinY === undefined) {
+							fMinY = fValueY;
 						}
 					}
 				}
 			}
-			if (that._isMinXValue) {
-				minX = that.getMinXValue();
+			if (this._isMinXValue) {
+				fMinX = this.getMinXValue();
 			}
 
-			if (that._isMaxXValue) {
-				maxX = that.getMaxXValue();
+			if (this._isMaxXValue) {
+				fMaxX = this.getMaxXValue();
 			}
 
-			if (that._isMinYValue) {
-				minY = that.getMinYValue();
+			if (this._isMinYValue) {
+				fMinY = this.getMinYValue();
 			}
 
-			if (that._isMaxYValue) {
-				maxY = that.getMaxYValue();
+			if (this._isMaxYValue) {
+				fMaxY = this.getMaxYValue();
 			}
 		}
 
-		calculateExtremums();
+		calculateExtrema.call(this);
 
 		var oResult = {
 			minY: 0,
 			minX: 0,
-			maxY: fHeight,
-			maxX: fWidth,
+			maxY: height,
+			maxX: width,
 			lines: []
 		};
 
 		var kx;
-		var fDeltaX = maxX - minX;
+		var fDeltaX = fMaxX - fMinX;
 
 		if (fDeltaX > 0) {
-			kx = fWidth / fDeltaX;
+			kx = width / fDeltaX;
 		} else if (fDeltaX == 0) {
 			kx = 0;
 			oResult.maxX /= 2;
 		} else {
-			jQuery.sap.log.warning("Min X is more than max X");
+			jQuery.sap.log.warning("Min X is greater than max X.");
 		}
 
 		var ky;
-		var fDeltaY = maxY - minY;
+		var fDeltaY = fMaxY - fMinY;
 
 		if (fDeltaY > 0) {
-			ky = fHeight / (maxY - minY);
+			ky = height / (fMaxY - fMinY);
 		} else if (fDeltaY == 0) {
 			ky = 0;
 			oResult.maxY /= 2;
 		} else {
-			jQuery.sap.log.warning("Min Y is more than max Y");
+			jQuery.sap.log.warning("Min Y is greater than max Y.");
 		}
 
 		function calculateCoordinates(line) {
 			var bRtl = sap.ui.getCore().getConfiguration().getRTL();
 
 			var fnCalcX = function(fValue) {
-				var x = kx * (fValue - minX);
+				var x = kx * (fValue - fMinX);
 
 				if (bRtl) {
 					x = oResult.maxX - x;
@@ -636,11 +747,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			};
 
 			var fnCalcY = function(fValue) {
-				return oResult.maxY - ky * (fValue - minY);
+				return oResult.maxY - ky * (fValue - fMinY);
 			};
 
 			var aResult = [];
-			if (line && kx != undefined && ky != undefined) {
+			if (line && kx !== undefined && ky !== undefined) {
 				var aPoints = line.getPoints();
 				var iLength = aPoints.length;
 				var xi, yi, tmpXValue, tmpYValue;
@@ -661,7 +772,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 							yn = oResult.maxY;
 						}
 
-						aResult.push({x: xi, y: yi}, {x: xn, y: yn});
+						aResult.push({ x: xi, y: yi }, { x: xn, y: yn });
 					} else {
 						jQuery.sap.log.warning("Point with coordinates [" + tmpXValue + " " + tmpYValue + "] ignored");
 					}
@@ -674,7 +785,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 							xi = fnCalcX(tmpXValue);
 							yi = fnCalcY(tmpYValue);
 
-							aResult.push({x: xi, y: yi});
+							aResult.push({ x: xi, y: yi });
 						} else {
 							jQuery.sap.log.warning("Point with coordinates [" + tmpXValue + " " + tmpYValue + "] ignored");
 						}
@@ -684,16 +795,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			return aResult;
 		}
 
-		oResult.maxThreshold = calculateCoordinates(that.getMaxThreshold());
-		oResult.minThreshold = calculateCoordinates(that.getMinThreshold());
-		oResult.chart = calculateCoordinates(that.getChart());
-		oResult.target = calculateCoordinates(that.getTarget());
-		oResult.innerMaxThreshold = calculateCoordinates(that.getInnerMaxThreshold());
-		oResult.innerMinThreshold = calculateCoordinates(that.getInnerMinThreshold());
+		oResult.maxThreshold = calculateCoordinates(this.getMaxThreshold());
+		oResult.minThreshold = calculateCoordinates(this.getMinThreshold());
+		oResult.chart = calculateCoordinates(this.getChart());
+		oResult.target = calculateCoordinates(this.getTarget());
+		oResult.innerMaxThreshold = calculateCoordinates(this.getInnerMaxThreshold());
+		oResult.innerMinThreshold = calculateCoordinates(this.getInnerMinThreshold());
 
-		var iLength = that.getLines().length;
+		var iLength = this.getLines().length;
 		for (var i = 0; i < iLength; i++) {
-			oResult.lines.push(calculateCoordinates(that.getLines()[i]));
+			oResult.lines.push(calculateCoordinates(this.getLines()[i]));
 		}
 		return oResult;
 	};
@@ -701,7 +812,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	/**
 	 * Property setter for the Min X value
 	 *
-	 * @param {int} value - new value Min X
+	 * @param {float} value - new value Min X
 	 * @param {boolean} bSuppressInvalidate - Suppress in validate
 	 * @returns {void}
 	 * @public
@@ -715,7 +826,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	/**
 	 * Property setter for the Max X value
 	 *
-	 * @param {int} value - new value Max X
+	 * @param {float} value - new value Max X
 	 * @param {boolean} bSuppressInvalidate - Suppress in validate
 	 * @returns {void}
 	 * @public
@@ -729,7 +840,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	/**
 	 * Property setter for the Min Y value
 	 *
-	 * @param {value} value - new value Min Y
+	 * @param {float} value - new value Min Y
 	 * @param {boolean} bSuppressInvalidate - Suppress in validate
 	 * @returns {void}
 	 * @public
@@ -743,7 +854,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	/**
 	 * Property setter for the Max Y value
 	 *
-	 * @param {string} value - new value Max Y
+	 * @param {float} value - new value Max Y
 	 * @param {boolean} bSuppressInvalidate - Suppress in validate
 	 * @returns {void}
 	 * @public
@@ -755,10 +866,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	AreaMicroChart.prototype._isNumber = function(n) {
-		return typeof n === 'number' && !isNaN(n) && isFinite(n);
+		return typeof n === "number" && !isNaN(n) && isFinite(n);
 	};
 
 	AreaMicroChart.prototype.onBeforeRendering = function() {
+		if (this._bUseIndex) {
+			this._indexChartItems();
+		}
 		if (this.getIsResponsive() && !this.data("_parentRenderingContext") && jQuery.isFunction(this.getParent)) {
 			this.data("_parentRenderingContext", this.getParent());
 		}
@@ -767,10 +881,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			library._removeStandardMargins(this);
 		}
 
-		//removes handler for mouseenter event
 		this._unbindMouseEnterLeaveHandler();
 	};
-
 
 	AreaMicroChart.prototype.onAfterRendering = function() {
 		if (this.getIsResponsive()) {
@@ -778,7 +890,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 		library._checkControlIsVisible(this, this._onControlIsVisible);
 
-		//attaches handler for mouseenter event
 		this._bindMouseEnterLeaveHandler();
 	};
 
@@ -789,11 +900,53 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @private
 	 */
 	AreaMicroChart.prototype._onControlIsVisible = function() {
+		this._adjustLabelWidth();
 		if (this.getIsResponsive()) {
 			this._onResize();
 		} else {
 			this._renderCanvas();
 		}
+	};
+
+	AreaMicroChart._CHARTITEM_AGGREGATIONS = ["chart", "target", "minThreshold", "maxThreshold", "innerMinThreshold", "innerMaxThreshold"];
+
+	/**
+	 * Applies numeric indices to the x-coordinates of all points in all AreaMicroChartItem aggregations in order to have them be enumerable.
+	 * This simple enumeration causes an equidistant point distribution on the x-axis.
+	 *
+	 * @private
+	 */
+	AreaMicroChart.prototype._indexChartItems = function() {
+		var oChartItem, n = AreaMicroChart._CHARTITEM_AGGREGATIONS.length;
+		for (var i = 0; i < n; i++) {
+			oChartItem = this.getAggregation(AreaMicroChart._CHARTITEM_AGGREGATIONS[i]);
+			if (oChartItem) {
+				this._indexChartItemPoints(oChartItem);
+			}
+		}
+	};
+
+	/**
+	 * Sets the property "x" of all points in the given AreaMicroChartItem to their respective index in the "points" aggregation.
+	 *
+	 * @param {sap.suite.ui.microchart.AreaMicroChartItem} chartItem The AreaMicroChartItem whose points are to be indexed.
+	 * @private
+	 */
+	AreaMicroChart.prototype._indexChartItemPoints = function(chartItem) {
+		var oPoints = chartItem.getPoints();
+		for (var i = 0; i < oPoints.length; i++) {
+			oPoints[i].setProperty("x", i, true);
+		}
+	};
+
+	/**
+	 * Enables x-values of all points are automatically indexed with numeric, equidistant values.
+	 *
+	 * @param {boolean} useIndex Flag to activate automatic index
+	 * @protected
+	 */
+	AreaMicroChart.prototype.enableXIndexing = function(useIndex) {
+		this._bUseIndex = useIndex;
 	};
 
 	/**
@@ -823,12 +976,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @private
 	 */
 	AreaMicroChart.prototype._adjustToParent = function() {
-		if (this.data("_parentRenderingContext") && this.data("_parentRenderingContext") instanceof sap.m.FlexBox) {
+		if (this.data("_parentRenderingContext") && this.data("_parentRenderingContext") instanceof FlexBox) {
 			// Subtracts two pixels, otherwise there's not enough space for the outline, and the chart won't be rendered properly
 			var $Parent = this.data("_parentRenderingContext").$();
-			var iParentWidth = parseFloat($Parent.width()) - 2;
-			var iParentHeight = parseFloat($Parent.height()) - 2;
-			this.$().outerWidth(iParentWidth).outerHeight(iParentHeight);
+			var fParentWidth = parseFloat($Parent.width()) - 2;
+			var fParentHeight = parseFloat($Parent.height()) - 2;
+			this.$().outerWidth(fParentWidth).outerHeight(fParentHeight);
 		}
 	};
 
@@ -853,14 +1006,63 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		if (fCurrentControlHeight <= AreaMicroChart.EDGE_CASE_HEIGHT_RESIZEFONT) {
 			$this.addClass("sapSuiteAMCSmallFont");
 		}
-		// Hides the top labels EDGE_CASE_HEIGHT_SHOWBOTTOMLABEL
-		if (fCurrentControlHeight <= AreaMicroChart.EDGE_CASE_HEIGHT_SHOWTOPLABEL) {
-			$this.find(".sapSuiteAMCPositionTop.sapSuiteAMCLabels").hide();
+		// Hides chart in wide and normal view
+		if (this.getView() === library.AreaMicroChartViewType.Wide) {
+			if (this._hideWholeChartInWideMode(true)) {
+				$this.hide();
+			}
+		} else {
+			// Hides the top labels EDGE_CASE_HEIGHT_SHOWBOTTOMLABEL
+			if (fCurrentControlHeight <= AreaMicroChart.EDGE_CASE_HEIGHT_SHOWTOPLABEL) {
+				$this.find(".sapSuiteAMCPositionTop.sapSuiteAMCLabels").hide();
+			}
+			// Hides the bottom labels
+			if (fCurrentControlHeight <= AreaMicroChart.EDGE_CASE_HEIGHT_SHOWBOTTOMLABEL) {
+				$this.find(".sapSuiteAMCPositionBtm.sapSuiteAMCLabels").hide();
+			}
 		}
-		// Hides the bottom labels
-		if (fCurrentControlHeight <= AreaMicroChart.EDGE_CASE_HEIGHT_SHOWBOTTOMLABEL) {
-			$this.find(".sapSuiteAMCPositionBtm.sapSuiteAMCLabels").hide();
+	};
+
+	/**
+	 * Adjusts the width of the labels if the chart is not in wide mode.
+	 *
+	 * @private
+	 */
+	AreaMicroChart.prototype._adjustLabelWidth = function() {
+		var oMinLabel = this.getMinLabel();
+		var oMaxLabel = this.getMaxLabel();
+		if (this.getView() !== library.AreaMicroChartViewType.Wide) {
+			if (oMinLabel && oMinLabel.getLabel()) {
+				this._setValueLabelsWidth(".sapSuiteAMCLabels.sapSuiteAMCPositionBtm");
+			}
+			if (oMaxLabel && oMaxLabel.getLabel()) {
+				this._setValueLabelsWidth(".sapSuiteAMCLabels.sapSuiteAMCPositionTop");
+			}
 		}
+	};
+
+	/**
+	 * Calculates and sets the width of the labels if the chart is not in wide mode.
+	 *
+	 * @param {string} selector The selector to search for.
+	 * @private
+	 */
+	AreaMicroChart.prototype._setValueLabelsWidth = function(selector) {
+		var $this = this.$();
+		var $LabelContainer = $this.find(selector);
+		var iLeftLabelWidth, iRightLabelWidth, iLeftLabelPerCent, iRightLabelPerCent, iCenterLabelPerCent;
+		var fCurrentControlWidth = parseFloat($this.css("width"));
+
+		$LabelContainer.children().css("width", "auto");
+		iLeftLabelWidth = $LabelContainer.children(".sapSuiteAMCPositionLeft").width();
+		iRightLabelWidth = $LabelContainer.children(".sapSuiteAMCPositionRight").width();
+		iLeftLabelPerCent = Math.round(iLeftLabelWidth / fCurrentControlWidth * 100) + 1;
+		iRightLabelPerCent = Math.round(iRightLabelWidth / fCurrentControlWidth * 100) + 1;
+		iCenterLabelPerCent = 100 - (iLeftLabelPerCent + iRightLabelPerCent);
+
+		$LabelContainer.children(".sapSuiteAMCPositionLeft").css("width", iLeftLabelPerCent + "%");
+		$LabelContainer.children(".sapSuiteAMCPositionRight").css("width", iRightLabelPerCent + "%");
+		$LabelContainer.children(".sapSuiteAMCPositionCenter").css("width", iCenterLabelPerCent + "%");
 	};
 
 	/**
@@ -870,26 +1072,37 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 */
 	AreaMicroChart.prototype._resizeHorizontally = function() {
 		var $this = this.$();
-		var iCurrentControlWidth = parseFloat($this.css("width"));
+		var fCurrentControlWidth = parseFloat($this.css("width"));
 		var $TopLabelContainer = $this.find(".sapSuiteAMCPositionTop.sapSuiteAMCLabels");
 		var $BottomLabelContainer = $this.find(".sapSuiteAMCPositionBtm.sapSuiteAMCLabels");
-		// Hides the chart if needed
-		if (iCurrentControlWidth <= AreaMicroChart.EDGE_CASE_WIDTH_SHOWCHART){
+		var sView = this.getView();
+		// Hides the entire chart if needed
+		if (fCurrentControlWidth <= AreaMicroChart.EDGE_CASE_WIDTH_SHOWCHART || this.getView() === library.AreaMicroChartViewType.Wide && this._hideWholeChartInWideMode(false)) {
 			$this.hide();
 		} else {
 			this._renderCanvas($this);
 			// Resizes the fonts
-			if (iCurrentControlWidth <= AreaMicroChart.EDGE_CASE_WIDTH_RESIZEFONT) {
+			if (fCurrentControlWidth <= AreaMicroChart.EDGE_CASE_WIDTH_RESIZEFONT) {
 				$this.addClass("sapSuiteAMCSmallFont");
 			}
 			// Hides the labels if truncated
-			var $LabelContainer = [];
-			$LabelContainer.push($TopLabelContainer, $BottomLabelContainer);
-			for (var i = 0; i < $LabelContainer.length; i++){
-				var $Labels = $LabelContainer[i].find(".sapSuiteAMCLbl");
-				for (var j = 0; j < $Labels.size(); j++){
-					if (this._isLabelTruncated($Labels[j])){
-						$LabelContainer[i].hide();
+			var aLabelContainer = [];
+			aLabelContainer.push($TopLabelContainer, $BottomLabelContainer);
+			for (var i = 0; i < aLabelContainer.length; i++) {
+				var $Labels;
+				if (sView === library.AreaMicroChartViewType.Wide) {
+					$Labels = aLabelContainer[i].find(".sapSuiteAMCPositionCenter");
+				} else {
+					$Labels = aLabelContainer[i].find(".sapSuiteAMCLbl");
+				}
+				for (var j = 0; j < $Labels.size(); j++) {
+					if (this._isLabelTruncated($Labels[j])) {
+						aLabelContainer[i].hide();
+						if (jQuery($Labels[j]).parent().is($TopLabelContainer)) {
+							$this.removeClass("sapSuiteAMCTopLbls");
+						} else if (jQuery($Labels[j]).parent().is($BottomLabelContainer)) {
+							$this.removeClass("sapSuiteAMCBtmLbls");
+						}
 						break;
 					}
 				}
@@ -898,18 +1111,45 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	/**
-	 * Checks if the label should be truncated.
+	 * Checks if the chart should be hidden in wide mode.
 	 *
 	 * @private
-	 * @param {Object} label The label to be checked
-	 * @returns {boolean} True if the label should be truncated, false if not.
+	 * @param {boolean} vertical true indicates the size change comes from vertical direction, otherwise is horizontal direction
+	 * @returns {boolean} True if the chart should be hidden, otherwise not.
+	 */
+	AreaMicroChart.prototype._hideWholeChartInWideMode = function(vertical) {
+		var $this = this.$();
+		var $RightLabels = this.$().find(".sapSuiteAMCPositionRight.sapSuiteAMCSideLabels");
+		var $LeftLabels = this.$().find(".sapSuiteAMCPositionLeft.sapSuiteAMCSideLabels");
+		if (vertical) {
+			return $RightLabels.height() < AreaMicroChart.EDGE_CASE_HEIGHT_WIDE_VIEW_SHOWCHART || $LeftLabels.height() <= AreaMicroChart.EDGE_CASE_HEIGHT_WIDE_VIEW_SHOWCHART;
+		} else {
+			var iRightLabelWidth = $RightLabels.width();
+			var iLeftLabelWidth = $LeftLabels.width();
+			// Hides the chart especially for safari browser
+			if (iRightLabelWidth + iLeftLabelWidth >= $this.width()) {
+				$this.find(".sapSuiteAMCCanvas").hide();
+			}
+			// Removes the padding width from the label to the chart
+			iRightLabelWidth = iRightLabelWidth ? iRightLabelWidth - AreaMicroChart.WIDE_MODE_LABEL_PADDING : 0;
+			iLeftLabelWidth = iLeftLabelWidth ? iLeftLabelWidth - AreaMicroChart.WIDE_MODE_LABEL_PADDING : 0;
+			return iRightLabelWidth + iLeftLabelWidth >= this.$().width();
+		}
+	};
+
+	/**
+	 * Checks if the label is truncated.
+	 *
+	 * @private
+	 * @param {Object} label The label to be checked.
+	 * @returns {boolean} True if the label is truncated, false if not.
 	 */
 	AreaMicroChart.prototype._isLabelTruncated = function(label) {
 		var iSubtrahend;
 
-		/* Both Internet Explorer and Edge browser compute the scrollWidth with 1px too much.
+		/* Both Internet Explorer and Edge browser compute the scrollWidth with 1px more.
 		 * In this case the scrollWidth needs to be reduced by 1px */
-		if (sap.ui.Device.browser.msie || sap.ui.Device.browser.edge) {
+		if (Device.browser.msie || Device.browser.edge) {
 			iSubtrahend = 1;
 		} else {
 			iSubtrahend = 0;
@@ -918,7 +1158,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	AreaMicroChart.prototype.ontap = function(oEvent) {
-		if (sap.ui.Device.browser.internet_explorer) {
+		if (Device.browser.msie) {
 			this.$().focus();
 		}
 		this.firePress();
@@ -937,8 +1177,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 	};
 
-	AreaMicroChart.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
+	AreaMicroChart.prototype.attachEvent = function() {
+		Control.prototype.attachEvent.apply(this, arguments);
 
 		if (this.hasListeners("press")) {
 			this.$().attr("tabindex", 0).addClass("sapSuiteUiMicroChartPointer");
@@ -947,8 +1187,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return this;
 	};
 
-	AreaMicroChart.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
+	AreaMicroChart.prototype.detachEvent = function() {
+		Control.prototype.detachEvent.apply(this, arguments);
 
 		if (!this.hasListeners("press")) {
 			this.$().removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer");
@@ -956,8 +1196,15 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return this;
 	};
 
-	AreaMicroChart.prototype._getLocalizedColorMeaning = function(sColor) {
-		return this._oRb.getText(("SEMANTIC_COLOR_" + sColor).toUpperCase());
+	/**
+	 * Retrieves the translated name of the given semantic color from the resource bundle.
+	 *
+	 * @param {sap.m.ValueColor} color The semantic color to be translated.
+	 * @returns {string} The translated text.
+	 * @private
+	 */
+	AreaMicroChart.prototype._getLocalizedColorMeaning = function(color) {
+		return this._oRb.getText(("SEMANTIC_COLOR_" + color).toUpperCase());
 	};
 
 	AreaMicroChart.prototype.getAltText = function() {
@@ -972,11 +1219,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		var oTarget = this.getTarget();
 		var bIsFirst = true;
 		if (oFirstXLabel && oFirstXLabel.getLabel() || oFirstYLabel && oFirstYLabel.getLabel()) {
-			sAltText += (bIsFirst ? "" : "\n") + this._oRb.getText(("AREAMICROCHART_START")) + ": " + (oFirstXLabel ? oFirstXLabel.getLabel() : "") + " " + (oFirstYLabel ? oFirstYLabel.getLabel()  + " " + this._getLocalizedColorMeaning(oFirstYLabel.getColor()) : "");
+			sAltText += (bIsFirst ? "" : "\n") + this._oRb.getText(("AREAMICROCHART_START")) + ": " + (oFirstXLabel ? oFirstXLabel.getLabel() : "") + " " + (oFirstYLabel ? oFirstYLabel.getLabel() + " " + this._getLocalizedColorMeaning(oFirstYLabel.getColor()) : "");
 			bIsFirst = false;
 		}
 		if (oLastXLabel && oLastXLabel.getLabel() || oLastYLabel && oLastYLabel.getLabel()) {
-			sAltText += (bIsFirst ? "" : "\n") + this._oRb.getText(("AREAMICROCHART_END")) + ": " + (oLastXLabel ? oLastXLabel.getLabel() : "") + " " + (oLastYLabel ? oLastYLabel.getLabel()  + " " + this._getLocalizedColorMeaning(oLastYLabel.getColor()) : "");
+			sAltText += (bIsFirst ? "" : "\n") + this._oRb.getText(("AREAMICROCHART_END")) + ": " + (oLastXLabel ? oLastXLabel.getLabel() : "") + " " + (oLastYLabel ? oLastYLabel.getLabel() + " " + this._getLocalizedColorMeaning(oLastYLabel.getColor()) : "");
 			bIsFirst = false;
 		}
 		if (oMinLabel && oMinLabel.getLabel()) {
@@ -1002,7 +1249,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 				sAltText += " " + aTarget[j].getY();
 			}
 		}
-
 		for (var k = 0; k < this.getLines().length; k++) {
 			var oLine = this.getLines()[k];
 			if (oLine.getPoints() && oLine.getPoints().length > 0) {
@@ -1020,9 +1266,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return sAltText;
 	};
 
-
-
-	AreaMicroChart.prototype.getTooltip_AsString = function() {
+	AreaMicroChart.prototype.getTooltip_AsString = function() { //eslint-disable-line
 		var oTooltip = this.getTooltip();
 		var sTooltip = this.getAltText();
 
@@ -1035,8 +1279,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return oTooltip ? oTooltip : "";
 	};
 
-	AreaMicroChart.prototype.clone = function(sIdSuffix, aLocalIds, oOptions) {
-		var oClone = sap.ui.core.Control.prototype.clone.apply(this, arguments);
+	/**
+	 * Returns the translated accessibility control type. It describes the type of the MicroChart control.
+	 *
+	 * @returns {string} The translated accessibility control type
+	 * @private
+	 */
+	AreaMicroChart.prototype._getAccessibilityControlType = function() {
+		return this._oRb.getText("ACC_CTR_TYPE_AREAMICROCHART");
+	};
+
+	AreaMicroChart.prototype.clone = function() {
+		var oClone = Control.prototype.clone.apply(this, arguments);
 		oClone._isMinXValue = this._isMinXValue;
 		oClone._isMaxXValue = this._isMaxXValue;
 		oClone._isMinYValue = this._isMinYValue;
@@ -1045,9 +1299,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	AreaMicroChart.prototype.exit = function() {
-		if (sap.ui.Device.system.tablet || sap.ui.Device.system.phone) {
-			sap.ui.Device.orientation.detachHandler(this._onOrientationChange, this);
+		if (Device.system.tablet || Device.system.phone) {
+			Device.orientation.detachHandler(this._onOrientationChange, this);
 		}
+		sap.ui.getCore().detachThemeChanged(this._handleThemeApplied, this);
 	};
 
 	/**
@@ -1077,8 +1332,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 *
 	 * @private
 	 */
-	AreaMicroChart.prototype._bindMouseEnterLeaveHandler = function () {
-
+	AreaMicroChart.prototype._bindMouseEnterLeaveHandler = function() {
 		// handlers need to be saved intermediately in order to unbind successfully
 		if (!this._oMouseEnterLeaveHandler) {
 			this._oMouseEnterLeaveHandler = {
@@ -1096,13 +1350,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 *
 	 * @private
 	 */
-	AreaMicroChart.prototype._unbindMouseEnterLeaveHandler = function () {
+	AreaMicroChart.prototype._unbindMouseEnterLeaveHandler = function() {
 		if (this._oMouseEnterLeaveHandler) {
 			this.$().unbind("mouseenter", this._oMouseEnterLeaveHandler.mouseEnterChart);
 			this.$().unbind("mouseleave", this._oMouseEnterLeaveHandler.mouseLeaveChart);
 		}
 	};
 
-	return AreaMicroChart;
+	library._overrideGetAccessibilityInfo(AreaMicroChart.prototype);
 
+	return AreaMicroChart;
 });

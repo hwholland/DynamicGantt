@@ -1,11 +1,9 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 
-(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.ui.tile.ImageTileRenderer");
-    jQuery.sap.require("sap.ushell.ui.tile.TileBaseRenderer");
-    jQuery.sap.require("sap.ui.core.Renderer");
+sap.ui.define(['sap/ui/core/Renderer','./TileBaseRenderer'],
+	function(Renderer, TileBaseRenderer) {
+	"use strict";
 
     /**
      * @name sap.ushell.ui.tile.ImageTileRenderer
@@ -13,7 +11,7 @@
      * @private
      */
 
-    sap.ushell.ui.tile.ImageTileRenderer = sap.ui.core.Renderer.extend(sap.ushell.ui.tile.TileBaseRenderer);
+    var ImageTileRenderer = Renderer.extend(TileBaseRenderer);
 
     /**
      * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
@@ -23,12 +21,17 @@
      *
      * @private
      */
-    sap.ushell.ui.tile.ImageTileRenderer.renderPart = function (oRm, oControl) {
+    ImageTileRenderer.renderPart = function (oRm, oControl) {
         // write the HTML into the render manager
         oRm.write("<img");
         oRm.addClass("sapUshellImageTile");
         oRm.writeClasses();
         oRm.writeAttributeEscaped("src", oControl.getImageSource());
+        oRm.writeAttributeEscaped("alt", " ");
         oRm.write("/>");
     };
-}());
+
+
+	return ImageTileRenderer;
+
+}, /* bExport= */ true);

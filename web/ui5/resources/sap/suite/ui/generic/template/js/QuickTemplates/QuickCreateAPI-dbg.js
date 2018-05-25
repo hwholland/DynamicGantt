@@ -42,8 +42,12 @@ sap.ui.define(["sap/ui/base/ManagedObject", "sap/ui/generic/app/transaction/Draf
 
     QuickCreateAPI.EVENT_CONSTANTS = {
         EventChannel : "sap.fiori.cp.quickactions.EventChannel",
-        QUICKCREATE_LINE_ITEMS_FOUND : "LineItemsFound"
+        QUICKCREATE_LINE_ITEMS_FOUND : "LineItemsFound",
+        QUICKCREATE_VIEW_CREATED: "QuickCreateViewCreated"
     };
+
+    var ACCESS_COLL_CONSTANTS_ITEMS = "items",
+        ACCESS_COLL_CONSTANTS_PARTICIPANTS = "participants";
 
     QuickCreateAPI.CopilotModelName = "FioriCopilotODataModel";
 
@@ -244,7 +248,7 @@ sap.ui.define(["sap/ui/base/ManagedObject", "sap/ui/generic/app/transaction/Draf
 
         function _onDataBindingChanged() {
             if (!this._oUpdateModelJSONTimer) {
-                this._oUpdateModelJSONTimer = setTimeout(this._updateModelJSON, 1000);
+                this._oUpdateModelJSONTimer = setTimeout(this._updateModelJSON, 2000);
             }
         }
 
@@ -329,7 +333,7 @@ sap.ui.define(["sap/ui/base/ManagedObject", "sap/ui/generic/app/transaction/Draf
                         oModel.remove(this.oRootView.getBindingContext().getPath(), {
 
                             success: function () {
-                                MessageToast.show("Quick Create Draft has been discarded");
+                                MessageToast.show("Draft has been discarded");
                                 resolve();
                             },
 
@@ -367,6 +371,17 @@ sap.ui.define(["sap/ui/base/ManagedObject", "sap/ui/generic/app/transaction/Draf
             this.fireObjectCreated({context: oContext});
         }
 
+        function fireQuickCreateViewCreated() {
+          // fire embedded view created event
+          sap.ui.getCore().getEventBus().publish(
+              QuickCreateAPI.EVENT_CONSTANTS.EventChannel,
+              QuickCreateAPI.EVENT_CONSTANTS.QUICKCREATE_VIEW_CREATED,
+              {
+                  api: this
+              }
+          );
+        }
+
         function destroy() {
             if (this._bDestroyed) {
                 return;
@@ -396,7 +411,54 @@ sap.ui.define(["sap/ui/base/ManagedObject", "sap/ui/generic/app/transaction/Draf
             this._bDestroyed = true;
         }
 
+        function _getCollectionParts (sPart, aItemTypes) {
+
+            if (this.getCollectionItem()
+                && this.getCollectionItem().copilotEntity
+                && this.getCollectionItem().copilotEntity.getParentEntity()
+                && this.getCollectionItem().copilotEntity.getParentEntity().copilotEntity) {
+
+                if (sPart === ACCESS_COLL_CONSTANTS_ITEMS) {
+                    return this.getCollectionItem().copilotEntity.getParentEntity().copilotEntity.getItemsPublic(aItemTypes);
+                } else if (sPart === ACCESS_COLL_CONSTANTS_PARTICIPANTS) {
+                    return this.getCollectionItem().copilotEntity.getParentEntity().copilotEntity.getParticipantsPublic();
+                } else {
+                    return new Promise(function(resolve, reject){
+                        if (reject) {
+                            reject("Error: " + sPart + " is not a valid part of a collection.");
+                        } else {
+                            resolve([]);
+                        }
+                    });
+                }
+            }
+            return new Promise(function(resolve, reject){
+                if (reject) {
+                    reject("Error: Cannot load collection " + sPart + ". Copilot collection entity cannot be accessed");
+                } else {
+                    resolve([]);
+                }
+            });
+        }
+
+        function getCollectionItems (aItemTypes) {
+            return _getCollectionParts.call(this, ACCESS_COLL_CONSTANTS_ITEMS, aItemTypes);
+        }
+
+        function getCollectionParticipants () {
+            return _getCollectionParts.call(this, ACCESS_COLL_CONSTANTS_PARTICIPANTS);
+        }
+
         var api = new QuickCreateAPI();
+
+        api.COLLECTION_ITEM_TYPES = {};
+        api.COLLECTION_ITEM_TYPES.ITEM_TYPE_NOTE = "NOTE";
+        api.COLLECTION_ITEM_TYPES.ITEM_TYPE_RELOBJ = "RO";
+        api.COLLECTION_ITEM_TYPES.ITEM_TYPE_SCREENSHOT = "SCRS";
+        api.COLLECTION_ITEM_TYPES.ITEM_TYPE_IMAGE = "IMG";
+        api.COLLECTION_ITEM_TYPES.ITEM_TYPE_DOCUMENT = "DOC";
+        api.COLLECTION_ITEM_TYPES = Object.freeze(api.COLLECTION_ITEM_TYPES);
+
 
         jQuery.extend(api, {
 
@@ -424,8 +486,10 @@ sap.ui.define(["sap/ui/base/ManagedObject", "sap/ui/generic/app/transaction/Draf
             _updateModelJSON: _updateModelJSON.bind(api),
             getCopilotModel: getCopilotModel.bind(api),
             discardQuickCreateDraft: discardQuickCreateDraft.bind(api),
-            _onLineItemsFound: _onLineItemsFound.bind(api)
-
+            _onLineItemsFound: _onLineItemsFound.bind(api),
+            fireQuickCreateViewCreated:fireQuickCreateViewCreated.bind(api),
+            getCollectionItems: getCollectionItems.bind(api),
+            getCollectionParticipants: getCollectionParticipants.bind(api)
         });
 
         oComponentContainer.addEventDelegate({

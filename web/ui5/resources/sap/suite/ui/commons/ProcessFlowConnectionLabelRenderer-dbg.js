@@ -1,15 +1,20 @@
 /*!
  * 
- * 		SAP UI development toolkit for HTML5 (SAPUI5)
- * 		(c) Copyright 2009-2015 SAP SE. All rights reserved
- * 	
+		SAP UI development toolkit for HTML5 (SAPUI5)
+		(c) Copyright 2009-2015 SAP SE. All rights reserved
+	
  */
-jQuery.sap.declare("sap.suite.ui.commons.ProcessFlowConnectionLabelRenderer");
-jQuery.sap.require("sap.ui.core.Renderer");
-jQuery.sap.require("sap.m.ButtonRenderer");
+sap.ui.define(['sap/m/ButtonRenderer','sap/ui/core/Renderer'],
+	function(ButtonRenderer, Renderer) {
+	"use strict";
 
-/**
- * @class ProcessFlowConnectionLabel renderer.
- * @static
- */
-sap.suite.ui.commons.ProcessFlowConnectionLabelRenderer = sap.ui.core.Renderer.extend(sap.m.ButtonRenderer);
+	/**
+	 * @class ProcessFlowConnectionLabel renderer.
+	 * @static
+	 */
+	var ProcessFlowConnectionLabelRenderer = Renderer.extend(ButtonRenderer);
+
+
+	return ProcessFlowConnectionLabelRenderer;
+
+}, /* bExport= */ true);

@@ -199,11 +199,6 @@ sap.ui.define([
 					return true;
 				}
 			})
-			.attr("tabindex", function(d){
-				if (!oShape.getParent()) {
-					return 0;
-				}
-			})
 			.attr("aria-label", function (d) {
 				if (!oShape.getParent()) {
 					return oShape.getAriaLabel(d);

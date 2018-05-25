@@ -1,19 +1,20 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/comp/smartfilterbar/ControlConfiguration', 'sap/ui/comp/valuehelpdialog/ValueHelpDialog', 'sap/ui/comp/odata/ODataType', 'sap/ui/comp/util/FormatUtil'
-], function(jQuery, ControlConfiguration, ValueHelpDialog, ODataType, FormatUtil) {
+	'jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/comp/valuehelpdialog/ValueHelpDialog', 'sap/ui/comp/odata/ODataType', 'sap/ui/comp/util/FormatUtil', 'sap/ui/core/format/DateFormat'
+], function(jQuery, library, ValueHelpDialog, ODataType, FormatUtil, DateFormat) {
 	"use strict";
 
 	/**
-	 * Constructs a utility class to convert the filter bar variant from/to internal to suite format
+	 * Constructs a utility class to convert the FilterBar variant from/to internal to suite format
 	 * @constructor
 	 * @public
-	 * @author Franz Mueller
+	 * @author SAP
 	 */
 	var VariantConverterTo = function() {
 	};
@@ -24,17 +25,19 @@ sap.ui.define([
 	 * @param {string} sKey of the current variant
 	 * @param {array} aFilters containing filter names
 	 * @param {string} sData json string representing the filter values
-	 * @param {object} oFilterBar instance of the filterbar object
+	 * @param {object} oFilterBar instance of the FilterBar object
+	 * @param {string} sVersion determining the API version number
 	 * @returns {string} variant in the suite format as json string
 	 */
-	VariantConverterTo.prototype.convert = function(sKey, aFilters, sData, oFilterBar) {
+	VariantConverterTo.prototype.convert = function(sKey, aFilters, sData, oFilterBar, sVersion) {
 
-		var aFields, i;
-		var oJson, oJsonCustom, n = null;
+		var aFields, i, oJson, oJsonCustom, n = null, sBasicSearchName, sBasicSearchValue;
 
 		var oSuiteContent = {
 			SelectionVariantID: sKey
 		};
+
+		this._sAPILevel = sVersion;
 
 		if (sData && aFilters) {
 			oJson = JSON.parse(sData);
@@ -57,8 +60,16 @@ sap.ui.define([
 
 					for (n in oJsonCustom) {
 						if (n) {
-							this._addSingleValue(oSuiteContent, n, this._getValue(oJsonCustom[n]));
+							this._addSingleValue(oSuiteContent, n, VariantConverterTo._getValue(oJsonCustom[n], true));
 						}
+					}
+				}
+
+				if (oFilterBar && oFilterBar.getBasicSearchName) {
+					sBasicSearchName = oFilterBar.getBasicSearchName();
+					if (sBasicSearchName) {
+						sBasicSearchValue = oFilterBar.getBasicSearchValue();
+						this._addSingleValue(oSuiteContent, sBasicSearchName, VariantConverterTo._getValue(sBasicSearchValue, true));
 					}
 				}
 			}
@@ -75,8 +86,7 @@ sap.ui.define([
 	 * @returns {object} meta data of the filter; null otherwise
 	 */
 	VariantConverterTo.prototype._getParameterMetaData = function(sName, oFilterBar) {
-		var i, j;
-		var oGroup;
+		var i, j, oGroup;
 
 		var aFilterMetaData = oFilterBar.getFilterBarViewMetadata();
 		if (aFilterMetaData) {
@@ -85,6 +95,18 @@ sap.ui.define([
 				for (j = 0; j < oGroup.fields.length; j++) {
 					if (sName === oGroup.fields[j].fieldName) {
 						return oGroup.fields[j];
+					}
+				}
+			}
+		}
+
+		if (oFilterBar.getAnalyticalParameters) {
+			var aAnaParameterMetaData = oFilterBar.getAnalyticalParameters();
+			if (aAnaParameterMetaData) {
+				for (j = 0; j < aAnaParameterMetaData.length; j++) {
+
+					if (sName === aAnaParameterMetaData[j].fieldName) {
+						return aAnaParameterMetaData[j];
 					}
 				}
 			}
@@ -99,12 +121,10 @@ sap.ui.define([
 	 * @param {object} oSuiteContent represents the suite format of the variant; will be changed
 	 * @param {string} sFilterName name of the filter
 	 * @param {object} oContent json representing the values of the variant
-	 * @param {object} oFilterBar representing the filterbar instance
+	 * @param {object} oFilterBar representing the FilterBar instance
 	 */
 	VariantConverterTo.prototype._convertField = function(oSuiteContent, sFilterName, oContent, oFilterBar) {
-		var oObj, sValue, sOp = null;
-		var oRanges;
-		var oFilterMetaData;
+		var oObj, sValue, sOp = null, oRanges, oFilterMetaData, aValue, oValue, oDate;
 
 		if (oContent && sFilterName && oSuiteContent) {
 			oObj = oContent[sFilterName];
@@ -116,14 +136,17 @@ sap.ui.define([
 						return; // custom fields will be handled separately
 					}
 
-					if (oFilterMetaData.filterRestriction === ControlConfiguration.FILTERTYPE.single) {
+					if (oFilterMetaData.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.single) {
 						sValue = (oObj.value === undefined) ? oObj : oObj.value;
+
+						sValue = VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetaData, sValue, true);
 						this._addSingleValue(oSuiteContent, sFilterName, sValue);
-					} else if (oFilterMetaData.filterRestriction === ControlConfiguration.FILTERTYPE.interval) {
+
+					} else if (oFilterMetaData.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.interval) {
 						if (oObj.conditionTypeInfo) {
-							this._convertFieldByValue(oSuiteContent, sFilterName, oContent);
+							this._convertFieldByValue(oSuiteContent, sFilterName, oContent, oFilterBar, oFilterMetaData);
 						} else {
-							oRanges = this._addRangeEntry(oSuiteContent, sFilterName);
+							oRanges = VariantConverterTo.addRangeEntry(oSuiteContent, sFilterName);
 
 							if ((oFilterMetaData.type === "Edm.DateTime") && !oObj.high) {
 								oObj.high = oObj.low;
@@ -132,43 +155,71 @@ sap.ui.define([
 							}
 
 							if (oFilterMetaData.type === "Edm.Time") {
-								this._addRangeMultipleRangeValues(oRanges, oObj.ranges, true);
-							} else if (ODataType.isNumeric(oFilterMetaData.type) && !oObj.high) {
-								var sOp = "BT", aValue = FormatUtil.parseFilterNumericIntervalData(oObj.low);
+								this._addRangeMultipleRangeValues(oFilterBar, oFilterMetaData, oRanges, oObj.ranges, true);
+							} else if (oFilterMetaData.type === "Edm.DateTimeOffset" && !oObj.high) {
+
+								if (!this._oFormat) {
+									this._oFormat = DateFormat.getDateTimeInstance({
+										UTC: false
+									});
+								}
+
+								sOp = "BT";
+								aValue = FormatUtil.parseDateTimeOffsetInterval(oObj.low);
 								if (aValue && (aValue.length === 2) && aValue[0]) {
-									this._addRangeLowHigh(oRanges, {
+									oValue = {
+										low: aValue[0],
+										high: aValue[1]
+									};
+
+									oDate = this._oFormat.parse(aValue[0]);
+									if (oDate) {
+										oValue.low = oDate.toISOString();
+									}
+									oDate = this._oFormat.parse(aValue[1]);
+									if (oDate) {
+										oValue.high = oDate.toISOString();
+									}
+
+									this._addRangeLowHigh(oFilterBar, oFilterMetaData, oRanges, oValue, "BT");
+								} else {
+									this._addRangeLowHigh(oFilterBar, oFilterMetaData, oRanges, oObj, "EQ");
+								}
+							} else if (ODataType.isNumeric(oFilterMetaData.type) && !oObj.high) {
+								aValue = FormatUtil.parseFilterNumericIntervalData(oObj.low);
+								if (aValue && (aValue.length === 2) && aValue[0]) {
+									this._addRangeLowHigh(oFilterBar, oFilterMetaData, oRanges, {
 										low: aValue[0],
 										high: aValue[1]
 									}, "BT");
 								} else {
-									this._addRangeLowHigh(oRanges, oObj, "EQ");
+									this._addRangeLowHigh(oFilterBar, oFilterMetaData, oRanges, oObj, "EQ");
 								}
 							} else {
-								this._addRangeLowHigh(oRanges, oObj, sOp);
+								this._addRangeLowHigh(oFilterBar, oFilterMetaData, oRanges, oObj, sOp);
 							}
-
 						}
-					} else if (oFilterMetaData.filterRestriction === ControlConfiguration.FILTERTYPE.multiple) {
-						oRanges = this._addRangeEntry(oSuiteContent, sFilterName);
+					} else if (oFilterMetaData.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.multiple) {
+						oRanges = VariantConverterTo.addRangeEntry(oSuiteContent, sFilterName);
 						if (oObj.items && oObj.items.length > 0) {
-							this._addRangeMultipleSingleValues(oRanges, oObj.items);
+							this._addRangeMultipleSingleValues(oFilterBar, oFilterMetaData, oRanges, oObj.items);
 						} else if (oObj.ranges && oObj.ranges.length > 0) {
-							this._addRangeMultipleRangeValues(oRanges, oObj.ranges);
+							this._addRangeMultipleRangeValues(oFilterBar, oFilterMetaData, oRanges, oObj.ranges);
 						} else {
 							this._addRangeSingleValue(oRanges, oObj.value);
 						}
 					} else {
-						this._convertFieldByValue(oSuiteContent, sFilterName, oContent);
+						this._convertFieldByValue(oSuiteContent, sFilterName, oContent, oFilterBar, oFilterMetaData);
 					}
 				} else {
-					this._convertFieldByValue(oSuiteContent, sFilterName, oContent);
+					this._convertFieldByValue(oSuiteContent, sFilterName, oContent, oFilterBar, oFilterMetaData);
 				}
 
 			}
 		}
 	};
 
-	VariantConverterTo.prototype._convertFieldByValue = function(oSuiteContent, sFilterName, oContent) {
+	VariantConverterTo.prototype._convertFieldByValue = function(oSuiteContent, sFilterName, oContent, oFilterBar, oFilterMetaData) {
 		var oObj;
 		var oRanges;
 
@@ -177,29 +228,29 @@ sap.ui.define([
 			if (oObj) {
 				if (oObj.conditionTypeInfo) {
 					if (oObj.ranges && oObj.ranges.length > 0) {
-						oRanges = this._addRangeEntry(oSuiteContent, sFilterName);
-						this._addRanges(oRanges, oObj.ranges);
+						oRanges = VariantConverterTo.addRangeEntry(oSuiteContent, sFilterName);
+						VariantConverterTo.addRanges(oRanges, oObj.ranges, oFilterBar, oFilterMetaData);
 					}
 				} else if ((oObj.ranges !== undefined) && (oObj.items !== undefined) && (oObj.value !== undefined)) {
 
-					oRanges = this._addRangeEntry(oSuiteContent, sFilterName);
+					oRanges = VariantConverterTo.addRangeEntry(oSuiteContent, sFilterName);
 
 					if (oObj.ranges && oObj.ranges.length > 0) {
-						this._addRanges(oRanges, oObj.ranges);
+						VariantConverterTo.addRanges(oRanges, oObj.ranges, oFilterBar, oFilterMetaData);
 					}
 					if (oObj.items && oObj.items.length > 0) {
-						this._addRangeMultipleSingleValues(oRanges, oObj.items);
+						this._addRangeMultipleSingleValues(oFilterBar, oFilterMetaData, oRanges, oObj.items);
 					}
 					if (oObj.value) { // date
-						this._addRangeSingleValue(oRanges, oObj.value);
+						this._addRangeSingleValue(oRanges, VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetaData, oObj.value));
 					}
 
 				} else if ((oObj.items !== undefined) && oObj.items && (oObj.items.length > 0)) {
-					oRanges = this._addRangeEntry(oSuiteContent, sFilterName);
-					this._addRangeMultipleSingleValues(oRanges, oObj.items);
+					oRanges = VariantConverterTo.addRangeEntry(oSuiteContent, sFilterName);
+					this._addRangeMultipleSingleValues(oFilterBar, oFilterMetaData, oRanges, oObj.items);
 				} else if ((oObj.low !== undefined) && oObj.low && (oObj.high !== undefined) && oObj.high) { // date
-					oRanges = this._addRangeEntry(oSuiteContent, sFilterName);
-					this._addRangeLowHigh(oRanges, oObj);
+					oRanges = VariantConverterTo.addRangeEntry(oSuiteContent, sFilterName);
+					this._addRangeLowHigh(oFilterBar, oFilterMetaData, oRanges, oObj);
 				} else if ((oObj.value !== undefined) && oObj.value) {
 					this._addSingleValue(oSuiteContent, sFilterName, oObj.value);
 				} else if (oObj) {
@@ -211,12 +262,12 @@ sap.ui.define([
 
 	/**
 	 * create a suite 'Ranges' object
-	 * @private
+	 * @protected
 	 * @param {object} oSuiteContent represents the suite format of the variant; will be changed
 	 * @param {string} sFilterName name of the filter
 	 * @returns {object} representing the suite ranges segment
 	 */
-	VariantConverterTo.prototype._addRangeEntry = function(oSuiteContent, sFilterName) {
+	VariantConverterTo.addRangeEntry = function(oSuiteContent, sFilterName) {
 		var oObj = {
 			PropertyName: sFilterName,
 			Ranges: []
@@ -230,37 +281,57 @@ sap.ui.define([
 	};
 
 	/**
-	 * convert ui5 to suite ranges
-	 * @private
+	 * Convert UI5 to suite ranges. P13nCond. Domain 'DDOPTION' Description
+	 * --------------------------------------------------------------------------------- I EQ -> I EQ Equals I BT -> I BT Between ... and ... I
+	 * Contains -> I CP Contains the template I StartsWith -> I CP I EndsWith -> I CP I LE -> I LE Less than or equal to I GE -> I GE Greater than or
+	 * equal to I GT -> I GT Greater than I LT -> I LT Less than E EQ -> E EQ NE Not equal to NB Not between ... and ... NP Does not contain the
+	 * template
+	 * @protected
 	 * @param {object} oRanges represents the suite ranges format of the variant; will be changed
 	 * @param {array} aRanges containing the ranges
 	 */
-	VariantConverterTo.prototype._addRanges = function(oRanges, aRanges) {
+	VariantConverterTo.addRanges = function(oRanges, aRanges, oFilterBar, oFilterMetadata) {
 
 		var sSign, sOption, sLow, sHigh;
 
 		for (var i = 0; i < aRanges.length; i++) {
 			sSign = aRanges[i].exclude ? "E" : "I";
-			sLow = this._getValue(aRanges[i].value1);
-			sHigh = this._getValue(aRanges[i].value2);
+			sLow = VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetadata, aRanges[i].value1, true);
+			sHigh = null;
+			if (aRanges[i].operation === sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.BT) {
+				sHigh = VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetadata, aRanges[i].value2);
+			}
 
-			if (aRanges[i].operation === sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.Contains) {
-				sOption = "CP";
-				if (sLow) {
-					sLow = "*" + sLow + "*";
-				}
-			} else if (aRanges[i].operation === sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.StartsWith) {
-				sOption = "CP";
-				if (sLow) {
-					sLow = sLow + "*";
-				}
-			} else if (aRanges[i].operation === sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.EndsWith) {
-				sOption = "CP";
-				if (sLow) {
-					sLow = "*" + sLow;
-				}
-			} else {
-				sOption = aRanges[i].operation;
+			switch (aRanges[i].operation) {
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.Contains:
+					sOption = "CP";
+					if (sLow) {
+						sLow = "*" + sLow + "*";
+					}
+					break;
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.StartsWith:
+					sOption = "CP";
+					if (sLow) {
+						sLow = sLow + "*";
+					}
+					break;
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.EndsWith:
+					sOption = "CP";
+					if (sLow) {
+						sLow = "*" + sLow;
+					}
+					break;
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.EQ:
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.BT:
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.LE:
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.GE:
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.GT:
+				case sap.ui.comp.valuehelpdialog.ValueHelpRangeOperation.LT:
+					sOption = aRanges[i].operation;
+					break;
+				default:
+					jQuery.sap.log.error("ValueHelpRangeOperation is not supported '" + aRanges[i].operation + "'");
+					return;
 			}
 
 			oRanges.push({
@@ -273,37 +344,37 @@ sap.ui.define([
 	};
 
 	/**
-	 * convert ui5 to suite multiple single values
+	 * convert UI5 to suite multiple single values
 	 * @private
 	 * @param {object} oRanges represents the suite ranges format of the variant; will be changed
 	 * @param {array} aItems containing the ranges
 	 */
-	VariantConverterTo.prototype._addRangeMultipleSingleValues = function(oRanges, aItems) {
+	VariantConverterTo.prototype._addRangeMultipleSingleValues = function(oFilterBar, oFilterMetaData, oRanges, aItems) {
 
 		for (var i = 0; i < aItems.length; i++) {
 			oRanges.push({
 				Sign: "I",
 				Option: "EQ",
-				Low: this._getValue(aItems[i].key),
+				Low: VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetaData, aItems[i].key, true),
 				High: null
 			});
 		}
 	};
 
-	VariantConverterTo.prototype._addRangeMultipleRangeValues = function(oRanges, aItems) {
+	VariantConverterTo.prototype._addRangeMultipleRangeValues = function(oFilterBar, oFilterMetaData, oRanges, aItems, bTimeInterval) {
 
 		for (var i = 0; i < aItems.length; i++) {
 			oRanges.push({
 				Sign: "I",
-				Option: "EQ",
-				Low: this._getValue(aItems[i].value1),
-				High: null
+				Option: bTimeInterval ? "BT" : "EQ",
+				Low: VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetaData, aItems[i].value1, true),
+				High: bTimeInterval ? VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetaData, aItems[i].value2) : null
 			});
 		}
 	};
 
 	/**
-	 * convert ui5 to suite between e.q. Date
+	 * convert UI5 to suite between e.q. Date
 	 * @private
 	 * @param {object} oRanges represents the suite ranges format of the variant; will be changed
 	 * @param {string} sValue of the filter
@@ -313,37 +384,37 @@ sap.ui.define([
 		oRanges.push({
 			Sign: "I",
 			Option: "EQ",
-			Low: this._getValue(sValue),
+			Low: VariantConverterTo._getValue(sValue, true),
 			High: null
 		});
 	};
 
 	/**
-	 * convert ui5 to suite between e.q. Date
+	 * convert UI5 to suite between e.q. Date
 	 * @private
 	 * @param {object} oRanges represents the suite ranges format of the variant; will be changed
 	 * @param {object} oLowHigh containing the ranges
 	 * @param {string} sOp override the default operation
 	 */
-	VariantConverterTo.prototype._addRangeLowHigh = function(oRanges, oLowHigh, sOp) {
+	VariantConverterTo.prototype._addRangeLowHigh = function(oFilterBar, oFilterMetaData, oRanges, oLowHigh, sOp) {
 		var sOperation = sOp || "BT";
 
 		oRanges.push({
 			Sign: "I",
 			Option: sOperation,
-			Low: this._getValue(oLowHigh.low),
-			High: this._getValue(oLowHigh.high)
+			Low: VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetaData, oLowHigh.low, true),
+			High: VariantConverterTo._getValueWithMetadata(oFilterBar, oFilterMetaData, oLowHigh.high)
 		});
 	};
 
 	/**
-	 * convert ui5 to suite between e.q. Date
+	 * convert UI5 to suite between e.q. Date
 	 * @private
 	 * @param {object} oSuiteContent represents the suite format of the variant; will be changed
 	 * @param {string} sFilterName name of the filter
 	 * @param {string} sValue of the filter
 	 */
-	VariantConverterTo.prototype._addSingleValue = function(oSuiteContent, sFilterName, sValue) {
+	VariantConverterTo.prototype._addParamaterSingleValue = function(oSuiteContent, sFilterName, sValue) {
 
 		if (!oSuiteContent.Parameters) {
 			oSuiteContent.Parameters = [];
@@ -353,6 +424,29 @@ sap.ui.define([
 			PropertyName: sFilterName,
 			PropertyValue: sValue
 		});
+	};
+
+	VariantConverterTo.prototype._createRangeSingleValue = function(oSuiteContent, sFilterName, sValue) {
+		var oRanges = VariantConverterTo.addRangeEntry(oSuiteContent, sFilterName);
+		this._addRangeSingleValue(oRanges, sValue);
+	};
+
+	VariantConverterTo.prototype._addSingleValue = function(oSuiteContent, sFilterName, sValue) {
+
+		var aName;
+
+		if (this._sAPILevel) {
+			aName = sFilterName.split(sap.ui.comp.ANALYTICAL_PARAMETER_PREFIX);
+			if (aName.length > 1) {
+				this._addParamaterSingleValue(oSuiteContent, aName[aName.length - 1], sValue);
+			} else {
+				this._createRangeSingleValue(oSuiteContent, sFilterName, sValue);
+			}
+
+		} else {
+			this._addParamaterSingleValue(oSuiteContent, sFilterName, sValue);
+
+		}
 	};
 
 	/**
@@ -378,24 +472,33 @@ sap.ui.define([
 	 * returns either the value
 	 * @private
 	 * @param {object} oValue object
+	 * @param {boolean} bUseEmptyString indicates if a default value should be null or empty string
 	 * @returns {object} stringified value
 	 */
-	VariantConverterTo.prototype._getValue = function(oValue) {
-		if ((oValue === null) || (oValue === undefined)) {
-			return null;
+	VariantConverterTo._getValue = function(oValue, bUseEmptyString) {
+		if ((oValue === null) || (oValue === undefined) || (oValue === "")) {
+			return (bUseEmptyString ? "" : null);
 		}
 
 		return "" + oValue;
 	};
 
-	VariantConverterTo.prototype._getControl = function(oFilterBar, sName) {
-		var oControl = null;
-		var oFilterMetaData = this._getParameterMetaData(sName, oFilterBar);
-		if (oFilterMetaData) {
-			oControl = oFilterMetaData.control;
+	VariantConverterTo._getValueWithMetadata = function(oFilterBar, oFilterMetadata, oValue, bUseEmptyString) {
+		if ((oValue === null) || (oValue === undefined) || (oValue === "")) {
+			return (bUseEmptyString ? "" : null);
+		} else if (oFilterBar && oFilterMetadata) {
+			if ((oFilterMetadata.type === "Edm.DateTime") || (oFilterMetadata.type === "Edm.Time")) {
+				if (oFilterBar && oFilterBar.isInUTCMode && oFilterBar.isInUTCMode() && oFilterBar.getDateInUTCOffset) {
+					oValue = oFilterBar.getDateInUTCOffset(new Date(oValue)).toJSON();
+				}
+
+				if (oValue.indexOf('Z') === (oValue.length - 1)) {
+					oValue = oValue.substr(0, oValue.length - 1);
+				}
+			}
 		}
 
-		return oControl;
+		return "" + oValue;
 	};
 
 	return VariantConverterTo;

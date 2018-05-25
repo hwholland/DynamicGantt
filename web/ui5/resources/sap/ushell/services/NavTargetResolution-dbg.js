@@ -1,19 +1,22 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The NavTargetResolution service.
  */
-(function () {
+sap.ui.define([
+    "sap/ushell/services/AppConfiguration",
+    "sap/ushell/utils",
+    "sap/ushell/navigationMode"
+], function (appConfiguration, utils, oNavigationMode) {
     "use strict";
     /*global jQuery, sap, localStorage, window, URI, document*/
     /*jslint nomen: true */
-    jQuery.sap.declare("sap.ushell.services.NavTargetResolution");
-    jQuery.sap.require("sap.ushell.utils");
-    jQuery.sap.require("sap.ushell.services.AppConfiguration");
 
     /**
      * This method MUST be called by the Unified Shell's container only, others MUST call
      * <code>sap.ushell.Container.getService("NavTargetResolution")</code>.
      * Constructs a new instance of the navigation target resolution service.
+     *
+     * @name sap.ushell.services.NavTargetResolution
      *
      * @class The Unified Shell's internal navigation target resolution service
      *
@@ -24,7 +27,6 @@
      * allow to redefine the Test-url, Test-local1, Test-local2 applications via url parameters
      * (sap-ushell-test-local1-url=  / sap-ushell-test-local1-additionalInformation=  ... )
      *
-     *
      * @constructor
      * @see sap.ushell.services.Container#getService
      * @since 1.15.0
@@ -32,7 +34,7 @@
      *
      * @public
      */
-    sap.ushell.services.NavTargetResolution = function (oAdapter, oContainerInterface, sParameters, oServiceConfiguration) {
+    function NavTargetResolution(oAdapter, oContainerInterface, sParameters, oServiceConfiguration) {
         var oServiceConfig = oServiceConfiguration && oServiceConfiguration.config,
             fnIsClientSideTargetResolutionEnabled = function () {  // need this declaration for fnResolveHashFragment
                 return !!(oServiceConfig && oServiceConfig.enableClientSideTargetResolution);
@@ -109,7 +111,6 @@
          */
         this._resolveHashFragmentClientSideAndFixApplicationType = function (sFragmentNoHash) {
             var oDeferred = new jQuery.Deferred();
-
             sap.ushell.Container.getService("ClientSideTargetResolution").resolveHashFragment(sFragmentNoHash)
                 .done(function (oResolutionResult) {
                     // Ensure backward compatible behavior after incompatible server-side change.
@@ -118,8 +119,8 @@
                     }
                     oDeferred.resolve(oResolutionResult);
                 })
-                .fail(function() {
-                    oDeferred.reject.apply(oDeferred,arguments);
+                .fail(function () {
+                    oDeferred.reject.apply(oDeferred, arguments);
                 });
             return oDeferred.promise();
         };
@@ -153,7 +154,7 @@
                 };
 
             if (sHashFragment && sHashFragment.charAt(0) !== "#") {
-                throw new sap.ushell.utils.Error(
+                throw new utils.Error(
                     "Hash fragment expected in _validateHashFragment",
                     "sap.ushell.services.NavTargetResolution"
                 );
@@ -186,8 +187,9 @@
          *     (in internal format)
          *
          * @public
+         * @alias sap.ushell.services.NavTargetResolution#expandCompactHash
          */
-        this.expandCompactHash = function(sHashFragment) {
+        this.expandCompactHash = function (sHashFragment) {
             var oUrlParsingService = sap.ushell.Container.getService("URLParsing"),
                 oParsedShellHash,
                 oDeferred = new jQuery.Deferred();
@@ -218,7 +220,7 @@
                 );
             } else {
                 //setTimeout(function () {
-                    oDeferred.resolve(sHashFragment);
+                oDeferred.resolve(sHashFragment);
                 //}, 0);
             }
             return oDeferred.promise();
@@ -231,6 +233,9 @@
          *
          * @param {object} oResolvedHashFragment
          *     the hash fragment resolved by one of the registered resolvers
+         *
+         * @param {object} [oCurrentlyOpenedApp]
+         *     an object describing the currently opened app
          *
          * @returns {string}
          *     the navigation mode for the given hash fragment. Returns the
@@ -257,72 +262,6 @@
          *
          * @private
          */
-        this._getNavigationMode = function (oResolvedHashFragment) {
-            var sAdditionalInformation = oResolvedHashFragment.additionalInformation,
-                sApplicationType = oResolvedHashFragment.applicationType,
-                oCurrentlyOpenedApp = sap.ushell.services.AppConfiguration.getCurrentAppliction() || {},
-                sUi5ComponentPart,
-                sUi5ComponentRegex;
-            if (oResolvedHashFragment.navigationMode) {
-                return oResolvedHashFragment.navigationMode;
-            }
-            if (aWDAGUIAppType.indexOf(oCurrentlyOpenedApp.applicationType) > -1 && !oCurrentlyOpenedApp.explicitNavMode) {
-                return 'newWindowThenEmbedded';
-            }
-
-            if ((sAdditionalInformation === null || typeof sAdditionalInformation === "string" || typeof sAdditionalInformation === "undefined") &&
-                    sApplicationType === "URL") {
-
-                /*
-                 * NOTE: The "managed=" and "SAPUI5.Component=" cases are
-                 * skipped if the additionalInformation field does not start
-                 * exactly with the "managed=" and "SAPUI5.Component=" values;
-                 */
-
-                // managed= case(s)
-                if (sAdditionalInformation && sAdditionalInformation.indexOf("managed=") === 0) {
-
-                    if (sAdditionalInformation === "managed=FioriWave1") {
-                        return "embedded";
-                    }
-
-                    if (sAdditionalInformation === "managed=") {
-                        return "newWindow";
-                    }
-
-                    return undefined;
-                }
-
-                // UI5 component case
-                if (sAdditionalInformation && sAdditionalInformation.indexOf("SAPUI5.Component=") === 0) {
-                    sUi5ComponentPart = "[a-zA-Z0-9_]+";
-                    sUi5ComponentRegex = [
-                        "^SAPUI5.Component=",   // starts with SAPUI5.Component=
-                        sUi5ComponentPart,      // at least one part
-                        "([.]", sUi5ComponentPart, ")*$" // multiple dot-separated parts
-                    ].join("");
-
-                    if (!(new RegExp(sUi5ComponentRegex)).test(sAdditionalInformation)) {
-                        jQuery.sap.log.warning(["The UI5 component name in",
-                            sAdditionalInformation, "is not valid.",
-                            "Please use names satisfying", sUi5ComponentRegex
-                            ].join(" "));
-                    }
-
-                    return "embedded";
-                }
-
-                return "newWindow";
-            }
-
-            // NWBC
-            if (sApplicationType === "NWBC" || sApplicationType === "TR") {
-                return "newWindowThenEmbedded";
-            }
-
-            // default
-            return undefined;
-        };
 
         /**
          * Adjusts the applicationType &quot;SAPUI5&quot; to &quot;URL&quot;
@@ -362,7 +301,7 @@
                 oResolvedHashFragment.applicationType = "URL";
             }
 
-            if ((oResolvedHashFragment.applicationType === "URL")) {
+            if (oResolvedHashFragment.applicationType === "URL") {
                 aMatches = /^SAPUI5\.Component=(.*)/.exec(oResolvedHashFragment.additionalInformation);
                 sComponentName = aMatches && aMatches[1];
 
@@ -461,13 +400,14 @@
          *
          * <p>The <code>navigationMode</code> indicates how the target application
          * should be navigated. It is added to the result using the logic
-         * in {@link #_getNavigationMode} if none of the resolvers in the chain
+         * in {@link navigationMode#getNavigationMode} if none of the resolvers in the chain
          * added it.</p>
          *
          * <p>No navigation should occur when the promise is resolved to
          * <code>undefined</code>.</p>
          *
          * @public
+         * @alias sap.ushell.services.NavTargetResolution#resolveHashFragment
          */
         this.resolveHashFragment = function (sHashFragment) {
             var oDeferred = new jQuery.Deferred(),
@@ -476,7 +416,7 @@
                 sSapUshellEncTestValue,
                 sSapSystem,
                 that = this;
-            sap.ushell.utils.addTime("resolveHashFragment");
+            utils.addTime("resolveHashFragment");
             jQuery.sap.measure.average("sap.ushell.navigation.resolveHashFragment");
             this.expandCompactHash(sHashFragment).done(function (sHashFragmentPotentiallyExpanded) {
                 if (sHashFragmentPotentiallyExpanded.indexOf("sap-ushell-enc-test") >= 0) {
@@ -496,15 +436,24 @@
                 var oPromise = that._invokeResolveHashChain(sHashFragmentPotentiallyExpanded);
                 // if method present on adapter, chain through it
                 // (adapter has complete freedom to change success into failure etc.)
-                if (typeof oAdapter.processPostResolution === "function" ) {
+                if (typeof oAdapter.processPostResolution === "function") {
                     oPromise = oAdapter.processPostResolution(sHashFragmentPotentiallyExpanded, oPromise);
                 }
                 oPromise.done(function (oResult) {
                     that._adjustResolutionResultForUi5Components(oResult);
 
                     // Add navigation mode if it's not already there
-                    if (jQuery.isPlainObject(oResult) && !oResult.hasOwnProperty("navigationMode")) {
-                        oResult.navigationMode = that._getNavigationMode(oResult);
+                    if (jQuery.isPlainObject(oResult)) {
+                        if (!oResult.hasOwnProperty("navigationMode")) {
+                            oResult.navigationMode = oNavigationMode.getNavigationMode(
+                                oResult,
+                                appConfiguration.getCurrentAppliction()
+                            );
+                        }
+
+                        oResult.externalNavigationMode = oNavigationMode.getExternalNavigationMode(
+                            oResult.navigationMode
+                        );
                     }
 
                     // add a sap-system if not already there
@@ -516,8 +465,8 @@
                     }
                     jQuery.sap.measure.end("sap.ushell.navigation.resolveHashFragment");
 
-                    //set currect application before initializing the application
-                    sap.ushell.services.AppConfiguration.setCurrentApplication(oResult);
+                    // set current application before initializing the application
+                    appConfiguration.setCurrentApplication(oResult);
 
                     oDeferred.resolve(oResult);
                 }).fail(function (sMessage) {
@@ -541,7 +490,7 @@
 
         /**
          * Returns the method that allows to return results for the getLinks
-         * method along with metainformation to handle the method call.
+         * method along with meta information to handle the method call.
          *
          * @returns {object}
          *   an object like:
@@ -571,6 +520,16 @@
             }
 
             // must call the adapter
+
+            if (Object.prototype.toString.apply(oArgs.paramsOptions) === "[object Array]"
+                && oArgs.paramsOptions.length > 0) {
+
+                jQuery.sap.log.warning(
+                    "Parameter options supplied to #getLinks will be ignored because FLP is not configured to use sap.ushell.services.ClientSideTargetResolution for target resolution",
+                    "provided parameters options: " + JSON.stringify(oArgs.paramsOptions, null, 4),
+                    "sap.ushell.services.NavTargetResolution"
+                );
+            }
 
             // try getLinks
             fnGetLinksBound = oAdapter && oAdapter.getLinks && oAdapter.getLinks.bind(oAdapter);
@@ -616,6 +575,9 @@
          *         A: "B",
          *         C: ["e", "j"]
          *      },
+         *      paramsOptions: [          // optional
+         *         { name: "A", required: true }
+         *      ],
          *      ignoreFormFactor: true,     // optional, defaults to true
          *
          *      ui5Component: UI5Component, // optional, the UI5 component
@@ -650,7 +612,10 @@
          * <pre>
          *   {
          *      intent: "#AnObject-Action?A=B&C=e&C=j",
-         *      text: "Perform action"
+         *      text: "Perform action",
+         *      icon: "sap-icon://Fiori2/F0018",   //optional
+         *      subTitle: "Action", //optional
+         *      shortTitle: "Perform" //optional
          *   }
          * </pre>
          *
@@ -668,17 +633,15 @@
          * @since 1.38.0
          */
         this.getLinks = function (oArgs) {
-            var that = this;
-
-            // get arguments
-            var sSemanticObject = oArgs.semanticObject,
+            var that = this,
+                // get arguments
+                sSemanticObject = oArgs.semanticObject,
                 mParameters = oArgs.params,
                 bIgnoreFormFactor = oArgs.ignoreFormFactor,
                 oComponent = oArgs.ui5Component,
                 sAppStateKey = oArgs.appStateKey,
-                bCompactIntents = oArgs.compactIntents;
-
-            var oParameters,
+                bCompactIntents = oArgs.compactIntents,
+                oParameters,
                 oHrefForExternalArg,
                 oPromise = new jQuery.Deferred(),
                 oShellNavigation,
@@ -694,61 +657,81 @@
                 oParameters["sap-xapp-state"] = encodeURIComponent(sAppStateKey);
             }
 
-            oHrefForExternalArg = {
-                target : {
-                    semanticObject : sSemanticObject,
-                    action : "dummyAction"
-                },
-                params : oParameters
-            };
-
             oShellNavigation = sap.ushell.Container.getService("ShellNavigation");
-            oShellNavigation.hrefForExternal(oHrefForExternalArg, true, oComponent, true).done(function (oResVerboseCompacted) {
-                oParameters = oResVerboseCompacted.params || oParameters;
 
-                var oResolverResult = that._getGetLinksResolver(oArgs);
+            // outcome determins whether the process of getting links delegates
+            // to ClientSideTargetresolution or navtarget resolution adapter.
+            // additonal property, 'tags' does not influence how _getGetLinksResolver behaves
+            var oResolverResult = that._getGetLinksResolver(oArgs),
+                fnHandleGetLinksFailure,
+                fnHandleGetLinksSuccess;
 
-                // warn that functionality is lost in this case
-                if (oResolverResult.warning) {
-                    jQuery.sap.log.warning(
-                        "A problem occurred while determining the resolver for getLinks",
-                        oResolverResult.warning,
-                        "sap.ushell.services.NavTargetResolution"
-                    );
-                }
+            // warn that functionality is lost in this case
+            if (oResolverResult.warning) {
+                jQuery.sap.log.warning(
+                    "A problem occurred while determining the resolver for getLinks",
+                    oResolverResult.warning,
+                    "sap.ushell.services.NavTargetResolution"
+                );
+            }
 
-                fnResolverBound = oResolverResult.resolver;
+            fnResolverBound = oResolverResult.resolver;
 
-                if (fnResolverBound) {
-                    var fnHandleGetLinksFailure = function (sError) { oPromise.reject(sError); };
-                    var fnHandleGetLinksSuccess = function (aSemanticObjectLinks) {
-                        if (bCompactIntents) {
-                            that._shortenGetSemanticObjectLinksResults(aSemanticObjectLinks, oComponent)
-                                .done(function (aCompactSemanticObjectLinks) { // note: no fail handler
-                                    oPromise.resolve(aCompactSemanticObjectLinks);
-                                });
-                        } else {
-                            oPromise.resolve(aSemanticObjectLinks);
-                        }
-                    };
-
-                    // decide how to call the method
-                    if (oResolverResult.isGetSemanticObjectLinksCall) {
-                        fnResolverBound(sSemanticObject, oParameters, bIgnoreFormFactor)
-                            .done(fnHandleGetLinksSuccess)
-                            .fail(fnHandleGetLinksFailure);
+            if (fnResolverBound) {
+                fnHandleGetLinksFailure = function (sError) { oPromise.reject(sError); };
+                fnHandleGetLinksSuccess = function (aSemanticObjectLinks) {
+                    if (bCompactIntents) {
+                        that._shortenGetSemanticObjectLinksResults(aSemanticObjectLinks, oComponent)
+                            .done(function (aCompactSemanticObjectLinks) { // note: no fail handler
+                                oPromise.resolve(aCompactSemanticObjectLinks);
+                            });
                     } else {
-                        fnResolverBound(oArgs)  // safe to pass oArgs (it's handled at CrossApplicationNavigation level)
-                            .done(fnHandleGetLinksSuccess)
-                            .fail(fnHandleGetLinksFailure);
+                        oPromise.resolve(aSemanticObjectLinks);
                     }
+                };
 
+                // this will be true for old legacy platform
+                if (oResolverResult.isGetSemanticObjectLinksCall) {
+                    //
+                    // 'this' in fnResolverBound will be nav target resolution adapter
+                    //
+                    // The portal still does server side resolution on the ABAP
+                    // server. In here, long parameters are not sent to the
+                    // server.  So we use the hrefForExternal to obtain a
+                    // sap-intent-param and actually truncate the original list
+                    // of parameters...
+                    //
+                    oHrefForExternalArg = {
+                        target : {
+                            semanticObject : sSemanticObject,
+                            action : "dummyAction"
+                        },
+                        params : oParameters
+                    };
+                    oShellNavigation.hrefForExternal(oHrefForExternalArg, true, oComponent, true).done(function (oResVerboseCompacted) {
+                        var oMaybeCompactedParameters = oResVerboseCompacted.params || oParameters;
+
+                        fnResolverBound(
+                            sSemanticObject,
+                            oMaybeCompactedParameters, /* May contain sap-intent-param (but
+                                                          server does nothing with it) */
+                            bIgnoreFormFactor)
+                                .done(fnHandleGetLinksSuccess)
+                                .fail(fnHandleGetLinksFailure);
+
+                    }).fail(function (sMsg) {
+                        oPromise.reject(sMsg);
+                    });
                 } else {
-                    oPromise.resolve([]);
+                    // 'this' in fnResolverBound will be client side target resolution
+                    fnResolverBound(oArgs)  // safe to pass oArgs (it's handled at CrossApplicationNavigation level)
+                        .done(fnHandleGetLinksSuccess)
+                        .fail(fnHandleGetLinksFailure);
                 }
-            }).fail(function (sMsg) {
-                oPromise.reject(sMsg);
-            });
+
+            } else {
+                oPromise.resolve([]);
+            }
             return oPromise.promise();
         };
 
@@ -792,6 +775,7 @@
 
         this._getLinksClientSide = function (oArgs) {
             var oDeferred = new jQuery.Deferred(),
+                sCompactHash,
                 oCallWithExpandedParamsDeferred = new jQuery.Deferred(), // always resolved
                 oUrlParsingService = sap.ushell.Container.getService("URLParsing");
             /*
@@ -804,7 +788,7 @@
              * a URL which is effectively compacted
              */
             if ((oArgs.params || {}).hasOwnProperty("sap-intent-param")) {
-                var sCompactHash = "#" + oArgs.semanticObject + "-" + "dummyAction?" + oUrlParsingService.paramsToString(oArgs.params);
+                sCompactHash = "#" + oArgs.semanticObject + "-" + "dummyAction?" + oUrlParsingService.paramsToString(oArgs.params);
                 this.expandCompactHash(sCompactHash)
                     .done(function (sExpandedHash) {
                         oCallWithExpandedParamsDeferred.resolve(
@@ -858,16 +842,16 @@
 
             aGetSemanticObjectLinksResults.forEach(function (oIntent) {
                 var oUrlParts = oUrlParsingService.parseShellHash(oIntent.intent),
-                    oCompactParamsPromise = oShellNavigation.compactParams(oUrlParts.params, undefined /* keep all params */, oComponent);
+                    oCompactParamsPromise = oShellNavigation.compactParams(oUrlParts.params, undefined/* keep all params */, oComponent);
 
                 aSemanticObjectLinksShortened.push(oCompactParamsPromise);
-                aSemanticObjectLinksShortened[i].done(function(iIdx, oCompactParams) {
+                aSemanticObjectLinksShortened[i].done(function (iIdx, oCompactParams) {
                     aSemanticObjectLinksShortened[iIdx] = {
                         text: oIntent.text,
                         intent: "#" + oUrlParts.semanticObject + "-" + oUrlParts.action + "?" +
                             oUrlParsingService.paramsToString(oCompactParams)
                     };
-                }.bind(that, i)).fail(function(iIdx, sMsg) {
+                }.bind(that, i)).fail(function (iIdx, sMsg) {
                     jQuery.sap.log.warning(
                         "Cannot shorten GetSemanticObjectLinks result, using expanded form",
                         "Failure message: " + sMsg + "; intent had title ''" + oIntent.title + "'' and link ''" + oIntent.intent + "'",
@@ -916,7 +900,7 @@
             var mResult = {},
                 oClientSideTargetResolutionService;
 
-            if (this._isClientSideTargetResolutionEnabled() ) {
+            if (this._isClientSideTargetResolutionEnabled()) {
                 // NOTE: request ClientSideTargetResolution service only if enabled!
                 oClientSideTargetResolutionService = sap.ushell.Container.getService("ClientSideTargetResolution");
                 return oClientSideTargetResolutionService.isIntentSupported(aIntents);
@@ -1014,6 +998,7 @@
          *
          * @since 1.32
          * @public
+         * @alias sap.ushell.services.NavTargetResolution#isNavigationSupported
          */
         this.isNavigationSupported = function (aIntents) {
             var oUrlParsingService = sap.ushell.Container.getService("URLParsing"),
@@ -1231,7 +1216,7 @@
 
                 // return undefined URL if not in same domain or not in runStandaloneAppFolderWhitelist
                 function localURL(sUrl) {
-                    if (sap.ushell.utils.calculateOrigin(that.parseUrl(sUrl)) !== sap.ushell.utils.calculateOrigin(window.location)) {
+                    if (utils.calculateOrigin(that.parseUrl(sUrl)) !== utils.calculateOrigin(window.location)) {
                         return undefined;
                     }
                     // on IE11, that.parseUrl(sUrl).pathname when set with /a/../b/ is /a/../b/,
@@ -1303,7 +1288,7 @@
                     // Configuring an app via url parameters is restricted to localhost for security reasons,
                     // unless explicitly enabled by config
                     if ((window.location.hostname === "localhost") ||
-                            oServiceConfig.allowTestUrlComponentConfig) {
+                            (oServiceConfig && oServiceConfig.allowTestUrlComponentConfig)) {
                         sPrefix = "sap-ushell-test-" + sHashFragment.substring(6);
                         additionalInformation = getURLParameter(sPrefix + "-additionalInformation");
                         if (additionalInformation) {
@@ -1346,4 +1331,11 @@
             return oCurrentResolution;
         };
     };
-}());
+
+    // Note: we set it to true to allow platforms that did not yet switch to
+    // ClientSideTargetResolution to keep using the adapter.
+    NavTargetResolution.hasNoAdapter = false;
+
+    return NavTargetResolution;
+
+}, true /* bExport */);

@@ -9,7 +9,7 @@
     <since>1.48.0</since>
     <baseType>sap.m/TreeItemBase</baseType>
     <aggregations default="content">
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>The content of this tree item.</documentation>
         </aggregation>
     </aggregations>

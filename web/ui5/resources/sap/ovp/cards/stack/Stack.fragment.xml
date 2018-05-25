@@ -5,14 +5,15 @@
 
     <VBox id="stackContent" class="sapOvpStackCardContent" justifyContent="SpaceBetween">
         <customData>
-            <ovp:CustomData key="tabindex" value="0" writeToDom="true" />
-            <ovp:CustomData key="role" value="button" writeToDom="true" />
+            <ovp:CustomData key="tabindex" value="0" writeToDom="true"/>
+            <ovp:CustomData key="role" value="button" writeToDom="true"/>
         </customData>
-        <Label id="stackSize">
+        <Label id="stackSize" class="sapOvpStackCardSize">
             <customData>
-                <ovp:CustomData key="role" value="heading" writeToDom="true" />
+                <ovp:CustomData key="role" value="" writeToDom="true"/>
             </customData>
         </Label>
-        <core:Icon class="sapOvpStackCardIcon" src="sap-icon://dimension" useIconTooltip="false"></core:Icon>
+        <Text id="stackTotalSize" class="sapOvpStackCardTotalSize"/>
+        <core:Icon id="StackCardIcon" class="sapOvpStackCardIcon" src="sap-icon://dimension" useIconTooltip="false"></core:Icon>
     </VBox>
 </core:FragmentDefinition>

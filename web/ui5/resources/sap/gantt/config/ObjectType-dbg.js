@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -45,7 +45,7 @@ sap.ui.define([
 				 * Specifies the expanded chart scheme in which the the object type can be shown
 				 * Array of keys of {@link sap.gantt.config.ChartScheme}
 				 */
-				expandedChartSchemeKeys: {type: "array", defaultValue: []}
+				expandedChartSchemeKeys: {type: "string[]", defaultValue: []}
 			}
 		}
 	});

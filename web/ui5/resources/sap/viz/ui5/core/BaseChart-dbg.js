@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.core.BaseChart.
@@ -102,13 +102,13 @@ sap.ui.define([
 	  var oLink = jQuery.sap.domById("sap-ui-theme-sap.viz");
 	  if ( oLink ) {
 	    sCSSUrl = oLink.href;
-	    sCSSText = jQuery.sap.syncGetText(sCSSUrl+ "?", undefined, undefined);
+	    sCSSText = jQuery.sap.syncGetText(sCSSUrl + "?", undefined, undefined);
 	    if (!sCSSText){
 	      sCSSText = "";
 	    }
 	  } 
 	  if (this.getCss()){
-	  	sCSSContent = sCSSText + this.getCss();
+	    sCSSContent = sCSSText + this.getCss();
 	  }
 	  return sCSSContent;
 	};
@@ -247,14 +247,14 @@ sap.ui.define([
 	BaseChart.prototype.setDefaultSelection = function(selectionInfos) {
 	  // retrieve new size and set it for the viz charts
 	  var ds = this.getDataset();
-	  if(ds){
-	    var vizds = this.getDataset().getVIZDataset();
-	    if(vizds){
-	      vizds.info({
+	  if (ds){
+	     var vizds = ds.getVIZDataset();
+	     if (vizds){
+	       vizds.info({
 	        'type' : 'defaultSelection',
 	        'value' : selectionInfos
-	      });
-	      if(this._oVIZInstance){
+	       });
+	     if (this._oVIZInstance){
 	        this._oVIZInstance.data(vizds);
 	      }
 	    }
@@ -262,14 +262,14 @@ sap.ui.define([
 	};
 
 	BaseChart.prototype.onThemeChanged = function (o){
-	  if (! this.getDomRef()){
+	  if (!this.getDomRef()){
 	    return;
 	  } 
 	  this._renderChart();
 	};
 
 	BaseChart.prototype.onLocalizationChanged = function (o){
-	  if (! this.getDomRef()){
+	  if (!this.getDomRef()){
 	    return;
 	  } 
 	  this._renderChart();
@@ -290,15 +290,17 @@ sap.ui.define([
 	BaseChart.prototype._getOptions = BaseStructuredType.prototype._getOptions;
 
 	BaseChart.prototype._attachVIZEvent = function(sName, oData, fnHandler, oListener) {
-		var that=this;
-		if ( !this.hasListeners(sName) ) {
+		var that = this;
+		if (!this.hasListeners(sName)) {
 			this._mVIZHandler[sName] = function(o) {
 				that.fireEvent(sName, o);
-			}
-			if ( this._oVIZInstance ) {
+			};
+
+			if (this._oVIZInstance) {
 				this._oVIZInstance.on(sName + BaseChart.EVENT_SUFFIX, this._mVIZHandler[sName]);
 			}
 		}
+
 		Control.prototype.attachEvent.apply(this, arguments);
 		return this;
 	};
@@ -368,8 +370,8 @@ sap.ui.define([
 	 * @public
 	 */
 	BaseChart.prototype.selection = function(selectionPoint, options){
-	  if(this._oVIZInstance){
-	    return this._oVIZInstance.selection.apply(this._oVIZInstance, arguments);
+	  if (this._oVIZInstance){
+	      return this._oVIZInstance.selection.apply(this._oVIZInstance, arguments);
 	  }
 	};
 

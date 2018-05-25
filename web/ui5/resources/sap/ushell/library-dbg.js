@@ -1,17 +1,18 @@
 /*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
-
-/* -----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying
- * source files only (*.type, *.js) or they will be lost after the next generation.
- * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.ushell (1.38.26)
+ * Initialization Code and shared classes of library sap.ushell.
  */
-jQuery.sap.declare("sap.ushell.library");
-jQuery.sap.require("sap.ui.core.Core");
+sap.ui.define([
+		'sap/m/library',
+		'sap/ui/core/Core',
+		'sap/ui/core/library',
+		'sap/ui/layout/library'
+	], function(library3, Core, library1, library2) {
+	"use strict";
+
 /**
  * SAP library: sap.ushell
  *
@@ -22,10 +23,6 @@ jQuery.sap.require("sap.ui.core.Core");
 
 
 // library dependencies
-jQuery.sap.require("sap.ui.core.library");
-jQuery.sap.require("sap.ui.layout.library");
-jQuery.sap.require("sap.m.library");
-
 // delegate further initialization of this library to the Core
 sap.ui.getCore().initLibrary({
 	name : "sap.ushell",
@@ -56,12 +53,12 @@ sap.ui.getCore().initLibrary({
 		"sap.ushell.ui.launchpad.AnchorNavigationBar",
 		"sap.ushell.ui.launchpad.DashboardGroupsContainer",
 		"sap.ushell.ui.launchpad.EmbeddedSupportErrorMessage",
+		"sap.ushell.ui.launchpad.Fiori2LoadingDialog",
 		"sap.ushell.ui.launchpad.GroupHeaderActions",
 		"sap.ushell.ui.launchpad.GroupListItem",
 		"sap.ushell.ui.launchpad.HeaderTile",
 		"sap.ushell.ui.launchpad.LinkTileWrapper",
 		"sap.ushell.ui.launchpad.LoadingDialog",
-		"sap.ushell.ui.launchpad.LoadingOverlay",
 		"sap.ushell.ui.launchpad.Panel",
 		"sap.ushell.ui.launchpad.PlusTile",
 		"sap.ushell.ui.launchpad.Tile",
@@ -74,25 +71,20 @@ sap.ui.getCore().initLibrary({
 		"sap.ushell.ui.tile.TileBase"
 	],
 	elements: [],
-	version: "1.38.26"
+	version: "1.54.3",
+	extensions: {
+		"sap.ui.support" : {
+			diagnosticPlugins: [
+				"sap/ushell/support/plugins/flpConfig/FlpConfigurationPlugin"
+			]
+		}
+	}
 });
 
-/*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
- */
-
-/* ----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying 
- * source files only (*.type, *.js) or they will be lost after the next generation.
- * ---------------------------------------------------------------------------------- */
-
-// Provides enumeration sap.ushell.ui.launchpad.ViewPortState.
-jQuery.sap.declare("sap.ushell.ui.launchpad.ViewPortState");
 /**
- * @class Denotes states for control parts and translates into standard SAP color codes
+ * Denotes states for control parts and translates into standard SAP color codes
  *
- * @version 1.38.26
- * @static
+ * @enum {string}
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
  */
@@ -141,22 +133,10 @@ sap.ushell.ui.launchpad.ViewPortState = {
 	CenterRight : "CenterRight"
 
 };
-/*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
- */
-
-/* ----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying 
- * source files only (*.type, *.js) or they will be lost after the next generation.
- * ---------------------------------------------------------------------------------- */
-
-// Provides enumeration sap.ushell.ui.tile.State.
-jQuery.sap.declare("sap.ushell.ui.tile.State");
 /**
- * @class Denotes states for control parts and translates into standard SAP color codes
+ * Denotes states for control parts and translates into standard SAP color codes
  *
- * @version 1.38.26
- * @static
+ * @enum {string}
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
  */
@@ -211,23 +191,11 @@ sap.ushell.ui.tile.State = {
 	Warning : "Warning"
 
 };
-/*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
- */
-
-/* ----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying 
- * source files only (*.type, *.js) or they will be lost after the next generation.
- * ---------------------------------------------------------------------------------- */
-
-// Provides enumeration sap.ushell.ui.tile.StateArrow.
-jQuery.sap.declare("sap.ushell.ui.tile.StateArrow");
 /**
- * @class The state of an arrow as trend direction indicator, pointing either up or down
+ * The state of an arrow as trend direction indicator, pointing either up or down
  * @private
  *
- * @version 1.38.26
- * @static
+ * @enum {string}
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
  */
@@ -252,11 +220,6 @@ sap.ushell.ui.tile.StateArrow = {
 	Down : "Down"
 
 };
-
-// -----------------------------------------------------------------------------
-// Begin of Library Initialization coding, copied from shared.js
-// -----------------------------------------------------------------------------
-
 // shared.js is automatically appended to library.js
 //
 // hiding (generated) types that are marked as @public by default
@@ -268,3 +231,7 @@ sap.ushell.ui.tile.StateArrow = {
  * @name sap.ushell.ui.tile.State
  * @private
  */
+
+return sap.ushell;
+
+}, /* bExport= */ true);

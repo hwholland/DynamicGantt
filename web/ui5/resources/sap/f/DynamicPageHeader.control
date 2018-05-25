@@ -26,18 +26,18 @@ content that is displayed.</documentation>
     <since>1.42</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="pinnable" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="pinnable">
             <documentation>Determines whether the header is pinnable.</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>The content of the header.</documentation>
         </aggregation>
-        <aggregation name="_pinButton" type="sap.m/Button" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/Button" name="_pinButton">
             <documentation>The pin/unpin button in the header.</documentation>
         </aggregation>
-        <aggregation name="_collapseButton" type="sap.m/Button" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/Button" name="_collapseButton">
             <documentation>Visual indication for expanding/collapsing.</documentation>
         </aggregation>
     </aggregations>

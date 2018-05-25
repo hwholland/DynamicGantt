@@ -1,46 +1,46 @@
-(function () {
-	"use strict";
-	/*global jQuery, sap */
+sap.ui.define(["sap/ovp/cards/generic/Component", "sap/ovp/cards/charts/VizAnnotationManager"],
 
-	jQuery.sap.declare("sap.ovp.cards.charts.analytical.Component");
-	jQuery.sap.require("sap.ovp.cards.generic.Component");
-	jQuery.sap.require("sap.ovp.cards.charts.VizAnnotationManager");
-	sap.ovp.cards.generic.Component.extend("sap.ovp.cards.charts.analytical.Component", {
-		// use inline declaration instead of component.json to save 1 round trip
-		metadata: {
-			properties: {
-				"headerExtensionFragment":{
-					"type": "string",
-					"defaultValue": "sap.ovp.cards.generic.KPIHeader"
-				},
-				"contentFragment": {
-					"type": "string",
-					"defaultValue": "sap.ovp.cards.charts.analytical.analyticalChart"
-				}
-			},
+    function (CardComponent, VizAnnotationManager) {
+        "use strict";
 
-			version: "1.38.10",
+        return CardComponent.extend("sap.ovp.cards.charts.analytical.Component", {
+            // use inline declaration instead of component.json to save 1 round trip
+            metadata: {
+                properties: {
+                    "headerExtensionFragment": {
+                        "type": "string",
+                        "defaultValue": "sap.ovp.cards.generic.KPIHeader"
+                    },
+                    "contentFragment": {
+                        "type": "string",
+                        "defaultValue": "sap.ovp.cards.charts.analytical.analyticalChart"
+                    }
+                },
 
-			library: "sap.ovp",
+                version: "1.54.3",
 
-			includes: [],
+                library: "sap.ovp",
 
-			dependencies: {
-				libs: [ "sap.m","sap.viz" ],
-				components: []
-			},
-			config: {},
-			customizing: {
-				"sap.ui.controllerExtensions": {
-					"sap.ovp.cards.generic.Card": {
-						controllerName: "sap.ovp.cards.charts.analytical.analyticalChart"
-					}
-				}
-			}
-		},
+                includes: [],
 
-		onAfterRendering: function() {
-			jQuery(".tabindex0").attr("tabindex", 0);
-		}
-	});
-})();
+                dependencies: {
+                    libs: ["sap.viz"],
+                    components: []
+                },
+                config: {},
+                customizing: {
+                    "sap.ui.controllerExtensions": {
+                        "sap.ovp.cards.generic.Card": {
+                            controllerName: "sap.ovp.cards.charts.analytical.analyticalChart"
+                        }
+                    }
+                }
+            },
+
+            onAfterRendering: function () {
+                jQuery(".tabindex0").attr("tabindex", 0);
+                jQuery(".tabindex-1").attr("tabindex", -1);
+            }
+        });
+    }
+);

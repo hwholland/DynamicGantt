@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.variants.VariantItem.
@@ -30,7 +31,7 @@ sap.ui.define([
 			properties: {
 
 				/**
-				 * Attribute for usage in Smart Filter Bar
+				 * Attribute for usage in <code>SmartFilterBar</code>
 				 * 
 				 * @since 1.26.0
 				 */
@@ -41,7 +42,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Is the user allowed to change the item's data
+				 * If set to <code>false</code>, the user is allowed to change the item's data
 				 * 
 				 * @since 1.26.0
 				 */
@@ -128,6 +129,17 @@ sap.ui.define([
 					type: "string",
 					group: "Misc",
 					defaultValue: null
+				},
+
+				/**
+				 * Indicates if favorites can be created.
+				 * 
+				 * @since 1.50.0
+				 */
+				favorite: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
 				}
 			}
 		}

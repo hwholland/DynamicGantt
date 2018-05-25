@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @extends sap.ui.core.Control
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -96,34 +96,157 @@ sap.ui.core.Control.extend("sap.makit.Chart", { metadata : {
 	],
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * The width of the Chart
+		 */
 		"width" : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : '100%'},
+
+		/**
+		 * The height of the Chart
+		 */
 		"height" : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : '100%'},
+
+		/**
+		 * Chart type
+		 */
 		"type" : {type : "sap.makit.ChartType", group : "Appearance", defaultValue : sap.makit.ChartType.Column},
+
+		/**
+		 * Specify whether the range selector should be visible.
+		 */
 		"showRangeSelector" : {type : "boolean", group : "Appearance", defaultValue : true},
+
+		/**
+		 * Toggle to display table view
+		 */
 		"showTableView" : {type : "boolean", group : "Misc", defaultValue : false},
+
+		/**
+		 * Legend position all chart types except Bar chart.
+		 * Default position for Pie/Donut chart is Left. All other chart's default position is None. Note: the default legend position is set when the chart type is set first time, subsequent change to the chart type will keep using initial legend position unless it is changed explicitly by user.
+		 */
 		"legendPosition" : {type : "sap.makit.LegendPosition", group : "Misc", defaultValue : null},
+
+		/**
+		 * Specify the line thickness of the line graph. Only applies to Line chart type.
+		 */
 		"lineThickness" : {type : "float", group : "Misc", defaultValue : 1},
+
+		/**
+		 * Toggle to display the table value on a Bar chart. Only applies to Bar chart.
+		 */
 		"showTableValue" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * Set the maximum number of slices in a Pie/Donut chart. If exceeding the specified value, the rest will be categorised into a single slice. Only applies to Pie/Donut.
+		 */
 		"maxSliceCount" : {type : "int", group : "Misc", defaultValue : 12},
+
+		/**
+		 * Allow a chart’s color palette to be modified without affecting the other charts' color palette. If not set, the chart will use the default color palette defined in the theme.
+		 * Accept an array of color in string format or hex format. e.g.
+		 * 0xff0000
+		 * "red"
+		 * "rgb(255,0,0)"
+		 */
 		"primaryColorPalette" : {type : "any", group : "Misc", defaultValue : null},
+
+		/**
+		 * Specify whether to show the sum of the value for Waterfall/Waterfall Bar chart. Only applies to Waterfall/WaterfallBar chart.
+		 */
 		"showTotalValue" : {type : "boolean", group : "Misc", defaultValue : false},
+
+		/**
+		 * The number of categories that will be visible on the chart at any time. The minimum value is 2. If not set, the number of visible categories will be automatically adjusted depending on the screen size
+		 */
 		"numberOfVisibleCategories" : {type : "int", group : "Misc", defaultValue : null},
+
+		/**
+		 * Specify the range selector start position, default value is 0.
+		 */
 		"rangeSelectorStartPosition" : {type : "int", group : "Misc", defaultValue : 0}
 	},
 	aggregations : {
+
+		/**
+		 * The data rows of the chart. User should bind these to their data source
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"rows" : {type : "sap.makit.Row", multiple : true, singularName : "row", bindable : "bindable", deprecated: true}, 
+
+		/**
+		 * The data column map of the chart.
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"columns" : {type : "sap.makit.Column", multiple : true, singularName : "column", bindable : "bindable", deprecated: true}, 
+
+		/**
+		 * Data region property of the chart's Series
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"series" : {type : "sap.makit.Series", multiple : false, deprecated: true}, 
+
+		/**
+		 * Data region property of the chart's Values
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"values" : {type : "sap.makit.Value", multiple : true, singularName : "value", deprecated: true}, 
+
+		/**
+		 * Data region property of the chart's Categories
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"categoryRegions" : {type : "sap.makit.Category", multiple : true, singularName : "categoryRegion", deprecated: true}, 
+
+		/**
+		 * Data region property of the chart's Category
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"category" : {type : "sap.makit.Category", multiple : false, deprecated: true}, 
+
+		/**
+		 * Category Axis property of the Chart. Accepts only an instance of CategoryAxis element.
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"categoryAxis" : {type : "sap.makit.CategoryAxis", multiple : false, deprecated: true}, 
+
+		/**
+		 * Value Axis property of the Chart. Accept only an instance of ValueAxis element.
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"valueAxis" : {type : "sap.makit.ValueAxis", multiple : false, deprecated: true}, 
+
+		/**
+		 * Value Bubble property of the Chart. Accept only an instance of ValueBubble element.
+		 * @deprecated Since version 1.38. 
+		 * MAKIT charts have been replaced with sap.viz and vizFrame in 1.38. This control will not be supported anymore from 1.38.
+		 */
 		"valueBubble" : {type : "sap.makit.ValueBubble", multiple : false, deprecated: true}
 	},
 	events : {
+
+		/**
+		 * Double tap event on the chart
+		 */
 		"doubletap" : {}, 
+
+		/**
+		 * Single tap event on the chart
+		 */
 		"tap" : {}, 
+
+		/**
+		 * Long press event on the chart
+		 */
 		"longpress" : {}
 	}
 }});

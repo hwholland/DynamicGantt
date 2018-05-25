@@ -51,10 +51,10 @@ the input field, it must fit to the used date format and locale.
 Supported format options are pattern-based on Unicode LDML Date Format notation.
 See {@link http://unicode.org/reports/tr35/#Date_Field_Symbol_Table}
 
-For example, if the &lt;code&gt;valueFormat&lt;/code&gt; is "yyyy-MM-dd-HH-mm-ss", the
-&lt;code&gt;displayFormat&lt;/code&gt; is "MMM d, y, HH:mm:ss", and the used locale is
-English, a valid value string is "2015-07-30-10-30-15", which leads to an output
-of "Jul 30, 2015, 10:30:15".
+For example, if the &lt;code&gt;valueFormat&lt;/code&gt; is &quot;yyyy-MM-dd-HH-mm-ss&quot;, the
+&lt;code&gt;displayFormat&lt;/code&gt; is &quot;MMM d, y, HH:mm:ss&quot;, and the used locale is
+English, a valid value string is &quot;2015-07-30-10-30-15&quot;, which leads to an output
+of &quot;Jul 30, 2015, 10:30:15&quot;.
 
 If no placeholder is set to the &lt;code&gt;DateTimePicker&lt;/code&gt;, the used
 &lt;code&gt;displayFormat&lt;/code&gt; is displayed as a placeholder. If another placeholder
@@ -74,7 +74,7 @@ mobile devices, it opens in full screen.</documentation>
     <since>1.38.0</since>
     <baseType>sap.m/DatePicker</baseType>
     <aggregations>
-        <aggregation name="_popup" type="sap.m/ResponsivePopover" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/ResponsivePopover" name="_popup">
             <documentation>Internal aggregation that contains the inner _picker pop-up.</documentation>
         </aggregation>
     </aggregations>

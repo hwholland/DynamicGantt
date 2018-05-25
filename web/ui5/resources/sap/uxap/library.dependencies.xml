@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <library  version="2.0" name="sap.uxap">
-  <module name="sap/uxap/AnchorBar.js" size="37572" compressedSize="16830">
+  <module name="sap/uxap/AnchorBar.js" size="37335" compressedSize="16767">
     <description>Provides control sap.uxap.AnchorBar.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -169,7 +169,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/uxap/ObjectPageHeader.js" size="37981" compressedSize="17879">
+  <module name="sap/uxap/ObjectPageHeader.js" size="38159" compressedSize="17965">
     <description>Provides control sap.uxap.ObjectPageHeader.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -242,7 +242,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/uxap/ObjectPageLayout.js" size="130612" compressedSize="54222">
+  <module name="sap/uxap/ObjectPageLayout.js" size="130585" compressedSize="54199">
     <description>Provides control sap.uxap.ObjectPageLayout.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -265,12 +265,11 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/uxap/ObjectPageLayoutABHelper.js" size="7185" compressedSize="3248">
+  <module name="sap/uxap/ObjectPageLayoutABHelper.js" size="6033" compressedSize="2674">
     <description>! UI development toolkit for HTML5 (OpenUI5) (c) Copyright 2009-2018 SAP SE or an SAP affiliate company. Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
       <module name="sap/m/Button.js"/>
-      <module name="sap/ui/base/ManagedObjectObserver.js"/>
       <module name="sap/ui/base/Metadata.js"/>
       <module name="sap/ui/core/CustomData.js"/>
       <module name="sap/ui/core/IconPool.js"/>
@@ -525,13 +524,13 @@
   </module>
   <module name="sap/uxap/i18n/i18n_el.properties" size="3900">
   </module>
-  <module name="sap/uxap/i18n/i18n_en.properties" size="2535">
+  <module name="sap/uxap/i18n/i18n_en.properties" size="2526">
   </module>
   <module name="sap/uxap/i18n/i18n_en_US.properties" size="71">
   </module>
-  <module name="sap/uxap/i18n/i18n_en_US_sappsd.properties" size="4340">
+  <module name="sap/uxap/i18n/i18n_en_US_sappsd.properties" size="4279">
   </module>
-  <module name="sap/uxap/i18n/i18n_en_US_saptrc.properties" size="3018">
+  <module name="sap/uxap/i18n/i18n_en_US_saptrc.properties" size="3009">
   </module>
   <module name="sap/uxap/i18n/i18n_es.properties" size="2662">
   </module>
@@ -595,7 +594,7 @@
   </module>
   <module name="sap/uxap/i18n/i18n_zh_TW.properties" size="2788">
   </module>
-  <module name="sap/uxap/library-h2-preload.js" size="12367">
+  <module name="sap/uxap/library-h2-preload.js" size="12328">
     <requires>
       <module name="jquery.sap.global.js"/>
       <module name="jquery.sap.keycodes.js"/>
@@ -718,7 +717,7 @@
       <module name="sap/uxap/rules/ObjectPageLayout.support.js"/>
     </includes>
   </module>
-  <module name="sap/uxap/library-preload.js" size="190504">
+  <module name="sap/uxap/library-preload.js" size="189926">
     <requires>
       <module name="jquery.sap.global.js"/>
       <module name="jquery.sap.keycodes.js"/>

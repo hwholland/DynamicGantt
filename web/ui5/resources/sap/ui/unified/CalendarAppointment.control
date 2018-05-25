@@ -9,27 +9,27 @@ Applications could inherit from this element to add own fields.</documentation>
     <since>1.34.0</since>
     <baseType>sap.ui.unified/DateTypeRange</baseType>
     <properties>
-        <property name="title" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="title">
             <documentation>Title of the appointment.</documentation>
         </property>
-        <property name="text" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="text">
             <documentation>Text of the appointment.</documentation>
         </property>
-        <property name="icon" type="sap.ui.core/URI" group="Data">
+        <property group="Data" type="sap.ui.core/URI" name="icon">
             <documentation>Icon of the Appointment. (e.g. picture of the person)
 
 URI of an image or an icon registered in sap.ui.core.IconPool.</documentation>
         </property>
-        <property name="tentative" type="sap.ui.core/boolean" defaultValue="false" group="Data">
+        <property group="Data" defaultValue="false" type="sap.ui.core/boolean" name="tentative">
             <documentation>Indicates if the icon is tentative.</documentation>
         </property>
-        <property name="selected" type="sap.ui.core/boolean" defaultValue="false" group="Data">
+        <property group="Data" defaultValue="false" type="sap.ui.core/boolean" name="selected">
             <documentation>Indicates if the icon is selected.</documentation>
         </property>
-        <property name="key" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="key">
             <documentation>Can be used as identifier of the appointment</documentation>
         </property>
-        <property name="color" type="sap.ui.core/CSSColor" group="Appearance" since="1.46.0">
+        <property since="1.46.0" group="Appearance" type="sap.ui.core/CSSColor" name="color">
             <documentation>Overrides the color derived from the &lt;code&gt;type&lt;/code&gt; property.
 This property will work only with full hex color with pound symbol, e.g.: #FF0000.</documentation>
         </property>

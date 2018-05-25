@@ -1,10 +1,10 @@
 // iteration 0 ok
 /* global jQuery, sap, window */
-(function() {
-    "use strict";
 
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    var SearchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper'
+], function(SearchHelper) {
+    "use strict";
 
     jQuery.sap.declare('sap.ushell.renderers.fiori2.search.UXLog');
     var module = sap.ushell.renderers.fiori2.search.UXLog = {};
@@ -36,4 +36,5 @@
 
     module._save = SearchHelper.delayedExecution(module._save, 2000);
 
-})();
+    return module;
+});

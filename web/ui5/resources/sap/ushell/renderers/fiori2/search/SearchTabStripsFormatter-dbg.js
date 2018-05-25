@@ -1,12 +1,8 @@
 /* global jQuery, sap */
 
-(function() {
+sap.ui.define([], function() {
     "use strict";
 
-    // =======================================================================
-    // import and declare packages
-    // =======================================================================
-    jQuery.sap.declare('sap.ushell.renderers.fiori2.search.SearchTabStripsFormatter');
     var module = sap.ushell.renderers.fiori2.search.SearchTabStripsFormatter = {};
 
     // =======================================================================
@@ -119,7 +115,7 @@
         },
 
         _findNode: function(dataSource, result) {
-            if (this.dataSource.equals(dataSource)) {
+            if (this.dataSource === dataSource) {
                 result.push(this);
                 return;
             }
@@ -154,6 +150,8 @@
         invalidate: function(dataSource) {
             var node = this.findNode(dataSource);
             if (!node) {
+                this.rootNode.children = [];
+                this.rootNode.count = 0;
                 return;
             }
             var childNode = null;
@@ -214,11 +212,9 @@
         updateFromPerspective: function(dataSource, perspective, model) {
 
             // update current tree node
-            var currentCount = null;
-            try {
-                currentCount = perspective.getSearchFacet().getQuery().getResultSetSync().totalcount;
-            } catch (e) {
-                // do nothing
+            var currentCount;
+            if (perspective) {
+                currentCount = perspective.totalCount;
             }
             var currentNode = this.findNode(dataSource);
             if (!currentNode) {
@@ -226,18 +222,20 @@
                 // we do not really now that this node is directly below root -> set flag unsureWhetherNodeisBelowRoot
                 // flag is evaluated later in order to correct location of node
                 currentNode = new module.Node(dataSource, currentCount);
-                currentNode.unsureWhetherNodeisBelowRoot = true;
+                if (perspective && dataSource !== perspective.sina.allDataSource) {
+                    currentNode.unsureWhetherNodeisBelowRoot = true;
+                }
                 this.rootNode.appendNode(currentNode);
             }
             currentNode.setCount(currentCount);
 
             // for root node: add apps to count
-            if (dataSource.equals(model.allDataSource)) {
+            if (dataSource === model.allDataSource) {
                 currentNode.setCount(currentNode.count + model.getProperty('/appCount'));
             }
 
             // update child nodes
-            this.updateFromPerspectiveChildDataSources(currentNode, perspective);
+            this.updateFromPerspectiveChildDataSources(currentNode, perspective, model);
 
             // update app tree node
             this.updateAppTreeNode(dataSource, model);
@@ -247,7 +245,7 @@
         updateAppTreeNode: function(dataSource, model) {
 
             // update only if datasource is all or apps
-            if (!dataSource.equals(model.allDataSource) && !dataSource.equals(model.appDataSource)) {
+            if (dataSource !== model.allDataSource && dataSource !== model.appDataSource) {
                 return;
             }
 
@@ -257,9 +255,9 @@
                 this.rootNode.removeChildNode(appNode);
             }
 
-            // no apps and datasource!=apps -> return 
+            // no apps and datasource!=apps -> return
             var appCount = model.getProperty('/appCount');
-            if (appCount === 0 && !dataSource.equals(model.appDataSource)) {
+            if (appCount === 0 && dataSource !== model.appDataSource) {
                 return;
             }
 
@@ -269,21 +267,21 @@
 
         },
 
-        updateFromPerspectiveChildDataSources: function(currentNode, perspective) {
+        updateFromPerspectiveChildDataSources: function(currentNode, perspective, model) {
 
             // extract child datasources from perspective
-            if (!perspective) {
+            if (!perspective || currentNode.dataSource === model.appDataSource) {
                 return;
             }
-            var facets = perspective.getChartFacets();
+            var facets = perspective.facets;
             if (facets.length === 0) {
                 return;
             }
             var dataSourceFacet = facets[0];
-            if (dataSourceFacet.facetType !== 'datasource') {
+            if (dataSourceFacet.type !== model.sinaNext.FacetType.DataSource) {
                 return;
             }
-            var childDataSourceElements = dataSourceFacet.getQuery().getResultSetSync().getElements();
+            var childDataSourceElements = dataSourceFacet.items;
 
             // append children to tree node
             currentNode.clearChildren();
@@ -292,7 +290,7 @@
                 var childDataSource = childDataSourceElement.dataSource;
                 var childNode = this.findNode(childDataSource);
                 if (!childNode) {
-                    childNode = new module.Node(childDataSource, childDataSourceElement.valueRaw);
+                    childNode = new module.Node(childDataSource, childDataSourceElement.measureValue);
                 }
                 if (childNode.unsureWhetherNodeisBelowRoot) {
                     childNode.unsureWhetherNodeisBelowRoot = false;
@@ -301,7 +299,7 @@
                 if (childNode.parent) {
                     childNode.parent.removeChildNode(childNode);
                 }
-                childNode.setCount(childDataSourceElement.valueRaw);
+                childNode.setCount(childDataSourceElement.measureValue);
                 currentNode.appendNode(childNode);
             }
 
@@ -347,7 +345,7 @@
 
             // 1) no node in tree -> show ALL+ current datasource (should never happen)
             if (!node) {
-                if (!dataSource.equals(model.allDataSource)) {
+                if (dataSource !== model.allDataSource) {
                     tabStrips.strips.push(model.allDataSource);
                 }
                 tabStrips.strips.push(dataSource);
@@ -356,7 +354,7 @@
             }
 
             // 2) node is $$ALL$$ -> show $$ALL$$ + children of $$ALL$$
-            if (node.dataSource.equals(model.allDataSource)) {
+            if (node.dataSource === model.allDataSource) {
                 tabStrips.strips.push(model.allDataSource);
                 children = node.getChildrenSortedByCount();
                 for (i = 0; i < children.length && tabStrips.strips.length < tabStripLimit; ++i) {
@@ -410,8 +408,7 @@
             tabStrips.strips.push(node.dataSource);
             tabStrips.selected = node.dataSource;
             return tabStrips;
-
         }
     };
-
-})();
+    return module;
+});

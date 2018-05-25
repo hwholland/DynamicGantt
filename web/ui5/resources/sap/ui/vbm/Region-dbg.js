@@ -52,7 +52,44 @@ sap.ui.define([
 					type: "boolean",
 					group: "Misc",
 					defaultValue: false
+				},
+
+				labelText: {
+					type: "string",
+					group: "Misc",
+					defaultValue: null
+				},
+
+				/**
+				 * Type for semantic labels. A given semantic type will overrule color settings and add an icon.
+				 */
+				labelType: {
+					type: "sap.ui.vbm.SemanticType",
+					group: "Behavior",
+					defaultValue: sap.ui.vbm.SemanticType.None
+				},
+
+				labelBgColor: {
+					type: "string",
+					group: "Misc",
+					defaultValue: 'RGB(255;255;255)'
+				},
+
+				labelBorderColor: {
+					type: "string",
+					group: "Misc",
+					defaultValue: null
+				},
+
+				/**
+				 * The visual objects label arrow. For left/right/top/bottom aligned labels an additional arrow points to the label's object.
+				 */
+				labelArrow: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
 				}
+
 			},
 			events: {
 

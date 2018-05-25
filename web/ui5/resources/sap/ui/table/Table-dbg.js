@@ -91,7 +91,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.54.5
+	 * @version 1.54.3
 	 *
 	 * @constructor
 	 * @public
@@ -1490,10 +1490,22 @@ sap.ui.define([
 		}
 		setMinColWidths(this);
 
+		var oTableSizes = this._collectTableSizes();
+
+		if (oTableSizes.tableCntHeight == 0 && oTableSizes.tableCntWidth == 0) {
+			// the table has no size at all. This may be due to one of the parents has display:none. In order to
+			// recognize when the parent size changes, the resize handler must be registered synchronously, otherwise
+			// the browser may finish painting before the resize handler is registered
+			TableUtils.registerResizeHandler(this, "", this._onTableResize.bind(this), true);
+
+			return;
+		}
+
 		// Manipulation of UI Sizes
 		this._updateRowHeights(this._aRowHeights, false);
 		this._updateRowHeights(aColumnHeaderRowHeights, true);
 
+		this._determineVisibleCols(oTableSizes);
 		if (!bSkipHandleRowCountMode || bForceSetRowContentHeight) {
 			this._setRowContentHeight(iRowContentSpace);
 		}
@@ -1508,17 +1520,6 @@ sap.ui.define([
 			} else {
 				this.$().height("0px");
 			}
-		}
-
-		var oTableSizes = this._collectTableSizes();
-
-		if (oTableSizes.tableCntHeight == 0 && oTableSizes.tableCntWidth == 0) {
-			// the table has no size at all. This may be due to one of the parents has display:none. In order to
-			// recognize when the parent size changes, the resize handler must be registered synchronously, otherwise
-			// the browser may finish painting before the resize handler is registered
-			TableUtils.registerResizeHandler(this, "", this._onTableResize.bind(this), true);
-
-			return;
 		}
 
 		var oScrollExtension = this._getScrollExtension();
@@ -1624,7 +1625,7 @@ sap.ui.define([
 	 */
 	Table.prototype.applyFocusInfo = function(mFocusInfo) {
 		if (mFocusInfo && mFocusInfo.customId) {
-			jQuery.sap.byId(mFocusInfo.customId, this.getDomRef()).focus();
+			this.$().find("#" + mFocusInfo.customId).focus();
 		} else {
 			//TBD: should be applyFocusInfo but changing it breaks the unit tests
 			Element.prototype.getFocusInfo.apply(this, arguments);
@@ -2227,12 +2228,10 @@ sap.ui.define([
 				});
 			}
 			// request contexts from binding
-			var bSuppressUpdate = false;
 			if (sReason === ChangeReason.Filter || sReason === ChangeReason.Sort) {
 				this.setFirstVisibleRow(0);
-				bSuppressUpdate = true;
 			}
-			this._updateBindingContexts(this._calculateRowsToDisplay(), bSuppressUpdate);
+			this._updateBindingContexts(this._calculateRowsToDisplay(), true);
 		}
 	};
 
@@ -2442,6 +2441,21 @@ sap.ui.define([
 		this.$().toggleClass("sapUiTableEmpty", TableUtils.isNoDataVisible(this));
 		this._getAccExtension().updateAriaStateForOverlayAndNoData();
 		this._getKeyboardExtension().updateNoDataAndOverlayFocus(oFocusRef);
+	};
+
+	/**
+	 * Determines the currently visible columns (used for simply updating only the
+	 * controls of the visible columns instead of the complete row!).
+	 * @private
+	 */
+	Table.prototype._determineVisibleCols = function(oTableSizes) {
+		// TODO: to be implemented; currently, all columns are counted
+		var aColumns = [];
+		this.getColumns().forEach(function(column, i){
+			if (column.shouldRender()) {
+				aColumns.push(i);
+			}
+		});
 	};
 
 	/*

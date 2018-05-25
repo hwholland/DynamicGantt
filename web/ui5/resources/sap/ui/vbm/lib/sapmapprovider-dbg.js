@@ -1,4 +1,4 @@
-﻿// ...........................................................................//
+// ...........................................................................//
 // mapprovider object........................................................//
 
 // Author: Ulrich Roegelein
@@ -303,10 +303,10 @@ VBI.Source = function(url) {
 		temp = temp.replace("{Y}", y);
 		temp = temp.replace("{-Y}", (1 << lod) - y - 1);
 		temp = temp.replace("{LOD}", lod);
-		if (source.m_bQuadkey){
+		if (source.m_bQuadkey) {
 			temp = temp.replace("{QUAD}", this.TileXYToQuadKey(x, y, lod));
 		}
-		if (source.m_bNumkey){
+		if (source.m_bNumkey) {
 			temp = temp.replace("{NUMT}", this.TileXYToNumKey(x, y, lod));
 		}
 
@@ -322,10 +322,10 @@ VBI.Source = function(url) {
 		temp = temp.replace("{Y}", y);
 		temp = temp.replace("{-Y}", (1 << lod) - y - 1);
 		temp = temp.replace("{LOD}", lod);
-		if (source.m_bQuadkey){
+		if (source.m_bQuadkey) {
 			temp = temp.replace("{QUAD}", this.TileXYToQuadKey(x, y, lod));
 		}
-		if (source.m_bNumkey){
+		if (source.m_bNumkey) {
 			temp = temp.replace("{NUMT}", this.TileXYToNumKey(x, y, lod));
 		}
 		temp = temp.replace("{WIDTH}", xTileSize * xExpansion);

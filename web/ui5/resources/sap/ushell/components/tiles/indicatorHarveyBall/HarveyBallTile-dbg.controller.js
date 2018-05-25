@@ -1,5 +1,6 @@
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     sap.ui.controller("tiles.indicatorHarveyBall.HarveyBallTile", {
         onInit : function(){
             this.getView().setModel(new sap.ui.model.json.JSONModel());
@@ -409,4 +410,6 @@
         }
 
     });
-}());
+
+
+}, /* bExport= */ true);

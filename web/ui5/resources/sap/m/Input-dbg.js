@@ -124,7 +124,7 @@ function(
 	 *
 	 * @extends sap.m.InputBase
 	 * @author SAP SE
-	 * @version 1.54.5
+	 * @version 1.54.3
 	 *
 	 * @constructor
 	 * @public
@@ -2005,7 +2005,7 @@ function(
 		 */
 		Input.prototype.insertSuggestionRow = function(oItem, iIndex) {
 			oItem.setType(ListType.Active);
-			this.insertAggregation("suggestionRows", oItem, iIndex);
+			this.insertAggregation("suggestionRows", iIndex, oItem);
 			this._bShouldRefreshListItems = true;
 			this._refreshItemsDelayed();
 			createSuggestionPopupContent(this);

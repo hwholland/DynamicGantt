@@ -1,20 +1,18 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's appState adapter for the local
  *               platform.
  *               TODO will be replaced by true persistence within this SP!
  *               This adapter delegates to the Personalization Adapter
  *
- * @version
- * 1.38.26
+ * @version 1.54.3
  */
-(function () {
-    "use strict";
+sap.ui.define(['sap/ushell/services/Personalization'],
+	function(Personalization) {
+	"use strict";
+
     /*jslint nomen: true*/
     /*global jQuery, sap, setTimeout */
-    jQuery.sap.declare("sap.ushell.adapters.local.AppStateAdapter");
-    jQuery.sap.require("sap.ushell.services.Personalization");
-
     // --- Adapter ---
     /**
      * This method MUST be called by the Unified Shell's personalization service only.
@@ -33,11 +31,11 @@
      * @since 1.28.0
      * @private
      */
-    sap.ushell.adapters.local.AppStateAdapter = function (oSystem, sParameters, oConfig) {
+    var AppStateAdapter = function (oSystem, sParameters, oConfig) {
         this._oConfig = oConfig && oConfig.config;
     };
 
-    sap.ushell.adapters.local.AppStateAdapter.prototype._getPersonalizationService = function () {
+    AppStateAdapter.prototype._getPersonalizationService = function () {
         return sap.ushell.Container.getService("Personalization");
     };
 
@@ -66,7 +64,7 @@
      *  fail handler sMsg argument
      * @private
      */
-    sap.ushell.adapters.local.AppStateAdapter.prototype.saveAppState = function (sKey, sSessionKey, sValue, sAppname, sComponent) {
+    AppStateAdapter.prototype.saveAppState = function (sKey, sSessionKey, sValue, sAppname, sComponent) {
         var oPersonalizationService = this._getPersonalizationService(),
             oDeferred = new jQuery.Deferred();
         oPersonalizationService.createEmptyContainer(sKey, {keyCategory: oPersonalizationService.constants.keyCategory.GENERATED_KEY, writeFrequency: oPersonalizationService.constants.writeFrequency.HIGH, clientStorageAllowed: false}).done(function (oContainer) {
@@ -96,7 +94,7 @@
      *  fail handler function(sMsg) argument
      * @private
      */
-    sap.ushell.adapters.local.AppStateAdapter.prototype.loadAppState = function (sKey) {
+    AppStateAdapter.prototype.loadAppState = function (sKey) {
         var oPersonalizationService = this._getPersonalizationService(),
             oDeferred = new jQuery.Deferred();
         oPersonalizationService.getContainer(sKey, {keyCategory: oPersonalizationService.constants.keyCategory.GENERATED_KEY, writeFrequency: oPersonalizationService.constants.writeFrequency.HIGH, clientStorageAllowed: false}).done(function (oContainer) {
@@ -108,4 +106,8 @@
         });
         return oDeferred.promise();
     };
-}());
+
+
+	return AppStateAdapter;
+
+}, /* bExport= */ true);

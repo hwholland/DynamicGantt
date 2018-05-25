@@ -11,7 +11,7 @@ jQuery.sap.require("sap.apf.ui.utils.formatter");
  * @description Formatter for facet filter list values
  * @returns {sap.apf.ui.utils.FacetFilterValueFormatter}
  */
-sap.apf.ui.utils.FacetFilterValueFormatter = function() {
+sap.apf.ui.utils.FacetFilterValueFormatter = function(oUiApi, oCoreApi) {
 	"use strict";
 	/**
 	 * @public
@@ -81,25 +81,20 @@ sap.apf.ui.utils.FacetFilterValueFormatter = function() {
 				"formattedValue" : "0002 - SAP SE"
 			} ]
 	 * */
-	this.getFormattedFFData = function(oFormatterArgs) {
-		var sFormattedKeyPropertyValue, sTextValue, sFormattedTextPropertyValue;
-		var oPropertyMetadata = oFormatterArgs.oPropertyMetadata;
-		var sSelectProperty = oFormatterArgs.sSelectProperty;
-		var aFilterValues = oFormatterArgs.aFilterValues;
+	this.getFormattedFFData = function(aFilterValues, sSelectProperty, oPropertyMetadata) {
+		var sFormattedKeyPropertyValue, sTextValue;
 		var oFormatter = new sap.apf.ui.utils.formatter({
-			getEventCallback : oFormatterArgs.oUiApi.getEventCallback.bind(oFormatterArgs.oUiApi),
-			getTextNotHtmlEncoded : oFormatterArgs.oCoreApi.getTextNotHtmlEncoded
+			getEventCallback : oUiApi.getEventCallback.bind(oUiApi),
+			getTextNotHtmlEncoded : oCoreApi.getTextNotHtmlEncoded,
+			getExits : oUiApi.getCustomFormatExit()
 		}, oPropertyMetadata, aFilterValues);
 		//Checks if the property has a text associated with it
 		var sTextProperty = oPropertyMetadata.text;
 		aFilterValues.forEach(function(oFilterValue) {
 			sFormattedKeyPropertyValue = oFormatter.getFormattedValue(sSelectProperty, oFilterValue[sSelectProperty]);
 			sTextValue = sFormattedKeyPropertyValue;
-			if (sTextProperty) {//If text is available formatting is done for the text property and appended to the formatted key value
-				sFormattedTextPropertyValue = oFormatter.getFormattedValue(sTextProperty, oFilterValue[sTextProperty]);
-				if (sFormattedTextPropertyValue) { //override the value if the formatted text is not undefined
-					sTextValue = sFormattedKeyPropertyValue + " - " + sFormattedTextPropertyValue;
-				}
+			if (sTextProperty !== undefined && oFilterValue[sTextProperty] !== undefined) {
+					sTextValue = sFormattedKeyPropertyValue + " - " + oFilterValue[sTextProperty];
 			}
 			oFilterValue.formattedValue = sTextValue;
 		});

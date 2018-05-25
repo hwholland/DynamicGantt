@@ -7,16 +7,16 @@
     <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
-        <property name="shape" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="shape">
             <documentation>The value is a string and can be 'rect' for rectangle, 'poly' for poligon, 'circle', or default.</documentation>
         </property>
-        <property name="coords" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="coords">
             <documentation>Coordinates of the area</documentation>
         </property>
-        <property name="href" type="sap.ui.core/URI" group="Misc">
+        <property group="Misc" type="sap.ui.core/URI" name="href">
             <documentation>Hyper link that is executed when the area is clicked</documentation>
         </property>
-        <property name="alt" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="alt">
             <documentation>Alternative text that is displayed in the case the image is not available</documentation>
         </property>
     </properties>

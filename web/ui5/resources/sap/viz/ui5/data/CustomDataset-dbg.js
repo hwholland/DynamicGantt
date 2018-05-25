@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.data.CustomDataset.
@@ -43,6 +43,11 @@ sap.ui.define(['sap/viz/library','./Dataset'],
      */
     CustomDataset.prototype.getRawDataset = function() {
         return this.getProperty('data');
+    };
+
+     // check if the data is ready to consume 
+    CustomDataset.prototype.isReady = function(){
+        return true;
     };
 
     return CustomDataset;

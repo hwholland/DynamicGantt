@@ -8,33 +8,33 @@ It can be only set by the control's public toggle function, to make a behaviour 
     <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="selectionState" type="sap.ui.commons/TriStateCheckBoxState" defaultValue="Unchecked" group="Data">
+        <property group="Data" defaultValue="Unchecked" type="sap.ui.commons/TriStateCheckBoxState" name="selectionState">
             <documentation>Defines the states of the checkbox</documentation>
         </property>
-        <property name="text" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="text">
             <documentation>Defines the text displayed next to the check box</documentation>
         </property>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>Using this property, the control could be disabled, if required.</documentation>
         </property>
-        <property name="editable" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="editable">
             <documentation>Specifies whether the user shall be allowed to flag the check box</documentation>
         </property>
-        <property name="valueState" type="sap.ui.core/ValueState" defaultValue="None" group="Data">
+        <property group="Data" defaultValue="None" type="sap.ui.core/ValueState" name="valueState">
             <documentation>Accepts the core enumeration ValueState.type that supports 'None', 'Error', 'Warning' and 'Success'.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" group="Dimension">
+        <property group="Dimension" type="sap.ui.core/CSSSize" name="width">
             <documentation>The width can be set to an absolute value. If no value is set, the control width results from the text length.</documentation>
         </property>
-        <property name="textDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance">
+        <property group="Appearance" defaultValue="Inherit" type="sap.ui.core/TextDirection" name="textDirection">
             <documentation>The value can be set to LTR or RTL. Otherwise, the control inherits the text direction from its parent control.</documentation>
         </property>
     </properties>
     <events>
-        <event name="change" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="change">
             <documentation>Event is triggered when the control status is changed by the user by flagging or unflagging the checkbox.</documentation>
             <parameters>
-                <parameter name="selectionState" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="selectionState">
                     <documentation>Checks whether the box is flagged or not flagged.</documentation>
                 </parameter>
             </parameters>
@@ -44,7 +44,7 @@ It can be only set by the control's public toggle function, to make a behaviour 
         <method name="toggle">
             <documentation>Method called whenever a user clicks on a tri-state checkbox</documentation>
             <parameters>
-                <parameter name="destState" type="sap.ui.commons/TriStateCheckBoxState">
+                <parameter type="sap.ui.commons/TriStateCheckBoxState" name="destState">
                     <documentation>destined selection state of checkbox</documentation>
                 </parameter>
             </parameters>

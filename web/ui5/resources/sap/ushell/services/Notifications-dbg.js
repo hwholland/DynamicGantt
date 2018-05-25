@@ -1,11 +1,11 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
+sap.ui.define([
+    "sap/ui/thirdparty/datajs",
+    "sap/ui/core/ws/SapPcpWebSocket"
+], function (datajs, SapPcpWebSocket) {
     "use strict";
-    /*global jQuery, sap, window, OData */
-    jQuery.sap.declare("sap.ushell.services.Notifications");
-
-    jQuery.sap.require("sap.ui.thirdparty.datajs");
+    /*global jQuery, sap, window, OData, hasher */
 
     /**
      * @class A UShell service for fetching user notification data from the Notification center/service<br>
@@ -28,6 +28,8 @@
      * - Execution of a notification actions
      * - Marking user notifications as seen
      *
+     * @name sap.ushell.services.Notifications
+     *
      * @param {object} oContainerInterface
      *     The interface provided by the container
      * @param {object} sParameter
@@ -41,20 +43,30 @@
      *
      * @public
      */
-    sap.ushell.services.Notifications = function (oContainerInterface, sParameters, oServiceConfiguration) {
+    function Notifications(oContainerInterface, sParameters, oServiceConfiguration) {
         var oModel = new sap.ui.model.json.JSONModel(),
             tInitializationTimestamp = new Date(),
             oServiceConfig = oServiceConfiguration && oServiceConfiguration.config,
             aRequestURIs = {
                 getNotifications : {},
                 getNotificationsByType : {},
+                getNotificationsInGroup : {},
                 getBadgeNumber : {},
-                resetBadgeNumber : {}
+                resetBadgeNumber : {},
+                getNotificationTypesSettings : {},
+                getNotificationsGroupHeaders : {},
+                getMobileSupportSettings : {},
+                getWebSocketValidity : {},
+                getNotificationCount : {}
             },
             oWebSocket,
             sWebSocketUrl = oServiceConfig.webSocketUrl || "/sap/bc/apc/iwngw/notification_push_apc",
             iPollingInterval = oServiceConfig.pollingIntervalInSeconds || 60,
+            initialReadTimer = undefined,
+            webSocketRecoveryTimer = undefined,
+            pollingTimer = undefined,
             aUpdateNotificationsCallbacks = [],
+            aUpdateDependencyNotificationsCallbacks = [],
             aUpdateNotificationsCountCallbacks = [],
             bIntentBasedConsumption = false,
             aConsumedIntents = [],
@@ -66,11 +78,21 @@
             tWebSocketRecoveryPeriod = 5000,
             tFioriClientInitializationPeriod = 6000,
             bWebSocketRecoveryAttempted = false,
-            oURIsEnum = {
+            oOperationEnum = {
                 NOTIFICATIONS: 0,
                 NOTIFICATIONS_BY_TYPE: 1,
                 GET_BADGE_NUMBER: 2,
-                RESET_BADGE_NUMBER: 3
+                RESET_BADGE_NUMBER: 3,
+                GET_SETTINGS: 4,
+                GET_MOBILE_SUPPORT_SETTINGS: 5,
+                NOTIFICATIONS_GROUP_HEADERS: 6,
+                NOTIFICATIONS_IN_GROUP: 7,
+                GET_NOTIFICATIONS_COUNT: 8,
+                VALIDATE_WEBSOCKET_CHANNEL: 9,
+                NOTIFICATIONS_BY_DATE_DESCENDING: "notificationsByDateDescending",
+                NOTIFICATIONS_BY_DATE_ASCENDING : "notificationsByDateAscending",
+                NOTIFICATIONS_BY_PRIORITY_DESCENDING: "notificationsByPriorityDescending",
+                NOTIFICATIONS_BY_TYPE_DESCENDING: "notificationsByTypeDescending"
             },
             oModesEnum = {
                 PACKAGED_APP: 0,
@@ -79,7 +101,22 @@
                 POLLING: 3
             },
             oCurrentMode,
-            bFirstDataLoaded = false;
+            bFirstDataLoaded = false,
+            oUserSettingsPersonalizer,
+            bPreviewNotificationEnabledConfig = true,
+            bPreviewNotificationEnabled = false,
+            bHighPriorityBannerEnabled = true,
+            bUserFlagsReadFromPersonalization = false,
+            oUserFlagsReadFromPersonalizationDefferred = new jQuery.Deferred(),
+            oNotificationSettingsAvailabilityDefferred = new jQuery.Deferred(),
+            bNotificationSettingsMobileSupport,
+            oUserFlagsReadFromPersonalizationPromise = oUserFlagsReadFromPersonalizationDefferred.promise(),
+            bUseDummyItems = false,
+            iNumOfDummyItems = 300,
+            oDummyItems = {},
+            iInitialBufferSize = 10,
+            bInvalidCsrfTokenRecoveryMode = false,
+            bCsrfDataSet = false;
 
         // *************************************************************************************************
         // ************************************* Service API - Begin ***************************************
@@ -94,6 +131,7 @@
          * @since 1.32.0
          *
          * @public
+         * @alias sap.ushell.services.Notifications#isEnabled
          */
         this.isEnabled = function () {
             if (!oServiceConfig.enabled || !oServiceConfig.serviceUrl) {
@@ -124,11 +162,17 @@
          * @since 1.32
          *
          * @public
+         * @alias sap.ushell.services.Notifications#init
          */
         this.init = function () {
             if ((!bInitialized) && (this.isEnabled())) {
+                sap.ui.getCore().getEventBus().subscribe("launchpad", "sessionTimeout", this.destroy, this);
+                this.lastNotificationDate = new Date();
+                bPreviewNotificationEnabledConfig = oServiceConfig.enableNotificationsPreview;
                 this._setWorkingMode();
                 bInitialized = true;
+                this.bUpdateDependencyInitiatorExists = false;
+                this._userSettingInitialization();
             }
         };
 
@@ -141,13 +185,27 @@
          * @since 1.32
          *
          * @public
+         * @alias sap.ushell.services.Notifications#getUnseenNotificationsCount
          */
         this.getUnseenNotificationsCount = function () {
             var oDeferred = jQuery.Deferred();
             oDeferred.resolve(oModel.getProperty("/UnseenCount"));
             return oDeferred.promise();
         };
-
+        /**
+         * Returns the number of  notifications<br>
+         * e.g. Notifications for user.
+         *
+         * @returns Returns the number of notifications of the user
+         *
+         * @since 1.44
+         *
+         * @public
+         * @alias sap.ushell.services.Notifications#getNotificationsCount
+         */
+        this.getNotificationsCount = function () {
+            return oModel.getProperty("/NotificationsCount") ? oModel.getProperty("/NotificationsCount") : "0";
+        };
         /**
          * Returns the notifications of the user sorted by type include the group headers and the notifications
          *
@@ -156,15 +214,57 @@
          * @since 1.38
          *
          * @public
+         * @alias sap.ushell.services.Notifications#getNotificationsByTypeWithGroupHeaders
          */
         this.getNotificationsByTypeWithGroupHeaders = function () {
             var oHeader,
                 oRequestObject,
                 oDeferred = new jQuery.Deferred(),
-                sReadNotificationsByTypeWithGroupHeadersUrl = this._getRequestURI(oURIsEnum.NOTIFICATIONS_BY_TYPE);
+                sReadNotificationsByTypeWithGroupHeadersUrl = this._getRequestURI(oOperationEnum.NOTIFICATIONS_BY_TYPE);
 
             oRequestObject = {
                 requestUri: sReadNotificationsByTypeWithGroupHeadersUrl
+            };
+
+            //  If CSRF token wasn't obtained yet - then set the header of the request so the token will be returned
+            if (!this._getHeaderXcsrfToken()) {
+                oHeader = {};
+                oHeader["X-CSRF-Token"] = "fetch";
+                oRequestObject.headers = oHeader;
+            }
+            OData.request(oRequestObject,
+                function (oResult) {
+                    oDeferred.resolve(oResult);
+                }, function (oMessage) {
+                    if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
+                        oDeferred.resolve(oMessage.response.body);
+                    } else {
+                        oDeferred.reject(oMessage);
+                        jQuery.sap.log.error("Notification service - oData executeAction failed: ", oMessage, "sap.ushell.services.Notifications");
+                    }
+                });
+            return oDeferred.promise();
+        };
+
+
+        /**
+         * Returns the group headers of the user notifications
+         *
+         * @returns {promise} Promise object that on success - returns all group headers
+         *
+         * @since 1.44
+         *
+         * @public
+         * @alias sap.ushell.services.Notifications#getNotificationsGroupHeaders
+         */
+        this.getNotificationsGroupHeaders = function () {
+            var oHeader,
+                oRequestObject,
+                oDeferred = new jQuery.Deferred(),
+                sReadNotificationsGroupHeadersUrl = this._getRequestURI(oOperationEnum.NOTIFICATIONS_GROUP_HEADERS);
+
+            oRequestObject = {
+                requestUri: sReadNotificationsGroupHeadersUrl
             };
 
             //  If CSRF token wasn't obtained yet - then set the header of the request so the token will be returned
@@ -187,15 +287,119 @@
             return oDeferred.promise();
         };
 
+        this.getNotificationsBufferInGroup = function (sGroup, iSkip, iTop) {
+            var that = this,
+                oHeader,
+                oRequestObject,
+                oDeferred = new jQuery.Deferred(),
+                oArgs = {
+                    group: sGroup,
+                    skip : iSkip,
+                    top : iTop
+                },
+                aResponse,
+                oResponse,
+                sRequestUri = this._getRequestURI(oOperationEnum.NOTIFICATIONS_IN_GROUP, oArgs);
+
+            if (bUseDummyItems === true) {
+                aResponse = oDummyItems[oOperationEnum.NOTIFICATIONS_IN_GROUP].slice(iSkip, iSkip + iTop);
+                oResponse = JSON.stringify({
+                    "@odata.context" : "$metadata#Notifications",
+                    "value" : aResponse
+                });
+
+                setTimeout(function () {
+                    oDeferred.resolve(oResponse);
+                }, 1000);
+            } else {
+                oRequestObject = {
+                    requestUri: sRequestUri
+                };
+
+                // If CSRF token wasn't obtained yet - then set the header of the request so the token will be returned
+                if (!this._getHeaderXcsrfToken()) {
+                    oHeader = {};
+                    oHeader["X-CSRF-Token"] = "fetch";
+                    oRequestObject.headers = oHeader;
+                }
+                OData.request(oRequestObject,
+                    function (oResult) {
+                        that._updateCSRF(oResult.response);
+                        oDeferred.resolve(oResult.value);
+                    }, function (oMessage) {
+                        if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
+                            that._updateCSRF(oMessage.response);
+                            oDeferred.resolve(JSON.parse(oMessage.response.body).value);
+                        } else {
+                            oDeferred.reject();
+                            jQuery.sap.log.error("Notification service - oData executeAction failed: ", oMessage, "sap.ushell.services.Notifications");
+                        }
+                    });
+            }
+            return oDeferred.promise();
+        };
+
+        this.getNotificationsBufferBySortingType = function (sSortingType, iSkip, iTop) {
+            var that = this,
+                oHeader,
+                oRequestObject,
+                oDeferred = new jQuery.Deferred(),
+                oArgs = {
+                    skip : iSkip,
+                    top : iTop
+                },
+                aResponse,
+                oResponse,
+                sRequestUri = this._getRequestURI(sSortingType, oArgs);
+
+            if (bUseDummyItems === true) {
+                aResponse = oDummyItems[sSortingType].slice(iSkip, iSkip + iTop);
+                oResponse = JSON.stringify({
+                    "@odata.context" : "$metadata#Notifications",
+                    "value" : aResponse
+                });
+
+                setTimeout(function () {
+                    oDeferred.resolve(oResponse);
+                }, 1000);
+            } else {
+                oRequestObject = {
+                    requestUri: sRequestUri
+                };
+
+                // If CSRF token wasn't obtained yet - then set the header of the request so the token will be returned
+                if (!this._getHeaderXcsrfToken()) {
+                    oHeader = {};
+                    oHeader["X-CSRF-Token"] = "fetch";
+                    oRequestObject.headers = oHeader;
+                }
+                OData.request(oRequestObject,
+                    function (oResult) {
+                        that._updateCSRF(oResult.response);
+                        oDeferred.resolve(oResult.value);
+                    }, function (oMessage) {
+                        if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
+                            that._updateCSRF(oMessage.response);
+                            oDeferred.resolve(JSON.parse(oMessage.response.body).value);
+                        } else {
+                            oDeferred.reject();
+                            jQuery.sap.log.error("Notification service - oData executeAction failed: ", oMessage, "sap.ushell.services.Notifications");
+                        }
+                    });
+            }
+            return oDeferred.promise();
+        };
 
         /**
-         * Returns the notifications of the user
+         * Returns the 10 most recent notifications of the user
          *
-         * @returns {promise} Promise object that on success - returns all notification items
+         * @returns {promise} Promise object that on success - returns the 10 most recent user notification items
          *
          * @since 1.32
          *
-         * @public
+         * @private
+         *
+         * @alias sap.ushell.services.Notifications#getNotifications
          */
         this.getNotifications = function () {
             var oReadPromise,
@@ -215,8 +419,6 @@
                     oDeferred.reject();
                 });
             } else {
-                // this._changeNotificationsDataForTest();
-
                 // In case of offline testing (when OData calls fail):
                 // Mark the following line and unmark the two successive lines
                 oDeferred.resolve(oModel.getProperty("/Notifications"));
@@ -231,15 +433,16 @@
          *
          * After launching the action, the function gets updated notification data in order to push the updated data to the consumers.
          *
-         * @param {object} sNotificationId The ID of the notification whose action is being executed
+         * @param {object} sNotificationGroupId The ID of the notification header/group whose action is being executed
          *
          * @param {object} sActionId The ID of the action that is being executed
          *
          * @since 1.32
          *
          * @public
+         * @alias sap.ushell.services.Notifications#executeBulkAction
          */
-        this.executeBulkAction = function (aNotificationIds, sActionId) {
+        this.executeBulkAction = function (sNotificationGroupId, sActionId) {
             var oDeferred = new jQuery.Deferred(),
                 aSuccededNotifications = [],
                 aFailedNotifications = [],
@@ -247,77 +450,47 @@
                     succededNotifications: aSuccededNotifications,
                     failedNotifications: aFailedNotifications
                 },
-                aDeferreds = [],
                 that = this;
 
-            aNotificationIds.forEach(function (sNotificationId, iIndex) {
-                // we have to use separate promises that we'll always resolve
-                // because jQuery.when immediately rejects upon the first rejected promise.
-                var oDeferredWrapper = new jQuery.Deferred();
-
-                aDeferreds.push(oDeferredWrapper.promise());
-                that.executeAction(sNotificationId, sActionId)
-                    .done(function () {
-                        aSuccededNotifications.push(sNotificationId);
-                        oDeferredWrapper.resolve();
+            that.sendBulkAction(sNotificationGroupId, sActionId)
+                .done(function (res) {
+                    res.forEach(function (oNotificationRes, iIndex) {
+                        var sNotificationId = oNotificationRes.NotificationId,
+                            bSuccess = oNotificationRes.Success;
+                        if (bSuccess) {
+                            aSuccededNotifications.push(sNotificationId);
+                        } else {
+                            aFailedNotifications.push(sNotificationId);
+                        }
                     })
-                    .fail(function () {
-                        aFailedNotifications.push(sNotificationId);
-                        oDeferredWrapper.resolve();
-                    });
-            });
-            jQuery.when.apply(jQuery, aDeferreds).always(function () {
-                if (aFailedNotifications.length) {
+                    if (aFailedNotifications.length) {
+                        oDeferred.reject(oResult);
+                    } else {
+                        oDeferred.resolve(oResult);
+                    }
+                })
+                .fail(function () {
                     oDeferred.reject(oResult);
-                } else {
-                    oDeferred.resolve(oResult);
-                }
-            });
-
+                });
             return oDeferred.promise();
         };
 
-        this.dismissBulkNotifications = function (aNotificationIds) {
+        this.dismissBulkNotifications = function (sNotificationGroupId) {
             var oDeferred = new jQuery.Deferred(),
-                aSuccededNotifications = [],
-                aFailedNotifications = [],
-                oResult = {
-                    succededNotifications: aSuccededNotifications,
-                    failedNotifications: aFailedNotifications
-                },
-                aDeferreds = [],
                 that = this;
-
-            aNotificationIds.forEach(function (sNotificationId, iIndex) {
-                // we have to use separate promises that we'll always resolve
-                // because jQuery.when immediately rejects upon the first rejected promise.
-                var oDeferredWrapper = new jQuery.Deferred();
-
-                aDeferreds.push(oDeferredWrapper.promise());
-                that.dismissNotification(sNotificationId)
-                    .done(function () {
-                        aSuccededNotifications.push(sNotificationId);
-                        oDeferredWrapper.resolve();
-                    })
-                    .fail(function () {
-                        aFailedNotifications.push(sNotificationId);
-                        oDeferredWrapper.resolve();
-                    });
-            });
-            jQuery.when.apply(jQuery, aDeferreds).always(function () {
-                if (aFailedNotifications.length) {
-                    oDeferred.reject(oResult);
-                } else {
-                    oDeferred.resolve(oResult);
-                }
-            });
-
+            that.sendBulkDismiss(sNotificationGroupId)
+                .done(function () {
+                    oDeferred.resolve();
+                })
+                .fail(function () {
+                    oDeferred.reject();
+                });
             return oDeferred.promise();
         };
 
         this.executeAction = function (sNotificationId, sActionId) {
-            // How to act in Fiori client use case?
-            var sActionUrl = oServiceConfig.serviceUrl + "/ExecuteAction",
+            var that = this,
+                sActionUrl = oServiceConfig.serviceUrl + "/ExecuteAction",
                 oRequestBody = {NotificationId: sNotificationId, ActionId: sActionId},
                 oRequestObject = {
                     requestUri: sActionUrl,
@@ -333,14 +506,107 @@
                 oDeferred = jQuery.Deferred();
             OData.request(oRequestObject,
                 function (oResult) {
-                    //that._readAllNotificationsData(true);
-                    oDeferred.resolve();
+                    var responseAckJson,
+                        responseAck = {isSucessfull: true, message: ""};
+                    if (oResult && oResult.response && oResult.response.statusCode === 200 && oResult.response.body) {
+                        responseAckJson = JSON.parse(oResult.response.body);
+                        responseAck.isSucessfull = responseAckJson.Success;
+                        responseAck.message = responseAckJson.MessageText;
+                    }
+                    oDeferred.resolve(responseAck);
                 }, function (oMessage) {
+                    var responseAckJson,
+                        responseAck = {isSucessfull: false, message: ""};
+
                     if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
-                        oDeferred.resolve();
+                        responseAckJson = JSON.parse(oMessage.response.body);
+                        responseAck.isSucessfull = responseAckJson.Success;
+                        responseAck.message = responseAckJson.MessageText;
+                        oDeferred.resolve(responseAck);
+                    } else if (that._csrfTokenInvalid(oMessage) && (bInvalidCsrfTokenRecoveryMode === false)) {
+                        that._invalidCsrfTokenRecovery(oDeferred, that.executeAction, [sNotificationId, sActionId]);
                     } else {
-                        oDeferred.reject();
+                        oDeferred.reject(oMessage);
                         jQuery.sap.log.error("Notification service - oData executeAction failed: ", oMessage, "sap.ushell.services.Notifications");
+                    }
+                });
+
+            return oDeferred.promise();
+        };
+
+        this.sendBulkAction = function (sParentId, sActionId) {
+            var that = this,
+                sActionUrl = oServiceConfig.serviceUrl + "/BulkActionByHeader",
+                oRequestBody = {ParentId: sParentId, ActionId: sActionId},
+                oRequestObject = {
+                    requestUri: sActionUrl,
+                    method: "POST",
+                    data: oRequestBody,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/json",
+                        "DataServiceVersion": sDataServiceVersion,
+                        "X-CSRF-Token": sHeaderXcsrfToken
+                    }
+                },
+                oDeferred = jQuery.Deferred();
+
+            OData.request(oRequestObject,
+                function (oResult) {
+                    var responseAckJson,
+                        responseAck ;
+                    if (oResult && oResult.response && oResult.response.statusCode === 200 && oResult.response.body) {
+                        responseAckJson = JSON.parse(oResult.response.body);
+                        responseAck= responseAckJson.value;
+                    }
+                    oDeferred.resolve(responseAck);
+                }, function (oResult) {
+                    var responseAckJson,
+                        responseAck ;
+
+                    if (oResult.response && oResult.response.statusCode === 200 && oResult.response.body) {
+                        responseAckJson = JSON.parse(oResult.response.body);
+                        responseAck= responseAckJson.value;
+                        oDeferred.resolve(responseAck);
+                    } else if (that._csrfTokenInvalid(oResult) && (bInvalidCsrfTokenRecoveryMode === false)) {
+                        that._invalidCsrfTokenRecovery(oDeferred, that.sendBulkAction, [sParentId, sActionId]);	
+                    } else { 
+                        oDeferred.reject();
+                        jQuery.sap.log.error("Notification service - oData executeBulkAction failed: ", oResult.message, "sap.ushell.services.Notifications");
+                    }
+                });
+
+            return oDeferred.promise();
+        };
+
+        this.sendBulkDismiss = function (sParentId) {
+            var that = this,
+                sActionUrl = oServiceConfig.serviceUrl + "/DismissAll",
+                oRequestBody = {ParentId: sParentId},
+                oRequestObject = {
+                    requestUri: sActionUrl,
+                    method: "POST",
+                    data: oRequestBody,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/json",
+                        "DataServiceVersion": sDataServiceVersion,
+                        "X-CSRF-Token": sHeaderXcsrfToken
+                    }
+                },
+                oDeferred = jQuery.Deferred();
+
+            OData.request(oRequestObject,
+                function (oResult) {
+                    oDeferred.resolve();
+                }, function (oResult) {
+                    if (oResult.response && oResult.response.statusCode === 200) {
+                        oDeferred.resolve();
+                    } else if (that._csrfTokenInvalid(oResult) && (bInvalidCsrfTokenRecoveryMode === false)) {
+                		that._invalidCsrfTokenRecovery(oDeferred, that.sendBulkDismiss, [sParentId]);
+                	} else {
+                        oDeferred.reject();
+                        jQuery.sap.log.error("Notification service - oData executeBulkAction failed: ", oMessage, "sap.ushell.services.Notifications");
                     }
                 });
 
@@ -357,9 +623,11 @@
          * @since 1.34
          *
          * @public
+         * @alias sap.ushell.services.Notifications#markRead
          */
         this.markRead = function (sNotificationId) {
-            var sActionUrl = oServiceConfig.serviceUrl + "/MarkRead",
+            var that = this,
+                sActionUrl = oServiceConfig.serviceUrl + "/MarkRead",
                 oRequestBody = {NotificationId: sNotificationId},
                 oRequestObject = {
                     requestUri: sActionUrl,
@@ -373,13 +641,17 @@
                     }
                 },
                 oDeferred = jQuery.Deferred();
+
             OData.request(oRequestObject,
                 function (oResult) {
-                    //that._readAllNotificationsData(true);
                     oDeferred.resolve();
                 }, function (oMessage) {
-                    oDeferred.reject();
-                    jQuery.sap.log.error("Notification service - oData markRead failed: ", oMessage, "sap.ushell.services.Notifications");
+                	if (that._csrfTokenInvalid(oMessage) && (bInvalidCsrfTokenRecoveryMode === false)) {
+                		that._invalidCsrfTokenRecovery(oDeferred, that.markRead, [sNotificationId]);
+                	} else {
+                        jQuery.sap.log.error("Notification service - oData reset badge number failed: ", oMessage, "sap.ushell.services.Notifications");
+                        oDeferred.reject(oMessage);
+                	}
                 });
             return oDeferred.promise();
         };
@@ -391,6 +663,7 @@
          * @since 1.34
          *
          * @public
+         * @alias sap.ushell.services.Notifications#dismissNotification
          */
         this.dismissNotification = function (sNotificationId) {
             var sActionUrl = oServiceConfig.serviceUrl + "/Dismiss",
@@ -407,13 +680,17 @@
                     }
                 },
                 oDeferred = jQuery.Deferred();
+
             OData.request(oRequestObject,
                 function (oResult) {
-                    //that._readAllNotificationsData(true);
                     oDeferred.resolve();
                 }, function (oMessage) {
-                    oDeferred.reject();
-                    jQuery.sap.log.error("Notification service - oData dismiss notification failed: ", oMessage, "sap.ushell.services.Notifications");
+                	if (that._csrfTokenInvalid(oMessage) && (bInvalidCsrfTokenRecoveryMode === false)) {
+                        that._invalidCsrfTokenRecovery(oDeferred, that.dismissNotification, [sNotificationId]);
+                    } else {
+                        oDeferred.reject(oMessage);
+                        jQuery.sap.log.error("Notification service - oData dismiss notification failed: ", oMessage, "sap.ushell.services.Notifications");
+                    }
                 });
             return oDeferred.promise();
         };
@@ -426,9 +703,36 @@
          * @since 1.32
          *
          * @public
+         * @alias sap.ushell.services.Notifications#registerNotificationsUpdateCallback
          */
         this.registerNotificationsUpdateCallback = function (callback) {
             aUpdateNotificationsCallbacks.push(callback);
+        };
+
+        /**
+         * Gets a callback function to be calle don notifications update, with a dependency in other callbacks
+         *
+         * On every notification update:
+         * 1. A deferred object is created
+         * 2. The registered callback functions are called with a parameter
+         * 3. The parameter is either the deferred object or the deferred's promise
+         *
+         * This way there is a dependency between one of the callback (that performs the deferred.resolve/reject)
+         * and all the other (that implement the promise.done/fail)
+         *
+         * @param {function} The callback function that is registered and called on data update.
+         * @param {boolean} Determines whether the callback gets a deferred object or a promise object, when called
+         *
+         * @private
+         */
+        this.registerDependencyNotificationsUpdateCallback = function (callback, bDependent) {
+            if (bDependent === false) {
+                this.bUpdateDependencyInitiatorExists = true;
+            }
+            aUpdateDependencyNotificationsCallbacks.push({
+                callback : callback,
+                dependent : bDependent
+            });
         };
 
         /**
@@ -439,6 +743,7 @@
          * @since 1.32
          *
          * @public
+         * @alias sap.ushell.services.Notifications#registerNotificationCountUpdateCallback
          */
         this.registerNotificationCountUpdateCallback = function (callback) {
             aUpdateNotificationsCountCallbacks.push(callback);
@@ -451,6 +756,7 @@
          * @since 1.32
          *
          * @public
+         * @alias sap.ushell.services.Notifications#notificationsSeen
          */
         this.notificationsSeen = function () {
             this._setNotificationsAsSeen();
@@ -462,16 +768,114 @@
          * @since 1.38
          *
          * @public
+         * @alias sap.ushell.services.Notifications#isFirstDataLoaded
          */
         this.isFirstDataLoaded = function () {
             return bFirstDataLoaded;
         };
 
+       /**
+        *
+        * @since 1.41
+        *
+        * @private
+        */
+        this.readSettings = function () {
+            var oPromise;
+
+            oPromise = this._readSettingsFromServer();
+
+            return oPromise;
+        };
+
+       /**
+        *
+        * @since 1.41
+        *
+        * @private
+        */
+        this.saveSettingsEntry = function (oEntry) {
+            var oPromise;
+
+            oPromise = this._writeSettingsEntryToServer(oEntry);
+            return oPromise;
+        };
+
+       /**
+        *
+        * @since 1.41
+        *
+        * @private
+        */
+        this.getUserSettingsFlags = function () {
+            var oDeferred = new jQuery.Deferred();
+
+            // If the settings flags were read once (on service initialization) from personalization service
+            if (bUserFlagsReadFromPersonalization === true) {
+                oDeferred.resolve({
+                    previewNotificationEnabled : bPreviewNotificationEnabled,
+                    highPriorityBannerEnabled : bHighPriorityBannerEnabled
+                });
+            } else {
+                // If the settings flags were not read from personalization service yet -
+                //  wait for oUserFlagsReadFromPersonalizationPromise to be resolved
+                oUserFlagsReadFromPersonalizationPromise.done(function () {
+                    oDeferred.resolve({
+                        previewNotificationEnabled : bPreviewNotificationEnabled,
+                        highPriorityBannerEnabled : bHighPriorityBannerEnabled
+                    });
+                });
+            }
+            return oDeferred.promise();
+        };
+
+       /**
+        *
+        * @since 1.41
+        *
+        * @private
+        */
+        this.setUserSettingsFlags = function (oFlags) {
+            bPreviewNotificationEnabled = oFlags.previewNotificationEnabled;
+            bHighPriorityBannerEnabled = oFlags.highPriorityBannerEnabled;
+
+            this._writeUserSettingsFlagsToPersonalization(oFlags);
+        };
+
+        /**
+         * Returns a boolean value indicating whether the Push to Mobile capability is supported by the Notification channel
+         *
+         * @since 1.43
+         *
+         * @private
+         */
+        this._getNotificationSettingsMobileSupport = function () {
+            return bNotificationSettingsMobileSupport;
+        };
+
+        /**
+        *
+        * @since 1.41
+        *
+        * @private
+        */
+        this.getPreviewNotificationEnabledConfig = function () {
+            return bPreviewNotificationEnabledConfig;
+        };
+
         this.destroy = function () {
             bOnServiceDestroy = true;
+            if (initialReadTimer) {
+            	clearTimeout(initialReadTimer);
+            } else if (webSocketRecoveryTimer) {
+            	clearTimeout(webSocketRecoveryTimer);
+            } else if (pollingTimer) {
+                clearTimeout(pollingTimer);
+            }
             if ((oCurrentMode === oModesEnum.WEB_SOCKET) && oWebSocket) {
                 oWebSocket.close();
             }
+            sap.ui.getCore().getEventBus().unsubscribe("launchpad", "sessionTimeout", this.destroy, this);
         };
 
         // ************************************** Service API - End ****************************************
@@ -479,100 +883,6 @@
 
         // *************************************************************************************************
         // ********************************* oData functionality - Begin ***********************************
-
-        /**
-         * Fetching notifications data from the notification center <br
-         *  and announcing the relevant consumers by calling all registered callback functions.<br>
-         *
-         * This function fetches and sets the CSRF token that is required for POST requests.
-         *
-         * In Fiori Client mode there might be a case in which two sequential calls to _readNotificationsData are made
-         *  in a short period of time:
-         *  Steps:
-         *   1. Push notification flow in Fiori Client invoked the callback _handlePushedNotification
-         *   2. _handlePushedNotification calls _readNotificationsData
-         *    (Push notification is actually a "ping" announcement for updates in the server)
-         *   3. OData.read is issued, and then _updateConsumers is called (in the success handler of the OData.read)
-         *   4. Some registered callback (registered by some UI control) is called by _updateConsumers
-         *   5. The callback wishes to get the notifications, hence, calls the API function getNotifications
-         *   6. In case of Fiori Client - getNotifications calls _readNotificationsData,
-         *     hence the 2nd Odata.read call that we wish to avoid
-         *   The solution is to prevent two sequential calls to OData.read (in case of Fiori Client)
-         *    - if the time between them is less then iMinimumSecondsBetweenRequests
-         *
-         * @param {boolean} A boolean parameter indicating whether to update the registered consumers or not
-         *
-         * @private
-         */
-        this._readNotificationsData = function (bUpdateCustomers) {
-            var that = this,
-                oHeader,
-                oRequestObject,
-                aSortedNotifications,
-                oReturnedObject,
-                oDeferred = new jQuery.Deferred(),
-                sReadNotificationsUrl = this._getRequestURI(oURIsEnum.NOTIFICATIONS);
-
-            oRequestObject = {
-                requestUri: sReadNotificationsUrl
-            };
-
-            //  If CSRF token wasn't obtained yet - then set the header of the request so the token will be returned
-            if (!this._getHeaderXcsrfToken()) {
-                oHeader = {};
-                oHeader["X-CSRF-Token"] = "fetch";
-                oRequestObject.headers = oHeader;
-            }
-            OData.read(
-                oRequestObject,
-
-                // Success handler
-                function (oResult, oResponseData) {
-                    oReturnedObject = oResult.results;
-                    that._notificationAlert(oReturnedObject);
-
-                    // TODO Remove this sorting when the OData parameter $orderby will be supported
-                    aSortedNotifications = that._notificationsDescendingSortBy(oReturnedObject, "CreatedAt");
-                    oModel.setProperty("/Notifications", aSortedNotifications);
-                    if (bUpdateCustomers) {
-                        that._updateNotificationsConsumers();
-                    }
-                    if (!that._getHeaderXcsrfToken()) {
-                        sHeaderXcsrfToken = oResponseData.headers["x-csrf-token"];
-                    }
-                    if (!that._getDataServiceVersion()) {
-                        sDataServiceVersion = oResponseData.headers.DataServiceVersion;
-                    }
-                    oDeferred.resolve();
-                },
-                function (oMessage) {
-
-                    if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
-                        oReturnedObject = JSON.parse(oMessage.response.body);
-                        that._notificationAlert(oReturnedObject.value);
-
-                        // TODO Remove this sorting when the OData parameter $orderby will be supported
-                        aSortedNotifications = that._notificationsDescendingSortBy(oReturnedObject.value, "CreatedAt");
-                        oModel.setProperty("/Notifications", aSortedNotifications);
-                        if (bUpdateCustomers) {
-                            that._updateNotificationsConsumers();
-                        }
-                        if (!that._getHeaderXcsrfToken()) {
-                            sHeaderXcsrfToken = oMessage.response.headers["x-csrf-token"];
-                        }
-                        if (!that._getDataServiceVersion()) {
-                            sDataServiceVersion = oMessage.response.headers.DataServiceVersion;
-                        }
-
-                        oDeferred.resolve();
-                    } else {
-                        jQuery.sap.log.error("Notification service - oData read notifications failed: ", oMessage.message, "sap.ushell.services.Notifications");
-                        oDeferred.reject();
-                    }
-                }
-            );
-            return oDeferred.promise();
-        };
 
         /**
          * Fetching the number of notifications that the user hasn't seen yet <br>
@@ -587,7 +897,8 @@
          */
         this._readUnseenNotificationsCount = function (bUpdateCustomers) {
             var that = this,
-                sGetBadgeNumberUrl = this._getRequestURI(oURIsEnum.GET_BADGE_NUMBER),
+                oDeferred = new jQuery.Deferred(),
+                sGetBadgeNumberUrl = this._getRequestURI(oOperationEnum.GET_BADGE_NUMBER),
                 oRequestObject = {
                     requestUri: sGetBadgeNumberUrl
                 };
@@ -598,26 +909,67 @@
                 // success handler
                 function (oResult, oResponseData) {
                     oModel.setProperty("/UnseenCount", oResponseData.data.GetBadgeNumber.Number);
-                    if (bUpdateCustomers) {
-                        that._updateNotificationsCountConsumers();
-                    }
+                    that._setNativeIconBadge(oResponseData.data.GetBadgeNumber.Number);
+                    oDeferred.resolve(oResponseData.data.GetBadgeNumber.Number);
                 },
                 function (oMessage) {
                     if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
                         var oReturnedObject = JSON.parse(oMessage.response.body);
                         oModel.setProperty("/UnseenCount", oReturnedObject.value);
-                        if (bUpdateCustomers) {
-                            that._updateNotificationsCountConsumers();
-                        }
+                        that._setNativeIconBadge(oReturnedObject.value);
+                        oDeferred.resolve(oReturnedObject.value);
                     } else {
                         jQuery.sap.log.error("Notification service - oData read unseen notifications count failed: ", oMessage.message, "sap.ushell.services.Notifications");
+                        oDeferred.reject(oMessage);
                     }
                 }
             );
+            return oDeferred.promise();
+        };
+        /**
+         * Fetching the number of notifications for user  <br>
+         *
+         */
+        this.readNotificationsCount = function () {
+            var oDeferred = new jQuery.Deferred(),
+                sGetNotificationNumberUrl = this._getRequestURI(oOperationEnum.GET_NOTIFICATIONS_COUNT),
+                oRequestObject = {
+                    requestUri: sGetNotificationNumberUrl
+                };
+
+            OData.read(
+                oRequestObject,
+
+                // success handler
+                function (oResult, oResponseData) {
+                    oDeferred.resolve(oResponseData.data);
+                },
+                function (oMessage) {
+                    if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
+                        var oReturnedObject = JSON.parse(oMessage.response.body);
+                        oDeferred.resolve(oReturnedObject.value);
+                    } else {
+                        jQuery.sap.log.error("Notification service - oData read notifications count failed: ", oMessage.message, "sap.ushell.services.Notifications");
+                        oDeferred.reject(oMessage);
+                    }
+                }
+            );
+            return oDeferred.promise();
+        };
+
+       /**
+        * Returns promise object that is resolved if Notification settings data is available, and rejected if not
+        *
+        * @private
+        */
+        this._getNotificationSettingsAvalability = function () {
+            return oNotificationSettingsAvailabilityDefferred.promise();
         };
 
         this._setNotificationsAsSeen = function () {
-            var sResetBadgeNumberUrl = this._getRequestURI(oURIsEnum.RESET_BADGE_NUMBER),
+            var that = this,
+                oDeferred = jQuery.Deferred(),
+                sResetBadgeNumberUrl = this._getRequestURI(oOperationEnum.RESET_BADGE_NUMBER),
                 oRequestObject = {
                     requestUri: sResetBadgeNumberUrl,
                     method: "POST",
@@ -629,29 +981,87 @@
                     }
                 };
 
+            if (this._isFioriClientMode() === true || this._isPackagedMode() === true) {
+                this._setNativeIconBadge(0);
+            }
+
             OData.request(
                 oRequestObject,
 
                 // success handler
                 function (oResult, oResponseData) {
+                	oDeferred.resolve();
                 },
                 function (oMessage) {
-                    jQuery.sap.log.error("Notification service - oData reset badge number failed: ", oMessage, "sap.ushell.services.Notifications");
+                	if (that._csrfTokenInvalid(oMessage) && (bInvalidCsrfTokenRecoveryMode === false)) {
+                		that._invalidCsrfTokenRecovery(oDeferred, that._setNotificationsAsSeen);
+                	} else {
+                        jQuery.sap.log.error("Notification service - oData reset badge number failed: ", oMessage, "sap.ushell.services.Notifications");
+                        oDeferred.reject(oMessage);
+                	}
                 }
             );
+            return oDeferred.promise();
         };
 
-        this._readAllNotificationsData = function (bUpdateConsuners) {
-            var oReadPromise,
-                oDeferred = new jQuery.Deferred();
+        /**
+         * Basic notifications data read flow, occurs either on service initialization or on web-socket/polling update event.
+         * Includes two read operations:
+         * - Read UnseenNotificationsCount and update consumers
+         * - Read several (i.e. iInitialBufferSize) notification items
+         *
+         * The two returned promise objects are pushed into an array, and after resolved, the following steps are performed:
+         * - Notifications (unseen) count consumers are updated
+         * - Service model is updated with the read notification objects
+         * - Notifications update consumers are updated
+         * - Dependent consumers are updated (i.e. call that._updateDependentNotificationsConsumers())
+         *
+         * @param boolean value indicating whether the consumers should be updated
+         *
+         * @returns oDeferred.promise() object, indicating success of both read actions
+         *
+         * @private
+         */
+        this._readNotificationsData = function (bUpdateConsumers) {
+            var that = this,
+                oReadUnseesCountPromise,
+                oReadNotificationsPromise,
+                oReadNotificationsCountPromise,
+                oDeferred = new jQuery.Deferred(),
+                aPromises = [];
 
-            this._readUnseenNotificationsCount(bUpdateConsuners);
+            oReadUnseesCountPromise = this._readUnseenNotificationsCount(bUpdateConsumers);
+            aPromises.push(oReadUnseesCountPromise);
 
-            oReadPromise = this._readNotificationsData(bUpdateConsuners);
-            oReadPromise.done(function () {
-                oDeferred.resolve();
-            }).fail(function (sMsg) {
-                oDeferred.reject();
+            oReadNotificationsCountPromise = this.readNotificationsCount();
+            oReadNotificationsCountPromise.done(function (oResponseData) {
+                oModel.setProperty("/NotificationsCount", oResponseData);
+            });
+
+            oReadNotificationsPromise = this.getNotificationsBufferBySortingType(oOperationEnum.NOTIFICATIONS_BY_DATE_DESCENDING, 0, iInitialBufferSize);
+            aPromises.push(oReadNotificationsPromise);
+
+            jQuery.when.apply(jQuery, aPromises).then(function (args) {
+
+                // When the deferred.promise of _readUnseenNotificationsCount is resolved
+                aPromises[0].done(function (oResponseData) {
+                    if (bUpdateConsumers === true) {
+                        that._updateNotificationsCountConsumers();
+                    }
+                });
+
+                // When the deferred.promise of getNotificationsBufferBySortingType is resolved
+                aPromises[1].done(function (oResponseData) {
+                    // Measure notification
+                    jQuery.sap.flpmeasure.start(0, "Notifications (services + rendering)", 7);
+                    oModel.setProperty("/Notifications", oResponseData);
+                    that._notificationAlert(oResponseData);
+                    if (bUpdateConsumers === true) {
+                        that._updateNotificationsConsumers();
+                        that._updateDependentNotificationsConsumers();
+                    }
+                    oDeferred.resolve();
+                });
             });
             return oDeferred.promise();
         };
@@ -669,67 +1079,321 @@
          * and according to filtering that might be required.
          * The object aRequestURIs is filled with the basic and/or byIntents-filter URI, and is used for maintaining the URIs throughout the session.
          *
-         * @param {object} The value form the enumeration oURIsEnum, representing the relevant request
-         * 
+         * @param {object} The value form the enumeration oOperationEnum, representing the relevant request
+         *
          * @returns {string} The URI that should be user in the OData.read call
          */
-        this._getRequestURI = function (oRequiredURI) {
+        this._getRequestURI = function (oRequiredURI, oArgs) {
             var sReturnedURI,
                 sEncodedConsumedIntents = encodeURI(this._getConsumedIntents(oRequiredURI));
 
             switch (oRequiredURI) {
 
-            // Get notifications 
-            case oURIsEnum.NOTIFICATIONS:
-                if (aRequestURIs.getNotifications.basic === undefined) {
-                    aRequestURIs.getNotifications.basic = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams&$filter=IsGroupHeader%20eq%20false";
-                }
-                if (this._isIntentBasedConsumption()) {
-                    if (aRequestURIs.getNotifications.byIntents === undefined) {
-                        aRequestURIs.getNotifications.byIntents = aRequestURIs.getNotifications.basic.concat("&intents%20eq%20" + sEncodedConsumedIntents);
+                // Get notifications
+                case oOperationEnum.NOTIFICATIONS:
+                    if (aRequestURIs.getNotifications.basic === undefined) {
+                        aRequestURIs.getNotifications.basic = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams&$filter=IsGroupHeader%20eq%20false";
                     }
-                    return aRequestURIs.getNotifications.byIntents;
-                }
-                return aRequestURIs.getNotifications.basic;
-
-            // Get notifications, grouped by type  
-            case oURIsEnum.NOTIFICATIONS_BY_TYPE:
-                if (aRequestURIs.getNotificationsByType.basic === undefined) {
-                    aRequestURIs.getNotificationsByType.basic = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams";
-                }
-                if (this._isIntentBasedConsumption()) {
-                    if (aRequestURIs.getNotificationsByType.byIntents === undefined) {
-                        aRequestURIs.getNotificationsByType.byIntents = aRequestURIs.getNotificationsByType.basic.concat("&$filter=intents%20eq%20" + sEncodedConsumedIntents);
+                    if (this._isIntentBasedConsumption()) {
+                        if (aRequestURIs.getNotifications.byIntents === undefined) {
+                            aRequestURIs.getNotifications.byIntents = aRequestURIs.getNotifications.basic.concat("&intents%20eq%20" + sEncodedConsumedIntents);
+                        }
+                        return aRequestURIs.getNotifications.byIntents;
                     }
-                    return aRequestURIs.getNotificationsByType.byIntents;
-                }
-                return aRequestURIs.getNotificationsByType.basic;
-
-            // Get badge number
-            case oURIsEnum.GET_BADGE_NUMBER:
-                if (aRequestURIs.getBadgeNumber.basic === undefined) {
-                    aRequestURIs.getBadgeNumber.basic = oServiceConfig.serviceUrl + "/GetBadgeNumber()";
-                }
-                if (this._isIntentBasedConsumption()) {
-                    if (aRequestURIs.getBadgeNumber.byIntents === undefined) {
-                        aRequestURIs.getBadgeNumber.byIntents = oServiceConfig.serviceUrl + "/GetBadgeCountByIntent(" + sEncodedConsumedIntents + ")";
+                    return aRequestURIs.getNotifications.basic;
+                // Get notifications, grouped by type
+                case oOperationEnum.NOTIFICATIONS_BY_TYPE:
+                    if (aRequestURIs.getNotificationsByType.basic === undefined) {
+                        aRequestURIs.getNotificationsByType.basic = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams";
                     }
-                    return aRequestURIs.getBadgeNumber.byIntents;
-                }
-                return aRequestURIs.getBadgeNumber.basic;
+                    if (this._isIntentBasedConsumption()) {
+                        if (aRequestURIs.getNotificationsByType.byIntents === undefined) {
+                            aRequestURIs.getNotificationsByType.byIntents = aRequestURIs.getNotificationsByType.basic.concat("&$filter=intents%20eq%20" + sEncodedConsumedIntents);
+                        }
+                        return aRequestURIs.getNotificationsByType.byIntents;
+                    }
+                    return aRequestURIs.getNotificationsByType.basic;
 
-            // Reset badge number (i.e. mark all notifications as "seen")
-            case oURIsEnum.RESET_BADGE_NUMBER:
-                if (aRequestURIs.resetBadgeNumber.basic === undefined) {
-                    aRequestURIs.resetBadgeNumber.basic = oServiceConfig.serviceUrl + "/ResetBadgeNumber";
-                }
-                return aRequestURIs.resetBadgeNumber.basic;
+                // Get notifications group Headers
+                case oOperationEnum.NOTIFICATIONS_GROUP_HEADERS:
+                    if (aRequestURIs.getNotificationsGroupHeaders.basic === undefined) {
+                        aRequestURIs.getNotificationsGroupHeaders.basic = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams&$filter=IsGroupHeader%20eq%20true";
+                    }
+                    if (this._isIntentBasedConsumption()) {
+                        if (aRequestURIs.getNotificationsGroupHeaders.byIntents === undefined) {
+                            aRequestURIs.getNotificationsGroupHeaders.byIntents = aRequestURIs.getNotificationsGroupHeaders.basic.concat("&intents%20eq%20" + sEncodedConsumedIntents);
+                        }
+                        return aRequestURIs.getNotificationsGroupHeaders.byIntents;
+                    }
+                    return aRequestURIs.getNotificationsGroupHeaders.basic;
 
-            default:
-                sReturnedURI = "";
+                // Get notifications in group
+                case oOperationEnum.NOTIFICATIONS_IN_GROUP:
+                    sReturnedURI = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams&$orderby=CreatedAt desc&$filter=IsGroupHeader eq false and ParentId eq " + oArgs.group + "&$skip=" + oArgs.skip + "&$top=" + oArgs.top;
+
+                    if (this._isIntentBasedConsumption() === true) {
+                        sReturnedURI = sReturnedURI.concat("&intents%20eq%20" + sEncodedConsumedIntents);
+                    }
+                    break;
+
+                // Get badge number
+                case oOperationEnum.GET_BADGE_NUMBER:
+                    if (aRequestURIs.getBadgeNumber.basic === undefined) {
+                        aRequestURIs.getBadgeNumber.basic = oServiceConfig.serviceUrl + "/GetBadgeNumber()";
+                    }
+                    if (this._isIntentBasedConsumption()) {
+                        if (aRequestURIs.getBadgeNumber.byIntents === undefined) {
+                            aRequestURIs.getBadgeNumber.byIntents = oServiceConfig.serviceUrl + "/GetBadgeCountByIntent(" + sEncodedConsumedIntents + ")";
+                        }
+                        return aRequestURIs.getBadgeNumber.byIntents;
+                    }
+                    return aRequestURIs.getBadgeNumber.basic;
+
+                // Get Notification Count
+                case oOperationEnum.GET_NOTIFICATIONS_COUNT:
+                    if (aRequestURIs.getNotificationCount.basic === undefined) {
+                        aRequestURIs.getNotificationCount.basic = oServiceConfig.serviceUrl + "/Notifications/$count";
+                    }
+                    return aRequestURIs.getNotificationCount.basic;
+
+                // Reset badge number (i.e. mark all notifications as "seen")
+                case oOperationEnum.RESET_BADGE_NUMBER:
+                    if (aRequestURIs.resetBadgeNumber.basic === undefined) {
+                        aRequestURIs.resetBadgeNumber.basic = oServiceConfig.serviceUrl + "/ResetBadgeNumber";
+                    }
+                    return aRequestURIs.resetBadgeNumber.basic;
+
+                // Get user settings
+                case oOperationEnum.GET_SETTINGS:
+                    if (aRequestURIs.getNotificationTypesSettings.basic === undefined) {
+                        aRequestURIs.getNotificationTypesSettings.basic = oServiceConfig.serviceUrl + "/NotificationTypePersonalizationSet";
+                    }
+                    return aRequestURIs.getNotificationTypesSettings.basic;
+
+                case oOperationEnum.GET_MOBILE_SUPPORT_SETTINGS:
+                    if (aRequestURIs.getMobileSupportSettings.basic === undefined) {
+                        aRequestURIs.getMobileSupportSettings.basic = oServiceConfig.serviceUrl + "/Channels(ChannelId='SAP_SMP')";
+                    }
+                    return aRequestURIs.getMobileSupportSettings.basic;
+
+                case oOperationEnum.VALIDATE_WEBSOCKET_CHANNEL:
+                    if (aRequestURIs.getWebSocketValidity.basic === undefined) {
+                        aRequestURIs.getWebSocketValidity.basic = oServiceConfig.serviceUrl + "/Channels('SAP_WEBSOCKET')";
+                    }
+                    return aRequestURIs.getWebSocketValidity.basic;
+
+                // Get a buffer of notifications (using $skip, $top and $orderby options) sorted by date in descending order
+                case oOperationEnum.NOTIFICATIONS_BY_DATE_DESCENDING:
+                    sReturnedURI = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams&$orderby=CreatedAt%20desc&$filter=IsGroupHeader%20eq%20false&$skip=" + oArgs.skip + "&$top=" + oArgs.top;
+                    if (this._isIntentBasedConsumption() === true) {
+                        sReturnedURI = sReturnedURI.concat("&intents%20eq%20" + sEncodedConsumedIntents);
+                    }
+                    break;
+
+                // Get a buffer of notifications (using $skip, $top and $orderby options) sorted by date in ascending order
+                case oOperationEnum.NOTIFICATIONS_BY_DATE_ASCENDING:
+                    sReturnedURI = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams&$orderby=CreatedAt%20asc&$filter=IsGroupHeader%20eq%20false&$skip=" + oArgs.skip + "&$top=" + oArgs.top;
+                    if (this._isIntentBasedConsumption() === true) {
+                        sReturnedURI = sReturnedURI.concat("&intents%20eq%20" + sEncodedConsumedIntents);
+                    }
+                    break;
+
+                // Get a buffer of notifications (using $skip, $top and $orderby options) sorted by priority in ascending order
+                case oOperationEnum.NOTIFICATIONS_BY_PRIORITY_DESCENDING:
+                    sReturnedURI = oServiceConfig.serviceUrl + "/Notifications?$expand=Actions,NavigationTargetParams&$orderby=Priority%20desc&$filter=IsGroupHeader%20eq%20false&$skip=" + oArgs.skip + "&$top=" + oArgs.top;
+                    if (this._isIntentBasedConsumption() === true) {
+                        sReturnedURI = sReturnedURI.concat("&intents%20eq%20" + sEncodedConsumedIntents);
+                    }
+                    break;
+
+                default:
+                    sReturnedURI = "";
             }
-
             return sReturnedURI;
+        };
+
+        /**
+         * For testing purposes
+         *
+         * @private
+         */
+        this._readSettingsFromServer_noConnection = function () {
+            var oDeferred = jQuery.Deferred(),
+                // Notification types content for testing the Settings feature
+                aNotificationTypesSettings = [{
+                    NotificationTypeId: "type1",
+                    NotificationTypeDesc: "aaaaabbbbb-cccccddddd",
+                    PriorityDefault: "40-HIGH",
+                    DoNotDeliver: false,
+                    DoNotDeliverMob: true
+                }, {
+                    NotificationTypeId: "type2",
+                    NotificationTypeDesc: "cccccdddddccc-aaaaabbbbb",
+                    PriorityDefault: "10-LOW",
+                    DoNotDeliver: true,
+                    DoNotDeliverMob: true
+                }];
+
+            oDeferred.resolve(JSON.stringify({
+                "@odata.context" : "$metadata#NotificationTypePersonalizationSet",
+                "value" : aNotificationTypesSettings
+            }));
+            return oDeferred.promise();
+        };
+
+        /**
+         * For testing purposes
+         *
+         * @private
+         */
+        this._readSettingsFromServer_noData = function () {
+            var oDeferred = jQuery.Deferred();
+
+            oDeferred.resolve(JSON.stringify({
+                "@odata.context" : "$metadata#NotificationTypePersonalizationSet",
+                "value" : {}
+            }));
+            return oDeferred.promise();
+        };
+
+        this._readSettingsFromServer = function () {
+            var sReadSettingsUrl = this._getRequestURI(oOperationEnum.GET_SETTINGS),
+                oRequestObject = {
+                    requestUri: sReadSettingsUrl
+                },
+                oDeferred = jQuery.Deferred();
+
+            OData.request(oRequestObject,
+                function (oResult) {
+                    oDeferred.resolve(oResult.results);
+                }, function (oMessage) {
+                    if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
+                        oDeferred.resolve(oMessage.response.body);
+                    } else {
+                        oDeferred.reject(oMessage);
+                        jQuery.sap.log.error("Notification service - oData get settings failed: ", oMessage, "sap.ushell.services.Notifications");
+                    }
+                });
+            return oDeferred.promise();
+        };
+
+        /**
+         * Verifying whether the "push notifications to mobile" feature is supported.
+         *
+         * @return A Deferred.promise object that is always resolved even if the request failed.<br>
+         * In case of failure - the response property successStatus gets the value <code>false</code>
+         */
+        this._readMobileSettingsFromServer = function () {
+            var sRequestUrl = this._getRequestURI(oOperationEnum.GET_MOBILE_SUPPORT_SETTINGS),
+                oRequestObject = {
+                    requestUri: sRequestUrl
+                },
+                oDeferred = jQuery.Deferred(),
+                oResponseObject,
+                sUpdatedResponseString,
+                bSuccessStatus;
+
+            OData.request(oRequestObject,
+                function (oResult) {
+                    if(typeof (oResult.results) === "string") {
+                    	oResponseObject = JSON.parse(oResult.results);
+                    	oResponseObject.successStatus = true;
+                    	sUpdatedResponseString = JSON.stringify(oResponseObject);
+                    	oDeferred.resolve(sUpdatedResponseString);
+                    } else {
+                        oResult.results.successStatus = true;
+                        oDeferred.resolve(oResult.results);
+                    }
+                }, function (oMessage) {
+                    if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
+                    	oResponseObject = JSON.parse(oMessage.response.body);
+                    	oResponseObject.successStatus = true;
+                    	sUpdatedResponseString = JSON.stringify(oResponseObject);
+                        oDeferred.resolve(sUpdatedResponseString);
+                    } else {
+                        oDeferred.resolve(JSON.stringify({successStatus : false}));
+                        jQuery.sap.log.error("Notification service - oData get settings failed: ", oMessage, "sap.ushell.services.Notifications");
+                    }
+                });
+
+            return oDeferred.promise();
+        };
+
+        /**
+         * Verifying whether the WebSocket is active (while it is already opened)
+         *
+         * @return A Deferred.promise object that is always resolved even if the request fails.<br>
+         * The actual response is returned as the done function's boolean parameter:<br>
+         * In case of active WebSocket - the value <code>true</code> is returned, and <code>false</code> otherwise.
+         */
+        this._checkWebSocketActivity = function () {
+            var sRequestUrl = this._getRequestURI(oOperationEnum.VALIDATE_WEBSOCKET_CHANNEL),
+                oRequestObject = {
+                    requestUri: sRequestUrl
+                },
+                oDeferred = jQuery.Deferred(),
+                oResponseObject;
+
+            OData.request(oRequestObject,
+                function (oResult) {
+                    if(typeof (oResult.results) === "string") {
+                        oResponseObject = JSON.parse(oResult.results);
+                        oDeferred.resolve(oResponseObject.IsActive);
+                    } else {
+                        oDeferred.resolve(false);
+                    }
+                }, function (oMessage) {
+                    if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
+                        oResponseObject = JSON.parse(oMessage.response.body);
+                        oDeferred.resolve(oResponseObject.IsActive);
+                    } else {
+                        oDeferred.resolve(false);
+                        jQuery.sap.log.error("Notification service - oData get settings failed: ", oMessage, "sap.ushell.services.Notifications");
+                    }
+                });
+
+            return oDeferred.promise();
+        };
+
+        this._writeSettingsEntryToServer = function (oEntry) {
+            var that = this,
+                oDeferred,
+                sSetSettingsUrl = this._getRequestURI(oOperationEnum.GET_SETTINGS) + "(NotificationTypeId=" + oEntry.NotificationTypeId + ")",
+                oRequestObject = {
+                    requestUri: sSetSettingsUrl,
+                    method: "PUT",
+                    data: {
+                        "@odata.context" : "$metadata#NotificationTypePersonalizationSet/$entity",
+                        "NotificationTypeId" : oEntry.NotificationTypeId,
+                        "NotificationTypeDesc" : oEntry.NotificationTypeDesc,
+                        "PriorityDefault" : oEntry.PriorityDefault,
+                        "DoNotDeliver" : oEntry.DoNotDeliver,
+                        "DoNotDeliverMob" : oEntry.DoNotDeliverMob
+                    },
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/json",
+                        "DataServiceVersion": sDataServiceVersion,
+                        "X-CSRF-Token": sHeaderXcsrfToken
+                    }
+                };
+            oDeferred = jQuery.Deferred();
+
+            OData.request(oRequestObject,
+                function (oResult) {
+                    oDeferred.resolve(oResult);
+                }, function (oMessage) {
+                    if (oMessage.response && oMessage.response.statusCode === 200 && oMessage.response.body) {
+                        oDeferred.resolve(oMessage.response.body);
+                    } else if (that._csrfTokenInvalid(oMessage) && (bInvalidCsrfTokenRecoveryMode === false)) {
+                        that._invalidCsrfTokenRecovery(oDeferred, that._writeSettingsEntryToServer, [oEntry]);
+                    } else {
+                        oDeferred.reject(oMessage);
+                        jQuery.sap.log.error("Notification service - oData set settings entry failed: ", oMessage, "sap.ushell.services.Notifications");
+                    }
+                });
+
+            return oDeferred.promise();
         };
 
         // ********************************** oData functionality - End ************************************
@@ -741,10 +1405,33 @@
             });
         };
 
+        this._updateDependentNotificationsConsumers = function () {
+            var that = this,
+                oDeferred = new jQuery.Deferred();
+
+            aUpdateDependencyNotificationsCallbacks.forEach(function (callbackObj) {
+                // If there is no registered module that with resolve/reject the deferred object -
+                // invoke the callback function without any parameter, so it will be executed regardless of any deferred object
+                if (that.bUpdateDependencyInitiatorExists === false) {
+                    callbackObj.callback();
+                } else {
+                    // If the consumer defined itself as "dependent", then it gets the promise object (as a parameter to the callback function)
+                    // otherwise it gets the deferred object
+                    callbackObj.dependent === true ? callbackObj.callback(oDeferred.promise()) : callbackObj.callback(oDeferred);
+                }
+            });
+        };
+
         this._updateNotificationsCountConsumers = function () {
             aUpdateNotificationsCountCallbacks.forEach(function (callback) {
                 callback();
             });
+        };
+
+        this._updateAllConsumers = function () {
+            this._updateNotificationsConsumers();
+            this._updateNotificationsCountConsumers();
+            this._updateDependentNotificationsConsumers();
         };
 
         this._getModel = function () {
@@ -796,7 +1483,10 @@
                 }
 
                 this._registerForPush();
-                this._readAllNotificationsData(true);
+                this._readNotificationsData(true);
+
+                this._setNativeIconBadgeWithDelay();
+
                 return;
             }
 
@@ -813,7 +1503,7 @@
         this._performFirstRead = function () {
             var that = this,
                 tFioriClientRemainingDelay,
-                oReadPromise = this._readAllNotificationsData(true);
+                oReadPromise = this._readNotificationsData(true);
 
             oReadPromise.done(function () {
                 // Calculate time left until Fiori Client mode can be checked
@@ -821,7 +1511,7 @@
                 if (tFioriClientRemainingDelay <= 0) {
                     that._fioriClientStep();
                 } else {
-                    setTimeout(function () {
+                	initialReadTimer = setTimeout(function () {
                         that._fioriClientStep();
                     }, tFioriClientRemainingDelay);
                 }
@@ -837,9 +1527,17 @@
          * If so - initialize Fiori Client mode. If not - go to the nest step (webSocket)
          */
         this._fioriClientStep = function () {
+            var that = this,
+                oUnseenNotificatiosCountPromise;
+
             if (this._isFioriClientMode()) {
                 oCurrentMode = oModesEnum.FIORI_CLIENT;
                 this._addPushNotificationHandler();
+
+                oUnseenNotificatiosCountPromise = this.getUnseenNotificationsCount();
+                oUnseenNotificatiosCountPromise.done(function (iBadgeValue) {
+                    that._setNativeIconBadge(iBadgeValue, function () {});
+                }).fail(function () {});
             } else {
                 this._webSocketStep();
             }
@@ -857,17 +1555,28 @@
          * Step 5. WebSocket recovery step
          * Called on WebSocket onClose event.
          * In this case there one additional trial to establish the WebSOcket connection.
-         * If the additional attpemt also fails - move to polling
+         * If the additional attempt also fails - move to polling
          */
         this._webSocketRecoveryStep = function () {
+
             if (bWebSocketRecoveryAttempted === false) {
                 bWebSocketRecoveryAttempted = true;
-                setTimeout(function() {
+                webSocketRecoveryTimer = setTimeout(function() {
                     this._webSocketStep();
                 }.bind(this), tWebSocketRecoveryPeriod);
             } else {
-                this._activatePolling();
+                // Since the first request for notifications data was already issued -
+                // the first polling request is delayed by (iPollingInterval * 1000) seconds
+                this._activatePollingAfterInterval();
             }
+        };
+
+        this._activatePollingAfterInterval = function () {
+            var that = this;
+
+            pollingTimer = setTimeout(function() {
+                that._activatePolling();
+            }, iPollingInterval * 1000);
         };
 
         /**
@@ -875,11 +1584,11 @@
          */
         this._activatePolling = function () {
             var that = this;
-            oCurrentMode = oModesEnum.POLLING;
 
-            this._readAllNotificationsData(true);
+            oCurrentMode = oModesEnum.POLLING;
+            this._readNotificationsData(true);
             // Call again after a delay
-            this.timer = setTimeout(that._activatePolling.bind(that, iPollingInterval, false), (iPollingInterval * 1000));
+            pollingTimer = setTimeout(that._activatePolling.bind(that, iPollingInterval, false), (iPollingInterval * 1000));
         };
 
         this._formatAsDate = function (sUnformated) {
@@ -887,6 +1596,12 @@
         };
 
         this._notificationAlert = function (results) {
+
+            // If alerts/banners for HIGH priority notifications are disabled by the user - then return
+            if (bHighPriorityBannerEnabled === false) {
+                return;
+            }
+
             var oNotification,
                 aNewNotifications = [],
                 nextLastNotificationDate = 0;
@@ -923,34 +1638,47 @@
          */
         this._establishWebSocketConnection = function () {
             var that = this,
+                bDeliberateClose = false,
                 oPcpFields;
 
-            jQuery.sap.require("sap.ui.core.ws.SapPcpWebSocket");
             try {
                 // Init WebSocket connection (TODO move into metadataloaded to ensure that authentication is done)
                 // TODO: version 7.51 (ABAP) will include v11, with ping-pong health check
                 // TODO: add the attachOpen function and log the event
-                oWebSocket = new sap.ui.core.ws.SapPcpWebSocket(sWebSocketUrl, [sap.ui.core.ws.SapPcpWebSocket.SUPPORTED_PROTOCOLS.v10]);
+                oWebSocket = this._getWebSocketObjectObject(sWebSocketUrl, [SapPcpWebSocket.SUPPORTED_PROTOCOLS.v10]);
+
                 oWebSocket.attachMessage(this, function(oMessage, oData) {
-                    // All this is a bit hacky from outside the model. It should be much easier when done within the UI5 model
                     oPcpFields = oMessage.getParameter("pcpFields");
                     if ((oPcpFields) && (oPcpFields.Command) && (oPcpFields.Command === "Notification")) {
                         // Receive "pings" for Notification EntitySet
                         // Another optional "ping" would be oPcpFields.Command === "Badge" for new Badge Number, but is currently not supported.
-                        that._readAllNotificationsData(true);
+                        that._readNotificationsData(true);
                     }
                 });
 
+                oWebSocket.attachOpen(this, function(oArgs) {
+                    that._checkWebSocketActivity().done(function (bIsActive) {
+                        // In case that bIsActive is false, it mean that the webSocket is not active although the connection is opened.
+                        // in this case we should close the WebSocket connection and switch to polling step.
+                       if (!bIsActive) {
+                           bDeliberateClose = true;
+                           oWebSocket.close();
+                           that._activatePollingAfterInterval();
+                       }
+                    })
+                    jQuery.sap.log.info("Notifications UShell service WebSocket: webSocket connection opened");
+                });
+
                 oWebSocket.attachClose(this, function(oEvent, oData) {
-                    jQuery.sap.log.error("Notifications UShell service WebSocket: attachClose called with code: " +  oEvent.mParameters.code + " and reason: " + oEvent.mParameters.reason);
-                    if (!bOnServiceDestroy) {
+                    jQuery.sap.log.warning("Notifications UShell service WebSocket: attachClose called with code: " +  oEvent.mParameters.code + " and reason: " + oEvent.mParameters.reason);
+                    if ((!bOnServiceDestroy) && (!bDeliberateClose)) {
                         that._webSocketRecoveryStep();
                     }
                 });
 
                 // attachError is not being handled since each attachError is followed by a call to attachClose (...which includes handling)
                 oWebSocket.attachError(this, function(oError, oData) {
-                    jQuery.sap.log.error("Notifications UShell service WebSocket: attachError called!");
+                    jQuery.sap.log.warning("Notifications UShell service WebSocket: attachError called!");
                 });
             } catch (e) {
                 jQuery.sap.log.error("Exception occurred while creating new sap.ui.core.ws.SapPcpWebSocket. Message: " + e.message);
@@ -973,6 +1701,25 @@
             return (window.fiori_client_appConfig && window.fiori_client_appConfig.prepackaged === true);
         };
 
+        this._setNativeIconBadge = function (iBadgeValue) {
+            if ((sap.Push !== undefined) && (sap.Push.setBadgeNumber !== undefined)) {
+                sap.Push.setBadgeNumber(iBadgeValue, function () {});
+            }
+        };
+
+        this._setNativeIconBadgeWithDelay = function () {
+            var that = this,
+                oUnseenNotificatiosCountPromise;
+
+            setTimeout(function () {
+                oUnseenNotificatiosCountPromise = that.getUnseenNotificationsCount();
+
+                oUnseenNotificatiosCountPromise.done(function (iBadgeValue) {
+                    that._setNativeIconBadge(iBadgeValue);
+                }).fail(function () {});
+            }, 4000);
+        };
+
         this._getIntentsFromConfiguration = function (aInput) {
             var aTempConsumedIntents = [],
                 sTempIntent,
@@ -987,16 +1734,71 @@
             return aTempConsumedIntents;
         };
 
-        this._handlePushedNotification = function (oData) {
-            if (!(oData === undefined) && !(oData.additionalData === undefined)) {
-                // TODO: Check flag to see if navigation is required + initiate click
-                if (oData.additionalData.foreground) {
-                    // Should be code for adding notifications to FLP’s notification center
-                    // but instead we relate to this case an "update pinging", and then we get all notifications
-                    this._readAllNotificationsData(true);
+        this._handlePushedNotification = function (oNotificationData) {
+           var sNotificationId,
+                sSemanticObject,
+                sAction,
+                oParameters,
+                aParameters = [],
+                oViewPortContainer;
+
+            if (oNotificationData !== undefined) {
+                // Either oNotificationData.additionalData is not defined
+                // OR oNotificationData.additionalData has the value "true" (foreground use-case)
+                if ((oNotificationData.additionalData === undefined) || (oNotificationData.additionalData.foreground === true)) {
+
+                    // The given notification object is ignored, and we relate to this use-case as a "ping",
+                    // telling us that notifications data (in the Notification Center) was changed,
+                    // hence the call to _readNotificationsData
+                    this._readNotificationsData(true);
+
+                // Background use-case (oNotificationData.additionalData is defined and equals "false")
                 } else {
-                    // Open an Fiori app to process notification directly
-                    this._readAllNotificationsData(true);
+                    // Read the semantic object, the action and the navigation parameters from the additionalData part of the notification,
+                	// or as a fallback - from the notification item's data
+
+                    if (oNotificationData.additionalData && oNotificationData.additionalData.NavigationTargetObject) {
+                        sSemanticObject = oNotificationData.additionalData.NavigationTargetObject;
+                    } else {
+                        sSemanticObject = oNotificationData.NavigationTargetObject; 
+                    }
+
+                    if (oNotificationData.additionalData && oNotificationData.additionalData.NavigationTargetAction) {
+                        sAction = oNotificationData.additionalData.NavigationTargetAction;
+                    } else {
+                        sAction = oNotificationData.NavigationTargetAction; 
+                    }
+
+                    if (oNotificationData.additionalData && oNotificationData.additionalData.NavigationTargetParam) {
+                        oParameters = oNotificationData.additionalData.NavigationTargetParam;
+                    } else {
+                        oParameters = oNotificationData.NavigationTargetParam;
+                    }
+
+                    if (oParameters) {
+                        if (typeof oParameters === 'string' || oParameters instanceof String) {
+                            aParameters[0] = oParameters;
+                        } else if (Array.isArray(oParameters) === true) {
+                            aParameters = oParameters;
+                        }
+                    }
+
+                    sNotificationId = oNotificationData.NotificationId;
+
+                    // In case the notification object's hash is "Shell-home"
+                    if ((typeof hasher !== "undefined") && (hasher.getHash() === sSemanticObject + "-" + sAction)) {
+                        oViewPortContainer = sap.ui.getCore().byId('viewPortContainer');
+                        if (oViewPortContainer) {
+                            oViewPortContainer.switchState("Center");
+                        }
+                    }
+
+                    // Perform a navigation action according to the pushed notificaiton's intent
+                    sap.ushell.utils.toExternalWithParameters(sSemanticObject, sAction, aParameters);
+
+                    this.markRead(sNotificationId);
+
+                    this._readNotificationsData(true);
                 }
             }
         };
@@ -1016,7 +1818,7 @@
         this._isIntentBasedConsumption = function () {
             return bIntentBasedConsumption;
         };
-        
+
         /**
          * Creates and returns the intents filter string of an OData request
          * For example: &NavigationIntent%20eq%20%27Action-toappstatesample%27%20or%20NavigationIntent%20eq%20%27Action-toappnavsample%27
@@ -1032,13 +1834,13 @@
             if (aConsumedIntents.length > 0) {
 
                 // If it is not GetBadgeNumber use-case then the intents filter string should start with "&"
-                if (oResuestURI !== oURIsEnum.GET_BADGE_NUMBER) {
+                if (oResuestURI !== oOperationEnum.GET_BADGE_NUMBER) {
                     sConsumedIntents = "&";
                 }
 
                 for (index = 0; index < aConsumedIntents.length; index++) {
                     // If it is GetBadgeNumber use case then the intent are comma separated
-                    if (oResuestURI === oURIsEnum.GET_BADGE_NUMBER) {
+                    if (oResuestURI === oOperationEnum.GET_BADGE_NUMBER) {
                         if (index === 0) {
                             sConsumedIntents = aConsumedIntents[index];
                         } else {
@@ -1050,6 +1852,69 @@
                 }
             }
             return sConsumedIntents;
+        };
+
+        this._revalidateCsrfToken = function () {
+            var oDeferred;
+
+            sHeaderXcsrfToken = undefined;
+            bCsrfDataSet = false;
+
+            oDeferred = this.getNotificationsBufferBySortingType(oOperationEnum.NOTIFICATIONS_BY_DATE_DESCENDING, 0, 1);
+            return oDeferred.promise();
+        };
+
+        this._csrfTokenInvalid = function (oMessage) {
+            return (oMessage.response && (oMessage.response.statusCode === 403) && (oMessage.response.headers["x-csrf-token"] === "Required"));
+        };
+
+        /**
+         * Called in case that the CSRF token becomes invalid during the session.
+         *
+         * This problem (i.e., invalid CSRF token) is found when a POST oData call fails (e.g, markRead).  
+         * in such a case this function is called in order to perform the recovery flow.
+         *
+         * The recovery flow includes two main steps:
+         *  1. Obtaining the new/valid CSRF token from the notification channel
+         *  2. Calling the function that failed (with the same parameters)
+         *  3. resolving/rejecting the deferred object of the first function call (the one that failed because the token became invalid)
+         *     in order to continue with the original flow
+         *     
+         * @returns the function doesn't return anything, instead it resolves or rejects the given oOriginalDeferred
+         *
+         * @private
+         */
+        this._invalidCsrfTokenRecovery = function (oOriginalDeferred, fnFailedFunction, aArgsArray) {
+            var that = this,
+                // Getting the new/valid CSRF token
+                oPromise = this._revalidateCsrfToken(),
+                oSecondCallPromise;
+
+            bInvalidCsrfTokenRecoveryMode = true;
+
+            oPromise.done(function () {
+
+            	// Call the function that failed (with the same parameters)
+            	oSecondCallPromise = fnFailedFunction.apply(that, aArgsArray);
+
+                oSecondCallPromise.done(function (oResult) {
+                	bInvalidCsrfTokenRecoveryMode = false;
+                	oOriginalDeferred.resolve(oResult);
+                });
+                oSecondCallPromise.fail(function (e) {
+                    bInvalidCsrfTokenRecoveryMode = false;
+                	if (e.response && e.response.statusCode === 200 && e.response.body) {
+                    	oOriginalDeferred.resolve(e.response.body);
+                    } else {
+                    	oOriginalDeferred.reject(e);	
+                    }
+                });
+            });
+            oPromise.fail(function (e) {
+                bInvalidCsrfTokenRecoveryMode = false;
+            	oOriginalDeferred.reject(e);
+                jQuery.sap.log.error("Notification service - oData markRead failed: ", e.message, "sap.ushell.services.Notifications");
+            });
         };
 
         // **************** Helper functions for Fiori client and PackagedApp mode - End *****************
@@ -1067,6 +1932,11 @@
             });
             return aNotifications;
         };
+
+        this._getWebSocketObjectObject = function (sWebSocketUrl, aVersionProtocol) {
+        	return new SapPcpWebSocket(sWebSocketUrl, aVersionProtocol);
+        };
+
         this._notificationsDescendingSortBy = function (aNotifications, sPropertyToSortBy) {
             aNotifications.sort(function (x, y) {
                 var val1 = x[sPropertyToSortBy],
@@ -1099,6 +1969,176 @@
             });
             return aNotifications;
         };
+
+        this.getOperationEnum = function () {
+            return oOperationEnum;
+        };
+
+        /**
+         * Read user settings flags from the personalization
+         *  and update the variables bPreviewNotificationEnabled and bPreviewNotificationEnabled.
+         * If the data does not yet exists in the personalization -
+         *  write the default values of bPreviewNotificationEnabled and bPreviewNotificationEnabled to the personalization
+         */
+        this._readUserSettingsFlagsFromPersonalization = function () {
+            var that = this,
+                oDeferred,
+                oPromise;
+
+            try {
+                oPromise = this._getUserSettingsPersonalizer().getPersData();
+            } catch (err) {
+                jQuery.sap.log.error("Personalization service does not work:");
+                jQuery.sap.log.error(err.name + ": " + err.message);
+                oDeferred = new jQuery.Deferred();
+                oDeferred.reject(err);
+                oPromise = oDeferred.promise();
+            }
+
+            oPromise.done(function (oFlagsData) {
+                if (oFlagsData === undefined) {
+                    that._writeUserSettingsFlagsToPersonalization ({
+                        previewNotificationEnabled : bPreviewNotificationEnabled,
+                        highPriorityBannerEnabled : bHighPriorityBannerEnabled
+                    });
+                } else {
+                    bPreviewNotificationEnabled = oFlagsData.previewNotificationEnabled;
+                    bHighPriorityBannerEnabled = oFlagsData.highPriorityBannerEnabled;
+                }
+                bUserFlagsReadFromPersonalization = true;
+                oUserFlagsReadFromPersonalizationDefferred.resolve();
+            });
+            oPromise.fail(function () {
+                jQuery.sap.log.error("Reading User Settings flags from Personalization service failed");
+            });
+        };
+
+       /**
+        * Write/save user settings flags to the personalization.
+        * The saved data consists of the user's DoNotDisturb and EnablePreview flags values.
+        */
+        this._writeUserSettingsFlagsToPersonalization  = function (oFlags) {
+            var oDeferred,
+                oPromise;
+
+            try {
+                oPromise = this._getUserSettingsPersonalizer().setPersData(oFlags);
+            } catch (err) {
+                jQuery.sap.log.error("Personalization service does not work:");
+                jQuery.sap.log.error(err.name + ": " + err.message);
+                oDeferred = new jQuery.Deferred();
+                oDeferred.reject(err);
+                oPromise = oDeferred.promise();
+            }
+            return oPromise;
+        };
+
+       /**
+        * If the instance of Personalizer (oUserSettingsPersonalizer) is not yet defined - then create it
+        * and return oUserSettingsPersonalizer
+        */
+        this._getUserSettingsPersonalizer = function () {
+            if (oUserSettingsPersonalizer === undefined) {
+                oUserSettingsPersonalizer = this._createUserSettingsPersonalizer();
+            }
+            return oUserSettingsPersonalizer;
+        };
+
+        this._createUserSettingsPersonalizer = function () {
+            var oPersonalizationService = sap.ushell.Container.getService("Personalization"),
+                oComponent,
+                oScope = {
+                   keyCategory : oPersonalizationService.constants.keyCategory.FIXED_KEY,
+                   writeFrequency: oPersonalizationService.constants.writeFrequency.LOW,
+                   clientStorageAllowed : true
+                },
+                oPersId = {
+                    container : "sap.ushell.services.Notifications",
+                    item : "userSettingsData"
+                },
+                oPersonalizer = oPersonalizationService.getPersonalizer(oPersId, oScope, oComponent);
+
+            return oPersonalizer;
+        };
+
+        this._updateCSRF = function (oResponseData) {
+            if ((bCsrfDataSet === true) || (oResponseData.headers === undefined)) {
+                return;
+            }
+            if (!this._getHeaderXcsrfToken()) {
+                sHeaderXcsrfToken = oResponseData.headers["x-csrf-token"] || oResponseData.headers["X-CSRF-Token"] || oResponseData.headers["X-Csrf-Token"];
+            }
+            if (!this._getDataServiceVersion()) {
+                sDataServiceVersion = oResponseData.headers.DataServiceVersion || oResponseData.headers["odata-version"];
+            }
+            bCsrfDataSet = true;
+        };
+
+        /**
+         * Handles all the required steps in order to initialize Notificaiton Settings UI
+         *
+         * Issues two calles to the Notifications channel backend system
+         * in order to check whether settigns feature and Push to Mobile features are supported
+         */
+        this._userSettingInitialization = function () {
+
+            var oSettingsPromise,
+                oMobileSettingsPromise,
+                // Contains two boolean flags:
+                // - settingsAvailable: Is the settings feature supported by the notification channel backend system
+                // - mobileAvailable: Is the "push to mobile" feature supported by the notification channel backend system
+                oSettingsStatus = {
+                    settingsAvailable: false,
+                    mobileAvailable: false
+                },
+                aPromises,
+                oResponseObject,
+                bMobileSupportResponseSuccess;
+
+            // Read the part of user settings data that is kept in personalization service
+            this._readUserSettingsFlagsFromPersonalization();
+
+            // 1st asynchronious call: Get setting data from the beckaend, for the purpose of verifying that the feature is supported
+            oSettingsPromise = this._readSettingsFromServer();
+            // 2nd asynchronious call: verify Push To Mobile capability
+            oMobileSettingsPromise = this._readMobileSettingsFromServer();
+
+            aPromises = [oSettingsPromise, oMobileSettingsPromise];
+
+            oSettingsPromise.done(function () {
+                // Notification setting supported
+                oSettingsStatus.settingsAvailable = true;
+            });
+
+            oSettingsPromise.fail(function () {
+                // If notification setting is not available, the default user choice for preview enabling is set to true,
+                // otherwise the user can't see preview at all
+                bPreviewNotificationEnabled = true;
+            });
+
+            oMobileSettingsPromise.done(function (oResult) {
+            	oResponseObject = JSON.parse(oResult);
+            	bMobileSupportResponseSuccess = oResponseObject.successStatus;
+
+                // Push to Mobile validation returned
+            	if(bMobileSupportResponseSuccess) {
+                    bNotificationSettingsMobileSupport = oResult ? oResponseObject.IsActive : false;
+                    oSettingsStatus.mobileAvailable = bNotificationSettingsMobileSupport;
+            	} else {
+                    bNotificationSettingsMobileSupport = false;
+                    oSettingsStatus.mobileAvailable = false;
+                }
+            });
+
+            // Resolve the deferred object on which the setting UI depends after the two OData calls returned,
+            // no matter if they were successful or not
+            jQuery.when.apply(jQuery, aPromises).then(function (args) {
+                // After both calls returned - the deferred object (on which the rendering of Notificaiton Settigns UI depends) is resolved
+                oNotificationSettingsAvailabilityDefferred.resolve(oSettingsStatus);
+            });
+        };
     };
-    sap.ushell.services.Notifications.hasNoAdapter = true;
-}());
+
+    Notifications.hasNoAdapter = true;
+    return Notifications;
+}, true /* bExport */);

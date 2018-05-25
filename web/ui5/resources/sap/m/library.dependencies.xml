@@ -478,7 +478,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/DatePicker.js" size="40612" compressedSize="16247">
+  <module name="sap/m/DatePicker.js" size="40558" compressedSize="16207">
     <description>Provides control sap.m.DatePicker.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -571,7 +571,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/DateTimePicker.js" size="20445" compressedSize="9900">
+  <module name="sap/m/DateTimePicker.js" size="20538" compressedSize="9952">
     <description>Provides control sap.m.DateTimePicker.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -703,7 +703,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/FacetFilterList.js" size="29560" compressedSize="9602">
+  <module name="sap/m/FacetFilterList.js" size="29540" compressedSize="9584">
     <description>Provides control sap.m.FacetFilterList.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -1703,7 +1703,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/MultiInput.js" size="41316" compressedSize="18506">
+  <module name="sap/m/MultiInput.js" size="41276" compressedSize="18485">
     <description>Provides control sap.m.MultiInput.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -2110,7 +2110,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/P13nDialog.js" size="35816" compressedSize="14008">
+  <module name="sap/m/P13nDialog.js" size="26579" compressedSize="12979">
     <description>Provides control sap.m.P13nDialog.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -2284,7 +2284,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/Page.js" size="23826" compressedSize="8721">
+  <module name="sap/m/Page.js" size="23824" compressedSize="8719">
     <description>Provides control sap.m.Page.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -2343,14 +2343,14 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/PanelRenderer.js" size="4308" compressedSize="2167">
+  <module name="sap/m/PanelRenderer.js" size="4260" compressedSize="2132">
     <description>! UI development toolkit for HTML5 (OpenUI5) (c) Copyright 2009-2018 SAP SE or an SAP affiliate company. Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</description>
     <requires>
       <module name="sap/m/library.js"/>
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/PlanningCalendar.js" size="88919" compressedSize="42075">
+  <module name="sap/m/PlanningCalendar.js" size="88895" compressedSize="42075">
     <description>Provides control sap.m.PlanningCalendar.</description>
     <requires>
       <module name="jquery.sap.events.js"/>
@@ -2400,7 +2400,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/PlanningCalendarRow.js" size="27926" compressedSize="11987">
+  <module name="sap/m/PlanningCalendarRow.js" size="27923" compressedSize="11987">
     <description>Provides control sap.ui.unified.PlanningCalendarRow.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -2754,7 +2754,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/SegmentedButton.js" size="29779" compressedSize="11590">
+  <module name="sap/m/SegmentedButton.js" size="29754" compressedSize="11567">
     <description>Provides control sap.m.SegmentedButton.</description>
     <requires>
       <module name="sap/m/SegmentedButtonRenderer.js"/>
@@ -2768,7 +2768,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/SegmentedButtonItem.js" size="5129" compressedSize="2151">
+  <module name="sap/m/SegmentedButtonItem.js" size="5358" compressedSize="2212">
     <description>Provides control sap.m.SegmentedButtonItem.</description>
     <requires>
       <module name="sap/m/Button.js"/>
@@ -2785,7 +2785,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/Select.js" size="68301" compressedSize="23710">
+  <module name="sap/m/Select.js" size="68183" compressedSize="23734">
     <description>! UI development toolkit for HTML5 (OpenUI5) (c) Copyright 2009-2018 SAP SE or an SAP affiliate company. Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -3180,7 +3180,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/StepInput.js" size="51374" compressedSize="18372">
+  <module name="sap/m/StepInput.js" size="51359" compressedSize="18357">
     <description>Provides control sap.m.StepInput.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -3272,7 +3272,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/TabContainer.js" size="18726" compressedSize="5665">
+  <module name="sap/m/TabContainer.js" size="18739" compressedSize="5668">
     <description>Provides control sap.m.TabContainer.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -3296,7 +3296,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/TabStrip.js" size="43189" compressedSize="16143">
+  <module name="sap/m/TabStrip.js" size="43155" compressedSize="16109">
     <description>! UI development toolkit for HTML5 (OpenUI5) (c) Copyright 2009-2018 SAP SE or an SAP affiliate company. Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -3352,7 +3352,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/TablePersoController.js" size="27919" compressedSize="7906">
+  <module name="sap/m/TablePersoController.js" size="27785" compressedSize="7887">
     <description>Provides TablePersoController</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -5008,87 +5008,87 @@
   </module>
   <module name="sap/m/designtime/messagebundle.properties" size="6437">
   </module>
-  <module name="sap/m/designtime/messagebundle_ar.properties" size="7713">
+  <module name="sap/m/designtime/messagebundle_ar.properties" size="4324">
   </module>
-  <module name="sap/m/designtime/messagebundle_bg.properties" size="8015">
+  <module name="sap/m/designtime/messagebundle_bg.properties" size="4650">
   </module>
-  <module name="sap/m/designtime/messagebundle_ca.properties" size="6311">
+  <module name="sap/m/designtime/messagebundle_ca.properties" size="2853">
   </module>
-  <module name="sap/m/designtime/messagebundle_cs.properties" size="6328">
+  <module name="sap/m/designtime/messagebundle_cs.properties" size="2868">
   </module>
-  <module name="sap/m/designtime/messagebundle_da.properties" size="6177">
+  <module name="sap/m/designtime/messagebundle_da.properties" size="2716">
   </module>
-  <module name="sap/m/designtime/messagebundle_de.properties" size="6179">
+  <module name="sap/m/designtime/messagebundle_de.properties" size="2718">
   </module>
-  <module name="sap/m/designtime/messagebundle_el.properties" size="7915">
+  <module name="sap/m/designtime/messagebundle_el.properties" size="4600">
   </module>
-  <module name="sap/m/designtime/messagebundle_en.properties" size="6130">
+  <module name="sap/m/designtime/messagebundle_en.properties" size="2670">
   </module>
-  <module name="sap/m/designtime/messagebundle_en_US_sappsd.properties" size="13594">
+  <module name="sap/m/designtime/messagebundle_en_US_sappsd.properties" size="5766">
   </module>
-  <module name="sap/m/designtime/messagebundle_en_US_saptrc.properties" size="8016">
+  <module name="sap/m/designtime/messagebundle_en_US_saptrc.properties" size="3544">
   </module>
-  <module name="sap/m/designtime/messagebundle_es.properties" size="6341">
+  <module name="sap/m/designtime/messagebundle_es.properties" size="2880">
   </module>
-  <module name="sap/m/designtime/messagebundle_et.properties" size="6184">
+  <module name="sap/m/designtime/messagebundle_et.properties" size="2729">
   </module>
-  <module name="sap/m/designtime/messagebundle_fi.properties" size="6319">
+  <module name="sap/m/designtime/messagebundle_fi.properties" size="2871">
   </module>
-  <module name="sap/m/designtime/messagebundle_fr.properties" size="6276">
+  <module name="sap/m/designtime/messagebundle_fr.properties" size="2816">
   </module>
-  <module name="sap/m/designtime/messagebundle_hi.properties" size="7315">
+  <module name="sap/m/designtime/messagebundle_hi.properties" size="3908">
   </module>
-  <module name="sap/m/designtime/messagebundle_hr.properties" size="6199">
+  <module name="sap/m/designtime/messagebundle_hr.properties" size="2737">
   </module>
-  <module name="sap/m/designtime/messagebundle_hu.properties" size="6388">
+  <module name="sap/m/designtime/messagebundle_hu.properties" size="2937">
   </module>
-  <module name="sap/m/designtime/messagebundle_it.properties" size="6247">
+  <module name="sap/m/designtime/messagebundle_it.properties" size="2790">
   </module>
-  <module name="sap/m/designtime/messagebundle_iw.properties" size="7291">
+  <module name="sap/m/designtime/messagebundle_iw.properties" size="3878">
   </module>
-  <module name="sap/m/designtime/messagebundle_ja.properties" size="6753">
+  <module name="sap/m/designtime/messagebundle_ja.properties" size="3322">
   </module>
-  <module name="sap/m/designtime/messagebundle_kk.properties" size="8048">
+  <module name="sap/m/designtime/messagebundle_kk.properties" size="4695">
   </module>
-  <module name="sap/m/designtime/messagebundle_ko.properties" size="6569">
+  <module name="sap/m/designtime/messagebundle_ko.properties" size="3138">
   </module>
-  <module name="sap/m/designtime/messagebundle_lt.properties" size="6385">
+  <module name="sap/m/designtime/messagebundle_lt.properties" size="2929">
   </module>
-  <module name="sap/m/designtime/messagebundle_lv.properties" size="6315">
+  <module name="sap/m/designtime/messagebundle_lv.properties" size="2856">
   </module>
-  <module name="sap/m/designtime/messagebundle_ms.properties" size="6157">
+  <module name="sap/m/designtime/messagebundle_ms.properties" size="2688">
   </module>
-  <module name="sap/m/designtime/messagebundle_nl.properties" size="6194">
+  <module name="sap/m/designtime/messagebundle_nl.properties" size="2734">
   </module>
-  <module name="sap/m/designtime/messagebundle_no.properties" size="6185">
+  <module name="sap/m/designtime/messagebundle_no.properties" size="2725">
   </module>
-  <module name="sap/m/designtime/messagebundle_pl.properties" size="6195">
+  <module name="sap/m/designtime/messagebundle_pl.properties" size="2733">
   </module>
-  <module name="sap/m/designtime/messagebundle_pt.properties" size="6329">
+  <module name="sap/m/designtime/messagebundle_pt.properties" size="2868">
   </module>
-  <module name="sap/m/designtime/messagebundle_ro.properties" size="6302">
+  <module name="sap/m/designtime/messagebundle_ro.properties" size="2842">
   </module>
-  <module name="sap/m/designtime/messagebundle_ru.properties" size="7784">
+  <module name="sap/m/designtime/messagebundle_ru.properties" size="4419">
   </module>
-  <module name="sap/m/designtime/messagebundle_sh.properties" size="6207">
+  <module name="sap/m/designtime/messagebundle_sh.properties" size="2745">
   </module>
-  <module name="sap/m/designtime/messagebundle_sk.properties" size="6337">
+  <module name="sap/m/designtime/messagebundle_sk.properties" size="2877">
   </module>
-  <module name="sap/m/designtime/messagebundle_sl.properties" size="6222">
+  <module name="sap/m/designtime/messagebundle_sl.properties" size="2757">
   </module>
-  <module name="sap/m/designtime/messagebundle_sv.properties" size="6214">
+  <module name="sap/m/designtime/messagebundle_sv.properties" size="2754">
   </module>
-  <module name="sap/m/designtime/messagebundle_th.properties" size="7773">
+  <module name="sap/m/designtime/messagebundle_th.properties" size="4426">
   </module>
-  <module name="sap/m/designtime/messagebundle_tr.properties" size="6436">
+  <module name="sap/m/designtime/messagebundle_tr.properties" size="2978">
   </module>
-  <module name="sap/m/designtime/messagebundle_uk.properties" size="7845">
+  <module name="sap/m/designtime/messagebundle_uk.properties" size="4480">
   </module>
-  <module name="sap/m/designtime/messagebundle_vi.properties" size="6593">
+  <module name="sap/m/designtime/messagebundle_vi.properties" size="3166">
   </module>
-  <module name="sap/m/designtime/messagebundle_zh_CN.properties" size="6393">
+  <module name="sap/m/designtime/messagebundle_zh_CN.properties" size="2938">
   </module>
-  <module name="sap/m/designtime/messagebundle_zh_TW.properties" size="6441">
+  <module name="sap/m/designtime/messagebundle_zh_TW.properties" size="2986">
   </module>
   <module name="sap/m/designtime/semantic/DetailPage.designtime.js" size="446" compressedSize="313">
     <description>Provides the Design Time Metadata for the sap.m.semantic.DetailPage control</description>
@@ -5248,7 +5248,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/m/library-h2-preload.js" size="107059">
+  <module name="sap/m/library-h2-preload.js" size="107051">
     <requires>
       <module name="jquery.sap.dom.js"/>
       <module name="jquery.sap.encoder.js" conditional="true"/>
@@ -5952,7 +5952,7 @@
       <module name="sap/m/semantic/SortSelect.js"/>
     </includes>
   </module>
-  <module name="sap/m/library-preload.js" size="2005211">
+  <module name="sap/m/library-preload.js" size="2004103">
     <requires>
       <module name="jquery.sap.dom.js"/>
       <module name="jquery.sap.encoder.js" conditional="true"/>
@@ -7078,7 +7078,7 @@
       <module name="sap/m/rules/Tokenizer.support.js"/>
     </includes>
   </module>
-  <module name="sap/m/library.js" size="116035" compressedSize="29319">
+  <module name="sap/m/library.js" size="116025" compressedSize="29311">
     <description>Initialization Code and shared classes of library sap.m.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -7116,87 +7116,87 @@
   </module>
   <module name="sap/m/messagebundle.properties" size="49423">
   </module>
-  <module name="sap/m/messagebundle_ar.properties" size="74618">
+  <module name="sap/m/messagebundle_ar.properties" size="74426">
   </module>
-  <module name="sap/m/messagebundle_bg.properties" size="85691">
+  <module name="sap/m/messagebundle_bg.properties" size="85357">
   </module>
-  <module name="sap/m/messagebundle_ca.properties" size="50718">
+  <module name="sap/m/messagebundle_ca.properties" size="50584">
   </module>
-  <module name="sap/m/messagebundle_cs.properties" size="52822">
+  <module name="sap/m/messagebundle_cs.properties" size="52685">
   </module>
-  <module name="sap/m/messagebundle_da.properties" size="49386">
+  <module name="sap/m/messagebundle_da.properties" size="49260">
   </module>
-  <module name="sap/m/messagebundle_de.properties" size="50525">
+  <module name="sap/m/messagebundle_de.properties" size="50385">
   </module>
-  <module name="sap/m/messagebundle_el.properties" size="84698">
+  <module name="sap/m/messagebundle_el.properties" size="84391">
   </module>
-  <module name="sap/m/messagebundle_en.properties" size="48358">
+  <module name="sap/m/messagebundle_en.properties" size="47933">
   </module>
-  <module name="sap/m/messagebundle_en_US_sappsd.properties" size="96404">
+  <module name="sap/m/messagebundle_en_US_sappsd.properties" size="95978">
   </module>
-  <module name="sap/m/messagebundle_en_US_saptrc.properties" size="59766">
+  <module name="sap/m/messagebundle_en_US_saptrc.properties" size="59560">
   </module>
-  <module name="sap/m/messagebundle_es.properties" size="50524">
+  <module name="sap/m/messagebundle_es.properties" size="50380">
   </module>
-  <module name="sap/m/messagebundle_et.properties" size="50242">
+  <module name="sap/m/messagebundle_et.properties" size="50093">
   </module>
-  <module name="sap/m/messagebundle_fi.properties" size="51892">
+  <module name="sap/m/messagebundle_fi.properties" size="51761">
   </module>
-  <module name="sap/m/messagebundle_fr.properties" size="51638">
+  <module name="sap/m/messagebundle_fr.properties" size="51484">
   </module>
-  <module name="sap/m/messagebundle_hi.properties" size="79675">
+  <module name="sap/m/messagebundle_hi.properties" size="79475">
   </module>
-  <module name="sap/m/messagebundle_hr.properties" size="50137">
+  <module name="sap/m/messagebundle_hr.properties" size="49978">
   </module>
-  <module name="sap/m/messagebundle_hu.properties" size="54503">
+  <module name="sap/m/messagebundle_hu.properties" size="54294">
   </module>
-  <module name="sap/m/messagebundle_it.properties" size="50105">
+  <module name="sap/m/messagebundle_it.properties" size="49979">
   </module>
-  <module name="sap/m/messagebundle_iw.properties" size="68992">
+  <module name="sap/m/messagebundle_iw.properties" size="68877">
   </module>
-  <module name="sap/m/messagebundle_ja.properties" size="60609">
+  <module name="sap/m/messagebundle_ja.properties" size="60374">
   </module>
-  <module name="sap/m/messagebundle_kk.properties" size="81723">
+  <module name="sap/m/messagebundle_kk.properties" size="81559">
   </module>
-  <module name="sap/m/messagebundle_ko.properties" size="57318">
+  <module name="sap/m/messagebundle_ko.properties" size="57140">
   </module>
-  <module name="sap/m/messagebundle_lt.properties" size="52946">
+  <module name="sap/m/messagebundle_lt.properties" size="52777">
   </module>
-  <module name="sap/m/messagebundle_lv.properties" size="53556">
+  <module name="sap/m/messagebundle_lv.properties" size="53393">
   </module>
-  <module name="sap/m/messagebundle_ms.properties" size="49394">
+  <module name="sap/m/messagebundle_ms.properties" size="49211">
   </module>
-  <module name="sap/m/messagebundle_nl.properties" size="49506">
+  <module name="sap/m/messagebundle_nl.properties" size="49357">
   </module>
-  <module name="sap/m/messagebundle_no.properties" size="49084">
+  <module name="sap/m/messagebundle_no.properties" size="48942">
   </module>
-  <module name="sap/m/messagebundle_pl.properties" size="52487">
+  <module name="sap/m/messagebundle_pl.properties" size="52358">
   </module>
-  <module name="sap/m/messagebundle_pt.properties" size="51068">
+  <module name="sap/m/messagebundle_pt.properties" size="50924">
   </module>
-  <module name="sap/m/messagebundle_ro.properties" size="51780">
+  <module name="sap/m/messagebundle_ro.properties" size="51618">
   </module>
-  <module name="sap/m/messagebundle_ru.properties" size="84586">
+  <module name="sap/m/messagebundle_ru.properties" size="84304">
   </module>
-  <module name="sap/m/messagebundle_sh.properties" size="50304">
+  <module name="sap/m/messagebundle_sh.properties" size="50143">
   </module>
-  <module name="sap/m/messagebundle_sk.properties" size="53150">
+  <module name="sap/m/messagebundle_sk.properties" size="53007">
   </module>
-  <module name="sap/m/messagebundle_sl.properties" size="50503">
+  <module name="sap/m/messagebundle_sl.properties" size="50355">
   </module>
-  <module name="sap/m/messagebundle_sv.properties" size="50086">
+  <module name="sap/m/messagebundle_sv.properties" size="49926">
   </module>
-  <module name="sap/m/messagebundle_th.properties" size="80810">
+  <module name="sap/m/messagebundle_th.properties" size="80649">
   </module>
-  <module name="sap/m/messagebundle_tr.properties" size="53068">
+  <module name="sap/m/messagebundle_tr.properties" size="52960">
   </module>
-  <module name="sap/m/messagebundle_uk.properties" size="83936">
+  <module name="sap/m/messagebundle_uk.properties" size="83855">
   </module>
-  <module name="sap/m/messagebundle_vi.properties" size="60883">
+  <module name="sap/m/messagebundle_vi.properties" size="60709">
   </module>
-  <module name="sap/m/messagebundle_zh_CN.properties" size="54136">
+  <module name="sap/m/messagebundle_zh_CN.properties" size="53947">
   </module>
-  <module name="sap/m/messagebundle_zh_TW.properties" size="54114">
+  <module name="sap/m/messagebundle_zh_TW.properties" size="53937">
   </module>
   <module name="sap/m/routing/RouteMatchedHandler.js" size="7811" compressedSize="2384">
     <description>! UI development toolkit for HTML5 (OpenUI5) (c) Copyright 2009-2018 SAP SE or an SAP affiliate company. Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</description>

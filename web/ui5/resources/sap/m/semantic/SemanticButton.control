@@ -9,12 +9,12 @@ eligible for aggregation content of a {@link sap.m.semantic.SemanticPage}.</docu
     <abstract/>
     <baseType>sap.m/semantic/SemanticControl</baseType>
     <properties>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>See {@link sap.m.Button#enabled}</documentation>
         </property>
     </properties>
     <events>
-        <event name="press" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="press">
             <documentation>See {@link sap.m.Button#press}</documentation>
         </event>
     </events>

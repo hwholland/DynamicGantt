@@ -13,12 +13,12 @@ sap.ui.define(['sap/ui/core/theming/Parameters', 'sap/gantt/misc/Utility'], func
 	 *
 	 * @namespace
 	 */
-	var GanttChartWithTable = {};
+	var GanttChartWithTableRenderer = {};
 
-	GanttChartWithTable.render = function (oRenderManager, oGanttChartWithTable) {
+	GanttChartWithTableRenderer.render = function (oRenderManager, oGanttChartWithTable) {
 		oRenderManager.write("<div");
 		oRenderManager.writeControlData(oGanttChartWithTable);
-		oRenderManager.addClass("sapUiTableHScr");  //force horizontal scroll bar to show
+		//oRenderManager.addClass("sapUiTableHScr");  //force horizontal scroll bar to show
 		oRenderManager.addClass("sapGanttChartWithTable");
 		oRenderManager.writeClasses();
 		oRenderManager.addStyle("width", oGanttChartWithTable.getWidth());
@@ -26,31 +26,28 @@ sap.ui.define(['sap/ui/core/theming/Parameters', 'sap/gantt/misc/Utility'], func
 		oRenderManager.writeStyles();
 		oRenderManager.write(">");
 
-		var iHeight = this._getColumnHeaderHeight(oGanttChartWithTable);
-		oGanttChartWithTable._oTT.setColumnHeaderHeight(iHeight);
-
+		this._setTableColumnHeaderHeight(oGanttChartWithTable);
 		oRenderManager.renderControl(oGanttChartWithTable._oSplitter);
 		oRenderManager.write("</div>");
 
 	};
 
-	GanttChartWithTable._getColumnHeaderHeight = function(oGanttChartWithTable) {
-		var iHeight = 0;
-		if (oGanttChartWithTable._oToolbar.getAllToolbarItems().length == 0) {
+	GanttChartWithTableRenderer._setTableColumnHeaderHeight = function(oGanttChartWithTable) {
 
-			var iPaddingTop = sap.ui.getCore().getConfiguration().getTheme() === "sap_hcb" ? 2 : 0,
-				sMode = Utility.findSapUiSizeClass(oGanttChartWithTable);
-
-			if (sMode === "sapUiSizeCompact" || sMode === "sapUiSizeCondensed") {
-				iHeight = parseInt(Parameters.get("sapGanttChartCompactHeaderHeight"), 10) - iPaddingTop;
-			} else if (sMode === "sapUiSizeCozy") {
-				iHeight = parseInt(Parameters.get("sapGanttChartHeaderHeight"), 10) - iPaddingTop;
+		var bHasNoLocalToolbar = oGanttChartWithTable._oToolbar.getAllToolbarItems().length === 0;
+		if (bHasNoLocalToolbar) {
+			var sMode = Utility.findSapUiSizeClass(oGanttChartWithTable),
+				bHcbTheme = jQuery.sap.endsWith(sap.ui.getCore().getConfiguration().getTheme(), "hcb"),
+				iHeight = 0,
+				iPaddingTop = bHcbTheme ? 4 : 2;
+			if (sMode === "sapUiSizeCozy") {
+				iHeight = parseInt(Parameters.get("_sap_gantt_Gantt_HeaderHeight"), 10) - iPaddingTop;
 			} else {
-				iHeight = parseInt(Parameters.get("sapGanttChartHeaderDefaultHeight"), 10) - iPaddingTop;
+				iHeight = parseInt(Parameters.get("_sap_gantt_Gantt_CompactHeaderHeight"), 10) - iPaddingTop;
 			}
+			oGanttChartWithTable._oTT.setColumnHeaderHeight(iHeight);
 		}
-		return iHeight;
 	};
 
-	return GanttChartWithTable;
+	return GanttChartWithTableRenderer;
 }, /* bExport= */ true);

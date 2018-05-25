@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* -----------------------------------------------------------------------------------
@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.makit (1.38.33)
+ * Initialization Code and shared classes of library sap.makit (1.54.3)
  */
 jQuery.sap.declare("sap.makit.library");
 jQuery.sap.require("sap.ui.core.Core");
@@ -55,13 +55,13 @@ sap.ui.getCore().initLibrary({
 		"sap.makit.ValueAxis",
 		"sap.makit.ValueBubble"
 	],
-	version: "1.38.33"
+	version: "1.54.3"
 });
 
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -74,7 +74,7 @@ jQuery.sap.declare("sap.makit.ChartType");
 /**
  * @class Enumeration for chart type
  *
- * @version 1.38.33
+ * @version 1.54.3
  * @static
  * @public
  * @since 1.8
@@ -148,7 +148,7 @@ sap.makit.ChartType = {
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ jQuery.sap.declare("sap.makit.LegendPosition");
 /**
  * @class Enumeration for legend position.
  *
- * @version 1.38.33
+ * @version 1.54.3
  * @static
  * @public
  * @deprecated Since version 1.38. 
@@ -204,7 +204,7 @@ sap.makit.LegendPosition = {
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -217,7 +217,7 @@ jQuery.sap.declare("sap.makit.SortOrder");
 /**
  * @class Enumeration for sort order
  *
- * @version 1.38.33
+ * @version 1.54.3
  * @static
  * @public
  * @since 1.8
@@ -255,7 +255,7 @@ sap.makit.SortOrder = {
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -268,7 +268,7 @@ jQuery.sap.declare("sap.makit.ValueBubblePosition");
 /**
  * @class Position for Value Bubble only applies to Pie/Donut Chart.
  *
- * @version 1.38.33
+ * @version 1.54.3
  * @static
  * @public
  * @since 1.8
@@ -294,7 +294,7 @@ sap.makit.ValueBubblePosition = {
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -307,7 +307,7 @@ jQuery.sap.declare("sap.makit.ValueBubbleStyle");
 /**
  * @class Enumeration for Value Bubble's positioning style. This applies all chart types except Pie/Donut/HBar chart.
  *
- * @version 1.38.33
+ * @version 1.54.3
  * @static
  * @public
  * @since 1.8

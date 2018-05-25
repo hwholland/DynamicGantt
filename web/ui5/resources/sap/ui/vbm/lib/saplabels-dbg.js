@@ -286,6 +286,61 @@ VBI.addSceneLabelFunctions = function(scene) {
 				label.AlignLabel();
 				var textcolor = label.GetLabelTextColor();
 				var substrings = label.m_Text.split(/\r\n/);
+
+				/*
+					REPOSITIONING THE LABELS TO AVOID THEM BEING CUT
+					Before drawing the labels, we check if they fit in the current map.
+					If they don't we reposition them by 5 pixels towards
+					left/right/top/bottom, depending on where it's necessary.
+				*/
+				var viewportCoord = scene.GetViewport();
+				for (var i = 0; i < label.m_Pos.length; i++) {
+					for (var j = 0; j < label.m_Pos[i].length; j++) {
+
+						var voPosition = label.m_PosArray.pa,
+							labelBottomLeftCoord = label.m_Pos[i][j];
+
+						// Performing the repositioning for all kinds of labels
+						if (voPosition.length !== 3 || voPosition[0] > viewportCoord[0] && voPosition[0] < viewportCoord[2]) {
+							// Check if label fits at the left
+							if (labelBottomLeftCoord[0] - viewportCoord[0] < 5) {
+								labelBottomLeftCoord[0] = viewportCoord[0] + 5;
+							} else if (labelBottomLeftCoord[0] + label.m_Width > viewportCoord[2] - 5) {
+								// Check if label fits at the right
+								labelBottomLeftCoord[0] = viewportCoord[2] - label.m_Width - 5;
+							}
+
+							// Check if the label fits at the top
+							if (labelBottomLeftCoord[1] - viewportCoord[1] < 5) {
+								labelBottomLeftCoord[1] = viewportCoord[1] + 5;
+							} else if (labelBottomLeftCoord[1] + label.m_Height > viewportCoord[3] - 5) {
+								// Check if the label fits at the bottom
+								labelBottomLeftCoord[1] = viewportCoord[3] - label.m_Height - 5;
+							}
+						} else {
+							// Performing the repositioning for spot labels in the scenario
+							// where they get a position value after substracting the tile width
+							if (labelBottomLeftCoord[0] + (label.m_aIO[1] || 0) - viewportCoord[0] < 5) {
+								labelBottomLeftCoord[0] = viewportCoord[0] + 5;
+							} else if (labelBottomLeftCoord[0] + (label.m_aIO[1] || 0) + label.m_Width > viewportCoord[2] - 5) {
+								// Check if label fits at the right
+								labelBottomLeftCoord[0] = viewportCoord[2] - label.m_Width - 5;
+							} else {
+								labelBottomLeftCoord[0] += label.m_aIO[1] || 0;
+							}
+
+							// Check if the label fits at the top
+							if (labelBottomLeftCoord[1] - viewportCoord[1] < 5) {
+								labelBottomLeftCoord[1] = viewportCoord[1] + 5;
+							} else if (labelBottomLeftCoord[1] + label.m_Height > viewportCoord[3] - 5) {
+								// Check if the label fits at the bottom
+								labelBottomLeftCoord[1] = viewportCoord[3] - label.m_Height - 5;
+							}
+						}
+
+					}
+				}
+
 				scene.InternalDrawLabels(dc, label, textcolor, substrings);
 			}
 		}

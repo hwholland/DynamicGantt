@@ -9,8 +9,8 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ], function(BaseController) {
 	"use strict";
 	var oCoreApi, oParentControl, overwriteConfirmationDialog;
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
-	var optionsValueModelBuilder = new sap.apf.modeler.ui.utils.OptionsValueModelBuilder();
+	var nullObjectChecker = sap.apf.modeler.ui.utils.nullObjectChecker;
+	var optionsValueModelBuilder = sap.apf.modeler.ui.utils.optionsValueModelBuilder;
 	function _setDisplayText(oController) {
 		var oTextReader = oCoreApi.getText;
 		oController.byId("idImportDeliveredContentDialog").setTitle(oTextReader("importDeliveredContent"));
@@ -61,10 +61,12 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 	}
 	function _callbackImportDeliveredContent(configuration, metadata, messageObject) {
 		var oController = this;
-		var successsMsgForConfigFileImport = oCoreApi.getText("successsMsgForConfigFileImport");
 		if (!nullObjectChecker.checkIsNotUndefined(messageObject)) {
 			oParentControl.fireEvent("updateAppListEvent");
-			sap.m.MessageToast.show(successsMsgForConfigFileImport);
+			var oMessageObject = oCoreApi.createMessageObject({
+				code : "11515"
+			});
+			oCoreApi.putMessage(oMessageObject);
 		} else {
 			var oMessageObject = oCoreApi.createMessageObject({
 				code : "11502"
@@ -106,7 +108,7 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 				var aValues = oAppConfigCombobox.getSelectedItem().data("value").split(".");
 				var appId = aValues[0];
 				var configId = aValues[1];
-				oCoreApi.importConfigurationFromLrep(appId, configId, function(callbackOverwrite, callbackCreateNew, configurationName) {
+				oCoreApi.importConfigurationFromVendorLayer(appId, configId, function(callbackOverwrite, callbackCreateNew, configurationName) {
 					_openOverwriteConfirmationDialog(oController, callbackOverwrite, callbackCreateNew, configurationName);
 				}, _callbackImportDeliveredContent.bind(oController));
 			}

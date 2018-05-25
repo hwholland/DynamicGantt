@@ -57,20 +57,12 @@ VBI.Scale = function() {
 
 	scale.AppendCanvas = function() {
 		scale.m_bRtl = (document.dir == 'rtl') ? true : false;
-		scale.m_canvas = document.createElement('canvas');
-		scale.m_canvas.className = "vbi-scale";
-// scale.m_canvas.style.position = "absolute";
-// scale.m_canvas.style.zIndex = 5;
-		scale.m_canvas.id = scale.getId('vbi-scale-canvas', scale.m_ID);
+		scale.m_canvas = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		scale.m_canvas.setAttribute("class", "vbi-scale");
+		scale.m_canvas.setAttribute("id", scale.getId('vbi-scale-canvas', scale.m_ID));
 		scale.m_canvas.m_VBIType = "S";
 
 		scale.scene.m_MapDecoDiv.appendChild(scale.m_canvas);
-// if ( scale.m_bRtl )
-// scale.m_canvas.style.right = "10px";
-// else
-// scale.m_canvas.style.left = "10px";
-// scale.m_canvas.style.bottom = "10px";
-
 	};
 
 	scale.getConfig = function() {
@@ -207,80 +199,51 @@ VBI.Scale = function() {
 	};
 
 	scale.Update = function() {
-		// left, top, width, height
-		var rectLeft = [
-			211, 304, 4, 8
-		];
-		var rectRightDark = [
-			240, 304, 4, 8
-		];
-		var rectRightBright = [
-			224, 304, 4, 8
-		];
-		var rectMidDark = [
-			235, 304, 1, 8
-		];
-		var rectMidBright = [
-			219, 304, 1, 8
-		];
-		var scaleDiv = document.getElementById(scale.m_canvas.id);
-		if (!scaleDiv) {
-			return;
-		}
-		var ctx = scaleDiv.getContext('2d');
-		ctx.clearRect(0, 0, scale.m_canvas.width, scale.m_canvas.height);
+		//Update the scale dimensions
+		scale.CalcScaleDimensions();
 
-		if (!scale.CalcScaleDimensions()) {
-			scale.m_canvas.width = scale.m_canvas.height = 0;
-			return;
-		}
-		scale.m_canvas.width = scale.m_nScalerLength + 10;
-		scale.m_canvas.height = 30;
+		//pixelLength means how many pixels long the scale bar should be;
+		//We perform division by 2 on both the scale bar length and the
+		//real-world distance so the bar becomes smaller. This is done for
+		//design & aesthetics purposes.
+		var pixelLength = (scale.m_nScalerLength + scale.m_nDivider) / 2,
+			//The real-world distance represented by the scale bar.
+			distance = scale.m_nDistance / 2;
 
-		var image = scale.getImage(scale.scene.RenderAsync.bind(scale.scene));
-		if (image) {
-			// left side of the scale
-			var leftOffset = 0;
-			var topOffset = 20;
-			ctx.drawImage(image, rectLeft[0], rectLeft[1], rectLeft[2], rectLeft[3], leftOffset, topOffset, rectLeft[2], rectLeft[3]);
-			leftOffset += rectLeft[2];
-			// mid parts of the scale
-			var nDivider = 0;
-			while (nDivider < scale.m_nDivider) {
-				for (var nJ = 0; nJ < scale.m_nScalerLength / scale.m_nDivider; nJ++) {
-					if (nDivider % 2) {// dark part
-						ctx.drawImage(image, rectMidDark[0], rectMidDark[1], rectMidDark[2], rectMidDark[3], leftOffset, topOffset, rectMidDark[2], rectMidDark[3]);
-						leftOffset += rectMidDark[2];
-					} else {// bright part
-						ctx.drawImage(image, rectMidBright[0], rectMidBright[1], rectMidBright[2], rectMidBright[3], leftOffset, topOffset, rectMidBright[2], rectMidBright[3]);
-						leftOffset += rectMidBright[2];
-					}
-				}
-				nDivider++;
-			}
-			// right side of the scale
-			if (scale.m_nDivider % 2) {
-				ctx.drawImage(image, rectRightBright[0], rectRightBright[1], rectRightBright[2], rectRightBright[3], leftOffset, topOffset, rectRightBright[2], rectRightBright[3]);
-				leftOffset += rectRightBright[2];
+		//creating the svg container where the scale will be rendered
+		var svg = document.getElementById(scale.m_canvas.id);
+		if (svg) {
+			
+			svg.setAttribute("height", 15);
+			svg.setAttribute("width", pixelLength + 1);
+			//Clearing the previous scale
+			jQuery(svg).empty();
+		
+
+			//This is the actual scale bar
+			var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+			path.setAttribute("d", "M 1 4 V 10 H " + pixelLength + " V 4");
+			path.setAttribute("stroke", "black");
+			path.setAttribute("stroke-width", 2);
+			path.setAttribute("fill", "none");
+			svg.appendChild(path);
+	
+			//This is the scale text. For example: "500 km"
+			var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+			//How far from the right/left edge we position the text
+			var textPositionX;
+			//calculating position differently if we are in right-to-left mode
+			if (document.dir === "rtl") {
+				textPositionX = (distance.toString().length + scale.m_DisplayUnit.length + 1) * 6 + 2;
 			} else {
-				ctx.drawImage(image, rectRightDark[0], rectRightDark[1], rectRightDark[2], rectRightDark[3], leftOffset, topOffset, rectRightDark[2], rectRightDark[3]);
-				leftOffset += rectRightDark[2];
+				textPositionX = pixelLength - 2 - (distance.toString().length + scale.m_DisplayUnit.length + 1) * 6;
 			}
-
-			// now the text ( twice: in two different colors )
-			var oldFillStyle = ctx.fillStyle;
-			var oldFont = ctx.font;
-			ctx.font = "12px arial";
-			ctx.fillStyle = "#FFFFFF";
-			ctx.textAlign = "left";
-			for (var nK = 0; nK < 2; ++nK) {
-				ctx.fillText("0", nK, 15 + nK);
-				var textOffset = scale.m_canvas.width - (ctx.measureText(scale.m_nDistance + scale.m_DisplayUnit).width + 1);
-				ctx.fillText(scale.m_nDistance + scale.m_DisplayUnit, textOffset + nK, 15 + nK);
-				ctx.fillStyle = "#212C34";
-			}
-			ctx.fillStyle = oldFillStyle;
-			ctx.font = oldFont;
+	
+			text.setAttribute("x", textPositionX);
+			text.setAttribute("y", 8);
+			text.setAttribute("font-size", 10);
+			text.textContent = distance + " " + scale.m_DisplayUnit;
+			svg.appendChild(text);
 		}
 	};
 

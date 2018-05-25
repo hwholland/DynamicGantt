@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -39,8 +39,10 @@ sap.ui.define([
 				cellCallback : {type : "object"},
 				/**
 				 * Column configuration object.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.HierarchyColumn</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				columnConfig: {type: "sap.gantt.config.HierarchyColumn"}
+				columnConfig: {type: "object"}
 			}
 		}
 	});
@@ -118,7 +120,11 @@ sap.ui.define([
 		}
 
 		this._oContext = oContext;
-		var sObjectType = oContext.getProperty("type");
+	
+		//the  row type name, which is configured while initialize ganttchart, or ganttchartwithtable
+		var sRowTypeName = this.data("rowTypeName");
+		sRowTypeName = sRowTypeName ? sRowTypeName : "type";
+		var sObjectType = oContext.getProperty(sRowTypeName);
 
 		if (this._oMapAttributes) { // attribute name per object type
 			this.updateCellContent(this._oAttributeControl, oContext, this._oMapAttributes[sObjectType], sObjectType, this.getColumnConfig());
@@ -131,7 +137,9 @@ sap.ui.define([
 				oRenderer = this._oAttributeControl.getRenderer();
 
 			oRenderer.render(oRM, this._oAttributeControl);
-			oRM.flush(this.getDomRef(), false, false);
+			if ($tdDomRef && $tdDomRef.length > 0) {
+				oRM.flush(this.getDomRef(), false, false);
+			}
 			oRM.destroy();
 		}
 	};

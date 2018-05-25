@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -55,7 +55,7 @@ sap.ui.define([
 				/**
 				 * Attributes. Array of {@link sap.gantt.config.ColumnAttribute}
 				 */
-				attributes: {type: "array", defaultValue: []}, //optional. array of objects. new file columnAttribute to describe object: object type, attribute
+				attributes: {type: "object[]", defaultValue: []}, //optional. array of objects. new file columnAttribute to describe object: object type, attribute
 				/**
 				 * Column Width
 				 */

@@ -14,21 +14,21 @@ content by selecting them, while it remains visible at the top of the page (belo
     <since>1.26</since>
     <baseType>sap.m/Toolbar</baseType>
     <properties>
-        <property name="showPopover" type="sap.ui.core/boolean" defaultValue="true">
+        <property defaultValue="true" type="sap.ui.core/boolean" name="showPopover">
             <documentation>Determines whether to show a Popover with Subsection links when clicking on Section links in the Anchor bar.</documentation>
         </property>
-        <property name="upperCase" type="sap.ui.core/boolean" defaultValue="false">
+        <property defaultValue="false" type="sap.ui.core/boolean" name="upperCase">
             <documentation>Determines whether the Anchor bar items are displayed in upper case.</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="_select" type="sap.uxap/HierarchicalSelect" cardinality="0..1" visibility="hidden"/>
-        <aggregation name="_popovers" type="sap.m/Popover" cardinality="0..n" visibility="hidden"/>
-        <aggregation name="_scrollArrowLeft" type="sap.ui.core/Control" cardinality="0..1" visibility="hidden"/>
-        <aggregation name="_scrollArrowRight" type="sap.ui.core/Control" cardinality="0..1" visibility="hidden"/>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.uxap/HierarchicalSelect" name="_select"/>
+        <aggregation visibility="hidden" cardinality="0..n" type="sap.m/Popover" name="_popovers"/>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.core/Control" name="_scrollArrowLeft"/>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.core/Control" name="_scrollArrowRight"/>
     </aggregations>
     <associations>
-        <association name="selectedButton" type="sap.m/Button" cardinality="0..1">
+        <association cardinality="0..1" type="sap.m/Button" name="selectedButton">
             <documentation>The button that represents the Section being scrolled by the user.</documentation>
         </association>
     </associations>
@@ -36,15 +36,15 @@ content by selecting them, while it remains visible at the top of the page (belo
         <method name="scrollToSection">
             <documentation>Scroll to a specific Section.</documentation>
             <parameters>
-                <parameter name="id" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="id">
                     <documentation>The Section ID to scroll to</documentation>
                 </parameter>
-                <parameter name="duration" type="sap.ui.core/int">
+                <parameter type="sap.ui.core/int" name="duration">
                     <documentation>Scroll duration (in ms). Default value is 0.</documentation>
                 </parameter>
             </parameters>
         </method>
-        <method name="getScrollDelegate" type="sap.ui.core/object">
+        <method type="sap.ui.core/object" name="getScrollDelegate">
             <documentation>Returns an sap.ui.core.delegate.ScrollEnablement object used to handle scrolling.</documentation>
         </method>
     </methods>

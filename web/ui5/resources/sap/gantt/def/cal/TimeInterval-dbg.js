@@ -8,20 +8,20 @@ sap.ui.define([
 	"../DefBase", "sap/gantt/misc/Format", "sap/ui/core/Core"
 ], function (DefBase, Format, Core) {
 	"use strict";
-	
+
 	/**
 	 * Creates and initializes a time interval inside the calendar.
 	 * 
-	 * @param {string} [sId] ID of the new control, generated automatically if no ID is given
-	 * @param {object} [mSettings] Initial settings for the new control
+	 * @param {string} [sId] ID of the new element, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new element
 	 * 
 	 * @class 
-	 * A time interval.
+	 * A time interval pattern.
 	 * 
 	 * @extends sap.gantt.def.DefBase
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -30,12 +30,12 @@ sap.ui.define([
 	var TimeInterval = DefBase.extend("sap.gantt.def.cal.TimeInterval", {
 		metadata: {
 			properties: {
-				
+
 				/**
 				 * Start Time of timeHorizon. Format: YYYYMMDDHHMMSS. If the type of startTime is object, the value is converted to string.
 				 */
 				startTime: {type: "string", group: "Misc", defaultValue: null},
-				
+
 				/**
 				 * End time of timeHorizon. Format: YYYYMMDDHHMMSS. If the type of startTime is object, the value is converted to string.
 				 */
@@ -43,15 +43,17 @@ sap.ui.define([
 			}
 		}
 	});
-	
+
 	TimeInterval.prototype.setStartTime = function (vStartTime) {
 		this.setProperty("startTime", this._convertTimestamp(vStartTime));
+		return this;
 	};
-	
+
 	TimeInterval.prototype.setEndTime = function (vEndTime) {
 		this.setProperty("endTime", this._convertTimestamp(vEndTime));
+		return this;
 	};
-	
+
 	TimeInterval.prototype._convertTimestamp = function (vTime) {
 		var sRetVal = vTime;
 		if (sRetVal && typeof sRetVal === "object") {

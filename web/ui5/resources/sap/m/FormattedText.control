@@ -6,7 +6,7 @@
     <since>1.38.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="htmlText" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="htmlText">
             <documentation>Text in HTML format.
 The following tags are supported:
 &lt;ul&gt;
@@ -42,21 +42,21 @@ If &lt;code&gt;target&lt;/code&gt; is not set, links open in a new window by def
 &lt;b&gt;Note:&lt;/b&gt; Keep in mind that not supported HTML tags and
 the content nested inside them are both not rendered by the control.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/CSSSize" name="width">
             <documentation>Optional width of the control in CSS units.</documentation>
         </property>
-        <property name="convertLinksToAnchorTags" type="sap.m/LinkConversion" defaultValue="None" group="Behavior" since="1.45.5">
+        <property since="1.45.5" group="Behavior" defaultValue="None" type="sap.m/LinkConversion" name="convertLinksToAnchorTags">
             <documentation>Determines whether strings that appear to be links will be converted to HTML anchor tags,
 and what are the criteria for recognizing them.</documentation>
         </property>
-        <property name="convertedLinksDefaultTarget" type="sap.ui.core/string" defaultValue="_blank" group="Behavior" since="1.45.5">
+        <property since="1.45.5" group="Behavior" defaultValue="_blank" type="sap.ui.core/string" name="convertedLinksDefaultTarget">
             <documentation>Determines the &lt;code&gt;target&lt;/code&gt; attribute of the generated HTML anchor tags.
 
 &lt;b&gt;Note:&lt;/b&gt; Applicable only if &lt;code&gt;ConvertLinksToAnchorTags&lt;/code&gt; property is used with a value other than &lt;code&gt;sap.m.LinkConversion.None&lt;/code&gt;.
 Options are the standard values for the &lt;code&gt;target&lt;/code&gt; attribute of the HTML anchor tag:
 &lt;code&gt;_self&lt;/code&gt;, &lt;code&gt;_top&lt;/code&gt;, &lt;code&gt;_blank&lt;/code&gt;, &lt;code&gt;_parent&lt;/code&gt;, &lt;code&gt;_search&lt;/code&gt;.</documentation>
         </property>
-        <property name="height" type="sap.ui.core/CSSSize" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/CSSSize" name="height">
             <documentation>Optional height of the control in CSS units.</documentation>
         </property>
     </properties>

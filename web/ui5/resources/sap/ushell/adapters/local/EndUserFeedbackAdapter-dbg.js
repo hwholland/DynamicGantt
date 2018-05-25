@@ -1,18 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The EndUserFeedback adapter for the local platform.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
-    "use strict";
-    /*global jQuery, sap, window, setTimeout*/
-    jQuery.sap.declare("sap.ushell.adapters.local.EndUserFeedbackAdapter");
-    jQuery.sap.require("jquery.sap.storage");
+sap.ui.define(['jquery.sap.storage'],
+	function(/* jQuerySap */) {
+	"use strict";
 
+    /*global jQuery, sap, window, setTimeout*/
     var bEnabledFromConfig;
 
-    sap.ushell.adapters.local.EndUserFeedbackAdapter = function (oSystem, sParameter, oAdapterConfiguration) {
+    var EndUserFeedbackAdapter = function (oSystem, sParameter, oAdapterConfiguration) {
         var sSESSION_STORAGE_KEY = "com.sap.ushell.adapters.local.EndUserFeedback";
 
         // constructor below
@@ -87,4 +86,8 @@
             bEnabledFromConfig = true; // default is true
         }
     };
-}());
+
+
+	return EndUserFeedbackAdapter;
+
+}, /* bExport= */ true);

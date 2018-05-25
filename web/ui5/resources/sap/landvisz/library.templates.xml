@@ -5,6 +5,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	connectionId: undefined, // string
@@ -16,7 +17,7 @@
 	showOverlay: true, // boolean
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	connectionData: [], // sap.landvisz.internal.LinearRowField
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
@@ -27,6 +28,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	connectionId=""
@@ -38,7 +40,7 @@
 	showOverlay="true"
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<connectionData></connectionData> <!-- sap.landvisz.internal.LinearRowField -->
 </ConnectionEntity>
 ]]></xmlTemplate>
@@ -48,13 +50,14 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	source: undefined, // string
 	target: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this]
@@ -64,13 +67,14 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	source=""
 	target=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </Connector>
 ]]></xmlTemplate>
 </Template>
@@ -79,6 +83,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	systemName: undefined, // string
@@ -104,7 +109,7 @@
 	trackSystemCount: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	dataContainers: [], // sap.landvisz.internal.DataContainer
 	actionBar: [], // sap.landvisz.internal.ActionBar
 	entityStatus: undefined, // sap.ui.commons.Image
@@ -126,6 +131,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	systemName=""
@@ -154,7 +160,7 @@
 	statusSelect=""
 	trackInfoPress="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<dataContainers></dataContainers> <!-- sap.landvisz.internal.DataContainer -->
 		<actionBar></actionBar> <!-- sap.landvisz.internal.ActionBar -->
 		<entityStatus></entityStatus> <!-- sap.ui.commons.Image -->
@@ -166,6 +172,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	type: undefined, // string
@@ -198,7 +205,7 @@
 	connectionLine: sap.landvisz.ConnectionLine.Line, // sap.landvisz.ConnectionLine
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	optionEntities: [], // sap.landvisz.OptionEntity
 	systems: [], // sap.landvisz.LandscapeEntity
 	connectionEntities: [], // sap.landvisz.ConnectionEntity
@@ -220,6 +227,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	type=""
@@ -254,7 +262,7 @@
 	close=""
 	loadSolutionView="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<optionEntities></optionEntities> <!-- sap.landvisz.OptionEntity -->
 		<systems></systems> <!-- sap.landvisz.LandscapeEntity -->
 		<connectionEntities></connectionEntities> <!-- sap.landvisz.ConnectionEntity -->
@@ -269,13 +277,14 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	text: undefined, // string
 	renderingSize: undefined, // sap.landvisz.EntityCSSSize
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this]
@@ -285,13 +294,14 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	text=""
 	renderingSize=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </LongTextField>
 ]]></xmlTemplate>
 </Template>
@@ -300,13 +310,14 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	type: undefined, // string
 	currentEntity: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	optionEntities: [], // sap.landvisz.OptionEntity
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
@@ -317,13 +328,14 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	type=""
 	currentEntity=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<optionEntities></optionEntities> <!-- sap.landvisz.OptionEntity -->
 </Option>
 ]]></xmlTemplate>
@@ -333,6 +345,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	source: undefined, // string
@@ -342,7 +355,7 @@
 	optionTextTooltip: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	optionSources: [], // sap.landvisz.OptionSource
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
@@ -356,6 +369,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	source=""
@@ -366,7 +380,7 @@
 	validateFieldGroup=""
 	selectOption="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<optionSources></optionSources> <!-- sap.landvisz.OptionSource -->
 </OptionEntity>
 ]]></xmlTemplate>
@@ -376,12 +390,13 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	source: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this]
@@ -391,12 +406,13 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	source=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </OptionSource>
 ]]></xmlTemplate>
 </Template>
@@ -405,6 +421,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	actionLabel: undefined, // string
@@ -417,7 +434,7 @@
 	changeView: false, // boolean
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	menu: [], // sap.ui.commons.Menu
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
@@ -431,6 +448,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	actionLabel=""
@@ -444,7 +462,7 @@
 	validateFieldGroup=""
 	select="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<menu></menu> <!-- sap.ui.commons.Menu -->
 </internal/ActionBar>
 ]]></xmlTemplate>
@@ -454,6 +472,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	header: undefined, // string
@@ -462,7 +481,7 @@
 	type: undefined, // sap.landvisz.LandscapeObject
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	properties: [], // sap.ui.core.Control
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
@@ -476,6 +495,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	header=""
@@ -485,7 +505,7 @@
 	validateFieldGroup=""
 	select="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<properties></properties> <!-- sap.ui.core.Control -->
 </internal/DataContainer>
 ]]></xmlTemplate>
@@ -495,12 +515,13 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	type: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this]
@@ -510,12 +531,13 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	type=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </internal/DeploymentType>
 ]]></xmlTemplate>
 </Template>
@@ -524,6 +546,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	actionTooltip: undefined, // string
@@ -531,7 +554,7 @@
 	renderingSize: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this],
@@ -544,6 +567,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	actionTooltip=""
@@ -552,7 +576,7 @@
 	validateFieldGroup=""
 	press="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </internal/EntityAction>
 ]]></xmlTemplate>
 </Template>
@@ -561,13 +585,14 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	customAction: undefined, // string
 	renderingSize: sap.landvisz.EntityCSSSize.Regular, // sap.landvisz.EntityCSSSize
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this],
@@ -580,6 +605,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	customAction=""
@@ -587,7 +613,7 @@
 	validateFieldGroup=""
 	select="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </internal/EntityCustomAction>
 ]]></xmlTemplate>
 </Template>
@@ -596,6 +622,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	headerTooltip: undefined, // string
@@ -604,7 +631,7 @@
 	type: undefined, // sap.landvisz.LandscapeObject
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this],
@@ -617,6 +644,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	headerTooltip=""
@@ -626,7 +654,7 @@
 	validateFieldGroup=""
 	press="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </internal/HeaderList>
 ]]></xmlTemplate>
 </Template>
@@ -635,6 +663,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	text: undefined, // string
@@ -648,7 +677,7 @@
 	componentType: undefined, // sap.landvisz.ComponentType
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this],
@@ -661,6 +690,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	text=""
@@ -675,7 +705,7 @@
 	validateFieldGroup=""
 	select="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </internal/IdentificationBar>
 ]]></xmlTemplate>
 </Template>
@@ -684,6 +714,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	label: undefined, // string
@@ -697,7 +728,7 @@
 	invalidName: undefined, // boolean
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this]
@@ -707,6 +738,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	label=""
@@ -720,7 +752,7 @@
 	invalidName=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </internal/LinearRowField>
 ]]></xmlTemplate>
 </Template>
@@ -729,6 +761,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	status: undefined, // string
@@ -737,7 +770,7 @@
 	stateIconTooltip: undefined, // any
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this]
@@ -747,6 +780,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	status=""
@@ -755,7 +789,7 @@
 	stateIconTooltip=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </internal/ModelingStatus>
 ]]></xmlTemplate>
 </Template>
@@ -764,6 +798,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	label: undefined, // string
@@ -776,7 +811,7 @@
 	linkSource: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	linearRows: [], // sap.landvisz.internal.LinearRowField
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
@@ -787,6 +822,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	label=""
@@ -799,7 +835,7 @@
 	linkSource=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<linearRows></linearRows> <!-- sap.landvisz.internal.LinearRowField -->
 </internal/NestedRowField>
 ]]></xmlTemplate>
@@ -809,13 +845,14 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	header: undefined, // string
 	renderingSize: undefined, // string
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	properties: [], // sap.ui.core.Control
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
@@ -829,6 +866,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	header=""
@@ -836,7 +874,7 @@
 	validateFieldGroup=""
 	closed="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<properties></properties> <!-- sap.ui.core.Control -->
 </internal/SingleDataContainer>
 ]]></xmlTemplate>
@@ -846,6 +884,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	treeModel: undefined, // object
@@ -853,7 +892,7 @@
 	renderingSize: undefined, // sap.landvisz.EntityCSSSize
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
-	dependents: [], // sap.ui.core.Control, since 1.19
+	dependents: [], // sap.ui.core.Element, since 1.19
 	treeNode: [], // sap.ui.commons.TreeNode
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
@@ -864,6 +903,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	treeModel=""
@@ -871,7 +911,7 @@
 	renderingSize=""
 	validateFieldGroup="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
-		<dependents></dependents> <!-- sap.ui.core.Control, since 1.19 -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 		<treeNode></treeNode> <!-- sap.ui.commons.TreeNode -->
 </internal/TreeField>
 ]]></xmlTemplate>

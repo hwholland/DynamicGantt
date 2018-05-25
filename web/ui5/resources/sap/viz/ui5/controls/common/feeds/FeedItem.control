@@ -6,7 +6,7 @@
     <since>1.21.0</since>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
-        <property name="uid" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="uid">
             <documentation>Uid of a feed item.
 Please reference to bindings section in VIZDOCS to get the exact sUid string for each chart type.
 
@@ -14,10 +14,10 @@ For example:
 	Bar chart &gt; bindings &gt; categoryAxis ; color ; valueAxis.
 	The 'categoryAxis' should be the sUid for x axis feeding for bar chart.</documentation>
         </property>
-        <property name="type" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="type">
             <documentation>Type of a feed item. Enumeration: Measure, Dimension</documentation>
         </property>
-        <property name="values" type="sap.ui.core/string[]" group="Misc">
+        <property group="Misc" type="sap.ui.core/any[]" name="values">
             <documentation>Value of a feed item.</documentation>
         </property>
     </properties>

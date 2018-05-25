@@ -1,41 +1,18 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's UI5 component loader service.
  *  This is a shell-internal service and no public or application facing API!
  *
- * @version
- * 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+    "sap/ushell/services/Ui5ComponentHandle",
+    "sap/ushell/services/_Ui5ComponentLoader/utils"
+], function (Ui5ComponentHandle, oUtils) {
     "use strict";
     /*jslint nomen: true */
     /*global jQuery, sap, window */
-    jQuery.sap.declare("sap.ushell.services.Ui5ComponentLoader");
 
-    // application context
-    var Ui5ComponentHandle = function(oComponent) {
-       this._oComponent = oComponent;
-    };
-
-    Ui5ComponentHandle.onBeforeApplicationInstanceCreated = function (/* oComponentConfig */) {
-        // May run Fiori 2.0 adaptation. This must run before the component is
-        // created. Note, this method is synchronous, therefore
-        // Fiori20AdapterTest must perform very lightweight synchronous
-        // operations, such as, attaching an handler.
-        jQuery.sap.require("sap.ushell.Fiori20AdapterTest");
-    };
-
-    Ui5ComponentHandle.prototype.getInstance = function() {
-        return this._oComponent;
-    };
-
-    Ui5ComponentHandle.prototype.getMetadata = function() {
-        return this._oComponent.getMetadata();
-    };
-
-    // ---------------------
-    // ------ Service ------
-    // ---------------------
     /**
      * This method MUST be called by the Unified Shell's container only, others
      * MUST call <code>sap.ushell.Container.getService("Ui5ComponentLoader")</code>.
@@ -64,43 +41,26 @@
      *
      * @since 1.38.0
      */
-    sap.ushell.services.Ui5ComponentLoader = function (oContainerInterface, sParameter, oConfig) {
-        this._oConfig =  (oConfig && oConfig.config) || {};
-
-        /**
-         * Returns a map of all search parameters present in the search string of the given URL.
-         *
-         * @param {string} sUrl
-         *   the URL
-         * @returns {object}
-         *   in member <code>startupParameters</code> <code>map&lt;string, string[]}></code> from key to array of values,
-         *   in members <code>sap-xapp-state</code> an array of Cross application Navigation state keys, if present
-         *   Note that this key is removed from startupParameters!
-         * @private
-         */
-        function getParameterMap(sUrl) {
-            var mParams = jQuery.sap.getUriParameters(sUrl).mParams,
-                xAppState = mParams["sap-xapp-state"],
-                oResult;
-            delete mParams["sap-xapp-state"];
-            oResult = {
-                startupParameters : mParams
-            };
-            if (xAppState) {
-                oResult["sap-xapp-state"] = xAppState;
-            }
-            return oResult;
-        }
+    function Ui5ComponentLoader (oContainerInterface, sParameter, oConfig) {
+        this._oConfig = (oConfig && oConfig.config) || {};
 
         /**
          * Loads and creates the UI5 component from the specified application properties object (the result of
          * a navigation target resolution).
          *
-         * @param oAppProperties object
+         * @param {object} oAppProperties
          *    Application properties as typically produced by resolveHashFragment,
          *    note that some members of componentData are propagated, this is used in the myinbox scenario,
          *    see (CrossApplicationNavigation.createComponentInstance)
-         * @return a jQuery promise which resolves with the application properties object which is enriched
+         * @param {object} oParsedShellHash
+         *    The shell hash of the application that is to be opened already
+         *    parsed via
+         *    <code>sap.ushell.services.URLParsing#parseShellHash</code><code>sap.ushell.services.URLParsing#parseShellHash</code>.
+         * @param {array} aWaitForBeforeInstantiation
+         *    An array of promises which delays the instantiation of the
+         *    Component class until those Promises are resolved.
+         * @return {jQuery.Deferred.promise}
+         *  a jQuery promise which resolves with the application properties object which is enriched
          *  with an <code>componentHandle<code> object that encapsulates the loaded component.
          *  If the UI5 core resources have been loaded completely as a result of this call (either amendedLoading is
          *  disabled or the core-ext-light.js module is loaded as part of this call or was already loaded), the result
@@ -109,149 +69,175 @@
          * @private
          */
         this.createComponent = function (oAppProperties, oParsedShellHash, aWaitForBeforeInstantiation) {
-            var oDeferred = new jQuery.Deferred(),
-                sPreloadModule = window["sap-ui-debug"] ? "sap/fiori/core-ext-light-dbg.js" : "sap/fiori/core-ext-light.js",
-                sComponentUrl = oAppProperties && oAppProperties.url,
-                oComponentProperties,
-                bLoadCoreExt = true,
-                bCoreExtAlreadyLoaded =
-                    jQuery.sap.isDeclared('sap.fiori.core', true) || jQuery.sap.isDeclared('sap.fiori.core-ext-light', true),
-                bLoadDefaultDependencies = true,
-                oApplicationDependencies = oAppProperties && oAppProperties.applicationDependencies || {},
-                iIndex,
-                oUrlData,
-                oComponentData,
-                // optimized loading (default libs, core-ext-light) is on by default, but can be switched off explicitly
-                // by platforms which do not support it (sandbox, demo); productive platforms should use it by default
-                // see BCP 1670249780 (no core-ext loading in cloud portal)
-                bAmendedLoading = (this._oConfig && this._oConfig.hasOwnProperty("amendedLoading")) ? this._oConfig.amendedLoading : true,
-                bCoreResourcesFullyLoaded = false;
+            var oAppPropertiesSafe = oAppProperties || {};
+            var bLoadCoreExt = oUtils.shouldLoadCoreExt(oAppPropertiesSafe);
+            var bAmendedLoading = oUtils.shouldUseAmendedLoading(this._oConfig);
+            var bLoadDefaultDependencies = oUtils.shouldLoadDefaultDependencies(oAppPropertiesSafe, this._oConfig, bAmendedLoading);
 
-            if (jQuery.isArray(oApplicationDependencies.messages)) {
-                oApplicationDependencies.messages.forEach(function (oMessage) {
-                    var sSeverity = String.prototype.toLowerCase.call(oMessage.severity || "");
-                    sSeverity = ["trace", "debug", "info", "warning", "error", "fatal"].indexOf(sSeverity) !== -1 ? sSeverity : "error";
-                    jQuery.sap.log[sSeverity](oMessage.text, oMessage.details, oApplicationDependencies.name);
-                });
+            var oApplicationDependencies = oAppPropertiesSafe.applicationDependencies || {};
+            oUtils.logAnyApplicationDependenciesMessages(
+                oApplicationDependencies.name,
+                oApplicationDependencies.messages
+            );
+
+            if (!oAppPropertiesSafe.ui5ComponentName) {
+                return new jQuery.Deferred().resolve(oAppProperties).promise();
             }
 
-            if (oAppProperties && oAppProperties.ui5ComponentName) {
+            // Avoid warnings in ApplicationContainer.
+            // TODO: can be removed when ApplicationContainer construction is
+            // changed.
+            delete oAppPropertiesSafe.loadCoreExt;
+            delete oAppPropertiesSafe.loadDefaultDependencies;
 
-                // take over all properties of applicationDependencies to enable extensions in server w/o
-                // necessary changes in client
-                oComponentProperties = jQuery.extend(true, {}, oAppProperties.applicationDependencies);
+            var oComponentData = this._createComponentData(
+                oAppPropertiesSafe.componentData || {},
+                oAppPropertiesSafe.url,
+                oAppPropertiesSafe.applicationConfiguration,
+                oAppPropertiesSafe.reservedParameters
+            );
 
-                oComponentData = jQuery.extend(true, {startupParameters: {}}, oAppProperties.componentData);
-                if (sComponentUrl) {
-                    iIndex = sComponentUrl.indexOf("?");
-                    if (iIndex >= 0) {
-                        // pass GET parameters of URL via component data as member startupParameters and as xAppState
-                        // (to allow blending with other oComponentData usage, e.g. extensibility use case)
-                        oUrlData = getParameterMap(sComponentUrl);
-                        oComponentData.startupParameters = oUrlData.startupParameters;
-                        if (oUrlData["sap-xapp-state"]) {
-                            oComponentData["sap-xapp-state"] = oUrlData["sap-xapp-state"];
-                        }
-                        sComponentUrl = sComponentUrl.slice(0, iIndex);
-                    }
-                }
+            var sComponentId = oUtils.constructAppComponentId(oParsedShellHash || {});
+            var bAddCoreExtPreloadBundle = bLoadCoreExt && bAmendedLoading;
+            var oComponentProperties = this._createComponentProperties(
+                bAddCoreExtPreloadBundle,
+                bLoadDefaultDependencies,
+                aWaitForBeforeInstantiation,
+                oAppPropertiesSafe.applicationDependencies || {},
+                oAppPropertiesSafe.ui5ComponentName,
+                oAppPropertiesSafe.url,
+                sComponentId
+            );
 
-                // add application configuration if specified
-                if (oAppProperties.applicationConfiguration) {
-                    oComponentData.config = jQuery.extend(true, {}, oAppProperties.applicationConfiguration);
-                }
+            // notify we are about to create component
+            Ui5ComponentHandle.onBeforeApplicationInstanceCreated.call(null, oComponentProperties);
 
-                oComponentProperties.componentData = oComponentData;
+            var oDeferred = new jQuery.Deferred();
 
-                // default dependencies loading can be skipped explicitly (homepage component use case)
-                if (oAppProperties.hasOwnProperty("loadDefaultDependencies")) {
-                    bLoadDefaultDependencies = oAppProperties.loadDefaultDependencies;
+            oUtils.createUi5Component(oComponentProperties, oComponentData)
+                .then(function (oComponent) {
+                    var oComponentHandle = new Ui5ComponentHandle(oComponent);
+                    oAppPropertiesSafe.componentHandle = oComponentHandle;
 
-                    // delete after evaluation to avoid warnings in ApplicationContainer
-                    // TODO: can be removed when ApplicationContainer construction is changed
-                    delete oAppProperties.loadDefaultDependencies;
-                }
-                // or via service configuration (needed for unit tests)
-                if (this._oConfig && this._oConfig.hasOwnProperty("loadDefaultDependencies")) {
-                    bLoadDefaultDependencies = bLoadDefaultDependencies && this._oConfig.loadDefaultDependencies;
-                }
-
-                bLoadDefaultDependencies = bLoadDefaultDependencies && bAmendedLoading;
-                // set default library dependencies if no asyncHints defined (apps without manifest)
-                // TODO: move fallback logic to server implementation
-                if (!oComponentProperties.asyncHints) {
-                    oComponentProperties.asyncHints =
-                        bLoadDefaultDependencies ? {"libs": ["sap.ca.scfld.md", "sap.ca.ui", "sap.me", "sap.ui.unified"]} : {};
-                }
-
-                // core-ext light is loaded by default, but can be skipped explicitly (homepage component use case)
-                if (oAppProperties.hasOwnProperty("loadCoreExt")) {
-                    bLoadCoreExt = oAppProperties.loadCoreExt;
-
-                    // delete after evaluation to avoid warnings in ApplicationContainer
-                    delete oAppProperties.loadCoreExt;
-                }
-
-                if (bLoadCoreExt && bAmendedLoading && !bCoreExtAlreadyLoaded) {
-                    oComponentProperties.asyncHints.preloadBundles =
-                        oComponentProperties.asyncHints.preloadBundles || [];
-                    oComponentProperties.asyncHints.preloadBundles.push(sPreloadModule);
-                }
-                // set flag for core resources if core-ext is already loaded or amended loading is switched off (in the latter case
-                // we expect that the page performs a regular UI5 bootstrap which should be complete)
-                // if the loadCoreExt flag is explicitly set to false (FLP homepage component use case), the flag should also be false
-                bCoreResourcesFullyLoaded = bLoadCoreExt && ( bLoadCoreExt  || bCoreExtAlreadyLoaded || (bAmendedLoading === false) );
-
-                if (aWaitForBeforeInstantiation) {
-                    oComponentProperties.asyncHints.waitFor = aWaitForBeforeInstantiation;
-                }
-
-                // use component name from app properties (target mapping) only if no name
-                // was provided in the component properties (applicationDependencies)
-                // for supporting application variants, we have to differentiate between app ID
-                // and component name
-                if (!oComponentProperties.name) {
-                    oComponentProperties.name = oAppProperties.ui5ComponentName;
-                }
-                if (sComponentUrl) {
-                    oComponentProperties.url = sComponentUrl;
-                }
-                oComponentProperties.async = true;
-
-                // construct component id from shell hash if specified; must be kept stable!
-                if (oParsedShellHash) {
-                    oComponentProperties.id = "application-" + oParsedShellHash.semanticObject + "-" + oParsedShellHash.action + "-component";
-
-                    // static method called for operations to be done before
-                    // the application component is instantiated
-                    Ui5ComponentHandle.onBeforeApplicationInstanceCreated(oComponentProperties);
-                }
-
-                sap.ui.component(oComponentProperties).then(function(oComponent) {
-                    oAppProperties.componentHandle = new Ui5ComponentHandle(oComponent);
+                    var bCoreResourcesFullyLoaded = bLoadCoreExt && ( bLoadCoreExt || bCoreExtAlreadyLoaded || (bAmendedLoading === false) );
                     if (bCoreResourcesFullyLoaded) {
-                        oAppProperties.coreResourcesFullyLoaded = true;
+                        oAppPropertiesSafe.coreResourcesFullyLoaded = bCoreResourcesFullyLoaded;
                     }
-                    oDeferred.resolve(oAppProperties);
-                }, function(vError) {
-                    var sMsg = "Failed to load UI5 component with properties '" + JSON.stringify(oComponentProperties) + "'.",
-                        vDetails;
-                    if (typeof vError === "object" && vError.stack) {
-                        vDetails = vError.stack;
-                    } else {
-                        vDetails = vError;
-                    }
-                    jQuery.sap.log.error(sMsg, vDetails, "sap.ushell.services.Ui5ComponentLoader");
+
+                    oDeferred.resolve(oAppPropertiesSafe);
+                }, function (vError) {
+                    var sComponentProperties = JSON.stringify(oComponentProperties, null, 4);
+
+                    oUtils.logInstantiateComponentError(
+                        oComponentProperties.name,
+                        vError + "",
+                        vError.status,
+                        vError.stack,
+                        sComponentProperties
+                    );
+
                     oDeferred.reject(vError);
                 });
-            } else {
-                // resolve anyway, without UI5 application  context
-                oDeferred.resolve(oAppProperties);
+
+             return oDeferred.promise();
+        };
+
+        /*
+         * Creates a componentData object that can be used to instantiate a ui5
+         * component.
+         */
+        this._createComponentData = function (oBaseComponentData, sComponentUrl, oApplicationConfiguration, oTechnicalParameters) {
+            var oComponentData = jQuery.extend(true, {
+                startupParameters: {}
+            }, oBaseComponentData);
+
+            if (oApplicationConfiguration) {
+                oComponentData.config = oApplicationConfiguration;
+            }
+            if (oTechnicalParameters) {
+                oComponentData.technicalParameters = oTechnicalParameters;
             }
 
-            return oDeferred.promise();
-        };
-    };
+            if (oUtils.urlHasParameters(sComponentUrl)) {
+                var oUrlData = oUtils.getParameterMap(sComponentUrl);
 
-    sap.ushell.services.Ui5ComponentLoader.hasNoAdapter = true;
-})();
+                // pass GET parameters of URL via component data as member
+                // startupParameters and as xAppState (to allow blending with
+                // other oComponentData usage, e.g. extensibility use case)
+                oComponentData.startupParameters = oUrlData.startupParameters;
+                if (oUrlData["sap-xapp-state"]) {
+                    oComponentData["sap-xapp-state"] = oUrlData["sap-xapp-state"];
+                }
+            }
+
+            return oComponentData;
+        };
+
+        /*
+         * Creates a componentProperties object that can be used to instantiate
+         * a ui5 component.
+         */
+        this._createComponentProperties = function (
+            bAddCoreExtPreloadBundle,
+            bLoadDefaultDependencies,
+            aWaitForBeforeInstantiation,
+            oApplicationDependencies,
+            sUi5ComponentName,
+            sComponentUrl,
+            sAppComponentId
+        ) {
+            // take over all properties of applicationDependencies to enable extensions in server w/o
+            // necessary changes in client
+            var oComponentProperties = jQuery.extend(true, {}, oApplicationDependencies);
+
+            // set default library dependencies if no asyncHints defined (apps without manifest)
+            // TODO: move fallback logic to server implementation
+            if (!oComponentProperties.asyncHints) {
+                oComponentProperties.asyncHints = bLoadDefaultDependencies
+                    ? {"libs": ["sap.ca.scfld.md", "sap.ca.ui", "sap.me", "sap.ui.unified"]}
+                    : {};
+            }
+
+            if (bAddCoreExtPreloadBundle) {
+                oComponentProperties.asyncHints.preloadBundles =
+                    oComponentProperties.asyncHints.preloadBundles || [];
+
+                if (window["sap-ui-debug"]) {
+                    oComponentProperties.asyncHints.preloadBundles.push("sap/fiori/core-ext-light-dbg.js");
+                } else {
+                    oComponentProperties.asyncHints.preloadBundles.push("sap/fiori/core-ext-light-0.js");
+                    oComponentProperties.asyncHints.preloadBundles.push("sap/fiori/core-ext-light-1.js");
+                    oComponentProperties.asyncHints.preloadBundles.push("sap/fiori/core-ext-light-2.js");
+                    oComponentProperties.asyncHints.preloadBundles.push("sap/fiori/core-ext-light-3.js");
+                }
+            }
+
+            if (aWaitForBeforeInstantiation) {
+                oComponentProperties.asyncHints.waitFor = aWaitForBeforeInstantiation;
+            }
+
+            // Use component name from app properties (target mapping) only if no name
+            // was provided in the component properties (applicationDependencies)
+            // for supporting application variants, we have to differentiate between app ID
+            // and component name
+            if (!oComponentProperties.name) {
+                oComponentProperties.name = sUi5ComponentName;
+            }
+
+            if (sComponentUrl) {
+                oComponentProperties.url = oUtils.removeParametersFromUrl(sComponentUrl);
+            }
+
+            if (sAppComponentId) {
+                oComponentProperties.id = sAppComponentId;
+            }
+
+            return oComponentProperties;
+        };
+
+    }
+
+    Ui5ComponentLoader.hasNoAdapter = true;
+    return Ui5ComponentLoader;
+
+}, true /* bExport */);

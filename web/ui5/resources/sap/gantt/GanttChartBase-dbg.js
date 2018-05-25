@@ -31,11 +31,36 @@ sap.ui.define([
 	 * </ul>
 	 * </p>
 	 * 
+	 * <p>A number of <code>get</code> and <code>select</code> functions in this class use the row ID, row UI ID (UID), shape ID, or shape UID as the input to identify the objects to 
+	 * select or retrieve.
+	 * 
+	 * A row UID comprises the following parts:
+	 * <ul>
+	 * 		<li>Row ID: Identifier of a specific row. In most cases, this ID is specified in your data model, for example: 0001. The system generates a 
+	 * random ID for a row if you do not specify the row ID.</li>
+	 * 		<li>Row path: Represents the ID hierarchy in a tree structure. For example, if a tree has a three-level hierarchy, the row path 
+	 * follows this pattern: Level_1_row_id|level_2_row_id|level_3_row_id</li>
+	 * 		<li>Scheme: Chart scheme which is configured in shape configuration. The scheme controls what kind of shapes are shown in a row.</li>
+	 * </ul>
+	 * Row UID pattern: PATH:row_id|SCHEME:chart_scheme_key[index]
+	 * 
+	 * A shape UID comprises the following parts:
+	 * <ul>
+	 * 		<li>Row UID: UID of the row where the shape is located.</li>
+	 * 		<li>Shape data name: Key of the shape in the data model. For example: DATA:activity_greedy</li>
+	 * 		<li>Shape ID: Identifier of a specific shape. In most cases, this ID is specified in your data model. The system generates a 
+	 * random ID for a shape if you do not specify the shape ID.</li>
+	 * </ul>
+	 * Row UID pattern: PATH:row_id|SCHEME:chart_scheme_key[index]|DATA:shape_data_name[shape_id]
+	 * 
+	 * Note that you do not need to specify the UID for a shape or row. Gantt  Chart automatically forms the UIDs for shapes or rows.
+	 * </p>
+	 * 
 	 * @extends sap.ui.core.Control
 	 * @abstract
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -72,12 +97,23 @@ sap.ui.define([
 				 * Switch to show and hide vertical lines representing intervals along the time axis
 				 */
 				enableVerticalLine: {type: "boolean", defaultValue: true},
-				
+
+				/**
+				 * Switch to show and hide adhoc lines representing milestones and events along the time axis
+				 */
+				enableAdhocLine: {type: "boolean", defaultValue: true},
+
+				/**
+				 * Switch to show or hide the start time and end time of a shape when you drag it along the time line
+				 */
+				enableShapeTimeDisplay: {type: "boolean", defaultValue: false},
+
 				/**
 				 * Zoom level in float.
 				 * 
 				 * This property allows application developers to control the zoom level. 
 				 * When GanttChart is embedded in <code>sap.gantt.GanttChartContainer</code>, you do not have to manage this property.
+				 * @deprecated As of version 1.44, please use sap.gantt.axistime.AxisTimeStrategy to change the zoom rate
 				 */
 				timeZoomRate: {type: "float", defaultValue: 1},
 				
@@ -87,15 +123,27 @@ sap.ui.define([
 				 * If no value is provided, GanttChart uses a default mode key.
 				 */
 				mode: {type: "string", defaultValue: sap.gantt.config.DEFAULT_MODE_KEY},
-				
+
 				/**
 				 * Selection mode for GanttChart
 				 * 
 				 * This property controls whether multiToggle or multi-selection mode is enabled for the tree table and
 				 * for shapes. It may also affect the visual appearance, such as whether check boxes are available for selection.
+				 * From version 1.40 to upper versions, multi is replaced by multiToggle selection mode in tree table
+				 * @deprecated Please use <code>tableProperties</code>(e.g. <code>setTableproperties({selectionMode: "None"})</code>)
+				 * to control table selection mode, and <code>shapeSelectionMode</code>(e.g. <code>setShapeSelectionMode("None")</code>)
+				 * to control shape selection mode.
 				 */
 				selectionMode: {type : "sap.gantt.SelectionMode", defaultValue : sap.gantt.SelectionMode.MultiWithKeyboard},
-				
+
+				/**
+				 * Selection mode for shape
+				 * 
+				 * This property controls 4 shape selection modes(MultiWithKeyboard, Multiple, Single, None).
+				 * You can use <code>setShapeSelectionMode("None")</code> to set shape selection mode.
+				 */
+				shapeSelectionMode: {type : "sap.gantt.SelectionMode", defaultValue : sap.gantt.SelectionMode.MultiWithKeyboard},
+
 				/**
 				 * If the implementation contains a selection panel, this is the initial width.
 				 * 
@@ -120,77 +168,105 @@ sap.ui.define([
 				 * 
 				 * If this property is provided, the paint server definition of the SVG is rendered. Method <code>getDefString()</code> should be
 				 * implemented by all paint server classes that are passed in in this property.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.def.SvgDefs</code>. Otherwise some properties you set may not function properly.
 				 */
-				svgDefs: {type: "sap.gantt.def.SvgDefs", defaultValue: null},
+				svgDefs: {type: "object", defaultValue: null},
 
 				/**
 				 * Configuration of the time axis.
 				 *
+				 * @deprecated As of version 1.44, replaced by aggregation 'axisTimeStrategy'.
 				 * Planning horizon, initial horizon, and zoom level can be configured with this property. If not provided, a default
 				 * configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.TimeAxis</code>. Otherwise some properties you set may not function properly.
 				 */
-				timeAxis: {type: "sap.gantt.config.TimeAxis", defaultValue: sap.gantt.config.DEFAULT_TIME_AXIS},
+				timeAxis: {type: "object", defaultValue: sap.gantt.config.DEFAULT_TIME_AXIS},
 				
 				/**
 				 * Configuration of available modes.
 				 *
 				 * List of available modes. To apply modes to toolbar and shapes, further configuration is needed. If not provided, a default
 				 * configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Mode[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				modes: {type: "array", defaultValue: sap.gantt.config.DEFAULT_MODES},
+				modes: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_MODES},
 				
 				/**
 				 * Configuration of toolbar schemes.
 				 *
-				 * List of available toolbar shcemes. If not provided, a default configuration is provided.
+				 * List of available toolbar schemes. If not provided, a default configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ToolbarScheme[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				toolbarSchemes: {type: "array", defaultValue: sap.gantt.config.DEFAULT_GANTTCHART_TOOLBAR_SCHEMES},
+				toolbarSchemes: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_GANTTCHART_TOOLBAR_SCHEMES},
 				
 				/**
 				 * Configuration of hierarchies.
 				 *
 				 * List of available hierarchies. If not provided, a default configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Hierarchy[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				hierarchies: {type: "array", defaultValue: sap.gantt.config.DEFAULT_HIERARCHYS},
+				hierarchies: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_HIERARCHYS},
 				
 				/**
 				 * Configuration of object types.
 				 *
 				 * List of available object types. If not provided, a default configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ObjectType[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				objectTypes: {type: "array", defaultValue: sap.gantt.config.DEFAULT_OBJECT_TYPES},
+				objectTypes: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_OBJECT_TYPES},
 				
 				/**
 				 * Configuration of chart schemes.
 				 *
 				 * List of available chart schemes. If not provided, a default configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ChartScheme[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				chartSchemes: {type: "array", defaultValue: sap.gantt.config.DEFAULT_CHART_SCHEMES},
+				chartSchemes: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_CHART_SCHEMES},
 
 				/**
 				 * Configuration of locale settings.
 				 *
 				 * Most locale settings can be configured in sap.ui.configuration objects. Only the time zone and day-light-saving time option
 				 * are provided by locale settings.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Locale</code>. Otherwise some properties you set may not function properly.
 				 */
-				locale: {type: "sap.gantt.config.Locale", defaultValue: sap.gantt.config.DEFAULT_LOCALE_CET},
-				
+				locale: {type: "object", defaultValue: sap.gantt.config.DEFAULT_LOCALE_CET},
+
 				/**
-				 * Configuration of shape data names.
+				 * Configuration of shape data names and the attribute in raw data that serves as 'id'.
 				 * 
-				 * List of available shape data names. This configuration must be provided if SVG graphics are needed.
+				 * This property value should be an array, either an array of string, each string represents one available shape data name, or an array of object, each object specifies the shape data name
+				 * and data attribute that will serves as 'id'.
+				 * This configuration must be provided if SVG graphics are needed.
 				 */
-				shapeDataNames: {type: "array", defaultValue: []},
-				
+				shapeDataNames: {type: "sap.gantt.GenericArray", defaultValue: []},
+
 				/**
 				 * Configuration of shape data against shape classes.
 				 *
 				 * List of available shapes. The shapes configured in this list are initialized inside <code>sap.gantt.GanttChartBase</code>.
 				 * Note that for JSON data binding, this configuration supports deep structured data structures. For ODATA binding, only one level is supported.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Shape[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				shapes: {type: "array", defaultValue: []}
+				shapes: {type: "object[]", defaultValue: []},
+
+				/**
+				 * Specifies on which layer adhoc lines reside. By default, adhoc lines are on top of all other shapes and patterns.
+				 */
+				adhocLineLayer: {type: "string", defaultValue: sap.gantt.AdhocLineLayer.Top},
+
+				/**
+				 * Exposed properties from TreeTable
+				 */
+				tableProperties: {type: "object", defaultValue: {}},
+
+				/**
+				 * Defines how to adjust the relative position between a draggable shape and the mouse pointer.
+				 */
+				ghostAlignment: {type: "string", defaultValue: sap.gantt.dragdrop.GhostAlignment.None}
+
 			},
-			
+
 			aggregations: {
 
 				/**
@@ -209,7 +285,7 @@ sap.ui.define([
 				 * <code>"crossRowShape"</code>. How relationships are drawn is also specified in configuration property <code>shapes</code>.
 				 */
 				relationships: {type: "sap.ui.core.Control", multiple: true, bindable: "bindable", visibility: "public"},
-				
+
 				/**
 				 * Paint servers consumed by special shape <code>sap.gantt.shape.cal.Calendar</code>.
 				 *
@@ -218,7 +294,16 @@ sap.ui.define([
 				 * <code>sap.gantt.def.cal.CalendarDef</code>: Different from property <code>paintServerDefs</code>, paint servers defined here must
 				 * implement method <code>getDefNode()</code> instead of method <code>getDefString()</code>.
 				 */	
-				calendarDef: {type: "sap.gantt.def.cal.CalendarDefs", multiple: false, bindable: "bindable", visibility: "public"}
+				calendarDef: {type: "sap.gantt.def.cal.CalendarDefs", multiple: false, bindable: "bindable", visibility: "public"},
+				/**
+				 * This aggregation controls the zoom strategies and zoom rate in Gantt Chart.
+				 */
+				axisTimeStrategy: {type: "sap.gantt.axistime.AxisTimeStrategyBase", multiple: false, bindable: "bindable", visibility: "public"},
+
+				/**
+				 * The aggregation is used to store configuration of adhoc lines, adhoc lines represent milestones and events in axis time.
+				 */
+				adhocLines: {type: "sap.gantt.AdhocLine", multiple: true, singularName: "adhocLine", bindable: "bindable", visibility: "public"}
 			},
 			
 			events: {
@@ -290,25 +375,35 @@ sap.ui.define([
 						zoomInfo: {type: "object"}
 					}
 				},
-				
+
 				/**
 				 * Horizontal (time axis) scroll.
 				 *
 				 * If the horizontal scroll bar exists and synchronization is needed with other Gantt charts in the container, use this event. 
+				 * @deprecated As of version 1.44
 				 */
 				horizontalScroll: {
 					parameters: {
 						/**
 						 * Scroll steps.
 						 */
-						scrollSteps: {type: "int"}
+						scrollSteps: {type: "int"},
+						/**
+						 * The start time of Gantt Chart visible area when the event fired
+						 */
+						startTime: {type: "string"},
+						/**
+						 * The end time of Gantt Chart visible area when the event fired
+						 */
+						endTime: {type: "string"}
 					}
 				},
-				
+
 				/**
 				 * Vertical (row axis) scroll.
 				 *
 				 * If the vertical scroll bar exists and synchronization is needed with other Gantt charts in the container, use this event. 
+				 * @deprecated As of version 1.44
 				 */
 				verticalScroll: {
 					parameters: {
@@ -560,9 +655,29 @@ sap.ui.define([
 						sourceSvgId: {type: "string"},
 
 						/**
-						 * List of target shape data. Sorted by shape level.
+						 * Information about the drop position and target row. It contains the following properties:
+						 * <ul>
+						 * 		<li>shapeTimestamp
+						 * 		startTime and endTime of a dropped shape.
+						 * 		This property is added to support the newly introduced drag-and-drop behaviors.
+						 * 		For more information, see <code>sap.gantt.dragdrop.GhostAlignment</code>.
+						 * 		</li>
+						 * 		<li>cursorTimestamp
+						 * 		Cursor timestamp when a shape is dropped.
+						 * 		This property is added to support the newly introduced drag-and-drop behaviors.
+						 * 		For more information, see <code>sap.gantt.dragdrop.GhostAlignment</code>.
+						 * 		</li>
+						 * 		<li>mode
+						 * 		Mode of the current view.
+						 * 		</li>
+						 * 		<li>objectInfo
+						 * 		Data of the row where you dropped the shape.
+						 * 		</li>
+						 * </ul>
+						 * Note: The original property 'mouseTimestamp', which contains the startTime/endTime of a
+						 * dropped shape has been deprecated.
 						 */
-						targetData: {type: "object[]"},
+						targetData: {type: "object"},
 
 						/**
 						 * Target SVG ID.
@@ -570,7 +685,7 @@ sap.ui.define([
 						targetSvgId: {type: "string"}
 					}
 				},
-				
+
 				/**
 				 * Event fired when toggle node of the tree table.
 				 */
@@ -589,11 +704,80 @@ sap.ui.define([
 						 */
 						expanded: {type: "boolean"}
 					}
+				},
+
+				/**
+				 * Event fired when a resizing occurs on a resized shape.
+				 */
+				shapeResizeEnd: {
+					parameters: {
+						/**
+						 * UID of the resized shape.
+						 */
+						shapeUid: {type: "string"},
+						/**
+						 * Row object of the resizing shape.
+						 */
+						rowObject: {type: "object"},
+						/**
+						 * Original shape time array, including the start time and end time.
+						 */
+						oldTime: {type: "string[]"},
+						
+						/**
+						 * New shape time array, including the start time and end time.
+						 */
+						newTime: {type: "string[]"}
+					}
+				},
+
+				/**
+				 * Event fired when the following conditions are met:
+				 * The 'enableHover' property of Shape is set to true.
+				 * You hover the mouse on a shape and keep the mouse stationary for 500 millisecond or longer.
+				 */
+				shapeMouseEnter: {
+					parameters: {
+						/**
+						 * The data of the shape which fires this event.
+						 */
+						shapeData: {type: "object"},
+						/**
+						 * The mouse position relative to the left edge of the document.
+						 */
+						pageX: {type: "int"},
+						/**
+						 * The mouse position relative to the top edge of the document.
+						 */
+						pageY: {type: "int"},
+						/**
+						 * Original JQuery event object.
+						 */
+						originEvent: {type: "object"}
+					}
+				},
+
+				/**
+				 * Event fired when the following conditions are met:
+				 * The 'enableHover' property of Shape is set to true.
+				 * You move the mouse out of a shape and keep the mouse stationary for 500 millisecond or longer.
+				 */
+				shapeMouseLeave: {
+					parameters: {
+						/**
+						 * The data of the shape which fires this event.
+						 */
+						shapeData: {type: "object"},
+						/**
+						 * Original JQuery event object.
+						 */
+						originEvent: {type: "object"}
+					}
 				}
 			}
 		}
 	});
-	
+
 	// enable calling 'bindAggregation("rows")' without a factory
 	GanttChartBase.getMetadata().getAllAggregations()["rows"]._doesNotRequireFactory = true;
 	// enable calling 'bindAggrgation("rows")' without a factory
@@ -606,6 +790,15 @@ sap.ui.define([
 	 */
 	GanttChartBase.prototype.init = function () {
 		this._iBaseRowHeight = undefined;
+		
+		// Exposed properties from TreeTable
+		// These properties are exposed by both of GanttChart's TreeTable and GanttChartWithTable's TreeTable
+		this.mDefaultTableProperties = {
+			rowHeight: 33,
+			threshold: 100,
+			firstVisibleRow: 0,
+			selectionMode: sap.ui.table.SelectionMode.MultiToggle
+		};
 	};
 
 	/**
@@ -649,14 +842,192 @@ sap.ui.define([
 	 * @public
 	 */
 
+	/**
+	 * Selects shape data or row data by UI ID (UID).
+	 *
+	 * UID is generated by Gantt Chart to identify the appearance of shape data and row data. You can retrieve UIDs by certain events.
+	 * The current implementation only supports shape selection by UID.
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.selectByUid
+	 * @function
+	 *
+	 * @param {aUid} Array of the UIDs of the UI elements to be selected
+	 * @public
+
+	 * Gets the selected rows.
+	 *
+	 * @return {array} Row data of the selected rows
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.getSelectedRows
+	 * @function
+	 *
+	 * @public
+	 */
 
 	/**
-	 * Default event handler for internal event expandChartChange from global TOOLBAR.
+	 * Gets the selected rows, shapes, and relationships.
+	 *
+	 * @return {object} The returned object contains row data for all selected rows, shape data for all selected shapes, and relationship 
+	 * data for all selected relationships.
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.getAllSelections
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Gets the shape data of the selected shapes.
+	 *
+	 * @return {array} Selected shapes. The returned structure is shown as below.
+	 * {
+	 *     "shapeDataName1": [oShapeData1, oShapeData2, ...]
+	 *     "shapeDataName2": [oShapeData3, oShapeData3, ...]
+	 *     ...
+	 * }
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.getSelectedShapes
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Gets all the selected relationships.
+	 *
+	 * @return {array} selected relationships
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.getSelectedRelationships
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Gets a row object by the corresponding shape UID.
+	 *
+	 * @param {string} [sShapeUid] Shape UID
+	 * @return {object} Row object
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.getRowByShapeUid
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Selects a group of shapes specified by the aId array. Alternatively, this function 
+	 * deselects all selected shapes when aId is a null list and bExclusive is true.
+	 *
+	 * @param {array} [aId] List of the IDs of the shapes to select
+	 * @param {boolean} [bExclusive] Whether or not to deselect all selected shapes when aId is null
+	 * @return {sap.gantt.GanttChartBase} Gantt Chart instance
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.selectShapes
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Deselects a group of shapes specified by the aId array.
+	 *
+	 * @param {array} [aId] List of IDs of the shapes to deselect
+	 * @return {sap.gantt.GanttChartBase} Gantt Chart instance
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.deselectShapes
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Selects rows and all shapes contained in those rows specified by an array of row IDs. Alternatively, this function 
+	 * deselects all selected rows and shapes in those rows if the row ID array is null and bExclusive is true.
+	 *
+	 * @param {array} [aRowId] List of IDs of the rows to select
+	 * @param {boolean} [bExclusive] Whether or not to deselect all selected rows and shapes when aRowId is null
+	 * @return {sap.gantt.GanttChartBase} Gantt Chart instance
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.selectRowsAndShapes
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Selects a group of relationships specified by the aId array. Alternatively, this function 
+	 * deselects all selected relationships if aId is a null list and bExclusive is true.
+	 *
+	 * @param {array} [aId] List of IDs of the relationships to select
+	 * @param {boolean} [bExclusive] Whether or not to deselect all selected shapes when aId is null
+	 * @return {sap.gantt.GanttChartBase} Gantt Chart instance
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.selectRelationships
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Deselects a group of relationships specified by the aId array.
+	 *
+	 * @param {array} [aId] List of IDs of the relationships to deselect
+	 * @return {sap.gantt.GanttChartBase} Gantt Chart instance
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.deselectRelationships
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Selects a group of rows specified by the aId array.
+	 *
+	 * @param {array} [aId] List of IDs of the rows to select
+	 * @param {boolean} [bExclusive] Whether or not to deselect all selected rows when aId is null
+	 * @return {sap.gantt.GanttChartBase} Gantt Chart instance
 	 * 
+	 * @name sap.gantt.GanttChartBase.prototype.selectRows
+	 * @function
+	 * 
+	 * @public
+	 */
+
+	/**
+	 * Deselects a group of rows specified by the aId array.
+	 *
+	 * @param {array} [aId] List of the rows that you want to deselect
+	 * @return {sap.gantt.GanttChartBase} Gantt Chart instance
+	 *
+	 * @name sap.gantt.GanttChartBase.prototype.deselectRows
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Expands the Gantt chart to the given level.
+	 *
+	 * @see sap.ui.table.TreeTable.expandToLevel
+	 *
+	 * @param {int} iLevel
+	 *         Level to be expanded to
+	 * @return {sap.gantt.GanttChartBase} Reference to the GanttChart control, which can be used for chaining
+	 * 
+	 * @name sap.gantt.GanttChartBase.prototype.expandToLevel
+	 * @function
+	 *
+	 * @public
+	 */
+
+	/**
+	 * Default event handler for the internal event expandChartChange from global TOOLBAR.
+	 *
 	 * @param {boolean} bExpanded expand or collapse the selected row
-	 * @param {array} aChartSchemes binded chart scheme
+	 * @param {array} aChartSchemes bound chart scheme
 	 * @param {array} aSelectedIndices user selected row indices
-	 * 
+	 *
 	 * @protected
 	 */
 	GanttChartBase.prototype.handleExpandChartChange = function(bExpanded, aChartSchemes, aSelectedIndices){
@@ -664,7 +1035,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Notify that the data source had changed.
+	 * Notifies that the data source has changed.
 	 * 
 	 * @protected
 	 */
@@ -678,13 +1049,142 @@ sap.ui.define([
 	 * We can make this method public once sap.ui.Table._setLargeDataScrolling is public.
 	 *
 	 * @param {boolean} bLargeDataScrolling Set to true to let the <code>ScrollBar</code> only fires scroll events when
-	 * the scroll handle is released. No matter what the setting is, the <code>ScrollBar</code> keeps on fireing scroll events
+	 * the scroll handle is released. No matter what the setting is, the <code>ScrollBar</code> keeps on firing scroll events
 	 * when the user scroll with the mousewheel or using touch
 	 * @private
 	 */
 	GanttChartBase.prototype._setLargeDataScrolling = function(bLargeDataScrolling) {
 		
 	};
+
+	/**
+	 * get the keys for row data : id, type, which is configured when init gantt chart
+	 * @return {object} indicate which attribute in raw rowData that serves as the purpose of 'id' and 'type'
+	 * @private
+	 */
+	GanttChartBase.prototype._getConfiguredRowKeys = function(oBindingInfo) {
+		if (!oBindingInfo) {
+			oBindingInfo = this.getBindingInfo("rows");
+		}
+		var oRowConfiguredKeys;
+		if (oBindingInfo && oBindingInfo.parameters) {
+			oRowConfiguredKeys = oBindingInfo.parameters.gantt;
+		}
+		this._configuredRowKeys = {
+				rowIdName : oRowConfiguredKeys && oRowConfiguredKeys.rowIdName ? oRowConfiguredKeys.rowIdName : "id",
+				rowTypeName : oRowConfiguredKeys && oRowConfiguredKeys.rowTypeName ? oRowConfiguredKeys.rowTypeName : "type"
+		};
+		return this._configuredRowKeys;
+	};
+
+	GanttChartBase.prototype.getRowIdName = function() {
+		if (!this._configuredRowKeys) {
+			this._getConfiguredRowKeys();
+		}
+		return this._configuredRowKeys.rowIdName;
+	};
+
+	GanttChartBase.prototype.getRowTypeName = function() {
+		if (!this._configuredRowKeys) {
+			this._getConfiguredRowKeys();
+		}
+		return this._configuredRowKeys.rowTypeName;
+	};
+	
+	GanttChartBase.prototype.getRlsIdName = function() {
+		if (!this._configuredRlsKeys) {
+			this._getConfiguredRlsKeys();
+		}
+		return this._configuredRlsKeys.rlsIdName;
+	};
+	
+	GanttChartBase.prototype._getConfiguredRlsKeys = function() {
+		var	oBindingInfo = this.getBindingInfo("relationships");
+		var oConfiguredRlsKeys;
+		if (oBindingInfo && oBindingInfo.parameters) {
+			oConfiguredRlsKeys = oBindingInfo.parameters.gantt;
+		}
+		this._configuredRlsKeys = {
+				rlsIdName : oConfiguredRlsKeys && oConfiguredRlsKeys.rlsIdName ? oConfiguredRlsKeys.rlsIdName : "id"
+		};
+		return this._configuredRlsKeys;
+	};
+
+	/**
+	 * Wrap the selector of a dom element to the Attribute Equeal Selector, which can work fine even if the ID of the
+	 * Gantt has some invalid character like colons "::".
+	 * @param {string} sSuffix the ID suffix to get a dom object for
+	 * @return {string} The wrapped selector for the Dom
+	 */
+	GanttChartBase.prototype.getDomSelectorById = function(sSuffix) {
+		var selector = Utility.attributeEqualSelector("id", sSuffix ? this.getId() + "-" + sSuffix : this.getId());
+		return selector;
+	};
+
+	/**
+	 * Set exposed TreeTable properties
+	 * @param {Object} oProperties The object include some properties from TreeTable
+	 * @return {sap.gantt.GanttChart|sap.gantt.GanttChartWithTable} Reference to this in order to allow method chaining
+	 * @public
+	 */
+	GanttChartBase.prototype.setTableProperties = function (oProperties) {
+		var oTableProperties = jQuery.extend({}, this.getProperty("tableProperties"));
+		Object.keys(oProperties).forEach(function (sKey) {
+			if (this.mDefaultTableProperties.hasOwnProperty(sKey)) {
+				oTableProperties[sKey] = oProperties[sKey];
+				this._oTT["set" + sKey[0].toUpperCase() + sKey.slice(1)](oProperties[sKey]);
+			}
+			else {
+				jQuery.sap.log.warning('The TreeTable property of "' + sKey + '" is not exposed by Gantt');
+			}
+		}, this);
+		this.setProperty("tableProperties", oTableProperties, true);
+		return this;
+	};
+
+	/**
+	 * Get exposed TreeTable properties
+	 * @return {Object} The all exposed TreeTable properties
+	 * @public
+	 */
+	GanttChartBase.prototype.getTableProperties = function () {
+		var oTableProperties = this.getProperty("tableProperties");
+		Object.keys(oTableProperties).forEach(function (sKey) {
+			oTableProperties[sKey] = this._oTT["get" + sKey[0].toUpperCase() + sKey.slice(1)]();
+		}, this);
+		return oTableProperties;
+	};
+
+	/**
+	 * Expands the row for the given row index in the selection panel
+	 *
+	 * @see sap.ui.table.Table.expand
+	 *
+	 * @param {int} iRowIndex
+	 *         Index of the row to expand
+	 * @return {sap.gantt.GanttChartBase} A reference to the GanttChartBase control, which can be used for chaining
+	 * @public
+	 */
+
+	/**
+	 * Collapses the row for the given row index in the selection panel
+	 *
+	 * @see sap.ui.table.Table.collapse
+	 *
+	 * @param {int} iRowIndex
+	 *         index of the row to expand
+	 * @return {sap.gantt.GanttChartBase} A reference to the GanttChartBase control, which can be used for chaining
+	 * @public
+	 */
+
+	/**
+	 * Gets the number of visible rows in the selection panel.
+	 *
+	 * @see sap.ui.table.Table.getVisibleRowCount
+	 *
+	 * @return {int} The first visible row index
+	 * @public
+	 */
 
 	return GanttChartBase;
 }, true);

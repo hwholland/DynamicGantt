@@ -1,55 +1,77 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(['sap/ui/core/UIComponent','./RendererExtensions','sap/ushell/resources', "sap/ushell/components/applicationIntegration/API"],
+    function(UIComponent, RendererExtensions, resources, modelAPI) {
+        "use strict";
 
-/**
- * @name sap.ushell.renderers.fiori2.Renderer
- * @since 1.9.0
- * @public
- */
-(function () {
-    "use strict";
-    /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.renderers.fiori2.Renderer");
+        /*global jQuery, sap */
+        /**
+         * Default renderer for SAP Fiori launchpad.<br><br>
+         * Publishes all lifecycle events as described in the documentation of the "sap.ushell" namepsace.
+         */
 
-    /**
-     * Default renderer for SAP Fiori launchpad.<br><br>
-     * Publishes all lifecycle events as described in the documentation of the "sap.ushell" namepsace.
-     */
-
-    jQuery.sap.require("sap.ui.core.UIComponent");
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.require("sap.ushell.renderers.fiori2.RendererExtensions");
-
-    /**
-     * This method MUST be called by the Unified Shell's container only, others MUST call
-     * <code>sap.ushell.Container.createRenderer("fiori2")</code>.
-     *
-     * @class The SAPUI5 component of SAP Fiori Launchpad renderer for the Unified Shell.
-     *
-     * @extends sap.ui.core.UIComponent
-     * @name sap.ushell.renderers.fiori2.Renderer
-     * @since 1.15.0
-     * @public
-     */
-    sap.ui.core.UIComponent.extend("sap.ushell.renderers.fiori2.Renderer", {
-        metadata : {
-            version : "1.38.26",
-            dependencies : {
-                version : "1.38.26",
-                libs : [ "sap.ui.core", "sap.m" ],
-                components: []
+        /**
+         * This method MUST be called by the Unified Shell's container only, others MUST call
+         * <code>sap.ushell.Container.createRenderer("fiori2")</code>.
+         *
+         * @class The SAPUI5 component of SAP Fiori Launchpad renderer for the Unified Shell.
+         *
+         * @extends sap.ui.core.UIComponent
+         * @alias sap.ushell.renderers.fiori2.Renderer
+         * @since 1.15.0
+         * @public
+         */
+        var Renderer = UIComponent.extend("sap.ushell.renderers.fiori2.Renderer", {
+            metadata : {
+                version : "1.54.3",
+                dependencies : {
+                    version : "1.54.3",
+                    libs : [ "sap.ui.core", "sap.m" ],
+                    components: []
+                }
             }
-        }
-    });
+        });
 
-    /**
+        /**
+         * @since 1.54.0
+         *
+         * @private
+         */
+        Renderer.prototype.addRightViewPort = function (oView) {
+            this.shellCtrl.oViewPortContainer.addRightViewPort(oView);
+            this.shellCtrl.oViewPortContainer.navTo('rightViewPort', oView.getId(), 'show');
+
+        };
+
+        /**
+         * @since 1.54.0
+         *
+         * @private
+         */
+        Renderer.prototype.addLeftViewPort = function (oView) {
+            this.shellCtrl.oViewPortContainer.addLeftViewPort(oView);
+            this.shellCtrl.oViewPortContainer.navTo('leftViewPort', oView.getId(), 'show');
+
+        };
+
+        /**
+         * @since 1.54.0
+         *
+         * @private
+         */
+        Renderer.prototype.getShellController = function () {
+            return this.shellCtrl;
+        };
+
+        /**
      * @returns {object} an instance of Shell view
      *
      * @since 1.15.0
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.createContent = function () {
+    Renderer.prototype.createContent = function () {
         var predefineState = jQuery.sap.getUriParameters().get("appState") || jQuery.sap.getUriParameters().get("sap-ushell-config"),
+            workState,
             viewData = this.getComponentData() || {},
             aProperties,
             oAppConfig = {
@@ -58,11 +80,169 @@
             },
             oView;
 
-        if (predefineState) {
+        // Support flp perf measurments
+        var PerfM = function () {
+            var perfActive = false,
+                blocklist = {};
+
+            function Measure(hash, name, start, info){
+                this.hash = hash;
+                this.name = name;
+                this.start = start;
+                this.end = 0;
+                this.duration = 0;
+                this.info = info;
+            };
+
+
+            function Block(hash, name, start, scenario, sequence){
+                this.hash = hash;
+                this.name = name;
+                this.scenario = scenario;
+                this.sequence = sequence;
+                this.start = start;
+                this.end = 0;
+                this.percent = null;
+                this.duration = 0;
+                this.funcs = {};
+            }
+
+            this.start = function(scenario, block, sequence){
+                var timeStamp = jQuery.sap.now(),
+                    oBlock;
+
+                if (!perfActive) {
+                    return;
+                }
+
+                if(blocklist[scenario] === undefined || blocklist[scenario]===null){
+                    blocklist[scenario] = {};
+                }
+
+                if(blocklist[scenario][block] === undefined){
+                    blocklist[scenario][block] = null;
+                }
+
+                if(blocklist[scenario][block] === null) {
+                    oBlock = new Block(this.hash(), block, timeStamp, scenario, sequence);
+                    blocklist[scenario][oBlock.name] = oBlock;
+                }
+            }
+
+            this.startFunc = function(scenario, blockName, sequence, funcName, info){
+                if (!perfActive) return;
+                var timeStamp = jQuery.sap.now();
+                var block = null;
+
+                if(blocklist[scenario] === undefined || blocklist[scenario]===null){
+                    blocklist[scenario] = {};
+                }
+
+                if(blocklist[scenario][blockName] === undefined){
+                    blocklist[scenario][blockName] = null;
+                }
+
+                if(blocklist[scenario][blockName] === null) {
+                    block = new Block(this.hash(), blockName, timeStamp, scenario, sequence);
+                    blocklist[scenario][blockName] = block;
+                }
+
+                var func = new Measure(this.hash(), funcName, timeStamp, info)
+                blocklist[scenario][blockName].funcs[func.hash] = func;
+
+                return func.hash;
+            }
+
+            this.end = function(scenario, block){
+                if (!perfActive) return;
+                var timeStamp = jQuery.sap.now();
+
+                if(blocklist[scenario][block] === undefined){
+                    blocklist[scenario][block] = null;
+                }
+
+                if(blocklist[scenario][block] != null) {
+                    blocklist[scenario][block].end = timeStamp;
+                    blocklist[scenario][block].duration = Math.round(blocklist[scenario][block].end - blocklist[scenario][block].start);
+                }
+            }
+
+
+            this.endFunc = function(scenario, block, fh){
+                if (!perfActive) return;
+                var timeStamp = jQuery.sap.now();
+
+                if(blocklist[scenario][block] === undefined){
+                    blocklist[scenario][block] = null;
+                }
+
+                if(blocklist[scenario][block] != null) {
+                    blocklist[scenario][block].end = timeStamp;
+                    blocklist[scenario][block].duration = Math.round(blocklist[scenario][block].end - blocklist[scenario][block].start);
+                    blocklist[scenario][block].funcs[fh].end = timeStamp;
+                    blocklist[scenario][block].funcs[fh].duration = Math.round(blocklist[scenario][block].funcs[fh].end - blocklist[scenario][block].funcs[fh].start);
+                }
+            }
+
+            this.calc = function(){
+                if (!perfActive) return;
+
+                return blocklist;
+            }
+
+            this.hash = function(){
+                if (!perfActive) return;
+                var val = (new Date()).valueOf().toString() + Math.random().toString();
+                //var hash = 0;
+                var hash = 5381;
+                for (var i = 0; i < val.length; i++) {
+                    var char = val.charCodeAt(i);
+                    hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
+                }
+
+                return hash;
+            }
+
+            this.getActive = function() {
+                return perfActive;
+            };
+
+            this.setActive = function(bOn, aCategories) {
+                if (perfActive === bOn) {
+                    return;
+                }
+                perfActive = bOn;
+                document.addEventListener('keyup', function (e) {
+                    if (e.shiftKey && e.ctrlKey && e.altKey && e.keyCode == 77) {
+                        window.calc = JSON.stringify(jQuery.sap.flpmeasure.calc());
+                        window.open(jQuery.sap.getResourcePath("sap/ushell/renderers/fiori2/stat.html"));
+                    }
+                }, false);
+                return perfActive;
+            };
+
+            var aMatch = location.href.match(/sap-flp-measure=([^\&]*)/);
+            if (aMatch && aMatch[1]) {
+                if (aMatch[1] === "true" || aMatch[1] === "x" || aMatch[1] === "X") {
+                    this.setActive(true);
+                } else {
+                    this.setActive(true, aMatch[1]);
+                }
+            }
+        }
+
+        jQuery.sap.flpmeasure = new PerfM();
+
+        //mapping headerless-opt to headerless
+        workState = (predefineState === "headerless-opt") ? "headerless" : predefineState;
+
+        if (workState) {
             if (!viewData.config) {
                 viewData.config = {};
             }
-            viewData.config.appState = predefineState;
+            viewData.config.appState = workState;
+            viewData.config.appStateOrig = predefineState;
+            viewData.config.inHeaderLessOpt = (predefineState === "headerless-opt");
         }
 
         //the code below migrates a configuration structure from version 1.28 or older, to the default
@@ -95,6 +275,7 @@
                 });
             }
         }
+        jQuery.sap.flpmeasure.start(0, "Creating Shell", 0);
 
         if (viewData.config && viewData.config.customViews) {
             Object.keys(viewData.config.customViews).forEach(function (sViewName) {
@@ -117,6 +298,8 @@
         // that sap.ushell.renderers.fiori2.RendererExtensions can be use.
         sap.ushell.renderers.fiori2.utils.init(oView.getController());
         this.shellCtrl = oView.oController;
+        this.oShellModel = sap.ushell.components.applicationIntegration.AppLifeCycle;
+
         return oView;
     };
 
@@ -156,10 +339,10 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.createExtendedShellState = function (sShellName, fnCreationInstructions) {
+    Renderer.prototype.createExtendedShellState = function (sShellName, fnCreationInstructions) {
         // create a shadow shell, shell will extend custom shell state.
         //place it in the custome shell hash.
-        return this.shellCtrl.createExtendedShellState(sShellName, fnCreationInstructions);
+        return this.oShellModel.createExtendedShellState(sShellName, fnCreationInstructions);
 
     };
 
@@ -194,9 +377,9 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.applyExtendedShellState = function (sShellName, fnCustomMerge) {
+    Renderer.prototype.applyExtendedShellState = function (sShellName, fnCustomMerge) {
         //merge the current shell state state (HOME/APP) with the custome shell.
-        this.shellCtrl.applyExtendedShellState(sShellName, fnCustomMerge);
+        this.oShellModel.applyExtendedShellState(sShellName, fnCustomMerge);
     };
     /*-------------------------------------------show----------------------------*/
 
@@ -225,11 +408,11 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showLeftPaneContent = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.showLeftPaneContent = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.addLeftPaneContent([aIds], bCurrentState, aStates);
+            this.oShellModel.addLeftPaneContent([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.addLeftPaneContent(aIds, bCurrentState, aStates);
+            this.oShellModel.addLeftPaneContent(aIds, bCurrentState, aStates);
         }
     };
 
@@ -265,16 +448,16 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showHeaderItem = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.showHeaderItem = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.addHeaderItem([aIds], bCurrentState, aStates);
+            this.oShellModel.addHeaderItem([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.addHeaderItem(aIds, bCurrentState, aStates);
+            this.oShellModel.addHeaderItem(aIds, bCurrentState, aStates);
         }
 
     };
 
-    /**
+        /**
      * Displays RightFloatingContainerItem on the left side of the Fiori launchpad shell, in the given launchpad states
      * (see sap.ushell.renderers.fiori2.renderer.LaunchpadState).</br>
      * If no launchpad state is provided the content is displayed in all states.</br>
@@ -300,9 +483,15 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showRightFloatingContainerItem = function (sId, bCurrentState, aStates) {
-        this.shellCtrl.addRightFloatingContainerItem(sId, bCurrentState, aStates);
+    Renderer.prototype.showRightFloatingContainerItem = function (aIds, bCurrentState, aStates) {
+        if (typeof aIds === "string") {
+            this.oShellModel.addRightFloatingContainerItem([aIds], bCurrentState, aStates);
+        } else {
+            this.oShellModel.addRightFloatingContainerItem(aIds, bCurrentState, aStates);
+        }
+
     };
+
 
     /**
      * Displays RightFloatingContainerItem on the right side of the Fiori launchpad shel.
@@ -322,8 +511,8 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showRightFloatingContainer = function (bShow) {
-        this.shellCtrl.showRightFloatingContainer(bShow);
+    Renderer.prototype.showRightFloatingContainer = function (bShow) {
+        this.oShellModel.showRightFloatingContainer(bShow);
     };
     /**
      * Displays ToolAreaItem on the left side of the Fiori launchpad shell, in the given launchpad states
@@ -351,12 +540,12 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showToolAreaItem = function (sId, bCurrentState, aStates) {
-        this.shellCtrl.addToolAreaItem(sId, bCurrentState, aStates);
+    Renderer.prototype.showToolAreaItem = function (sId, bCurrentState, aStates) {
+        this.oShellModel.addToolAreaItem(sId, bCurrentState, aStates);
     };
 
     /**
-     * Displays Buttons on the user actions menu in the Fiori launchpad shell, in the given launchpad states
+     * Displays action buttons in the options bar of the Me Area in the SAP Fiori launchpad, in the given launchpad states (LaunchpadState).
      * (see sap.ushell.renderers.fiori2.renderer.LaunchpadState).</br>
      * If no launchpad state is provided the content is displayed in all states.</br>
      * The user actions menu is opened via the button on the right hand side of the shell header.</br>
@@ -369,27 +558,48 @@
      *   </pre>
      *
      * @param {String[]} aIds
-     *   List of ID elements to add to the user actions menu.
+     *   List of ID elements to that should be added to the Me Area options bar.
      *
      * @param {boolean} bCurrentState
-     *   if true, add the current Buttons only to the current instance of the rendering of the shell.
-     *   if false, add the Buttons to the LaunchPadState itself.
+     *   If true, add the created control to the current rendered shell state. When the user navigates to a
+     *   different state, or to a different application, then the control is removed. If false, the control is added to the LaunchpadState.
      *
      * @param {String[]} aStates
-     *   (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.renderer.LaunchpadState in which to add the aIds.
+     *   List of the launchpad states (sap.ushell.renderers.fiori2.Renderer.LaunchpadState) in which to add the aIds. Valid only if bCurrentState is set to false.
      * @param {boolean} bIsFirst
-     *   if true, the Button will be added to the top of the ActionItems list.
+     *   If set to true, displays the button as the first item.
+     *
+     * @see sap.ushell.renderers.fiori2.renderer.LaunchpadState.
+     *  If no launchpad state is provided, the content is added in all states.
      *
      * @since 1.30
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showActionButton = function (aIds, bCurrentState, aStates, bIsFirst) {
+    Renderer.prototype.showActionButton = function (aIds, bCurrentState, aStates, bIsFirst) {
+        var aButtons = [],
+            aActions = [],
+            oButton;
         if (typeof aIds === "string") {
-            this.shellCtrl.addActionButton([aIds], bCurrentState, aStates, bIsFirst);
-        } else {
-            this.shellCtrl.addActionButton(aIds, bCurrentState, aStates, bIsFirst);
+            aIds = [aIds];
         }
+        //In case the method was called with instance of sap.m.Button, we need to convert it to
+        //sap.ushell.ui.launchpad.ActionItem in order to apply the action item behavior and styles to this control
+        aButtons = aIds.filter(function (sId) {
+            oButton = sap.ui.getCore().byId(sId);
+            return oButton instanceof sap.m.Button && !(oButton instanceof sap.ushell.ui.launchpad.ActionItem);
+        });
+        aActions = aIds.filter(function (sId) {
+            oButton = sap.ui.getCore().byId(sId);
+            return oButton instanceof sap.ushell.ui.launchpad.ActionItem;
+        });
+        if (aButtons.length) {
+            this.convertButtonsToActions(aButtons, bCurrentState, aStates, bIsFirst);
+        }
+        if (aActions.length) {
+            this.oShellModel.addActionButton(aActions, bCurrentState, aStates, bIsFirst);
+        }
+        this.toggleOverFlowActions();
     };
 
     /**
@@ -418,11 +628,11 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showFloatingActionButton = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.showFloatingActionButton = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.addFloatingActionButton([aIds], bCurrentState, aStates);
+            this.oShellModel.addFloatingActionButton([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.addFloatingActionButton(aIds, bCurrentState, aStates);
+            this.oShellModel.addFloatingActionButton(aIds, bCurrentState, aStates);
         }
     };
 
@@ -454,11 +664,11 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showHeaderEndItem = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.showHeaderEndItem = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.addHeaderEndItem([aIds], bCurrentState, aStates);
+            this.oShellModel.addHeaderEndItem([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.addHeaderEndItem(aIds, bCurrentState, aStates);
+            this.oShellModel.addHeaderEndItem(aIds, bCurrentState, aStates);
         }
     };
 
@@ -490,8 +700,8 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.setHeaderVisibility = function (bVisible, bCurrentState, aStates) {
-        this.shellCtrl.setHeaderVisibility(bVisible, bCurrentState, aStates);
+    Renderer.prototype.setHeaderVisibility = function (bVisible, bCurrentState, aStates) {
+        this.oShellModel.setHeaderVisibility(bVisible, bCurrentState, aStates);
     };
 
     /**
@@ -528,12 +738,68 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showSubHeader = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.showSubHeader = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.addSubHeader([aIds], bCurrentState, aStates);
+            this.oShellModel.addSubHeader([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.addSubHeader(aIds, bCurrentState, aStates);
+            this.oShellModel.addSubHeader(aIds, bCurrentState, aStates);
         }
+    };
+
+    /**
+     * Displays Sign Out button in Me Area in the given launchpad state
+     * (see sap.ushell.renderers.fiori2.renderer.LaunchpadState).</br>
+     * If no launchpad state is provided the item is displayed in all states.</br>
+     * If this method is called when the sign out button already displayed, this method will not do anything.</br>
+     *
+     * <b>Example:</b>
+     *   <pre>
+     *   var renderer = sap.ushell.Container.getRenderer("fiori2");
+     *   renderer.showSignOutItem (false, ["home", "app"]);
+     *   </pre>
+     *
+     * @param {boolean} bCurrentState
+     *   if true, add the sign out button only to the current instance of the rendering of the shell.
+     *   if false, add the sign out button to the LaunchPadState itself.
+     *
+     * @param {String[]} aStates
+     *   (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.renderer.LaunchpadState in which to add the aIds.
+     *
+     * @since 1.44
+     *
+     * @private
+     */
+    Renderer.prototype.showSignOutItem = function (bCurrentState, aStates) {
+        this.oShellModel.showSignOutButton(bCurrentState, aStates);
+
+    };
+
+    /**
+     * Displays Settings button in Me Area in the given launchpad state
+     * (see sap.ushell.renderers.fiori2.renderer.LaunchpadState).</br>
+     * If no launchpad state is provided the item is displayed in all states.</br>
+     * If this method is called when the sign out button already displayed, this method will not do anything.</br>
+     *
+     * <b>Example:</b>
+     *   <pre>
+     *   var renderer = sap.ushell.Container.getRenderer("fiori2");
+     *   renderer.showSettingsItem (false, ["home", "app"]);
+     *   </pre>
+     *
+     * @param {boolean} bCurrentState
+     *   if true, add the settings button only to the current instance of the rendering of the shell.
+     *   if false, add settings button to the LaunchPadState itself.
+     *
+     * @param {String[]} aStates
+     *   (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.renderer.LaunchpadState in which to add the aIds.
+     *
+     * @since 1.44
+     *
+     * @private
+         */
+    Renderer.prototype.showSettingsItem = function (bCurrentState, aStates) {
+        this.oShellModel.showSettingsButton(bCurrentState, aStates);
+
     };
 
     /**
@@ -558,8 +824,178 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.setFooter = function (oFooter) {
+    Renderer.prototype.setFooter = function (oFooter) {
         this.shellCtrl.setFooter(oFooter);
+    };
+
+    /**
+     * Creates and displays an SAPUI5 control as the footer of the Fiori launchpad shell.<br>
+     * The footer will be displayed in all states. <br>
+     * Previously created footer will be removed. <br>
+     *
+     * <b>For example, using the sap.m.Bar control:</b>
+     * <pre>
+     * var oRenderer = sap.ushell.Container.getRenderer("fiori2"),
+     *     oFooterControlProperties = {
+     *         controlType : "sap.m.Bar",
+     *         oControlProperties : {
+     *             id: "testBar",
+     *             contentLeft: [new sap.m.Button({
+     *                 text: "Test Footer Button",
+     *                 press: function () {
+     *                     sap.m.MessageToast.show("Pressed");
+     *                 }
+     *             })]
+     *         }
+     *     };
+     *
+     * oRenderer.setShellFooter(oFooterControlProperties);
+     * </pre>
+     *
+     * @param {object} oParameters<br>
+     *  Contains the required parameters for creating and showing the new control object:<br>
+     *  Properties:<br>
+     *   - {string} controlType<br>
+     *       The (class) name of the control type to create, for example: <code>"sap.m.Bar"</code><br>
+     *   - {object} oControlProperties<br>
+     *       The properties that will be passed to the created control, for example: <code>{id: "testBar"}</code><br>
+     *
+     * @returns {object} jQuery.deferred.promise object that when resolved, returns the newly created control
+     *
+     * @since 1.48
+     *
+     * @public
+     */
+    Renderer.prototype.setShellFooter = function (oParameters) {
+        var oDeferred = new jQuery.Deferred(),
+            that = this,
+            sControlResource,
+            oControlInstance,
+            controlType = oParameters.controlType,
+            oControlProperties = oParameters.oControlProperties;
+
+        // If a control instance is already created - get it by its id
+        if (oControlProperties && oControlProperties.id && sap.ui.getCore().byId(oControlProperties.id)) {
+        	oControlInstance = sap.ui.getCore().byId(oControlProperties.id);
+        	if (oControlInstance) {
+                //In case a footer was created before, we remove it first before setting a new one
+                if (this.lastFooterId) {
+                    this.removeFooter();
+                }
+                //This parameter holds the id of a footer that was created by the setFooterControl API
+                this.lastFooterId = oInnerControl.getId();
+                this.shellCtrl.setFooter(oControlInstance);
+
+                oDeferred.resolve(oControlInstance);
+        	}
+        }
+
+        if (controlType) {
+        	sControlResource = controlType.replace(/\./g, "/");
+            sap.ui.require([sControlResource],
+                function (oControlObject) {
+                    oControlInstance = new oControlObject(oControlProperties);
+                    //In case a footer was created before, we remove it first before setting a new one
+                    if (that.lastFooterId) {
+                    	that.removeFooter();
+                    }
+
+                    // In order to manage the new created footer, we add it to the shell managed objects
+                    that.oShellModel.addElementToManagedQueue(oControlInstance);
+
+                    //This parameter holds the id of a footer that was created by the setFooterControl API
+                    that.lastFooterId = oControlInstance.getId();
+                    that.shellCtrl.setFooter(oControlInstance);
+                    oDeferred.resolve(oControlInstance);
+                });
+        } else {
+            jQuery.sap.log.warning("You must specify control type in order to create it");
+        }
+        return oDeferred.promise();
+    };
+
+    /**
+     * Creates and displays an SAPUI5 control as the footer of the Fiori launchpad shell.<br>
+     * The footer will be displayed in all states. <br>
+     * Previously created footer will be removed. <br>
+     *
+     * <b>For example, using the sap.m.Bar control:</b>
+     * <pre>
+     * var oRenderer = sap.ushell.Container.getRenderer("fiori2");
+     * oRenderer.setFooterControl("sap.m.Bar", {id: "testBar", contentLeft: [new sap.m.Button({text: "Test Footer Button",
+     *      press: function () {
+     *      sap.m.MessageToast.show("Pressed");
+     *      }
+     *  })
+     * ]});
+     * </pre>
+     *
+     * This function is marked for deprecation as of version 1.48.<br>
+     * It will continue to work as expected as long as one of the following conditions apply:<br>
+     * 1. The control instance is already created and its ID is included in the input parameter oControlProperties<br>
+     * 2. The control type resource is already loaded<br>
+     * 3. Synchronous XHR requests are supported by the browser<br>
+     *
+     * @param {string} controlType
+     *   The (class) name of the control type to create.<br>
+     *   For example: <code>"sap.m.Bar"</code><br>
+     *
+     * @param {object} oControlProperties
+     *   The properties that will be passed to the created control.<br>
+     *   For example: <code>{id: "testBar"}</code><br>
+     *
+     * @returns {object} The created control
+     *
+     * @since 1.42
+     *
+     * @deprecated since version 1.48 (as a result of XMLHttpRequest spec prohibiting the sending of synchronous requests).
+     * Use <code>setShellFooter<code> instead
+     *
+     * @public
+     */
+    Renderer.prototype.setFooterControl = function (controlType, oControlProperties) {
+        var sControlResource = controlType.replace(/\./g, "/"),
+            // Try to require the control in case it is already loaded
+        	oControlObject = sap.ui.require(sControlResource),
+        	oControlInstance,
+        	fnCreate,
+        	bResourceLoadedAsObject = false;
+
+        // Verify whether the control type is already loaded
+        if (oControlObject) {
+            bResourceLoadedAsObject = true;
+        } else {
+     	    // Load the control type synchronously.
+            // Verify (again) that controlType was not loaded yet.
+            // Use-case: if it was loaded using sap.ui.require, but the control itself is not a module,
+        	// hence, sap.ui.require(sControlResource) that was called before returned "undefined" although the actual resource is already loaded
+            if (!jQuery.sap.getObject(controlType)) {
+                jQuery.sap.require(controlType);
+            }
+        }
+
+     	fnCreate = function (oControlProperties) {
+            if (controlType) {
+    			if (bResourceLoadedAsObject) {
+    				return new oControlObject(oControlProperties);
+    			} else {
+    				var oControlPrototype = jQuery.sap.getObject(controlType);
+                    return new oControlPrototype(oControlProperties);
+    			}
+            } else {
+              jQuery.sap.log.warning("You must specify control type in order to create it");
+            }
+        }
+
+        oControlInstance = this.createItem(oControlProperties, undefined, undefined, fnCreate);
+        //In case a footer was created before, we remove it first before setting a new one
+        if (this.lastFooterId) {
+            this.removeFooter();
+        }
+        //This parameter holds the id of a footer that was created by s previous call to setFooterControl
+        this.lastFooterId = oControlInstance.getId();
+        this.shellCtrl.setFooter(oControlInstance);
+        return oControlInstance;
     };
 
 /*--------------------------Hide ----------------------------------*/
@@ -587,11 +1023,11 @@
      * @public
      */
 
-    sap.ushell.renderers.fiori2.Renderer.prototype.hideHeaderItem = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.hideHeaderItem = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeHeaderItem([aIds], bCurrentState, aStates);
+            this.oShellModel.removeHeaderItem([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeHeaderItem(aIds, bCurrentState, aStates);
+            this.oShellModel.removeHeaderItem(aIds, bCurrentState, aStates);
         }
     };
 
@@ -617,11 +1053,11 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.removeToolAreaItem = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.removeToolAreaItem = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeToolAreaItem([aIds], bCurrentState, aStates);
+            this.oShellModel.removeToolAreaItem([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeToolAreaItem(aIds, bCurrentState, aStates);
+            this.oShellModel.removeToolAreaItem(aIds, bCurrentState, aStates);
         }
     };
 
@@ -646,44 +1082,79 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.removeRightFloatingContainerItem = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.removeRightFloatingContainerItem = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeRightFloatingContainerItem([aIds], bCurrentState, aStates);
+            this.oShellModel.removeRightFloatingContainerItem([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeRightFloatingContainerItem(aIds, bCurrentState, aStates);
+            this.oShellModel.removeRightFloatingContainerItem(aIds, bCurrentState, aStates);
         }
     };
 
     /**
-     * Hide the given Action Button from Fiori Launchpad, in the given launchpad states.
-     * The removed button will not be destroyed.<br><br>
-     * This API is meant to be used for implementing custom elements in the SAP Fiori launchpad. We do not recommend using it on a standard launchpad element, as this may interfere with the standard launchpad functionality.
+     * Hides an action button from the options bar of the Me Area in the SAP Fiori launchpad, in the given launchpad states (LaunchpadState). The removed button will not be destroyed.<br><br>
+     * This API is meant to be used for custom elements in the SAP Fiori launchpad. We do not recommend using it on standard launchpad elements, as this may interfere with the standard launchpad functionality.
      *
      * @param {String[]} aIds
-     *   the Ids of the Action Button to remove.
+     *   IDs of the button controls that should hidden.
      *
      * @param {boolean} bCurrentState
-     *   if true, remove the current control only from the current rendered shell state.
+     *   If true, removes the current control only from the current rendered shell state.
      *
      * @param {String[]} aStates
-     *   list of the sap.ushell.renderers.fiori2.Renderer.LaunchpadState in which to remove the control.(Only valid if bCurrentState is set to false)
+     *   A list of the launchpad states in which to hide the control. Valid only if bCurrentState is set to false.
      *
-     *  @see LaunchpadState.
+     *  @see sap.ushell.renderers.fiori2.renderer.LaunchpadState.
      *
-     *  If no launchpad state is provided the content is removed in all states.
+     *  If no launchpad state is provided, the content is hidden in all states.
      *
      * @since 1.30
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.hideActionButton = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.hideActionButton = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeActionButton([aIds], bCurrentState, aStates);
+            this.oShellModel.removeActionButton([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeActionButton(aIds, bCurrentState, aStates);
+            this.oShellModel.removeActionButton(aIds, bCurrentState, aStates);
         }
+       this.toggleOverFlowActions();
     };
-
+        /**
+         * remove the over flow actions container space in case there are no action buttons in it due to their moving from me area to shell header
+         * @private
+         */
+        Renderer.prototype.toggleOverFlowActions = function(){
+            jQuery.sap.measure.start("FLP:Shell.controller.toggleMeAreaView", "show or hide actionbox if no actions in me area","FLP");
+            var meArea = sap.ui.getCore().byId('meArea');
+            var BreakException = {};
+            try{
+                if(meArea){
+                    if(meArea.actionBox){
+                        if(meArea.actionBox._getControlsIds().length === 0){
+                            sap.ui.getCore().byId('overflowActions').setVisible(false);
+                        }
+                        else{
+                            meArea.actionBox._getControlsIds().forEach(function(element) {
+                                var actionItem = sap.ui.getCore().byId(element);
+                                if(actionItem.getVisible()){
+                                    throw BreakException;
+                                }
+                            });
+                            sap.ui.getCore().byId('overflowActions').setVisible(false);
+                        }
+                    }
+                }
+            }
+            catch (e) {
+                if (e !== BreakException){
+                    throw e;
+                }
+                else{
+                    sap.ui.getCore().byId('overflowActions').setVisible(true);
+                }
+            }
+            jQuery.sap.measure.end("FLP:Shell.controller.toggleMeAreaView");
+        };
     /**
      * Hide the given control from Fiori Launchpad, in the given launchpad states.
      * The removed control will not be destroyed.<br><br>
@@ -706,11 +1177,11 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.hideLeftPaneContent = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.hideLeftPaneContent = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeLeftPaneContent([aIds], bCurrentState, aStates);
+            this.oShellModel.removeLeftPaneContent([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeLeftPaneContent(aIds, bCurrentState, aStates);
+            this.oShellModel.removeLeftPaneContent(aIds, bCurrentState, aStates);
         }
     };
 
@@ -736,11 +1207,11 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.hideFloatingActionButton = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.hideFloatingActionButton = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeFloatingActionButton([aIds], bCurrentState, aStates);
+            this.oShellModel.removeFloatingActionButton([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeFloatingActionButton(aIds, bCurrentState, aStates);
+            this.oShellModel.removeFloatingActionButton(aIds, bCurrentState, aStates);
         }
     };
 
@@ -766,11 +1237,11 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.hideHeaderEndItem = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.hideHeaderEndItem = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeHeaderEndItem([aIds], bCurrentState, aStates);
+            this.oShellModel.removeHeaderEndItem([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeHeaderEndItem(aIds, bCurrentState, aStates);
+            this.oShellModel.removeHeaderEndItem(aIds, bCurrentState, aStates);
         }
     };
     /**
@@ -795,11 +1266,11 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.hideSubHeader = function (aIds, bCurrentState, aStates) {
+    Renderer.prototype.hideSubHeader = function (aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeSubHeader([aIds], bCurrentState, aStates);
+            this.oShellModel.removeSubHeader([aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeSubHeader(aIds, bCurrentState, aStates);
+            this.oShellModel.removeSubHeader(aIds, bCurrentState, aStates);
         }
     };
 
@@ -807,13 +1278,20 @@
      * If exists, this method will remove the footer from the Fiori Launchpad.<br><br>
      * This API is meant to be used for implementing custom elements in the SAP Fiori launchpad. We do not recommend using it on a standard launchpad element, as this may interfere with the standard launchpad functionality.
      *
-     *
      * @since 1.30
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.removeFooter = function () {
+    Renderer.prototype.removeFooter = function () {
         this.shellCtrl.removeFooter();
+        //If the footer was created by the renderer (setFooterControl API) then we will destroy it after it removed
+        if (this.lastFooterId) {
+            var oFooter = sap.ui.getCore().byId(this.lastFooterId);
+            if (oFooter){
+                oFooter.destroy();
+            }
+            this.lastFooterId = undefined;
+        }
     };
 
     /**
@@ -824,11 +1302,95 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.getCurrentViewportState = function () {
+    Renderer.prototype.getCurrentViewportState = function () {
         return this.shellCtrl.getCurrentViewportState();
     };
 
     /*------------------------------------------------ Adding controls functionality ------------------------------------------*/
+
+    /**
+     * Creates and displays a sub header control in Fiori launchpad, in the given launchpad states.<br>
+     * The new control is displayed in FLP UI according to the given display parameters.<br>
+     * If a sub header already exists, the new created one will replace the existing one.<br><br>
+     * <b>Example:</b>
+     * <pre>
+     * var oRenderer = sap.ushell.Container.getRenderer("fiori2"),
+     *     oAddSubHeaderProperties = {
+     *         controlType : "sap.m.Bar",
+     *         oControlProperties : {
+     *             id: "testBar",
+     *             contentLeft: [new sap.m.Button({
+     *                 text: "Test SubHeader Button",
+     *                 press: function () {
+     *                     sap.m.MessageToast.show("Pressed");
+     *                 }
+     *             })
+     *         },
+     *         true,
+     *         true
+     *     };
+     *
+     * oRenderer.addShellSubHeader(oAddSubHeaderProperties);
+     * </pre>
+     *
+     * @param {object} oParameters<br>
+     *  Contains the required parameters for creating and showing the new control object:<br>
+     *  Properties:<br>
+     *   - {string} controlType<br>
+     *       The (class) name of the control type to create.<br>
+     *   - {object} oControlProperties<br>
+     *       The properties that will be passed to the created control.<br>
+     *   - {boolean} bIsVisible<br>
+     *       Specify whether to display the control.<br>
+     *   - {boolean} bCurrentState<br>
+     *       If true, add the current control only to the current rendered shell state.<br>
+     *     Once the user navigates to another app or back to the Home page, this control will be removed.<br>
+     *   - {String[]} aStates<br>
+     *       (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.Renderer.LaunchpadState in which to add the control.<br>
+     *
+     * @returns {object} jQuery.deferred.promise object that when resolved, returns the newly created control
+     *
+     * @since 1.48
+     *
+     * @public
+     */
+    Renderer.prototype.addShellSubHeader = function (oParameters) {
+        var oDeferred = new jQuery.Deferred(),
+            that = this,
+            sControlResource,
+            oControlInstance,
+            controlType = oParameters.controlType,
+            oControlProperties = oParameters.oControlProperties,
+            bIsVisible = oParameters.bIsVisible,
+            bCurrentState = oParameters.bCurrentState,
+            aStates = oParameters.aStates;
+
+        // If a control instance is already created - get it by its id
+        if (oControlProperties && oControlProperties.id && sap.ui.getCore().byId(oControlProperties.id)) {
+        	oControlInstance = sap.ui.getCore().byId(oControlProperties.id);
+        	if (oControlInstance) {
+                if (bIsVisible) {
+                    this.showSubHeader(oControlInstance.getId(), bCurrentState, aStates);
+                }
+                oDeferred.resolve(oControlInstance);
+        	}
+        }
+        if (controlType) {
+    	    sControlResource = controlType.replace(/\./g, "/");
+            sap.ui.require([sControlResource],
+                function (oControlObject) {
+                    oControlInstance = new oControlObject(oControlProperties);
+                    if (bIsVisible) {
+                       that.showSubHeader(oControlInstance.getId(), bCurrentState, aStates);
+                       that.oShellModel.addElementToManagedQueue(oControlInstance);
+                    }
+                    oDeferred.resolve(oControlInstance);
+            });
+        } else {
+            jQuery.sap.log.warning("You must specify control type in order to create it");
+        }
+        return oDeferred.promise();
+    };
 
     /**
      * Creates and displays a sub header control in Fiori launchpad, in the given launchpad states.<br>
@@ -844,6 +1406,12 @@
      *  })
      * ]}, true, true);
      * </pre>
+     *
+     * This function is marked for deprecation as of version 1.48.<br>
+     * It will continue to work as expected as long as one of the following conditions apply:<br>
+     * 1. The control instance is already created and its ID is included in the input parameter oControlProperties<br>
+     * 2. The control type resource is already loaded<br>
+     * 3. Synchronous XHR requests are supported by the browser<br>
      *
      * @param {string} controlType
      *   The (class) name of the control type to create.<br>
@@ -873,33 +1441,169 @@
      *
      * @since 1.30
      *
+     * @deprecated since version 1.48 (as a result of XMLHttpRequest spec prohibiting the sending of synchronous requests).
+     * Use <code>addShellSubHeader<code> instead
+     *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addSubHeader = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
-        var fnCreate = function (oControlProperties) {
-                var ViewPrototype;
-                if (controlType) {
-                    jQuery.sap.require(controlType);
-                    ViewPrototype = jQuery.sap.getObject(controlType);
-                } else {
-                    jQuery.sap.log.warning("You must specify control type in order to create it");
-                }
-                return new ViewPrototype(oControlProperties);
-            },
-            oItem;
+    Renderer.prototype.addSubHeader = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
+        var sControlResource = controlType.replace(/\./g, "/"),
+            // Try to require the control in case it is already loaded
+        	oControlObject = sap.ui.require(sControlResource),
+        	oControlInstance,
+        	fnCreate,
+        	bResourceLoadedAsObject = false;
 
-        oItem = this.createItem(oControlProperties, bCurrentState, aStates, fnCreate);
-        if (bIsVisible) {
-            this.showSubHeader(oItem.getId(), bCurrentState, aStates);
+        // Verify whether the control type is already loaded
+        if (oControlObject) {
+        	bResourceLoadedAsObject = true;
+        } else {
+    	    // Load the control type synchroniously.
+            // Verify (again) that controlType wass not loaded yet.
+            // Use-case: if it was loaded using sap.ui.require, but the control itself is not a module,
+        	// hence, sap.ui.require(sControlResource) that was called before returned "undefined" although the actual resource is already loaded
+            if (!jQuery.sap.getObject(controlType)) {
+                jQuery.sap.require(controlType);
+            }
         }
-        return oItem;
+
+        fnCreate = function (oControlProperties) {
+            if (controlType) {
+                if (bResourceLoadedAsObject) {
+			        return new oControlObject(oControlProperties);
+		        } else {
+			        var oControlPrototype = jQuery.sap.getObject(controlType);
+                    return new oControlPrototype(oControlProperties);
+			    }
+            } else {
+                jQuery.sap.log.warning("You must specify control type in order to create it");
+            }
+        };
+
+        oControlInstance = this.createItem(oControlProperties, bCurrentState, aStates, fnCreate);
+        if (bIsVisible) {
+            this.showSubHeader(oControlInstance.getId(), bCurrentState, aStates);
+        }
+        return oControlInstance;
     };
 
     /**
      * Creates an Action Button in Fiori launchpad, in the given launchpad states. </br>
      * The button will be displayed in the user actions menu, that is opened from the user button in the shell header.</br>
      *  <b>Example:</b>
+     * <pre>
+     * var oRenderer = sap.ushell.Container.getRenderer("fiori2"),
+     *     oAddActionButtonProperties = {
+     *         controlType : "sap.m.Bar",
+     *         oControlProperties : {
+     *             id: "testBar",
+     *             contentLeft: [new sap.m.Button({
+     *                 text: "Test SubHeader Button",
+     *                 press: function () {
+     *                     sap.m.MessageToast.show("Pressed");
+     *                 }
+     *             })
+     *         },
+     *         true,
+     *         true
+     *     };
+     *
+     * oRenderer.addUserAction(oAddSubHeaderProperties);
+     * </pre>
+     *
+     * @param {object} oParameters<br>
+     *  Contains the required parameters for creating and showing the new control object:<br>
+     *  Properties:<br>
+     *   - {string} controlType<br>
+     *       The (class) name of the control type to create.<br>
+     *   - {object} oControlProperties<br>
+     *       The properties that will be passed to the created control.<br>
+     *   - {boolean} bIsVisible<br>
+     *       Specify whether to display the control.<br>
+     *   - {boolean} bCurrentState<br>
+     *       If true, add the current control only to the current rendered shell state.<br>
+     *       Once the user navigates to another app or back to the Home page, this control will be removed.<br>
+     *   - {String[]} aStates<br>
+     *       (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.Renderer.LaunchpadState in which to add the control.<br>
+     *
+     *  @see LaunchpadState.
+     *
+     *  If no launchpad state is provided the content is added in all states.
+     *
+     * @returns {object} jQuery.deferred.promise object that when resolved, returns the newly created control
+     *
+     * @since 1.48
+     *
+     * @public
+     */
+    Renderer.prototype.addUserAction = function (oParameters) {
+        var oDeferred = new jQuery.Deferred(),
+            that = this,
+            oModelToUpdate = this.oShellModel.getModelToUpdate(),
+            sControlResource,
+            oControlInstance,
+            controlType = oParameters.controlType,
+            oControlProperties = oParameters.oControlProperties,
+            bIsVisible = oParameters.bIsVisible,
+            bCurrentState = oParameters.bCurrentState,
+            aStates = oParameters.aStates,
+            bIsFirst = oParameters.bIsFirst || true,
+            sNoControlTypeErrorMessage;
+
+        // If a control instance is already created - get it by its id
+        if (oControlProperties && oControlProperties.id && sap.ui.getCore().byId(oControlProperties.id)) {
+    	    oControlInstance = sap.ui.getCore().byId(oControlProperties.id);
+            if (oControlInstance) {
+                oDeferred.resolve(oControlInstance);
+            }
+        }
+
+        if (controlType) {
+            if (controlType === "sap.m.Button") {
+            	controlType = "sap.ushell.ui.launchpad.ActionItem";
+            }
+            sControlResource = controlType.replace(/\./g, "/");
+            sap.ui.require([sControlResource],
+                function (oControlObject) {
+            		//change model
+            		var oOrigShellModel = that.oShellModel.getModelToUpdate();
+            		that.oShellModel.setModelToUpdate(oModelToUpdate, true);
+                    var btnId;
+                    if(oControlProperties){
+                        //fallback for qunit
+                        if(oControlProperties.id){
+                            btnId = oControlProperties.id;
+                        }
+                    }
+                    oControlInstance = sap.ui.getCore().byId(btnId) || new oControlObject(oControlProperties);
+                    if(!oControlInstance.getActionType){
+                        oControlInstance = new oControlObject(oControlProperties);
+                    }
+                    if (bIsVisible) {
+                        that.showActionButton(oControlInstance.getId(), bCurrentState, aStates, bIsFirst);
+                        that.oShellModel.addElementToManagedQueue(oControlInstance);
+                    }
+                    that.oShellModel.setModelToUpdate(oOrigShellModel, false);
+                    oDeferred.resolve(oControlInstance);
+                });
+        } else {
+        	sNoControlTypeErrorMessage = "You must specify control type in order to create it";
+            jQuery.sap.log.warning(sNoControlTypeErrorMessage);
+            oDeferred.reject(sNoControlTypeErrorMessage);
+        }
+        return oDeferred.promise();
+    };
+
+    /**
+     * Creates an action button in the options bar of the Me Area in the SAP Fiori launchpad, in the given launchpad states (LaunchpadState). </br>
+     *  <b>Example:</b>
      *   <pre> sap.ushell.Container.getRenderer("fiori2").addActionButton("sap.m.Button", {id: "testBtn2", text: "test button"}, true, true);</pre>
+     *
+     * This function is marked for deprecation as of version 1.48.<br>
+     * It will continue to work as expected as long as one of the following conditions apply:<br>
+     * 1. The control instance is already created and its ID is included in the input parameter oControlProperties<br>
+     * 2. The control type resource is already loaded<br>
+     * 3. Synchronous XHR requests are supported by the browser<br>
      *
      * @param {string} controlType
      *   The (class) name of the control type to create.
@@ -908,43 +1612,75 @@
      *   The properties that will be passed to the created control.
      *
      * @param {boolean} bIsVisible
-     *   Specify whether to display the control
+     *  Specify whether to display the control. If true, the control is displayed (calls the showActionButton method)
+     *  according to the bCurrentState and aStates parameters. If false, the control is created but not displayed (you can use showActionButton to display the control when needed).
      *
      * @param {boolean} bCurrentState
      *   If true, add the current control only to the current rendered shell state.
-     *   Once the user navigates to another app or back to the Home page, this control will be removed.
+     *   Once the user navigates to another app or back to the home page, this control will be removed.
      *
      * @param {String[]} aStates
-     *   (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.Renderer.LaunchpadState in which to add the control.
+     *   List of the launchpad states (sap.ushell.renderers.fiori2.Renderer.LaunchpadState) in which to add the control. Valid only if bCurrentState is set to false.
      *
-     *  @see LaunchpadState.
-     *
-     *  If no launchpad state is provided the content is added in all states.
+     *  @see sap.ushell.renderers.fiori2.renderer.LaunchpadState.
+     *    If no launchpad state is provided, the content is added in all states.
      *
      * @returns {object} oItem - the created control
+     *
      * @since 1.30
+     *
+     * @deprecated since version 1.48 (as a result of XMLHttpRequest spec prohibiting the sending of synchronous requests).
+     * Use <code>addUserAction<code> instead
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addActionButton = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
-        var fnCreate = function (oControlProperties) {
-                var ViewPrototype;
-                if (controlType) {
-                    jQuery.sap.require(controlType);
-                    ViewPrototype = jQuery.sap.getObject(controlType);
-                } else {
-                    ViewPrototype = jQuery.sap.getObject(sap.ushell.ui.launchpad.ActionItem);
-                }
-                return new ViewPrototype(oControlProperties);
-            },
-            oItem;
+    Renderer.prototype.addActionButton = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates, bIsFirst) {
+        var sControlResource,
+    	    oControlObject,
+    	    oControlInstance,
+    	    fnCreate,
+    	    bResourceLoadedAsObject = false;
 
-        oItem = this.createItem(oControlProperties, bCurrentState, aStates, fnCreate);
-        if (bIsVisible) {
-            this.showActionButton(oItem.getId(), bCurrentState, aStates);
+        if (controlType === "sap.m.Button") {
+        	controlType = "sap.ushell.ui.launchpad.ActionItem";
         }
 
-        return oItem;
+        sControlResource = controlType.replace(/\./g, "/");
+        // Try to require the control in case it is already loaded
+        oControlObject = sap.ui.require(sControlResource);
+
+        // Verify whether the control type is already loaded
+        if (oControlObject) {
+        	bResourceLoadedAsObject = true;
+        } else {
+    	    // Load the control type synchroniously.
+            // Verify (again) that controlType wass not loaded yet.
+            // Use-case: if it was loaded using sap.ui.require, but the control itself is not a module,
+        	// hence, sap.ui.require(sControlResource) that was called before returned "undefined" although the actual resource is already loaded
+            if (!jQuery.sap.getObject(controlType)) {
+                jQuery.sap.require(controlType);
+            }
+        }
+
+    	fnCreate = function (oControlProperties) {
+            if (controlType) {
+    			if (bResourceLoadedAsObject) {
+    				return new oControlObject(oControlProperties);
+    			} else {
+    				var oControlPrototype = jQuery.sap.getObject(controlType);
+                    return new oControlPrototype(oControlProperties);
+    			}
+            } else {
+                jQuery.sap.log.warning("You must specify control type in order to create it");
+            }
+        };
+
+    	oControlInstance = this.createItem(oControlProperties, bCurrentState, aStates, fnCreate);
+        if (bIsVisible) {
+            this.showActionButton(oControlInstance.getId(), bCurrentState, aStates, bIsFirst);
+        }
+
+        return oControlInstance;
     };
 
     /**
@@ -953,6 +1689,83 @@
      *   <b>Example:</b>
      *   <pre> sap.ushell.Container.getRenderer("fiori2").addFloatingActionButton("sap.ushell.ui.shell.ShellFloatingAction", {id: "testBtn"}, true, true);</pre>
      *
+     * @param {object} oParameters<br>
+     *  Contains the required parameters for creating and showing the new control object:<br>
+     *  Properties:<br>
+     *   - {string} controlType<br>
+     *       The (class) name of the control type to create.<br>
+     *   - {object} oControlProperties<br>
+     *       The properties that will be passed to the created control.<br>
+     *   - {boolean} bIsVisible<br>
+     *       Specify whether to display the control.<br>
+     *   - {boolean} bCurrentState<br>
+     *       If true, add the current control only to the current rendered shell state.<br>
+     *       Once the user navigates to another app or back to the Home page, this control will be removed.<br>
+     *   - {String[]} aStates<br>
+     *       (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.Renderer.LaunchpadState in which to add the control.<br>
+     *
+     *  @see LaunchpadState.
+     *
+     *  If no launchpad state is provided the content is added in all states.
+     *
+     * @returns {object} jQuery.deferred.promise object that when resolved, returns the newly created control
+     *
+     * @since 1.48
+     *
+     * @public
+     */
+    Renderer.prototype.addFloatingButton = function (oParameters) {
+        var oDeferred = new jQuery.Deferred(),
+            that = this,
+            sControlResource,
+            oControlInstance,
+            controlType = oParameters.controlType,
+            oControlProperties = oParameters.oControlProperties,
+            bIsVisible = oParameters.bIsVisible,
+            bCurrentState = oParameters.bCurrentState,
+            aStates = oParameters.aStates;
+
+        // If a control instance is already created - get it by its id
+        if (oControlProperties && oControlProperties.id && sap.ui.getCore().byId(oControlProperties.id)) {
+            oControlInstance = sap.ui.getCore().byId(oControlProperties.id);
+            if (oControlInstance) {
+                if (bIsVisible) {
+                    that.oShellModel.addElementToManagedQueue(oControlInstance);
+                    that.showFloatingActionButton(oItem.getId(), bCurrentState, aStates);
+                }
+                oDeferred.resolve(oControlInstance);
+            }
+        }
+
+        if (controlType) {
+            sControlResource = controlType.replace(/\./g, "/");
+        } else {
+            sControlResource = "sap/m/Button";
+        }
+
+        sap.ui.require([sControlResource],
+            function (oControlObject) {
+                oControlInstance = new oControlObject(oControlProperties);
+                if (bIsVisible) {
+                    this.showFloatingActionButton(oItem.getId(), bCurrentState, aStates);
+                }
+                oDeferred.resolve(oControlInstance);
+        });
+        return oDeferred.promise();
+    };
+
+    /**
+     * Creates a FloatingActionButton in Fiori launchpad, in the given launchpad states.</br>
+     * The FloatingActionButton is rendered in the bottom right corner of the shell.</br>
+     *   <b>Example:</b>
+     *   <pre> sap.ushell.Container.getRenderer("fiori2").addFloatingActionButton("sap.ushell.ui.shell.ShellFloatingAction", {id: "testBtn"}, true, true);</pre>
+     *
+     * This function is marked for deprecation as of version 1.48.<br>
+     * It will continue to work as expected as long as one of the following conditions apply:<br>
+     * 1. The control instance is already created and its ID is included in the input parameter oControlProperties<br>
+     * 2. The control type resource is already loaded<br>
+     * 3. Synchronous XHR requests are supported by the browser<br>
+     *
      * @param {string} controlType
      *   The (class) name of the control type to create.
      *
@@ -976,33 +1789,151 @@
      * @returns {object} oItem - the created control
      * @since 1.30
      *
+     * @deprecated since version 1.48 (as a result of XMLHttpRequest spec prohibiting the sending of synchronous requests).
+     * Use <code>addFloatingButton<code> instead
+     *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addFloatingActionButton = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
-        var fnCreate = function (oControlProperties) {
-                var ViewPrototype;
-                if (controlType) {
-                    jQuery.sap.require(controlType);
-                    ViewPrototype = jQuery.sap.getObject(controlType);
-                } else {
-                    ViewPrototype = jQuery.sap.getObject(sap.m.Button);
-                }
-                return new ViewPrototype(oControlProperties);
-            },
-            oItem;
+    Renderer.prototype.addFloatingActionButton = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
+        var sControlResource,
+	        oControlObject,
+	        oControlInstance,
+	        fnCreate,
+	        bResourceLoadedAsObject = false;
 
-        oItem = this.createItem(oControlProperties, bCurrentState, aStates, fnCreate);
-        if (bIsVisible) {
-            this.showFloatingActionButton(oItem.getId(), bCurrentState, aStates);
+        if (!controlType) {
+        	controlType = "sap.m.Button";
         }
 
-        return oItem;
+        sControlResource = controlType.replace(/\./g, "/");
+        // Try to require the control in case it is already loaded
+        oControlObject = sap.ui.require(sControlResource);
+
+        // Verify whether the control type is already loaded
+        if (oControlObject) {
+        	bResourceLoadedAsObject = true;
+        } else {
+    	    // Load the control type synchroniously.
+            // Verify (again) that controlType wass not loaded yet.
+            // Use-case: if it was loaded using sap.ui.require, but the control itself is not a module,
+        	// hence, sap.ui.require(sControlResource) that was called before returned "undefined" although the actual resource is already loaded
+            if (!jQuery.sap.getObject(controlType)) {
+                jQuery.sap.require(controlType);
+            }
+        }
+
+    	fnCreate = function (oControlProperties) {
+            if (controlType) {
+                if (bResourceLoadedAsObject) {
+			        return new oControlObject(oControlProperties);
+		        } else {
+			        var oControlPrototype = jQuery.sap.getObject(controlType);
+                    return new oControlPrototype(oControlProperties);
+			    }
+            } else {
+                jQuery.sap.log.warning("You must specify control type in order to create it");
+            }
+        };
+
+    	oControlInstance = this.createItem(oControlProperties, bCurrentState, aStates, fnCreate);
+        if (bIsVisible) {
+            this.showFloatingActionButton(oControlInstance.getId(), bCurrentState, aStates);
+        }
+
+        return oControlInstance;
+    };
+
+    /**
+     * Creates the Left Pane content in Fiori launchpad, in the given launchpad states.</br>
+     *   <b>Example:</b>
+     *
+     *  <pre>
+     * var oRenderer = sap.ushell.Container.getRenderer("fiori2"),
+     *     oLeftPaneContentProperties = {
+     *         controlType : "sap.m.Button",
+     *         oControlProperties : {
+     *             id: "testBtn",
+     *             text: "Test Button"
+     *         },
+     *         true,
+     *         true
+     *     };
+     *
+     * oRenderer.addSidePaneContent(oLeftPaneContentProperties);
+     *  </pre>
+     *
+     * @param {object} oParameters<br>
+     *  Contains the parameters that are required for creating and showing the new control object:<br>
+     *  Properties:<br>
+     *   - {string} controlType<br>
+     *       The (class) name of the control type to create.<br>
+     *   - {object} oControlProperties<br>
+     *       The properties that will be passed to the created control.<br>
+     *   - {boolean} bIsVisible<br>
+     *       Specify whether to display the control.<br>
+     *   - {boolean} bCurrentState<br>
+     *       If true, add the current control only to the current rendered shell state.<br>
+     *       Once the user navigates to another app or back to the Home page, this control will be removed.<br>
+     *   - {String[]} aStates<br>
+     *       (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.Renderer.LaunchpadState in which to add the control.<br>
+     *
+     *  @see LaunchpadState.
+     *
+     *  If no launchpad state is provided the content is added in all states.
+     *
+     * @returns {object} jQuery.deferred.promise object that when resolved, returns the newly created control
+     *
+     * @since 1.48
+     *
+     * @public
+     */
+    Renderer.prototype.addSidePaneContent = function (oParameters) {
+    	var oDeferred = new jQuery.Deferred(),
+            that = this,
+            sControlResource,
+            oControlInstance,
+            bResourceLoadedAsObject = false,
+            controlType = oParameters.controlType,
+            oControlProperties = oParameters.oControlProperties,
+            bIsVisible = oParameters.bIsVisible,
+            bCurrentState = oParameters.bCurrentState,
+            aStates = oParameters.aStates;
+
+        // If a control instance is already created - get it by its id
+        if (oControlProperties && oControlProperties.id && sap.ui.getCore().byId(oControlProperties.id)) {
+    	    oControlInstance = sap.ui.getCore().byId(oControlProperties.id);
+    	    if (oControlInstance) {
+                oDeferred.resolve(oControlInstance);
+    	    }
+        }
+
+        if (controlType) {
+            sControlResource = controlType.replace(/\./g, "/");
+            sap.ui.require([sControlResource],
+                function (oControlObject) {
+                    oControlInstance = new oControlObject(oControlProperties);
+                    if (bIsVisible) {
+                        that.oShellModel.addElementToManagedQueue(oControlInstance);
+                        that.showLeftPaneContent(oItem.getId(), bCurrentState, aStates);
+                    }
+                    oDeferred.resolve(oControlInstance);
+            });
+        } else {
+            jQuery.sap.log.warning("You must specify control type in order to create it");
+        }
+        return oDeferred.promise();
     };
 
     /**
      * Creates the Left Pane content in Fiori launchpad, in the given launchpad states.</br>
      *   <b>Example:</b>
      *   <pre> sap.ushell.Container.getRenderer("fiori2").addLeftPaneContent("sap.m.Button", {id: "testBtn", text: "Test Button"}, true, true);</pre>
+     *
+     * This function is marked for deprecation as of version 1.48.<br>
+     * It will continue to work as expected as long as one of the following conditions apply:<br>
+     * 1. The control instance is already created and its ID is included in the input parameter oControlProperties<br>
+     * 2. The control type resource is already loaded<br>
+     * 3. Synchronous XHR requests are supported by the browser<br>
      *
      * @param {string} controlType
      *   The (class) name of the control type to create.
@@ -1020,35 +1951,60 @@
      * @param {String[]} aStates
      *   (only valid if bCurrentState is set to false) - list of the sap.ushell.renderers.fiori2.Renderer.LaunchpadState in which to add the control.
      *
-     *  @see LaunchpadState.
+     * @see LaunchpadState.
      *
      *  If no launchpad state is provided the content is added in all states.
      *
-     *@returns {object} oItem - the created control
+     * @returns {object} oItem - the created control
+     *
      * @since 1.30
+     *
+     * @deprecated since version 1.48 (as a result of XMLHttpRequest spec prohibiting the sending of synchronous requests).
+     * Use <code>addSidePaneContent<code> instead
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addLeftPaneContent = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
-        var fnCreate = function (oControlProperties) {
-                var ViewPrototype;
-                if (controlType) {
-                    jQuery.sap.require(controlType);
-                    ViewPrototype = jQuery.sap.getObject(controlType);
-                } else {
-                    jQuery.sap.log.warning("You must specify control type in order to create it");
-                }
+    Renderer.prototype.addLeftPaneContent = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
+    	var that = this,
+            sControlResource = controlType.replace(/\./g, "/"),
+            // Try to require the control in case it is already loaded
+        	oControlObject = sap.ui.require(sControlResource),
+            oControlInstance,
+            fnCreate,
+            bResourceLoadedAsObject;
 
-                return new ViewPrototype(oControlProperties);
-            },
-            oItem;
-
-        oItem = this.createItem(oControlProperties, bCurrentState, aStates, fnCreate);
-        if (bIsVisible) {
-            this.showLeftPaneContent(oItem.getId(), bCurrentState, aStates);
+        // Verify whether the control type is already loaded
+        if (oControlObject) {
+        	bResourceLoadedAsObject = true;
+        } else {
+    	    // Load the control type synchroniously.
+            // Verify (again) that controlType wass not loaded yet.
+            // Use-case: if it was loaded using sap.ui.require, but the control itself is not a module,
+        	// hence, sap.ui.require(sControlResource) that was called before returned "undefined" although the actual resource is already loaded
+            if (!jQuery.sap.getObject(controlType)) {
+                jQuery.sap.require(controlType);
+            }
         }
 
-        return oItem;
+        fnCreate = function (oControlProperties) {
+            if (controlType) {
+                if (bResourceLoadedAsObject) {
+			        return new oControlObject(oControlProperties);
+		        } else {
+			        var oControlPrototype = jQuery.sap.getObject(controlType);
+                    return new oControlPrototype(oControlProperties);
+			    }
+            } else {
+                jQuery.sap.log.warning("You must specify control type in order to create it");
+            }
+        };
+
+        oControlInstance = this.createItem(oControlProperties, bCurrentState, aStates, fnCreate);
+        if (bIsVisible) {
+            this.showLeftPaneContent(oControlInstance.getId(), bCurrentState, aStates);
+        }
+
+        return oControlInstance;
     };
 
     /**
@@ -1061,9 +2017,11 @@
      * oRenderer.addHeaderItem("sap.ushell.ui.shell.ShellHeadItem", {id: "testBtn"}, true, true);
      * </pre>
      *
-     * @param {string} controlType
+     * @param {string} [controlType]
      *   The (class) name of the control type to create.
      *   For example: <code>"sap.m.Button"</code><br>
+     *   <b>Deprecated</b>: Since version 1.38.
+     *   This property is no longer supported.
      *
      * @param {object} oControlProperties
      *   The properties that will be passed to the created control.
@@ -1091,12 +2049,20 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addHeaderItem = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
+    Renderer.prototype.addHeaderItem = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
+        //in order to support deprecation of the never used argument: 'controlType' , we'll need to check whether it was passed to the function by
+        //checking the typs of the first two arguments
+        if (typeof (arguments[0]) === 'object' && typeof (arguments[1]) === 'boolean') {
+            oControlProperties = arguments[0];
+            bIsVisible = arguments[1];
+            bCurrentState = arguments[2];
+            aStates = arguments[3];
+        } else {
+            jQuery.sap.log.warning("sap.ushell.renderers.fiori2.Renderer: The parameter 'controlType' of the function 'addHeaderItem' is deprecated. Usage will be ignored!");
+        }
         var oProperties = oControlProperties;
         //in case Fiori2 is on we need to set the showSeparator flag to false
-        if (this.shellCtrl.isFiori2()){
-            oProperties.showSeparator = false;
-        }
+        oProperties.showSeparator = false;
         var fnCreate = function (oControlProperties) {
                 return new sap.ushell.ui.shell.ShellHeadItem(oControlProperties);
             },
@@ -1149,7 +2115,7 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addRightFloatingContainerItem = function (oControlProperties, bIsVisible, bCurrentState, aStates) {
+    Renderer.prototype.addRightFloatingContainerItem = function (oControlProperties, bIsVisible, bCurrentState, aStates) {
         var fnCreate = function (oControlProperties) {
                 return new sap.m.NotificationListItem(oControlProperties);
             },
@@ -1205,7 +2171,7 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addToolAreaItem = function (oControlProperties, bIsVisible, bCurrentState, aStates) {
+    Renderer.prototype.addToolAreaItem = function (oControlProperties, bIsVisible, bCurrentState, aStates) {
         var fnCreate = function (oControlProperties) {
                 return new sap.ushell.ui.shell.ToolAreaItem(oControlProperties);
             },
@@ -1249,25 +2215,23 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addHeaderEndItem = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
-        var oProperties = oControlProperties;
-        //in case Fiori2 is on we need to set the showSeparator flag to false
-        if (this.shellCtrl.isFiori2()){
+    Renderer.prototype.addHeaderEndItem = function (controlType, oControlProperties, bIsVisible, bCurrentState, aStates) {
+            var oProperties = oControlProperties;
+            //in case Fiori2 is on we need to set the showSeparator flag to false
             oProperties.showSeparator = false;
-        }
-        var fnCreate = function (oControlProperties) {
-                return new sap.ushell.ui.shell.ShellHeadItem(oControlProperties);
-            },
-            oItem = this.createItem(oProperties, bCurrentState, aStates, fnCreate);
+            var fnCreate = function (oControlProperties) {
+                    return new sap.ushell.ui.shell.ShellHeadItem(oControlProperties);
+                },
+                oItem = this.createItem(oProperties, bCurrentState, aStates, fnCreate);
 
-        if (bIsVisible) {
-            this.showHeaderEndItem(oItem.getId(), bCurrentState, aStates);
-        }
+            if (bIsVisible) {
+                this.showHeaderEndItem(oItem.getId(), bCurrentState, aStates);
+            }
 
-        return oItem;
+            return oItem;
     };
 /*-------------------general---------------------------*/
-    sap.ushell.renderers.fiori2.Renderer.prototype.getModelConfiguration = function () {
+    Renderer.prototype.getModelConfiguration = function () {
         return this.shellCtrl.getModelConfiguration();
     };
 
@@ -1285,7 +2249,7 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addEndUserFeedbackCustomUI = function (oCustomUIContent, bShowCustomUIContent) {
+    Renderer.prototype.addEndUserFeedbackCustomUI = function (oCustomUIContent, bShowCustomUIContent) {
         this.shellCtrl.addEndUserFeedbackCustomUI(oCustomUIContent, bShowCustomUIContent);
     };
 
@@ -1308,7 +2272,7 @@
      *       return jQuery.Deferred().resolve();
      *   }
      *   };
-     * oRenderer.addUserPreferencesEntry(oEntry);   
+     * oRenderer.addUserPreferencesEntry(oEntry);
      * </pre>
      *
      * @param {object} entryObject
@@ -1332,7 +2296,7 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.addUserPreferencesEntry = function (entryObject) {
+    Renderer.prototype.addUserPreferencesEntry = function (entryObject) {
         return this.shellCtrl.addUserPreferencesEntry(entryObject);
     };
 
@@ -1346,21 +2310,37 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.setHeaderTitle = function (sTitle, controlType, oControlProperties) {
-        var oInnerControl = null,
-            oLaunchpadStates = sap.ushell.renderers.fiori2.Renderer.prototype.LaunchpadState;
+    Renderer.prototype.setHeaderTitle = function (sTitle, controlType, oControlProperties) {
+        var sControlResource,
+            oControlInstance = null,
+            oControlObject,
+            oLaunchpadStates = Renderer.prototype.LaunchpadState;
 
-        if (controlType) {
-            var fnCreate = function (oControlProperties) {
-                var oControlClass;
-                jQuery.sap.require(controlType);
-                oControlClass = jQuery.sap.getObject(controlType);
-                return new oControlClass(oControlProperties);
-            };
-
-            oInnerControl = this.createItem(oControlProperties, false, [oLaunchpadStates.Home, oLaunchpadStates.App], fnCreate);
+        // If a control instance is already created - get it by its id
+        if (oControlProperties && oControlProperties.id && sap.ui.getCore().byId(oControlProperties.id)) {
+        	oControlInstance = sap.ui.getCore().byId(oControlProperties.id);
+            this.shellCtrl.setHeaderTitle(sTitle, oControlInstance);
         }
-        this.shellCtrl._setHeaderTitle(sTitle, oInnerControl);
+        // If the specific control was not created yet, and a control type was given by the caller
+        else if (controlType) {
+       	     sControlResource = controlType.replace(/\./g, "/");
+        	// Verify whether the control type is already loaded
+        	oControlObject = sap.ui.require(sControlResource);
+
+        	if (oControlObject) {
+        		// Create a control instance
+        		oControlInstance = new oControlObject(oControlProperties);
+                this.shellCtrl.setHeaderTitle(sTitle, oControlInstance);
+        	} else {
+        		// Load the control type asynchroniously, create an instance and set the title
+                sap.ui.require([sControlResource], function (oControlObject) {
+                	oControlInstance = new oControlObject(oControlProperties);
+                    this.shellCtrl.setHeaderTitle(sTitle, oControlInstance);
+                });
+        	}
+        } else {
+            this.shellCtrl.setHeaderTitle(sTitle, oControlInstance);
+        }
     };
 
     /**
@@ -1376,8 +2356,8 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.setLeftPaneVisibility = function (sLaunchpadState, bVisible) {
-        this.shellCtrl.showShellItem("/showPane", sLaunchpadState, bVisible);
+    Renderer.prototype.setLeftPaneVisibility = function (sLaunchpadState, bVisible) {
+        this.oShellModel.setLeftPaneVisibility(bVisible, false, [sLaunchpadState]);
     };
 
     /**
@@ -1391,12 +2371,12 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showToolArea = function (sLaunchpadState, bVisible) {
-        this.shellCtrl.showShellItem("/toolAreaVisible", sLaunchpadState, bVisible);
+    Renderer.prototype.showToolArea = function (sLaunchpadState, bVisible) {
+        this.oShellModel.showShellItem("/toolAreaVisible", sLaunchpadState, bVisible);
     };
 
-    sap.ushell.renderers.fiori2.Renderer.prototype.setHeaderHiding = function (bHiding) {
-        return this.shellCtrl._setHeaderHiding(bHiding);
+    Renderer.prototype.setHeaderHiding = function (bHiding) {
+        return this.oShellModel.setHeaderHiding(bHiding);
     };
 
     /**
@@ -1429,8 +2409,8 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.setFloatingContainerContent = function (oControl, bCurrentState, aStates) {
-        this.shellCtrl._setFloatingContainerContent("floatingContainerContent", [oControl.getId()], bCurrentState, aStates);
+    Renderer.prototype.setFloatingContainerContent = function (oControl, bCurrentState, aStates) {
+        this.shellCtrl.setFloatingContainerContent("floatingContainerContent", [oControl.getId()], bCurrentState, aStates);
     };
 
     /**
@@ -1440,8 +2420,32 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.setFloatingContainerVisibility = function (bVisible) {
-        this.shellCtrl._setFloatingContainerVisibility(bVisible);
+    Renderer.prototype.setFloatingContainerVisibility = function (bVisible) {
+        this.shellCtrl.setFloatingContainerVisibility(bVisible);
+    };
+
+
+        /**
+         * Get the current docking state of the floating container
+         *
+         * @returns {boolean} The state : floating or docked
+         *
+         * @private
+         */
+        Renderer.prototype.getFloatingContainerState = function () {
+            return this.shellCtrl.getFloatingContainerState();
+        };
+
+
+    /**
+     * Get the current visibility state of the floating container
+     *
+     * @returns {boolean} Indicates whether the floating container is visible
+     *
+     * @private
+     */
+    Renderer.prototype.getFloatingContainerVisiblity = function () {
+        return this.shellCtrl.getFloatingContainerVisibility();
     };
 
     /**
@@ -1451,19 +2455,8 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.getFloatingContainerVisiblity = function () {
-        return this.shellCtrl._getFloatingContainerVisibility();
-    };
-
-    /**
-     * Get the current visibility state of the floating container
-     *
-     * @returns {boolean} Indicates whether the floating container is visible
-     *
-     * @private
-     */
-    sap.ushell.renderers.fiori2.Renderer.prototype.getRightFloatingContainerVisibility = function () {
-        return this.shellCtrl._getRightFloatingContainerVisibility();
+    Renderer.prototype.getRightFloatingContainerVisibility = function () {
+        return this.shellCtrl.getRightFloatingContainerVisibility();
     };
 
     /**
@@ -1473,8 +2466,8 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.setFloatingContainerDragSelector = function (sElementToCaptureSelector) {
-        this.shellCtrl._setFloatingContainerDragSelector(sElementToCaptureSelector);
+    Renderer.prototype.setFloatingContainerDragSelector = function (sElementToCaptureSelector) {
+        this.shellCtrl.setFloatingContainerDragSelector(sElementToCaptureSelector);
     };
 
     /**
@@ -1484,8 +2477,8 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.makeEndUserFeedbackAnonymousByDefault = function (bEndUserFeedbackAnonymousByDefault) {
-        this.shellCtrl._makeEndUserFeedbackAnonymousByDefault(bEndUserFeedbackAnonymousByDefault);
+    Renderer.prototype.makeEndUserFeedbackAnonymousByDefault = function (bEndUserFeedbackAnonymousByDefault) {
+        this.shellCtrl.makeEndUserFeedbackAnonymousByDefault(bEndUserFeedbackAnonymousByDefault);
     };
 
     /**
@@ -1495,8 +2488,8 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.showEndUserFeedbackLegalAgreement = function (bShowEndUserFeedbackLegalAgreement) {
-        this.shellCtrl._showEndUserFeedbackLegalAgreement(bShowEndUserFeedbackLegalAgreement);
+    Renderer.prototype.showEndUserFeedbackLegalAgreement = function (bShowEndUserFeedbackLegalAgreement) {
+        this.shellCtrl.showEndUserFeedbackLegalAgreement(bShowEndUserFeedbackLegalAgreement);
     };
 
 /*---------------States------------------------*/
@@ -1510,22 +2503,50 @@
      *
      * @public
      */
-    sap.ushell.renderers.fiori2.Renderer.prototype.LaunchpadState = {
+    Renderer.prototype.LaunchpadState = {
         App: "app",
         Home: "home"
     };
+/*---------------Conditional----------------*/
+    Renderer.prototype.createInspection = function (sAttibute, aCheckPoint, bCurrentState, aStates) {
+        this.oShellModel.createInspection(sAttibute, aCheckPoint, bCurrentState, aStates);
+    };
+
+    Renderer.prototype.createTriggers = function (aTriggers, bCurrentState, aStates) {
+        this.oShellModel.createTriggers(aTriggers, bCurrentState, aStates);
+    };
 
 /*---------------Generic--------------------*/
-    sap.ushell.renderers.fiori2.Renderer.prototype.createItem = function (oControlProperties, bCurrentState, aStates, fnCreateItem) {
+    Renderer.prototype.convertButtonsToActions = function (aIds, bCurrentState, aStates, bIsFirst){
+        var oProperties = {},
+            oButton,
+            that = this;
+        aIds.forEach(function(sId) {
+            oButton = sap.ui.getCore().byId(sId);
+            oProperties.id = oButton.getId();
+            oProperties.text = oButton.getText();
+            oProperties.icon = oButton.getIcon();
+            oProperties.tooltip = oButton.getTooltip();
+            oProperties.enabled = oButton.getEnabled();
+            oProperties.visible = oButton.getVisible();
+            if (oButton.mEventRegistry && oButton.mEventRegistry.press) {
+                oProperties.press = oButton.mEventRegistry.press[0].fFunction;
+            }
+            oButton.destroy();
+            that.addActionButton("sap.ushell.ui.launchpad.ActionItem", oProperties, oProperties.visible, bCurrentState, aStates, bIsFirst);
+        });
+    };
+
+    Renderer.prototype.createItem = function (oControlProperties, bCurrentState, aStates, fnCreateItem) {
         //create the object
         var oItem;
-        if (oControlProperties.id) {
+        if (oControlProperties && oControlProperties.id) {
             oItem = sap.ui.getCore().byId(oControlProperties.id);
         }
         if (!oItem) {
             oItem = fnCreateItem(oControlProperties);
             if (bCurrentState) {
-                this.shellCtrl.addElementToManagedQueue(oItem);
+                this.oShellModel.addElementToManagedQueue(oItem);
             }
         }
 
@@ -1533,28 +2554,28 @@
     };
 
 /*------------Custom State Entry------------------------------*/
-    sap.ushell.renderers.fiori2.Renderer.prototype.addEntryInShellStates = function (sName, entrySuffix, fnAdd, fnRemove, oStateConfiguration) {
-        this.shellCtrl.addEntryInShellStates(sName, entrySuffix, fnAdd, fnRemove, oStateConfiguration);
+    Renderer.prototype.addEntryInShellStates = function (sName, entrySuffix, fnAdd, fnRemove, oStateConfiguration) {
+        this.oShellModel.addEntryInShellStates(sName, entrySuffix, fnAdd, fnRemove, oStateConfiguration);
     };
 
-    sap.ushell.renderers.fiori2.Renderer.prototype.removeCustomItems = function (sStateEntry, aIds, bCurrentState, aStates) {
+    Renderer.prototype.removeCustomItems = function (sStateEntry, aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.removeCustomItems(sStateEntry, [aIds], bCurrentState, aStates);
+            this.oShellModel.removeCustomItems(sStateEntry, [aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.removeCustomItems(sStateEntry, aIds, bCurrentState, aStates);
+            this.oShellModel.removeCustomItems(sStateEntry, aIds, bCurrentState, aStates);
         }
     };
 
-    sap.ushell.renderers.fiori2.Renderer.prototype.addCustomItems = function (sStateEntry, aIds, bCurrentState, aStates) {
+    Renderer.prototype.addCustomItems = function (sStateEntry, aIds, bCurrentState, aStates) {
         if (typeof aIds === "string") {
-            this.shellCtrl.addCustomItems(sStateEntry, [aIds], bCurrentState, aStates);
+            this.oShellModel.addCustomItems(sStateEntry, [aIds], bCurrentState, aStates);
         } else {
-            this.shellCtrl.addCustomItems(sStateEntry, aIds, bCurrentState, aStates);
+            this.oShellModel.addCustomItems(sStateEntry, aIds, bCurrentState, aStates);
         }
     };
 
-    sap.ushell.renderers.fiori2.Renderer.prototype.isFiori2 = function () {
-        return this.shellCtrl.isFiori2();
-    };
 
-}());
+
+	return Renderer;
+
+});

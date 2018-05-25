@@ -10,20 +10,20 @@ sap.ui.define([
 
 	/**
 	 * Constructor for a new ClusterBase.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Abtract base class for Clustering types. This element implements the common part for all specific Cluster elements. It must not be used
 	 *        directly, but is the base for further extension.<br>
 	 *        There are two optional aggregations: <code>vizTemplate</code> and <code>vizVo</code> determining how cluster objects should be
 	 *        visualized. Only the one or the other should be provided.<br>
-	 *        With aggregation <code>vizTemplate</code> you can provide an arbitrary SAPUI5 control for the actual visualization. If you want this control 
-	 *        to display the number of clustered object you need to provide the name of the receiving property of the template via property <code>textProperty</code>. 
-	 *        For interaction with the cluster you can either use the events provided by the visualization template or, if it does not provide appropriate events, 
+	 *        With aggregation <code>vizTemplate</code> you can provide an arbitrary SAPUI5 control for the actual visualization. If you want this control
+	 *        to display the number of clustered object you need to provide the name of the receiving property of the template via property <code>textProperty</code>.
+	 *        For interaction with the cluster you can either use the events provided by the visualization template or, if it does not provide appropriate events,
 	 *        the cluster element events <code>click</code> and <code>contextMenu</code>. The event handler will receive an instance of <code>sap.ui.vbm.ClusterContainer</code>.<br>
-	 *        With aggregation <code>vizVo</code> you provide an instance of <code>sap.ui.vbm.Spot</code> as visualization object. Spots are based on an image. The text 
+	 *        With aggregation <code>vizVo</code> you provide an instance of <code>sap.ui.vbm.Spot</code> as visualization object. Spots are based on an image. The text
 	 *        for the number of clustered objects needs to be placed over the image. The actual color, font, size, and positioning of the text can be influence via property
-	 *        <code>textSettings</code>. For interaction with the cluster you can use the events provided by the spot.   
+	 *        <code>textSettings</code>. For interaction with the cluster you can use the events provided by the spot.
 	 * @extends sap.ui.core.Element
 	 * @constructor
 	 * @public
@@ -43,7 +43,7 @@ sap.ui.define([
 				areaAlwaysVisible: {
 					type: "boolean",
 					group: "Appearance",
-					defaultValue: "false"
+					defaultValue: false
 				},
 
 				/**
@@ -169,7 +169,7 @@ sap.ui.define([
 
 	/**
 	 * Open a Detail Window. This function can only be used with a Spot as Cluster visualization object!
-	 * 
+	 *
 	 * @param {sap.ui.vbm.Spot} oSpotInst Spot instance for which the Detail Window should be opened
 	 * @param {object} oParams Parameter object
 	 * @param {string} oParams.caption Text for Detail Window caption
@@ -192,7 +192,7 @@ sap.ui.define([
 
 	/**
 	 * Open a context menu
-	 * 
+	 *
 	 * @param {string} sType Type of VO
 	 * @param {sap.ui.vbm.ClusterContainer} oContainer VO instance for which the Context Menu should be opened
 	 * @param {sap.ui.unified.Menu} oMenu the context menu to be opened
@@ -211,11 +211,11 @@ sap.ui.define([
 		// do something for initialization...
 		this.mVizObjMap = {};
 		this.mContObjMap = {};
-		var sDefaultFontFamily = Parameters.get("sapUiFontFamily");  
+		var sDefaultFontFamily = Parameters.get("sapUiFontFamily");
 		this.setProperty("textSettings", {
 			textcolor: "#000000",
 			textfont: (sDefaultFontFamily) ? sDefaultFontFamily : "Arial, Helvetica, sans-serif",
-			textfontsize: "10"				
+			textfontsize: "10"
 		}, true);
 	};
 
@@ -231,7 +231,7 @@ sap.ui.define([
 
 	/**
 	 * Set the settings for the text placed on the Spot for number of clustered objects
-	 * 
+	 *
 	 * @param {object} oSettings Settings object
 	 * @param {CSSColor} ?oSettings.textcolor Text color. Default is black
 	 * @param {string} ?oSettings.textfont Text font family. Default take from theming parameter <i>sapUiFontFamily</i>
@@ -323,7 +323,7 @@ sap.ui.define([
 			var oNodeInfo = this.getParent().getInfoForCluster(sClusterId, sap.ui.vbm.ClusterInfoType.NodeInfo);
 			if (!oItem.getBindingInfo("text")) {
 				oItem.setProperty(this.getTextProperty(), oNodeInfo.cnt.toString(), /* suppress invaidate */true);
-			} 
+			}
 
 			if (!this.oDOMHandler) {
 				this.oDOMHander = new ClusterBase._DOMHandler(this);
@@ -443,6 +443,13 @@ sap.ui.define([
 		}
 	};
 
+
+	/**
+	 * It retrieves a {sap.ui.vbm.ClusterContainer} by key from the list of current containers.
+	 * @param {string} key The key of the container that we want to retrieve.
+	 * @returns {sap.ui.vbm.ClusterContainer} oResult
+	 * @private
+	 */
 	ClusterBase.prototype._getContainer = function(key) {
 		var oResult = this.mContObjMap[key];
 		if (!oResult) {
@@ -471,12 +478,13 @@ sap.ui.define([
 	/**
 	 * Generic event handler for DOM events from container divs Note: Naming conventions apply here. Thus the hadler cannot be used directly, but via
 	 * sub object _DOMHandler!
-	 * 
-	 * @param oEvent DOM event
+	 *
+	 * @param {object} oEvent DOM event
 	 * @private
 	 */
 	ClusterBase.prototype._handleDOMEvent = function(oEvent) {
 		var sClusterId = oEvent.currentTarget.m_Key;
+		//oCluster is an instance of sap.ui.vbm.ClusterContainer
 		var oCluster = this.parent._getContainer(sClusterId);
 		switch (oEvent.type) {
 			case "click":
@@ -509,7 +517,10 @@ sap.ui.define([
 					eventContext.instance = oCluster;
 					this.parent.fireContextMenu(eventContext);
 				} catch (e) {
+					// TODO: handle error?
 				}
+				break;
+			default:
 				break;
 		}
 	};

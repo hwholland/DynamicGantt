@@ -7,7 +7,7 @@
     <deprecation since="1.12">This Property has been deprecated. This interface will be removed from the SAPUI5 delivery in one of the next releases.</deprecation>
     <baseType>sap.viz/ui5/core/BaseStructuredType</baseType>
     <properties>
-        <property name="color" type="sap.ui.core/string" defaultValue="#666666">
+        <property defaultValue="#666666" type="sap.ui.core/string" name="color">
             <documentation>Property color</documentation>
         </property>
     </properties>

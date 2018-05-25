@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 // Provides default renderer for control sap.ui.richtexteditor.RichTextEditor
 sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer'],
@@ -26,6 +26,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer'],
 	 *            oRichTextEditor The RichTextEditor control that should be rendered.
 	 */
 	RichTextEditorRenderer.render = function(rm, oRichTextEditor) {
+		var oToolbarWrapper = oRichTextEditor.getAggregation("_toolbarWrapper");
+		var bCustomToolbar = oToolbarWrapper && oRichTextEditor._bCustomToolbarRequirementsFullfiled;
+
 		rm.write('<div');
 		rm.writeControlData(oRichTextEditor);
 		if (oRichTextEditor.getEditorType() == "TinyMCE4") {
@@ -38,6 +41,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer'],
 		if (oRichTextEditor.getUseLegacyTheme()) {
 			rm.addClass("sapUiRTELegacyTheme");
 		}
+		if (bCustomToolbar) {
+			rm.addClass("sapUiRTEWithCustomToolbar");
+		}
 
 		rm.writeClasses();
 		rm.addStyle("width", oRichTextEditor.getWidth());
@@ -47,6 +53,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer'],
 			rm.writeAttributeEscaped("title", oRichTextEditor.getTooltip_AsString());
 		}
 		rm.write('>');
+
+		if (bCustomToolbar) {
+			oToolbarWrapper.addStyleClass("sapUiRTECustomToolbar");
+			rm.renderControl(oToolbarWrapper);
+		}
 
 		// Call specialized renderer method if it exists
 		var sRenderMethodName = "render" + oRichTextEditor.getEditorType() + "Editor";

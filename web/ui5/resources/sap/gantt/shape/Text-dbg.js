@@ -48,7 +48,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -60,15 +60,15 @@ sap.ui.define([
 				tag: {type: "string", defaultValue: "text"},
 
 				text: {type: "string"},
-				x: {type: "number"},
-				y: {type: "number"},
-				fontSize: {type: "number", defaultValue: 10},
+				x: {type: "float"},
+				y: {type: "float"},
+				fontSize: {type: "int", defaultValue: 10},
 				textAnchor: {type: "string", defaultValue: "start"},
 				fontFamily: {type: "string"},
-				wrapWidth: {type: "number", defaultValue: -1},
-				wrapDy: {type: "number", defaultValue: 20},
-				truncateWidth: {type: "number", defaultValue: -1},
-				ellipsisWidth: {type: "number", defaultValue: 12}
+				wrapWidth: {type: "float", defaultValue: -1},
+				wrapDy: {type: "float", defaultValue: 20},
+				truncateWidth: {type: "float", defaultValue: -1},
+				ellipsisWidth: {type: "float", defaultValue: 12}
 			}
 		}
 	});
@@ -270,5 +270,14 @@ sap.ui.define([
 		return this._configFirst("ellipsisWidth", oData);
 	};
 
+	Text.prototype.getStyle = function(oData, oRowInfo) {
+		var sInheritedStyle = Shape.prototype.getStyle.apply(this, arguments);
+		var oStyles = {
+			"font-size": this.getFontSize(oData, oRowInfo) + "px;",
+			"fill": this.determineValueColor(this.getFill(oData, oRowInfo)),
+			"font-family": this.getFontFamily(oData, oRowInfo)
+		};
+		return sInheritedStyle + this.getInlineStyle(oStyles);
+	};
 	return Text;
 }, true);

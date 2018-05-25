@@ -7,51 +7,51 @@
     <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.CheckBox&lt;/code&gt; control.</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="checked" type="sap.ui.core/boolean" defaultValue="false" group="Data" bindable="bindable">
+        <property bindable="bindable" group="Data" defaultValue="false" type="sap.ui.core/boolean" name="checked">
             <documentation>Contains the state of the control whether it is flagged with a check mark, or not</documentation>
         </property>
-        <property name="text" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="text">
             <documentation>Defines the text displayed next to the check box</documentation>
         </property>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>Using this property, the control could be disabled, if required.</documentation>
         </property>
-        <property name="editable" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="editable">
             <documentation>Specifies whether the user shall be allowed to select the check box.</documentation>
         </property>
-        <property name="valueState" type="sap.ui.core/ValueState" defaultValue="None" group="Data">
+        <property group="Data" defaultValue="None" type="sap.ui.core/ValueState" name="valueState">
             <documentation>Accepts the core enumeration ValueState.type that supports 'None', 'Error', 'Warning' and 'Success'.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" group="Dimension">
+        <property group="Dimension" type="sap.ui.core/CSSSize" name="width">
             <documentation>The width can be set to an absolute value. If no value is set, the control width results from the text length.</documentation>
         </property>
-        <property name="textDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance">
+        <property group="Appearance" defaultValue="Inherit" type="sap.ui.core/TextDirection" name="textDirection">
             <documentation>The value can be set to LTR or RTL. Otherwise, the control inherits the text direction from its parent control.</documentation>
         </property>
-        <property name="name" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="name">
             <documentation>The 'name' property to be used in the HTML code, for example for HTML forms that send data to the server via submit.</documentation>
         </property>
     </properties>
     <events>
-        <event name="change" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="change">
             <documentation>Event is triggered when the control status is changed by the user by flagging or unflagging the checkbox.</documentation>
             <parameters>
-                <parameter name="checked" type="sap.ui.core/boolean">
+                <parameter type="sap.ui.core/boolean" name="checked">
                     <documentation>Checks whether the box is flagged or not flagged.</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <associations>
-        <association name="ariaDescribedBy" type="sap.ui.core/Control" cardinality="0..n">
+        <association cardinality="0..n" type="sap.ui.core/Control" name="ariaDescribedBy">
             <documentation>Association to controls / ids which describe this control (see WAI-ARIA attribute aria-describedby).</documentation>
         </association>
-        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
+        <association cardinality="0..n" type="sap.ui.core/Control" name="ariaLabelledBy">
             <documentation>Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).</documentation>
         </association>
     </associations>
     <methods>
-        <method name="toggle" type="sap.ui.commons/CheckBox">
+        <method type="sap.ui.commons/CheckBox" name="toggle">
             <documentation>Inverts the current value of the control.</documentation>
         </method>
     </methods>

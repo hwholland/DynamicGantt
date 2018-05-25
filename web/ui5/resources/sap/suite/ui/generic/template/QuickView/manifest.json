@@ -6,7 +6,7 @@
 	"type": "component",
 	"i18n": "i18n/i18n.properties",
 	"applicationVersion": {
-		"version": "1.38.16"
+		"version": "1.54.3"
 	},
 	"title": "{{TITLE}}",
 	"description": "{{DESCRIPTION}}",

@@ -291,11 +291,8 @@ VBI.VisualObjects = function() {
 				if (this.m_DragSourceInfo) {
 					scene.m_Canvas[scene.m_nLabelIndex].draggable = true;
 				}
-			} else {
-				if (scene.m_Canvas[scene.m_nLabelIndex].draggable == true) {
-					scene.m_Canvas[scene.m_nLabelIndex].draggable = false;
-				}
-
+			} else if (scene.m_Canvas[scene.m_nLabelIndex].draggable == true) {
+				scene.m_Canvas[scene.m_nLabelIndex].draggable = false;
 			}
 
 			return hits.length > 0 ? true : false;
@@ -308,63 +305,61 @@ VBI.VisualObjects = function() {
 			if (!this.GetHitArray) {
 				return false;
 			}
-			if (this.m_Scene.vbiclass == "3DScene") {
-				return false; // TODO: handle the event
+			var scene = this.m_Scene;
+
+			if (scene.vbiclass == "3DScene") {
+				return false; // check: handle the event
 			}
-
-			// determine the instances that are hit.............................//
-			var hits = this.GetHitArray(event.offsetX, event.offsetY);
-
-			// set the hot item.................................................//
-			if (hits.length > 0) {
-				var scene = this.m_Scene, hn = hits[0];
-				var myIndex = this.GetDataIndex(hn.m_Index);
-				var action, actions = scene.m_Ctx.m_Actions;
-				var directInst; // to be filled for clusters
-				var ele = this.m_DataSource.GetIndexedElement(scene.m_Ctx, myIndex);
-				if (ele) {
-					// check for design handle context menu subscription.............//
-					if (actions && hn.m_Design && (hn.m_Hit == VBI.HTHANDLE)) {
-						// check if action is subscribed..............................//
-						if ((action = actions.findAction("HandleContextMenu", scene, this))) {
-							var params = scene.GetEventVPCoordsObj(event);
-							params.handle = hn.m_Handle.toString();
-							this.m_Scene.m_Ctx.FireAction(action, scene, this, ele, params);
-
-							// prevent from default handling...........................//
-							event.preventDefault();
-							return true;
-						}
-					}
-
-					// before we can fire the context menu, check the instance for...//
-					// click, a detailed contextmenu can be in an edge or a waypoint.//
-
-					if (this.DetailContextmenu(event, ele, hits[0])) {
-						event.preventDefault();
-						return true;
-					}
-				} else {
-					// we have an artifical element
-					var refElte = this.m_BBRefs[hits[0].m_Index];
-					directInst = scene.m_Ctx.m_Clustering.getClusterIdent(scene.m_PreassembledData, refElte.cI, refElte.i);
-					ele = this.GetPreassembledElement(hits[0].m_Index);
-				}
-
-				// check for subscribed action and raise it......................//
-				if (actions) {
-					// check if action is subscribed..............................//
-					if ((action = actions.findAction("ContextMenu", scene, this))) {
-						this.m_Scene.m_Ctx.FireAction(action, scene, this, ele, scene.GetEventVPCoordsObjWithScene(event), directInst);
+			if (event.hitTests) { // collect hit tests only
+				event.hitTests = event.hitTests.concat(this.GetHitArray(event.offsetX, event.offsetY, true));
+				return event.hitTests.length > 0;
+			}
+			// use hit test provided or perform hit tests and get the first one
+			var hit = event.hitCached ? event.hitCached : this.GetHitArray(event.offsetX, event.offsetY, false)[0];
+			if (!hit) {
+				return false;
+			}
+			// set the hot item
+			var index = this.GetDataIndex(hit.m_Index);
+			var action, actions = scene.m_Ctx.m_Actions;
+			var directInst; // to be filled for clusters
+			var element = this.m_DataSource.GetIndexedElement(scene.m_Ctx, index);
+			if (element) {
+				// check for design handle context menu subscription
+				if (actions && hit.m_Design && (hit.m_Hit == VBI.HTHANDLE)) {
+					// check if action is subscribed
+					if ((action = actions.findAction("HandleContextMenu", scene, this))) {
+						var params = scene.GetEventVPCoordsObj(event);
+						params.handle = hit.m_Handle.toString();
+						scene.m_Ctx.FireAction(action, scene, this, element, params);
+						// prevent from default handling
 						event.preventDefault();
 						return true;
 					}
 				}
-
-				// always prevent from default handling when there was a hit.....//
-				event.preventDefault();
+				// before we can fire the context menu, check the instance for
+				// click, a detailed contextmenu can be in an edge or a waypoint
+				if (this.DetailContextmenu(event, element, hit)) {
+					event.preventDefault();
+					return true;
+				}
+			} else {
+				// we have an artifical element
+				var refElte = this.m_BBRefs[hit.m_Index];
+				directInst = scene.m_Ctx.m_Clustering.getClusterIdent(scene.m_PreassembledData, refElte.cI, refElte.i);
+				element = this.GetPreassembledElement(hit.m_Index);
 			}
-
+			// check for subscribed action and raise it
+			if (actions) {
+				// check if action is subscribed
+				if ((action = actions.findAction("ContextMenu", scene, this))) {
+					scene.m_Ctx.FireAction(action, scene, this, element, scene.GetEventVPCoordsObjWithScene(event), directInst);
+					event.preventDefault();
+					return true;
+				}
+			}
+			// always prevent from default handling when there was a hit
+			event.preventDefault();
 			return false;
 		},
 
@@ -388,80 +383,74 @@ VBI.VisualObjects = function() {
 				return false;
 			}
 			var scene = this.m_Scene;
-			var hits = this.GetHitArray(event.offsetX, event.offsetY);
 
 			if (scene.vbiclass == "3DScene") {
-				return false; // TODO: handle the event
+				return false; // check: handle the event
 			}
-
-			// set the hot item and raise click event...........................//
-			if (!hits.length) {
+			if (event.hitTests) { // collect hit tests only
+				event.hitTests = event.hitTests.concat(this.GetHitArray(event.offsetX, event.offsetY, true));
+				return event.hitTests.length > 0;
+			}
+			//use hit test provided or perform hit tests and get the first one
+			var hit = event.hitCached ? event.hitCached : this.GetHitArray(event.offsetX, event.offsetY, false)[0];
+			// set the hot item and raise click event
+			if (!hit) {
 				return false;
 			}
-			var myIndex = this.GetDataIndex(hits[0].m_Index);
-
-			scene.RenderAsync(false); // trigger async rendering....................//
-
-			// determine the data element of the instance that is hit...........//
-			// and process selection............................................//
-			// shift-key adds selection.........................................//
-			// ctrl-key toggle selection........................................//
-			// for touch events we always toggle selection state................//
-
+			var index = this.GetDataIndex(hit.m_Index);
+			// trigger async rendering
+			scene.RenderAsync(false);
+			// determine the data element of the instance that is hit
+			// and process selection
+			// shift-key adds selection
+			// ctrl-key toggle selection
+			// for touch events we always toggle selection state
 			var ele;
 			var directInst; // to be filled for clusters
-			if (myIndex >= 0 && (ele = this.m_DataSource.GetIndexedElement(scene.m_Ctx, myIndex))) {
-				// set the datanode iterator to the hit element....................//
-				this.m_DataSource.Select(myIndex);
+			if (index >= 0 && (ele = this.m_DataSource.GetIndexedElement(scene.m_Ctx, index))) {
+				// set the datanode iterator to the hit element
+				this.m_DataSource.Select(index);
 
 				if ((event.type.indexOf("touch") >= 0) || (event.type.indexOf("pointer") >= 0 || ((event.ctrlKey || event.metaKey) && !event.shiftKey))) {
 					this.Select(ele, scene.m_Ctx, this.IsSelected(scene.m_Ctx) ? false : true);
 				} else if (event.shiftKey) {
-					// add it to the selection
-					if (!this.IsSelected(scene.m_Ctx)) {
+					if (!this.IsSelected(scene.m_Ctx)) { // add it to the selection
 						this.Select(ele, scene.m_Ctx, true);
 					}
 				} else {
-					// and select the single one..................................//
-					this.m_nActiveSelections = ele.GlobalSingleSelect();
+					this.m_nActiveSelections = ele.GlobalSingleSelect(); // and select the single one
 				}
 				if (scene.m_PreassembledData) {
-					scene.UpdatePreData4Selected(this.m_nPreDataIndex, this.GetInternalIndex(hits[0].m_Index));
+					scene.UpdatePreData4Selected(this.m_nPreDataIndex, this.GetInternalIndex(hit.m_Index));
 				}
-				if (hits[0].m_Handle >= 0) {
-					// click on a handle is already fired with sapup event
+				if (hit.m_Handle >= 0) {
+					event.preventDefault(); // click on a handle is already fired with sapup event
+					return true;
+				} else if (this.IsPosChangeable(scene.m_Ctx)) {
+					// when the position is changeable the click should toggle the
+					// selection mode between box and handle, clicks are not fired
+					// determine new edit mode
+					var em = this.m_DataSource.GetEditMode(scene.m_Ctx) == VBI.EMHandle ? VBI.EMBox : VBI.EMHandle;
+					if (VBI.m_bTrace) {
+						VBI.Trace("SetEditMode: " + em);
+					}
+					this.m_DataSource.SetEditMode(scene.m_Ctx, em);
 					event.preventDefault();
 					return true;
-				} else {
-					// when the position is changeable the click should toggle the......//
-					// selection mode between box and handle, clicks are not fired......//
-					if (this.IsPosChangeable(scene.m_Ctx)) {
-						// determine new edit mode.......................................//
-						var em = this.m_DataSource.GetEditMode(scene.m_Ctx) == VBI.EMHandle ? VBI.EMBox : VBI.EMHandle;
-						if (VBI.m_bTrace) {
-							VBI.Trace("SetEditMode: " + em);
-						}
-						this.m_DataSource.SetEditMode(scene.m_Ctx, em);
-						event.preventDefault();
-						return true;
-					}
 				}
-
-				// before we can fire the click, check the instance for detailed....//
-				// click, a detailed click can be a click in an edge or waypoint....//
-
-				if (this.DetailClick(event, ele, hits[0])) {
+				// before we can fire the click, check the instance for detailed
+				// click, a detailed click can be a click in an edge or waypoint
+				if (this.DetailClick(event, ele, hit)) {
 					event.preventDefault();
 					return true;
 				}
 			} else {
 				// we have an artifical element
-				var refElte = this.m_BBRefs[hits[0].m_Index];
+				var refElte = this.m_BBRefs[hit.m_Index];
 				directInst = scene.m_Ctx.m_Clustering.getClusterIdent(scene.m_PreassembledData, refElte.cI, refElte.i);
-				ele = this.GetPreassembledElement(hits[0].m_Index);
+				ele = this.GetPreassembledElement(hit.m_Index);
 			}
-
-			// check for subscribed action and fire event.......................//
+			// check for subscribed action and fire event
 			var actions;
 			if ((actions = scene.m_Ctx.m_Actions)) {
 				var action;
@@ -471,7 +460,6 @@ VBI.VisualObjects = function() {
 					return true;
 				}
 			}
-
 			return false;
 		},
 
@@ -483,94 +471,99 @@ VBI.VisualObjects = function() {
 		// with taking care about round world behavior.........................//
 		// the returned information is an array of hit information objects.....//
 		BaseHitTest: function(nsx, nsy, ocb) {
-			var tmp, hits = [];
-
+			var hits = [];
 			// returns an array of objects, containing the index and............//
 			// other detailed hit data..........................................//
 			// hit testing must be done in the reverse order....................//
 			// a callback object is used to define the params of the detail hit.//
 			// test.............................................................//
-			var ptInRect = VBI.Utilities.PtInRect;
-
 			// ..................................................................//
 			// do hit testing on all design handles first.......................//
 			// the ocb is filled with the required hit information..............//
-
 			var hi = {}; // hit information...................................//
 			if (this.BaseDesignHitTest(nsx, nsy, hi)) {
 				// design handle hit found.......................................//
 				hits.push(hi);
 				return hits;
 			}
-
+			var map = new Map; //use map to avoid duplicate hit tests
 			// check for label hit
-			var aLabels = this.getLabelData(false);
-			var nJ, nK;
-			if (aLabels) {
-				for (nJ = 0; nJ < aLabels.length; ++nJ) {
-					var lb = aLabels[nJ];
-					var rgba = VBI.Types.string2rgba(lb.m_BgColor);
+			var labels = this.getLabelData(false);
+			if (labels) {
+				for (var i = labels.length - 1; i >= 0; --i) { //opposite order starting from last (topmost) instance
+					var label = labels[i];
+					var rgba = VBI.Types.string2rgba(label.m_BgColor);
 					if (rgba[3] < 0.1 && rgba[4] == 1) {
-						// transparent background
-						continue; // not as hit considered
+						continue; // transparent background, not as hit considered
 					}
-					for (nK = 0; nK < lb.m_Pos.length; ++nK) {
-						for (var nL = 0; nL < lb.m_Pos[nK].length; nL++) {
-							var point = [
-								nsx, nsy
-							];
-							var xPos = lb.m_Pos[nK][nL][0];
-							var yPos = lb.m_Pos[nK][nL][1];
-							var textRect = [
-								xPos, yPos, xPos + lb.m_Width, yPos + lb.m_Height
-							];
+					for (var j = 0; j < label.m_Pos.length; ++j) {
+						for (var k = 0; k < label.m_Pos[j].length; ++k) {
+							var point = [nsx, nsy];
+							var xPos = label.m_Pos[j][k][0];
+							var yPos = label.m_Pos[j][k][1];
+							var tri = label.m_Pos[j][k].tri;
+							var rect = label.m_Pos[j][k].rc;
+							var textRect = [xPos, yPos, xPos + label.m_Width, yPos + label.m_Height];
 
-							if (VBI.Utilities.PtInRect(point, textRect) || (lb.m_Pos[nK][nL].tri && VBI.Utilities.pointInTriangle(lb.m_Pos[nK][nL].tri, point)) || (lb.m_Pos[nK][nL].rc && VBI.Utilities.PtInRect(point, lb.m_Pos[nK][nL].rc))) {
-								hits.push({
-									m_Index: lb.mIndex,
-									m_Entity: this.GetEntity(lb.mIndex, this.m_Scene.m_Ctx)
-								});
-								return hits; // a label is hit -> no further event processing
-							}
-						}
-					}
-				}
-			}
-
-			for (nJ = this.m_BB.length - 1; nJ >= 0; --nJ) {
-				// loop for data bound instances
-				if ((tmp = this.m_BB[nJ])) {
-					for (nK = this.m_IO[nJ].length - 1; nK >= 0; --nK) {
-						// loop for round world instances
-						var off = this.m_IO[nJ][nK];
-						if (!ptInRect([
-							nsx - off, nsy
-						], tmp)) {
-							continue;
-						}
-
-						// hit test fits..............................................//
-						// do detail hittest using callback...........................//
-						if (ocb) {
-							// do call back, transform coord to master instance........//
-							var ret = ocb.m_cb(ocb, nJ, nsx - off, nsy);
-
-							if (ret && ret.m_hit > 0) {
-								// this is a hit
-								hits.push({
-									m_Index: nJ,
-									m_Entity: this.GetEntity(nJ, this.m_Scene.m_Ctx),
-									m_Detail: ret,
-									m_IO: off
-								});
-								if (ret.m_hit == 1) {
-									// 1: true hit, 2: diffuse hit (e.g. transparent objects )
+							if (VBI.Utilities.PtInRect(point, textRect) || (tri && VBI.Utilities.pointInTriangle(tri, point)) || (rect && VBI.Utilities.PtInRect(point, rect))) {
+								var hitObj = {
+									m_Vo: this,
+									m_Index: label.mIndex,
+									m_Entity: this.GetEntity(label.mIndex, this.m_Scene.m_Ctx)
+								};
+								if (ocb.m_All) {
+									map.set(hitObj.m_Index, hitObj);
+								} else {
+									hits.push(hitObj);
+								}
+								if (!ocb.m_All) { // if not hit test for all instances required -> exit immediately
 									return hits;
 								}
 							}
 						}
 					}
 				}
+			}
+			// loop for data bound instances
+			for (var i = this.m_BB.length - 1; i >= 0; --i) { //opposite order starting from last (topmost) instance
+				var bbox = this.m_BB[i];
+				if (bbox) {
+					for (var j = this.m_IO[i].length - 1; j >= 0; --j) { // loop for round world instances
+						var off = this.m_IO[i][j];
+						if (!VBI.Utilities.PtInRect([nsx - off, nsy], bbox)) {
+							continue;
+						}
+						// hit test fits..............................................//
+						// do detail hittest using callback...........................//
+						if (ocb) {
+							// do call back, transform coord to master instance........//
+							var ret = ocb.m_cb(ocb, i, nsx - off, nsy);
+
+							if (ret && ret.m_hit > 0) { // this is a hit
+								var hitObj = {
+									m_Vo: this,
+									m_Index: i,
+									m_Entity: this.GetEntity(i, this.m_Scene.m_Ctx),
+									m_Detail: ret,
+									m_IO: off
+								};
+								if (ocb.m_All) {
+									map.set(hitObj.m_Index, hitObj);
+								} else {
+									hits.push(hitObj);
+								}
+								if (!ocb.m_All && ret.m_hit == 1) { // 1: true hit, 2: diffuse hit (e.g. transparent objects)
+									return hits;
+								}
+							}
+						}
+					}
+				}
+			}
+			if (ocb.m_All) { //map -> array
+				map.forEach(function(item) {
+					hits.push(item);
+				});
 			}
 			return hits;
 		},
@@ -797,6 +790,11 @@ VBI.VisualObjects = function() {
 		getTooltip: function(ctx, hitObj) {
 			this.m_DataSource.Select(hitObj.m_Index);
 			return this.m_Tooltip.GetValueString(ctx);
+		},
+
+		getLabelText: function(ctx, hitObj) {
+			this.m_DataSource.Select(hitObj.m_Index);
+			return this.m_Labeltext.GetValueString(ctx);
 		},
 
 		getLabelData: function(bRecalc) {
@@ -1333,7 +1331,7 @@ VBI.VisualObjects = function() {
 			}
 
 			if (scene.vbiclass == "3DScene") {
-				return false; // TODO: handle the event
+				return false; // check: handle the event
 			}
 
 			if (!this.GetHitArray) {
@@ -1393,7 +1391,6 @@ VBI.VisualObjects = function() {
 						return true;
 					}
 				}
-
 			}
 			return false;
 		},
@@ -1420,7 +1417,7 @@ VBI.VisualObjects = function() {
 					return 'move';
 				}
 			}
-			// todo: other cursors..............................................//
+			// check: other cursors..............................................//
 			return 'pointer';
 		},
 
@@ -1989,7 +1986,7 @@ VBI.VisualObjects = function() {
 // dcs.stroke();
 // }
 // };
-//      
+//
 // debugPaintBox: function(dcs, borders, lodF, xOff, yOff)
 // {
 // dcs.strokeStyle = "rgba(255,255,0,0.5)";
@@ -2233,18 +2230,19 @@ VBI.VisualObjects = function() {
 			return iicon;
 		};
 
-		this.GetHitArray = function(x, y) {
-			// determine the array of instances that are hit....................//
-			// x and y are the canvas relative coordinates......................//
+		this.GetHitArray = function(x, y, all) {
+			// determine the array of instances that are hit
+			// x and y are the canvas relative coordinates
+			// all is set when hit test for all instances needed
 			var zsf = this.m_Scene.GetStretchFactor4Mode();
 			var nsx = x / zsf[0];
 			var nsy = y / zsf[0];
 
 			var ocb = {
 				m_cb: this.DetailHitTest.bind(this),
-				m_Ctx: this.m_Scene.m_Ctx
+				m_Ctx: this.m_Scene.m_Ctx,
+				m_All: all
 			};
-
 			// call base function for bounds check..............................//
 			return this.BaseHitTest(nsx, nsy, ocb);
 		};
@@ -2457,7 +2455,7 @@ VBI.VisualObjects = function() {
 						],
 						bb: null
 					};
-					this.m_Label.push(new VBI.Label(elem.label, nIndex, null, aLabelPos, this.m_BB[nIndex], aIO));
+					this.m_Label.push(new VBI.Label(elem.label, nIndex, this.CalculateLabelPos, aLabelPos, this.m_BB[nIndex], aIO));
 				}
 			}
 
@@ -2465,7 +2463,7 @@ VBI.VisualObjects = function() {
 		};
 
 		// render the single instance..........................................//
-		this.RenderInstance = function(nIndex, dc, pos, image, text, scale, hot, label, icon) {
+		this.RenderInstance = function(nIndex, dc, realPos, image, text, scale, hot, label, icon) {
 			if (VBI.m_bTrace) {
 				VBI.Trace("Spot: RenderInstance");
 			}
@@ -2478,7 +2476,7 @@ VBI.VisualObjects = function() {
 			var zsf = scene.GetStretchFactor4Mode();
 
 			// determine the location where to render the main instance.........//
-			var xy = scene.GetPointFromPos(pos, true);
+			var xy = scene.GetPointFromPos(realPos, true);
 			// determine the master box.........................................//
 			var width = image.naturalWidth * scale[0] / zsf[0];
 			var height = image.naturalHeight * scale[1] / zsf[1];
@@ -2563,9 +2561,28 @@ VBI.VisualObjects = function() {
 					],
 					bb: null
 				};
-				this.m_Label.push(new VBI.Label(label, nIndex, null, aLabelPos, this.m_BB[nIndex], aIO));
+				this.m_Label.push(new VBI.Label(label, nIndex, this.CalculateLabelPos, aLabelPos, this.m_BB[nIndex], aIO));
 			}
 
+		};
+
+		// Calculate label position for spots
+		this.CalculateLabelPos = function(scene, pointarray, instancesOffset) {
+
+			var nLen = Math.floor(pointarray.pa.length / 3) * 3,
+				aTmp = [],
+				viewportCoord = scene.GetViewport();
+
+			for (var nI = 0; nI < nLen; nI += 3) {
+				var pt = [
+					pointarray.pa[nI] + instancesOffset, pointarray.pa[nI + 1]
+				];
+				if (pt[0] > viewportCoord[0] && pt[0] < viewportCoord[2] && pt[1] > viewportCoord[1] && pt[1] < viewportCoord[3]) {
+					aTmp.push(pt);
+				}
+			}
+
+			return aTmp.length ? aTmp : null;
 		};
 
 		this.Init4Render = function() {
@@ -2582,14 +2599,14 @@ VBI.VisualObjects = function() {
 			// get scene .......................................................//
 			var scene = this.m_Scene;
 			this.SwitchPreDataRendering(preAssembledData != undefined);
-
+			var cntInstances;
 			if (this.bUsePreData) {
 				if ((preAssembledData.m_nNumIgnore != undefined) && (preAssembledData.m_nNumIgnore == preAssembledData.length)) {
 					return 0; // everything to ignore
 				}
 
 				var bRenderWithLabel = bSkipLabel ? false : true;
-				var cntInstances = this.m_BB.length; // might be unequal 0 if entity in a predecessor call
+				cntInstances = this.m_BB.length; // might be unequal 0 if entity in a predecessor call
 				var fExactLod = scene.m_Canvas[0].m_nExactLOD;
 				var xOff = scene.m_Canvas[0].m_nCurrentX * scene.m_MapManager.m_tileWidth;
 				var yOff = scene.m_Canvas[0].m_nCurrentY * scene.m_MapManager.m_tileHeight;
@@ -2649,7 +2666,7 @@ VBI.VisualObjects = function() {
 						this.SetRichTooltip(bHot);
 					}
 				}
-				// todo: do single instance rendering in else branch ...........//
+				// check: do single instance rendering in else branch ...........//
 
 			}
 
@@ -2927,12 +2944,13 @@ VBI.VisualObjects = function() {
 				0, 0, 0
 			];
 			var result;
+			var nJ;
 
 			dist = 0;
 			if (start) {
 				result = {};
 				count = 0;
-				for (var nJ = off; nJ < aLinePoints.length; ++nJ) {
+				for (nJ = off; nJ < aLinePoints.length; ++nJ) {
 					ptXyz = aLinePoints[nJ];
 					tdx = pt1[0] - ptXyz[0];
 					tdy = pt1[1] - ptXyz[1];
@@ -2984,7 +3002,7 @@ VBI.VisualObjects = function() {
 				if (pt1.length) {
 					result = {};
 					count = 0;
-					for (var nJ = off; nJ < aLinePoints.length; ++nJ) {
+					for (nJ = off; nJ < aLinePoints.length; ++nJ) {
 						ptXyz = aLinePoints[nJ];
 						tdx = pt1[0] - ptXyz[0];
 						tdy = pt1[1] - ptXyz[1];
@@ -3150,12 +3168,13 @@ VBI.VisualObjects = function() {
 		};
 
 		this.LassoSelect = function(aPos, hits, orgHits) {
-			var pointList, routePt, bEnclosed, aOff;
+			var pointList, routePt, aOff;
 			var bFound = false;
 			for (var nJ = this.m_LP.length - 1; nJ >= 0; --nJ) {
 				pointList = this.m_LP[nJ];
 				aOff = this.m_IO[nJ];
-				for (var nL = 0, bEnclosed = false; nL < aOff.length; ++nL) {
+				var bEnclosed = false;
+				for (var nL = 0; nL < aOff.length; ++nL) {
 					if (bEnclosed) {
 						break;
 					}
@@ -3240,8 +3259,8 @@ VBI.VisualObjects = function() {
 
 			var label = this.GetLabel(ctx);
 
-			var lt = scene.GetPointFromUCSPoint(pa.cache.lt);
-			var rb = scene.GetPointFromUCSPoint(pa.cache.rb);
+			// var lt = scene.GetPointFromUCSPoint(pa.cache.lt);
+			// var rb = scene.GetPointFromUCSPoint(pa.cache.rb);
 
 			// determine the nearest position array.............................//
 			// and the instance ofsets..........................................//
@@ -3444,7 +3463,6 @@ VBI.VisualObjects = function() {
 				dc.lineJoin = dc.lineCap = 'round';
 			}
 
-			var nJ;
 			var bPathNotYetBegan = true;
 
 			if (bRouteCompletelyOnCanvas) { // everything on canvas so let's omit all the checks and simply paint
@@ -3452,8 +3470,8 @@ VBI.VisualObjects = function() {
 				dc.beginPath();
 				bPathNotYetBegan = false;
 				dc.moveTo((aLinePoints[0])[0], (aLinePoints[0])[1]);
-				for (nJ = 1; nJ < aLinePoints.length; ++nJ) {
-					dc.lineTo((aLinePoints[nJ])[0], (aLinePoints[nJ])[1]);
+				for (var nJJ = 1; nJJ < aLinePoints.length; ++nJJ) {
+					dc.lineTo((aLinePoints[nJJ])[0], (aLinePoints[nJJ])[1]);
 				}
 
 			} else {
@@ -3694,7 +3712,7 @@ VBI.VisualObjects = function() {
 					this.SetRichTooltip(this.IsHot(nJ));
 				}
 			}
-			// todo: do single instance rendering in else branch ................//
+			// check: do single instance rendering in else branch ................//
 
 			if (hotIndex != undefined) {
 				this.m_DataSource.Select(hotIndex);
@@ -3741,7 +3759,6 @@ VBI.VisualObjects = function() {
 				y1 = aLP[nK][1];
 
 				// check wether a waypoint is hit................................//
-				// todo:
 
 				// check if not outside segment box and continue.................//
 				if (linerad && !((nsx < (Math.min(x0, x1) - linerad)) || // outside left
@@ -3806,17 +3823,17 @@ VBI.VisualObjects = function() {
 			return null; // no hit
 		};
 
-		this.GetHitArray = function(x, y) {
-			// determine the array of instances that are hit....................//
-			// x and y are the canvas relative coordinates......................//
-
+		this.GetHitArray = function(x, y, all) {
+			// determine the array of instances that are hit
+			// x and y are the canvas relative coordinates
+			// all is set when hit test for all instances needed
 			var ocb = {
-				m_cb: this.DetailHitTest.bind(this)
+				m_cb: this.DetailHitTest.bind(this),
+				m_All: all
 			};
 			var zsf = this.m_Scene.GetStretchFactor4Mode();
-
-			// bounding boxes are defined always in non stretched canvas........//
-			// coordinates, therefore transform them............................//
+			// bounding boxes are defined always in non stretched canvas
+			// coordinates, therefore transform them
 			var nsx = x / zsf[0];
 			var nsy = y / zsf[1];
 			// call base function for bounds check..............................//
@@ -4004,7 +4021,7 @@ VBI.VisualObjects = function() {
 					this.SetRichTooltip(bHot);
 				}
 			}
-			// todo: do single instance rendering in else branch ................//
+			// check: do single instance rendering in else branch ................//
 
 			// call base rendering method.......................................//
 			this.BaseRender(canvas, dc);
@@ -4022,23 +4039,25 @@ VBI.VisualObjects = function() {
 			if (((tdx = (xy[0] - nsx)) * tdx + (tdy = (xy[1] - nsy)) * tdy) < r * r) {
 				return {
 					m_hit: 1
-				}; // todo: do diffuse hits here as well
+				}; // check: do diffuse hits here as well
 			}
 
 			return null; // no hit
 		};
 
-		this.GetHitArray = function(x, y) {
-			// determine the array of instances that are hit....................//
-			// x and y are the canvas relative coordinates......................//
+		this.GetHitArray = function(x, y, all) {
+			// determine the array of instances that are hit
+			// x and y are the canvas relative coordinates
+			// all is set when hit test for all instances needed
 			var zsf = this.m_Scene.GetStretchFactor4Mode();
 			var ocb = {
 				m_cb: this.DetailHitTest.bind(this),
-				m_zf: zsf
+				m_zf: zsf,
+				m_All: all
 			};
 			var nsx = x / zsf[0];
 			var nsy = y / zsf[1];
-			// call base function for bounds check..............................//
+			// call base function for bounds check
 			return this.BaseHitTest(nsx, nsy, ocb);
 		};
 
@@ -4185,8 +4204,8 @@ VBI.VisualObjects = function() {
 				if (aLinePoints) {
 					aLinePoints.push(tmp); // add first line point
 				}
-				for (var nJ = 1; nJ < data.length; ++nJ) {
-					xy = scene.GetPointFromGeo(data[nJ], false);
+				for (var nJJ = 1; nJJ < data.length; ++nJJ) {
+					xy = scene.GetPointFromGeo(data[nJJ], false);
 
 					// when the distance is too small between projected points.......//
 					// skip rendering................................................//
@@ -4345,7 +4364,7 @@ VBI.VisualObjects = function() {
 					this.SetRichTooltip(bHot);
 				}
 			}
-			// todo: do single instance rendering in else branch ................//
+			// check: do single instance rendering in else branch ................//
 
 			// call base rendering method.......................................//
 			this.BaseRender(canvas, dc);
@@ -4364,22 +4383,23 @@ VBI.VisualObjects = function() {
 				if (((tdx = (xy[0] - nsx)) * tdx + (tdy = (xy[1] - nsy)) * tdy) < r * r) {
 					return {
 						m_hit: 1
-					}; // todo: do diffuse hits here as well
+					}; // check: do diffuse hits here as well
 				}
 
 				return null; // no hit
 			} else {
 				// check the segmented point geo circle
-				// todo: check for diffuse hits.....................................//
+				// check: check for diffuse hits.....................................//
 				return VBI.Utilities.pointInPolygon(this.m_LP[nIndex], nsx, nsy) ? {
 					m_hit: 1
 				} : null;
 			}
 		};
 
-		this.GetHitArray = function(x, y) {
-			// determine the array of instances that are hit....................//
-			// x and y are the canvas relative coordinates......................//
+		this.GetHitArray = function(x, y, all) {
+			// determine the array of instances that are hit
+			// x and y are the canvas relative coordinates
+			// all is set when hit test for all instances needed
 			var zsf = this.m_Scene.GetStretchFactor4Mode();
 
 			var nsx = x / zsf[0];
@@ -4387,7 +4407,8 @@ VBI.VisualObjects = function() {
 
 			var ocb = {
 				m_cb: this.DetailHitTest.bind(this),
-				m_zf: zsf
+				m_zf: zsf,
+				m_All: all
 			};
 
 			// call base function for bounds check..............................//
@@ -4528,7 +4549,7 @@ VBI.VisualObjects = function() {
 						this.m_ARC[nIndex].push(lastPosition);
 					}
 
-					// todo: store segments positions.............................//
+					// check: store segments positions.............................//
 				}
 			}
 
@@ -4587,7 +4608,7 @@ VBI.VisualObjects = function() {
 					this.SetRichTooltip(bHot);
 				}
 			}
-			// todo: do single instance rendering in else branch
+			// check: do single instance rendering in else branch
 
 			// call base rendering method.......................................//
 			this.BaseRender(canvas, dc);
@@ -4622,25 +4643,25 @@ VBI.VisualObjects = function() {
 				return {
 					m_hit: 1,
 					m_slice: lowVal
-				}; // todo: do diffuse hits here as well
+				}; // check: do diffuse hits here as well
 			}
 
 			return null; // no hit
 		};
 
-		this.GetHitArray = function(x, y) {
+		this.GetHitArray = function(x, y, all) {
+			// all is set when hit test for all instances needed
 			var zsf = this.m_Scene.GetStretchFactor4Mode();
-
-			// bounding boxes are defined always in non stretched canvas........//
-			// coordinates, therefore transform them............................//
+			// bounding boxes are defined always in non stretched canvas
+			// coordinates, therefore transform them
 			var nsx = x / zsf[0];
 			var nsy = y / zsf[1];
 
 			var ocb = {
-				m_cb: this.DetailHitTest.bind(this)
+				m_cb: this.DetailHitTest.bind(this),
+				m_All: all
 			};
-
-			// call base function for bounds check..............................//
+			// call base function for bounds check
 			return this.BaseHitTest(nsx, nsy, ocb);
 		};
 
@@ -4872,7 +4893,7 @@ VBI.VisualObjects = function() {
 					this.SetRichTooltip(bHot);
 				}
 			}
-			// todo: do single instance rendering in else branch
+			// check: do single instance rendering in else branch
 
 			// call base rendering method.......................................//
 			this.BaseRender(canvas, dc);
@@ -4886,19 +4907,19 @@ VBI.VisualObjects = function() {
 			}; // always a hit due bounds is equal to box, todo: diffuse hit
 		};
 
-		this.GetHitArray = function(x, y) {
-			// determine the array of instances that are hit....................//
-			// x and y are the canvas relative coordinates......................//
+		this.GetHitArray = function(x, y, all) {
+			// determine the array of instances that are hit
+			// x and y are the canvas relative coordinates
+			// all is set when hit test for all instances needed
 			var zsf = this.m_Scene.GetStretchFactor4Mode();
-
 			var nsx = x / zsf[0];
 			var nsy = y / zsf[1];
 
 			var ocb = {
-				m_cb: this.DetailHitTest.bind(this)
+				m_cb: this.DetailHitTest.bind(this),
+				m_All: all
 			};
-
-			// call base function for bounds check..............................//
+			// call base function for bounds check
 			return this.BaseHitTest(nsx, nsy, ocb);
 		};
 
@@ -5100,7 +5121,7 @@ VBI.VisualObjects = function() {
 
 		this.IsPosChangeable = function(ctx) {
 			// no design mode when mouse is not supported
-			if ( !VBI.m_bMouseSupported ){
+			if (!VBI.m_bMouseSupported) {
 				return false;
 			}
 			// determine if position is changeable..............................//
@@ -5317,7 +5338,7 @@ VBI.VisualObjects = function() {
 				}
 			}
 
-			// todo: do single instance rendering in else branch ............//
+			// check: do single instance rendering in else branch ............//
 			len = selected.length;
 			for (var i = 0; i < len; i++) {
 				this.m_DataSource.Select(selected[i]);
@@ -5365,20 +5386,19 @@ VBI.VisualObjects = function() {
 			return null;
 		};
 
-		this.GetHitArray = function(x, y) {
-			// determine the array of instances that are hit....................//
-			// x and y are the canvas relative coordinates......................//
-
+		this.GetHitArray = function(x, y, all) {
+			// determine the array of instances that are hit
+			// x and y are the canvas relative coordinates
+			// all is set when hit test for all instances needed
 			var zsf = this.m_Scene.GetStretchFactor4Mode();
-
 			var nsx = x / zsf[0];
 			var nsy = y / zsf[1];
 
 			var ocb = {
-				m_cb: this.DetailHitTest.bind(this)
+				m_cb: this.DetailHitTest.bind(this),
+				m_All: all
 			};
-
-			// call base function for bounds check..............................//
+			// call base function for bounds check
 			return this.BaseHitTest(nsx, nsy, ocb);
 		};
 
@@ -5489,19 +5509,20 @@ VBI.VisualObjects = function() {
 			var ctx = tempCanvas.getContext("2d");
 			var cols = [];
 			ctx.lineWidth = 1;
-			for (var i = 0; i < colStops; ++i) {
+			var i;
+			for (i = 0; i < colStops; ++i) {
 				ctx.fillStyle = colGradient[2 * i + 1];
 				ctx.fillRect(colGradient[2 * i], 0, 1, 1);
 				var iData = ctx.getImageData(colGradient[2 * i], 0, 1, 1);
 				cols.push(iData.data);
 			}
 			var wholeLine = ctx.getImageData(0, 0, cWidth, 1);
-			var col1 = cols[0];
-			var col1hls = VBI.Utilities.RGB2HLS(col1[0], col1[1], col1[2]);
-			var hue1 = col1hls[0];
-			var lum1 = col1hls[1];
-			var sat1 = col1hls[2];
-			for (var i = 1; i < colStops; ++i) {
+			for (i = 1; i < colStops; ++i) {
+				var col1 = cols[i - 1];
+				var col1hls = VBI.Utilities.RGB2HLS(col1[0], col1[1], col1[2]);
+				var hue1 = col1hls[0];
+				var lum1 = col1hls[1];
+				var sat1 = col1hls[2];
 				var start = colGradient[2 * (i - 1)], end = colGradient[2 * i], divider = end - start;
 				var col2 = cols[i];
 				var col2hls = VBI.Utilities.RGB2HLS(col2[0], col2[1], col2[2]);
@@ -5511,11 +5532,6 @@ VBI.VisualObjects = function() {
 					var cCol = VBI.Utilities.HLS2RGB(hue1 + (j - start) * delta, lum1, sat1);
 					this.SetColor1(wholeLine.data, j, cCol);
 				}
-				col1 = cols[i];
-				var col1hls = VBI.Utilities.RGB2HLS(col1[0], col1[1], col1[2]);
-				var hue1 = col1hls[0];
-				var lum1 = col1hls[1];
-				var sat1 = col1hls[2];
 			}
 
 			ctx.putImageData(wholeLine, 0, 0);
@@ -5672,7 +5688,7 @@ VBI.VisualObjects = function() {
 			var correction = (scene.m_bObjCanvasMode == 0 ? Math.pow(2, exactLod - integerLod) : 1.0) / rFactor;
 			var eLod = 1.0;
 			if (behav > 0) {
-				var eLod = 1 + scene.m_Canvas[0].m_nExactLOD;
+				eLod = 1 + scene.m_Canvas[0].m_nExactLOD;
 				if (behav == 2) {
 					eLod = Math.pow(2, eLod);
 				}
@@ -5692,19 +5708,18 @@ VBI.VisualObjects = function() {
 		};
 
 		this.GetHitArray = function(x, y) {
-			// determine the array of instances that are hit....................//
-			// x and y are the canvas relative coordinates......................//
+			// determine the array of instances that are hit
+			// x and y are the canvas relative coordinates
 			var zsf = this.m_Scene.GetStretchFactor4Mode();
 
-			// bounding boxes are defined always in non stretched canvas........//
-			// coordinates, therefore transform them............................//
+			// bounding boxes are defined always in non stretched canvas
+			// coordinates, therefore transform them
 			var nsx = x / zsf[0];
 			var nsy = y / zsf[1];
 			var ocb = {
 				m_cb: this.DetailHitTest.bind(this)
 			};
-
-			// call base function for bounds check..............................//
+			// call base function for bounds check
 			return this.BaseHitTest(nsx, nsy, ocb);
 		};
 
@@ -5969,7 +5984,7 @@ VBI.VisualObjects = function() {
 			return offset;
 		};
 
-		this.GetClusterPosition = function(dc, elem, conf, nLod, nDist, lodF, xOff, yOff, zzf) {
+		this.GetClusterPosition = function(dc, elem, conf, nLod, nDist, lodF, xOff, yOff) {
 			var lt;
 			var scene = this.m_Scene;
 			var oX = dc.canvas.getPixelLeft();
@@ -6056,7 +6071,6 @@ VBI.VisualObjects = function() {
 
 			if (bCluster) {
 				var cntInstances = 0;
-				var fExactLod = scene.m_Canvas[0].m_nExactLOD;
 				var xOff = scene.m_Canvas[0].m_nCurrentX * scene.m_MapManager.m_tileWidth;
 				var yOff = scene.m_Canvas[0].m_nCurrentY * scene.m_MapManager.m_tileHeight;
 				var conf = preAssembledData.config;
@@ -6487,7 +6501,6 @@ VBI.VisualObjects = function() {
 			}
 			// determine the instance offsets...................................//
 			// var aIO = this.m_IO[ nIndex ] = scene.GetInstanceOffsets( bb = this.m_BB[ nIndex ] = [ l, t, r, b ] );
-
 		};
 
 		// Box3D.Render with respect to data binding.................................//
@@ -6531,7 +6544,7 @@ VBI.VisualObjects = function() {
 
 					this.RenderInstance(nJ, aPos, aScale, aCol, aColBorder, aFxSize);
 				}
-			} // todo: do single instance rendering in else branch
+			} // check: do single instance rendering in else branch
 
 			// call base rendering method.......................................//
 			// this.BaseRender( canvas, dc );
@@ -6544,14 +6557,10 @@ VBI.VisualObjects = function() {
 
 		this.GetHitArray = function(x, y) {
 		};
-
 		// this.DesignBoxSize = VBI.Utilities.SceneBindDesignBoxBoxSize.bind( this, false );
-
 		// event handlers......................................................//
 	};
 	VBI.VisualObjects.Box3D.prototype = VBI.VisualObjects.Base;
-
-// return the visual object...............................................//
+	// return the visual object...............................................//
 	return visualobjects;
-
 };

@@ -1,27 +1,34 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
-// Provides control sap.ui.comp.smartmicrochart.SmartAreaMicroChart.
-sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control', 'sap/ui/comp/providers/ChartProvider', 'sap/suite/ui/microchart/library'],
-	function(jQuery, CompLibrary, Control, ChartProvider, MicroChartLibrary) {
+sap.ui.define([
+	"jquery.sap.global",
+	"sap/ui/comp/library",
+	"sap/ui/core/Control",
+	"sap/ui/comp/providers/ChartProvider",
+	"sap/suite/ui/microchart/library",
+	"sap/ui/core/CustomData",
+	"sap/ui/comp/smartmicrochart/SmartMicroChartCommons"
+], function(jQuery, CompLibrary, Control, ChartProvider, MicroChartLibrary, CustomData, SmartMicroChartCommons) {
 	"use strict";
 
 	/**
-	 * Constructor for a new sap.ui.comp.smartmicrochart/SmartMicroChart.
+	 * Constructor for a new sap.ui.comp.smartmicrochart.SmartMicroChart.
 	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The SmartMicroChart control creates a chart based on OData metadata and the configuration specified by <code>mSettings</code>.
 	 * The entitySet property must be specified in order to use the control. This property is used to fetch metadata and
 	 * annotation information from the given default OData model. Depending on the UI/ChartType annotation, the control
-	 * creates a corresponding <code>SmartBulletMicroChart</code> or <code>SmartAreaMicroChart</code> instance and delegates to the internal control.
+	 * creates a corresponding <code>SmartAreaMicroChart</code>, <code>SmartBulletMicroChart</code> or <code>SmartRadialMicroChart</code> instance and delegates to the internal control.
 	 *        <br>
-	 * <b><i>Note:<i></b> Most of the attributes are not dynamic and cannot be changed once the control has been initialized.
+	 * <b><i>Note:</i></b> Most of the attributes are not dynamic and cannot be changed once the control has been initialized.
 	 * @extends sap.ui.core.Control
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.38
 	 * @constructor
 	 * @public
@@ -29,19 +36,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var SmartMicroChart = Control.extend("sap.ui.comp.smartmicrochart.SmartMicroChart", /** @lends sap.ui.comp.smartmicrochart.SmartMicroChart.prototype */ {
-		metadata : {
+		metadata: {
 
-			library : "sap.ui.comp",
-			properties : {
+			library: "sap.ui.comp",
+			designtime: "sap/ui/comp/designtime/smartmicrochart/SmartMicroChart.designtime",
+			properties: {
 
 				/**
 				 * The entity set name to fetch data and create the internal chart representation from.
 				 * Note that this is not a dynamic UI5 property.
 				 */
-				entitySet : {
-					type : "string",
-					group : "Misc",
-					defaultValue : null
+				entitySet: {
+					type: "string",
+					group: "Misc",
+					defaultValue: null
 				},
 
 				/**
@@ -49,7 +57,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 				 */
 				showLabel: {
 					type: "boolean",
-					group : "Appearance",
+					group: "Appearance",
 					defaultValue: true
 				},
 
@@ -69,82 +77,95 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 				 * specified, the entitySet attribute is used instead and also stored in this property.
 				 * Calling <code>bindElement</code> binds the control and sets this property.
 				 */
-				chartBindingPath : {
-					type : "string",
-					group : "Misc",
-					defaultValue : null
+				chartBindingPath: {
+					type: "string",
+					group: "Misc",
+					defaultValue: null
 				},
 
 				/**
 				 * Specifies the type of chart. Note that this property is read-only.
 				 */
-				chartType : {
-					type : "string",
-					group : "Misc",
-					defaultValue : null
+				chartType: {
+					type: "string",
+					group: "Misc",
+					defaultValue: null
 				},
 
 				/**
 				 * Defines the width.
 				 */
-				width : {type : "sap.ui.core.CSSSize", group : "Misc", defaultValue : "164px"},
+				width: { type: "sap.ui.core.CSSSize", group: "Misc", defaultValue: "164px" },
 
 				/**
 				 * Defines the height.
 				 */
-				height : {type : "sap.ui.core.CSSSize", group : "Misc", defaultValue : "74px"},
-				
+				height: { type: "sap.ui.core.CSSSize", group: "Misc", defaultValue: "74px" },
+
 				/**
-	 			 * If this set to true, width and height of the control are determined by the width and height of the container in which the control is placed.
-	 			 * <code>width</code> and <code>height</code> properties are ignored in such case.
+				 * If this set to true, width and height of the control are determined by the width and height of the container in which the control is placed.
+				 * <code>width</code> and <code>height</code> properties are ignored in such case.
 				 */
-				isResponsive: {type: "boolean", group: "Appearance", defaultValue: false}
+				isResponsive: { type: "boolean", group: "Appearance", defaultValue: false }
 			},
-			defaultAggregation : "_chart",
-			aggregations : {
+			defaultAggregation: "_chart",
+			aggregations: {
 				/**
 				 * This private aggregation is used for the internal instance of Smart<*>MicroChart.
 				 */
-				_chart : {
-					type : "sap.ui.core.Control",
-					multiple : false,
-					visibility : "hidden"
+				_chart: {
+					type: "sap.ui.core.Control",
+					multiple: false,
+					visibility: "hidden"
 				}
 			},
-			associations : {
+			associations: {
 				/**
 				 * If the associated control is provided, its <code>text</code> property is set to the Title property of the Chart annotation.
 				 * Title property of the DataPoint annotation is ignored.
 				 */
-				chartTitle : {
-					type : "sap.m.Label",
-					group : "Misc",
-					multiple : false
+				chartTitle: {
+					type: "sap.m.Label",
+					group: "Misc",
+					multiple: false
 				},
 				/**
 				 * If the associated control is provided, its <code>text</code> property is set to the Description property of the Chart annotation.
 				 * Description property of the DataPoint annotation is ignored.
 				 */
-				chartDescription : {
-					type : "sap.m.Label",
-					group : "Misc",
-					multiple : false
+				chartDescription: {
+					type: "sap.m.Label",
+					group: "Misc",
+					multiple: false
 				},
 				/**
 				 * If the associated control is provided, its <code>text</code> property is set to the Unit of Measure. The Value property of the DataPoint annotation should be annotated with this Unit of Measure. It can be either ISOCurrency or Unit from the OData Measures annotations.
 				 */
-				unitOfMeasure : {
-					type : "sap.m.Label",
-					group : "Misc",
-					multiple : false
+				unitOfMeasure: {
+					type: "sap.m.Label",
+					group: "Misc",
+					multiple: false
+				},
+
+				/**
+				 * If the associated control is provided, its <code>text</code> property is set to the free text provided by annotations.
+				 * The Value property of the DataPoint annotation should be annotated with this free text.
+				 * As of 1.42.0, this association is only available for chart type 'Donut'.
+				 *
+				 * @since 1.42.0
+				 */
+				freeText: {
+					type: "sap.m.Label",
+					group: "Misc",
+					multiple: false
 				}
 			},
-			events : {
+			events: {
 
 				/**
 				 * Event fired once the control has been initialized.
 				 */
-				initialize : {}
+				initialize: {}
 			}
 		}
 	});
@@ -186,7 +207,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 				oChart.setProperty("isResponsive", this.getIsResponsive(), true);
 				MicroChartLibrary._passParentContextToChild(this, oChart);
 			}
-			oChart.setProperty("showLabel", this.getShowLabel(), true);
+			if (oChart.getMetadata().hasProperty("showLabel")) {
+				oChart.setProperty("showLabel", this.getShowLabel(), true);
+			}
 			if (oChart.getMetadata().hasAssociation("chartTitle")) {
 				oChart.setAssociation("chartTitle", this.getChartTitle(), true);
 			}
@@ -195,6 +218,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 			}
 			if (oChart.getMetadata().hasAssociation("unitOfMeasure")) {
 				oChart.setAssociation("unitOfMeasure", this.getUnitOfMeasure(), true);
+			}
+			if (oChart.getMetadata().hasAssociation("freeText")) {
+				oChart.setAssociation("freeText", this.getFreeText(), true);
 			}
 		}
 	};
@@ -206,13 +232,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 	SmartMicroChart.prototype._initializeMetadata = function() {
 		if (!this._bIsinitialized) {
 			var oModel = this.getModel();
-			if (oModel && (oModel instanceof sap.ui.model.odata.v2.ODataModel || oModel instanceof sap.ui.model.odata.ODataModel)) {
+			if (oModel && (oModel.getMetadata().getName() === "sap.ui.model.odata.v2.ODataModel" || oModel.getMetadata().getName() === "sap.ui.model.odata.ODataModel")) {
 				if (!this._bMetaModelLoadAttached) {
 					oModel.getMetaModel().loaded().then(this._onMetadataInitialized.bind(this));
 					this._bMetaModelLoadAttached = true;
 				}
 			} else if (oModel) {
-				// Could be a non ODataModel or a synchronous ODataModel --> just create the necessary helpers
+				// Could be a non-ODataModel or a synchronous ODataModel --> just create the necessary helpers
 				this._onMetadataInitialized();
 			}
 		}
@@ -228,8 +254,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 		// independent of ODataModel.
 		if (oModel && sEntitySetName) {
 			this._oChartProvider = new ChartProvider({
-				entitySet : sEntitySetName,
-				model : oModel
+				entitySet: sEntitySetName,
+				model: oModel,
+				chartQualifier: this.data("chartQualifier")
 			});
 		}
 	};
@@ -267,7 +294,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 		switch (sChartType) {
 			case "line" :
 			case "area" :
-				if (this._oChartViewMetadata.annotation.ChartType.EnumMember.split("/").pop().toLowerCase() === "area") {
+				var sType = this._oChartViewMetadata.annotation.ChartType.EnumMember.split("/").pop().toLowerCase();
+				if (sType === "area" || sType === "line") {
 					this._buildSmartAreaMicroChart();
 				} else {
 					jQuery.sap.log.error("Not supported chart type used.");
@@ -275,6 +303,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 				break;
 			case "bullet" :
 				this._buildSmartBulletMicroChart();
+				break;
+			case "donut" :
+				this._buildSmartRadialMicroChart();
 				break;
 			default :
 				jQuery.sap.log.error("Not supported chart type used.");
@@ -286,13 +317,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 	 * Constructs an instance of SmartAreaMicroChart and sets it in _chart aggregation.
 	 * @private
 	 */
-	SmartMicroChart.prototype._buildSmartAreaMicroChart = function () {
+	SmartMicroChart.prototype._buildSmartAreaMicroChart = function() {
 		this.setAggregation("_chart", new CompLibrary.smartmicrochart.SmartAreaMicroChart({
-			entitySet : this.getEntitySet(),
-			chartBindingPath : this.getChartBindingPath(),
-			enableAutoBinding : this.getEnableAutoBinding(),
-			showLabel : this.getShowLabel(),
-			initialize : [this._onChartInitialized, this]
+			entitySet: this.getEntitySet(),
+			chartBindingPath: this.getChartBindingPath(),
+			enableAutoBinding: this.getEnableAutoBinding(),
+			showLabel: this.getShowLabel(),
+			initialize: [this._onChartInitialized, this],
+			customData: [
+				new CustomData({
+					key: "chartQualifier",
+					value: this.data("chartQualifier")
+				})
+			]
 		}), true);
 	};
 
@@ -300,13 +337,38 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 	 * Constructs an instance of SmartBulletMicroChart and sets it in _chart aggregation.
 	 * @private
 	 */
-	SmartMicroChart.prototype._buildSmartBulletMicroChart = function () {
+	SmartMicroChart.prototype._buildSmartBulletMicroChart = function() {
 		this.setAggregation("_chart", new CompLibrary.smartmicrochart.SmartBulletMicroChart({
-			entitySet : this.getEntitySet(),
-			chartBindingPath : this.getChartBindingPath(),
-			enableAutoBinding : this.getEnableAutoBinding(),
-			showLabel : this.getShowLabel(),
-			initialize : [this._onChartInitialized, this]
+			entitySet: this.getEntitySet(),
+			chartBindingPath: this.getChartBindingPath(),
+			enableAutoBinding: this.getEnableAutoBinding(),
+			showLabel: this.getShowLabel(),
+			initialize: [this._onChartInitialized, this],
+			customData: [
+				new CustomData({
+					key: "chartQualifier",
+					value: this.data("chartQualifier")
+				})
+			]
+		}), true);
+	};
+
+	/**
+	 * Constructs an instance of SmartRadialMicroChart and sets it in _chart aggregation.
+	 * @private
+	 */
+	SmartMicroChart.prototype._buildSmartRadialMicroChart = function() {
+		this.setAggregation("_chart", new CompLibrary.smartmicrochart.SmartRadialMicroChart({
+			entitySet: this.getEntitySet(),
+			chartBindingPath: this.getChartBindingPath(),
+			enableAutoBinding: this.getEnableAutoBinding(),
+			initialize: [this._onChartInitialized, this],
+			customData: [
+				new CustomData({
+					key: "chartQualifier",
+					value: this.data("chartQualifier")
+				})
+			]
 		}), true);
 	};
 
@@ -322,18 +384,22 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 	/**
 	 * Executes a validity check of the metadata of the chart, necessary to create the inner chart.
 	 * In particular, checks if the chart type annotation is available in the proper format.
-	 * @returns {boolean}
+	 * @returns {boolean} True if the metadata of the chart is valid, otherwise false.
 	 * @private
 	 */
 	SmartMicroChart.prototype._checkChartMetadata = function() {
-			if (this._oChartViewMetadata.chartType && this._oChartViewMetadata.annotation &&
-					this._oChartViewMetadata.annotation.ChartType &&
-					this._oChartViewMetadata.annotation.ChartType.EnumMember &&
-					this._oChartViewMetadata.annotation.ChartType.EnumMember.length > 0) {
+		if (this._oChartViewMetadata.chartType && this._oChartViewMetadata.annotation &&
+			this._oChartViewMetadata.annotation.ChartType &&
+			this._oChartViewMetadata.annotation.ChartType.EnumMember &&
+			this._oChartViewMetadata.annotation.ChartType.EnumMember.length > 0) {
 			return true;
 		} else {
 			return false;
 		}
+	};
+
+	SmartMicroChart.prototype.getAccessibilityInfo = function() {
+		return SmartMicroChartCommons._getAccessibilityInfo.apply(this);
 	};
 
 	return SmartMicroChart;

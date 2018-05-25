@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -40,7 +40,7 @@ sap.ui.define([
 				/**
 				 * Array of key of {@link sap.gantt.config.ChartScheme}
 				 */
-				chartSchemeKeys: {type: "array", defaultValue: []}
+				chartSchemeKeys: {type: "string[]", defaultValue: []}
 			}
 		}
 	});

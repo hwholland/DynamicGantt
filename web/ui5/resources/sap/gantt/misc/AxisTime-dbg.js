@@ -5,8 +5,9 @@
 	
  */
 sap.ui.define([
-	"sap/ui/base/Object", "sap/ui/core/Core", "sap/gantt/misc/Utility", "sap/gantt/misc/Format", "sap/ui/thirdparty/d3"
-], function (BaseObject, Core, Utility, Format) {
+	"sap/ui/base/Object", "sap/ui/core/Core", "sap/gantt/misc/Utility", "sap/gantt/misc/Format",
+	"sap/gantt/axistime/ProportionZoomStrategy"
+], function (BaseObject, Core, Utility, Format, ProportionZoomStrategy) {
 	// Utility cannot be referenced because of cyclic dependency between AxisOrdinal and Utility, use global name to reference
 	"use strict";
 
@@ -44,14 +45,14 @@ sap.ui.define([
 		this.locale = locale;
 
 		if (locale && locale.getUtcdiff()) {
-			var format = d3.time.format("%Y%m%d%H%M%S");
+			var format = Format.getTimeStampFormatter();
 			this.timeZoneOffset = Math.round((format.parse("20000101" + locale.getUtcdiff()).getTime() - format.parse("20000101000000").getTime()) / 1000);
 			if (locale.getUtcsign() === "-") {
 				this.timeZoneOffset = -this.timeZoneOffset;
 			}
 		}
 
-		this._oZoomStrategy = oZoomStrategy ? oZoomStrategy : sap.gantt.config.DEFAULT_TIME_ZOOM_STRATEGY;
+		this._oZoomStrategy = oZoomStrategy ? oZoomStrategy : new ProportionZoomStrategy();
 	};
 
 	/*
@@ -70,20 +71,20 @@ sap.ui.define([
 	 * Given a date within the timeRange, this function returns the corresponding value within the viewRange.
 	 * 
 	 * @param {date} time Given date within the timeRange.
-	 * 
+	 * @param: TODO
 	 * @return {number} Value corresponding to the given date within the viewRange.
 	 * 
 	 * @public
 	 */
 	
-	AxisTime.prototype.timeToView = function(time){
+	AxisTime.prototype.timeToView = function(time, bIgnoreOffset){
 		if (Core.getConfiguration().getRTL() !== true) {
-			return Math.round((this.scale(time) - this.zoomOrigin) * this.zoomRate - this.viewOffset);
+			return Math.round((this.scale(time) - this.zoomOrigin) * this.zoomRate - (bIgnoreOffset ? 0 : this.viewOffset));
 		} else {
-			return Math.round(this.viewRange[1] * this.zoomRate - (((this.scale(time) + this.zoomOrigin) * this.zoomRate) + this.viewOffset));
+			return Math.round(this.viewRange[1] * this.zoomRate - (((this.scale(time) + this.zoomOrigin) * this.zoomRate) + (bIgnoreOffset ? 0 : this.viewOffset)));
 		}
 	};
-	
+
 	/**
 	 * Returns the date within the timeRange for the corresponding value within the viewRange.
 	 * 
@@ -93,12 +94,12 @@ sap.ui.define([
 	 * 
 	 * @public
 	 */
-	
-	AxisTime.prototype.viewToTime = function(value){
+
+	AxisTime.prototype.viewToTime = function(value, bIgnoreOffset){
 		if (Core.getConfiguration().getRTL() !== true) {
-			return this.scale.invert((value + this.viewOffset) / this.zoomRate + this.zoomOrigin);
+			return this.scale.invert((value + (bIgnoreOffset ? 0 : this.viewOffset)) / this.zoomRate + this.zoomOrigin);
 		} else {
-			return this.scale.invert(this.viewRange[1] - (value + this.viewOffset) / this.zoomRate - this.zoomOrigin);
+			return this.scale.invert(this.viewRange[1] - (value + (bIgnoreOffset ? 0 : this.viewOffset)) / this.zoomRate - this.zoomOrigin);
 		}
 	};
 
@@ -159,7 +160,7 @@ sap.ui.define([
 		return [Math.round((range[0] - this.zoomOrigin) * this.zoomRate - this.viewOffset),
 		        Math.round((range[1] - this.zoomOrigin) * this.zoomRate - this.viewOffset)];
 	};
-	
+
 	/**
 	 * Retrieves the value of oZoomStrategy.
 	 * 
@@ -250,7 +251,7 @@ sap.ui.define([
 	AxisTime.prototype.setLocale = function(locale){
 		this.locale = locale;
 		if (locale && locale.getUtcdiff()) {
-			var format = d3.time.format("%Y%m%d%H%M%S");
+			var format = Format.getTimeStampFormatter();
 			this.timeZoneOffset = Math.round((format.parse("20000101" + locale.getUtcdiff()).getTime() - format.parse("20000101000000").getTime()) / 1000);
 			if (locale.getUtcsign() === "-") {
 				this.timeZoneOffset = -this.timeZoneOffset;
@@ -281,44 +282,36 @@ sap.ui.define([
 	 * @return {number} Index of the time interval level in array oZoomStrategy.
 	 * 
 	 * @public
+	 * @deprecated As of version 1.44, replaced by sap.gantt.axistime.AxisTimeStrategyBase.getZoomLevel
 	 */
 	AxisTime.prototype.getCurrentTickTimeIntervalLevel = function(){
-		var startTime = d3.time.format("%Y%m%d%H%M%S").parse("20000101000000");
-		var start = this.scale(startTime);
-		var count = 0;
-		for (var i in this._oZoomStrategy) {
-			var interval = this._oZoomStrategy[i].innerInterval;
-			var end = this.scale(jQuery.sap.getObject(interval.unit).offset(startTime, interval.span));
-			var r = Math.ceil((end - start) * this.zoomRate);
-			if (r >= interval.range) {
-				return count;
+		var oTimeLineOption = this._oZoomStrategy.getTimeLineOption(),
+			oTimeLineOptions = this._oZoomStrategy.getTimeLineOptions(),
+			i = 0;
+		for (var sAttr in oTimeLineOptions) {
+			if (oTimeLineOptions[sAttr] === oTimeLineOption) {
+				return i;
 			}
-			count++;
+			i++;
 		}
-		return count - 1;
 	};
-
+	
 	/**
 	 * Retrieves a key of the time interval level in array oZoomStrategy.
 	 * 
 	 * @return {string} Key of the time interval level in array oZoomStrategy.
+	 * @deprecated As of version 1.44, replaced by sap.gantt.axistime.AxisTimeStrategyBase.getZoomLevel
 	 * 
 	 * @public
 	 */
 	AxisTime.prototype.getCurrentTickTimeIntervalKey = function(){
-		var startTime = d3.time.format("%Y%m%d%H%M%S").parse("20000101000000");
-		var start = this.scale(startTime);
-		var iCurrentTickKey, i;
-		for (i in this._oZoomStrategy) {
-			var interval = this._oZoomStrategy[i].innerInterval;
-			var end = this.scale(jQuery.sap.getObject(interval.unit).offset(startTime, interval.span));
-			var r = Math.ceil((end - start) * this.zoomRate);
-			if (r >= interval.range) {
-				iCurrentTickKey = i;
-				break;
+		var oTimeLineOption = this._oZoomStrategy.getTimeLineOption(),
+			oTimeLineOptions = this._oZoomStrategy.getTimeLineOptions();
+		for (var sAttr in oTimeLineOptions) {
+			if (oTimeLineOptions[sAttr] === oTimeLineOption) {
+				return sAttr;
 			}
 		}
-		return iCurrentTickKey ? iCurrentTickKey : i;
 	};
 
 	/**
@@ -334,45 +327,29 @@ sap.ui.define([
 		var value = this.timeToView(utcDate);
 		var localDate = d3.time.second.offset(utcDate,this.timeZoneOffset);
 
-		var oZoomStrategyConfig = this._oZoomStrategy[this.getCurrentTickTimeIntervalKey()].smallInterval;
-		var label = Format.creatTimeLabel(oZoomStrategyConfig, localDate);
-
-		return [{"date": localDate, "value": Math.round(value), "label": label}];
+		return [{"date": localDate, "value": Math.round(value)}];
 	};
 
 	/**
 	 * Retrieves an array of time ticks, each item containing date position and label, for the specified level within the given timeBoundary or viewBoundary.
 	 * 
 	 * @param {number} level Corresponding index in array oZoomStrategy.
-	 * 
 	 * @param {number} timeBoundary Time range within which time ticks are generated.
-	 * 
 	 * @param {number} viewBoundary View range within which time ticks are generated. Available only when timeBoundary isn't specified.
-	 * 
 	 * @return {object} Reference to an array of time ticks, each item containing date, position, and label.
 	 * 
 	 * @public
 	 */
-	AxisTime.prototype.getTickTimeIntervalLabel = function(level, timeBoundary, viewBoundary){
-		var i;
-		var lvl = level;
-		if (typeof level === "number") {
-			var count = 0;
-			for (i in this._oZoomStrategy) {
-				if (count === level) {
-					lvl = i;
-					break;
-				}
-				count++;
-			}
-		}
-
-		var preStartDate, preEndDate;
-		var daylightInterval = null;
+	AxisTime.prototype.getTickTimeIntervalLabel = function(oLevel, timeBoundary, viewBoundary){
+		var i, 
+			preStartDate, 
+			preEndDate, 
+			daylightInterval = null;
+		
 		if (this.locale && this.locale.getDstHorizons().length > 0){
 			daylightInterval = this.locale.getDstHorizons();
 		}
-		var format = d3.time.format("%Y%m%d%H%M%S");
+		var format = Format.getTimeStampFormatter();
 		var dlsIntervals = [];
 		if (daylightInterval){
 			for (i = 0; i < daylightInterval.length; i++){
@@ -438,8 +415,14 @@ sap.ui.define([
 		normalScale = scaleValue.normalScale;
 		var ticks = [];
 		var date, normalDate, value, label;
-		var largeInterval = this._oZoomStrategy[lvl].largeInterval;
-		var smallInterval = this._oZoomStrategy[lvl].smallInterval;
+		var largeInterval = {
+			unit: this._oZoomStrategy.getTimeLineOption().largeInterval.unit,
+			span: this._oZoomStrategy.getTimeLineOption().largeInterval.span
+		};
+		var smallInterval = {
+			unit: this._oZoomStrategy.getTimeLineOption().smallInterval.unit,
+			span: this._oZoomStrategy.getTimeLineOption().smallInterval.span
+		};
 
 		var iIndex, iInner;
 		if (largeInterval) {
@@ -448,7 +431,7 @@ sap.ui.define([
 			var largeNorIntervalTicks = [];
 
 			if (!(visibleScale instanceof Array)){
-				largeIntervalTicks[0] = visibleScale.ticks(jQuery.sap.getObject(largeInterval.unit).range, largeInterval.span);
+				largeIntervalTicks[0] = this._getTimeIntervalTicks(largeInterval, visibleScale);
 			} else {
 				for (iIndex = 0; iIndex < dstScale.length; iIndex++){
 					largeDstIntervalTicks[iIndex] = dstScale[iIndex].ticks(jQuery.sap.getObject(largeInterval.unit).range, largeInterval.span);
@@ -466,7 +449,7 @@ sap.ui.define([
 
 						value = localAxisTime.timeToView(date);
 					
-						label = Format.creatTimeLabel(largeInterval, date);
+						label = this._oZoomStrategy.getUpperRowFormatter().format(date); 
 
 						largeIntervalData.push({"date": date, "value": Math.round(value), "label": label});
 					}
@@ -481,7 +464,7 @@ sap.ui.define([
 
 						value = localAxisTime.timeToView(d3.time.second.offset(date.getTime(), -60 * 60));
 						
-						label = Format.creatTimeLabel(largeInterval, date);
+						label = this._oZoomStrategy.getUpperRowFormatter().format(date);
 
 						largeIntervalData.push({"date": date, "value": Math.round(value), "label": label});
 
@@ -497,7 +480,7 @@ sap.ui.define([
 			var smallNorIntervalTicks = [];
 			var smallIntervalTicks = [];
 			if (!(visibleScale instanceof Array)){
-				smallIntervalTicks[0] = visibleScale.ticks(jQuery.sap.getObject(smallInterval.unit).range, smallInterval.span);
+				smallIntervalTicks[0] = this._getTimeIntervalTicks(smallInterval, visibleScale);
 			} else {
 				for (iIndex = 0; iIndex < dstScale.length; iIndex++){
 					smallDstIntervalTicks[iIndex] = dstScale[iIndex].ticks(jQuery.sap.getObject(smallInterval.unit).range, smallInterval.span);
@@ -509,7 +492,6 @@ sap.ui.define([
 			}
 
 			var smallIntervalData = [];
-			var largeLabel;
 			if (smallIntervalTicks[0]){
 				for (iIndex = 0; iIndex < smallIntervalTicks.length; iIndex++){
 					for (iInner = 0; iInner < smallIntervalTicks[iIndex].length; iInner++) {
@@ -520,7 +502,7 @@ sap.ui.define([
 							for (var d = 0; d < dlsIntervals.length; d++){
 								if (date.getTime() === dlsIntervals[d].startDate.getTime()){
 									changeDate = d3.time.second.offset(date.getTime(), 60 * 60);
-									if ((iInner === smallIntervalTicks[iIndex].length - 1) && (lvl === "1hour" || lvl === "30min" || lvl === "15min" || lvl === "10min" || lvl === "5min")){
+									if ((iInner === smallIntervalTicks[iIndex].length - 1) && this._oZoomStrategy.isLowerRowTickHourSensitive()){
 										ignoreTickFlag = true;
 									}
 								}
@@ -532,18 +514,19 @@ sap.ui.define([
 
 						value = localAxisTime.timeToView(date);
 
+						var sLargeLabel;
 						if (ignoreTickFlag){
 							break;
 						} else if (changeDate){
-							label = Format.creatTimeLabel(smallInterval, changeDate);
-							largeLabel = Format.creatTimeLabel(largeInterval, changeDate);
+							sLargeLabel = this._oZoomStrategy.getUpperRowFormatter().format(changeDate);
+							label = this._oZoomStrategy.getLowerRowFormatter().format(changeDate);
 							changeDate = null;
 						} else {
-							label = Format.creatTimeLabel(smallInterval, date);
-							largeLabel = Format.creatTimeLabel(largeInterval, date);
+							sLargeLabel = this._oZoomStrategy.getUpperRowFormatter().format(date);
+							label = this._oZoomStrategy.getLowerRowFormatter().format(date);
 						}
 
-						smallIntervalData.push({"date": date, "value": Math.round(value), "label": label, "largeLabel": largeLabel});
+						smallIntervalData.push({"date": date, "value": Math.round(value), "label": label, "largeLabel": sLargeLabel});
 					}
 				}
 			}
@@ -555,7 +538,7 @@ sap.ui.define([
 						normalDate = smallNorIntervalTicks[iIndex][iInner];
 						var oChangeDate;
 						var bIgnoreTickFlag = false;
-						if ((iInner === smallDstIntervalTicks[iIndex].length - 1) && (lvl === "1hour" || lvl === "30min" || lvl === "15min" || lvl === "10min" || lvl === "5min")){
+						if ((iInner === smallDstIntervalTicks[iIndex].length - 1) && this._oZoomStrategy.isLowerRowTickHourSensitive()){
 							if (timeRangeSet.length > 0){
 								for (var rangeItem = 0; rangeItem < timeRangeSet.length; rangeItem++){
 									if ((!timeRangeSet[rangeItem].haveDST) && (normalDate.getTime() === timeRangeSet[rangeItem].range[0].getTime())){
@@ -575,7 +558,7 @@ sap.ui.define([
 								}
 							}
 						}
-						if (lvl !== "1hour" && lvl !== "30min" && lvl !== "15min" && lvl !== "10min" && lvl !== "5min"){
+						if (!this._oZoomStrategy.isLowerRowTickHourSensitive()){
 							value = localAxisTime.timeToView(d3.time.second.offset(date.getTime(), -60 * 60));
 						} else {
 							value = localAxisTime.timeToView(normalDate);
@@ -584,15 +567,14 @@ sap.ui.define([
 							break;
 						} else if (oChangeDate){
 							
-							label = Format.creatTimeLabel(smallInterval, oChangeDate);
-							largeLabel = Format.creatTimeLabel(largeInterval, oChangeDate);
+							label = this._oZoomStrategy.getLowerRowFormatter().format(oChangeDate);
 							oChangeDate = null;
 						} else {
-							largeLabel = Format.creatTimeLabel(largeInterval, date);
-							label = Format.creatTimeLabel(smallInterval, date);
+							
+							label = this._oZoomStrategy.getLowerRowFormatter().format(date);
 						}
 
-						smallIntervalData.push({"date": date, "value": Math.round(value), "label": label, "largeLabel": largeLabel});
+						smallIntervalData.push({"date": date, "value": Math.round(value), "label": label});
 
 					}
 				}
@@ -605,6 +587,23 @@ sap.ui.define([
 		return ticks;
 	};
 	// <= public methods
+
+	AxisTime.prototype._getTimeIntervalTicks = function (oTimeInterval, visibleScale) {
+		if ( oTimeInterval.unit !== sap.gantt.config.TimeUnit.week ) {
+			return visibleScale.ticks(jQuery.sap.getObject(oTimeInterval.unit).range, oTimeInterval.span);
+		}
+		//when time interval is week
+		var sLang = sap.ui.getCore().getConfiguration().getLanguage().toLowerCase();
+		var sTimeZone = sLang.substring(0,2) === "gb" ? sLang : sLang.substr(0,2);
+		var oWeekFirstDay = sap.gantt.config.WeekFirstDay;
+
+		if (!oWeekFirstDay[sTimeZone]){
+			return visibleScale.ticks(jQuery.sap.getObject(oTimeInterval.unit).range, oTimeInterval.span);
+		}
+
+		return visibleScale.ticks(jQuery.sap.getObject(oWeekFirstDay[sTimeZone]).range, oTimeInterval.span);
+
+	};
 
 	AxisTime.prototype._calculateScale = function(timeRangeSet, viewRangeSet, timeRange, viewRange, localTimeRange){
 		var visibleScale = null;

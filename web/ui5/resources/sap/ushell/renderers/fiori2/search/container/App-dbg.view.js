@@ -1,25 +1,22 @@
 // iteration 0 ok
-/* global jQuery, sap, window, console */
+/* global jQuery, sap, window, console, document */
 
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview
  *
  * @version
  */
 
-(function(global) {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchModel',
+    'sap/ushell/renderers/fiori2/search/SearchShellHelper',
+    'sap/m/Bar', 'sap/ushell/renderers/fiori2/search/SearchHelper',
+    'sap/ushell/renderers/fiori2/search/controls/SearchFilterBar'
+], function(SearchModel, SearchShellHelper, Bar, SearchHelper, SearchFilterBar) {
     "use strict";
 
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchShellHelper');
-
-
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.controls.SearchBar');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-
-    //     jQuery.sap.require('sap.ushell.renderers.fiori2.search.controls.SearchMultiSelectionControl');
-
-    sap.ui.jsview("sap.ushell.renderers.fiori2.search.container.App", {
+    return sap.ui.jsview("sap.ushell.renderers.fiori2.search.container.App", {
 
         createContent: function() {
             var that = this;
@@ -37,16 +34,55 @@
                 viewName: "sap.ushell.renderers.fiori2.search.container.Search",
                 type: sap.ui.core.mvc.ViewType.JS
             });
-
             this.oSearchResults.setModel(that.oModel);
             this.oSearchResults.setAppView(that);
 
+            // search bar
+            var searchBar = new sap.m.Bar({
+                contentLeft: [
+                    that.oSearchResults.assembleFilterButton(),
+                    that.oSearchResults.assembleDataSourceTapStrips()
+                ],
+                contentRight: that.oSearchResults.assembleSearchToolbar()
+            });
+            searchBar.addStyleClass('sapUshellSearchBar');
+
+            // filter contextual bar
+            var filterBar = new sap.ushell.renderers.fiori2.search.controls.SearchFilterBar({
+                visible: {
+                    parts: [{
+                        path: '/facetVisibility'
+                    }, {
+                        path: '/uiFilter/rootCondition'
+                    }],
+                    formatter: function(facetVisibility, rootCondition) {
+                        if (!facetVisibility && rootCondition && rootCondition.hasFilters()) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }
+            });
+
+
             // deserialze URL
-            this.oModel.deserializeURL();
+            this.oModel.parseURL();
 
             // create page
-            this.oPage = this.pageFactory("searchPage", [this.oSearchResults]);
+            this.oPage = this.pageFactory("searchPage", this.oSearchResults, searchBar, filterBar);
 
+            // reorg tab strips
+            this.oSearchResults.reorgTabBarSequence();
+            this.oPage.addEventDelegate({
+                onAfterRendering: function(oEvent) {
+                    window.onbeforeunload = function() {
+                        that.oModel.eventLogger.logEvent({
+                            type: that.oModel.eventLogger.LEAVE_PAGE
+                        });
+                    };
+                }
+            });
             return this.oPage;
         },
 
@@ -54,57 +90,36 @@
 
         },
 
-        pageFactory: function(sId, oControl, bDisableBouncing) {
+        pageFactory: function(sId, oControl, header, subHeader) {
             var that = this;
-
-            var oSearchBar = new sap.ushell.renderers.fiori2.search.controls.SearchBar({
-                oSearchLayout: that.oSearchResults.searchLayout,
-                filterButtonPressed: that.oModel.getProperty('/facetVisibility'),
-                filterButtonVisible: {
-                    parts: [{
-                        path: '/businessObjSearchEnabled'
-                    }],
-                    formatter: function(businessObjSearchEnabled) {
-                        return !sap.ui.Device.system.phone &&  businessObjSearchEnabled;
-                    }
-                },
-                contentMiddle: new sap.m.Label({
-                    text: {
-                        parts: [{
-                            path: '/count'
-                        }],
-                        formatter: function(count) {
-                            if (typeof count !== 'number') {
-                                return "";
-                            }
-                            var countAsStr = sap.ui.core.format.NumberFormat.getIntegerInstance({
-                                style: (Math.abs(count) >= 99950 ? "short" : "standard"), // 99950 is the first number (with precision 3 rounding) that will map to 100000; same as "parseFloat((Math.abs(number)).toPrecision(3)) >= 100000"
-                                precision: 3
-                            }).format(count);
-                            return sap.ushell.resources.i18n.getText("searchResults") + " (" + countAsStr + ")";
-                        }
-                    },
-                    tooltip: {
-                        parts: [{
-                            path: '/count'
-                        }],
-                        formatter: function(count) {
-                            if (typeof count !== "number") {
-                                return "";
-                            }
-                            return sap.ushell.resources.i18n.getText("searchResults") + " (" + count + ")";
-                        }
-                    }
-                })
-            });
-            oSearchBar.setModel(that.oModel);
 
             var oPage = new sap.m.Page({
                 id: sId,
-                customHeader: oSearchBar,
-                content: oControl,
+                customHeader: header,
+                subHeader: subHeader,
+                content: [oControl],
                 enableScrolling: true,
-                showFooter: true
+                showFooter: {
+                    parts: ['/multiSelectionAvailable', '/multiSelectionActions', '/errors/length'],
+                    formatter: function(multiSelectionAvailable, multiSelectionActions, numberErrors) {
+                        return multiSelectionAvailable || numberErrors > 0;
+                    }
+                },
+                showHeader: true,
+                showSubHeader: {
+                    parts: [{
+                        path: '/facetVisibility'
+                    }, {
+                        path: '/uiFilter/rootCondition'
+                    }],
+                    formatter: function(facetVisibility, rootCondition) {
+                        if (!facetVisibility && rootCondition && rootCondition.hasFilters()) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }
             });
             oPage.setModel(that.oModel);
 
@@ -130,15 +145,9 @@
             if (!sap.ui.Device.system.desktop) {
                 oPage._bUseIScroll = true;
             }
-            if (bDisableBouncing) {
-                this.disableBouncing(oPage);
-            }
-
-            // compact class for non-touch devices
-            if (!sap.ui.Device.support.touch) {
-                var oView = sap.ui.getCore().byId("searchContainerApp");
-                oView.addStyleClass('sapUiSizeCompact');
-            }
+            //            if (false) {
+            //                this.disableBouncing(oPage);
+            //            }
 
             return oPage;
         },
@@ -183,7 +192,8 @@
 
                         var actions = selectionHandler.actionsForDataSource();
                         that.oModel.setProperty("/multiSelectionActions", actions);
-
+                        // if one cannot program performant, at least take the blame in style
+                        /*eslint-disable no-loop-func*/
                         for (i = 0; i < actions.length; i++) {
                             var action = actions[i];
                             var actionButton = new sap.m.Button({
@@ -211,19 +221,28 @@
                             actionButton.addStyleClass("sapUshellSearchResultList-multiSelectionActionButton");
                             that.oBar.insertContent(actionButton, 2);
                         }
-
+                        /*eslint-enable no-loop-func*/
                     } else {
-                        that.oSearchResults.resultList.disableSelectionMode();
-                        that.oModel.setProperty("/multiSelectionEnabled", false);
+                        var disablePromise = that.oSearchResults.resultList.disableSelectionMode();
+                        disablePromise.done(function() {
+                            that.oModel.setProperty("/multiSelectionEnabled", false);
+                            that.oModel.setProperty("/multiSelectionActions", undefined);
 
-                        that.oModel.setProperty("/multiSelectionActions", undefined);
-
-                        for (i = 0; i < content.length; i++) {
-                            control = content[i];
-                            if (control.hasStyleClass("sapUshellSearchResultList-multiSelectionActionButton")) {
-                                that.oBar.removeContent(control);
+                            var results = that.oModel.getProperty("/boResults");
+                            if (results) {
+                                for (var j = 0; j < results.length; j++) {
+                                    var result = results[j];
+                                    result.selected = false;
+                                }
                             }
-                        }
+
+                            for (i = 0; i < content.length; i++) {
+                                control = content[i];
+                                if (control.hasStyleClass("sapUshellSearchResultList-multiSelectionActionButton")) {
+                                    that.oBar.removeContent(control);
+                                }
+                            }
+                        });
                     }
                 },
                 visible: {
@@ -231,62 +250,16 @@
                         path: '/multiSelectionAvailable'
                     }],
                     mode: sap.ui.model.BindingMode.OneWay
-                },
-                pressed: {
-                    parts: [{
-                        path: '/multiSelectionEnabled'
-                    }],
-                    mode: sap.ui.model.BindingMode.OneWay
                 }
             });
             oMultiSelectionButton.setModel(this.oModel);
             oMultiSelectionButton.addStyleClass("sapUshellSearchResultList-toggleMultiSelectionButton");
 
-            // create bookmark button (entry in action sheet)
-            var oBookmarkButton = new sap.ushell.ui.footerbar.AddBookmarkButton({
-                beforePressHandler: function() {
-                    var oAppData = {
-                        url: document.URL,
-                        title: that.oModel.getDocumentTitle(),
-                        icon: sap.ui.core.IconPool.getIconURI("search")
-                    };
-                    oBookmarkButton.setAppData(oAppData);
-                }
-            });
-            oBookmarkButton.setWidth('auto');
-
-            var oEmailButton = new sap.m.Button();
-            oEmailButton.setIcon("sap-icon://email");
-            oEmailButton.setText(sap.ushell.resources.i18n.getText("eMailFld"));
-            oEmailButton.attachPress(function() {
-                sap.m.URLHelper.triggerEmail(null, that.oModel.getDocumentTitle(), document.URL);
-            });
-            oEmailButton.setWidth('auto');
-
-            // add these two jam buttons when we know how to configure jam in fiori  //TODO
-            //var oJamShareButton = new sap.ushell.ui.footerbar.JamShareButton();
-            //var oJamDiscussButton = new sap.ushell.ui.footerbar.JamDiscussButton();
-
-
-            // create action sheet
-            var oActionSheet = new sap.m.ActionSheet({
-                placement: 'Top',
-                buttons: [oBookmarkButton, oEmailButton]
-            });
-
-            // button which opens action sheet
-            var oShareButton = new sap.m.Button({
-                icon: 'sap-icon://action',
-                tooltip: sap.ushell.resources.i18n.getText('shareBtn'),
-                press: function() {
-                    oActionSheet.openBy(oShareButton);
-                }
-            });
-
             // create error message popover
             var oErrorPopover = new sap.m.MessagePopover({
                 placement: "Top"
-            }).setModel(this.oModel);
+            });
+            oErrorPopover.setModel(this.oModel);
 
             oErrorPopover.bindAggregation("items", "/errors", function(sId, oContext) {
                 var item = new sap.m.MessagePopoverItem({
@@ -334,6 +307,15 @@
                 }
             });
 
+            oErrorButton.addDelegate({
+                onAfterRendering: function() {
+                    if (!that.oModel.getProperty('/isErrorPopovered')) {
+                        oErrorButton.firePress();
+                        that.oModel.setProperty('/isErrorPopovered', true);
+                    }
+                }
+            });
+
             oErrorButton.setLayoutData(new sap.m.OverflowToolbarLayoutData({
                 priority: sap.m.OverflowToolbarPriority.NeverOverflow
             }));
@@ -342,14 +324,10 @@
                 priority: sap.m.OverflowToolbarPriority.NeverOverflow
             }));
 
-            oShareButton.setLayoutData(new sap.m.OverflowToolbarLayoutData({
-                priority: sap.m.OverflowToolbarPriority.NeverOverflow
-            }));
-
             var content = [
                 oErrorButton,
                 new sap.m.ToolbarSpacer(),
-                oMultiSelectionButton, oShareButton
+                oMultiSelectionButton
             ];
 
             // create footer bar
@@ -366,4 +344,4 @@
             oPage.setFooter(that.oBar);
         }
     });
-}(window));
+});

@@ -11,28 +11,35 @@
  *@memberOf sap.apf.ui.reuse.view
  * 
  */
-sap.ui.jsfragment("sap.apf.ui.reuse.fragment.selectionDisplay", {
-	createContent : function(oController) {
-		this.oController = oController;
-		this.contentWidth = jQuery(window).height() * 0.6 + "px"; // height and width for the dialog relative to the window
-		this.contentHeight = jQuery(window).height() * 0.6 + "px";
-		var self = this;
-		this.oCoreApi = oController.oCoreApi;
-		this.oUiApi = oController.oUiApi;
-		var closeButton = new sap.m.Button({
-			text : self.oCoreApi.getTextNotHtmlEncoded("close"),
-			press : function() {
-				self.selectionDisplayDialog.close();
-				self.selectionDisplayDialog.destroy();
+(function() {
+	"use strict";
+	sap.ui.jsfragment("sap.apf.ui.reuse.fragment.selectionDisplay", {
+		createContent : function(oController) {
+			var selectedRepresentation = oController.getCurrentRepresentation();
+			var oRequiredFilterOptions = selectedRepresentation.getParameter().requiredFilterOptions;
+			var selectionData = selectedRepresentation.getSortedSelections();
+			var oRequiredPropertyMetaData = selectedRepresentation.getMetaData().getPropertyMetadata(selectedRepresentation.getParameter().requiredFilters[0]);
+			var selectedDimension = oRequiredPropertyMetaData.label || oRequiredPropertyMetaData.name;
+			if (oRequiredFilterOptions && oRequiredFilterOptions.fieldDesc) {
+				selectedDimension = oController.oCoreApi.getTextNotHtmlEncoded(oRequiredFilterOptions.fieldDesc);
 			}
-		});
-		var oActiveStep = this.oCoreApi.getActiveStep();
-		var selectedRepresentation = oActiveStep.getSelectedRepresentation();
-		var selectionData = typeof selectedRepresentation.getSelections === "function" ? selectedRepresentation.getSelections() : undefined; //Returns the filter selections
-		var selectedDimension = selectedRepresentation.getMetaData().getPropertyMetadata(selectedRepresentation.getParameter().requiredFilters[0]).label;
-		var oModel = new sap.ui.model.json.JSONModel();
-		//Preparing the data list in the dialog
-		if (selectionData !== undefined && selectionData.length > 0) {
+			var selectionDisplayDialog = new sap.m.Dialog({
+				id : this.createId("idSelectionDisplayDialog"),
+				title : oController.oCoreApi.getTextNotHtmlEncoded("selected-required-filter", [ selectedDimension ]) + " (" + selectionData.length + ")",
+				contentWidth : jQuery(window).height() * 0.6 + "px",
+				contentHeight : jQuery(window).height() * 0.6 + "px",
+				buttons : [ new sap.m.Button({
+					text : oController.oCoreApi.getTextNotHtmlEncoded("close"),
+					press : function() {
+						selectionDisplayDialog.close();
+						selectionDisplayDialog.destroy();
+					}
+				}) ],
+				afterClose : function() {
+					selectionDisplayDialog.destroy();
+				}
+			});
+			//Preparing the data list in the dialog
 			var oData = {
 				selectionData : selectionData
 			};
@@ -44,20 +51,12 @@ sap.ui.jsfragment("sap.apf.ui.reuse.fragment.selectionDisplay", {
 					})
 				}
 			});
-			oModel.setSizeLimit(selectedRepresentation.getSelections().length);
+			var oModel = new sap.ui.model.json.JSONModel();
+			oModel.setSizeLimit(selectionData.length);
 			oModel.setData(oData);
 			selectionList.setModel(oModel);
-			self.selectionDisplayDialog = new sap.m.Dialog({
-				title : this.oCoreApi.getTextNotHtmlEncoded("selected-required-filter", [ selectedDimension ]) + " (" + selectionData.length + ")",
-				contentWidth : self.contentWidth,
-				contentHeight : self.contentHeight,
-				buttons : [ closeButton ],
-				content : [ selectionList ],
-				afterClose : function() {
-					self.selectionDisplayDialog.destroy();
-				}
-			});
-			return self.selectionDisplayDialog;
+			selectionDisplayDialog.addContent(selectionList);
+			return selectionDisplayDialog;
 		}
-	}
-});
+	});
+}());

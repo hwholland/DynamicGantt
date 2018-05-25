@@ -4,13 +4,13 @@
         xmlns:build="sap.build"
         xmlns:ovp="sap.ovp.ui"
         xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1">
-    <QuickViewCard id="quickViewCard" class="sapMPanelContent sapOvpCardContent">
+    <QuickViewCard id="quickViewCard" class="sapMPanelContent sapOvpCardContent cardType">
         <customData>
             <ovp:CustomData key="aria-label" value="{ovplibResourceBundle>quickViewCard}" writeToDom="true" />
-            <ovp:CustomData key="role" value="heading" writeToDom="true" />
         </customData>
         <template:with path="entityType>com.sap.vocabularies.UI.v1.HeaderInfo" var="header">
             <QuickViewPage
+                    pageId="quickViewPage"
                     header="{= ${header>TypeNamePlural} ? ${path: 'header>TypeNamePlural', formatter: 'sap.ui.model.odata.AnnotationHelper.format'} :  '' }"
                     icon="{= ${header>ImageUrl} ? ${path: 'header>ImageUrl', formatter: 'sap.ui.model.odata.AnnotationHelper.format'} : (${header>TypeImageUrl} ? ${path: 'header>TypeImageUrl', formatter: 'sap.ui.model.odata.AnnotationHelper.format'} : '') }"
                     title="{= ${header>Title/Value} ? ${path: 'header>Title/Value', formatter: 'sap.ui.model.odata.AnnotationHelper.format'} :  '' }"

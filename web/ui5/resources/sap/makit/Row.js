@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Row");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");sap.ui.core.Element.extend("sap.makit.Row",{metadata:{deprecated:true,library:"sap.makit",aggregations:{"cells":{type:"sap.makit.Column",multiple:true,singularName:"cell"}}}});
 /*!

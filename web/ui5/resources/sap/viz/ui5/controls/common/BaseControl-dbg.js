@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.controls.common.BaseControl.
@@ -56,7 +56,6 @@ sap.ui.define(['sap/ui/core/Control','sap/viz/library'],
 			'resize' : null
 		};
 
-		this._theme = null;
 		this._locale = null;
 
 		this._pendingRerendering = false;
@@ -94,7 +93,7 @@ sap.ui.define(['sap/ui/core/Control','sap/viz/library'],
 	};
 
 	BaseControl.prototype.onThemeChanged = function() {
-		if (this._theme !== sap.ui.getCore().getConfiguration().getTheme()) {
+	    if (this.getDomRef()) {
 		    this.invalidate();
 	        if (!this._pendingRerendering) {
 	            this._render();
@@ -112,7 +111,6 @@ sap.ui.define(['sap/ui/core/Control','sap/viz/library'],
 		if (this._resourceLoaded && this.getDomRef()) {
 			this._pendingRerendering = false;
 
-			this._theme = sap.ui.getCore().getConfiguration().getTheme();
 			this._locale = sap.ui.getCore().getConfiguration().getLocale();
 
 			if (!this._app$) {

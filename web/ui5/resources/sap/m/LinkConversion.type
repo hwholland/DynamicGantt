@@ -12,7 +12,7 @@
             <documentation>Valid links with protocols, such as http, https, ftp.</documentation>
         </value>
         <value name="All">
-            <documentation>Valid links with protocols, such as http, https, ftp and those starting with the string "www".</documentation>
+            <documentation>Valid links with protocols, such as http, https, ftp and those starting with the string &quot;www&quot;.</documentation>
         </value>
     </enumeration>
 </simple-type>

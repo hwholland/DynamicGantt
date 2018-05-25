@@ -4,11 +4,12 @@
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
 /*global sap*/
-jQuery.sap.require("sap.apf.modeler.ui.utils.nullObjectChecker");
-sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ], function(BaseController) {
+sap.ui.define([
+	"sap/apf/modeler/ui/controller/overwriteExistingConfiguration",
+	"sap/apf/modeler/ui/utils/nullObjectChecker"
+], function(BaseController, nullObjectChecker) {
 	"use strict";
 	var oCoreApi, oParentControl, oApplicationHandler, overwriteConfirmationDialog, appIdFromConfigFile;
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
 	function _setDisplayText(oController) {
 		var oTextReader = oCoreApi.getText;
 		oController.byId("idImportFilesDialog").setTitle(oTextReader("importConfig"));
@@ -43,13 +44,18 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 			oController.handleCancelOfImportFilesDialog();
 		}
 	}
+	function _showSuccessMessageToast(sMsgCode) {
+		var oMessageObject = oCoreApi.createMessageObject({
+			code : sMsgCode
+		});
+		oCoreApi.putMessage(oMessageObject);
+	}
 	function _callbackImport(configuration, metadata, messageObject) {
 		var oController = this;
-		var successsMsgForConfigFileImport = oCoreApi.getText("successsMsgForConfigFileImport");
 		var oTextPropertyFileUploader = oController.byId("idTextFileUploader");
 		if (!nullObjectChecker.checkIsNotUndefined(messageObject)) {
 			oParentControl.fireEvent("updateAppListEvent");
-			sap.m.MessageToast.show(successsMsgForConfigFileImport);
+			_showSuccessMessageToast("11515");
 			if (oTextPropertyFileUploader && oTextPropertyFileUploader.getValue()) {
 				oTextPropertyFileUploader.upload();
 			}
@@ -65,10 +71,9 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 		}
 	}
 	function _importPropertiesFile(oController, aPropertyTexts) {
-		var successsMsgForPropertyFileImport = oCoreApi.getText("successsMsgForPropertyFileImport");
 		oCoreApi.importTexts(aPropertyTexts, function(messageObject) {
 			if (!nullObjectChecker.checkIsNotUndefined(messageObject)) {
-				sap.m.MessageToast.show(successsMsgForPropertyFileImport);
+				_showSuccessMessageToast("11516");
 			} else {
 				var oMessageObject = oCoreApi.createMessageObject({
 					code : "11503"
@@ -84,8 +89,16 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 			var oController = this;
 			oCoreApi = oController.getView().getViewData().oCoreApi;
 			oParentControl = oController.getView().getViewData().oParentControl;
-			oCoreApi.getApplicationHandler(function(applicationHandler) {
-				oApplicationHandler = applicationHandler;
+			oCoreApi.getApplicationHandler(function(applicationHandler, messageObject) {
+				if (applicationHandler && !nullObjectChecker.checkIsNotUndefined(messageObject)) {
+					oApplicationHandler = applicationHandler;
+				} else {
+					var oMessageObject = oCoreApi.createMessageObject({
+						code : "11508"
+					});
+					oMessageObject.setPrevious(messageObject);
+					oCoreApi.putMessage(oMessageObject);
+				}
 			});
 			_setDisplayText(oController);
 			oController.byId("idImportFilesDialog").open();
@@ -98,14 +111,13 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 			propertyFileInput.attr('accept', '.properties');
 		},
 		handleTypeMissmatchForJSONFile : function() {
-			sap.m.MessageToast.show(oCoreApi.getText("jsonFileMissmatch"));
+			_showSuccessMessageToast("11517");
 		},
 		handleTypeMissmatchForPropertiesFile : function() {
-			sap.m.MessageToast.show(oCoreApi.getText("propertiesFileMissmatch"));
+			_showSuccessMessageToast("11518");
 		},
 		handleJSONFileUploadComplete : function(oEvent) {
 			var oController = this;
-			var sMsg = oCoreApi.getText("errorReadingJSONFile");
 			var file = oEvent.getSource().oFileUpload.files[0];
 			if (file) {
 				var reader = new FileReader();
@@ -117,7 +129,7 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 					}, _callbackImport.bind(oController));
 				};
 				reader.onerror = function() {
-					sap.m.MessageToast.show(sMsg);
+					_showSuccessMessageToast("11519");
 				};
 			}
 		},
@@ -149,10 +161,10 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 						}
 					}
 					if (!bExistingApplication && oJSONFileUploader && !oJSONFileUploader.getValue()) {
-						sap.m.MessageToast.show(oCoreApi.getText("chooseJsonFile")); //JSON file has to be selected before properties file if the application does not exist
+						_showSuccessMessageToast("11520"); //JSON file has to be selected before properties file if the application does not exist
 					} else if (oJSONFileUploader && oJSONFileUploader.getValue()) {
 						if (appIdFromConfigFile && appIdFromTextFile && appIdFromTextFile !== appIdFromConfigFile) { //chcek if the id of application is same in both the files
-							sap.m.MessageToast.show(oCoreApi.getText("asyncMsg"));
+							_showSuccessMessageToast("11521");
 							_closeAllOpenDialogs(oController);
 						} else {
 							_importPropertiesFile(oController, evt.target.result); //only property file has to be imported
@@ -162,7 +174,7 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/overwriteExistingConfiguration" ]
 					}
 				};
 				reader.onerror = function() {
-					sap.m.MessageToast.show(oCoreApi.getText("errorReadingPropertiesFile"));
+					_showSuccessMessageToast("11522");
 				};
 			}
 		},

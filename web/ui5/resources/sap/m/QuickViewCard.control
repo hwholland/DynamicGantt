@@ -10,7 +10,7 @@ Unlimited number of objects can be linked.</documentation>
     <since>1.28.11</since>
     <baseType>sap.m/QuickViewBase</baseType>
     <properties>
-        <property name="showVerticalScrollBar" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="showVerticalScrollBar">
             <documentation>Determines whether the browser displays the vertical scroll bar or simply cuts the content of the QuickViewCard.</documentation>
         </property>
     </properties>

@@ -28,7 +28,7 @@
 			"version" : "0.0.1",
 			"publicMethods" : [ "getApi" ],
 			"dependencies" : {
-				"libs" : [ "sap.m", "sap.ui.layout", "sap.ca.ui", "sap.viz", "sap.ui.comp" ]
+				"libs" : [ "sap.m", "sap.ui.layout", "sap.viz", "sap.ui.comp", "sap.suite.ui.commons" ]
 			}
 		},
 		/**

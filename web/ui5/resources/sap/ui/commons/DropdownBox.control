@@ -7,19 +7,19 @@ The choosable items can be provided in the form of a complete &lt;code&gt;ListBo
     <deprecation since="1.38">replaced by {@link sap.m.ComboBox}</deprecation>
     <baseType>sap.ui.commons/ComboBox</baseType>
     <properties>
-        <property name="searchHelpEnabled" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="searchHelpEnabled">
             <documentation>Whether the DropdownBox's search help should be enabled.</documentation>
         </property>
-        <property name="searchHelpText" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="searchHelpText">
             <documentation>(optional) The text to use for the search help entry.</documentation>
         </property>
-        <property name="searchHelpAdditionalText" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="searchHelpAdditionalText">
             <documentation>(optional) The additional Text to use for the search help entry.</documentation>
         </property>
-        <property name="searchHelpIcon" type="sap.ui.core/URI" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/URI" name="searchHelpIcon">
             <documentation>(optional) The URI of the icon to use for the search help entry.</documentation>
         </property>
-        <property name="maxHistoryItems" type="sap.ui.core/int" defaultValue="0" group="Behavior">
+        <property group="Behavior" defaultValue="0" type="sap.ui.core/int" name="maxHistoryItems">
             <documentation>Maximum number of history items in the list.
 
 If 0 no history is displayed or stored. The history is locally stored on the client.
@@ -27,10 +27,10 @@ Therefore do not activate this feature when this control handles confidential da
         </property>
     </properties>
     <events>
-        <event name="searchHelp" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="searchHelp">
             <documentation>Event fired whenever the configured searchHelpItem is clicked or the searchHelpItem is configured and F4 key is pressed.</documentation>
             <parameters>
-                <parameter name="value" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="value">
                     <documentation>The current value of the DropdownBox.</documentation>
                 </parameter>
             </parameters>

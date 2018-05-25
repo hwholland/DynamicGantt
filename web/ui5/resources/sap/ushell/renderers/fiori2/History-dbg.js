@@ -1,18 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-(function () {
-    "use strict";
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, window */
     /*jslint nomen: true */
-    jQuery.sap.declare("sap.ushell.renderers.fiori2.History");
-
-    sap.ushell.renderers.fiori2.History = function () {
+    var History = function () {
         this._history = [];
         this.backwards = false;
         this._historyPosition = -1;
         this._virtual = {};
     };
 
-    sap.ushell.renderers.fiori2.History.prototype.hashChange = function (newHash, oldHash) {
+    History.prototype.hashChange = function (newHash, oldHash) {
         var historyIndex = this._history.indexOf(newHash);
 
         //new history entry
@@ -36,7 +35,7 @@
         }
     };
 
-    sap.ushell.renderers.fiori2.History.prototype.pop = function() {
+    History.prototype.pop = function() {
         var sLastHistory;
         if (this._history.length > 0) {
             sLastHistory = this._history.pop();
@@ -45,7 +44,7 @@
         return sLastHistory;
     };
 
-    sap.ushell.renderers.fiori2.History.prototype.isVirtualHashchange = function (newHash, oldHash) {
+    History.prototype.isVirtualHashchange = function (newHash, oldHash) {
         //the old hash was flagged as virtual
         return this._virtual.hasOwnProperty(oldHash) &&
             //the new Hash is the current One
@@ -56,19 +55,23 @@
             this._history[this._historyPosition + 1] === oldHash;
     };
 
-    sap.ushell.renderers.fiori2.History.prototype.setVirtualNavigation = function (hash) {
+    History.prototype.setVirtualNavigation = function (hash) {
         this._virtual[hash] = true;
     };
 
-    sap.ushell.renderers.fiori2.History.prototype.getCurrentHash = function () {
+    History.prototype.getCurrentHash = function () {
         return this._history[this._historyPosition] || null;
     };
 
-    sap.ushell.renderers.fiori2.History.prototype.getHashIndex = function (hash) {
+    History.prototype.getHashIndex = function (hash) {
         return this._history.indexOf(hash);
     };
 
-    sap.ushell.renderers.fiori2.History.prototype.getHistoryLength = function () {
+    History.prototype.getHistoryLength = function () {
         return this._history.length;
     };
-}());
+
+
+	return History;
+
+}, /* bExport= */ true);

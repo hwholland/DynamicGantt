@@ -36,8 +36,8 @@ oApp.use(bodyParser.urlencoded({extended: false}));
 
 oRouter.setMiddleware("bodyParser", bodyParser, {jsonParser: bodyParser.json()});
 
-oApp.use("/web/ui5", serveIndex(__dirname + "/web/sapui5rt", {icons: true}));
-oApp.use("/web/ui5", express.static(__dirname + "/web/sapui5rt"));
+oApp.use("/web/ui5", serveIndex(__dirname + "/web/ui5", {icons: true}));
+oApp.use("/web/ui5", express.static(__dirname + "/web/ui5"));
 oApp.use("/web", express.static(__dirname + "/web"));
 
 oRouter.loadRoutes();

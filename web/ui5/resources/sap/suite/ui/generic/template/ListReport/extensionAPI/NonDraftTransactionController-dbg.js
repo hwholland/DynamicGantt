@@ -1,8 +1,8 @@
-sap.ui.define(["sap/ui/base/Object"], function(BaseObject) {
+sap.ui.define(["jquery.sap.global", "sap/ui/base/Object"], function(jQuery, BaseObject) {
 	"use strict";
 	/**
 	 * Non draft transaction controller to be used in extensions of ListReport. Breakout coding can access an instance of
-	 * this class via <code>EtensionAPI.getTransactionController</code>. Do not instantiate yourself.
+	 * this class via <code>ExtensionAPI.getTransactionController</code>. Do not instantiate yourself.
 	 * 
 	 * Note: Only one object can be edited at a given point in time.
 	 * 
@@ -50,21 +50,39 @@ sap.ui.define(["sap/ui/base/Object"], function(BaseObject) {
 				fnEditFinished();
 			},
 			/**
-			 * Save the changes which have been applied to the OData model
+			 * Save the changes which have been applied to the OData model. Sets the application busy during execution 
+			 * and doesn't execute if application is already busy when called (i.e. don't use <code>ExtensionAPI.securedExecution</code>
+			 * to call this method).
 			 * 
 			 * @return {Promise} is resolved when entry is successfully saved and rejected when saving fails
 			 * @public
 			 */
 			save: function() {
-				if (sEditingStatus !== "editing") {
-					throw new Error("Nothing edited");
-				}
-				sEditingStatus = "saving";
-				var oPromise = oTemplateUtils.oServices.oTransactionController.triggerSubmitChanges();
-				oPromise.then(fnEditFinished, function() {
-					sEditingStatus = "editing";
-				});
-				return oPromise;
+				
+				var fnFunction = function() {
+					if (sEditingStatus !== "editing") { throw new Error("Nothing edited"); }
+					sEditingStatus = "saving";
+					var oPromise = oTemplateUtils.oServices.oTransactionController.triggerSubmitChanges();
+					oPromise.then(fnEditFinished, function() {
+						sEditingStatus = "editing";
+					});
+					return oPromise;
+				};
+
+				// set default values for parameters
+				var mParameters = {};
+				mParameters = jQuery.extend(true, {
+					busy: {
+						set: true,
+						check: true
+					},
+					dataloss: {
+						popup: false,
+						navigation: false
+					}
+				}, mParameters);
+
+				return oTemplateUtils.oCommonUtils.securedExecution(fnFunction, mParameters, oState);
 			}
 		};
 	}

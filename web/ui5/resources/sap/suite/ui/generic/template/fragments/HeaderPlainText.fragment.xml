@@ -5,6 +5,7 @@
 	<VBox id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::PlainTextVBox"
 		  displayInline="true" class="sapSmartTemplatesObjectPageHeaderPlainText"
 		  binding="{parts: [{path: 'headerFacet>Target'}, {path: 'entitySet>'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getNavigationPathWithExpand'}"
+          visible="{= ${path: 'headerFacet>com.sap.vocabularies.UI.v1.Hidden'} ? ${path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getBindingForHiddenPath'} : true}"
           build:metadata="#pattern:Header>>HeaderPlainText;">
 		<template:if test="{headerFacet>Label}">
 			<Text id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::PlainTextLabel"

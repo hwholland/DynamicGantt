@@ -20,7 +20,10 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 	 * @constructor
 	 */
 	sap.apf.modeler.core.Step = function(stepId, inject, dataFromCopy) {
-		var representationContainer, request, selectProperties, filterProperties, requestForFilterMapping, selectPropertiesForFilterMapping, targetPropertiesForFilterMapping, navigationTargets, keepSourceForFilterMapping, titleId, longTitleId, leftUpperCornerTextKey, rightUpperCornerTextKey, leftLowerCornerTextKey, rightLowerCornerTextKey, topNSettings, messageHandler;
+		var representationContainer, request, selectProperties, filterProperties, requestForFilterMapping, selectPropertiesForFilterMapping, 
+		targetPropertiesForFilterMapping, navigationTargets, keepSourceForFilterMapping, titleId, longTitleId, leftUpperCornerTextKey, 
+		rightUpperCornerTextKey, leftLowerCornerTextKey, rightLowerCornerTextKey, topNSettings, messageHandler, 
+		filterPropertyLabelKey, filterPropertyLabelDisplayOption, targetPropertyLabelKey, targetPropertyLabelDisplayOption;
 		messageHandler = inject.instances.messageHandler;
 		if (!dataFromCopy) {
 			representationContainer = new inject.constructors.ElementContainer(stepId + "-Representation", inject.constructors.Representation, inject);
@@ -37,6 +40,10 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 			request = dataFromCopy.request;
 			selectProperties = dataFromCopy.selectProperties;
 			filterProperties = dataFromCopy.filterProperties;
+			filterPropertyLabelKey = dataFromCopy.filterPropertyLabelKey;
+			filterPropertyLabelDisplayOption = dataFromCopy.filterPropertyLabelDisplayOption;
+			targetPropertyLabelKey = dataFromCopy.targetPropertyLabelKey;
+			targetPropertyLabelDisplayOption = dataFromCopy.targetPropertyLabelDisplayOption;
 			requestForFilterMapping = dataFromCopy.requestForFilterMapping;
 			selectPropertiesForFilterMapping = dataFromCopy.selectPropertiesForFilterMapping;
 			targetPropertiesForFilterMapping = dataFromCopy.targetPropertiesForFilterMapping;
@@ -50,6 +57,15 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 			rightLowerCornerTextKey = dataFromCopy.rightLowerCornerTextKey;
 			topNSettings = dataFromCopy.topNSettings;
 		}
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.Step#getType
+		 * @function
+		 * @returns {String} "step"
+		 */
+		this.getType = function (){
+			return "step";
+		};
 		/**
 		 * @private
 		 * @name sap.apf.modeler.core.Step#getId
@@ -115,6 +131,14 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 		this.setTopNSortProperties = function (orderBySpec){
 			if(!topNSettings){
 				topNSettings = {};
+			}
+			// orderBySpec.ascending should always be a boolean value in the core; as a default value ascending is string "true" in the ui, because the control only understands string values
+			if(orderBySpec && orderBySpec.length > 0){
+				orderBySpec.forEach(function(orderBy){
+					if(orderBy.ascending === "true"){
+						orderBy.ascending = true;
+					}
+				});
 			}
 			topNSettings.orderby = orderBySpec; 
 			if(topNSettings.top) {
@@ -290,9 +314,9 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 		 */
 		this.getFilterProperties = function() {
 			var list = [];
-			var lll = filterProperties.getElements();
-			lll.forEach(function(item) {
-				list.push(item.getId());
+			var aFilterProperties = filterProperties.getElements();
+			aFilterProperties.forEach(function(oFilterProperty) {
+				list.push(oFilterProperty.getId());
 			});
 			return list;
 		};
@@ -304,6 +328,8 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 		 * @param {string} property - property name
 		 */
 		this.addFilterProperty = function(property) {
+			filterPropertyLabelKey = undefined;
+			filterPropertyLabelDisplayOption = undefined;
 			return filterProperties.createElementWithProposedId(undefined, property).getId();
 		};
 		/**
@@ -314,7 +340,49 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 		 * @param {string} property - property name
 		 */
 		this.removeFilterProperty = function(property) {
+			filterPropertyLabelKey = undefined;
+			filterPropertyLabelDisplayOption = undefined;
 			filterProperties.removeElement(property);
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#setFilterPropertyLabelKey
+		 * @description Set a text label key to the filter property
+		 * @param {string} labelKey - text label key
+		 */
+		this.setFilterPropertyLabelKey = function(labelKey) {
+			filterPropertyLabelKey = labelKey;
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getFilterPropertyLabelKey
+		 * @description Get the text label key to the filter property
+		 * @returns {string} labelKey - text label key
+		 */
+		this.getFilterPropertyLabelKey = function() {
+			return filterPropertyLabelKey;
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#setFilterPropertyDisplayOption
+		 * @description Set a text label display option to the filter property
+		 * @param {string} labelDisplayOption - text label display option
+		 */
+		this.setFilterPropertyLabelDisplayOption = function(labelDisplayOption) {
+			filterPropertyLabelDisplayOption = labelDisplayOption;
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getFilterPropertyLabelDisplayOption
+		 * @description Get the text label display option to the filter property
+		 * @returns {string} labelDisplayOption - text label display option
+		 */
+		this.getFilterPropertyLabelDisplayOption = function() {
+			return filterPropertyLabelDisplayOption;
 		};
 		/**
 		 * @private
@@ -364,6 +432,8 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 		 * @param {string} property - Property name
 		 */
 		this.addFilterMappingTargetProperty = function(property) {
+			targetPropertyLabelKey = undefined;
+			targetPropertyLabelDisplayOption = undefined;
 			targetPropertiesForFilterMapping.createElementWithProposedId(undefined, property);
 		};
 		/**
@@ -389,7 +459,49 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 		 * @param {string} property - Property name
 		 */
 		this.removeFilterMappingTargetProperty = function(property) {
+			targetPropertyLabelKey = undefined;
+			targetPropertyLabelDisplayOption = undefined;
 			targetPropertiesForFilterMapping.removeElement(property);
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#setFilterMappingTargetPropertyLabelKey
+		 * @description Set a text label key to the filter mapping target property
+		 * @param {string} labelKey - text label key
+		 */
+		this.setFilterMappingTargetPropertyLabelKey = function(labelKey) {
+			targetPropertyLabelKey = labelKey;
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getFilterMappingTargetPropertyLabelKey
+		 * @description Get the text label key to the filter mapping target property
+		 * @returns {string} labelKey - text label key
+		 */
+		this.getFilterMappingTargetPropertyLabelKey = function() {
+			return targetPropertyLabelKey;
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#setFilterMappingTargetPropertyDisplayOption
+		 * @description Set a text label display option to the filter mapping target property
+		 * @param {string} labelDisplayOption - text label display option
+		 */
+		this.setFilterMappingTargetPropertyLabelDisplayOption = function(labelDisplayOption) {
+			targetPropertyLabelDisplayOption = labelDisplayOption;
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getFilterMappingTargetPropertyLabelDisplayOption
+		 * @description Get the text label display option to the filter mapping target property
+		 * @returns {string} labelDisplayOption - text label display option
+		 */
+		this.getFilterMappingTargetPropertyLabelDisplayOption = function() {
+			return targetPropertyLabelDisplayOption;
 		};
 		/**
 		 * @private
@@ -615,6 +727,156 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 		};
 		/**
 		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getConsumablePropertiesForTopN
+		 * @returns {Object} jQuery.Deferred() the promise will be resolved with an Object with following format
+		 * {
+		 * 		available: [String],
+		 * 		consumable: [String]
+		 * }
+		 * Available are all properties that are selected properties and are also returned by the metadata
+		 * Consumable are all properties that are available minus the already used properties as top N sort properties
+		 */
+		this.getConsumablePropertiesForTopN = function (){
+			var deferred = jQuery.Deferred();
+			this.getAvailableProperties().done(function(availableProperties){
+				var selectedProperties = [];
+				if(topNSettings && topNSettings.orderby && topNSettings.orderby.length > 0){
+					topNSettings.orderby.forEach(function(orderBy){
+						selectedProperties.push(orderBy.property);
+					});
+				}
+				deferred.resolve({
+					available: availableProperties,
+					consumable: this.getConsumableProperties(availableProperties, selectedProperties)
+				});
+			}.bind(this));
+			return deferred.promise();
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getConsumablePropertiesForRepresentation
+		 * @param {String} representationId
+		 * @returns {Object} jQuery.Deferred() the promise will be resolved with an Object with following format
+		 * {
+		 * 		available: [String],
+		 * 		consumable: [String]
+		 * }
+		 * Available are all properties that are selected properties and are also returned by the metadata
+		 * Consumable are all properties that are available minus the already used properties as dimension/measure/property on representation level
+		 */
+		this.getConsumablePropertiesForRepresentation = function (representationId){
+			var deferred = jQuery.Deferred();
+			this.getAvailableProperties().done(function(availableProperties){
+				if(this.getHierarchyProperty && this.getHierarchyProperty()){
+					availableProperties.push(this.getHierarchyProperty());
+				}
+				var selectedProperties = [];
+				var representation = representationContainer.getElement(representationId);
+				jQuery.merge(selectedProperties, representation.getDimensions());
+				jQuery.merge(selectedProperties, representation.getMeasures());
+				jQuery.merge(selectedProperties, representation.getProperties());
+				if(representation.getHierarchyProperty()){
+					selectedProperties.push(representation.getHierarchyProperty());
+				}
+
+				deferred.resolve({
+					available: availableProperties,
+					consumable: this.getConsumableProperties(availableProperties, selectedProperties)
+				});
+			}.bind(this));
+			return deferred.promise();
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getConsumableSortPropertiesForRepresentation
+		 * @param {String} representationId
+		 * @returns {Object} jQuery.Deferred() the promise will be resolved with an Object with following format
+		 * {
+		 * 		available: [String],
+		 * 		consumable: [String]
+		 * }
+		 * Available are all properties that are selected properties and are also returned by the metadata
+		 * Consumable are all properties that are available minus the already used properties as sort property on representation level
+		 */
+		this.getConsumableSortPropertiesForRepresentation = function (representationId){
+			var deferred = jQuery.Deferred();
+			this.getAvailableProperties().done(function(availableProperties){
+				deferred.resolve({
+					available: availableProperties,
+					consumable: this.getConsumableProperties(availableProperties, this.getSortPropertiesFromRepresentation(representationId))
+				});
+			}.bind(this));
+			return deferred.promise();
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getConsumableProperties
+		 * @description Will return an array of properties that are selected as sort properties on representation level
+		 * @returns {Object} jQuery.Deferred() the promise will be resolved with [String]
+		 */
+		this.getSortPropertiesFromRepresentation = function(representationId){
+			var selectedProperties = [];
+			var representation = representationContainer.getElement(representationId);
+			var orderbySpecs = representation.getOrderbySpecifications();
+			orderbySpecs.forEach(function(orderbySpec){
+				selectedProperties.push(orderbySpec.property);
+			});
+			return selectedProperties;
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getConsumableProperties
+		 * @description Will return an array of consumable properties: Every available property that is not selected is consumable
+		 * @param {[String]} availableProperties
+		 * @param {[String]} selectedProperties
+		 * @returns {Object} jQuery.Deferred() the promise will be resolved with [String]
+		 */
+		this.getConsumableProperties = function(availableProperties, selectedProperties) {
+			var consumableValues = [];
+			availableProperties.forEach(function(availableValue){
+				if(jQuery.inArray(availableValue, selectedProperties) === -1 ){
+					consumableValues.push(availableValue);
+				}
+			});
+			return consumableValues;
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.Step#getAvailableProperties
+		 * @description Will return an array of available properties: Every property that is selected on step level and is in the metadata
+		 * @returns {Object} jQuery.Deferred() the promise will be resolved with [String]
+		 */
+		this.getAvailableProperties = function() {
+			var deferred = jQuery.Deferred();
+			var availableProperties = [];
+			if(request.service && request.entitySet){
+				inject.instances.metadataFactory.getMetadata(request.service).then(function(metadata){
+					if(metadata){
+						var propertiesInMetadata = metadata.getAllPropertiesOfEntitySet(request.entitySet);
+						var selectedValues = this.getSelectProperties();
+						selectedValues.forEach(function(selectedValue){
+							if(jQuery.inArray(selectedValue, propertiesInMetadata) !== -1 ){
+								availableProperties.push(selectedValue);
+							}
+						});
+					}
+					deferred.resolve(availableProperties);
+				}.bind(this), function(){
+					deferred.resolve([]);
+				});
+			} else {
+				deferred.resolve([]);
+			}
+			return deferred.promise();
+		};
+		/**
+		 * @private
 		 * @name sap.apf.modeler.core.step#copy
 		 * @function
 		 * @description Execute a deep copy of the step and its referenced objects
@@ -622,26 +884,48 @@ jQuery.sap.declare("sap.apf.modeler.core.step");
 		 * @returns {Object} sap.apf.modeler.core.step# - New step object being a copy of this object
 		 */
 		this.copy = function(newStepIdForCopy) {
-			var dataForCopy = {
-				request : request,
-				selectProperties : selectProperties,
-				filterProperties : filterProperties,
-				requestForFilterMapping : requestForFilterMapping,
-				selectPropertiesForFilterMapping : selectPropertiesForFilterMapping,
-				targetPropertiesForFilterMapping : targetPropertiesForFilterMapping,
-				navigationTargets : navigationTargets,
-				keepSourceForFilterMapping : keepSourceForFilterMapping,
-				titleId : titleId,
-				longTitleId : longTitleId,
-				leftUpperCornerTextKey : leftUpperCornerTextKey,
-				rightUpperCornerTextKey : rightUpperCornerTextKey,
-				leftLowerCornerTextKey : leftLowerCornerTextKey,
-				rightLowerCornerTextKey : rightLowerCornerTextKey,
-				topNSettings : topNSettings
-			};
-			var dataFromCopy = sap.apf.modeler.core.ConfigurationObjects.deepDataCopy(dataForCopy);
+			var dataFromCopy = sap.apf.modeler.core.ConfigurationObjects.deepDataCopy(this.getDataForCopy());
 			dataFromCopy.representationContainer = representationContainer.copy((newStepIdForCopy || this.getId()) + "-Representation");
 			return new sap.apf.modeler.core.Step((newStepIdForCopy || this.getId()), inject, dataFromCopy);
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.step#getDataForCopy
+		 * @function
+		 * @description Gets the relevant data for a copy
+		 * @returns {Object} - All relevant data for a copy of the step
+		 */
+		this.getDataForCopy = function (){
+			return {
+					request : request,
+					selectProperties : selectProperties,
+					filterProperties : filterProperties,
+					filterPropertyLabelKey : filterPropertyLabelKey, 
+					filterPropertyLabelDisplayOption : filterPropertyLabelDisplayOption, 
+					requestForFilterMapping : requestForFilterMapping,
+					selectPropertiesForFilterMapping : selectPropertiesForFilterMapping,
+					targetPropertiesForFilterMapping : targetPropertiesForFilterMapping,
+					targetPropertyLabelKey : targetPropertyLabelKey, 
+					targetPropertyLabelDisplayOption : targetPropertyLabelDisplayOption,
+					navigationTargets : navigationTargets,
+					keepSourceForFilterMapping : keepSourceForFilterMapping,
+					titleId : titleId,
+					longTitleId : longTitleId,
+					leftUpperCornerTextKey : leftUpperCornerTextKey,
+					rightUpperCornerTextKey : rightUpperCornerTextKey,
+					leftLowerCornerTextKey : leftLowerCornerTextKey,
+					rightLowerCornerTextKey : rightLowerCornerTextKey,
+					topNSettings : topNSettings
+			};
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.step#getRepresentationContainer
+		 * @function
+		 * @returns {Object} sap.apf.modeler.core.ElementContainer - representationContainer
+		 */
+		this.getRepresentationContainer = function () {
+			return representationContainer;
 		};
 	};
 }());

@@ -1,6 +1,5 @@
 <core:FragmentDefinition xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"
 						 xmlns="sap.m" xmlns:build="sap.build" xmlns:core="sap.ui.core">
-
 	<template:if test="{=${headerFacet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.DataPoint') >= 0}">
 		<template:then>
 			<template:with path="headerFacet>Target" helper="sap.ui.model.odata.AnnotationHelper.resolvePath" var="dataPoint">
@@ -22,6 +21,9 @@
 				</template:with>
 			</template:with>
 		</template:elseif>
+		<template:elseif test="{= ${headerFacet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.Chart') >= 0}">
+			<core:Fragment fragmentName="sap.suite.ui.generic.template.fragments.SmartMicroChart" type="XML"/>
+		</template:elseif>				
 		<template:elseif test="{= ${headerFacet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.Identification') >= 0}">
 			<template:with path="headerFacet>Target" helper="sap.ui.model.odata.AnnotationHelper.resolvePath" var="form">
 				<core:Fragment fragmentName="sap.suite.ui.generic.template.fragments.HeaderForm" type="XML"/>
@@ -38,5 +40,4 @@
 			</template:with>
 		</template:elseif>
 	</template:if>
-
 </core:FragmentDefinition>

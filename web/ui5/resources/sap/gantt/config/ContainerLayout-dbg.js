@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -54,8 +54,9 @@ sap.ui.define([
 				selectionPanelSize: {type: "sap.ui.core.CSSSize", defaultValue: "30%"},
 				/**
 				 * Array of the Gantt chart layout. See {@link sap.gantt.config.GanttChartLayout}
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.GanttChartLayout[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				ganttChartLayouts: {type: "array", defaultValue: []}
+				ganttChartLayouts: {type: "object[]", defaultValue: []}
 			}
 		}
 	});

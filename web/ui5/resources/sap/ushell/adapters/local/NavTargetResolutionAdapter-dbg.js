@@ -1,16 +1,14 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The NavTargetResolution adapter for the demo platform.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
-    "use strict";
+sap.ui.define(['sap/ui/thirdparty/datajs'],
+	function(datajs) {
+	"use strict";
+
     /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.adapters.local.NavTargetResolutionAdapter");
-
-    jQuery.sap.require("sap.ui.thirdparty.datajs");
-
     /**
      * This adapter reads its configuration from the demo config, where the target applications are defined.
      * Note that only a constructed tuple is returned, which returns the platform neutral
@@ -22,7 +20,7 @@
      * @param {object} oAdapterConfiguration configuration, typically contains the statically defined applications
      * @private
      */
-    sap.ushell.adapters.local.NavTargetResolutionAdapter = function (oUnused, sParameter, oAdapterConfiguration) {
+    var NavTargetResolutionAdapter = function (oUnused, sParameter, oAdapterConfiguration) {
 
         var oApplications = jQuery.sap.getObject("config.applications", 0, oAdapterConfiguration);
 
@@ -184,4 +182,8 @@
             return oDeferred.promise();
         };
     };
-}());
+
+
+	return NavTargetResolutionAdapter;
+
+}, /* bExport= */ true);

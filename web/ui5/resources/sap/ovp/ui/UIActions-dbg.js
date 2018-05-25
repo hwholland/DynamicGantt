@@ -23,8 +23,6 @@
 		this.contextMenuEvent = null; // {String} `contextmenu` event for Windows 8 Chrome
 		this.debug = false; // {Boolean} for debug mode
 		this.dragMoveCallback = null; // {Function} Callback function executes while drag mode is active
-		this.dragAndScrollDuration = null; // {Number} Scroll timer duration in ms
-		this.dragAndScrollTimer = null; // {Number} timer ID. Used in drag & scroll animation
 		this.draggable = null; // {Array<Element>|NodeList<Element>} list of draggable elements
 		this.placeHolderClass = null; // {String} placeholder CSS Class
 		this.draggableSelector = null; // {String} CSS Selector String which specifies the draggable elements
@@ -43,6 +41,7 @@
 		this.mouseDownEvent = null; // {String} 'mousedown'
 		this.mouseMoveEvent = null; // {String} 'mousemove'
 		this.mouseUpEvent = null; // {String} 'mouseup'
+        this.keyUpEvent = null; // {String} 'keyup' 
 		this.moveTolerance = null; // {Number} tolerance in pixels between touchStart/mousedwon and touchMove/mousemove
 		this.moveX = null; // {Number} X coordinate of move event
 		this.moveY = null; // {Number} Y coordinate of move event
@@ -75,7 +74,10 @@
 		this.resizeMoveCallback = null; // {Function} Callback function executes while resize mode is active
 		this.resizeEndCallback = null;
 		this.isResize = null;
+        this.isResizeX = null; //Flag to distinguish for X-direction resize
+        this.isResizeY = null;  //Flag to distinguish for Y-direction resize
 		this.resizeHandleDistance = null;
+        this.layoutDetails = null; //Property to check for the layout of the application i.e Fixed Card or Resizable Card Layout
 
 		/**
 		 * Initialize state using configuration
@@ -90,16 +92,18 @@
 			this.endX = -1;
 			this.endY = -1;
 
-			this.resizeHandleDistance = 48;
+            //Threshold distance for the card from where it can be resized
+			this.resizeHandleDistance = 16;
 			this.isResize = false;
+            this.isResizeX = false;
+            this.isResizeY = false;
 
 			this.noop = function() {};
 			this.isTouch = cfg.isTouch ? !!cfg.isTouch : false;
 			this.container = document.querySelector(cfg.containerSelector);
 			this.scrollContainerSelector = cfg.scrollContainerSelector || cfg.containerSelector;
 			this.switchModeDelay = cfg.switchModeDelay || 1500;
-			this.dragAndScrollDuration = cfg.dragAndScrollDuration || 230;
-			this.moveTolerance = cfg.moveTolerance === 0 ? 0 : cfg.moveTolerance || 10;
+			this.moveTolerance = cfg.moveTolerance === 0 ? 0 : cfg.moveTolerance || 1000;
 			this.draggableSelector = cfg.draggableSelector;
 			this.mode = 'normal';
 			this.debug = cfg.debug || false;
@@ -127,9 +131,11 @@
 			this.mouseDownEvent = 'mousedown';
 			this.mouseMoveEvent = 'mousemove';
 			this.mouseUpEvent = 'mouseup';
+            this.keyUpEvent = 'keyup';
 			this.contextMenuEvent = 'contextmenu';
 			this.touchCancelEvent = 'touchcancel';
 			this.clickEvent = 'click';
+            this.layoutDetails = cfg.layout ? cfg.layout.dashboardLayoutUtil : null;
 
 			this.resizeStartCallback = typeof cfg.resizeStartCallback === 'function' ? cfg.resizeStartCallback : this.noop;
 			this.resizeMoveCallback = typeof cfg.resizeMoveCallback === 'function' ? cfg.resizeMoveCallback : this.noop;
@@ -137,7 +143,7 @@
 
 			if (this.wrapper) {
 				jQuery(this.wrapper).css({
-					"position": "absolute",
+					"position": "relative",
 					"top": 0,
 					"left": 0,
 					"right": 0,
@@ -262,14 +268,42 @@
 				this.lastMoveY = 0;
 
 				//drag&drop or resize?
-				if (this.element) {
-					var $elem = jQuery(this.element);
-					var dX = $elem.offset().left + $elem.width() - this.startX;
-					var dY = $elem.offset().top + $elem.height() - this.startY;
-					if (dX < this.resizeHandleDistance && dY < this.resizeHandleDistance) {
-						this.isResize = true;
-					}
-				}
+                if (this.element) {
+                    var $elem = jQuery(this.element);
+                    var elemLeft = $elem.offset().left;
+                    var elemTop = $elem.offset().top;
+                    var elemHeight = $elem.height();
+                    var elemWidth = $elem.width();
+                    //For Resizable card layout then both Drag and resize available while for Fixed card layout only card can be dragged.
+                    //check to distinguish between drag and Resize depending upon the layout
+                    if (this.layoutDetails) {
+                        var rightX = (elemLeft + elemWidth - this.startX) < this.resizeHandleDistance;
+                        var bottomY = (elemTop + elemHeight - this.startY) < this.resizeHandleDistance;
+                        if (rightX || bottomY) {
+                            //Condition to distinguish between resize in X-direction , Y-direction and XY-direction
+                            //If the interaction point is right side of card then it's X-direction resize
+                            if (rightX && bottomY) {
+                                this.isResizeX = false;
+                                this.isResizeY = false;
+                                //If the interaction point is bottom part of card then it's Y-direction resize
+                            } else if (!rightX && bottomY) {
+                                this.isResizeX = false;
+                                this.isResizeY = true;
+                                //If the interaction point is at right side and bottom part of card then it's XY-direction resize
+                            } else if (rightX && !bottomY) {
+                                this.isResizeX = true;
+                                this.isResizeY = false;
+                            }
+                            this.isResize = true;
+                        }
+                    } else {
+                        var dX = elemLeft + elemWidth - this.startX;
+                        var dY = elemTop + elemHeight - this.startY;
+                        if (dX < this.resizeHandleDistance && dY < this.resizeHandleDistance) {
+                            this.isResize = true;
+                        }
+                    }
+                }
 
 				//Check if it is a doubletap flow or single tap
 				if (this.lastTapTime && this.lastElement && this.element && (this.lastElement === this.element) && Math.abs(Date.now() - this.lastTapTime) <
@@ -293,8 +327,8 @@
 		 */
 		this.startHandler = function(evt) {
 			this.log('startHandler');
-			clearTimeout(this.timer);
-			delete this.timer;
+		//	clearTimeout(this.timer);
+		//	delete this.timer;
 			this.captureStart(evt);
 			if (this.element) {
 				this.beforeDragCallback(evt, this.element);
@@ -303,7 +337,7 @@
 						this.mode = 'double-tap';
 						return;
 					}
-					if (this.isTouch) {
+					if (evt.type === "touchstart") {
 						this.timer = setTimeout(function() {
 							if (this.isResize) {
 								this.log("mode switched to resize");
@@ -349,13 +383,12 @@
 		 * @private
 		 */
 		this.moveHandler = function(evt) {
-			var isScrolling;
 			this.log('moveHandler');
 			this.captureMove(evt);
 			switch (this.mode) {
 				case 'normal':
 					if ((Math.abs(this.startX - this.moveX) > this.moveTolerance || Math.abs(this.startY - this.moveY) > this.moveTolerance)) {
-						if (this.isTouch) {
+						if (evt.type === "touchmove") {
 							this.log('-> normal');
 							clearTimeout(this.timer);
 							delete this.timer;
@@ -378,11 +411,12 @@
 					this.log('-> drag');
 					this.mode = 'drag-and-scroll';
 					window.addEventListener(this.mouseUpEvent, this.endHandler, true);
+                    // Adding a keyup event to terminate the drag and drop in case of a key is pressed
+                    window.addEventListener(this.keyUpEvent, this.endHandler, true);
 					this.translateClone();
 					this.scrollContainer = document.querySelector(this.scrollContainerSelector);
-					this.dragAndScroll();
 
-					if (!this.isTouch) {
+					if (evt.type === "mousemove") {
 						this.dragStartCallback(evt, this.element);
 					}
 					break;
@@ -390,14 +424,12 @@
 					evt.stopPropagation();
 					evt.preventDefault();
 					this.log('-> drag-and-scroll');
-					isScrolling = this.dragAndScroll();
 					this.translateClone();
 					this.dragMoveCallback({
 						evt: evt,
 						clone: this.clone,
 						element: this.element,
 						draggable: this.draggable,
-						isScrolling: isScrolling,
 						moveX: this.moveX,
 						moveY: this.moveY
 					});
@@ -407,11 +439,9 @@
 					this.log('-> resize');
 					this.mode = 'resize-and-scroll';
 					window.addEventListener(this.mouseUpEvent, this.endHandler, true);
-					//this.translateClone();
 					this.scrollContainer = document.querySelector(this.scrollContainerSelector);
-					this.dragAndScroll();
 
-					if (!this.isTouch) {
+					if (evt.type === "mousemove") {
 						this.resizeStartCallback(evt, this.element);
 					}
 					break;
@@ -419,13 +449,10 @@
 					evt.stopPropagation();
 					evt.preventDefault();
 					this.log('-> resize-and-scroll');
-					isScrolling = this.dragAndScroll();
-					//this.translateClone();
 					this.resizeMoveCallback({
 						evt: evt,
 						element: this.element,
 						draggable: this.draggable,
-						isScrolling: isScrolling,
 						moveX: this.moveX,
 						moveY: this.moveY
 					});
@@ -475,6 +502,16 @@
 		 */
 		this.clickHandler = function(event) {
 
+			var vizTooltipContainer = document.getElementsByClassName('viz-controls-chartTooltip');
+			var vizTooltipContainerID = vizTooltipContainer && vizTooltipContainer[0] && vizTooltipContainer[0].id;
+			var vizTooltip = sap.ui.getCore().byId(vizTooltipContainerID);
+			if (vizTooltip) {
+				var oPopover = vizTooltip && vizTooltip.aDelegates[0] && vizTooltip.aDelegates[0].oDelegate;
+				if (oPopover) {
+					oPopover.close();
+				}
+			}
+
 			if (this.preventClickFlag) {
 				this.preventClickFlag = false;
 				event.preventDefault();
@@ -503,58 +540,58 @@
 		 */
 		this.endHandler = function(evt) {
 			this.log('endHandler');
-			this.captureEnd(evt);
-			switch (this.mode) {
-				case 'normal':
-					this.log('-> normal');
-					break;
-				case 'drag':
-					this.log('-> drag');
-					this.removeClone(); //show placeholder
-					this.dragEndCallback(evt, this.element);
-					this.preventClick();
-					break;
-				case 'drag-and-scroll':
-					this.log('-> drag-and-scroll');
-					window.removeEventListener(this.mouseUpEvent, this.endHandler, true);
-					this.removeClone(); //show placeholde
-					this.dragEndCallback(evt, this.element);
-					this.preventClick();
-					evt.stopPropagation();
-					evt.preventDefault();
-					break;
-				case 'double-tap':
-					this.log('-> double-tap');
-					this.doubleTapCallback(evt, this.element);
-					break;
-				case "resize":
-					this.log("-> resize");
-					this.isResize = false;
-					this.resizeEndCallback(evt, this.element);
-					this.preventClick();
-					break;
-				case "resize-and-scroll":
-					this.log("-> resize-and-scroll");
-					window.removeEventListener(this.mouseUpEvent, this.endHandler, true);
-					this.isResize = false;
-					this.resizeEndCallback(evt, this.element);
-					this.preventClick();
-					evt.stopPropagation();
-					evt.preventDefault();
-					break;
-				default:
-					break;
-			}
-			if (this.element) {
-				this.endCallback(evt, this.element);
-			}
-			clearTimeout(this.timer);
-			delete this.timer;
-			this.lastMoveX = 0;
-			this.lastMoveY = 0;
-			this.swapTargetElement = null;
-			this.element = null;
-			this.mode = 'normal';
+            if ((evt.type == this.keyUpEvent && evt.which == jQuery.sap.KeyCodes.ESCAPE) || evt.type == this.mouseUpEvent || evt.type == this.touchEndEvent) {
+                this.captureEnd(evt);
+                switch (this.mode) {
+                    case 'normal':
+                        this.log('-> normal');
+                        break;
+                    case 'drag':
+                        this.log('-> drag');
+                        this.dragEndCallback(evt, this.element, this.clone);
+                        this.preventClick();
+                        break;
+                    case 'drag-and-scroll':
+                        this.log('-> drag-and-scroll');
+                        window.removeEventListener(this.mouseUpEvent, this.endHandler, true);
+                        this.dragEndCallback(evt, this.element, this.clone);
+                        this.preventClick();
+                        evt.stopPropagation();
+                        evt.preventDefault();
+                        break;
+                    case 'double-tap':
+                        this.log('-> double-tap');
+                        this.doubleTapCallback(evt, this.element);
+                        break;
+                    case "resize":
+                        this.log("-> resize");
+                        this.isResize = false;
+                        this.resizeEndCallback(evt, this.element);
+                        this.preventClick();
+                        break;
+                    case "resize-and-scroll":
+                        this.log("-> resize-and-scroll");
+                        window.removeEventListener(this.mouseUpEvent, this.endHandler, true);
+                        this.isResize = false;
+                        this.resizeEndCallback(evt, this.element);
+                        this.preventClick();
+                        evt.stopPropagation();
+                        evt.preventDefault();
+                        break;
+                    default:
+                        break;
+                }
+                if (this.element) {
+                    this.endCallback(evt, this.element);
+                }
+                clearTimeout(this.timer);
+                delete this.timer;
+                this.lastMoveX = 0;
+                this.lastMoveY = 0;
+                this.swapTargetElement = null;
+                this.element = null;
+                this.mode = 'normal';
+            }
 		}.bind(this);
 
 		this.defaultDragStartHandler = function(evt) {
@@ -584,9 +621,27 @@
 			}
 			rect = this.element.getBoundingClientRect();
 			this.clone = this.element.cloneNode(true);
+
+			// If the cloned element contains canvas children,
+			// we have to clone the rendered content too. Simply
+			// cloning a canvas node will create a new canvas element,
+			// but it doesn't also transfer the rendered contet.
+			var canvasesOld = this.element.querySelectorAll('canvas');
+			if (canvasesOld.length) {
+				var canvasesNew = this.clone.querySelectorAll('canvas');
+
+				for (var i = 0; i < canvasesOld.length; i++) {
+					// Painting the original canvas on the cloned canvas
+					canvasesNew[i].getContext('2d').drawImage(canvasesOld[i], 0, 0);
+				}
+			}
+
 			this.clone.className += (' ' + this.cloneClass);
-			// this.element.className += (' ' + this.removeClone);
-			this.element.className += (' ' + 'easyScanLayoutItemWrapper-placeHolder');
+            if (!this.layoutDetails) {
+                this.element.className += (' ' + 'easyScanLayoutItemWrapper-placeHolder');
+            } else {
+                this.element.className += (' ' + 'dashboardLayoutItemWrapper-placeHolder');
+            }
 			style = this.clone.style;
 			style.position = 'absolute';
 			style.display = 'block';
@@ -635,118 +690,15 @@
 
 			deltaX = this.moveX - this.startX;
 			deltaY = this.moveY - this.startY;
-			this.clone.style.webkitTransform = 'translate3d(' + deltaX + 'px, ' + deltaY + 'px, 0px)';
-			this.clone.style.mozTransform = 'translate3d(' + deltaX + 'px, ' + deltaY + 'px, 0px)';
-			//IE9 contains only 2-D transform
-			this.clone.style.msTransform = 'translate(' + deltaX + 'px, ' + deltaY + 'px)';
-			this.clone.style.transform = 'translate3d(' + deltaX + 'px, ' + deltaY + 'px, 0px)';
-
-			this.log('translateClone (' + deltaX + ', ' + deltaY + ')');
-
-			this.clone.style.opacity = '0.5'; // make floater transparent
-		};
-
-		/**
-		 * Scroll while dragging if needed
-		 *
-		 * @private
-		 */
-		this.dragAndScroll = function() {
-
-			var
-			/*
-			 * Duration of scrolling animation in milliseconds.
-			 * Greater value makes scroll faster, lower values - smoother
-			 */
-				duration = this.dragAndScrollDuration,
-				style,
-				that = this;
-
-			function startAnimation(transitionY) {
-
-				style.webkitTransition = '-webkit-transform ' + duration + 'ms linear';
-				style.transition = 'transform ' + duration + 'ms linear';
-				style.mozTransition = '-moz-transform ' + duration + 'ms linear';
-				style.msTransition = '-ms-transform ' + duration + 'ms linear';
-				style.webkitTransform = 'translate(0px, ' + transitionY + 'px) scale(1) translateZ(0px)';
-				style.mozTransform = 'translate(0px, ' + transitionY + 'px) scale(1) translateZ(0px)';
-				style.msTransform = 'translate(0px, ' + transitionY + 'px) scale(1) translateZ(0px)';
-				style.transform = 'translate(0px, ' + transitionY + 'px) scale(1) translateZ(0px)';
-			}
-
-			function clearAnimation(transitionY) {
-				style.webkitTransition = '';
-				style.mozTransition = '';
-				style.msTransition = '';
-				style.transition = '';
-				style.webkitTransform = '';
-				style.mozTransform = '';
-				style.msTransform = '';
-				style.transform = '';
-				that.wrapper.scrollTop -= transitionY;
-			}
-
-			/*
-			 * Indicates how much pixels of draggable element are overflowing in a vertical axis.
-			 * When deltaY is negative - content should be scrolled down,
-			 * when deltaY is positive - content should be scrolled up,
-			 * when deltaY is zero - content should not be scrolled
-			 */
-			function getDeltaY() {
-				var wrapperRect = that.wrapper.getBoundingClientRect();
-				//Up
-				var topDiff = that.moveY - wrapperRect.top - that.scrollEdge;
-				if (topDiff < 0) {
-					return Math.abs(topDiff);
-				}
-
-				//Down
-				var bottomDiff = wrapperRect.bottom - that.moveY - that.scrollEdge;
-				if (bottomDiff < 0) {
-					return bottomDiff;
-				}
-
-				return 0;
-			}
-
-			function getNextTransitionY(deltaY) {
-				var possibleScroll;
-				var nextTransitionY = deltaY * 2;
-				if (deltaY < 0) {
-					//Down
-					possibleScroll = (that.wrapper.offsetHeight + that.wrapper.scrollTop) - that.wrapper.scrollHeight;
-					return nextTransitionY < possibleScroll ? possibleScroll : nextTransitionY;
-				} else if (deltaY > 0) {
-					//Up
-					possibleScroll = that.wrapper.scrollTop;
-					return nextTransitionY < possibleScroll ? nextTransitionY : possibleScroll;
-				}
-				return 0;
-			}
-
-			function start(transitionY) {
-				startAnimation(transitionY);
-				that.dragAndScrollTimer = setTimeout(function(oldTransitionY) {
-					clearAnimation(oldTransitionY);
-					that.dragAndScrollTimer = undefined;
-					var nextTransitionY = getNextTransitionY(getDeltaY());
-					if (nextTransitionY) {
-						start(nextTransitionY);
-					}
-				}.bind(that, transitionY), duration);
-			}
-
-			var nextTransitionY = getNextTransitionY(getDeltaY());
-			if (nextTransitionY && !this.dragAndScrollTimer) {
-				//in IE when reaching the drag and scroll we lose the ref to this.scrollContainer
-				this.scrollContainer = this.scrollContainer || document.querySelector(this.scrollContainerSelector);
-				style = this.scrollContainer.style;
-				start(nextTransitionY);
-			}
-
-			this.log('dragAndScroll (' + nextTransitionY + ')');
-
-			return !!nextTransitionY;
+            if (this.clone && deltaX && deltaY) {
+                this.clone.style.webkitTransform = 'translate3d(' + deltaX + 'px, ' + deltaY + 'px, 0px)';
+                this.clone.style.mozTransform = 'translate3d(' + deltaX + 'px, ' + deltaY + 'px, 0px)';
+                //IE9 contains only 2-D transform
+                this.clone.style.msTransform = 'translate(' + deltaX + 'px, ' + deltaY + 'px)';
+                this.clone.style.transform = 'translate3d(' + deltaX + 'px, ' + deltaY + 'px, 0px)';
+                this.log('translateClone (' + deltaX + ', ' + deltaY + ')');
+                //this.clone.style.opacity = '0.5'; // make floater transparent
+            }
 		};
 
 		/* PUBLIC METHODS */

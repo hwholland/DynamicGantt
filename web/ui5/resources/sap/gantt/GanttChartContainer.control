@@ -48,40 +48,51 @@ When this value is set, it overrides the corresponding value on instances of agg
 
 When this value is set, it overrides the corresponding value on instances of aggregation &lt;code&gt;ganttCharts&lt;/code&gt;.</documentation>
         </property>
-        <property type="sap.gantt/def/SvgDefs" name="svgDefs">
+        <property defaultValue="true" type="sap.ui.core/boolean" name="enableAdhocLine">
+            <documentation>Switch to enable and disable adhoc lines representing milestones and events along the time axis.
+
+When this value is set, it overrides the corresponding value on instances of aggregation &lt;code&gt;ganttCharts&lt;/code&gt;.</documentation>
+        </property>
+        <property type="sap.ui.core/object" name="svgDefs">
             <documentation>Definitions of paint servers used for advanced shape features around SVG fill, stroke, and filter attributes.
 
 If this property is provided, the paint server definition of the SVG is rendered. Method &lt;code&gt;getDefString()&lt;/code&gt; should be
 implemented by all paint server classes that are passed in in this property. It is easier to assign a common paint server definition
 in this class instead of in separate instances of &lt;code&gt;sap.gantt.GanttChartBase&lt;/code&gt;. Then the definition is 
-rendered only once.</documentation>
+rendered only once.
+We recommend that you set the type of this argument to &lt;code&gt;sap.gantt.def.SvgDefs&lt;/code&gt;. Otherwise some properties you set may not function properly.</documentation>
         </property>
-        <property defaultValue="sap.gantt.config.DEFAULT_MODES" type="any" name="modes">
+        <property defaultValue="sap.gantt.config.DEFAULT_MODES" type="sap.ui.core/object[]" name="modes">
             <documentation>List of available modes. To apply modes to the toolbar and shapes, further configuration is needed. (specifically, 
 in property &lt;code&gt;toolbarSchemes&lt;/code&gt;, and properties &lt;code&gt;toolbarSchemes&lt;/code&gt; and &lt;code&gt;shapes&lt;/code&gt; in 
-the &lt;code&gt;GanttChartBase&lt;/code&gt; class)If not provided, a default configuration is provided.</documentation>
+the &lt;code&gt;GanttChartBase&lt;/code&gt; class)If not provided, a default configuration is provided.
+We recommend that you set the type of this argument to &lt;code&gt;sap.gantt.config.Mode[]&lt;/code&gt;. Otherwise some properties you set may not function properly.</documentation>
         </property>
-        <property defaultValue="sap.gantt.config.DEFAULT_CONTAINER_TOOLBAR_SCHEMES" type="any" name="toolbarSchemes">
-            <documentation>List of available toolbar schemes. If not provided, a default configuration is provided.</documentation>
+        <property defaultValue="sap.gantt.config.DEFAULT_CONTAINER_TOOLBAR_SCHEMES" type="sap.ui.core/object[]" name="toolbarSchemes">
+            <documentation>List of available toolbar schemes. If not provided, a default configuration is provided.
+We recommend that you set the type of this argument to &lt;code&gt;sap.gantt.config.ToolbarScheme[]&lt;/code&gt;. Otherwise some properties you set may not function properly.</documentation>
         </property>
-        <property defaultValue="sap.gantt.config.DEFAULT_HIERARCHYS" type="any" name="hierarchies">
-            <documentation>List of available hierarchies. If not provided, a default configuration is provided.</documentation>
+        <property defaultValue="sap.gantt.config.DEFAULT_HIERARCHYS" type="sap.ui.core/object[]" name="hierarchies">
+            <documentation>List of available hierarchies. If not provided, a default configuration is provided.
+We recommend that you set the type of this argument to &lt;code&gt;sap.gantt.config.Hierarchy[]&lt;/code&gt;. Otherwise some properties you set may not function properly.</documentation>
         </property>
-        <property defaultValue="sap.gantt.config.DEFAULT_CONTAINER_LAYOUTS" type="any" name="containerLayouts">
+        <property defaultValue="sap.gantt.config.DEFAULT_CONTAINER_LAYOUTS" type="sap.ui.core/object[]" name="containerLayouts">
             <documentation>Configuration of container layouts.
 
 This configuration affects the data source selection ComboBox in the Container Toolbar. When the selection
-changes, the &lt;code&gt;ganttChartChangeRequested&lt;/code&gt; event that is triggered includes the corresponding layout key.</documentation>
+changes, the &lt;code&gt;ganttChartChangeRequested&lt;/code&gt; event that is triggered includes the corresponding layout key.
+We recommend that you set the type of this argument to &lt;code&gt;sap.gantt.config.ContainerLayout[]&lt;/code&gt;. Otherwise some properties you set may not function properly.</documentation>
         </property>
         <property defaultValue="sap.gantt.config.DEFAULT_CONTAINER_SINGLE_LAYOUT_KEY" type="sap.ui.core/string" name="containerLayoutKey">
             <documentation>Current container layout key.
 
 This is a key configured in configuration property &lt;code&gt;containerLayouts&lt;/code&gt;.</documentation>
         </property>
-        <property defaultValue="10" type="sap.ui.core/int" name="sliderStep">
+        <property type="sap.ui.core/int" name="sliderStep">
             <documentation>Define the amount of units to change the time zoom slider.
 
 See {@link sap.m.Slider#setStep}</documentation>
+            <deprecation since="1.44">please set the property 'stepCountOfSlider' in sap.gantt.config.TimeZoomGroup.</deprecation>
         </property>
         <property defaultValue="3" type="sap.ui.core/int" name="maxNumOfGanttCharts">
             <documentation>Define the maximum number of Gantt charts to be displayed on the same screen. 

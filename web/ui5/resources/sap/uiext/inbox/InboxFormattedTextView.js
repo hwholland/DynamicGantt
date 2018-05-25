@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.InboxFormattedTextView");sap.ui.commons.FormattedTextView.extend("sap.uiext.inbox.InboxFormattedTextView",{metadata:{properties:{wrapping:{type:"boolean",defaultValue:true},maxLines:{type:"int",defaultValue:1}}},renderer:function(r,c){sap.ui.commons.FormattedTextViewRenderer.render.apply(this,arguments);}});
 sap.uiext.inbox.InboxFormattedTextView.prototype.applyStylingToFormattedTextDiv=function(f){if(f){if(this.getWrapping()&&this.getMaxLines()>0){if(!this.canUseNativeLineClamp()){this.clampHeight();jQuery(f).css({"text-overflow":"ellipsis","overflow":"hidden","max-width":"100%"});}else{jQuery(f).css({"display":"-webkit-box","-webkit-box-orient":"vertical","overflow":"hidden","-webkit-line-clamp":this.getMaxLines()+""});}}else if(!this.getWrapping()){jQuery(f).css({"text-overflow":"ellipsis","overflow":"hidden","max-width":"100%","whitespace":"nowrap"});}}};

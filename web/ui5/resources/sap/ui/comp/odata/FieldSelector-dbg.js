@@ -1,7 +1,8 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.odata.FieldSelector.
@@ -116,10 +117,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control'
 
 	var smartFormDialog = sap.ui.getCore().byId("smartFormPersDialog");
 	if (smartFormDialog) {
-		this._oResizeDialogHandlerId = sap.ui.core.ResizeHandler.register(smartFormDialog, jQuery.proxy(this._handleResizeDialog, this));
+		this._oResizeDialogHandlerId = sap.ui.core.ResizeHandler.register(smartFormDialog, this._handleResizeDialog.bind(this));
 	}
 	if (this._oScrollView) {
-		this._oResizeScrollViewHandlerId = sap.ui.core.ResizeHandler.register(this._oScrollView, jQuery.proxy(this._handleResizeTable, this));
+		this._oResizeScrollViewHandlerId = sap.ui.core.ResizeHandler.register(this._oScrollView, this._handleResizeTable.bind(this));
 	}
 
 };
@@ -272,7 +273,7 @@ FieldSelector.prototype.updateFieldLabel = function(oFieldListElement) {
 	});
 	this._oHeaderLayoutSearch.addStyleClass("sapUiCompFieldSelectorHeaderSearch");
 
-	this._oResizeHeaderHandlerId = sap.ui.core.ResizeHandler.register(this._oHeaderLayout, jQuery.proxy(this._handleResizeDialog, this));
+	this._oResizeHeaderHandlerId = sap.ui.core.ResizeHandler.register(this._oHeaderLayout, this._handleResizeDialog.bind(this));
 
 	var oEntitySelectionLayout = new sap.m.HBox({
 		direction: sap.m.FlexDirection.Row,
@@ -464,10 +465,10 @@ FieldSelector.prototype.updateFieldLabel = function(oFieldListElement) {
 	this._oTable = new sap.m.Table("sapUiCompFieldSelectorTable", {
 		mode: "SingleSelectMaster",
 		columns: aColumns,
-		selectionChange: jQuery.proxy(function(e) {
+		selectionChange: function(e) {
 			var oSelection = this.getSelectedField();
 			this.fireFieldSelectionChanged(oSelection);
-		}, this)
+		}.bind(this)
 	});
 	this._oTable.setFixedLayout(false);
 

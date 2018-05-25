@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
+        (c) Copyright 2009-2018 SAP SE. All rights reserved
     
  */
 
@@ -24,7 +24,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Core', 'sap/ui/core/library'],
 	// delegate further initialization of this library to the Core
 	sap.ui.getCore().initLibrary({
 		name : "sap.me",
-		version: "1.38.33",
+		version: "1.54.3",
 		dependencies : ["sap.ui.core"],
 		types: [
 			"sap.me.CalendarDesign",

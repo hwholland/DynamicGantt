@@ -33,7 +33,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -50,6 +50,7 @@ sap.ui.define([
 	});
 
 	Polygon.prototype.init = function() {
+		Shape.prototype.init.apply(this, arguments);
 		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
 		this.setProperty("ariaLabel", oRb.getText("ARIA_POLYGON"));
 	};
@@ -124,5 +125,13 @@ sap.ui.define([
 		return aRetVal.join(" ");
 	};
 
+	Polygon.prototype.getStyle = function(oData, oRowInfo) {
+		var sInheritedStyle = Shape.prototype.getStyle.apply(this, arguments);
+		var oStyles = {
+			"fill": this.determineValueColor(this.getFill(oData, oRowInfo)),
+			"fill-opacity": this.getFillOpacity(oData, oRowInfo)
+		};
+		return sInheritedStyle + this.getInlineStyle(oStyles);
+	};
 	return Polygon;
 }, true);

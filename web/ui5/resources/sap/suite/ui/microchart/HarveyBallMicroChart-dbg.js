@@ -1,13 +1,12 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// This file defines behavior for the control.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define([
+	"jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/Control", "sap/ui/Device"
+], function(jQuery, library, MobileLibrary, Control, Device) {
 	"use strict";
 
 	/**
@@ -21,7 +20,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -29,60 +28,61 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @ui5-metamodel This control will also be described in the UI5 (legacy) designtime metamodel
 	 */
 	var HarveyBallMicroChart = Control.extend("sap.suite.ui.microchart.HarveyBallMicroChart", /** @lends sap.suite.ui.microchart.HarveyBallMicroChart.prototype */ {
-		metadata : {
+		metadata: {
 			library: "sap.suite.ui.microchart",
 			properties: {
 
 				/**
 				 * The total value. This is taken as 360 degrees value on the chart.
 				 */
-				total: {group:"Misc", type:"float", defaultValue: null},
+				total: { group: "Misc", type: "float", defaultValue: null },
 
 				/**
 				 * The total label. If specified, it is displayed instead of the total value.
 				 */
-				totalLabel: {group:"Misc", type:"string"},
+				totalLabel: { group: "Misc", type: "string" },
 
 				/**
-				The scaling factor that is displayed next to the total value.
-				*/
-				totalScale: {group:"Misc", type:"string"},
+				 The scaling factor that is displayed next to the total value.
+				 */
+				totalScale: { group: "Misc", type: "string" },
 
 				/**
-				If set to true, the totalLabel parameter is considered as the combination of the total value and its scaling factor. The default value is false. It means that the total value and the scaling factor are defined separately by the total and the totalScale properties accordingly.
-				*/
-				formattedLabel: {group:"Misc", type:"boolean", defaultValue:false},
+				 If set to true, the totalLabel parameter is considered as the combination of the total value and its scaling factor. The default value is false. It means that the total value and the scaling factor are defined separately by the total and the totalScale properties accordingly.
+				 */
+				formattedLabel: { group: "Misc", type: "boolean", defaultValue: false },
 
 				/**
-				If it is set to true, the total value is displayed next to the chart. The default setting is true.
-				*/
-				showTotal: {group:"Misc", type:"boolean", defaultValue:true},
+				 If it is set to true, the total value is displayed next to the chart. The default setting is true.
+				 */
+				showTotal: { group: "Misc", type: "boolean", defaultValue: true },
 
 				/**
-				If it is set to true, the fraction values are displayed next to the chart. The default setting is true.
-				*/
-				showFractions: {group:"Misc", type:"boolean", defaultValue:true},
+				 If it is set to true, the fraction values are displayed next to the chart. The default setting is true.
+				 */
+				showFractions: { group: "Misc", type: "boolean", defaultValue: true },
 
 				/**
-				The size of the chart. If it is not set, the default size is applied based on the device type.
-				*/
-				size: {group:"Misc", type:"sap.m.Size", defaultValue:"Auto"},
+				 The size of the chart. If it is not set, the default size is applied based on the device type.
+				 */
+				size: { group: "Misc", type: "sap.m.Size", defaultValue: "Auto" },
 
 				/**
-				The color palette for the chart. If this property is set, semantic colors defined in HarveyBallMicroChart are ignored. Colors from the palette are assigned to each slice consequentially. When all the palette colors are used, assignment of the colors begins from the first palette color.
-				*/
-				colorPalette: {type: "string[]", group : "Appearance", defaultValue : [] },
+				 The color palette for the chart. Currently only a single color (first color of the array) is supported.
+				 If this property is set, the semantic color defined in HarveyBallMicroChartItem is ignored.
+				 */
+				colorPalette: { type: "string[]", group: "Appearance", defaultValue: [] },
 
 				/**
-				The width of the chart. If it is not set, the size of the control is defined by the size property.
-				*/
-				width: {group:"Misc", type:"sap.ui.core.CSSSize"},
+				 The width of the chart. If it is not set, the size of the control is defined by the size property.
+				 */
+				width: { group: "Misc", type: "sap.ui.core.CSSSize" },
 
 				/**
 				 * If this set to true, width and height of the control are determined by the width and height of the container in which the control is placed. Size and Width properties are ignored in such case.
 				 * @since 1.38.0
 				 */
-				isResponsive: {type: "boolean", group: "Appearance", defaultValue: false}
+				isResponsive: { type: "boolean", group: "Appearance", defaultValue: false }
 			},
 			events: {
 				/**
@@ -90,22 +90,24 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 				 */
 				press: {}
 			},
-			defaultAggregation : "items",
+			defaultAggregation: "items",
 			aggregations: {
 				/**
-				 * The set of points for this graphic element.
+				 * The set of items. Currently only a single item is supported.
 				 */
-				"items": { multiple: true, type: "sap.suite.ui.microchart.HarveyBallMicroChartItem", bindable : "bindable" }
+				items: {
+					multiple: true,
+					type: "sap.suite.ui.microchart.HarveyBallMicroChartItem",
+					bindable: "bindable"
+				}
 			}
 		}
 	});
 
+	HarveyBallMicroChart.VALUE_TRUNCATION_DIGITS = 5;
 	HarveyBallMicroChart._iSmallestChartSize = 24;
 	HarveyBallMicroChart._iSmallestFontSize = 12;
 
-	///**
-	// * This file defines behavior for the control,
-	// */
 	HarveyBallMicroChart.prototype.getAltText = function() {
 		var sAltText = "";
 		var bIsFirst = true;
@@ -113,13 +115,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		var aItems = this.getItems();
 		for (var i = 0; i < aItems.length; i++) {
 			var oItem = aItems[i];
-			var sColor = (this.getColorPalette().length == 0) ? this._rb.getText(("SEMANTIC_COLOR_" + oItem.getColor()).toUpperCase()) : "";
+			var sColor = (this.getColorPalette().length == 0) ? this._oRb.getText(("SEMANTIC_COLOR_" + oItem.getColor()).toUpperCase()) : "";
 			var sLabel = oItem.getFractionLabel();
 			var sScale = oItem.getFractionScale();
 			if (!sLabel && sScale) {
-				sLabel = oItem.getFormattedLabel() ? oItem.getFraction() : oItem.getFraction() + oItem.getFractionScale().substring(0,3);
+				sLabel = oItem.getFormattedLabel() ? oItem.getFraction() : oItem.getFraction() + oItem.getFractionScale().substring(0, 3);
 			} else if (!oItem.getFormattedLabel() && oItem.getFractionLabel()) {
-				sLabel += oItem.getFractionScale().substring(0,3);
+				sLabel += oItem.getFractionScale().substring(0, 3);
 			}
 
 			sAltText += (bIsFirst ? "" : "\n") + sLabel + " " + sColor;
@@ -129,17 +131,17 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		if (this.getTotal()) {
 			var sTLabel = this.getTotalLabel();
 			if (!sTLabel) {
-				sTLabel = this.getFormattedLabel() ? this.getTotal() : this.getTotal() + this.getTotalScale().substring(0,3);
+				sTLabel = this.getFormattedLabel() ? this.getTotal() : this.getTotal() + this.getTotalScale().substring(0, 3);
 			} else if (!this.getFormattedLabel()) {
-				sTLabel += this.getTotalScale().substring(0,3);
+				sTLabel += this.getTotalScale().substring(0, 3);
 			}
 
-			sAltText += (bIsFirst ? "" : "\n") + this._rb.getText("HARVEYBALLMICROCHART_TOTAL_TOOLTIP") + " " + sTLabel;
+			sAltText += (bIsFirst ? "" : "\n") + this._oRb.getText("HARVEYBALLMICROCHART_TOTAL_TOOLTIP") + " " + sTLabel;
 		}
 		return sAltText;
 	};
 
-	HarveyBallMicroChart.prototype.getTooltip_AsString = function() {
+	HarveyBallMicroChart.prototype.getTooltip_AsString = function() { //eslint-disable-line
 		var oTooltip = this.getTooltip();
 		var sTooltip = this.getAltText();
 
@@ -152,10 +154,20 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return oTooltip ? oTooltip : "";
 	};
 
+	/**
+	 * Returns the translated accessibility control type. It describes the type of the MicroChart control.
+	 *
+	 * @returns {string} The translated accessibility control type
+	 * @private
+	 */
+	HarveyBallMicroChart.prototype._getAccessibilityControlType = function() {
+		return this._oRb.getText("ACC_CTR_TYPE_HARVEYBALLMICROCHART");
+	};
+
 	HarveyBallMicroChart.prototype.init = function() {
-		this._rb = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.microchart");
+		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.microchart");
 		this.setAggregation("tooltip", "{AltText}", true);
-		sap.ui.Device.media.attachHandler(this.rerender, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD);
+		Device.media.attachHandler(this.rerender, this, Device.media.RANGESETS.SAP_STANDARD);
 		this._sChartResizeHandlerId = null;
 		this._$Control = null;
 		this._$ParentContainer = null;
@@ -168,9 +180,21 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 	};
 
+	HarveyBallMicroChart.prototype.setSize = function(size) {
+		if (this.getSize() !== size) {
+			if (size === MobileLibrary.Size.Responsive) {
+				this.setProperty("isResponsive", true, true);
+			} else {
+				this.setProperty("isResponsive", false, true);
+			}
+			this.setProperty("size", size, false);
+		}
+		return this;
+	};
+
 	/**
 	 * Handler for the core's init event. The control will only be rendered if all themes are loaded
-	 * and everything is properly initialized, we attach a theme check here.
+	 * and everything is properly initialized. We attach a theme check here.
 	 *
 	 * @private
 	 */
@@ -203,11 +227,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 
 	HarveyBallMicroChart.prototype.onAfterRendering = function() {
 		if (this.getIsResponsive()) {
-			if (library._isInGenericTile(this)) {
-				this._resizeForTileContent();
-			} else {
-				this._adjustToParent();
-			}
+			this._adjustToParent();
 		}
 		library._checkControlIsVisible(this, this._onControlIsVisible);
 		this._bindMouseEnterLeaveHandler();
@@ -248,16 +268,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 	};
 
-	HarveyBallMicroChart.prototype._resizeForTileContent = function() {
-		var sParentWidth = this.getParent().$().css("min-width");
-		this.getParent().$().width(sParentWidth);
-		if (sap.ui.Device.browser.msie || sap.ui.Device.browser.edge || sap.ui.Device.browser.chrome) {
-			// 16 pixels are removed to compensate the margin and the padding.
-			// Needs to be done for IE and Chrome because in some cases it is rendered only once.
-			this.$().width(parseInt(sParentWidth, 10) - 16);
-		}
-	};
-
 	HarveyBallMicroChart.prototype._hideLabels = function() {
 		// Gets the font size of the two texts
 		var iTextTopFontSize;
@@ -284,7 +294,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	HarveyBallMicroChart.prototype.ontap = function(oEvent) {
-		if (sap.ui.Device.browser.internet_explorer) {
+		if (Device.browser.msie) {
 			this.$().focus();
 		}
 		this.firePress();
@@ -297,27 +307,22 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	HarveyBallMicroChart.prototype.onkeyup = function(oEvent) {
-		if (oEvent.which == jQuery.sap.KeyCodes.ENTER
-				|| oEvent.which == jQuery.sap.KeyCodes.SPACE) {
+		if (oEvent.which === jQuery.sap.KeyCodes.ENTER || oEvent.which === jQuery.sap.KeyCodes.SPACE) {
 			this.firePress();
 			oEvent.preventDefault();
 		}
 	};
 
-	HarveyBallMicroChart.prototype.attachEvent = function(
-			sEventId, oData, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, sEventId, oData,
-				fnFunction, oListener);
+	HarveyBallMicroChart.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
+		Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
 		if (this.hasListeners("press")) {
 			this.$().attr("tabindex", 0).addClass("sapSuiteUiMicroChartPointer");
 		}
 		return this;
 	};
 
-	HarveyBallMicroChart.prototype.detachEvent = function(
-			sEventId, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, sEventId, fnFunction,
-				oListener);
+	HarveyBallMicroChart.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
+		Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
 		if (!this.hasListeners("press")) {
 			this.$().removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer");
 		}
@@ -325,7 +330,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	HarveyBallMicroChart.prototype.exit = function(oEvent) {
-		sap.ui.Device.media.detachHandler(this.rerender, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD);
+		Device.media.detachHandler(this.rerender, this, Device.media.RANGESETS.SAP_STANDARD);
 	};
 
 	/**
@@ -355,7 +360,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 *
 	 * @private
 	 */
-	HarveyBallMicroChart.prototype._bindMouseEnterLeaveHandler = function () {
+	HarveyBallMicroChart.prototype._bindMouseEnterLeaveHandler = function() {
 		this.$().bind("mouseenter.tooltip", this._addTitleAttribute.bind(this));
 		this.$().bind("mouseleave.tooltip", this._removeTitleAttribute.bind(this));
 	};
@@ -365,11 +370,31 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 *
 	 * @private
 	 */
-	HarveyBallMicroChart.prototype._unbindMouseEnterLeaveHandler = function () {
+	HarveyBallMicroChart.prototype._unbindMouseEnterLeaveHandler = function() {
 		this.$().unbind("mouseenter.tooltip");
 		this.$().unbind("mouseleave.tooltip");
 	};
 
-	return HarveyBallMicroChart;
+	/**
+	 * Truncates the given string to the given number of digits.
+	 * If the given string ends on a decimal separator, be it a period or a comma, this character is also removed.
+	 *
+	 * @param {string} value The value string to be truncated.
+	 * @param {int} digits The number of digits the number is to be truncated to.
+	 * @returns {string} The truncated text
+	 * @static
+	 * @private
+	 */
+	HarveyBallMicroChart._truncateValue = function(value, digits) {
+		var bHasDecimalSeparator = value[digits - 1] === "." || value[digits - 1] === ",";
+		if (value.length >= digits && bHasDecimalSeparator) {
+			return value.substring(0, digits - 1);
+		} else {
+			return value.substring(0, digits);
+		}
+	};
 
+	library._overrideGetAccessibilityInfo(HarveyBallMicroChart.prototype);
+
+	return HarveyBallMicroChart;
 });

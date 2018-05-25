@@ -1,41 +1,33 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 sap.ui.define([
-    'sap/chart/ChartType',
-    'sap/chart/TimeUnitType'
+    'sap/chart/utils/ChartUtils'
 ],function(
-    ChartType,
-    TimeUnitType
+    ChartUtils
 ) {
     "use strict";
 
     var ChartTypeAdapterUtils = {};
 
-    var oAdapteredChartTypes = {
-        Line: "line",
-        TimeSeriesLine: "timeseries_line"
-    };
-
-    function lineAdaptHandler(aDimensions) {
+    function timeSeriesAdaptHandler(sChartType, aDimensions) {
         var bHasTimeDimension = aDimensions.some(function(oDim) {
             return oDim instanceof sap.chart.data.TimeDimension;
         });
         if (bHasTimeDimension) {
-            return oAdapteredChartTypes.TimeSeriesLine;
+            return ChartUtils.CONFIG.oAdapteredChartTypes[sChartType];
         } else {
-            return oAdapteredChartTypes.Line;
+            return sChartType;
         }
     }
 
     ChartTypeAdapterUtils.adaptChartType = function(sChartType, aDimensions) {
-        switch (sChartType) {
-            case ChartType.Line:
-                return lineAdaptHandler(aDimensions);
-            default:
-                return sChartType;
+        if (ChartUtils.CONFIG.oAdapteredChartTypes[sChartType]) {
+            return timeSeriesAdaptHandler(sChartType, aDimensions);
+        } else {
+            return sChartType;
         }
     };
 

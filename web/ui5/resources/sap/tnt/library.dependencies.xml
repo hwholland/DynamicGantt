@@ -253,10 +253,4 @@
   </module>
   <module name="sap/tnt/messagebundle.properties" size="288">
   </module>
-  <module name="sap/tnt/messagebundle_en.properties" size="222">
-  </module>
-  <module name="sap/tnt/messagebundle_en_US_sappsd.properties" size="421">
-  </module>
-  <module name="sap/tnt/messagebundle_en_US_saptrc.properties" size="268">
-  </module>
 </library>

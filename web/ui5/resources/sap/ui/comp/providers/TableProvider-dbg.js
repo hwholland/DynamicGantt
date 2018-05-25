@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // -----------------------------------------------------------------------------
@@ -19,7 +20,7 @@ sap.ui.define([
 	 * @experimental This module is only for internal/experimental use!
 	 * @public
 	 * @param {object} mPropertyBag - PropertyBag having members model, entitySet
-	 * @author Pavan Nayak
+	 * @author SAP SE
 	 */
 	var TableProvider = function(mPropertyBag) {
 		if (mPropertyBag) {
@@ -28,10 +29,14 @@ sap.ui.define([
 			this._sIgnoredFields = mPropertyBag.ignoredFields;
 			this._sInitiallyVisibleFields = mPropertyBag.initiallyVisibleFields;
 			this.isEditableTable = mPropertyBag.isEditableTable;
+			this._smartTableId = mPropertyBag.smartTableId;
 			this._isAnalyticalTable = mPropertyBag.isAnalyticalTable;
 			this._isMobileTable = mPropertyBag.isMobileTable;
 			this.useSmartField = mPropertyBag.useSmartField;
+			this.useSmartToggle = mPropertyBag.useSmartToggle;
 			this._bSkipAnnotationParse = mPropertyBag.skipAnnotationParse === "true";
+			this._sLineItemQualifier = mPropertyBag.lineItemQualifier;
+			this._sPresentationVariantQualifier = mPropertyBag.presentationVariantQualifier;
 			this.enableInResultForLineItem = mPropertyBag.enableInResultForLineItem === "true";
 			this._oSemanticKeyAdditionalControl = mPropertyBag._semanticKeyAdditionalControl;
 			try {
@@ -41,6 +46,13 @@ sap.ui.define([
 			} catch (ex) {
 				// Invalid dateformat provided!
 			}
+		}
+		if (!this._oDateFormatSettings) {
+			this._oDateFormatSettings = {};
+		}
+		// Default to UTC true if nothing is provided --> as sap:display-format="Date" should be used without a timezone
+		if (!this._oDateFormatSettings.hasOwnProperty("UTC")) {
+			this._oDateFormatSettings["UTC"] = true;
 		}
 		this._aODataFieldMetadata = [];
 		this._aTableViewMetadata = [];
@@ -61,19 +73,24 @@ sap.ui.define([
 		this._aODataFieldMetadata = this._oMetadataAnalyser.getFieldsByEntitySetName(this.sEntitySet);
 		sFullyQualifiedEntityTypeName = this._oMetadataAnalyser.getEntityTypeNameFromEntitySetName(this.sEntitySet);
 		if (!this._bSkipAnnotationParse) {
-			this._oPresentationVariant = this._oMetadataAnalyser.getPresentationVariantAnnotation(sFullyQualifiedEntityTypeName);
+			this._oPresentationVariant = this._oMetadataAnalyser.getPresentationVariantAnnotation(sFullyQualifiedEntityTypeName, this._sPresentationVariantQualifier);
 			if (this._oPresentationVariant) {
 				this._oLineItemAnnotation = this._oPresentationVariant.lineItemAnnotation;
 			}
 			if (!this._oLineItemAnnotation) {
-				this._oLineItemAnnotation = this._oMetadataAnalyser.getLineItemAnnotation(sFullyQualifiedEntityTypeName);
+				this._oLineItemAnnotation = this._oMetadataAnalyser.getLineItemAnnotation(sFullyQualifiedEntityTypeName, this._sLineItemQualifier);
 			}
 		}
-		// for ResponsiveTable - also get SemanticKey and add navigationProperty fields from LineItem annotation to metadata
+
+		// for ResponsiveTable - also get SemanticKey annotaiton
 		if (this._isMobileTable) {
 			this._oSemanticKeyAnnotation = this._oMetadataAnalyser.getSemanticKeyAnnotation(sFullyQualifiedEntityTypeName);
+		}
+		// for non-AnalyticalTable add navigationProperty fields from LineItem annotation to metadata
+		if (!this._isAnalyticalTable) {
 			this._addLineItemNavigationFields(sFullyQualifiedEntityTypeName);
 		}
+
 		sSupportedFormats = this._oMetadataAnalyser.getEntityContainerAttribute("supported-formats");
 		if (sSupportedFormats) {
 			this._bSupportsExcelExport = sSupportedFormats.indexOf("xlsx") > -1;
@@ -92,11 +109,14 @@ sap.ui.define([
 			semanticKeyAnnotation: this._oSemanticKeyAnnotation,
 			_semanticKeyAdditionalControl: this._oSemanticKeyAdditionalControl,
 			isMobileTable: this._isMobileTable,
+			isAnalyticalTable: this._isAnalyticalTable,
+			smartTableId: this._smartTableId,
 			dateFormatSettings: this._oDateFormatSettings,
 			currencyFormatSettings: this._oCurrencyFormatSettings,
 			defaultDropDownDisplayBehaviour: this._oDefaultDropDownDisplayBehaviour,
 			useSmartField: this.useSmartField,
-			enableDescriptions: !this._isAnalyticalTable,
+			useSmartToggle: this.useSmartToggle,
+			enableDescriptions: true,
 			entitySet: this.sEntitySet,
 			semanticObjectController: this._oSemanticObjectController
 		});
@@ -108,10 +128,12 @@ sap.ui.define([
 		}
 		for (i = 0; i < iLen; i++) {
 			oField = this._aODataFieldMetadata[i];
-			// Ignore the fields in the ignored list -or- the one marked with visible="false" in annotation
-			if (this._aIgnoredFields.indexOf(oField.name) > -1 || !oField.visible) {
+			// Ignore the fields in the ignored list -or- the one marked with visible="false" in annotation -or- "hidden"-annotated fields that not be
+			// rendered on the UI
+			if (this._aIgnoredFields.indexOf(oField.name) > -1 || !oField.visible || oField.hidden) {
 				continue;
 			}
+
 			// Check if field is not a Primitive type --> only generate metadata for primitive/simple type fields
 			if (oField.type.indexOf("Edm.") === 0) {
 				oTableViewField = this._oControlProvider.getFieldViewMetadata(oField, this.isEditableTable);
@@ -226,7 +248,9 @@ sap.ui.define([
 	 * @public
 	 */
 	TableProvider.prototype.getRequestAtLeastFields = function() {
+
 		return (this._oPresentationVariant && this._oPresentationVariant.requestAtLeastFields) ? this._oPresentationVariant.requestAtLeastFields : [];
+
 	};
 
 	/**
@@ -278,10 +302,19 @@ sap.ui.define([
 		if (oFieldViewMetadata.criticality) {
 			aAdditionalProperty.push(oFieldViewMetadata.criticality);
 		}
+		// Include criticality representation if it exists as field metadata
+		if (oFieldViewMetadata.criticalityRepresentation) {
+			aAdditionalProperty.push(oFieldViewMetadata.criticalityRepresentation);
+		}
 
 		// Include link Properties
 		if (oFieldViewMetadata.linkProperties && oFieldViewMetadata.linkProperties.length) {
 			aAdditionalProperty = aAdditionalProperty.concat(oFieldViewMetadata.linkProperties);
+		}
+
+		// Include field control Properties
+		if (oFieldViewMetadata.fieldControlProperty) {
+			aAdditionalProperty.push(oFieldViewMetadata.fieldControlProperty);
 		}
 
 		iLength = aAdditionalProperty.length;
@@ -310,6 +343,8 @@ sap.ui.define([
 			oFieldViewMetadata.summed = oFieldViewMetadata.aggregationRole === "measure";
 			// set the inResult from metadata
 			this._setInResult(oFieldViewMetadata);
+			// set the groupBy from metadata
+			this._setGroupBy(oFieldViewMetadata);
 		}
 	};
 
@@ -388,6 +423,19 @@ sap.ui.define([
 	};
 
 	/**
+	 * Sets grouping realted info (grouped) on the field metadata if the field exists in the GroupBy of PresentationVariant annotation
+	 * 
+	 * @param {object} oField - OData metadata for the table field
+	 * @private
+	 */
+	TableProvider.prototype._setGroupBy = function(oField) {
+		// first check if field is part of PresentationVariant-->GroupBy
+		if (this._oPresentationVariant && this._oPresentationVariant.groupByFields && this._oPresentationVariant.groupByFields.indexOf(oField.name) >= 0) {
+			oField.grouped = true;
+		}
+	};
+
+	/**
 	 * Returns the important annotation for the given field or null
 	 * 
 	 * @param {object} oField - OData metadata for the table field
@@ -420,7 +468,11 @@ sap.ui.define([
 		}
 		// If LineItem exists try to make configuration fields appear at the end
 		if (iIndex < 0 && this._aInitiallyVisibleFields) {
-			iIndex = this._aInitiallyVisibleFields.indexOf(oField.name) + iLength;
+			iIndex = this._aInitiallyVisibleFields.indexOf(oField.name);
+			// set index only if field is part of configuration
+			if (iIndex > -1) {
+				iIndex += iLength;
+			}
 		}
 		if (iIndex > -1) {
 			return iIndex;

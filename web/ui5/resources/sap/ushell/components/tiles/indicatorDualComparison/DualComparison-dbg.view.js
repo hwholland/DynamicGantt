@@ -1,14 +1,15 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// @copyright@
 
 //Comparison Tile
 (function () {
-    "use strict";
+	"use strict";
+
     /*global jQuery, sap */
     /*jslint nomen: true */
 
     jQuery.sap.require("sap.ushell.components.tiles.indicatorTileUtils.smartBusinessUtil");
     jQuery.sap.require("sap.ui.model.analytics.odata4analytics");
-    sap.ui.getCore().loadLibrary("sap.suite.ui.commons");
+      sap.ui.getCore().loadLibrary("sap.suite.ui.commons");
 
     sap.ui.jsview("tiles.indicatorDualComparison.DualComparison", {
         getControllerName: function () {

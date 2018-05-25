@@ -1,18 +1,18 @@
- /*!
- * SAP UI development toolkit for HTML5 (SAPUI5)
+/*!
+* SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
- */
+(c) Copyright 2009-2018 SAP SE. All rights reserved
+*/
 
-sap.ui.define(['sap/ui/Device'],
-	function(Device) {
+sap.ui.define([
+	"jquery.sap.global", "sap/m/library", "sap/ui/Device", "./library", "./HarveyBallMicroChart"
+], function(jQuery, MobileLibrary, Device, library, HarveyBallMicroChart) {
 	"use strict";
 
 	/**
-	* HarveyBallMicroChartRenderer renderer.
-	* @namespace
-	*/
+	 * HarveyBallMicroChartRenderer renderer.
+	 * @namespace
+	 */
 	var HarveyBallMicroChartRenderer = {};
 
 	HarveyBallMicroChartRenderer._iReferenceControlHeight = 72;
@@ -28,8 +28,9 @@ sap.ui.define(['sap/ui/Device'],
 		if (!oControl._bThemeApplied) {
 			return;
 		}
-		var bRtl = sap.ui.getCore().getConfiguration().getRTL();
 		this._calculatePath(oControl);
+		var aColorPalette = oControl.getColorPalette();
+		var bRtl = sap.ui.getCore().getConfiguration().getRTL();
 		var sAriaLabel = oControl.getAltText();
 		var sTotalScale = "";
 		var sValueLabel = "";
@@ -37,12 +38,24 @@ sap.ui.define(['sap/ui/Device'],
 		var bFmtLabel = false;
 		var fValue = 0;
 		var sColorClass = "";
-		var sColorPaletteColor = false;
-		// support only value from first item
+		var sColor = aColorPalette.length > 0 ? aColorPalette[0] : null;
+		var iCircleRadius = this._oPath.center;
+
+		if (library._isThemeHighContrast()) {
+			iCircleRadius -= 1;
+		}
+
+		if (MobileLibrary.ValueCSSColor.isValid(sColor)) {
+			sColor = jQuery.sap.encodeHTML(aColorPalette[0]);
+		} else {
+			sColor = null;
+		}
+
+		// currently only value from first item is supported
 		if (oControl.getItems().length) {
 			var oPieItem = oControl.getItems()[0];
 			fValue = oPieItem.getFraction();
-			sColorClass = "sapSuiteHBMCSemanticColor" + oPieItem.getColor();
+			sColorClass = "sapSuiteHBMCSemanticColor" + jQuery.sap.encodeHTML(oPieItem.getColor());
 			sValueLabel = oPieItem.getFractionLabel() ? oPieItem.getFractionLabel() : sValueLabel + oPieItem.getFraction();
 			sValueScale = oPieItem.getFractionScale() ? oPieItem.getFractionScale().substring(0, 3) : sValueScale;
 			bFmtLabel = oPieItem.getFormattedLabel();
@@ -66,19 +79,12 @@ sap.ui.define(['sap/ui/Device'],
 			sTotalScale = oFormattedTotal.scale.substring(0, 3);
 			sTotalLabel = oFormattedTotal.value;
 		}
-		var iTrunc = 5; // truncate values to 5 chars
+
 		if (sValueLabel) {
-			sValueLabel = (sValueLabel.length >= iTrunc && (sValueLabel[iTrunc - 1] === "." || sValueLabel[iTrunc - 1] === ","))
-					? sValueLabel.substring(0, iTrunc - 1)
-					: sValueLabel.substring(0, iTrunc);
+			sValueLabel = HarveyBallMicroChart._truncateValue(sValueLabel, HarveyBallMicroChart.VALUE_TRUNCATION_DIGITS);
 		}
 		if (sTotalLabel) {
-			sTotalLabel = (sTotalLabel.length >= iTrunc && (sTotalLabel[iTrunc - 1] === "." || sTotalLabel[iTrunc - 1] === ","))
-					? sTotalLabel.substring(0, iTrunc - 1)
-					: sTotalLabel.substring(0, iTrunc);
-		}
-		if (oControl.getColorPalette().length > 0) {
-			sColorPaletteColor = oControl.getColorPalette()[0];
+			sTotalLabel = HarveyBallMicroChart._truncateValue(sTotalLabel, HarveyBallMicroChart.VALUE_TRUNCATION_DIGITS);
 		}
 
 		var sSizeClass = "sapSuiteHBMCSize" + oControl.getSize();
@@ -94,14 +100,14 @@ sap.ui.define(['sap/ui/Device'],
 		}
 		oRm.writeClasses();
 
-		if (!oControl.getIsResponsive() && oControl.getWidth()){
+		if (!oControl.getIsResponsive() && oControl.getWidth()) {
 			oRm.addStyle("width", oControl.getWidth());
 		}
 		oRm.writeStyles();
 		oRm.write(">");
 
 		oRm.write("<div");
-		oRm.addClass("sapSuiteHBMCChartCnt");
+		oRm.addClass("sapSuiteHBMCChart");
 		oRm.addClass(oControl.getIsResponsive() ? "sapSuiteHBMCResponsive" : jQuery.sap.encodeHTML(sSizeClass));
 		oRm.writeClasses();
 		oRm.addStyle("display", "inline-block");
@@ -111,7 +117,7 @@ sap.ui.define(['sap/ui/Device'],
 		oRm.write("<svg");
 		oRm.writeAttribute("id", oControl.getId() + "-harvey-ball");
 		if (oControl.getIsResponsive()) {
-			oRm.addClass("sapSuiteHBMCChartCnt");
+			oRm.addClass("sapSuiteHBMCChart");
 			oRm.addClass("sapSuiteHBMCResponsive");
 			oRm.writeClasses();
 			oRm.writeAttributeEscaped("viewBox", this._getSvgViewBoxProperties());
@@ -129,10 +135,8 @@ sap.ui.define(['sap/ui/Device'],
 			oRm.writeAttributeEscaped("cx", this._oPath.center);
 		}
 		oRm.writeAttributeEscaped("cy", this._oPath.center);
-		oRm.writeAttributeEscaped("r", (sap.ui.getCore().getConfiguration().getTheme() === "sap_hcb")
-														? this._oPath.center - 1
-														: this._oPath.center);
-		oRm.addClass("sapSuiteHBMCSBall");
+		oRm.writeAttributeEscaped("r", iCircleRadius);
+		oRm.addClass("sapSuiteHBMCBackgroundCircle");
 		oRm.writeClasses();
 		oRm.write("/>");
 
@@ -144,29 +148,29 @@ sap.ui.define(['sap/ui/Device'],
 				oRm.writeAttributeEscaped("cx", this._oPath.center);
 			}
 			oRm.writeAttributeEscaped("cy", this._oPath.center);
-			oRm.writeAttributeEscaped("r", this._oPath.center - this._oPath.border);
-			oRm.addClass("sapSuiteHBMCSgmnt");
-			oRm.addClass(jQuery.sap.encodeHTML(sColorClass));
-			oRm.writeClasses();
-
-			if (oControl.getColorPalette().length > 0) {
-				oRm.addStyle("fill", jQuery.sap.encodeHTML(oControl.getColorPalette()[0]));
+			oRm.writeAttributeEscaped("r", iCircleRadius - this._oPath.border);
+			oRm.addClass("sapSuiteHBMCSegment");
+			if (sColor) {
+				oRm.addStyle("fill", sColor);
 				oRm.writeStyles();
+			} else {
+				oRm.addClass(jQuery.sap.encodeHTML(sColorClass));
 			}
+			oRm.writeClasses();
 
 			oRm.write("/>");
 		} else if (fValue > 0) {
 			oRm.write("<path");
 			oRm.writeAttribute("id", oControl.getId() + "-segment");
-			oRm.addClass("sapSuiteHBMCSgmnt");
-			oRm.addClass(jQuery.sap.encodeHTML(sColorClass));
+			oRm.addClass("sapSuiteHBMCSegment");
+			if (sColor) {
+				oRm.addStyle("fill", sColor);
+				oRm.writeStyles();
+			} else {
+				oRm.addClass(jQuery.sap.encodeHTML(sColorClass));
+			}
 			oRm.writeClasses();
 			oRm.writeAttributeEscaped("d", this._serializePieChart());
-
-			if (oControl.getColorPalette().length > 0) {
-				oRm.addStyle("fill", jQuery.sap.encodeHTML(oControl.getColorPalette()[0]));
-				oRm.writeStyles();
-			}
 
 			oRm.write("/>");
 		}
@@ -184,16 +188,18 @@ sap.ui.define(['sap/ui/Device'],
 				oRm.writeAttribute("x", "80");
 				oRm.writeAttribute("y", "30");
 				oRm.addClass("sapSuiteHBMCResponsive");
-				oRm.addClass("sapSuiteHBMCValSclCnt");
-				oRm.addClass(jQuery.sap.encodeHTML(sColorClass));
+				oRm.addClass("sapSuiteHBMCValueContainer");
+				if (!sColor) {
+					oRm.addClass(jQuery.sap.encodeHTML(sColorClass));
+				}
 				oRm.writeClasses();
 				oRm.write(">");
 				if (!bRtl) {
-					this.renderFractionLabel(oRm, sValueLabel, bRtl);
-					this.renderFractionScale(oRm, sValueScale, bRtl);
+					this.renderFractionLabel(oRm, sValueLabel, sColor, bRtl);
+					this.renderFractionScale(oRm, sValueScale, sColor, bRtl);
 				} else {
-					this.renderFractionScale(oRm, sValueScale, bRtl);
-					this.renderFractionLabel(oRm, sValueLabel, bRtl);
+					this.renderFractionScale(oRm, sValueScale, sColor, bRtl);
+					this.renderFractionLabel(oRm, sValueLabel, sColor, bRtl);
 				}
 				oRm.write("</text>");
 			}
@@ -214,8 +220,8 @@ sap.ui.define(['sap/ui/Device'],
 				}
 
 				oRm.addClass("sapSuiteHBMCResponsive");
-				oRm.addClass("sapSuiteHBMCTtl");
-				oRm.addClass("sapSuiteHBMCTtlSclCnt");
+				oRm.addClass("sapSuiteHBMCTotal");
+				oRm.addClass("sapSuiteHBMCTotalContainer");
 				oRm.writeClasses();
 				oRm.write(">");
 				if (!bRtl) {
@@ -231,29 +237,28 @@ sap.ui.define(['sap/ui/Device'],
 		oRm.write("</svg>");
 		oRm.write("</div>");
 
-		if (!oControl.getIsResponsive()){
+		if (!oControl.getIsResponsive()) {
 			oRm.write("<div");
-			oRm.addClass("sapSuiteHBMCValSclCnt");
+			oRm.addClass("sapSuiteHBMCValueContainer");
 			oRm.addClass(jQuery.sap.encodeHTML(sSizeClass));
-			oRm.addClass(jQuery.sap.encodeHTML(sColorClass));
-
-			if (sColorPaletteColor) {
-				oRm.addClass("sapSuiteHBMCColorPaletteColor");
-			}
-
 			oRm.writeClasses();
 			oRm.addStyle("display", oControl.getShowFractions() ? "inline-block" : "none");
 			oRm.writeStyles();
 			oRm.write(">");
-			oRm.write("<p");
-			oRm.write(">");
-			this.renderLabel(oRm, oControl, [sColorClass, sSizeClass, "sapSuiteHBMCVal"], sValueLabel, "-fraction");
-			this.renderLabel(oRm, oControl, [sColorClass, sSizeClass, "sapSuiteHBMCValScale"], sValueScale, "-fraction-scale");
-			oRm.write("</p>");
+			this.renderLabel(oRm, oControl, [
+				sColorClass,
+				sSizeClass,
+				"sapSuiteHBMCValue"
+			], sValueLabel, sColor, "-fraction");
+			this.renderLabel(oRm, oControl, [
+				sColorClass,
+				sSizeClass,
+				"sapSuiteHBMCValueScale"
+			], sValueScale, sColor, "-fraction-scale");
 			oRm.write("</div>");
 
 			oRm.write("<div");
-			oRm.addClass("sapSuiteHBMCTtlSclCnt");
+			oRm.addClass("sapSuiteHBMCTotalContainer");
 			oRm.addClass(jQuery.sap.encodeHTML(sSizeClass));
 			oRm.writeClasses();
 			if (bRtl) {
@@ -264,30 +269,46 @@ sap.ui.define(['sap/ui/Device'],
 			oRm.addStyle("display", oControl.getShowTotal() ? "inline-block" : "none");
 			oRm.writeStyles();
 			oRm.write(">");
-			this.renderLabel(oRm, oControl, [sColorClass, sSizeClass, "sapSuiteHBMCTtl"], sTotalLabel, "-total");
-			this.renderLabel(oRm, oControl, [sColorClass, sSizeClass, "sapSuiteHBMCTtlScale"], sTotalScale, "-total-scale");
+			this.renderLabel(oRm, oControl, [
+				sColorClass,
+				sSizeClass,
+				"sapSuiteHBMCTotal"
+			], sTotalLabel, sColor, "-total");
+			this.renderLabel(oRm, oControl, [
+				sColorClass,
+				sSizeClass,
+				"sapSuiteHBMCTotalScale"
+			], sTotalScale, sColor, "-total-scale");
 			oRm.write("</div>");
 		}
 		oRm.write("</div>");
 	};
 
-	HarveyBallMicroChartRenderer.renderFractionLabel = function(oRm, sFractionLabel, bRtl) {
+	HarveyBallMicroChartRenderer.renderFractionLabel = function(oRm, sFractionLabel, sColor, bRtl) {
 		oRm.write("<tspan");
 		if (bRtl) {
 			// px is used instead of rem for IE compatibility reasons
 			oRm.writeAttribute("dx", "4.8px");
+		}
+		if (sColor) {
+			oRm.addStyle("fill", sColor);
+			oRm.writeStyles();
 		}
 		oRm.write(">");
 		oRm.writeEscaped(sFractionLabel);
 		oRm.write("</tspan>");
 	};
 
-	HarveyBallMicroChartRenderer.renderFractionScale = function(oRm, sFractionScale, bRtl) {
+	HarveyBallMicroChartRenderer.renderFractionScale = function(oRm, sFractionScale, sColor, bRtl) {
 		oRm.write("<tspan");
 		oRm.writeAttribute("font-size", "0.8rem");
 		if (!bRtl) {
 			// px is used instead of rem for IE compatibility reasons
 			oRm.writeAttribute("dx", "4.8px");
+		}
+		if (sColor) {
+			oRm.addStyle("fill", sColor);
+			oRm.writeStyles();
 		}
 		oRm.write(">");
 		oRm.writeEscaped(sFractionScale);
@@ -318,11 +339,18 @@ sap.ui.define(['sap/ui/Device'],
 		oRm.write("</tspan>");
 	};
 
-	HarveyBallMicroChartRenderer.renderLabel = function(oRm, oControl, aClasses, sLabel, sId) {
+	HarveyBallMicroChartRenderer.renderLabel = function(oRm, oControl, aClasses, sLabel, sColor, sId) {
+		var bUseColorPalette = !(aClasses.indexOf("sapSuiteHBMCTotal") > -1 || aClasses.indexOf("sapSuiteHBMCTotalScale") > -1);
 		oRm.write("<span");
 		oRm.writeAttribute("id", oControl.getId() + sId);
 		for (var i = 0; i < aClasses.length; i++) {
-			oRm.addClass(jQuery.sap.encodeHTML(aClasses[i]));
+			// uses palette color only for fraction label and scale
+			if (i === 0 && sColor && bUseColorPalette) {
+				oRm.addStyle("color", sColor);
+				oRm.writeStyles();
+			} else {
+				oRm.addClass(jQuery.sap.encodeHTML(aClasses[i]));
+			}
 		}
 		oRm.writeClasses();
 		oRm.write(">");
@@ -355,7 +383,7 @@ sap.ui.define(['sap/ui/Device'],
 		}
 
 		var iMediaSize = bIsPhone ? 56 : 72;
-		if (oControl.getIsResponsive()){
+		if (oControl.getIsResponsive()) {
 			iMediaSize = HarveyBallMicroChartRenderer._iReferenceControlHeight;
 		}
 		var iCenter = iMediaSize / 2;
@@ -368,28 +396,28 @@ sap.ui.define(['sap/ui/Device'],
 			bRtlResponsive = false;
 		}
 		this._oPath = {
-			initial : {
-				x : !bRtlResponsive ? iCenter : HarveyBallMicroChartRenderer._iReferenceControlWidth - iCenter,
-				y : iCenter,
-				x1 : !bRtlResponsive ? iCenter : HarveyBallMicroChartRenderer._iReferenceControlWidth - iCenter,
-				y1 : iCenter
+			initial: {
+				x: !bRtlResponsive ? iCenter : HarveyBallMicroChartRenderer._iReferenceControlWidth - iCenter,
+				y: iCenter,
+				x1: !bRtlResponsive ? iCenter : HarveyBallMicroChartRenderer._iReferenceControlWidth - iCenter,
+				y1: iCenter
 			},
-			lineTo : {
-				x : !bRtlResponsive ? iCenter : HarveyBallMicroChartRenderer._iReferenceControlWidth - iCenter,
-				y : iBorder
+			lineTo: {
+				x: !bRtlResponsive ? iCenter : HarveyBallMicroChartRenderer._iReferenceControlWidth - iCenter,
+				y: iBorder
 			},
-			arc : {
-				x1 : iCenter - iBorder,
-				y1 : iCenter - iBorder,
-				xArc : 0,
-				largeArc : 0,
-				sweep : 1,
-				x2 : "",
-				y2 : ""
+			arc: {
+				x1: iCenter - iBorder,
+				y1: iCenter - iBorder,
+				xArc: 0,
+				largeArc: 0,
+				sweep: 1,
+				x2: "",
+				y2: ""
 			},
-			size : iMediaSize,
-			border : iBorder,
-			center : iCenter
+			size: iMediaSize,
+			border: iBorder,
+			center: iCenter
 		};
 
 		var fAngle = fFrac / fTot * 360;
@@ -423,9 +451,11 @@ sap.ui.define(['sap/ui/Device'],
 
 	HarveyBallMicroChartRenderer._serializePieChart = function() {
 		var p = this._oPath;
-		return ["M", p.initial.x, ",", p.initial.y, " L", p.initial.x, ",", p.lineTo.y, " A", p.arc.x1, ",", p.arc.y1,
-				" ", p.arc.xArc, " ", p.arc.largeArc, ",", p.arc.sweep, " ", p.arc.x2, ",", p.arc.y2, " L", p.initial.x1,
-				",", p.initial.y1, " z"].join("");
+		return [
+			"M", p.initial.x, ",", p.initial.y, " L", p.initial.x, ",", p.lineTo.y, " A", p.arc.x1, ",", p.arc.y1,
+			" ", p.arc.xArc, " ", p.arc.largeArc, ",", p.arc.sweep, " ", p.arc.x2, ",", p.arc.y2, " L", p.initial.x1,
+			",", p.initial.y1, " z"
+		].join("");
 	};
 
 	return HarveyBallMicroChartRenderer;

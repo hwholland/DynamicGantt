@@ -1,7 +1,8 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 sap.ui.define([
@@ -13,7 +14,7 @@ sap.ui.define([
 	 * Change handler for removing a smart form group element.
 	 * @alias sap.ui.fl.changeHandler.RemoveField
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @experimental Since 1.27.0
 	 */
 	var RemoveField = { };
@@ -21,13 +22,16 @@ sap.ui.define([
 	/**
 	 * Removes a smart form group element.
 	 *
-	 * @param {sap.ui.fl.Change} oChangeWrapper change wrapper object with instructions to be applied on the control map
-	 * @param {sap.ui.comp.smartform.GroupElement} oField GroupElement control that matches the change selector for applying the change
+	 * @param {sap.ui.fl.Change} oChange change wrapper object with instructions to be applied on the control map
+	 * @param {sap.ui.comp.smartform.GroupElement|Element} oField GroupElement control that matches the change selector for applying the change
 	 * @param {object} mPropertyBag
-	 * @param {object} mPropertyBag.modifier - modifier for the controls
+	 * @param {sap.ui.fl.changeHandler.BaseTreeModifier} mPropertyBag.modifier - modifier for the controls
+	 * @param {sap.ui.core.UIComponent} mPropertyBag.appComponent - component in which the change should be applied
+	 * @param {object} mPropertyBag.view - view object or xml element representing an ui5 view
+	 * @return {boolean} true if successfully added
 	 * @public
 	 */
-	RemoveField.applyChange = function(oChangeWrapper, oField, mPropertyBag) {
+	RemoveField.applyChange = function(oChange, oField, mPropertyBag) {
 		var oModifier = mPropertyBag.modifier;
 		var oView = mPropertyBag.view;
 		var oGroup = oModifier.getParent(oField);

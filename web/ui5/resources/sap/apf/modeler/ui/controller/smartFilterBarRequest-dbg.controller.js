@@ -4,15 +4,16 @@
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
 /*global sap*/
-sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseController) {
+jQuery.sap.require("sap.apf.modeler.ui.controller.requestOptions");
+(function() {
 	"use strict";
-	return BaseController.extend("sap.apf.modeler.ui.controller.smartFilterBarRequest", {
+	sap.apf.modeler.ui.controller.requestOptions.extend("sap.apf.modeler.ui.controller.smartFilterBarRequest", {
 		// Called on initialization of the view and sets the static texts for all controls in UI
 		setDisplayText : function() {
 			var oController = this;
 			var oTextReader = oController.getView().getViewData().oTextReader;
 			oController.byId("idSourceLabel").setText(oTextReader("source"));
-			oController.byId("idEntityLabel").setText(oTextReader("entityType"));
+			oController.byId("idEntityLabel").setText(oTextReader("entity"));
 		},
 		// Hide property fields before render
 		onBeforeRendering : function() {
@@ -41,15 +42,15 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseC
 			var oController = this;
 			return oController.oParentObject.getService();
 		},
-		// returns all entity types in a service
-		getAllEntities : function(sSource) {
+		// returns all entity sets in a service
+		getAllEntitiesAsPromise : function(sSource) {
 			var oController = this;
-			return oController.oConfigurationEditor.getAllEntityTypesOfService(sSource);
+			return oController.oConfigurationEditor.getAllEntitySetsExceptParameterEntitySets(sSource);
 		},
 		// returns entity type of service
 		getEntity : function() {
 			var oController = this;
-			return oController.oParentObject.getEntityType();
+			return oController.oParentObject.getEntitySet();
 		},
 		// clearSource clears smart filter bar service. It calls clears entity to clear smart filter entity type as well.
 		clearSource : function() {
@@ -59,17 +60,17 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseC
 		},
 		clearEntity : function() {
 			var oController = this;
-			oController.oParentObject.setEntityType(undefined);
+			oController.oParentObject.setEntitySet(undefined);
 		},
 		// updates smart filter bar service
 		updateSource : function(sSource) {
 			var oController = this;
 			oController.oParentObject.setService(sSource);
 		},
-		// updates smart filter bar entity type
+		// updates smart filter bar entity set
 		updateEntity : function(sEntity) {
 			var oController = this;
-			oController.oParentObject.setEntityType(sEntity);
+			oController.oParentObject.setEntitySet(sEntity);
 		},
 		// returns the current validation state of sub view
 		getValidationState : function() {
@@ -77,4 +78,4 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseC
 			return oController.viewValidator.getValidationState();
 		}
 	});
-});
+}());

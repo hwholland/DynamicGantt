@@ -1,8 +1,7 @@
 jQuery.sap.require("sap.ushell.components.tiles.generic");
-
-
 (function () {
-    "use strict";
+	"use strict";
+
     sap.ushell.components.tiles.generic.extend("sap.ushell.components.tiles.indicatorcomparison.ComparisonTile", {
         onInit :  function(){
             this.KPI_VALUE_REQUIRED = false;
@@ -128,7 +127,7 @@ jQuery.sap.require("sap.ushell.components.tiles.generic");
                          */
                         var finalQuery = sap.ushell.components.tiles.indicatorTileUtils.util.prepareQueryServiceUri(that.oRunTimeODataModel, entitySet, measures,null, variants, 3);
                         /*
-                         * sorting is not required
+                         *   sorting is not required
                          *
                      if (this.oConfig.TILE_PROPERTIES.semanticMeasure) {
                         finalQuery.uri += "&$orderby=" + orderByElement[0] + " " + orderByElement[2];

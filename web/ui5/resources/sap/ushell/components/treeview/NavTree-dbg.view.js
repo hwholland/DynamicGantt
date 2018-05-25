@@ -1,7 +1,8 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, document */
     /*jslint plusplus: true, nomen: true */
 
@@ -53,4 +54,6 @@
             return "sap.ushell.components.treeview.NavTree";
         }
     });
-}());
+
+
+}, /* bExport= */ true);

@@ -1,30 +1,35 @@
 /*!
  * SAP APF Analysis Path Framework
- * 
- * (c) Copyright 2012-2014 SAP AG. All rights reserved
+ *
+ * (c) Copyright 2012-2018 SAP AG. All rights reserved
  */
 
-jQuery.sap.declare("sap.apf.core.ajax");
-
-jQuery.sap.require("sap.apf.core.utils.checkForTimeout");
-
-(function() {
+sap.ui.define(['sap/apf/core/utils/checkForTimeout', 'sap/ui/model/odata/ODataUtils'],
+		function(checkForTimeout, ODataUtils) {
 	'use strict';
+
 	/**
 	 * @memberOf sap.apf.core
 	 * @description Wraps a jQuery (jQuery.ajax) request in order to handle a server time-out.
-	 * @param {object} inject Configuration of the jQuery.ajax request plus additional injects.  One inject is the
+	 * @param {object} settingsAndInject Configuration of the jQuery.ajax request plus additional settingsAndInjects.  One settingsAndInject is the
 	 * ajax, that shall be used, and the message handler.
+         * @param {boolean} settingsAndInject.suppressSapSystem directive, that the sap system parameter shall not be set
 	 * @returns {object} jqXHR
 	 */
-	sap.apf.core.ajax = function(inject) {
-		var messageHandler = inject.instances && inject.instances.messageHandler;
-		var oAjaxSettings = jQuery.extend(true, {}, inject);
+	function _ajax(settingsAndInject) {
+		var messageHandler = settingsAndInject.instances && settingsAndInject.instances.messageHandler;
+		var oAjaxSettings = jQuery.extend(true, {}, settingsAndInject);
 		if (oAjaxSettings.functions && oAjaxSettings.functions.ajax) {
 			delete oAjaxSettings.functions.ajax;
 		}
+		if (oAjaxSettings.functions && oAjaxSettings.functions.getSapSystem) {
+			delete oAjaxSettings.functions.getSapSystem;
+		}
 		if (oAjaxSettings.instances && oAjaxSettings.instances.messageHandler) {
 			delete oAjaxSettings.instances.messageHandler;
+		}
+		if (oAjaxSettings.suppressSapSystem){
+			delete oAjaxSettings.suppressSapSystem;
 		}
 		var fnBeforeSend = oAjaxSettings.beforeSend;
 		var fnSuccess = oAjaxSettings.success;
@@ -64,8 +69,14 @@ jQuery.sap.require("sap.apf.core.utils.checkForTimeout");
 				defaultErrorHandling(error);
 			}
 		};
-		if (inject.functions && inject.functions.ajax) {
-			result = inject.functions.ajax(oAjaxSettings);
+		if ((settingsAndInject.functions && settingsAndInject.functions.getSapSystem &&
+			settingsAndInject.functions.getSapSystem()) && !settingsAndInject.suppressSapSystem) {
+
+			oAjaxSettings.url = sap.ui.model.odata.ODataUtils.setOrigin(oAjaxSettings.url,
+					{ force : true, alias : settingsAndInject.functions.getSapSystem()});
+		}
+		if (settingsAndInject.functions && settingsAndInject.functions.ajax) {
+			result = settingsAndInject.functions.ajax(oAjaxSettings);
 		} else {
 			result = jQuery.ajax(oAjaxSettings);
 		}
@@ -88,6 +99,10 @@ jQuery.sap.require("sap.apf.core.utils.checkForTimeout");
 				messageHandler.putMessage(oMessage);
 			}
 		}
-	};
-
-}());
+	}
+	/*BEGIN_COMPATIBILITY*/
+	sap.apf.core = sap.apf.core || {};
+	sap.apf.core.ajax = _ajax;
+	/*END_COMPATIBILITY*/
+	return _ajax;
+}, true /*GLOBAL_EXPORT*/);

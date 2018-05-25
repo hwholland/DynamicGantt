@@ -58,7 +58,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * that we want to represent in his hierarchy. Optionals item will be hidden if the option is true on the Hierarchy
  * control.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -407,6 +407,7 @@ sap.ca.ui.HierarchyItem.M_EVENTS = {'linkPress':'linkPress'};
 jQuery.sap.require("sap.ui.layout.VerticalLayout");
 jQuery.sap.require("sap.ui.core.theming.Parameters");
 
+
 sap.ca.ui.HierarchyItem.prototype.init = function () {
 };
 
@@ -415,7 +416,7 @@ sap.ca.ui.HierarchyItem.prototype._getIconControl = function () {
     if (oIcon == undefined) {
         oIcon = new sap.ui.core.Icon({
             src:this.getProperty("icon"),
-            color:sap.ui.core.theming.Parameters.get("sapUiLightText")
+            color:sap.ui.core.theming.Parameters.get("sapUiContentNonInteractiveIconColor")
         }).addStyleClass("sapCaUiHierarchyItemIcon");
         this.setAggregation("_iconControl", oIcon);
     }

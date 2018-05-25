@@ -1,15 +1,14 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The SupportTicket adapter for the local platform.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
-    "use strict";
-    /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.adapters.local.SupportTicketAdapter");
+sap.ui.define(function() {
+	"use strict";
 
-    sap.ushell.adapters.local.SupportTicketAdapter = function (oSystem, sParameter, oAdapterConfiguration) {
+    /*global jQuery, sap */
+    var SupportTicketAdapter = function (oSystem, sParameter, oAdapterConfiguration) {
 
         this.createTicket = function (oSupportObject) {
             var oDeferred = new jQuery.Deferred(),
@@ -20,4 +19,8 @@
         };
 
     };
-}());
+
+
+	return SupportTicketAdapter;
+
+}, /* bExport= */ true);

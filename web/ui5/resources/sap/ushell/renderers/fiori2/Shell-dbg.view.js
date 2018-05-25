@@ -1,15 +1,21 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-(function () {
-    "use strict";
-    /*global jQuery, sap, location, window, clearTimeout, setTimeout */
-    jQuery.sap.require("sap.ushell.renderers.fiori2.Navigation");
-    jQuery.sap.require("sap.ushell.ui.shell.ShellLayout");
-    jQuery.sap.require("sap.ushell.UserActivityLog");
-    jQuery.sap.require("sap.ushell.ui.launchpad.ActionItem");
-    jQuery.sap.require("sap.ushell.ui.launchpad.ViewPortContainer");
-    jQuery.sap.require("sap.ushell.ui.shell.FloatingContainer");
-    jQuery.sap.require("sap.ushell.ui.shell.NavigationMiniTile");
-    jQuery.sap.require("sap.ushell.ui.launchpad.AccessibilityCustomData");
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define([
+		'sap/ushell/UserActivityLog',
+		'./Navigation',
+		'sap/ushell/ui/launchpad/ActionItem',
+		'sap/ushell/ui/launchpad/Fiori2LoadingDialog',
+		'sap/ushell/ui/launchpad/ViewPortContainer',
+		'sap/ushell/ui/shell/RightFloatingContainer',
+		'sap/ushell/ui/shell/ShellLayout'
+	], function(UserActivityLog, Navigation, ActionItem, Fiori2LoadingDialog, ViewPortContainer, RightFloatingContainer, ShellLayout) {
+	"use strict";
+
+    /*global jQuery, sap, location, window, clearTimeout, setTimeout, hasher */
+    function fnShellUpdateAggItem(sId, oContext) {
+        return sap.ui.getCore().byId(oContext.getObject());
+    }
+
+
     sap.ui.jsview("sap.ushell.renderers.fiori2.Shell", {
         /**
          * Most of the following code acts just as placeholder for new Unified Shell Control.
@@ -19,54 +25,55 @@
          * @public
          */
         createContent: function (oController) {
+            this.oShellAppTitleStateEnum = {
+                SHELL_NAV_MENU_ONLY: 0,
+                ALL_MY_APPS_ONLY: 1,
+                SHELL_NAV_MENU : 2,
+                ALL_MY_APPS: 3
+            };
             var that = this,
                 oViewData = this.getViewData() || {},
                 oConfig = oViewData.config || {},
                 bStateEmbedded = (oConfig.appState === "embedded") ? true : false,
-                bStateHeaderless = (oConfig.appState === "headerless") ? true : false,
-                fnShellUpdateAggItem = function (sId, oContext) {
-                    return sap.ui.getCore().byId(oContext.getObject());
-                },
-                oLoadingOverlay = new sap.ushell.ui.launchpad.LoadingOverlay({
-                    id: "loadingDialog"
+                oFiori2LoadingDialog = new Fiori2LoadingDialog({
+                    id: "Fiori2LoadingDialog",
+                    text: ""
                 }),
                 oConfigButton = new sap.ushell.ui.shell.ShellHeadItem({
                     id: "configBtn",
                     tooltip: "{i18n>showGrpsBtn_tooltip}",
                     ariaLabel: "{i18n>showGrpsBtn_tooltip}",
                     icon: sap.ui.core.IconPool.getIconURI("menu2"),
-                    selected: {path: "/currentState/showPane"},
+                    selected: {
+                        path: "/currentState/showPane"
+                    },
                     press: [oController.togglePane, oController]
                 }),
-                oHomeButton,
-                oViewPortContainer;
-
-            if (oConfig.enableMergeAppAndShellHeaders === true) {
-                var sBackIcon = sap.ui.getCore().getConfiguration().getRTL() ? "feeder-arrow" : "nav-back";
-                oHomeButton = new sap.ushell.ui.shell.ShellHeadItem({
-                    id: "homeBtn",
-                    tooltip: "{i18n>backBtn_tooltip}",
-                    ariaLabel: "{i18n>backBtn_tooltip}",
-                    icon: sap.ui.core.IconPool.getIconURI(sBackIcon),
-                    press: oController._navBack.bind(oController)
-                });
-            } else {
+                sBackButtonIcon = sap.ui.getCore().getConfiguration().getRTL() ? "feeder-arrow" : "nav-back",
                 oHomeButton = new sap.ushell.ui.shell.ShellHeadItem({
                     id: "homeBtn",
                     tooltip: "{i18n>homeBtn_tooltip}",
                     ariaLabel: "{i18n>homeBtn_tooltip}",
                     icon: sap.ui.core.IconPool.getIconURI("home"),
                     target: oConfig.rootIntent ? "#" + oConfig.rootIntent : "#"
-                });
-            }
-            if (oConfig.enableMeArea) {
-                oHomeButton.setShowSeparator(false);
-            }
+                }),
+                oBackButton = new sap.ushell.ui.shell.ShellHeadItem({
+                    id: "backBtn",
+                    tooltip: "{i18n>backBtn_tooltip}",
+                    ariaLabel: "{i18n>backBtn_tooltip}",
+                    icon: sap.ui.core.IconPool.getIconURI(sBackButtonIcon),
+                    press: oController._navBack.bind(oController)
+                }),
+                oViewPortContainer;
+            this._allowUpToThreeActionInShellHeader(oConfig);
+            oBackButton.setShowSeparator(false);
+            oHomeButton.setShowSeparator(false);
             oHomeButton.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
                 key: "aria-disabled",
                 value: "false",
                 writeToDom: true
             }));
+
             oHomeButton.addEventDelegate({
                 onsapskipback: function (oEvent) {
                     if (sap.ushell.renderers.fiori2.AccessKeysHandler.getAppKeysHandler()) {
@@ -97,274 +104,404 @@
             this.aDanglingControls = [];
 
             var oActionsUserButton;
-            if (bStateEmbedded) {
-                new sap.ushell.ui.shell.ShellHeadItem({
-                    id: "standardActionsBtn",
-                    tooltip: "{i18n>headerActionsTooltip}",
-                    icon: sap.ui.core.IconPool.getIconURI("account"),
-                    press: [oController.pressActionBtn, oController]
-                });
-            } else if (!bStateHeaderless && !oConfig.enableMeArea) {
-                oActionsUserButton = new sap.ushell.ui.shell.ShellHeadUserItem({
-                    id: "actionsBtn",
-                    username: sap.ushell.Container.getUser().getFullName(),
-                    tooltip: "{i18n>headerActionsTooltip}",
-                    ariaLabel: sap.ushell.Container.getUser().getFullName(),
-                    image: sap.ui.core.IconPool.getIconURI("account"),
-                    press: [oController.pressActionBtn, oController]
-                });
-                oActionsUserButton.addEventDelegate({
-                    onsaptabnext: function (oEvent) {
-                        if (sap.ushell.renderers.fiori2.AccessKeysHandler.getAppKeysHandler()) {
-                            oEvent.preventDefault();
-                            sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
-                        }
-                    },
-                    onsapskipforward: function (oEvent) {
-                        if (sap.ushell.renderers.fiori2.AccessKeysHandler.getAppKeysHandler()) {
-                            oEvent.preventDefault();
-                            sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
-                        }
-                    }
-                });
-            }
+
             oViewPortContainer = this.initViewPortContainer(oController);
 
-            if (oConfig.enableNotificationsUI === true) {
-
-                // Define the notifications counter ShellHeadItem control
-                var oNotificationToggle = new sap.ushell.ui.shell.ShellHeadItem({
-                    id: "NotificationsCountButton",
-                    tooltip: "{i18n>notificationsBtn_tooltip}",
-                    selected: {
-                        path: "/currentViewPortState",
-                        formatter: function (viewPortState) {
-                            if (viewPortState === 'RightCenter') {
-                                return true;
-                            } else {
-                                return false;
-                            }
+            //handle open catalog
+            if (oConfig.enablePersonalization !== false) {
+                var id = "openCatalogBtn";
+                var text = sap.ushell.resources.i18n.getText("open_appFinderBtn");
+                var icon = 'sap-icon://sys-find';
+                var press = function () {
+                    jQuery.sap.measure.start("FLP:AppFinderLoadingStartToEnd", "AppFinderLoadingStartToEnd","FLP");
+                    var shellHash = "Shell-home&/appFinder/catalog";
+                    //in case the button is in the shell header
+                    if(this.data("isShellHeader")){
+                        //clicking the appFinder button when appFinder is presented, will cause a page refresh
+                    	var starsWithShellHash = new RegExp("^" + shellHash);
+                    	if (starsWithShellHash.test(hasher.getHash())){
+                            window.location.reload();
+                            return;
                         }
-                    },
-                    icon: sap.ui.core.IconPool.getIconURI("ui-notifications"),
-                    floatingNumber: "{/notificationsCount}",
-                    visible: "{/enableNotifications}",
-                    press: [oController.toggleNotificationsView, oController],
-                    showSeparator: false
-                });
-                this.aDanglingControls.push(oNotificationToggle);
+                    }
+                    // perform the navigation only after the viewport animation ends and the center vireport is active
+                    setTimeout(function() {
+                        var oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
+                        oCrossAppNavigator.toExternal({
+                            target: {
+                                shellHash: "#"+shellHash
+                            }
+                        });
+                    }, !!sap.ui.Device.system.desktop ? 0 : 500);
+                };
+                var visible = !oConfig.disableAppFinder;
+                if(oConfig.moveAppFinderActionToShellHeader){
+                    //in case the app finder button should move to the shell header, we create it as a ShellHeadItem
+                    if(!this.oOpenCatalogItem){
+                        this.oOpenCatalogItem = new sap.ushell.ui.shell.ShellHeadItem(id,{
+                            icon: icon,
+                            tooltip: text,
+                            text: text,
+                            press: press,
+                            showSeparator: false,
+                            visible: visible
+                        });
+                        // if xRay is enabled
+                        if (oConfig.enableHelp) {
+                            this.oOpenCatalogItem.addStyleClass('help-id-openCatalogActionItem');// xRay help ID
+                        }
+                        this.oOpenCatalogItem.data("isShellHeader", true);
+                    }
+                }
+                else{
+                    if(!this.oOpenCatalogItem) {
+                        this.oOpenCatalogItem = new ActionItem(id, {
+                            text:       text,
+                            icon:       icon,
+                            actionType: 'action',
+                            press:      press,
+                            visible:    visible
+                        });
+                        // if xRay is enabled
+                        if (oConfig.enableHelp) {
+                            this.oOpenCatalogItem.addStyleClass('help-id-openCatalogActionItem');// xRay help ID
+                        }
+                    }
+                }
+                this.aDanglingControls.push(this.oOpenCatalogItem);
+                if(oConfig.moveEditHomePageActionToShellHeader){
+                    jQuery.sap.measure.start("FLP:Shell.view.createContent", "create the edit home page button as shell head enditem","FLP");
+                    //in case the edit home page button should move to the shell header, we create it as a ShellHeadItem
+                    //text and press properties will be set in DashboardContent.view.js
+                    //by default it is not visible unless the personalization is enabled and the home page is shown.
+                    if( !this.oTileActionsButton){
+                        this.oTileActionsButton = new sap.ushell.ui.shell.ShellHeadItem("ActionModeBtn",{
+                            icon: 'sap-icon://edit',
+                            visible: false,
+                            showSeparator: false
+                        });
+                        this.oTileActionsButton.data("isShellHeader", true);
+                        // if xRay is enabled
+                        if (oConfig.enableHelp) {
+                            this.oTileActionsButton.addStyleClass('help-id-openCatalogActionItem');// xRay help ID
+                        }
+                    }
+                    this.aDanglingControls.push(this.oTileActionsButton);
+                    jQuery.sap.measure.end("FLP:Shell.view.createContent");
+                }
             }
 
-            if (oConfig.enableMeArea === true) {
-                var oMeAreaToggle = new sap.ushell.ui.shell.ShellHeadItem({
-                    id: "meAreaHeaderButton",
-                    tooltip: "{i18n>meAreaBtn_tooltip}",
-                    icon: 'sap-icon://person-placeholder',
-                    selected: {
-                        path: "/currentViewPortState",
-                        formatter: function (viewPortState) {
-                            if (viewPortState === 'LeftCenter') {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        }
-                    },
-                    press: [oController.toggleMeAreaView, oController],
-                    visible: true,
-                    showSeparator: false
-                });
-                this.aDanglingControls.push(oMeAreaToggle);
+            /**
+             * create EndItem overflow button in case me area is on
+             * this will open an action sheet in case we there is not
+             * enough space to show all button in the header
+             */
+            var oEndItemsOverflowBtn = new sap.ushell.ui.shell.ShellHeadItem({
+                id: "endItemsOverflowBtn",
+                tooltip: "{i18n>shellHeaderOverflowBtn_tooltip}",
+                ariaLabel: "{i18n>shellHeaderOverflowBtn_tooltip}",
+                icon: "sap-icon://overflow",
+                press: [oController.pressEndItemsOverflow, oController],
+                visible: true,
+                showSeparator: false
+            });
+            this.aDanglingControls.push(oEndItemsOverflowBtn);
 
-                /**
-                 * create EndItem overflow button in case me area is on
-                 * this will open an action sheet in case we there is not
-                 * enough space to show all button in the header
-                 */
-                var oEndItemsOverflowBtn = new sap.ushell.ui.shell.ShellHeadItem({
-                    id: "endItemsOverflowBtn",
-                    tooltip: "{i18n>meAreaBtn_tooltip}",
-                    icon: "sap-icon://overflow",
-                    press: [oController.pressEndItemsOverflow, oController],
-                    visible: true,
-                    showSeparator: false
-                });
-                this.aDanglingControls.push(oEndItemsOverflowBtn);
-            }
             var oShellSplitContainer = new sap.ushell.ui.shell.SplitContainer({
                 id: 'shell-split',
-                showSecondaryContent: {path: "/currentState/showPane"},
-                secondaryContent: {path: "/currentState/paneContent", factory: fnShellUpdateAggItem},
+                showSecondaryContent: {
+                    path: "/currentState/showPane"
+                },
+                secondaryContent: {
+                    path: "/currentState/paneContent",
+                    factory: fnShellUpdateAggItem
+                },
                 content: oViewPortContainer,
-                subHeader: {path: "/currentState/subHeader", factory: fnShellUpdateAggItem}
+                subHeader: {
+                    path: "/currentState/subHeader",
+                    factory: fnShellUpdateAggItem
+                }
             });
             var oShellToolArea = new sap.ushell.ui.shell.ToolArea({
                 id: 'shell-toolArea',
-                toolAreaItems: {path: "/currentState/toolAreaItems", factory: fnShellUpdateAggItem}
+                toolAreaItems: {
+                    path: "/currentState/toolAreaItems",
+                    factory: fnShellUpdateAggItem
+                }
             });
-            var oRightFloatingContainer = new sap.ushell.ui.shell.RightFloatingContainer({
+            var oRightFloatingContainer = new RightFloatingContainer({
                 id: 'right-floating-container',
-                top: '10',
+                top: '6.875', // header 2.875rem + dashboard notifications preview margin top 4rem
                 hideItemsAfterPresentation: true,
                 visible: '{/currentState/showRightFloatingContainer}',
-                floatingContainerItems: {path: "/currentState/RightFloatingContainerItems", factory: fnShellUpdateAggItem}
-            });
-            var oShellFloatingContainer = new sap.ushell.ui.shell.FloatingContainer({
-                id: 'shell-floatingContainer',
-                content: {path: "/currentState/floatingContainerContent", factory: fnShellUpdateAggItem}
+                floatingContainerItems: {
+                    path: "/currentState/RightFloatingContainerItems",
+                    factory: fnShellUpdateAggItem
+                },
+                insertItemsWithAnimation: {
+                    path: '/animationMode',
+                    formatter: function (sAnimationMode) {
+                        return sAnimationMode !== 'minimal';
+                    }
+                }
             });
             var oShellHeaderTitle = new sap.ushell.ui.shell.ShellTitle("shellTitle", {
-                text: {path: "/title"}
+                text: {
+                    path: "/title"
+                }
             });
 
-            var oShellHeaderAppTitle;
-            if (oConfig.enableMergeAppAndShellHeaders === true) {
+            var oHierarchyTemplateFunction = function(sId, oContext) {
 
+                // default icon behavior
+                var sIcon = oContext.getProperty("icon");
+                var sTitle = oContext.getProperty("title");
+                var sSubtitle = oContext.getProperty("subtitle");
+                var sIntent = oContext.getProperty("intent");
+                if (!sIcon) {
+                    sIcon = "sap-icon://circle-task-2";
+                }
 
-                var oHierarchyTemplateFunction = function (sId, oContext) {
+                var oLi =  (new sap.m.StandardListItem({
+                    type: sap.m.ListType.Active,
+                    title: sTitle,
+                    description: sSubtitle,
+                    icon: sIcon,
+                    customData: [new sap.ui.core.CustomData({
+                        key: "intent",
+                        value: sIntent
+                    })],
+                    press: function(oEvent) {
+                        var oData = oEvent.getSource().getCustomData();
+                        if (oData && oData.length > 0) {
+                            for (var i=0; i<oData.length; i++) {
+                                if (oData[i].getKey() === "intent") {
 
-                    // default icon behavior
-                    var sIcon = oContext.getProperty("icon");
-                    var sTitle = oContext.getProperty("title");
-                    var sSubtitle = oContext.getProperty("subtitle");
-                    var sIntent = oContext.getProperty("intent");
-                    if (!sIcon) {
-                        sIcon =  "sap-icon://folder";
-                    }
-
-                    return (new sap.m.StandardListItem({
-                        type: sap.m.ListType.Active,
-                        title: sTitle,
-                        description: sSubtitle,
-                        icon:  sIcon,
-                        customData: [ new sap.ui.core.CustomData({ key: "intent", value: sIntent }) ],
-                        press: function (oEvent) {
-                            var oLi = oEvent.getSource();
-                            if (oLi.getCustomData() && oLi.getCustomData().length === 1) {
-                                var sListItemIntent = oLi.getCustomData()[0].getValue();
-                                if (sListItemIntent && sListItemIntent[0] === "#") {
-                                    oController.navigateFromShellApplicationNavigationMenu(sListItemIntent);
+                                    var sListItemIntent = oData[i].getValue();
+                                    if (sListItemIntent && sListItemIntent[0] === "#") {
+                                        oController.navigateFromShellApplicationNavigationMenu(sListItemIntent);
+                                        return;
+                                    }
                                 }
                             }
                         }
-                    })).addStyleClass("sapUshellNavigationMenuListItems");
-                };
-
-                var oRelatedAppsTemplateFunction = function (sId, oContext) {
-
-                    // default icon behavior
-                    var sIcon = oContext.getProperty("icon");
-                    var sTitle = oContext.getProperty("title");
-                    var sSubtitle = oContext.getProperty("subtitle");
-                    var sIntent = oContext.getProperty("intent");
-                    if (!sSubtitle && !sIcon) {
-                        sIcon =  "sap-icon://documents";
                     }
+                })).addStyleClass("sapUshellNavigationMenuListItems");
 
-                    return new sap.ushell.ui.shell.NavigationMiniTile({
-                        title : sTitle,
-                        subtitle: sSubtitle,
-                        icon : sIcon,
-                        intent : sIntent,
-                        //layoutData: new sap.ui.layout.GridData({span: "L4 M4 S4"}),
-                        press : function () {
-                            var sTileIntent = this.getIntent();
-                            if (sTileIntent && sTileIntent[0] === '#') {
-                                oController.navigateFromShellApplicationNavigationMenu(sTileIntent);
-                            }
-                        }
-                    });
-                };
+                return oLi;
+            };
 
+            var oRelatedAppsTemplateFunction = function(sId, oContext) {
 
-                var oShellNavigationMenu = new sap.ushell.ui.shell.ShellNavigationMenu("shellNavigationMenu", {
-                    items : { path: "/currentState/application/hierarchy", factory : oHierarchyTemplateFunction.bind(this)},
-                    miniTiles : { path: "/currentState/application/relatedApps", factory : oRelatedAppsTemplateFunction.bind(this)}
-                });
-                // we save it also on the view object itself, as once the Model is loaded (on the controller side)
-                // we need to set it as the shell-navigation-menu's Model
-                // as the navigation-menu is used as an association member of the ShellAppTitle object in which
-                // it does not inherit the Model from its parent
-                this.oShellNavigationMenu = oShellNavigationMenu;
-
-                oShellHeaderAppTitle = new sap.ushell.ui.shell.ShellAppTitle({
-                    id: "shellAppTitle",
-                    text : "{/currentState/application/title}",
-                    tooltip: sap.ushell.resources.i18n.getText("shellNavMenu_openMenuTooltip"),
-                    navigationMenu : oShellNavigationMenu
-                });
-
-                oShellHeaderAppTitle.addEventDelegate({
-                    onsapskipforward: function (oEvent) {
-                        if (sap.ushell.renderers.fiori2.AccessKeysHandler.getAppKeysHandler()) {
-                            oEvent.preventDefault();
-                            sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
+                // default icon behavior
+                var sIcon = oContext.getProperty("icon");
+                var sTitle = oContext.getProperty("title");
+                var sSubtitle = oContext.getProperty("subtitle");
+                var sIntent = oContext.getProperty("intent");
+                if (!sSubtitle && !sIcon) {
+                    sIcon = "sap-icon://documents";
+                }
+                jQuery.sap.require("sap.ushell.ui.shell.NavigationMiniTile");
+                return new sap.ushell.ui.shell.NavigationMiniTile({
+                    title: sTitle,
+                    subtitle: sSubtitle,
+                    icon: sIcon,
+                    intent: sIntent,
+                    //layoutData: new sap.ui.layout.GridData({span: "L4 M4 S4"}),
+                    press: function() {
+                        var sTileIntent = this.getIntent();
+                        if (sTileIntent && sTileIntent[0] === '#') {
+                            oController.navigateFromShellApplicationNavigationMenu(sTileIntent);
                         }
                     }
                 });
-            }
+            };
+
+
+            var oShellNavigationMenu = new sap.ushell.ui.shell.ShellNavigationMenu("shellNavigationMenu", {
+                title: "{/currentState/application/title}",
+                icon: "{/currentState/application/icon}",
+                showTitle: {
+                    path: "/currentState/application/showNavMenuTitle"
+                },
+                items: {
+                    path: "/currentState/application/hierarchy",
+                    factory: oHierarchyTemplateFunction.bind(this)
+                },
+                miniTiles: {
+                    path: "/currentState/application/relatedApps",
+                    factory: oRelatedAppsTemplateFunction.bind(this)
+                },
+                visible: {
+                    path: '/ShellAppTitleState',
+                    formatter: function (oCurrentState) {
+                        return oCurrentState === this.oShellAppTitleStateEnum.SHELL_NAV_MENU;
+                    }.bind(this)
+                }
+            });
+            // we save it also on the view object itself, as once the Model is loaded (on the controller side)
+            // we need to set it as the shell-navigation-menu's Model
+            // as the navigation-menu is used as an association member of the ShellAppTitle object in which
+            // it does not inherit the Model from its parent
+            this.oShellNavigationMenu = oShellNavigationMenu;
+
+            var oShellHeaderAppTitle;
+
+            oShellHeaderAppTitle = new sap.ushell.ui.shell.ShellAppTitle({
+                id: "shellAppTitle",
+                text: "{/currentState/application/title}",
+                tooltip: sap.ushell.resources.i18n.getText("shellNavMenu_openMenuTooltip"),
+                navigationMenu: oShellNavigationMenu
+            });
+
+            oShellHeaderAppTitle.addEventDelegate({
+                onsapskipforward: function(oEvent) {
+                    if (sap.ushell.renderers.fiori2.AccessKeysHandler.getAppKeysHandler()) {
+                        oEvent.preventDefault();
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
+                    }
+                }
+            });
 
             // filter for the headEndItems in the header
             // to filter overflow items in case overflow is on
             var oFilter = new sap.ui.model.Filter('', 'EQ', 'a'),
                 oShellHeader,
-                oUnifiedShell,
-                oShellFloatingActions;
+                oUnifiedShell;
 
             oFilter.fnTest = oController.isHeadEndItemNotInOverflow.bind(oController);
 
             oShellHeader = new sap.ushell.ui.shell.ShellHeader({
                 id: 'shell-header',
-                showLogo: {path: "/currentState/showLogo"},
-                headItems: {path: "/currentState/headItems", factory: fnShellUpdateAggItem},
-                headEndItems: {path: "/currentState/headEndItems", factory: fnShellUpdateAggItem, filters: [oFilter]},
+                showLogo: {
+                    path: "/currentState/showLogo"
+                },
+                headItems: {
+                    path: "/currentState/headItems",
+                    factory: fnShellUpdateAggItem
+                },
+                headEndItems: {
+                    path: "/currentState/headEndItems",
+                    factory: fnShellUpdateAggItem,
+                    filters: [oFilter]
+                },
                 title: oShellHeaderTitle,
-                appTitle : oShellHeaderAppTitle,
-                showSeparators: !oConfig.enableMeArea
+                appTitle: oShellHeaderAppTitle,
+                showSeparators: false
             });
-            oShellFloatingActions = new sap.ushell.ui.shell.ShellFloatingActions({
-                id: 'shell-floatingActions',
-                floatingActions: {path: "/currentState/floatingActions", factory: fnShellUpdateAggItem}
-            });
-            oUnifiedShell = new sap.ushell.ui.shell.ShellLayout({
+
+            oUnifiedShell = new ShellLayout({
                 id: "shell",
                 header: oShellHeader,
                 toolArea: oShellToolArea,
                 rightFloatingContainer: oRightFloatingContainer,
                 floatingContainerVisible: false,
-                floatingContainer: oShellFloatingContainer,
                 canvasSplitContainer: oShellSplitContainer,
-                toolAreaVisible: {path: "/currentState/toolAreaVisible"},
-                floatingActionsContainer: oShellFloatingActions,
-                headerHiding: {path: "/currentState/headerHiding"},
-                headerVisible : {path: "/currentState/headerVisible"},
-                backgroundColorForce: !oConfig.enableMeArea,
-                showBrandLine: !oConfig.enableMeArea,
-                showAnimation: !oConfig.enableMeArea
+                toolAreaVisible: {
+                    path: "/currentState/toolAreaVisible"
+                },
+                headerHiding: {
+                    path: "/currentState/headerHiding"
+                },
+                headerVisible: {
+                    path: "/currentState/headerVisible"
+                },
+                backgroundColorForce: false,
+                showBrandLine: false,
+                showAnimation: false,
+                enableCanvasShapes: oConfig.enableBackGroundShapes === undefined ? true : oConfig.enableBackGroundShapes
             });
             oUnifiedShell._setStrongBackground(true);
             this.setOUnifiedShell(oUnifiedShell);
             if (oActionsUserButton) {
                 oShellHeader.setUser(oActionsUserButton);
             }
+
             // modifying the header on after rendering so it will add the relevant identifiers
             // to the Elements which are related to the xRay help scenarios
             if (oShellHeader) {
                 var origHeadAfterRender = oShellHeader.onAfterRendering;
                 oShellHeader.onAfterRendering = function () {
-                    if (origHeadAfterRender) {
-                        origHeadAfterRender.apply(this, arguments);
+                    var bIsHeaderVisible = this.getModel().getProperty("/currentState/headerVisible");
+                    if (bIsHeaderVisible) {
+                        if (origHeadAfterRender) {
+                            origHeadAfterRender.apply(this, arguments);
+                        }
+                        // if xRay is enabled
+                        if (this.getModel().getProperty("/enableHelp")) {
+                            jQuery('#actionsBtn').addClass('help-id-actionsBtn'); // xRay help ID
+                            jQuery('#configBtn').addClass('help-id-configBtn'); // xRay help ID
+                            jQuery('#homeBtn').addClass('help-id-homeBtn'); // xRay help ID
+                        }
+                        // remove tabindex for keyboard navigation
+                        jQuery(".sapUshellHeadTitle").removeAttr("tabindex", 0);
+
+                        // handle keyboard navigation when different viewports are active
+                        var oHeaderAccHelper = jQuery("#sapUshellHeaderAccessibilityHelper");
+
+                        oHeaderAccHelper.focusin(function (oEvent) {
+                            var viewPort = sap.ui.getCore().byId('viewPortContainer'),
+                                sCurrentState = viewPort.getCurrentState(),
+                                nextFocusElement;
+
+                            // navigation direction is forward
+                            if (sap.ushell.renderers.fiori2.AccessKeysHandler.bForwardNavigation) {
+                                switch (sCurrentState) {
+                                    case "Center":
+                                        var handler = sap.ushell.renderers.fiori2.AccessKeysHandler;
+                                        if (handler.getAppKeysHandler()) {
+                                            setTimeout(function () {
+                                                handler.fnExternalKeysHandler(oEvent, handler.bFocusPassedToExternalHandlerFirstTime);
+                                                handler.bFocusOnShell = false;
+                                            }, 0);
+                                        } else {
+                                            // set the focus on the next focusable element in the dom to avoid double tab clicks
+                                            // to get there
+                                            var jqAllFocusableElements = jQuery(":focusable").filter("[tabindex!='-1']"),
+                                                iCurrentFocusIndex = jqAllFocusableElements.index(document.activeElement),
+                                                nextFocusElement = jqAllFocusableElements.eq(iCurrentFocusIndex + 1);
+
+                                            //go to first focusable item
+                                            if (!nextFocusElement.length) {
+                                                nextFocusElement = jqAllFocusableElements[0];
+                                            }
+                                        }
+                                        break;
+                                    case "LeftCenter":
+                                        // If the MeArea is opened, then the focus will be located either on the logout button,
+                                        // or on the status-opener button, since only one of those two button may exist
+                                        nextFocusElement = jQuery("#logoutBtn");
+                                        if (nextFocusElement.length === 0) {
+                                            nextFocusElement = jQuery("#userStatusOpener");
+                                        }
+                                        break;
+                                    case "RightCenter":
+                                        nextFocusElement = jQuery("#sapUshellNotificationIconTabByDate");
+                                        sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
+                                        break;
+                                }
+                                // navigation direction is backward
+                            } else {
+                                var oHeader = sap.ui.getCore().byId("shell-header"),
+                                    aHeaderEndItems = oHeader.getHeadEndItems(),
+                                    oLastHeaderItem;
+                                if (aHeaderEndItems.length > 0) {
+                                    oLastHeaderItem = aHeaderEndItems[aHeaderEndItems.length - 1];
+                                    nextFocusElement = oLastHeaderItem;
+                                } else
+                                    nextFocusElement = oHeader.getAppTitle();
+                            }
+                            setTimeout(function () {
+                                // set the focus in timeout in order to support screen reader. Otherwise the screen reader
+                                // will not read the target element
+                                if (nextFocusElement) {
+                                    nextFocusElement.focus();
+                                }
+                            }, 0);
+                        });
                     }
-                    // if xRay is enabled
-					if (this.getModel().getProperty("/enableHelp")) {
-						jQuery('#actionsBtn').addClass('help-id-actionsBtn');// xRay help ID
-						jQuery('#configBtn').addClass('help-id-configBtn');// xRay help ID
-						jQuery('#homeBtn').addClass('help-id-homeBtn');// xRay help ID
-					}
-					// remove tabindex for keyboard navigation
-					jQuery(".sapUshellHeadTitle").removeAttr("tabindex", 0);
-				};
-			}
+                };
+            }
 
             this.oShellPage = this.pageFactory("shellPage", oUnifiedShell, true);
             if (bStateEmbedded) {
@@ -373,25 +510,32 @@
                 this.initShellBarLogo(oShellHeader);
             }
             this.setDisplayBlock(true);
-            this.aDanglingControls = this.aDanglingControls.concat([sap.ui.getCore().byId('viewPortContainer'), this.oShellPage, oLoadingOverlay, oHomeButton, oConfigButton]);
+            this.aDanglingControls = this.aDanglingControls.concat([sap.ui.getCore().byId('viewPortContainer'), this.oShellPage, oFiori2LoadingDialog, oHomeButton, oBackButton, oConfigButton]);
 
             oUnifiedShell.updateAggregation = this.updateShellAggregation;
             oShellHeader.updateAggregation = this.updateShellAggregation;
             oShellToolArea.updateAggregation = this.updateShellAggregation;
             oRightFloatingContainer.updateAggregation = this.updateShellAggregation;
-            oShellFloatingContainer.updateAggregation = this.updateShellAggregation;
-            oShellFloatingActions.updateAggregation = this.updateShellAggregation;
             oShellSplitContainer.updateAggregation = this.updateShellAggregation;
 
-            //TODO temporary Cozy/Compact implementation for SAPPHIRE
-            if (sap.ui.Device.system.desktop) {
-                oRightFloatingContainer.removeStyleClass('sapUiSizeCozy');
-                oRightFloatingContainer.addStyleClass('sapUiSizeCompact');
-            }//no need for "else", Cozy is the default mode
-
             var bSearchEnable = (oConfig.enableSearch !== false);
-
             if (bSearchEnable) {
+                var _loadSearchShellHelper = function(init) {
+                    if (!that._searchShellHelperDeferred) {
+                        that._searchShellHelperDeferred = jQuery.Deferred();
+                        sap.ui.require([
+                            'sap/ushell/renderers/fiori2/search/SearchShellHelperAndModuleLoader'
+                        ], function() {
+                            var searchShellHelper = sap.ui.require('sap/ushell/renderers/fiori2/search/SearchShellHelper');
+                            if (init) {
+                                searchShellHelper.init();
+                            }
+                            that._searchShellHelperDeferred.resolve(searchShellHelper);
+                        });
+                    }
+                    return that._searchShellHelperDeferred;
+                }
+
                 //Search Icon
                 that.oShellSearchBtn = new sap.ushell.ui.shell.ShellHeadItem({
                     id: "sf",
@@ -402,31 +546,44 @@
                     // visible: {path: "/searchAvailable"},
                     visible: true,
                     showSeparator: false,
-                    press: function (event) {
-                        if (!that.searchShellHelper) {
-                            jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchShellHelper');
-                            that.searchShellHelper = sap.ushell.renderers.fiori2.search.SearchShellHelper;
-                        }
-                        that.searchShellHelper.onShellSearchButtonPressed(event);
+                    press: function(event) {
+                        _loadSearchShellHelper(false).done(function(searchShellHelper) {
+                            searchShellHelper.onShellSearchButtonPressed(event);
+                        });
                     }
                 });
 
                 if (oConfig.openSearchAsDefault) {
-                    if (!that.searchShellHelper) {
-                        jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchShellHelper');
-                        that.searchShellHelper = sap.ushell.renderers.fiori2.search.SearchShellHelper;
-                        that.searchShellHelper.init();
-                    }
-                    that.searchShellHelper.setDefaultOpen(true);
-                    that.searchShellHelper.openSearch(false, false);
+                    _loadSearchShellHelper(true).done(function(searchShellHelper) {
+                        searchShellHelper.setDefaultOpen(true);
+                        searchShellHelper.openSearch(false, false);
+                    });
                 }
+                
+                // track navigation
+                var initSearchHashChanger = function(){
+                    var oHashChanger = sap.ui.core.routing.HashChanger.getInstance();
+                    oHashChanger.attachEvent("shellHashChanged", function (sShellHash) {
+                        var hashChangeInfo = sShellHash.mParameters;
+                        sap.ui.require(['sap/ushell/renderers/fiori2/search/HashChangeHandler'], function (HashChangeHandler) {
+                            HashChangeHandler.handle(hashChangeInfo);
+                        });
+                    });
+                };
+                sap.ui.getCore().getEventBus().subscribeOnce("sap.ushell", "coreResourcesFullyLoaded", initSearchHashChanger);
+                
 
                 that.oShellSearchBtn.addEventDelegate({
-                    onsapskipforward: function (oEvent) {
-                        if (sap.ushell.renderers.fiori2.AccessKeysHandler.getAppKeysHandler()) {
-                            oEvent.preventDefault();
-                            sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
-                        }
+                    onsapskipforward: function(oEvent) {
+                        oEvent.preventDefault();
+                        jQuery("#sapUshellHeaderAccessibilityHelper").focus();
+                    },
+                    onsapskipback: function(oEvent) {
+                        oEvent.preventDefault();
+                        jQuery("#sapUshellHeaderAccessibilityHelper").focus();
+                    },
+                    onAfterRendering: function() {
+                        jQuery("#sf").attr("aria-pressed", false);
                     }
                 });
 
@@ -435,67 +592,140 @@
             //This property is needed for a special scenario when a remote Authentication is required.
             // IFrame src is set by UI2 Services
             this.logonIFrameReference = null;
-
             return new sap.m.App({
                 pages: this.oShellPage
             });
         },
 
-        getOUnifiedShell: function () {
+        _allowUpToThreeActionInShellHeader: function(oConfig){
+            //in order to save performance time when these properties are not define
+            if(Object.keys(oConfig).length != 0){
+                var aConfig = [
+                    oConfig.moveAppFinderActionToShellHeader,
+                    oConfig.moveUserSettingsActionToShellHeader,
+                    oConfig.moveGiveFeedbackActionToShellHeader,
+                    oConfig.moveContactSupportActionToShellHeader,
+                    oConfig.moveEditHomePageActionToShellHeader
+                ];
+                var count = 0;
+                //count the number of "true" values, once get to three, force the other to be "false"
+                for(var index = 0; index < 5; index ++){
+                    if(count  === 3){
+                        aConfig[index] = false;
+                    }
+                    else{
+                        if(aConfig[index]){
+                            count++;
+                        }
+                    }
+                }
+                //assign the values according to above for loop results so only maximum of 3 FLP actions will be moved from the me area to the shell header
+                oConfig.moveAppFinderActionToShellHeader= aConfig[0];
+                oConfig.moveUserSettingsActionToShellHeader= aConfig[1];
+                oConfig.moveGiveFeedbackActionToShellHeader = aConfig[2];
+                oConfig.moveContactSupportActionToShellHeader= aConfig[3];
+                oConfig.moveEditHomePageActionToShellHeader= aConfig[4];
+            }
+        },
+
+        /**
+         * In order to minimize core-min we delay the FloatingContainer, ShellFloatingActions creation
+         * and enabling MeArea button till core-ext file will be loaded.
+         */
+        createPostCoreExtControls: function(){
+            jQuery.sap.require("sap.ushell.ui.shell.FloatingContainer");
+            jQuery.sap.require("sap.ushell.ui.shell.ShellFloatingActions");
+
+            var oShellFloatingContainer = new sap.ushell.ui.shell.FloatingContainer({
+                id: 'shell-floatingContainer',
+                content: {
+                    path: "/currentState/floatingContainerContent",
+                    factory: fnShellUpdateAggItem
+                }
+            });
+            // add tabindex for the floating container so it can be tab/f6
+            oShellFloatingContainer.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "tabindex",
+                value: "-1",
+                writeToDom: true
+            }));
+            // from the container , next f6 is to the me area
+            oShellFloatingContainer.addEventDelegate({
+                onsapskipforward: function (oEvent) {
+                    oEvent.preventDefault();
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                },
+                onsapskipback: function(oEvent) {
+                    if (sap.ushell.renderers.fiori2.AccessKeysHandler.getAppKeysHandler()) {
+                        oEvent.preventDefault();
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
+                    }
+                }
+            });
+
+            var oShell = sap.ui.getCore().byId("shell"),
+                oModel = oShell.getModel()
+            oShellFloatingContainer.setModel(oModel);
+
+            this.aDanglingControls.push(oShellFloatingContainer);
+            var oShellFloatingActions = new sap.ushell.ui.shell.ShellFloatingActions({
+                id: 'shell-floatingActions',
+                floatingActions: {
+                    path: "/currentState/floatingActions",
+                    factory: fnShellUpdateAggItem
+                }
+            });
+
+            oShellFloatingActions.updateAggregation = this.updateShellAggregation;
+
+            var oShellLayout = this.getOUnifiedShell();
+            oShellLayout.setFloatingContainer(oShellFloatingContainer);
+            oShellLayout.setFloatingActionsContainer(oShellFloatingActions);
+
+            this._createAllMyAppsView();
+        },
+
+        _createAllMyAppsView: function() {
+
+            var that = this,
+                _fnGetShellModel = function () {
+                    return that.getModel();
+                };
+            if (sap.ushell.Container.getService("AllMyApps").isEnabled()) {
+                this.oAllMyAppsView = sap.ui.view("allMyAppsView", {
+                    type: sap.ui.core.mvc.ViewType.JS,
+                    viewName:  "sap.ushell.renderers.fiori2.allMyApps.AllMyApps",
+                    viewData: {
+                        _fnGetShellModel: _fnGetShellModel
+                    },
+                    height: "100%",
+                    visible: {
+                        path: '/ShellAppTitleState',
+                        formatter: function (oCurrentState) {
+                            return oCurrentState !== this.oShellAppTitleStateEnum.SHELL_NAV_MENU;
+                        }.bind(this)
+                    }
+                }).addStyleClass("sapUshellAllMyAppsView");
+
+                this.oAllMyAppsView.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "aria-label",
+                    value: sap.ushell.resources.i18n.getText("allMyApps_headerTitle"),
+                    writeToDom: true
+                }));
+
+                this.getOUnifiedShell().getHeader().getAppTitle().setAllMyApps(this.oAllMyAppsView);
+            }
+        },
+
+        getOUnifiedShell: function() {
             return this.oUnifiedShell;
         },
-        setOUnifiedShell: function (oUnifiedShell) {
+        setOUnifiedShell: function(oUnifiedShell) {
             this.oUnifiedShell = oUnifiedShell;
         },
 
-        loadUserImage: function () {
-            /*
-             in case user image URI is set we try to get it,
-             only if request was successful, we set it on the
-             oActionsButton icon.
-             In case of success, 2 get requests will be executed
-             (one here and the second by the control) however
-             the second one will be taken from the cache
-             */
-            var oUser = sap.ushell.Container.getUser(),
-                imageURI = oUser.getImage();
-
-            if (imageURI) {
-                this._setUserImage(imageURI);
-            }
-            oUser.attachOnSetImage(this._setUserImage);
-        },
-
-        _setUserImage: function (param) {
-            var sUrl = typeof (param) === 'string' ? param : param.mParameters,
-                oActionsUserButton = sap.ui.getCore().byId('actionsBtn'),
-                oMeAreaHeaderButton = sap.ui.getCore().byId('meAreaHeaderButton'),
-                oHeaders = {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                };
-
-            //Using jQuery.ajax instead of jQuery.get in-order to be able to control the caching.
-            jQuery.ajax({
-                url: sUrl,
-                //"cache: false" didn't work as expected hence, turning off the cache vie explicit headers.
-                headers: oHeaders,
-                success: function () {
-                    if (oActionsUserButton) {
-                        oActionsUserButton.setImage(sUrl);
-                    }
-                    if (oMeAreaHeaderButton) {
-                        oMeAreaHeaderButton.setIcon(sUrl);
-                    }
-                },
-                error: function () {
-                    jQuery.sap.log.error("Could not load user image from: " + sUrl, "", "sap.ushell.renderers.fiori2.Shell.view");
-                }
-            });
-        },
-
-        _getIconURI: function (ico) {
+        _getIconURI: function(ico) {
             var result = null;
             if (ico) {
                 var match = /url[\s]*\('?"?([^\'")]*)'?"?\)/.exec(ico);
@@ -506,26 +736,15 @@
             return result;
         },
 
-        initShellBarLogo: function (oShellHeader) {
-            var oViewData = this.getViewData() || {},
-                oConfig = oViewData.config || {},
-                sModulePath = jQuery.sap.getModulePath("sap.ushell");
+        initShellBarLogo: function(oShellHeader) {
+            var sModulePath = jQuery.sap.getModulePath("sap.ushell");
 
             jQuery.sap.require("sap.ui.core.theming.Parameters");
-            var ico = sap.ui.core.theming.Parameters.get("sapUiGlobalLogo");
-            if (ico) {
-                ico = this._getIconURI(ico);
-                if (!ico) {
-                    if (oConfig.enableMergeAppAndShellHeaders === true) {
-                        oShellHeader.setLogo(sModulePath + '/themes/base/img/sap_55x27.png');
-                    } else {
-                        oShellHeader.setLogo(sap.ui.resource("sap.ui.core", "mimes/logo/sap_50x26.png")); //sets the logo manually on the sap.ushell.ui.shell.Shell instance
-                    }
-                }
-            }
+            oShellHeader.setLogo(sModulePath + '/themes/base/img/sap_55x27.png');
+
             //Change the Theme icon once it is changed (in the theme designer)
             var that = this;
-            sap.ui.getCore().attachThemeChanged(function () {
+            sap.ui.getCore().attachThemeChanged(function() {
                 if (oShellHeader.bIsDestroyed) {
                     return;
                 }
@@ -535,24 +754,16 @@
                     if (newIco) {
                         oShellHeader.setLogo(newIco);
                     } else {
-                        if (oConfig.enableMergeAppAndShellHeaders === true) {
-                            oShellHeader.setLogo(sModulePath + '/themes/base/img/sap_55x27.png');
-                        } else {
-                            oShellHeader.setLogo(sap.ui.resource("sap.ui.core", "mimes/logo/sap_50x26.png")); //sets the logo manually on the sap.ushell.ui.shell.Shell instance
-                        }
+                        oShellHeader.setLogo(sModulePath + '/themes/base/img/sap_55x27.png');
                     }
                 } else {
-                    if (oConfig.enableMergeAppAndShellHeaders === true) {
-                        oShellHeader.setLogo(sModulePath + '/themes/base/img/sap_55x27.png');
-                    } else {
-                        oShellHeader.setLogo(sap.ui.resource("sap.ui.core", "mimes/logo/sap_50x26.png")); //sets the logo manually on the sap.ushell.ui.shell.Shell instance
-                    }
+                    oShellHeader.setLogo(sModulePath + '/themes/base/img/sap_55x27.png');
                 }
             });
         },
 
-        initViewPortContainer: function (oController) {
-            var oViewPortContainer = new sap.ushell.ui.launchpad.ViewPortContainer({
+        initViewPortContainer: function(oController) {
+            var oViewPortContainer = new ViewPortContainer({
                 id: "viewPortContainer",
                 defaultState: sap.ushell.ui.launchpad.ViewPortState.Center,
                 afterNavigate: jQuery.proxy(oController.onAfterNavigate, oController),
@@ -562,30 +773,30 @@
             return oViewPortContainer;
         },
 
-        updateShellAggregation: function (sName) {
+        updateShellAggregation: function(sName) {
             /*jslint nomen: true */
             var oBindingInfo = this.mBindingInfos[sName],
                 oAggregationInfo = this.getMetadata().getJSONKeys()[sName],
                 oClone;
 
-            jQuery.each(this[oAggregationInfo._sGetter](), jQuery.proxy(function (i, v) {
+            jQuery.each(this[oAggregationInfo._sGetter](), jQuery.proxy(function(i, v) {
                 this[oAggregationInfo._sRemoveMutator](v);
             }, this));
-            jQuery.each(oBindingInfo.binding.getContexts(), jQuery.proxy(function (i, v) {
+            jQuery.each(oBindingInfo.binding.getContexts(), jQuery.proxy(function(i, v) {
                 oClone = oBindingInfo.factory(this.getId() + "-" + i, v) ? oBindingInfo.factory(this.getId() + "-" + i, v).setBindingContext(v, oBindingInfo.model) : "";
                 this[oAggregationInfo._sMutator](oClone);
             }, this));
         },
 
         // Disable bouncing outside of the boundaries
-        disableBouncing: function (oPage) {
+        disableBouncing: function(oPage) {
             /*jslint nomen: true */
-            oPage.onBeforeRendering = function () {
+            oPage.onBeforeRendering = function() {
                 sap.m.Page.prototype.onBeforeRendering.apply(oPage);
                 var oScroller = this._oScroller,
                     oOriginalAfterRendering = oScroller.onAfterRendering;
 
-                oScroller.onAfterRendering = function () {
+                oScroller.onAfterRendering = function() {
                     oOriginalAfterRendering.apply(oScroller);
                     if (oScroller._scroller) {
                         oScroller._scroller.options.bounce = false;
@@ -596,12 +807,12 @@
             return oPage;
         },
 
-        getControllerName: function () {
+        getControllerName: function() {
             return "sap.ushell.renderers.fiori2.Shell";
         },
 
 
-        pageFactory: function (sId, oControl, bDisableBouncing) {
+        pageFactory: function(sId, oControl, bDisableBouncing) {
             var oPage = new sap.m.Page({
                     id: sId,
                     showHeader: false,
@@ -612,9 +823,9 @@
                 oDelegates = {};
 
             // Pass navigation container events to children.
-            jQuery.each(aEvents, function (iIndex, sEvent) {
-                oDelegates[sEvent] = jQuery.proxy(function (evt) {
-                    jQuery.each(this.getContent(), function (iIndex, oControl) {
+            jQuery.each(aEvents, function(iIndex, sEvent) {
+                oDelegates[sEvent] = jQuery.proxy(function(evt) {
+                    jQuery.each(this.getContent(), function(iIndex, oControl) {
                         /*jslint nomen: true */
                         oControl._handleEvent(evt);
                     });
@@ -629,12 +840,12 @@
             return oPage;
         },
 
-        createIFrameDialog: function () {
+        createIFrameDialog: function() {
             var oDialog = null,
                 oLogonIframe = this.logonIFrameReference,
                 bContactSupportEnabled;
 
-            var _getIFrame = function () {
+            var _getIFrame = function() {
                 //In order to assure the same iframe for SAML authentication is not reused, we will first remove it from the DOM if exists.
                 if (oLogonIframe) {
                     oLogonIframe.remove();
@@ -643,7 +854,7 @@
                 return jQuery('<iframe id="SAMLDialogFrame" src="" frameborder="0" height="100%" width="100%"></iframe>');
             };
 
-            var _hideDialog = function () {
+            var _hideDialog = function() {
                 oDialog.addStyleClass('sapUshellSamlDialogHidden');
                 jQuery('#sap-ui-blocklayer-popup').addClass('sapUshellSamlDialogHidden');
             };
@@ -653,7 +864,7 @@
 
             var closeBtn = new sap.m.Button({
                 text: sap.ushell.resources.i18n.getText("samlCloseBtn"),
-                press: function () {
+                press: function() {
                     sap.ushell.Container.cancelLogon(); // Note: calls back destroyIFrameDialog()!
                 }
             });
@@ -685,7 +896,7 @@
             return this.logonIFrameReference[0];
         },
 
-        destroyIFrameDialog: function () {
+        destroyIFrameDialog: function() {
             var dialog = sap.ui.getCore().byId('SAMLDialog');
             if (dialog) {
                 dialog.destroy();
@@ -693,7 +904,7 @@
             this.logonIFrameReference = null;
         },
 
-        showIFrameDialog: function () {
+        showIFrameDialog: function() {
             //remove css class of dialog
             var oDialog = sap.ui.getCore().byId('SAMLDialog');
 
@@ -703,4 +914,6 @@
             }
         }
     });
-}());
+
+
+}, /* bExport= */ false);

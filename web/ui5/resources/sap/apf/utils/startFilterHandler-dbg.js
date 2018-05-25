@@ -174,7 +174,7 @@ sap.apf.utils.StartFilterHandler = function(inject) {
 	 * @param {boolean} isNavigation Indicator for serializing a start filter for navigation purpose
 	 * @returns {object} Serialized data as deep JS object
 	 */
-	this.serialize = function(isNavigation) {
+	this.serialize = function(isNavigation, keepInitialStartFilterValues) {
 		var deferred = jQuery.Deferred();
 		var numberOfStartFilters;
 		var restrictedProperty;
@@ -187,7 +187,7 @@ sap.apf.utils.StartFilterHandler = function(inject) {
 		numberOfStartFilters = getStartFilters().length;
 		if (getStartFilters().length > 0) {
 			getStartFilters().forEach(function(startFilter) {
-				startFilter.serialize(isNavigation).done(function(serializedStartFilter) {
+				startFilter.serialize(isNavigation, keepInitialStartFilterValues).done(function(serializedStartFilter) {
 					serializedStartFilterHandler.startFilters.push(serializedStartFilter);
 					numberOfStartFilters--;
 					if (numberOfStartFilters === 0) {
@@ -208,23 +208,31 @@ sap.apf.utils.StartFilterHandler = function(inject) {
 	 * @param {object} serializedStartFilterHandler Serialized data used to re-initialize Start Filter Handler
 	 */
 	this.deserialize = function(serializedStartFilterHandler) {
-		var startFilters = getStartFilters();
-		var restrictedProperty;
-		var externalFilter;
-		restrictionsSetByApplication = {};
-		serializedStartFilterHandler.startFilters.forEach(function(serializedStartFilter) {
-			for(var i = 0, len = startFilters.length; i < len; i++) {
-				if (serializedStartFilter.propertyName === startFilters[i].getPropertyName()) {
-					startFilters[i].deserialize(serializedStartFilter);
+		var deferred = jQuery.Deferred();
+		propagationPromise.done(function(){
+			var startFilters = getStartFilters();
+			var restrictedProperty;
+			var externalFilter;
+			restrictionsSetByApplication = {};
+			serializedStartFilterHandler.startFilters.forEach(function(serializedStartFilter) {
+				for(var i = 0, len = startFilters.length; i < len; i++) {
+					if (serializedStartFilter.propertyName === startFilters[i].getPropertyName()) {
+						startFilters[i].deserialize(serializedStartFilter);
+					}
 				}
+			});
+			for(restrictedProperty in serializedStartFilterHandler.restrictionsSetByApplication) {
+				externalFilter = new sap.apf.utils.Filter(msgH);
+				externalFilter.deserialize(serializedStartFilterHandler.restrictionsSetByApplication[restrictedProperty]);
+				restrictionsSetByApplication[restrictedProperty] = externalFilter;
 			}
+			propagationPromise = jQuery.Deferred();
+			triggerPropagation();
+			propagationPromise.done(function(){
+				deferred.resolve();
+			});
 		});
-		for(restrictedProperty in serializedStartFilterHandler.restrictionsSetByApplication) {
-			externalFilter = new sap.apf.utils.Filter(msgH);
-			externalFilter.deserialize(serializedStartFilterHandler.restrictionsSetByApplication[restrictedProperty]);
-			restrictionsSetByApplication[restrictedProperty] = externalFilter;
-		}
-		triggerPropagation();
+		return deferred;
 	};
 	/**
 	 * @private
@@ -283,7 +291,11 @@ sap.apf.utils.StartFilterHandler = function(inject) {
 							}
 						}
 						if (filterPropertyToBeMerged) {
-							startFilters.push(new StartFilter(inject, config, createContextForStartFilter(externalContextFilter, filterPropertyToBeMerged)));
+							var contextValues = createContextForStartFilter(externalContextFilter, filterPropertyToBeMerged);
+							if(sap.apf.utils.isPropertyTypeWithDateSemantics(config.metadataProperty)){
+								contextValues = sap.apf.utils.convertDateListToInternalFormat(contextValues, config.metadataProperty);
+							}
+							startFilters.push(new StartFilter(inject, config, contextValues));
 							//Remove external context property if it has matched a configured property
 							externalContextProperties.splice(externalContextProperties.indexOf(filterPropertyToBeMerged), 1);
 							filterPropertyToBeMerged = null;
@@ -349,11 +361,15 @@ sap.apf.utils.StartFilterHandler = function(inject) {
 					});
 				}
 				if (restrictionsBuffer[startFilter.getPropertyName()]) {
-					if(restrictionsBuffer[startFilter.getPropertyName()].isOr()){
-						filter = new sap.apf.core.utils.Filter(msgH);
-						filter.addAnd(restrictionsBuffer[startFilter.getPropertyName()]).addAnd(filterSelectedValues);
+					if(filterSelectedValues.isEmpty()){
+						filter = restrictionsBuffer[startFilter.getPropertyName()].copy();
 					} else {
-						filter = restrictionsBuffer[startFilter.getPropertyName()].copy().addAnd(filterSelectedValues);
+						if(restrictionsBuffer[startFilter.getPropertyName()].isOr()){
+							filter = new sap.apf.core.utils.Filter(msgH);
+							filter.addAnd(restrictionsBuffer[startFilter.getPropertyName()]).addAnd(filterSelectedValues);
+						} else {
+							filter = restrictionsBuffer[startFilter.getPropertyName()].copy().addAnd(filterSelectedValues);
+						}
 					}
 				} else {
 					filter = filterSelectedValues;
@@ -374,7 +390,7 @@ sap.apf.utils.StartFilterHandler = function(inject) {
 	function createContextForStartFilter(filter, property) {
 		var result = [];
 		var termsForProperty = filter.getFilterTermsForProperty(property);
-		var reducedFilter = filter.reduceToProperty(property);
+		var reducedFilter = filter.restrictToProperties([property]);
 		if (reducedFilter.toUrlParam().indexOf('%20and%20') > -1) {
 			return reducedFilter;
 		}
@@ -506,6 +522,8 @@ sap.apf.utils.StartFilterHandler = function(inject) {
 			var restriction = buildRestrictiveFilters(getMinusOneLevelFilters());
 			restrictionsBuffer[startFilters[indexFirstConfiguredStartFilter].getPropertyName()] = restriction;
 			startFilters[indexFirstConfiguredStartFilter].setRestriction(restriction);
+		}else{
+			propagationPromise.resolve(buildRestrictiveFilters(getMinusOneLevelFilters()));
 		}
 	}
 };

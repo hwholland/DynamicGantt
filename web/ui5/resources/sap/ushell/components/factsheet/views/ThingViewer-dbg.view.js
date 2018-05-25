@@ -1,7 +1,8 @@
-(function () {
-    "use strict";
+sap.ui.define(['sap/ushell/components/factsheet/tools/ODataUrlTemplating'],
+	function(ODataUrlTemplating) {
+	"use strict";
+
     /*global jQuery, sap */
-    jQuery.sap.require("sap.ushell.components.factsheet.tools.ODataUrlTemplating");
     sap.ui.jsview("sap.ushell.components.factsheet.views.ThingViewer", {
 
         getControllerName : function () {
@@ -34,7 +35,7 @@
                     sEntityUrlTemplate = sEntityUrlTemplate.replace(/%7B/g, "{");
                     sEntityUrlTemplate = sEntityUrlTemplate.replace(/%7D/g, "}");
 
-                    sEntityUrl = sap.ushell.components.factsheet.tools.ODataUrlTemplating.resolve(sEntityUrlTemplate, oViewData);
+                    sEntityUrl = ODataUrlTemplating.resolve(sEntityUrlTemplate, oViewData);
                   }
 
             }
@@ -78,4 +79,6 @@
             return oTI;
         }
     });
-}());
+
+
+}, /* bExport= */ false);

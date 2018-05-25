@@ -1,12 +1,11 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-sap.ui.define(['jquery.sap.global'],
-	function() {
+sap.ui.define(['jquery.sap.global', './library'],
+	function(jQuery, library) {
 	"use strict";
 
 	/**
@@ -91,10 +90,6 @@ sap.ui.define(['jquery.sap.global'],
 		oRm.write("<div");
 		oRm.addClass("sapSuiteCpMCVerticalAlignmentContainer");
 		oRm.writeClasses();
-		if (oControl.getIsResponsive()){
-			// tooltip has been moved to this container to avoid that the tooltip is being shown on the empty space that results from the vertical alignment.
-			oRm.writeAttributeEscaped("title", sAriaLabel);
-		}
 		oRm.write(">");
 
 		var aChartData = oControl._calculateChartData();
@@ -130,10 +125,18 @@ sap.ui.define(['jquery.sap.global'],
 		oRm.addClass("sapSuiteCpMCViewType" + oControl.getView());
 		oRm.addClass(sSize);
 		if (oControl.getData()[iIndex].hasListeners("press")) {
-			oRm.writeAttribute("tabindex", "0");
+			if (iIndex === 0) {
+				oRm.writeAttribute("tabindex", "0");
+			}
 			oRm.writeAttribute("role", "presentation");
-			oRm.writeAttributeEscaped("title", oControl._getBarAltText(iIndex));
 			oRm.writeAttributeEscaped("aria-label", oControl._getBarAltText(iIndex));
+			if (!library._isTooltipSuppressed(oControl._getBarAltText(iIndex))) {
+				oRm.writeAttributeEscaped("title", oControl._getBarAltText(iIndex));
+			} else {
+				// By setting the empty title attribute on the bar, the followng desired behavior is achieved:
+				// no tooltip is displayed when hovering over the bar press area, independent whether the tooltip of the chart is suppressed or displayed.
+				oRm.writeAttribute("title", "");
+			}
 			oRm.writeAttribute("data-bar-index", iIndex);
 			oRm.addClass("sapSuiteUiMicroChartPointer");
 		}

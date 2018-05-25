@@ -54,7 +54,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * A picture / photo Item for AddPicture and PictureViewer Controls
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -519,6 +519,9 @@ sap.ca.ui.PictureItem.prototype.onAfterRendering = function() {
 	} else {
 		$image.load(jQuery.proxy(fnResize,this));
 	}
+	// remove tabindex from image - containing div has it.
+	// this prevents unwanted tab and speech for accessibility
+	$image.attr("tabIndex", -1);
 };
 
 

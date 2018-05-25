@@ -1,36 +1,37 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.filterbar.FilterBar.
 sap.ui.define([
-	'jquery.sap.global', 'sap/m/MultiInput', 'sap/m/Bar', 'sap/m/Button', 'sap/m/ButtonType', 'sap/m/CheckBox', 'sap/m/Label', 'sap/m/LabelDesign', 'sap/m/Link', 'sap/m/List', 'sap/m/ListSeparators', 'sap/m/Panel', 'sap/m/PlacementType', 'sap/m/SearchField', 'sap/m/Text', 'sap/m/Toolbar', 'sap/m/ToolbarSpacer', 'sap/ui/Device', './VariantConverterFrom', './VariantConverterTo', 'sap/ui/comp/library', 'sap/ui/comp/smartvariants/PersonalizableInfo', 'sap/ui/comp/smartvariants/SmartVariantManagementUi2', 'sap/ui/comp/variants/VariantManagement', 'sap/ui/core/Icon', 'sap/ui/core/TextAlign', 'sap/ui/core/Title', 'sap/ui/core/ValueState', 'sap/ui/layout/Grid', 'sap/ui/layout/GridRenderer', 'sap/ui/layout/GridData', 'sap/ui/layout/HorizontalLayout', 'sap/ui/layout/ResponsiveFlowLayout', 'sap/ui/layout/ResponsiveFlowLayoutData', 'sap/ui/layout/VerticalLayout', 'sap/ui/layout/form/Form', 'sap/ui/layout/form/FormContainer', 'sap/ui/layout/form/FormElement', 'sap/ui/layout/form/ResponsiveGridLayout', 'sap/ui/layout/form/FormRenderer'
-], function(jQuery, MultiInput, Bar, Button, ButtonType, CheckBox, Label, LabelDesign, Link, List, ListSeparators, Panel, PlacementType, SearchField, Text, Toolbar, ToolbarSpacer, Device, VariantConverterFrom, VariantConverterTo, library, PersonalizableInfo, SmartVariantManagementUi2, VariantManagement, Icon, TextAlign, Title, ValueState, Grid, GridRenderer, GridData, HorizontalLayout, ResponsiveFlowLayout, ResponsiveFlowLayoutData, VerticalLayout, Form, FormContainer, FormElement, ResponsiveGridLayout, FormRenderer) {
+	'jquery.sap.global', 'sap/m/MultiInput', 'sap/m/Bar', 'sap/m/Button', 'sap/m/ButtonType', 'sap/m/CheckBox', 'sap/m/Label', 'sap/m/LabelDesign', 'sap/m/Link', 'sap/m/List', 'sap/m/ListSeparators', 'sap/m/Panel', 'sap/m/PlacementType', 'sap/m/SearchField', 'sap/m/Text', 'sap/m/Toolbar', 'sap/m/ToolbarSpacer', 'sap/ui/Device', 'sap/ui/comp/state/UIState', './VariantConverterFrom', './VariantConverterTo', 'sap/ui/comp/library', 'sap/ui/comp/smartvariants/PersonalizableInfo', 'sap/ui/comp/smartvariants/SmartVariantManagementUi2', 'sap/ui/comp/variants/VariantManagement', 'sap/ui/core/Icon', 'sap/ui/core/TextAlign', 'sap/ui/core/Title', 'sap/ui/core/ValueState', 'sap/ui/layout/Grid', 'sap/ui/layout/GridRenderer', 'sap/ui/layout/GridData', 'sap/ui/layout/HorizontalLayout', 'sap/ui/layout/ResponsiveFlowLayout', 'sap/ui/layout/ResponsiveFlowLayoutData', 'sap/ui/layout/VerticalLayout', 'sap/ui/layout/form/Form', 'sap/ui/layout/form/FormContainer', 'sap/ui/layout/form/FormElement', 'sap/ui/layout/form/ResponsiveGridLayout', 'sap/ui/layout/form/FormRenderer', 'sap/ui/comp/util/IdentifierUtil'
+], function(jQuery, MultiInput, Bar, Button, ButtonType, CheckBox, Label, LabelDesign, Link, List, ListSeparators, Panel, PlacementType, SearchField, Text, Toolbar, ToolbarSpacer, Device, UIState, VariantConverterFrom, VariantConverterTo, library, PersonalizableInfo, SmartVariantManagementUi2, VariantManagement, Icon, TextAlign, Title, ValueState, Grid, GridRenderer, GridData, HorizontalLayout, ResponsiveFlowLayout, ResponsiveFlowLayoutData, VerticalLayout, Form, FormContainer, FormElement, ResponsiveGridLayout, FormRenderer, IdentifierUtil) {
 	"use strict";
 
 	/**
 	 * Constructor for a new FilterBar.
-	 * 
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The control displays filters in a user-friendly manner to populate values for a query. The FilterBar consists of a row containing the
 	 *        {@link sap.ui.comp.variants.VariantManagement VariantManagement} control, the related buttons, and an area underneath displaying the
 	 *        filters. The filters are arranged in a logical row that is divided depending on the space available and the width of the filters. The
-	 *        area containing the filters can be hidden or shown using the Hide Filter Bar / Show Filter Bar button. The Go button triggers the search
+	 *        area containing the filters can be hidden or shown using the Hide FilterBar / Show FilterBar button. The Go button triggers the search
 	 *        event, and the Filters button shows the filter dialog.<br>
-	 *        In this dialog, the consumer has full control over the filter bar. The filters in this dialog are displayed in one column and organized
+	 *        In this dialog, the consumer has full control over the FilterBar. The filters in this dialog are displayed in one column and organized
 	 *        in groups. The filter items of the <code>filterItems</code> aggregation are grouped in the Basic group . Each filter can be marked as
-	 *        visible in the filter bar by selecting Add to Filter Bar. In addition, the items in the <code>filterGroupItems</code> aggregation can
-	 *        be marked as part of the current variant. The FilterBar also supports a different UI layout when used inside a value help dialog. In
-	 *        this case the FilterBar consists of two logical areas, one containing the general search button and in the Advanced Search area. The
+	 *        visible in the FilterBar by selecting Add to FilterBar. In addition, the items in the <code>filterGroupItems</code> aggregation can be
+	 *        marked as part of the current variant. The FilterBar also supports a different UI layout when used inside a value help dialog. In this
+	 *        case the FilterBar consists of two logical areas, one containing the general search button and one the Advanced Search area. The
 	 *        Advanced Search is a collapsible area displaying the advanced filters in two columns.
 	 * @extends sap.ui.layout.Grid
-	 * @author Franz Mueller
+	 * @author SAP
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.filterbar.FilterBar
+	 * @see {@link topic:2ae520a67c44495ab5dbc69668c47a7f Filter Bar}
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) design-time meta model
 	 */
 	var FilterBar = Grid.extend("sap.ui.comp.filterbar.FilterBar", /** @lends sap.ui.comp.filterbar.FilterBar.prototype */
@@ -38,19 +39,21 @@ sap.ui.define([
 		metadata: {
 
 			library: "sap.ui.comp",
+			designtime: "sap/ui/comp/designtime/filterbar/FilterBar.designtime",
 			properties: {
 
 				/**
-				 * Key used to access personalization data.
+				 * Key used to access personalization data. Only if the persistencyKey is provided, will the <code>VariantManagement</code> control
+				 * be used.
 				 */
 				persistencyKey: {
 					type: "string",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
-				 * The advanced mode overwrites the standard behavior and is used in the value help scenario.
+				 * The advanced mode is only relevant for the value help scenario. UI representation is different from the standard FilterBar.
 				 */
 				advancedMode: {
 					type: "boolean",
@@ -60,10 +63,8 @@ sap.ui.define([
 
 				/**
 				 * Collapses/expands the advanced area.
-				 * 
 				 * @deprecated Since version 1.30.0. Replaced by property <code>filterBarExpanded</code> This property is mapped to the
 				 *             filterBarExpanded property.
-				 * @since 1.30.0
 				 */
 				expandAdvancedArea: {
 					type: "boolean",
@@ -74,7 +75,6 @@ sap.ui.define([
 
 				/**
 				 * Enables/disables the Search button.
-				 * 
 				 * @deprecated Since version 1.32.0.
 				 */
 				searchEnabled: {
@@ -85,7 +85,6 @@ sap.ui.define([
 
 				/**
 				 * Shows/hides the filter row.
-				 * 
 				 * @since 1.26.1
 				 */
 				filterBarExpanded: {
@@ -96,7 +95,6 @@ sap.ui.define([
 
 				/**
 				 * If this property is set, then the label for filters will be prefixed with the group title.
-				 * 
 				 * @since 1.28.0
 				 */
 				considerGroupTitle: {
@@ -107,7 +105,6 @@ sap.ui.define([
 
 				/**
 				 * Handles visibility of the Clear button on the Filters dialog.
-				 * 
 				 * @since 1.26.1
 				 */
 				showClearButton: {
@@ -118,7 +115,6 @@ sap.ui.define([
 
 				/**
 				 * Handles visibility of the Restore button on the Filters dialog.
-				 * 
 				 * @since 1.26.1
 				 */
 				showRestoreButton: {
@@ -128,8 +124,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Handles visibility of the Go button on the filter bar.
-				 * 
+				 * Handles visibility of the Go button on the FilterBar.
 				 * @since 1.28.0
 				 */
 				showGoOnFB: {
@@ -139,8 +134,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Handles visibility of the Restore button on the filter bar.
-				 * 
+				 * Handles visibility of the Restore button on the FilterBar.
 				 * @since 1.28.0
 				 */
 				showRestoreOnFB: {
@@ -150,8 +144,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Handles visibility of the Clear button on the filter bar.
-				 * 
+				 * Handles visibility of the Clear button on the FilterBar.
 				 * @since 1.28.0
 				 */
 				showClearOnFB: {
@@ -161,8 +154,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Handles visibility of the Go button on the filter bar.
-				 * 
+				 * Handles visibility of the Go button on the FilterBar.
 				 * @since 1.26.1
 				 * @deprecated Since version 1.28.0. Replaced by property <code>showGoOnFB</code>
 				 */
@@ -175,7 +167,6 @@ sap.ui.define([
 
 				/**
 				 * Stores the delta as compared to the standard variant.
-				 * 
 				 * @since 1.34.0
 				 */
 				deltaVariantMode: {
@@ -186,7 +177,6 @@ sap.ui.define([
 
 				/**
 				 * Sets the width of the filters container.
-				 * 
 				 * @since 1.34.0
 				 */
 				filterContainerWidth: {
@@ -196,9 +186,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * Determines what design should be used. Default is the design with the toolbar. In mobile scenarios this property is ignored - the
-				 * design with the toolbar will be used.
-				 * 
+				 * Determines what design should be used. Default is the design with the toolbar. The design with the toolbar is always used on
+				 * phones.
 				 * @since 1.38.0
 				 */
 				useToolbar: {
@@ -210,30 +199,46 @@ sap.ui.define([
 				/**
 				 * Specifies header text that is shown in the toolbar on the first position. This property is ignored, when <code>useToolbar</code>
 				 * is set to <code>false</code>.
-				 * 
 				 * @since 1.38.0
 				 */
 				header: {
 					type: "string",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
-				 * Handles visibility of the Filters button on the filter bar.
-				 * 
+				 * Handles visibility of the Filters button on the FilterBar.
 				 * @since 1.38.0
 				 */
 				showFilterConfiguration: {
 					type: "boolean",
 					group: "Misc",
 					defaultValue: true
+				},
+
+				/**
+				 * Determines the behavior when <code>reset</code> is executed. <br>
+				 * <b>Note:</b> This property is only relevant if no variant management is used, and the filter bar is not used in the advanced mode.
+				 * A snapshot shows the current state of the filter bar, just before the Filters dialog is opened.
+				 * <ul>
+				 * <li><code>undefined</code> (default) defines the standard behavior: snapshot will be applied after <code>reset</code> was
+				 * triggered</li>
+				 * <li><code>false</code> defines that the snapshot will not be applied</li>
+				 * <li><code>true</code>is not considered at all</li>
+				 * </ul>
+				 * @since 1.44
+				 */
+				useSnapshot: {
+					type: "boolean",
+					group: "Misc"
 				}
 			},
 			aggregations: {
 
 				/**
 				 * Filters belonging to the basic group.
+				 * @deprecated Since version 1.48.0. Use aggregation <code>filterGroupItems</code> instead.
 				 */
 				filterItems: {
 					type: "sap.ui.comp.filterbar.FilterItem",
@@ -242,19 +247,37 @@ sap.ui.define([
 				},
 
 				/**
-				 * Filters belonging to groups other than the basic group.
+				 * Contains all FilterBar filters. <br>
+				 * <code>Note:</code>In case a filter has to be added to the basic group
+				 * <ul>
+				 * <li>the property <code>groupName</code> has to be set to the constant
+				 * <code>sap.ui.comp.filterbar.FilterBar.INTERNAL_GROUP</code></li>
+				 * <li>the property <code>groupLabel</code> will be handled internally and will be ignored, if set</li>
+				 * <li>the property <code>partOfCurrentVariant</code> has to be set to <code>true</code></li>
+				 * <li>if the property <code>visibleInFilterBar</code> is set to <code>true</code>, the property
+				 * <code>partOfCurrentVariant</code> will be set internally also to <code>true</code></li>
+				 * </ul>
 				 */
 				filterGroupItems: {
 					type: "sap.ui.comp.filterbar.FilterGroupItem",
 					multiple: true,
 					singularName: "filterGroupItem"
+				},
+
+				/**
+				 * Special handling for analytic parameters.
+				 */
+				_parameters: {
+					type: "sap.ui.comp.filterbar.FilterGroupItem",
+					multiple: true,
+					singularName: "_parameter",
+					visibility: "hidden"
 				}
 			},
 			associations: {
 
 				/**
-				 * Populates the basic search area on the filter bar and the Filters dialog.
-				 * 
+				 * Populates the basic search area on the FilterBar and the Filters dialog.
 				 * @since 1.30.0
 				 */
 				basicSearch: {
@@ -300,6 +323,7 @@ sap.ui.define([
 				/**
 				 * This event is fired before a variant is saved. The event can be used to adapt the data of the custom filters, which will be saved
 				 * as variant later.
+				 * @deprecated Since version 1.48.2. Replaced by the event <code>beforeVariantFetch</code>
 				 */
 				beforeVariantSave: {
 					parameters: {
@@ -314,7 +338,6 @@ sap.ui.define([
 
 				/**
 				 * This event is fired before a variant is fetched.
-				 * 
 				 * @since 1.28.13
 				 */
 				beforeVariantFetch: {},
@@ -330,14 +353,41 @@ sap.ui.define([
 						 */
 						context: {
 							type: "string"
+						},
+						/**
+						 * executeOnSelect indicates if the variant will trigger search
+						 * @since 1.44.0
+						 */
+						executeOnSelect: {
+							type: "boolean"
 						}
 					}
 				},
 
 				/**
-				 * This event is fired when a filter has changed.
+				 * This event is fired when a filter or multiple filters has changed.
 				 */
-				filterChange: {},
+				filterChange: {
+					/**
+					 * This property is provided, whenever a filter is added via the add/remove filters dialog.
+					 */
+					added: {
+						type: "sap.ui.core.Control"
+					},
+					/**
+					 * This property is provided, whenever a filter is removed via the add/remove filters dialog.
+					 */
+					deleted: {
+						type: "sap.ui.core.Control"
+					},
+
+					/**
+					 * The filter item is only provided along with added or deleted properties.
+					 */
+					filterItem: {
+						type: "sap.ui.comp.filterbar.FilterGroupItem"
+					}
+				},
 
 				/**
 				 * This event is fired when the Clear button is pressed. The consumer has to clear all filters.
@@ -354,34 +404,75 @@ sap.ui.define([
 				},
 
 				/**
-				 * This event is fired when the filter bar is initialized.
+				 * This event is fired when the FilterBar is initialized to indicate that the meta data are available.
 				 */
 				initialise: {},
 
 				/**
-				 * This event is fired after the filter bar was initialized and the standard variant was obtained. Eventual navigation related actions
+				 * This event is fired after the FilterBar was initialized and the standard variant was obtained. Eventual navigation related actions
 				 * should be triggered by this event.
-				 * 
 				 * @since 1.38.0
 				 */
 				initialized: {},
 
 				/**
-				 * This event is fired after a variant has been saved. ID of the saved variant.
+				 * This event is fired after a variant has been saved.
 				 */
 				afterVariantSave: {},
 
 				/**
 				 * This event is fired after the filters dialog is closed.
-				 * 
 				 * @since 1.34.0
 				 */
-				filtersDialogClosed: {},
+				filtersDialogClosed: {
+					parameters: {
+						/**
+						 * Context of the event. Can also be <code>null</code> or <code>undefined</code>
+						 */
+						context: {
+							type: "string"
+						}
+					}
+				},
+
+				/**
+				 * This event is fired after the filters dialog is opened.
+				 * @since 1.48.0
+				 */
+				filtersDialogBeforeOpen: {},
+
+				/**
+				 * This event is fired when the Cancel button on the filters dialog is pressed.
+				 * @since 1.48.0
+				 */
+				filtersDialogCancel: {},
+
+				/**
+				 * This event is fired when the Go button on the filters dialog is pressed.
+				 * @since 1.48.0
+				 */
+				filtersDialogSearch: {},
+
+				/**
+				 * This event is fired when search field of the filter dialog is changed.
+				 * @since 1.48.0
+				 */
+				filtersDialogSearchForFilters: {
+					parameters: {
+
+						/**
+						 * Contains the entered search filed value
+						 */
+						newValue: {
+							type: "string"
+						}
+					}
+
+				},
 
 				/**
 				 * This event is fired when the filters information has changed. It indicates specifically that the count of assigned filters may be
 				 * changed. One of the intended reaction to this event would be to call <code>retrieveFiltersWithValuesAsText</code> method.
-				 * 
 				 * @since 1.38.0
 				 */
 				assignedFiltersChanged: {}
@@ -395,7 +486,6 @@ sap.ui.define([
 
 	/**
 	 * Initializes the FilterBar control.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype.init = function() {
@@ -435,7 +525,12 @@ sap.ui.define([
 
 		this._bHostedVariantManagement = false;
 
+		this._bDoItOnce = false;
+		this._oLabelTextWidth = 0;
+
 		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp");
+
+		this.setHSpacing(0);
 
 		this.addStyleClass("sapUiCompFilterBar");
 		if (this._isPhone()) {
@@ -446,6 +541,7 @@ sap.ui.define([
 
 		this.addStyleClass("sapUiCompFilterBarMarginBottom");
 		this.addStyleClass("sapUiCompFilterBarPaddingPanel");
+		this.addStyleClass("sapContrastPlus");
 
 		this._oToolbar = this._createToolbar();
 		this._oToolbar.setLayoutData(new GridData({
@@ -473,8 +569,8 @@ sap.ui.define([
 		this.addContent(this._oAdvancedPanel);
 
 		// register event handler for resizing
-		jQuery(window).on("resize." + this.getId(), jQuery.proxy(this._fHandleResize, this));
-		// this._hResizeListener = sap.ui.core.ResizeHandler.register(this._oBasicAreaLayout, jQuery.proxy(this._fHandleResize, this));
+		// jQuery(window).on("resize." + this.getId(), this._fHandleResize.bind(this));
+		this._hResizeListener = sap.ui.core.ResizeHandler.register(this._oBasicAreaLayout, this._fHandleResize.bind(this));
 
 		this.oModel = new sap.ui.model.json.JSONModel({});
 		this.setModel(this.oModel, "FilterBar");
@@ -490,6 +586,7 @@ sap.ui.define([
 		if (this._isTablet() || this._isPhone()) {
 			this.setFilterBarExpanded(false);
 		}
+
 	};
 
 	FilterBar.prototype._hasAnyVisibleFiltersOnFB = function() {
@@ -516,6 +613,7 @@ sap.ui.define([
 		if (!this.getAdvancedMode() && !this._isPhone()) {
 
 			var bFlag = !this._hasAnyVisibleFiltersOnFB();
+
 			if (bFlag && this._mAdvancedAreaFilter) {
 				i = this._oBasicAreaLayout.indexOfContent(this._oHintText);
 				if (i < 0) {
@@ -531,12 +629,43 @@ sap.ui.define([
 		}
 	};
 
+	FilterBar.prototype._hasRelevantFilters = function() {
+		var i, n = null, oItem;
+
+		if (!this._mAdvancedAreaFilter || (Object.keys(this._mAdvancedAreaFilter) < 1)) {
+			return false;
+		}
+
+		if (this.getAdvancedMode()) {
+			for (n in this._mAdvancedAreaFilter) {
+				var oGroupElement = this._mAdvancedAreaFilter[n];
+				if (oGroupElement && oGroupElement.items) {
+					for (i = 0; i < oGroupElement.items.length; i++) {
+						oItem = oGroupElement.items[i];
+						if (oItem) {
+							if (this._determineVisibility(oItem.filterItem)) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+
+			return false;
+		}
+
+		return true;
+	};
+
 	FilterBar.prototype._adaptButtonsEnablement = function() {
 
 		var bFlag = false || !!this._mAdvancedAreaFilter;
 
 		if (this._oHideShowButton) {
 			this._oHideShowButton.setEnabled(bFlag);
+			if (this.getAdvancedMode() && !this._isPhone()) {
+				this._oHideShowButton.setVisible(this._hasRelevantFilters());
+			}
 		}
 		this._oClearButtonOnFB.setEnabled(bFlag);
 		this._oRestoreButtonOnFB.setEnabled(bFlag);
@@ -548,91 +677,123 @@ sap.ui.define([
 	};
 
 	/**
-	 * Handles the visibility for the Clear button in the filter bar. On phone devices, the value is always treated as false.
-	 * 
+	 * Returns the associated VariantManagement control. The returned VariantManagement instance should not be cached or manipulated in any ways. It
+	 * should offer the application a convenient way to verify the dirty state and to check for page variant scenario. The method may return
+	 * <code>null</code> or a disabled VariantManagement control.
 	 * @public
-	 * @since 1.28.0
-	 * @param {boolean} bFlag State of visibility
+	 * @since 1.44.0
+	 * @returns {sap.ui.comp.variants.VariantManagement} the associated VariantManagement control.
 	 */
+	FilterBar.prototype.getVariantManagement = function() {
+		return this._oVariantManagement;
+	};
+
 	FilterBar.prototype.setShowClearOnFB = function(bFlag) {
 
 		if (!this._isPhone()) {
 			this.setProperty("showClearOnFB", bFlag);
 			this._oClearButtonOnFB.setVisible(bFlag);
 		}
+
+		return this;
 	};
 
-	/**
-	 * Handles the visibility of the Restore button in the filter bar. On phone devices, the value is always treated as false.
-	 * 
-	 * @public
-	 * @since 1.28.0
-	 * @param {boolean} bFlag State of visibility
-	 */
 	FilterBar.prototype.setShowRestoreOnFB = function(bFlag) {
 
 		if (!this._isPhone()) {
 			this.setProperty("showRestoreOnFB", bFlag);
 			this._oRestoreButtonOnFB.setVisible(bFlag);
 		}
+
+		return this;
 	};
 
-	/**
-	 * Handles the visibility of the Go button on filter bar.
-	 * 
-	 * @public
-	 * @since 1.28.0
-	 * @param {boolean} bFlag State of visibility
-	 */
 	FilterBar.prototype.setShowGoOnFB = function(bFlag) {
 
 		this.setProperty("showGoOnFB", bFlag);
 
+		this._calcVisibilityGoButton();
+
+		return this;
+	};
+
+	/**
+	 * Handles the visibility of the Go button on FilterBar.
+	 * @private
+	 */
+	FilterBar.prototype._calcVisibilityGoButton = function() {
+
+		var bFlag = this.getShowGoOnFB();
+		if (bFlag && !this._isPhone() && this.isLiveMode && this.isLiveMode()) {
+			bFlag = false;
+		}
+
 		this._oSearchButton.setVisible(bFlag);
 	};
 
-	/**
-	 * Handles the visibility for the Go button on filter bar. This property is deprecated, please use instead the property <code>showGoOnFB</code>.
-	 * 
-	 * @private
-	 * @since 1.26.1
-	 * @param {boolean} bFlag State of visibility
-	 */
 	FilterBar.prototype.setShowGoButton = function(bFlag) {
 
 		this.setShowGoOnFB(bFlag);
+
+		return this;
 	};
 
-	/**
-	 * Handles the visibility for the Go button on filter bar. This property is deprecated, please use instead the property <code>showGoOnFB</code>.
-	 * 
-	 * @private
-	 * @since 1.26.1
-	 * @returns {boolean} State of visibility
-	 */
 	FilterBar.prototype.getShowGoButton = function() {
 
 		return this.getShowGoOnFB();
 	};
 
 	/**
-	 * Handles the visibility for the Filters button on filter bar.
-	 * 
-	 * @private
-	 * @since 1.38.0
-	 * @param {boolean} bFlag State of visibility
+	 * Hides the Go button on FilterBar. Allows to hide the Go-button for dedicated scenarios, like liveMode.
+	 * @protected
+	 * @since 1.40.4
 	 */
+	FilterBar.prototype.hideGoButton = function() {
+		this._oSearchButton.setVisible(false);
+	};
+
+	/**
+	 * Restores the visibility of the Go button on FilterBar. The visibilty of the Go button will be set, according to the showGoOnFB property.
+	 * @protected
+	 * @since 1.40.4
+	 */
+	FilterBar.prototype.restoreGoButton = function() {
+		this._oSearchButton.setVisible(this.getShowGoOnFB());
+	};
+
 	FilterBar.prototype.setShowFilterConfiguration = function(bFlag) {
 		this.setProperty("showFilterConfiguration", bFlag);
 
 		if (this._oFiltersButton && !this._isPhone()) {
 			this._oFiltersButton.setVisible(bFlag);
 		}
+
+		return this;
+	};
+
+	/**
+	 * Determines if the current variant is the standard variant
+	 * @public
+	 * @since 1.44.0
+	 * @returns {boolean| undefined} indicates if the current variant is the standard variant. In case the variant management does not exists,
+	 *          <code>undefined</code> is returned.
+	 */
+	FilterBar.prototype.isCurrentVariantStandard = function() {
+
+		var sKey;
+		if (this._oVariantManagement) {
+			sKey = this._oVariantManagement.getCurrentVariantId();
+			if (sKey === "") {
+				return true;
+			}
+			return (sKey === this._oVariantManagement.getStandardVariantKey());
+		}
+
+		return undefined;
 	};
 
 	/**
 	 * Sets the current variant ID.
-	 * 
 	 * @public
 	 * @since 1.28.0
 	 * @param {string} sVariantId ID of the variant
@@ -648,7 +809,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the current variant ID.
-	 * 
 	 * @public
 	 * @since 1.28.0
 	 * @returns {string} ID of the current variant
@@ -666,13 +826,18 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the current variant as selection variant for UI navigation
-	 * 
 	 * @public
-	 * @since 1.28.0 Also include empty/invisible fields filter data
+	 * @since 1.28.0
+	 * @deprecated As of version 1.48, replaced by {@link sap.ui.comp.filterbar.FilterBar.html#getUiState}
 	 * @param {boolean} bConsiderAllFilters also include empty/invisible fields filter data
 	 * @returns {string} JSON string representing the selection variant for UI navigation; <code>null</code> otherwise
 	 */
 	FilterBar.prototype.getDataSuiteFormat = function(bConsiderAllFilters) {
+
+		return this._getDataSuiteFormat(bConsiderAllFilters, null);
+	};
+
+	FilterBar.prototype._getDataSuiteFormat = function(bConsiderAllFilters, sVersion) {
 
 		var sSuiteVariant = null;
 		var sKey, sContent, aFiltersInfo;
@@ -686,7 +851,7 @@ sap.ui.define([
 				sContent = this.getFilterDataAsString(bConsiderAllFilters);
 				if (sContent) {
 					var oConverter = new VariantConverterTo();
-					sSuiteVariant = oConverter.convert(sKey, aFiltersInfo, sContent, this);
+					sSuiteVariant = oConverter.convert(sKey, aFiltersInfo, sContent, this, sVersion);
 				}
 			}
 		}
@@ -695,28 +860,205 @@ sap.ui.define([
 	};
 
 	/**
+	 * Determine the internal basic search field name.
+	 * @protected
+	 * @returns {string} name of the basic search field.
+	 */
+	FilterBar.prototype.getBasicSearchName = function() {
+
+		var sBasicSearchFieldName = null;
+
+		if (this._oBasicSearchField && this.getEntitySet) {
+			sBasicSearchFieldName = "$" + this.getEntitySet() + ".basicSearch";
+		}
+
+		return sBasicSearchFieldName;
+	};
+
+	/**
+	 * Determine the value of the basic search.
+	 * @protected
+	 * @returns {string} current value of the basic search field.
+	 */
+	FilterBar.prototype.getBasicSearchValue = function() {
+		return this._getBasicSearchValue();
+	};
+
+	/**
+	 * Apply the SelectionPresentationVariant annotated information as a variant. The current UI state represents the data suite format.
+	 * @public
+	 * @since 1.54
+	 * @param {sap.ui.comp.state.UIState} oUiState object representing the ui-state.Only the SelectionVariant part is considered.
+	 */
+	FilterBar.prototype.setUiStateAsVariant = function(oUiState) {
+		var mProperties = {
+			replace: true,
+			strictMode: true
+		};
+
+		this.setUiState(oUiState, mProperties);
+
+		this.fireAfterVariantLoad("SPV_VARIANT", false);
+
+		this._applyVisibility(oUiState.getSelectionVariant());
+	};
+
+	FilterBar.prototype._applyVisibility = function(oSelectionVariant) {
+
+		var fSetVisibile = function(oFilterItem) {
+			if (oFilterItem && oFilterItem.visible && !oFilterItem.isHiddenFilter()) {
+				if (!oFilterItem.getVisibleInFilterBar()) {
+					oFilterItem.setVisibleInFilterBar(true);
+				}
+				if (!oFilterItem.getPartOfCurrentVariant()) {
+					oFilterItem.setPartOfCurrentVariant(true);
+				}
+			}
+		};
+
+		if (this._bIsInitialized) {
+
+			for ( var n in this._mAdvancedAreaFilter) {
+				if (n) {
+					/* eslint-disable no-loop-func */
+					this._mAdvancedAreaFilter[n].items.forEach(function(oItem) {
+						if (oItem && oItem.filterItem && oItem.filterItem.getMandatory()) {
+							fSetVisibile(oItem.filterItem);
+						} else if (oItem && oItem.filterItem) {
+							if (oItem.filterItem.getVisibleInFilterBar()) {
+								oItem.filterItem.setVisibleInFilterBar(false);
+							}
+							if (oItem.filterItem.getPartOfCurrentVariant()) {
+								if (n === FilterBar.INTERNAL_GROUP) {
+									oItem.filterItem.setPartOfCurrentVariant(true);
+								} else {
+									oItem.filterItem.setPartOfCurrentVariant(false);
+								}
+							}
+						}
+					});
+					/* eslint-enable no-loop-func */
+				}
+			}
+
+			if (oSelectionVariant && oSelectionVariant.Parameters) {
+				oSelectionVariant.Parameters.forEach(function(oEntry) {
+					var oFilterItem = this.determineFilterItemByName(oEntry.PropertyName);
+					fSetVisibile(oFilterItem);
+				}.bind(this));
+			}
+
+			if (oSelectionVariant && oSelectionVariant.SelectOptions) {
+				oSelectionVariant.SelectOptions.forEach(function(oEntry) {
+					var oFilterItem = this.determineFilterItemByName(oEntry.PropertyName);
+					fSetVisibile(oFilterItem);
+				}.bind(this));
+			}
+		}
+	};
+
+	/**
+	 * Retrieves the current UI state of the <code>FilterBar</code> control.<br>
+	 * The current UI state represents the data suite format.
+	 * @public
+	 * @since 1.48
+	 * @param {map} mProperties controls the API behavior
+	 * @param {boolean} mProperties.allFilters include empty/invisible fields filter data. Default is <code>false</code>
+	 * @returns {sap.ui.comp.state.UIState} object representing the ui-state. Currently only the SelectionVariant part is considered.
+	 */
+	FilterBar.prototype.getUiState = function(mProperties) {
+		var oUiState, sSelectionVariant, bConsiderAllFilters = false, oData = null;
+
+		if (mProperties) {
+			bConsiderAllFilters = (mProperties.allFilters === true);
+		}
+
+		sSelectionVariant = this._getDataSuiteFormat(bConsiderAllFilters, "13.0");
+
+		oUiState = new UIState();
+
+		oUiState.selectionVariant = JSON.parse(sSelectionVariant); // compatibility wise
+
+		oUiState.setSelectionVariant(oUiState.selectionVariant);
+		if (oUiState.getSelectionVariant()) {
+			if (this.getModelData && this.getModelData()) {
+				oData = this.getModelData();
+			}
+			oUiState.setValueTexts(UIState.calculateValueTexts(oUiState.getSelectionVariant(), oData));
+		}
+
+		return oUiState;
+	};
+
+	/**
+	 * Sets the current UI state of the <code>FilterBar</code> control.<br>
+	 * The current UI state represents the data suite format.
+	 * @public
+	 * @since 1.48
+	 * @param {sap.ui.comp.state.UIState} oUiState object representing the ui-state. Currently only the SelectionVariant part is considered.
+	 * @param {map} mProperties controls the API behavior
+	 * @param {boolean} mProperties.replace Replaces existing filter data
+	 * @param {boolean} mProperties.strictMode Determines filters and parameters based on the name.<BR>
+	 *        <ul>
+	 *        <li><code>true</code>: Determines filters and parameters based on their exact name and type. If there is no exact match, the
+	 *        filter/parameter will be ignored.</li>
+	 *        <li><code>false</code>: Determines parameters first following this rule set:
+	 *        <ul>
+	 *        <li>If a parameter is found, use it.</li>
+	 *        <li>If a filter is found, check first if a matching parameter exists with the filter name prefixed with "P_". If there is a match, use
+	 *        it as parameter, otherwise use it as filter.</li>
+	 *        </ul>
+	 *        </ul>
+	 */
+	FilterBar.prototype.setUiState = function(oUiState, mProperties) {
+		var oValueTexts, sSelectionVariant, oSelectionVariant = null, bReplace = false, bStrictMode = true;
+
+		if (mProperties) {
+			bReplace = (mProperties.replace === true);
+			bStrictMode = (mProperties.strictMode === true);
+		}
+
+		if (oUiState) {
+			oSelectionVariant = oUiState.getSelectionVariant();
+			if (oSelectionVariant) {
+				sSelectionVariant = JSON.stringify(oSelectionVariant);
+			}
+
+			oValueTexts = oUiState.getValueTexts();
+		}
+
+		this._setDataSuiteFormat(sSelectionVariant, bReplace, bStrictMode, oValueTexts);
+	};
+
+	/**
 	 * Sets the selection variant for UI navigation to FilterBar.
-	 * 
 	 * @public
 	 * @since 1.28.0
+	 * @deprecated As of version 1.48, replaced by {@link sap.ui.comp.filterbar.FilterBar.html#setUiState}
 	 * @param {string} sSuiteData Represents the selection variants for UI navigation
 	 * @param {boolean} bReplace Replaces existing filter data
 	 */
 	FilterBar.prototype.setDataSuiteFormat = function(sSuiteData, bReplace) {
 
-		var oConverter, oContent;
+		this._setDataSuiteFormat(sSuiteData, bReplace, true);
+
+	};
+
+	FilterBar.prototype._setDataSuiteFormat = function(sSuiteData, bReplace, bStrictMode, oValueTexts) {
+
+		var oConverter, oContent, sPayload;
 
 		if (sSuiteData) {
 
 			oConverter = new VariantConverterFrom();
-			oContent = oConverter.convert(sSuiteData, this);
+			oContent = oConverter.convert(sSuiteData, this, bStrictMode);
 			if (oContent) {
 
 				if (oContent.variantId && this._oVariantManagement) {
 
 					if (this._bIsInitialized) {
 						if (this._oVariantManagement.isPageVariant()) {
-							this._oVariantManagement._selectVariant(oContent.variantId);
+							this._oVariantManagement._selectVariant(oContent.variantId, "DATA_SUITE");
 						} else {
 							this._setFilterVisibility(oContent.variantId);
 						}
@@ -725,12 +1067,25 @@ sap.ui.define([
 					this._oVariantManagement.setInitialSelectionKey(oContent.variantId);
 				}
 
-				if (oContent.payload && this.setFilterDataAsString) {
-					this.setFilterDataAsString(oContent.payload, bReplace);
+				if (oContent.payload && (bReplace || (Object.keys(JSON.parse(oContent.payload)).length > 0)) && this.setFilterDataAsString) {
+
+					sPayload = oContent.payload;
+					if (oValueTexts) {
+						sPayload = UIState.enrichWithValueTexts(sPayload, oValueTexts);
+					}
+
+					this.setFilterDataAsString(sPayload, bReplace);
+				}
+
+				if (oContent.basicSearch && this._oBasicSearchField && this._oBasicSearchField.setValue) {
+					this._oBasicSearchField.setValue("" || oContent.basicSearch);
+
+					this._updateToolbarText();
 				}
 
 			}
 		}
+
 	};
 
 	FilterBar.prototype._setFilterVisibility = function(sVariantId) {
@@ -771,16 +1126,40 @@ sap.ui.define([
 			this._bHostedVariantManagement = true;
 		}
 
+		this._applyLayoutDataToToolbarButtons();
+
 		Grid.prototype.applySettings.apply(this, arguments);
+	};
+
+	FilterBar.prototype._applyLayoutDataToToolbarButtons = function(sPersistenceKey) {
+		jQuery.sap.require("sap.m.ToolbarLayoutData");
+
+		if (this._isPhone() || this._isTablet() || this.getAdvancedMode() || !this.getUseToolbar()) {
+			return;
+		}
+
+		this._oHideShowButton.setLayoutData(new sap.m.ToolbarLayoutData({
+			shrinkable: true
+		}));
+
+		this._oClearButtonOnFB.setLayoutData(new sap.m.ToolbarLayoutData({
+			shrinkable: true
+		}));
+
+		this._oRestoreButtonOnFB.setLayoutData(new sap.m.ToolbarLayoutData({
+			shrinkable: true
+		}));
+
+		this._oFiltersButton.setLayoutData(new sap.m.ToolbarLayoutData({
+			shrinkable: true
+		}));
+
+		this._oSearchButton.setLayoutData(new sap.m.ToolbarLayoutData({
+			shrinkable: false
+		}));
 
 	};
 
-	/**
-	 * Sets the persistency key.
-	 * 
-	 * @public
-	 * @param {string} sPersistenceKey ID for persistency
-	 */
 	FilterBar.prototype.setPersistencyKey = function(sPersistenceKey) {
 
 		this.setProperty("persistencyKey", sPersistenceKey);
@@ -788,6 +1167,8 @@ sap.ui.define([
 		if (this._possibleToChangeVariantManagement()) {
 			this._oVariantManagement.setVisible(true);
 		}
+
+		return this;
 
 	};
 
@@ -801,7 +1182,6 @@ sap.ui.define([
 
 	/**
 	 * Resets the current selection in the variant management control to standard.
-	 * 
 	 * @public
 	 */
 	FilterBar.prototype.clearVariantSelection = function() {
@@ -811,12 +1191,6 @@ sap.ui.define([
 		}
 	};
 
-	/**
-	 * Enables/disables the Search button.
-	 * 
-	 * @private
-	 * @param {boolean} bValue Sets the enable state of the Search button
-	 */
 	FilterBar.prototype.setSearchEnabled = function(bValue) {
 
 		this.setProperty("searchEnabled", bValue);
@@ -824,17 +1198,15 @@ sap.ui.define([
 		if (this._oSearchButton) {
 			this._oSearchButton.setEnabled(bValue);
 		}
-	};
-	FilterBar.prototype.getSearchEnabled = function() {
-		return this.getProperty("searchEnabled");
+
+		return this;
 	};
 
 	/**
 	 * Sets the type of the Search to Emphasize.
-	 * 
 	 * @private
-	 * @since 1.28
 	 * @param {boolean} bSetEmphasize Sets the type to Emphasize or Default
+	 * @deprecated Since 1.30.0
 	 */
 	FilterBar.prototype.setSearchButtonEmphType = function(bSetEmphasize) {
 
@@ -842,9 +1214,9 @@ sap.ui.define([
 
 	/**
 	 * Sets the simplified mode.
-	 * 
 	 * @param {boolean} bFlag Sets the simplified mode
 	 * @private
+	 * @deprecated Since 1.30.0
 	 */
 	FilterBar.prototype.setSimplifiedMode = function(bFlag) {
 
@@ -854,9 +1226,9 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the simplified mode.
-	 * 
 	 * @returns {boolean} Indicates if the current advanced mode is set
 	 * @private
+	 * @deprecated Since 1.30.0
 	 */
 	FilterBar.prototype.getSimplifiedMode = function() {
 
@@ -869,9 +1241,9 @@ sap.ui.define([
 
 	/**
 	 * Sets the advanced area to collapsed or expanded mode.
-	 * 
 	 * @private
 	 * @param {boolean} bFlag Sets the advanced area to expanded/collapsed
+	 * @deprecated Since 1.30.0
 	 */
 	FilterBar.prototype.setExpandAdvancedArea = function(bFlag) {
 
@@ -880,24 +1252,20 @@ sap.ui.define([
 
 	/**
 	 * Determines if the advanced area is displayed collapsed or expanded.
-	 * 
 	 * @private
 	 * @returns {boolean} The state of the advanced area
+	 * @deprecated Since 1.30.0
 	 */
 	FilterBar.prototype.getExpandAdvancedArea = function() {
 
 		return this.getFilterBarExpanded();
 	};
 
-	/**
-	 * The advanced mode is only relevant for the value help scenario. UI representation is different from the standard filter bar.
-	 * 
-	 * @public
-	 * @param {boolean} bFlag Sets the advanced mode
-	 */
 	FilterBar.prototype.setAdvancedMode = function(bFlag) {
 
 		this.setProperty("advancedMode", bFlag);
+
+		this.toggleStyleClass("sapContrastPlus", !bFlag);
 
 		if (bFlag) {
 			if (this._possibleToChangeVariantManagement()) {
@@ -931,10 +1299,24 @@ sap.ui.define([
 
 		if (this._oHideShowButton) {
 			this._oHideShowButton.setVisible((bFlag && this._isPhone()) ? false : true);
+
+			if (this._oHideShowButton.getVisible()) {
+				if (this.getFilterBarExpanded()) {
+					this._oHideShowButton.setText(this._oRb.getText("FILTER_BAR_VH_HIDE"));
+					this._oHideShowButton.setTooltip(this._oRb.getText("FILTER_BAR_VH_HIDE"));
+				} else {
+					this._oHideShowButton.setText(this._oRb.getText("FILTER_BAR_VH_SHOW"));
+					this._oHideShowButton.setTooltip(this._oRb.getText("FILTER_BAR_VH_SHOW"));
+				}
+			}
 		}
 
-		this._oBasicAreaLayout.setVisible(!bFlag);
+		this._oBasicAreaLayout.setVisible(!bFlag && this.getFilterBarExpanded());
 		this._oAdvancedPanel.setVisible(bFlag && this.getFilterBarExpanded());
+
+		this._adaptButtonsEnablement();
+
+		return this;
 	};
 
 	FilterBar.prototype.setUseToolbar = function(bValue) {
@@ -943,6 +1325,73 @@ sap.ui.define([
 
 		if (!bValue) {
 			this._adaptNewFilterBarDesign();
+		} else {
+			this._recreateToolbar();
+		}
+
+		return this;
+	};
+
+	FilterBar.prototype._recreateToolbar = function() {
+
+		if (!this._oToolbar) {
+
+			this._bButtonaAdded = false;
+
+			if (this._oButtonsVLayout) {
+				this._oBasicAreaLayout.removeContent(this._oButtonsVLayout);
+				this._oButtonsVLayout.destroy();
+				this._oButtonsVLayout = null;
+			}
+
+			this._oToolbar = this._createToolbar(true);
+			this._oToolbar.setLayoutData(new GridData({
+				span: "L12 M12 S12"
+			}));
+			this.insertContent(this._oToolbar, 0);
+
+			if (this._oVariantManagement) {
+
+				if (this._oVariantManagement instanceof SmartVariantManagementUi2 || ((this._oVariantManagement.getId() === (this.getId() + "-variant")))) {
+					this._oToolbar.insertContent(this._oVariantManagement, 0);
+				}
+			}
+
+			this._adaptButtonsEnablement();
+
+			if (this._oBasicSearchFieldContainer) {
+				this._oBasicAreaLayout.removeContent(this._oBasicSearchFieldContainer);
+
+				this._cleanBasicSearchContainer();
+
+				this.setBasicSearch(this._oBasicSearchField);
+			}
+
+			this._oHintText = new Text({
+				text: this._oRb.getText("FILTER_BAR_NO_FILTERS_ON_FB"),
+				textAlign: TextAlign.Center
+			});
+			this._oHintText.setVisible(false);
+			this._oHintText.addStyleClass("sapUiCompFilterBarHint");
+			this._oBasicAreaLayout.addContent(this._oHintText);
+
+			this._updateToolbarText();
+		}
+	};
+
+	FilterBar.prototype._cleanBasicSearchContainer = function() {
+		if (this._oBasicSearchFieldContainer) {
+
+			var aContent = this._oBasicSearchFieldContainer.removeAllContent();
+			if (aContent) {
+				for (var i = 0; i < aContent.length; i++) {
+					if (aContent[i] !== this._oBasicSearchField) {
+						aContent[i].destroy();
+					}
+				}
+			}
+			this._oBasicSearchFieldContainer.destroy();
+			this._oBasicSearchFieldContainer = null;
 		}
 	};
 
@@ -953,6 +1402,8 @@ sap.ui.define([
 		if (this.getUseToolbar()) {
 			this._addHeaderToToolbar(sValue);
 		}
+
+		return this;
 	};
 
 	FilterBar.prototype._addHeaderToToolbar = function(sValue) {
@@ -1001,18 +1452,20 @@ sap.ui.define([
 			this.setFilterBarExpanded(true);
 			this._oBasicAreaLayout.setVisible(true);
 
-			if (!this._oVariantManagement || (this._oVariantManagement && this._oVariantManagement.isPageVariant())) {
+			if (this.getUseToolbar()) {
+				var aContent = this._oToolbar.getContent();
+				for (var i = aContent.length - 1; i > 0; i--) {
+					this._oToolbar.removeContent(aContent[i]);
+				}
+			} else {
+				/* eslint-disable no-lonely-if */
 				if (this._oToolbar) {
 					this.removeContent(this._oToolbar);
 					this._oToolbar.removeAllContent();
 					this._oToolbar.destroy();
 					this._oToolbar = null;
 				}
-			} else {
-				var aContent = this._oToolbar.getContent();
-				for (var i = aContent.length - 1; i > 0; i--) {
-					this._oToolbar.removeContent(aContent[i]);
-				}
+				/* eslint-enable no-lonely-if */
 			}
 
 			if (this._oHintText) {
@@ -1029,6 +1482,10 @@ sap.ui.define([
 			if (!this._bButtonaAdded) {
 				this._bButtonaAdded = true;
 				this._addButtonsToBasicArea();
+			}
+
+			if (this._oBasicSearchField) {
+				this.setBasicSearch(this._oBasicSearchField);
 			}
 
 		}
@@ -1052,8 +1509,14 @@ sap.ui.define([
 		oVLayout.addContent(oHLayout);
 
 		oHLayout.addContent(this._oClearButtonOnFB);
+		this._oClearButtonOnFB.addStyleClass("sapUiCompFilterBarPaddingRightBtn");
+
 		oHLayout.addContent(this._oRestoreButtonOnFB);
+		this._oRestoreButtonOnFB.addStyleClass("sapUiCompFilterBarPaddingRightBtn");
+
 		oHLayout.addContent(this._oFiltersButton);
+		this._oFiltersButton.addStyleClass("sapUiCompFilterBarPaddingRightBtn");
+
 		oHLayout.addContent(this._oSearchButton);
 
 		this._updateToolbarText();
@@ -1068,6 +1531,8 @@ sap.ui.define([
 			this._oBasicAreaLayout.addContent(oVLayout);
 		}
 
+		this._oButtonsVLayout = oVLayout;
+
 	};
 
 	FilterBar.prototype._addBasicSearchToBasicArea = function(oBasicSearchField) {
@@ -1081,16 +1546,7 @@ sap.ui.define([
 				nWidth = this._oBasicSearchFieldContainer.getWidth();
 			}
 
-			var aContent = this._oBasicSearchFieldContainer.removeAllContent();
-			if (aContent) {
-				for (var i = 0; i < aContent.length; i++) {
-					if (aContent[i] !== this._oBasicSearchField) {
-						aContent[i].destroy();
-					}
-				}
-			}
-			this._oBasicSearchFieldContainer.destroy();
-			this._oBasicSearchFieldContainer = null;
+			this._cleanBasicSearchContainer();
 		}
 
 		if (oBasicSearchField) {
@@ -1121,10 +1577,11 @@ sap.ui.define([
 	};
 
 	FilterBar.prototype._setCollectiveSearch = function(oCollectiveSearch) {
-		if (this.getAdvancedMode() && oCollectiveSearch) {
+		if (this.getAdvancedMode()) {
 			if (this._oToolbar) {
 				if (this._oVariantManagement) {
 					this._oToolbar.removeContent(this._oVariantManagement);
+					this._unregisterVariantManagement(this._oVariantManagement);
 					this._oVariantManagement = null;
 				}
 
@@ -1139,27 +1596,24 @@ sap.ui.define([
 		}
 	};
 
-	/**
-	 * Adds a basic search field to the toolbar.
-	 * 
-	 * @public
-	 * @param {sap.m.SearchField} oBasicSearchField Control
-	 */
 	FilterBar.prototype.setBasicSearch = function(oBasicSearchField) {
+		var that = this;
+
 		this.setAssociation("basicSearch", oBasicSearchField, true);
 
-		var that = this;
+		if (typeof oBasicSearchField === "string") {
+			oBasicSearchField = sap.ui.getCore().byId(oBasicSearchField);
+		}
 
 		if (this._oBasicSearchField && this._oToolbar) {
 			this._oToolbar.removeContent(this._oBasicSearchField);
 		}
 
 		if (oBasicSearchField && this._isNewFilterBarDesign()) {
-
 			this._addBasicSearchToBasicArea(oBasicSearchField);
-
 		} else {
 
+			/* eslint-disable no-lonely-if */
 			if (oBasicSearchField && this._oToolbar && (!this._isPhone() || this.getAdvancedMode())) {
 
 				var nIdx = this._indexOfSpacerOnToolbar();
@@ -1170,9 +1624,20 @@ sap.ui.define([
 					});
 				}
 			}
+			/* eslint-enable no-lonely-if */
 		}
 
 		this._oBasicSearchField = oBasicSearchField;
+
+		return this;
+	};
+
+	FilterBar.prototype._getBasicSearchValue = function() {
+		if (this._oBasicSearchField && this._oBasicSearchField.getValue) {
+			return this._oBasicSearchField.getValue();
+		}
+
+		return null;
 	};
 
 	FilterBar.prototype._indexOfSpacerOnToolbar = function() {
@@ -1188,11 +1653,9 @@ sap.ui.define([
 		return 0;
 	};
 
-	/**
-	 * Adds a <code>FilterItem</code> element to the aggregation <code>filterItems</code>.
-	 * 
-	 * @public
-	 * @param {sap.ui.comp.filterbar.FilterItem} oFilterItem Belongs to the basic group
+	/*
+	 * @public Add a FilterItem to the <code>filterItems</code> aggregation.
+	 * @deprecated Since version 1.48.0. Use aggregation <code>filterGroupItems</code> instead.
 	 */
 	FilterBar.prototype.addFilterItem = function(oFilterItem) {
 
@@ -1235,10 +1698,10 @@ sap.ui.define([
 			partOfCurrentVariant: true,
 			control: oFilterItem.getControl(),
 			groupName: FilterBar.INTERNAL_GROUP,
-			groupTitle: ""
+			groupTitle: "",
+			hiddenFilter: oFilterItem.getHiddenFilter()
 		});
 
-		oFilterGroupItem._iSpan = oFilterItem._iSpan;
 		if (oFilterItem.data('isCustomField')) {
 			oFilterGroupItem.data('isCustomField', true);
 		}
@@ -1247,14 +1710,9 @@ sap.ui.define([
 
 		this.addFilterGroupItem(oFilterGroupItem);
 
+		return this;
 	};
 
-	/**
-	 * Adds a <code>FilterGroupItem</code> element to the aggregation <code>filterGroupItems</code>.
-	 * 
-	 * @public
-	 * @param {sap.ui.comp.filterbar.FilterGroupItem} oFilterGroupItem Belongs to any group other than basic
-	 */
 	FilterBar.prototype.addFilterGroupItem = function(oFilterGroupItem) {
 
 		var sName, sGroupName, oObj, oContainer;
@@ -1284,6 +1742,10 @@ sap.ui.define([
 			this._mAdvancedAreaFilter[sGroupName].items = [];
 		}
 
+		if (!this._mAdvancedAreaFilter[sGroupName].items) {
+			this._mAdvancedAreaFilter[sGroupName].items = [];
+		}
+
 		if (!this._mAdvancedAreaFilter[sGroupName].filterItem) {
 			this._mAdvancedAreaFilter[sGroupName].filterItem = oFilterGroupItem;
 		}
@@ -1301,30 +1763,105 @@ sap.ui.define([
 
 		this._mAdvancedAreaFilter[sGroupName].items.push(oObj);
 
-		oContainer = this._addControlToBasicAreaFormContainer(oFilterGroupItem);
-		if (oContainer) {
-			oObj.container = oContainer;
+		if (!oFilterGroupItem.getHiddenFilter()) {
 
-			oContainer.setVisible(oFilterGroupItem.getVisible() && oFilterGroupItem.getVisibleInFilterBar());
-			if (oFilterGroupItem.getVisibleInFilterBar()) {
-				oFilterGroupItem.setPartOfCurrentVariant(oFilterGroupItem.getVisibleInFilterBar());
+			oContainer = this._addControlToBasicAreaFormContainer(oFilterGroupItem);
+			if (oContainer) {
+				oObj.container = oContainer;
+
+				oContainer.setVisible(oFilterGroupItem.getVisible() && oFilterGroupItem.getVisibleInFilterBar());
+				if (oFilterGroupItem.getVisibleInFilterBar()) {
+					oFilterGroupItem.setPartOfCurrentVariant(oFilterGroupItem.getVisibleInFilterBar());
+				}
+
+				oFilterGroupItem.attachChange(this._filterGroupItemChange.bind(this));
 			}
 
-			oFilterGroupItem.attachChange(this._filterGroupItemChange.bind(this));
+			if (this.getAdvancedMode()) {
+				this._rerenderAA();
+			} else {
+				this._showHintText();
+			}
+
+		}
+		this._adaptButtonsEnablement();
+
+		return this;
+	};
+
+	/**
+	 * Adds a <code>FilterGroupItem</code> element to the aggregation <code>_parameters</code>.
+	 * @protected
+	 * @param {sap.ui.comp.filterbar.FilterGroupItem} oParameter adding a analytical parameter
+	 * @returns {sap.ui.comp.filterbar.FilterBar} Reference to this in order to allow method chaining
+	 */
+	FilterBar.prototype._addParameter = function(oParameter) {
+		var i, oObj, oContainer, bInserted = false, bReorder = false, sGroupName = FilterBar.INTERNAL_GROUP;
+
+		oParameter._setParameter(true);
+		oParameter.setVisibleInFilterBar(true);
+		oParameter.setPartOfCurrentVariant(true);
+
+		this.addAggregation("_parameters", oParameter, true);
+
+		oObj = {
+			control: oParameter.getControl(),
+			filterItem: oParameter
+		};
+
+		if (!this._mAdvancedAreaFilter) {
+			this._mAdvancedAreaFilter = {};
+		}
+		if (!this._mAdvancedAreaFilter[sGroupName]) {
+			this._mAdvancedAreaFilter[sGroupName] = {};
+			this._mAdvancedAreaFilter[sGroupName].filterItem = null;
 		}
 
-		if (this.getAdvancedMode()) {
-			this._rerenderAA();
-		} else {
+		if (!this._mAdvancedAreaFilter[sGroupName].items) {
+			this._mAdvancedAreaFilter[sGroupName].items = [];
+		}
+
+		for (i = 0; i < this._mAdvancedAreaFilter[sGroupName].items.length; i++) {
+			var oItem = this._mAdvancedAreaFilter[sGroupName].items[i];
+			if (oItem.filterItem._isParameter()) {
+				continue;
+			}
+			this._mAdvancedAreaFilter[sGroupName].items.splice(i, 0, oObj);
+			bInserted = true;
+			break;
+		}
+
+		if (!bInserted) {
+			this._mAdvancedAreaFilter[sGroupName].items.push(oObj);
+
+			if (Object.keys(this._mAdvancedAreaFilter).length > 1) {
+				bReorder = true;
+			}
+		}
+
+		oContainer = this._addControlToBasicAreaFormContainer(oParameter);
+		if (oContainer) {
+			oObj.container = oContainer;
+			oContainer.setVisible(oParameter.getVisible());
+		}
+
+		if (bInserted || bReorder) {
+			this._oBasicAreaLayout.removeContent(oContainer);
+			this._addContainerInOrder(oObj.filterItem, oObj.container);
+		}
+
+		if (!this.getAdvancedMode()) {
 			this._showHintText();
 		}
 
 		this._adaptButtonsEnablement();
+
+		return this;
+
 	};
 
 	/**
 	 * Event-handler is called when the property of a filter item has changed.
-	 * 
 	 * @private
 	 * @param {object} oContainer the container of the filter item's control and label
 	 * @param {object} oEvent the event
@@ -1339,7 +1876,7 @@ sap.ui.define([
 
 			sPropertyName = oEvent.getParameter("propertyName");
 
-			if (sPropertyName === "visibleInFilterBar" || sPropertyName === "visible" || sPropertyName === "label" || sPropertyName === "mandatory") {
+			if (sPropertyName === "visibleInFilterBar" || sPropertyName === "visible" || sPropertyName === "label" || sPropertyName === "labelTooltip" || sPropertyName === "mandatory") {
 				oItem = this._determineItemByName(oEvent.oSource.getName(), FilterBar.INTERNAL_GROUP);
 
 				if (oItem && oItem.filterItem) {
@@ -1357,6 +1894,8 @@ sap.ui.define([
 
 					} else if (sPropertyName === "label") {
 						oItem.filterItem.setLabel(oEvent.oSource.getLabel());
+					} else if (sPropertyName === "labelTooltip") {
+						oItem.filterItem.setLabelTooltip(oEvent.oSource.getLabelTooltip());
 					} else if (sPropertyName === "mandatory") {
 						bFlag = oEvent.oSource.getMandatory();
 						oItem.filterItem.setMandatory(bFlag);
@@ -1368,7 +1907,6 @@ sap.ui.define([
 
 	/**
 	 * Event handler called when the property of a filter group item has changed.
-	 * 
 	 * @private
 	 * @param {object} oEvent the event
 	 */
@@ -1432,6 +1970,12 @@ sap.ui.define([
 				if (this._oFilterDialog) { // adapt only in case the advanced filters dialog is active
 					this._adaptMandatoryForFilter(oEvent.oSource);
 				}
+
+			} else if ((sPropertyName === "partOfCurrentVariant") && this.ensureLoadedValueHelpList) {
+				var oFilterItem = this.determineFilterItemByName(oEvent.oSource.getName());
+				if (oFilterItem && oFilterItem.getPartOfCurrentVariant()) {
+					this.ensureLoadedValueHelpList(oEvent.oSource.getName());
+				}
 			}
 
 			if (this.getAdvancedMode()) {
@@ -1456,8 +2000,13 @@ sap.ui.define([
 	FilterBar.prototype._addContainerInOrder = function(oFilterItem, oContainer) {
 		var n, i, idx, aContainers = this._oBasicAreaLayout.getContent(), oPredecessorContainerIdx = -1;
 
-		if (this._isNewFilterBarDesign() && this._oBasicSearchField) {
-			oPredecessorContainerIdx++;
+		if (this._isNewFilterBarDesign()) {
+			if (this._isPhone()) {
+				oPredecessorContainerIdx++;
+			}
+			if (this._oBasicSearchField) {
+				oPredecessorContainerIdx++;
+			}
 		}
 
 		if (this._mAdvancedAreaFilter) {
@@ -1465,6 +2014,10 @@ sap.ui.define([
 				var oGroupElement = this._mAdvancedAreaFilter[n];
 				if (oGroupElement && oGroupElement.items) {
 					for (i = 0; i < oGroupElement.items.length; i++) {
+
+						if (!oGroupElement.items[i].container) {
+							continue;
+						}
 
 						if (oGroupElement.items[i].container === oContainer) {
 
@@ -1484,7 +2037,6 @@ sap.ui.define([
 
 	/**
 	 * VisibleInFilterBar-property may not be changed to false, when the filter is mandatory and has no value
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.filterbar.FilterItem} oFilterItem in question
 	 * @param {boolean} bFlag - represents the value of visibleInFilterBar
@@ -1505,7 +2057,6 @@ sap.ui.define([
 
 	/**
 	 * In case the visibility was changed, check if the link text has to be adapted.
-	 * 
 	 * @private
 	 * @param {string} sGroupName the group name
 	 */
@@ -1518,7 +2069,6 @@ sap.ui.define([
 
 	/**
 	 * Checks if a filter has a value.
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.filterbar.FilterItem} oFilterItem the filter
 	 * @returns {boolean} returns if the filter has a value or not
@@ -1531,7 +2081,6 @@ sap.ui.define([
 
 	/**
 	 * Handles dynamic change of the mandatory property.
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.filterbar.FilterItem} oFilterItem the filter
 	 */
@@ -1560,7 +2109,6 @@ sap.ui.define([
 
 	/**
 	 * In case considerGroupTitle is set then all labels of filters of a specific group will post-fixed with the group title.
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.filterbar.FilterGroupItem} oFilterItem the filter
 	 */
@@ -1569,7 +2117,7 @@ sap.ui.define([
 		var sLabel;
 		var oLabel;
 
-		if (oFilterItem) {
+		if (oFilterItem && !oFilterItem.getHiddenFilter()) {
 			sLabel = oFilterItem.getLabel();
 			oLabel = oFilterItem.getLabelControl(this.getId());
 			if (this.getConsiderGroupTitle()) {
@@ -1584,7 +2132,6 @@ sap.ui.define([
 
 	/**
 	 * In case considerGroupTitle is set then all labels of filters of a specific group will post-fixed with the group title.
-	 * 
 	 * @private
 	 * @param {string} sGroupName filter group name
 	 */
@@ -1605,7 +2152,6 @@ sap.ui.define([
 
 	/**
 	 * In case considerGroupTitle is set then all labels of all filters of all groups will be post-fixed with the group title.
-	 * 
 	 * @private
 	 * @param {string} sGroupName the group name
 	 */
@@ -1625,38 +2171,44 @@ sap.ui.define([
 
 	/**
 	 * Registration of a callback function. The provided callback function is executed to obtain the filters with values.
-	 * 
 	 * @public
 	 * @since 1.26.1
 	 * @param {function} fCallBack Called when a variant must be applied
+	 * @returns {sap.ui.comp.filterbar.FilterBar} Reference to this in order to allow method chaining.
 	 */
 	FilterBar.prototype.registerGetFiltersWithValues = function(fCallBack) {
 
 		this._fRegisterGetFiltersWithValues = fCallBack;
+
+		return this;
 	};
 
 	/**
 	 * Registration of a callback function. The provided callback function is executed when saving a variant is triggered and must provide all
 	 * relevant fields and values in JSON.
-	 * 
 	 * @public
 	 * @param {function} fCallBack Called when a variant must be fetched
+	 * @returns {sap.ui.comp.filterbar.FilterBar} Reference to this in order to allow method chaining.
 	 */
 	FilterBar.prototype.registerFetchData = function(fCallBack) {
 
 		this._fRegisteredFetchData = fCallBack;
+
+		return this;
 	};
 
 	/**
 	 * Registration of a callback function. The provided callback function is executed when a variant must be applied. The callback function will
 	 * receive the corresponding data set containing all relevant data in JSON, as initially provided by the callback for fetchData.
-	 * 
 	 * @public
 	 * @param {function} fCallBack Called when a variant must be applied
+	 * @returns {sap.ui.comp.filterbar.FilterBar} Reference to this in order to allow method chaining.
 	 */
 	FilterBar.prototype.registerApplyData = function(fCallBack) {
 
 		this._fRegisteredApplyData = fCallBack;
+
+		return this;
 	};
 
 	FilterBar.prototype._isTINAFScenario = function() {
@@ -1682,11 +2234,6 @@ sap.ui.define([
 		return false;
 	};
 
-	/**
-	 * This method has to be called by the consumer to indicate that the data model is available.
-	 * 
-	 * @public
-	 */
 	FilterBar.prototype.fireInitialise = function() {
 
 		if (this._isTINAFScenario()) {
@@ -1701,10 +2248,14 @@ sap.ui.define([
 	};
 
 	/**
-	 * This method will be called by the smart variant mangement and it indicates, that the standard variant was obtained.
-	 * 
-	 * @public
+	 * This method will be called by the SmartVariantMangement and indicates, that the standard variant was obtained. It indicates, that the variant
+	 * management is fully initialized.
+	 * @protected
 	 */
+	FilterBar.prototype.variantsInitialized = function() {
+		this.fireInitialized();
+	};
+
 	FilterBar.prototype.fireInitialized = function() {
 		this.fireEvent("initialized");
 	};
@@ -1712,7 +2263,6 @@ sap.ui.define([
 	/**
 	 * Initializes the variant management, when the prerequisites are full filled. In this case the initialise-event will be triggered lated, after
 	 * the variant management initialization. Triggers the initialise-event immediately, in case the pre-requisits are not full filled.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._initializeVariantManagement = function() {
@@ -1724,7 +2274,7 @@ sap.ui.define([
 				this._oVariantManagement.initialise(this._initialiseVariants, this);
 			} else {
 				// Ui2 handling
-				this._fInitialiseVariants = jQuery.proxy(this._initialiseVariants, this);
+				this._fInitialiseVariants = this._initialiseVariants.bind(this);
 				this._oVariantManagement.attachInitialise(this._fInitialiseVariants, this);
 				this._oVariantManagement.initialise();
 			}
@@ -1749,7 +2299,6 @@ sap.ui.define([
 
 	/**
 	 * Is triggered, whenever the flex layer is initialized.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._initialiseVariants = function() {
@@ -1761,24 +2310,30 @@ sap.ui.define([
 	};
 
 	/**
-	 * Informs the consumer of the filter bar that a new variant was applied.
-	 * 
+	 * Informs the consumer of the FilterBar that a new variant was applied.
 	 * @private
-	 * @param {string} sContext may be undefined, has the values 'RESET' or 'CANCEL' and indicates the initial trigger source
+	 * @param {string} sContext may be undefined, has the values 'RESET'/'CANCEL/'DATA_SUITE'/'SET_VM_ID'/'INIT' and indicates the initial trigger
+	 *        source
+	 * @param {boolean} bExecuteOnSelect indicates if a follow-on search will be triggered automatically
 	 */
-	FilterBar.prototype.fireAfterVariantLoad = function(sContext) {
+	FilterBar.prototype.fireAfterVariantLoad = function(sContext, bExecuteOnSelect) {
 
 		this._rerenderFilters();
 
 		var oEvent = {
-			context: sContext
+			context: sContext,
+			executeOnSelect: bExecuteOnSelect
 		};
-		this.fireEvent("afterVariantLoad", oEvent);
+
+		try {
+			this.fireEvent("afterVariantLoad", oEvent);
+		} catch (ex) {
+			jQuery.sap.log.error("error during 'afterVariantLoad' event handling - " + ex.message);
+		}
 	};
 
 	/**
-	 * Informs the consumer of the filter bar, that a variant is about to be saved.
-	 * 
+	 * Informs the consumer of the FilterBar, that a variant is about to be saved.
 	 * @private
 	 * @param {string} sContext may be undefined, have the value <code>STANDARD</code> and indicates the initial trigger source
 	 */
@@ -1801,15 +2356,44 @@ sap.ui.define([
 		}
 	};
 
+// BCP: 1670241039
+// /**
+// * Returns all Filters belonging to the 'filterItems' aggregation. Since 1.48.0 this method will return all filters belonging to the BASIC group.
+// * @public
+// * @returns {sap.ui.comp.filterbar.FilterItem[]} An array of the removed elements (might be empty).
+// * @deprecated Since version 1.48.0. Use aggregation <code>filterGroupItems</code> instead.
+// */
+// FilterBar.prototype.getFilterItems = function() {
+//
+// var i, aFilters = [];
+//
+// if (this._mAdvancedAreaFilter) {
+//
+// this._ensureFilterLoaded(null);
+//
+// if ((this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP]) && (this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].items)) {
+// for (i = 0; i < this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].items.length; i++) {
+// if (this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].items[i].filterItem &&
+// !this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].items[i].filterItem._isParameter()) {
+// aFilters.push(this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].items[i].filterItem);
+// }
+// }
+// }
+// }
+//
+// return aFilters;
+// };
+
 	/**
 	 * Removes all entries in the aggregation filterItems.
-	 * 
 	 * @public
+	 * @returns {sap.ui.comp.filterbar.FilterItem[]} An array of the removed elements (might be empty).
+	 * @deprecated Since version 1.48.0. Use aggregation <code>filterGroupItems</code> instead.
 	 */
 	FilterBar.prototype.removeAllFilterItems = function() {
 
 		var i;
-		var aFilters;
+		var aFilters = [];
 
 		this._aBasicAreaSelection = null;
 
@@ -1823,7 +2407,6 @@ sap.ui.define([
 			}
 		}
 
-		aFilters = this.getFilterItems();
 		if (this._mAdvancedAreaFilter) {
 			if ((this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP]) && (this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].items)) {
 				for (i = 0; i < this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].items.length; i++) {
@@ -1845,12 +2428,14 @@ sap.ui.define([
 		this._destroyItems(aFilters);
 
 		this._adaptButtonsEnablement();
+
+		return aFilters;
 	};
 
 	/**
 	 * Removes all entries in the aggregation filterGroupItems.
-	 * 
 	 * @public
+	 * @returns {sap.ui.comp.filterbar.FilterItem[]} An array of the removed elements (might be empty).
 	 */
 	FilterBar.prototype.removeAllFilterGroupItems = function() {
 
@@ -1882,11 +2467,12 @@ sap.ui.define([
 		this.__bDeleteMode = false;
 
 		this._adaptButtonsEnablement();
+
+		return aFilters;
 	};
 
 	/**
-	 * Removes all entries in the aggregations filterItems, filterGroupItems, basicSearch
-	 * 
+	 * Removes all entries in the aggregations filterGroupItems, basicSearch
 	 * @public
 	 */
 	FilterBar.prototype.removeAllFilters = function() {
@@ -1895,21 +2481,15 @@ sap.ui.define([
 		this.removeBasicSearch();
 	};
 
-	/**
-	 * Removes the association basicSearch.
-	 * 
-	 * @public
-	 * @since 1.30.0
-	 */
 	FilterBar.prototype.removeBasicSearch = function() {
 		this.setBasicSearch(null);
 	};
 
 	/**
 	 * Retrieves filters belonging to the current variant.
-	 * 
 	 * @public
-	 * @param {boolean} bConsiderOnlyVisibleFields Indicates that only visible filters are retrieved
+	 * @param {boolean} bConsiderOnlyVisibleFields Indicates that only visible filters are retrieved. <b>Note:</b> hidden filters are treated as
+	 *        visible filters.
 	 * @returns {array} filters Of the current variant
 	 */
 	FilterBar.prototype.getAllFilterItems = function(bConsiderOnlyVisibleFields) {
@@ -1949,23 +2529,11 @@ sap.ui.define([
 
 	/**
 	 * Clears an eventual error state on all filter.
-	 * 
-	 * @private
+	 * @privatef
 	 */
 	FilterBar.prototype._clearErrorState = function() {
 
-		var i;
-		var oControl;
-
-		var aFilterItems = this.determineMandatoryFilterItems();
-		if (aFilterItems) {
-			for (i = 0; i < aFilterItems.length; i++) {
-				oControl = this.determineControlByFilterItem(aFilterItems[i]);
-				if (oControl && oControl.setValueState) {
-					oControl.setValueState(ValueState.None);
-				}
-			}
-		}
+		this._resetFiltersInErrorValueState();
 	};
 
 	FilterBar.prototype.getAggregation = function(sName) {
@@ -1978,8 +2546,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Provides filter information for lazy instantiation
-	 * 
+	 * Provides filter information for lazy instantiation. Is overwritten by the SmartFilterBar.
 	 * @protected
 	 * @returns {array} of filter information
 	 */
@@ -1989,12 +2556,23 @@ sap.ui.define([
 
 	FilterBar.prototype._createVisibleFilters = function() {
 
+		this._getFilters();
+	};
+
+	FilterBar.prototype._getFilters = function() {
+
 		this._aFields = this._getFilterInformation();
 		var i, oField;
 
 		if (this._aFields && this._aFields.length > 0) {
 			if (!this._mAdvancedAreaFilter) {
 				this._mAdvancedAreaFilter = {};
+
+				if (!this.getAdvancedMode()) {
+					this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP] = {};
+					this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].filterItem = null;
+					this._mAdvancedAreaFilter[FilterBar.INTERNAL_GROUP].items = null;
+				}
 			}
 
 			for (i = 0; i < this._aFields.length; i++) {
@@ -2014,9 +2592,114 @@ sap.ui.define([
 					this._instanciateFilterItem(oField);
 				}
 			}
-
-			this._adaptButtonsEnablement();
 		}
+
+		this._adaptButtonsEnablement();
+	};
+
+	/**
+	 * Determines if an filter is visible on he filterbar. This API is only relevant for the Smart Templates scenario any may not be used in any ozher
+	 * cases.
+	 * @private
+	 * @param {string} sName of a filter.
+	 * @returns {boolean} determines if a specific filter is visible o the filterbar.
+	 */
+	FilterBar.prototype.isVisibleInFilterBarByName = function(sName) {
+		var oFilterItem, oField = this._getFilterMetadata(sName);
+		if (oField && oField.factory) {
+			if ((oField.hasOwnProperty("visibleInAdvancedArea") && oField.visibleInAdvancedArea) || (oField.groupName === FilterBar.INTERNAL_GROUP)) {
+				return true;
+			}
+		} else {
+			oFilterItem = this.determineFilterItemByName(sName);
+			if (oFilterItem) {
+				return oFilterItem.getVisibleInFilterBar();
+			}
+		}
+
+		return false;
+	};
+
+	FilterBar.prototype._getFilterMetadata = function(sName) {
+		if (this._aFields) {
+			for (var i = 0; i < this._aFields.length; i++) {
+				if (this._aFields[i].fieldName === sName) {
+					return this._aFields[i];
+				}
+			}
+		}
+
+		return null;
+	};
+
+	/**
+	 * Determines an array of filter names, which are custom filters and non visible on the FilterBar. This API is only relevant for the Smart
+	 * Templates scenario any may not be used in any ozher cases.
+	 * @private
+	 * @returns {array} of filter names.
+	 */
+	FilterBar.prototype.getNonVisibleCustomFilterNames = function() {
+
+		if (this._aFields.length > 0) {
+			return this._getLazyNonVisibleCustomFilterNames();
+		} else {
+			return this._getNonVisibleCustomFilterNames();
+		}
+
+	};
+
+	FilterBar.prototype._getLazyNonVisibleCustomFilterNames = function() {
+		var that = this, aArray = [];
+
+		this._aFields.forEach(function(oField) {
+
+			if (oField.factory) {
+				if (oField.isCustomFilterField && !oField.visibleInAdvancedArea) {
+					aArray.push(oField.fieldName);
+				}
+			} else if (that._isNonVisibleCustomFilterNamesByName(oField.fieldName, oField.groupName)) {
+				aArray.push(oField.fieldName);
+			}
+
+		});
+
+		return aArray;
+	};
+
+	FilterBar.prototype._isNonVisibleCustomFilterNamesByName = function(sName, sGroupName) {
+		var i, oItem;
+		if (this._mAdvancedAreaFilter && this._mAdvancedAreaFilter[sGroupName] && this._mAdvancedAreaFilter[sGroupName].items) {
+			for (i = 0; i < this._mAdvancedAreaFilter[sGroupName].items.length; i++) {
+				oItem = this._mAdvancedAreaFilter[sGroupName].items[i];
+				if (oItem.filterName && (oItem.filterItem.getName() === sName)) {
+					return this._isNonVisibleCustomFilterNamesByFilter(oItem.filterItem);
+				}
+			}
+		}
+
+		return false;
+	};
+
+	FilterBar.prototype._isNonVisibleCustomFilterNamesByFilter = function(oFilterItem) {
+		if (oFilterItem.data("isCustomField") && !oFilterItem.getVisibleInFilterBar()) {
+			return true;
+		}
+
+		return false;
+	};
+
+	FilterBar.prototype._getNonVisibleCustomFilterNames = function() {
+		var that = this, aArray = [], aFilterItems = this.getAllFilterItems();
+
+		if (aFilterItems) {
+			aFilterItems.forEach(function(oFilterItem) {
+				if (that._isNonVisibleCustomFilterNamesByFilter(oFilterItem)) {
+					aArray.push(oFilterItem.getName());
+				}
+			});
+		}
+
+		return aArray;
 	};
 
 	FilterBar.prototype._ensureFilterLoaded = function(aFilterNames) {
@@ -2051,17 +2734,53 @@ sap.ui.define([
 
 	};
 
+// FilterBar.prototype._ensureFilterLoaded = function(aFilterNames) {
+//
+// var that = this;
+//
+// if (this._aFields && this._aFields.length > 0) {
+//
+// if (aFilterNames) {
+// aFilterNames.forEach(function(oFilter) {
+// that._aFields.some(function(oField) {
+// if ((oField.fieldName === oFilter.name) && (oField.groupName === oFilter.group)) {
+// if (oField.factory) {
+// that._instanciateFilterItem(oField);
+// }
+// return true;
+// }
+// return false;
+// });
+// });
+// } else {
+//
+// this._aFields.forEach(function(oField) {
+// if (oField.factory) {
+// that._instanciateFilterItem(oField);
+// }
+// });
+// }
+//
+// if (!aFilterNames) {
+// this._aFields = [];
+// }
+// }
+//
+// };
+
 	FilterBar.prototype._instanciateFilterItem = function(oField) {
 
-		if (oField.factory) {
-			oField.factory();
+		var factory = oField.factory;
+		if (factory) {
+			// first remove factory to avoid endless recursion, then call it
 			delete oField.factory;
+			factory.call(oField);
 		}
+
 	};
 
 	/**
 	 * Destroys the passed filters.
-	 * 
 	 * @private
 	 * @param {array} aFilterItems aggregation items
 	 */
@@ -2076,7 +2795,6 @@ sap.ui.define([
 
 	/**
 	 * Handles the visibility of the filters, during the variant appliance, according to the persisted information.
-	 * 
 	 * @private
 	 * @param {array} aPersData information about the filter fields
 	 */
@@ -2108,7 +2826,6 @@ sap.ui.define([
 
 	/**
 	 * Determines if the current filter is marks as visible via the personalization
-	 * 
 	 * @private
 	 * @param {array} aPersData array of filters as obtain by the persistence layer
 	 * @param {sap.ui.comp.filterBar.FilterItem} oFilterItem current filterItem
@@ -2118,7 +2835,7 @@ sap.ui.define([
 		var sGroupName, sName;
 		var oFilterInfo;
 
-		if (oFilterItem) {
+		if (oFilterItem && !oFilterItem.getHiddenFilter()) {
 			sName = oFilterItem.getName();
 			sGroupName = oFilterItem.getGroupName();
 
@@ -2127,9 +2844,17 @@ sap.ui.define([
 				if (oFilterInfo) {
 					oFilterItem.setVisibleInFilterBar(oFilterInfo.visibleInFilterBar);
 					oFilterItem.setPartOfCurrentVariant(oFilterInfo.partOfCurrentVariant);
+
+					if (oFilterInfo.hasOwnProperty("visible")) {
+						oFilterItem.setVisible(oFilterInfo.visible);
+					}
 				} else {
 					oFilterItem.setVisibleInFilterBar(false);
-					oFilterItem.setPartOfCurrentVariant(sGroupName === FilterBar.INTERNAL_GROUP);
+					if ((sGroupName === FilterBar.INTERNAL_GROUP) || oFilterItem._isParameter()) {
+						oFilterItem.setPartOfCurrentVariant(true);
+					} else {
+						oFilterItem.setPartOfCurrentVariant(false);
+					}
 				}
 			} else {
 				/* eslint-disable no-lonely-if */
@@ -2148,12 +2873,22 @@ sap.ui.define([
 			if (sGroupName === FilterBar.INTERNAL_GROUP) { // basic fields are always partOfCurentVariant
 				oFilterItem.setPartOfCurrentVariant(true);
 			}
+
+			if (oFilterItem) {
+				var oControl = this.determineControlByFilterItem(oFilterItem, true);
+				if (oControl && oControl.getValueState && (oControl.getValueState() !== ValueState.None)) {
+					if (oControl.setValue) {
+						oControl.setValue("");
+					}
+					oControl.setValueState(ValueState.None);
+				}
+			}
+
 		}
 	};
 
 	/**
 	 * Determines the filter info from the persistence data for a specific filter.
-	 * 
 	 * @private
 	 * @param {array} aPersData array of filters as obtain by the persistence layer
 	 * @param {string} sName Name of the filter
@@ -2167,10 +2902,16 @@ sap.ui.define([
 
 		if (aPersData && aPersData.length) {
 			for (i = 0; i < aPersData.length; i++) {
-				if ((aPersData[i].name === sName) && (aPersData[i].group === sGroupName)) {
-					oFilterInfo = aPersData[i];
-					break;
+
+				if (aPersData[i].name === sName) {
+
+					if ((aPersData[i].group === sGroupName)) {
+						oFilterInfo = aPersData[i];
+						break;
+					}
+
 				}
+
 			}
 		}
 
@@ -2179,7 +2920,6 @@ sap.ui.define([
 
 	/**
 	 * Creates the variant management control.
-	 * 
 	 * @private
 	 * @returns {sap.ui.comp.smartvariants.SmartVariantManagementUi2} the instance of variant management
 	 */
@@ -2202,33 +2942,33 @@ sap.ui.define([
 		return oVarMgm;
 	};
 
-	/**
-	 * Notifies about a filter change. Is the indicator that the text of filters with values may be changed.
-	 * 
-	 * @public
-	 */
 	FilterBar.prototype.fireAssignedFiltersChanged = function() {
 		this.fireEvent("assignedFiltersChanged");
 	};
 
 	/**
 	 * Retrieves the labels of all visible filters that belongs to the current variant and have an assigned value.
-	 * 
 	 * @public
 	 * @returns {array} Filter labels that represents relevant filters with values
 	 */
 	FilterBar.prototype.retrieveFiltersWithValuesAsText = function() {
-		var sText, sCSVText, aFiltersWithValues = this.retrieveFiltersWithValues();
+		var sText, sCSVText, aFiltersWithValues = this.retrieveFiltersWithValues(), nCount, sBasicSearchValue = this.getBasicSearchValue();
+
+		if (sBasicSearchValue && aFiltersWithValues) {
+			aFiltersWithValues.splice(0, 0, this._oRb.getText("FILTER_BAR_ASSIGNED_FILTERS_SEARCH_TERM"));
+		}
 
 		if (!aFiltersWithValues || (aFiltersWithValues.length === 0)) {
 			sText = this._oRb.getText("FILTER_BAR_ASSIGNED_FILTERS_ZERO");
 		} else {
 
+			/* eslint-disable no-lonely-if */
 			if (!this._isPhone()) {
+				nCount = Math.min(5, aFiltersWithValues.length);
 				sCSVText = "";
-				for (var i = 0; i < aFiltersWithValues.length; i++) {
+				for (var i = 0; i < nCount; i++) {
 					sCSVText += aFiltersWithValues[i];
-					if (i < (aFiltersWithValues.length - 1)) {
+					if (i < (nCount - 1)) {
 						sCSVText += ', ';
 					}
 				}
@@ -2236,11 +2976,18 @@ sap.ui.define([
 				sText = this._oRb.getText("FILTER_BAR_ASSIGNED_FILTERS", [
 					aFiltersWithValues.length, sCSVText
 				]);
+
+				if (nCount < aFiltersWithValues.length) {
+					sText += ", ...";
+				}
+
 			} else {
 				sText = this._oRb.getText("FILTER_BAR_ASSIGNED_FILTERS_MOBILE", [
 					aFiltersWithValues.length
 				]);
 			}
+
+			/* eslint-disable no-lonely-if */
 		}
 
 		return sText;
@@ -2248,7 +2995,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the labels of all visible filters that belongs to the current variant and have an assigned value.
-	 * 
 	 * @public
 	 * @returns {array} Filter labels that represents relevant filters with values
 	 */
@@ -2269,7 +3015,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves all filters with values.
-	 * 
 	 * @private
 	 * @returns {array} of filters with values
 	 */
@@ -2288,7 +3033,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieve the count for visible filters with values.
-	 * 
 	 * @private
 	 * @returns {number} count of visible filters with values
 	 */
@@ -2308,7 +3052,6 @@ sap.ui.define([
 
 	/**
 	 * Determines if at least one filter is visible.
-	 * 
 	 * @private
 	 * @param {array} aFilterItemsWithValues contains all filters with values
 	 * @param {sap.ui.comp.filterbar.FilterItem} oFilterItem filter to check
@@ -2352,7 +3095,6 @@ sap.ui.define([
 
 	/**
 	 * Toggles the filterbar mode Hide/Show.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._toggleHideShow = function() {
@@ -2362,7 +3104,6 @@ sap.ui.define([
 
 	/**
 	 * Updates the 'Filters'-button text with the count of filters with values
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._updateToolbarText = function() {
@@ -2375,21 +3116,14 @@ sap.ui.define([
 			nFilterCount
 		])) : (this._oRb.getText(sZeroFiltersKey));
 		this._oFiltersButton.setText(sText);
+		this._oFiltersButton.setTooltip(sText);
 
-		// if (this._isNewFilterBarDesign()) {
 		this.fireAssignedFiltersChanged();
-		// }
 
 	};
 
-	/**
-	 * Sets filterbar in collapsed/expanded mode.
-	 * 
-	 * @public
-	 * @since 1.26.1
-	 * @param {boolean} bShowExpanded Mode
-	 */
 	FilterBar.prototype.setFilterBarExpanded = function(bShowExpanded) {
+		var bExpanded;
 
 		if (this.getAdvancedMode()) {
 
@@ -2398,18 +3132,24 @@ sap.ui.define([
 			if (this._oHideShowButton) {
 				if (bShowExpanded) {
 					this._oHideShowButton.setText(this._oRb.getText("FILTER_BAR_VH_HIDE"));
+					this._oHideShowButton.setTooltip(this._oRb.getText("FILTER_BAR_VH_HIDE"));
 				} else {
 					this._oHideShowButton.setText(this._oRb.getText("FILTER_BAR_VH_SHOW"));
+					this._oHideShowButton.setTooltip(this._oRb.getText("FILTER_BAR_VH_SHOW"));
 				}
 			}
 			// this._oHideShowButton.setVisible(true);
-			this._oSearchButton.setVisible(this.getShowGoOnFB());
+			this._calcVisibilityGoButton();
 
 			this._oAdvancedPanel.setVisible(bShowExpanded);
 
 		} else {
 
-			var bExpanded = this._isPhone() ? false : bShowExpanded;
+			if (this._isPhone() && this.getUseToolbar()) {
+				bExpanded = false;
+			} else {
+				bExpanded = bShowExpanded;
+			}
 
 			this.setProperty("filterBarExpanded", bExpanded);
 
@@ -2422,7 +3162,7 @@ sap.ui.define([
 				if (this._oHideShowButton) {
 					this._oHideShowButton.setVisible(false);
 				}
-				this._oSearchButton.setVisible(this.getShowGoOnFB());
+				this._calcVisibilityGoButton();
 
 				this._oBasicAreaLayout.setVisible(false);
 
@@ -2431,13 +3171,16 @@ sap.ui.define([
 				if (this._oHideShowButton) {
 					if (bExpanded) {
 						this._oHideShowButton.setText(this._oRb.getText("FILTER_BAR_HIDE"));
+						this._oHideShowButton.setTooltip(this._oRb.getText("FILTER_BAR_HIDE"));
+
 					} else {
 						this._oHideShowButton.setText(this._oRb.getText("FILTER_BAR_SHOW"));
+						this._oHideShowButton.setTooltip(this._oRb.getText("FILTER_BAR_SHOW"));
 					}
 					this._oHideShowButton.setVisible(true);
 				}
 
-				this._oSearchButton.setVisible(this.getShowGoOnFB());
+				this._calcVisibilityGoButton();
 
 				if (this._oHideShowButton) {
 					if (this._oHideShowButton.getEnabled()) {
@@ -2455,7 +3198,6 @@ sap.ui.define([
 
 	/**
 	 * Eventhandler for visibility change in the 'Filters'-dialog.
-	 * 
 	 * @private
 	 * @param {sap.m.Checkbox } oCheckBox on which the select-state was changed
 	 * @param {sap.ui.comp.filterbar.FilterItem } oFilterItem manipulated by the checkbox
@@ -2464,7 +3206,7 @@ sap.ui.define([
 
 		oFilterItem.setVisibleInFilterBar(oCheckBox.getSelected());
 
-		if (this._getConsiderFilterChanges() && this._oVariantManagement && this._oVariantManagement.getEnabled()) {
+		if (this._getConsiderFilterChanges() && this._oVariantManagement && !this._oVariantManagement.getInErrorState()) {
 			this._oVariantManagement.currentVariantSetModified(true);
 		}
 
@@ -2473,7 +3215,6 @@ sap.ui.define([
 
 	/**
 	 * Cross-checks if a mandatory filter has a value.
-	 * 
 	 * @private
 	 * @param {object } oEvent general event object
 	 */
@@ -2518,7 +3259,6 @@ sap.ui.define([
 
 	/**
 	 * Called from 'Filters'-dialog and creates the form containing all filters.
-	 * 
 	 * @private
 	 * @returns {sap.ui.layout.form.Form} the filter form
 	 */
@@ -2543,7 +3283,6 @@ sap.ui.define([
 
 	/**
 	 * Determines how many filters of a specific group are yet not part of the current variant.
-	 * 
 	 * @private
 	 * @param {string} sGroupName name of the current group
 	 * @returns {number} count of filters, for the current group, yet not part of the current variant
@@ -2555,7 +3294,7 @@ sap.ui.define([
 		if (this._mAdvancedAreaFilter[sGroupName] && this._mAdvancedAreaFilter[sGroupName].items) {
 			for (i = 0; i < this._mAdvancedAreaFilter[sGroupName].items.length; i++) {
 				oFilterItem = this._mAdvancedAreaFilter[sGroupName].items[i].filterItem;
-				if (!oFilterItem.getVisible()) {
+				if (!oFilterItem.getVisible() || oFilterItem.getHiddenFilter()) {
 					continue;
 				}
 				if (!oFilterItem.getPartOfCurrentVariant() && !oFilterItem.getVisibleInFilterBar()) {
@@ -2569,7 +3308,6 @@ sap.ui.define([
 
 	/**
 	 * Handles the visibility of the passed oItem; adapts the more-link text; handles the visibility for the form-container.
-	 * 
 	 * @private
 	 * @param {object} oItem representing a filter
 	 * @param {string} sGroupName name of the current group
@@ -2601,7 +3339,6 @@ sap.ui.define([
 
 	/**
 	 * Sets the group's 'More'- link text containing the info about not yet assigned filters to the current group.
-	 * 
 	 * @private
 	 * @param {string} sGroupName name of the group
 	 * @param {sap.m.Link } oLink control
@@ -2624,7 +3361,6 @@ sap.ui.define([
 
 	/**
 	 * Sets the group's 'More'- link text containing the info about not yet assigned filters to the current group.
-	 * 
 	 * @private
 	 * @param {string} sGroupName name of the group
 	 * @param {sap.m.Link } oLink control
@@ -2638,7 +3374,6 @@ sap.ui.define([
 
 	/**
 	 * Creates a link control for the current group. The link will open the 'Add/Remove Filters'- dialog
-	 * 
 	 * @private
 	 * @param {string} sGroupName name of the group
 	 * @param {Title} oGroupTitle title of the group to which the link should belong
@@ -2646,8 +3381,11 @@ sap.ui.define([
 	 */
 	FilterBar.prototype._createLink = function(sGroupName, oGroupTitle) {
 
-		var that = this;
-		var oLink = new Link();
+		var sGroupNameId, that = this;
+
+		sGroupNameId = IdentifierUtil.replace(sGroupName);
+
+		var oLink = new Link(this.getId() + "-link-" + sGroupNameId);
 		this._setLinkText(sGroupName, oLink);
 
 		oLink.attachPress(function() {
@@ -2663,7 +3401,6 @@ sap.ui.define([
 
 	/**
 	 * Checks if running on phone.
-	 * 
 	 * @private
 	 * @returns {boolean} true if phone, false other wise
 	 */
@@ -2674,7 +3411,6 @@ sap.ui.define([
 
 	/**
 	 * Checks if running on tablet.
-	 * 
 	 * @private
 	 * @returns {boolean} true if phone, false other wise
 	 */
@@ -2699,7 +3435,7 @@ sap.ui.define([
 
 				that._adaptStyleSheet();
 
-				if (that._isNewFilterBarDesign() || !that._isPhone()) {
+				if (that._oFilterDialog && that._oFilterDialog.isOpen() && (that._isNewFilterBarDesign() || !that._isPhone())) {
 					that._repositionAddToFilterBarLabel();
 				}
 			};
@@ -2740,6 +3476,83 @@ sap.ui.define([
 
 	};
 
+	FilterBar.prototype._addFieldToFiltersDialog = function(oItem, oFormContainer, aFilters) {
+		var oLabel, oCheckBox, oFormElement, bHasValue;
+
+		if (!oItem && !oItem.filterItem || oItem.filterItem.getHiddenFilter()) {
+			return;
+		}
+
+		var bShowFilter = this._determineVisibility(oItem.filterItem);
+
+		if (oItem.control.getWidth) {
+			oItem.width = oItem.control.getWidth();
+
+			if (oItem.control.setWidth) {
+				oItem.control.setWidth("100%");
+			}
+		}
+
+		oLabel = oItem.filterItem.getLabelControl(this.getId());
+
+		if (this.getConsiderGroupTitle()) {
+			oLabel.setText(oItem.filterItem.getLabel());
+		}
+
+		oCheckBox = new CheckBox({
+			tooltip: this._oRb.getText("FILTER_BAR_SHOW_IN_FILTERBAR")
+		});
+		oCheckBox.setSelected(oItem.filterItem.getVisibleInFilterBar());
+		if (oItem.filterItem.getMandatory()) {
+			bHasValue = this._checkFilterForValue(aFilters, oItem.filterItem);
+			if (!bHasValue && oItem.filterItem.getVisibleInFilterBar()) {
+				oCheckBox.setEnabled(false);
+			}
+
+// if (oItem.filterItem._isParameter()) {
+// oCheckBox.setEnabled(false);
+// }
+		}
+		oCheckBox.attachSelect(this._selectionChangedInFilterDialog.bind(this, oCheckBox, oItem.filterItem));
+
+		if (this._isNewFilterBarDesign() || !this._isPhone()) {
+
+// oLabel.setLayoutData(new GridData({
+// span: "L3 M3 S12"
+// }));
+			oItem.control.setLayoutData(new GridData({
+				span: "L8 M8 S11"
+			}));
+			oCheckBox.setLayoutData(new GridData({
+				span: "L1 M1 S1"
+			}));
+
+		} else {
+// oLabel.setLayoutData(new GridData({
+// span: "L3 M3 S12"
+// }));
+			oItem.control.setLayoutData(new GridData({
+				span: "L8 M8 S12"
+			}));
+
+			oCheckBox.setVisible(false);
+		}
+
+		oFormElement = new FormElement({
+			label: oLabel,
+			fields: [
+				oItem.control, oCheckBox
+			]
+		});
+		oFormElement.setVisible(bShowFilter);
+
+		oItem.formelement = oFormElement;
+		oItem.checkbox = oCheckBox;
+
+		oFormContainer.addFormElement(oFormElement);
+
+	};
+
 	FilterBar.prototype._createHeaderAddToFilterBar = function(oFormContainer) {
 
 		var oAddToFilterBarLabel, oFormElement;
@@ -2763,13 +3576,82 @@ sap.ui.define([
 			});
 
 			oFormContainer.addFormElement(oFormElement);
+
+			oAddToFilterBarLabel.setLabelFor(null);
 		}
 
 	};
 
+	FilterBar.prototype._addBasicSearchAddToFilterBar = function(oFormContainer) {
+
+		var oFormElement;
+
+		if (!this._isPhone()) {
+
+			this._oBasicSearchFieldClone = this._oBasicSearchField.clone();
+
+			if (this._oToolbar) {
+				this._replaceOnToolbar(this._oBasicSearchField, this._oBasicSearchFieldClone);
+			} else {
+				this._addBasicSearchToBasicArea(this._oBasicSearchFieldClone); // a new container was creted
+			}
+
+		} else {
+			/* eslint-disable no-lonely-if */
+			if (this.getAdvancedMode()) {
+				this._oBasicSearchFieldClone = this._oBasicSearchField.clone();
+			}
+			/* eslint-enable no-lonely-if */
+		}
+
+		if (this._isNewFilterBarDesign() || !this._isPhone()) {
+			this._oBasicSearchField.setLayoutData(new GridData({
+				span: "L8 M8 S11",
+				indent: "L3 M3 S0"
+			}));
+		} else {
+			this._oBasicSearchField.setLayoutData(new GridData({
+				span: "L8 M8 S12"
+			}));
+		}
+
+		// FRANZ
+		if (this._isPhone() && this.getAdvancedMode()) {
+			oFormElement = new FormElement({
+				fields: [
+					this._oBasicSearchFieldClone
+				]
+			});
+		} else {
+			oFormElement = new FormElement({
+				fields: [
+					this._oBasicSearchField
+				]
+			});
+		}
+
+		oFormContainer.addFormElement(oFormElement);
+
+	};
+
+	FilterBar.prototype._isGroupEmpty = function(aItems) {
+
+		var bIsEmpty = true;
+
+		aItems.some(function(oItem) {
+			if (oItem.filterItem && oItem.filterItem.getVisible() && !oItem.filterItem.getHiddenFilter()) {
+				bIsEmpty = false;
+				return true;
+			}
+
+			return false;
+		});
+
+		return bIsEmpty;
+	};
+
 	/**
 	 * Creates the form containing all visible filters belonging to the current variant
-	 * 
 	 * @private
 	 * @returns {sap.ui.layout.form.Form} form with all filters
 	 */
@@ -2777,13 +3659,15 @@ sap.ui.define([
 
 		var that = this, n = null, i, sGroupName;
 		var oFormContainer = null, oFormElement, aFormElements, oItem;
-		var oLink, oLabel, oGroupTitle, oCheckBox = null, bHasValue, bFirstGroup = true, nInvisibleCount;
+		var oLink, oGroupTitle, bFirstGroup = true, nInvisibleCount;
 
-		this.__oClonedVM = null;
+		this._oClonedVM = null;
 
 		var oAdvancedLayout = new ResponsiveGridLayout();
 		oAdvancedLayout.setColumnsL(1);
+		oAdvancedLayout.setLabelSpanL(3);
 		oAdvancedLayout.setColumnsM(1);
+		oAdvancedLayout.setLabelSpanM(3);
 
 		var oForm = this._createForm(oAdvancedLayout);
 
@@ -2814,57 +3698,13 @@ sap.ui.define([
 		}
 
 		// basic search field
-		if (this._oBasicSearchField) {
+		if (this._oBasicSearchField && !this._isNewFilterBarDesign()) {
 			if (!oFormContainer) {
 				oFormContainer = new FormContainer();
 				oForm.addFormContainer(oFormContainer);
 			}
 
-			if (!this._isPhone()) {
-
-				this._oBasicSearchFieldClone = this._oBasicSearchField.clone();
-
-				if (this._oToolbar) {
-					this._replaceOnToolbar(this._oBasicSearchField, this._oBasicSearchFieldClone);
-				} else {
-					this._addBasicSearchToBasicArea(this._oBasicSearchFieldClone); // a new container was creted
-				}
-
-			} else {
-				/* eslint-disable no-lonely-if */
-				if (this.getAdvancedMode()) {
-					this._oBasicSearchFieldClone = this._oBasicSearchField.clone();
-				}
-				/* eslint-enable no-lonely-if */
-			}
-
-			if (this._isNewFilterBarDesign() || !this._isPhone()) {
-				this._oBasicSearchField.setLayoutData(new GridData({
-					span: "L8 M8 S11",
-					indent: "L0 M3 S0"
-				}));
-			} else {
-				this._oBasicSearchField.setLayoutData(new GridData({
-					span: "L8 M8 S12"
-				}));
-			}
-
-			// FRANZ
-			if (this._isPhone() && this.getAdvancedMode()) {
-				oFormElement = new FormElement({
-					fields: [
-						this._oBasicSearchFieldClone
-					]
-				});
-			} else {
-				oFormElement = new FormElement({
-					fields: [
-						this._oBasicSearchField
-					]
-				});
-			}
-
-			oFormContainer.addFormElement(oFormElement);
+			this._addBasicSearchAddToFilterBar(oFormContainer);
 		}
 
 		this._ensureFilterLoaded(null);
@@ -2896,13 +3736,17 @@ sap.ui.define([
 				oGroupTitle = new Title({
 					text: sGroupName
 				});
+
 				oFormContainer = new FormContainer({
 					title: oGroupTitle
 				});
 
-				if (bFirstGroup) {
+				if (bFirstGroup && !this._isGroupEmpty(this._mAdvancedAreaFilter[n].items)) {
 					bFirstGroup = false;
 					this._createHeaderAddToFilterBar(oFormContainer);
+					if (this._oBasicSearchField && this._isNewFilterBarDesign()) {
+						this._addBasicSearchAddToFilterBar(oFormContainer);
+					}
 				}
 
 				nInvisibleCount = 0;
@@ -2912,112 +3756,44 @@ sap.ui.define([
 				for (i = 0; i < this._mAdvancedAreaFilter[n].items.length; i++) {
 					oItem = this._mAdvancedAreaFilter[n].items[i];
 
-					var bShowFilter = oItem.filterItem.getVisible() && (oItem.filterItem.getVisibleInFilterBar() || oItem.filterItem.getPartOfCurrentVariant());
-
-					if (!this.getShowFilterConfiguration() && !bShowFilter) {
-						continue;
-					}
-
-					if (oItem.control.getWidth) {
-						oItem.width = oItem.control.getWidth();
-
-						if (oItem.control.setWidth) {
-							oItem.control.setWidth("100%");
-						}
-					}
-
-					oLabel = oItem.filterItem.getLabelControl(this.getId());
-
-					if (this.getConsiderGroupTitle()) {
-						oLabel.setText(oItem.filterItem.getLabel());
-					}
-
-					oCheckBox = new CheckBox({
-						tooltip: this._oRb.getText("FILTER_BAR_SHOW_IN_FILTERBAR")
-					});
-					oCheckBox.setSelected(oItem.filterItem.getVisibleInFilterBar());
-					if (oItem.filterItem.getMandatory()) {
-						bHasValue = this._checkFilterForValue(aFilters, oItem.filterItem);
-						if (!bHasValue && oItem.filterItem.getVisibleInFilterBar()) {
-							oCheckBox.setEnabled(false);
-						}
-					}
-					oCheckBox.attachSelect(jQuery.proxy(this._selectionChangedInFilterDialog, this, oCheckBox, oItem.filterItem));
-
-					if (this._isNewFilterBarDesign() || !this._isPhone()) {
-
-						oLabel.setLayoutData(new GridData({
-							span: "L3 M3 S12"
-						}));
-						oItem.control.setLayoutData(new GridData({
-							span: "L8 M8 S11"
-						}));
-						oCheckBox.setLayoutData(new GridData({
-							span: "L1 M1 S1"
-						}));
-
-					} else {
-						oLabel.setLayoutData(new GridData({
-							span: "L3 M3 S12"
-						}));
-						oItem.control.setLayoutData(new GridData({
-							span: "L8 M8 S12"
-						}));
-
-						oCheckBox.setVisible(false);
-					}
-
-					oFormElement = new FormElement({
-						label: oLabel,
-						fields: [
-							oItem.control, oCheckBox
-						]
-					});
-					oFormElement.setVisible(bShowFilter);
+					this._addFieldToFiltersDialog(oItem, oFormContainer, aFilters);
 					if (!oItem.filterItem.getVisible()) {
 						nInvisibleCount++;
 					}
-
-					oItem.formelement = oFormElement;
-					oItem.checkbox = oCheckBox;
-
-					oFormContainer.addFormElement(oFormElement);
 				}
 
 				aFormElements = oFormContainer.getFormElements();
 				if (aFormElements && aFormElements.length > 0) {
 
 					// More link
-					if (this.getShowFilterConfiguration()) {
-						if ((n !== FilterBar.INTERNAL_GROUP) && !this.getAdvancedMode()) {
-							oLink = this._createLink(n, oGroupTitle);
-							if (oLink) {
+					if ((n !== FilterBar.INTERNAL_GROUP) && !this.getAdvancedMode()) {
+						oLink = this._createLink(n, oGroupTitle);
+						if (oLink) {
 
-								if (this._isPhone()) {
-									oLink.setLayoutData(new GridData({
-										span: "L8 M8 S12"
-									}));
-								} else {
-									oLink.setLayoutData(new GridData({
-										span: "L8 M8 S12",
-										indent: "L3 M3 S0"
-									}));
-								}
-
-								oFormElement = new FormElement({
-									fields: [
-										oLink
-									]
-								});
-
-								this._mAdvancedAreaFilter[n].link = oLink;
-
-								oFormContainer.addFormElement(oFormElement);
+							if (this._isPhone()) {
+								oLink.setLayoutData(new GridData({
+									span: "L8 M8 S12"
+								}));
+							} else {
+								oLink.setLayoutData(new GridData({
+									span: "L8 M8 S12",
+									indent: "L3 M3 S0"
+								}));
 							}
 
-							if (nInvisibleCount === aFormElements.length) {
-								oFormContainer.setVisible(false);
-							}
+							oFormElement = new FormElement({
+								fields: [
+									oLink
+								]
+							});
+
+							this._mAdvancedAreaFilter[n].link = oLink;
+
+							oFormContainer.addFormElement(oFormElement);
+						}
+
+						if (nInvisibleCount === aFormElements.length) {
+							oFormContainer.setVisible(false);
 						}
 					}
 
@@ -3045,7 +3821,6 @@ sap.ui.define([
 	/**
 	 * Creates the content of the basic area, either by replacing the controls with their clones, or removing the clones and moving the original
 	 * controls back to it.
-	 * 
 	 * @private
 	 * @param {boolean} bUseClone indicates if clones or 'original' controls should be placed inside the basic area
 	 */
@@ -3099,6 +3874,10 @@ sap.ui.define([
 				for (i = 0; i < this._mAdvancedAreaFilter[n].items.length; i++) {
 					oFilterGroupItem = this._mAdvancedAreaFilter[n].items[i].filterItem;
 
+					if (oFilterGroupItem.getHiddenFilter()) {
+						continue; // never consider hideen filters
+					}
+
 					nWidth = null;
 
 					if (bUseClone) {
@@ -3118,6 +3897,8 @@ sap.ui.define([
 
 						oControl = this._mAdvancedAreaFilter[n].items[i].control.clone();
 						oLabel = oFilterGroupItem.getLabelControl(this.getId()).clone();
+						// label clone does not reset internal reference to the control
+						oLabel.setLabelFor(null);
 
 						if (this.getConsiderGroupTitle()) {
 							// in advanced filters dialog the label should not contain group title
@@ -3148,22 +3929,54 @@ sap.ui.define([
 
 	/**
 	 * Search was executed. Check afterwards if any filer is in error state. Close dialog only in case non of the filters is in error state.
-	 * 
 	 * @private
-	 * @param {sap.ui.layout.form.Form} oForm representing the filters
 	 */
-	FilterBar.prototype._searchRequested = function(oForm) {
+	FilterBar.prototype._searchRequested = function() {
 
-		this._bOKFiltersDialogTriggered = true;
+		var oSearchAllowed, bInErrorState = false;
 
-		if (this.search()) {
+		if (this.verifySearchAllowed) {
+			oSearchAllowed = this.verifySearchAllowed();
+			if (oSearchAllowed.hasOwnProperty("pending")) {
+				// if search is pending.. do nothing
+				return;
+			} else if (oSearchAllowed.hasOwnProperty("error") || oSearchAllowed.hasOwnProperty("mandatory")) {
+				bInErrorState = true;
+			}
+		}
+
+		if (bInErrorState) {
+			this._bOKFiltersDialogTriggered = false;
+			this._activateMainContent();
+		} else {
+			this._bOKFiltersDialogTriggered = true;
+			if (!this.isLiveMode || !this.isLiveMode()) {
+				this.search();
+			} else {
+				this._oFilterDialog.close();
+			}
+		}
+	};
+
+	FilterBar.prototype._activateMainContent = function() {
+		var aContent = this.getFilterDialogContent();
+		if (aContent && (aContent.length > 1)) {
+			this.addFilterDialogContent(aContent[0]);
+		}
+	};
+
+	FilterBar.prototype.fireSearch = function(oEvent) {
+
+		if (this._oFilterDialog && this._bOKFiltersDialogTriggered) {
 			this._oFilterDialog.close();
 		}
+
+		this.fireEvent("search", oEvent);
+
 	};
 
 	/**
 	 * Close the 'Filters'-dialog and restores the filterbar.
-	 * 
 	 * @private
 	 * @param {sap.ui.layout.form.Form} oForm representing the filters
 	 */
@@ -3177,8 +3990,6 @@ sap.ui.define([
 
 		this._recreateBasicAreaContainer();
 
-		// this._oBasicAreaLayout.rerender(); // seems to be required from 1.32...
-
 		this._deleteProperties();
 		this._adaptGroupsTitle();
 
@@ -3186,6 +3997,10 @@ sap.ui.define([
 
 			this.detachFilterChange(this._fRegisteredFilterChangeHandlers);
 			this._fRegisteredFilterChangeHandlers = null;
+		}
+
+		if (this.isLiveMode && this.isLiveMode()) {
+			this.search();
 		}
 
 		this._updateToolbarText();
@@ -3212,6 +4027,8 @@ sap.ui.define([
 	};
 
 	FilterBar.prototype._variantSavePressed = function(oEvent) {
+
+		this._bVariantSavePressed = true;
 
 		if (this._oVariantManagement) {
 
@@ -3245,6 +4062,31 @@ sap.ui.define([
 		return null;
 	};
 
+	FilterBar.prototype._checkForCollision = function(oTitleElement, oLabelElement) {
+
+		var oResizeDomRef = this._oFilterDialog.getDomRef("scroll");
+		this._oLabelTextWidth = Math.max(oLabelElement.width(), this._oLabelTextWidth);
+		if (!this._oLabelTextWidth) {
+			return false;
+		}
+
+		// relevant in visual filterts scenario with initial non-standard filters dialog content
+		if (!(oTitleElement.position() && oTitleElement.width())) {
+			return false;
+		}
+
+		if ((this._oLabelTextWidth > 0) && oResizeDomRef && (oTitleElement.position().left + oTitleElement.width()) >= (oResizeDomRef.clientWidth - this._oLabelTextWidth - 32)) {
+// if (this._oAddToFilterBarLabel) {
+// this._oAddToFilterBarLabel.setText("");
+// }
+
+			return true;
+		}
+
+		return false;
+
+	};
+
 	FilterBar.prototype._repositionAddToFilterBarLabel = function() {
 
 		if (this._isNewFilterBarDesign() || !this._isPhone()) {
@@ -3253,20 +4095,24 @@ sap.ui.define([
 
 			if (oTitle && this._oAddToFilterBarLabel) {
 
-				var nOffset = 14;
-				if (this.$().closest(".sapUiSizeCompact").length > 0) {
-					nOffset = nOffset >> 1;
-				}
-
 				var oTitleElement = oTitle.$();
 				if (oTitleElement) {
 
-					var oTitlePosition = oTitleElement.offset();
 					var oLabelElement = this._oAddToFilterBarLabel.$();
 					if (oLabelElement) {
+
+						oTitleElement.css({
+							display: "inline"
+						});
+
+						if (this._checkForCollision(oTitleElement, oLabelElement)) {
+							return;
+						}
+
+						var oTitlePosition = oTitleElement.offset();
 						var oLabelOffset = oLabelElement.offset();
 						if (oLabelOffset && oTitlePosition) {
-							oLabelOffset.top = oTitlePosition.top + nOffset;
+							oLabelOffset.top = Math.ceil(oTitlePosition.top);
 							oLabelElement.offset(oLabelOffset);
 
 							if (!sap.ui.getCore().getConfiguration().getRTL()) {
@@ -3288,23 +4134,11 @@ sap.ui.define([
 	// indicates a filter change in the control, but not in the model
 	FilterBar.prototype._filterSetInErrorState = function(oControl) {
 		if (this._oFilterDialog && this._oFilterDialog.isOpen()) {
-			if (this._getConsiderFilterChanges() && this._oVariantManagement && this._oVariantManagement.getEnabled()) {
+			if (this._getConsiderFilterChanges() && this._oVariantManagement && !this._oVariantManagement.getInErrorState()) {
 				this._oVariantManagement.currentVariantSetModified(true);
 			}
 			this._bDirtyViaDialog = true;
 		}
-	};
-
-	FilterBar.prototype._enableRestoreForFilterSetInErrorState = function() {
-		if (this._oFilterDialog && this._oVariantManagement && this.getShowRestoreButton()) {
-			if (this._oVariantManagement.oVariantSave.getEnabled()) {
-				var oButtonRestore = sap.ui.getCore().byId(this.getId() + "-btnRestoreFilterDialog");
-				if (oButtonRestore) {
-					oButtonRestore.setEnabled(true);
-				}
-			}
-		}
-
 	};
 
 	FilterBar.prototype._cancelFilterDialog = function(bVariantSaveTriggered) {
@@ -3314,6 +4148,12 @@ sap.ui.define([
 		// BCP: 1670342256
 		if (bVariantSaveTriggered && this._oVariantManagement) {
 			this._bDirtyViaDialog = this._oVariantManagement._bSaveCanceled;
+		}
+
+		// BCP: 1780159203
+		if (!this.getPersistencyKey() && (this.getUseSnapshot() === false)) {
+			this.fireCancel();
+			return;
 		}
 
 		if (this._oInitialVariant && this._oInitialVariant.content && this._bDirtyViaDialog) {
@@ -3329,7 +4169,6 @@ sap.ui.define([
 				this._oVariantManagement.currentVariantSetModified(this._oInitialVariant.modified);
 			}
 
-			// this._resetFiltersInErrorValueState();
 			this.fireCancel();
 		}
 	};
@@ -3337,23 +4176,22 @@ sap.ui.define([
 	/**
 	 * Resets filters in value state error to value state none. The error value is set in control and not propagated to the model. It is not possible
 	 * to restore a filter which was already in error state, once the filters dialog is opened.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._resetFiltersInErrorValueState = function() {
 		var aNameControls;
 
-		aNameControls = this._retrieveCurrentSelectionSet(true);
+		aNameControls = this._retrieveCurrentSelectionSet(true, true);
 		aNameControls.forEach(function(oObj) {
-			if (oObj.setValueState && oObj.getValueState) {
-				if (oObj.getValueState() === ValueState.Error) {
+			if (oObj.control && oObj.control.setValueState && oObj.control.getValueState) {
+				if (oObj.control.getValueState() === ValueState.Error) {
 					// oBind = oObj.control.getBinding("value");
 					// if (oBind) {
-					if (oObj.setValue) {
-						oObj.setValue("");
+					if (oObj.control.setValue) {
+						oObj.control.setValue("");
 					}
 					// oBind.checkUpdate(true);
-					oObj.setValueState(ValueState.None);
+					oObj.control.setValueState(ValueState.None);
 					// }
 				}
 			}
@@ -3363,8 +4201,113 @@ sap.ui.define([
 	};
 
 	/**
+	 * Creates and shows the filters dialog. This method may only be called when FilterBar is displayed and basically accessible. It may also only be
+	 * called when the filters dialog is currently not opened.
+	 * @public
+	 */
+	FilterBar.prototype.showFilterDialog = function() {
+		if (!this._oFilterDialog) {
+			this._showFilterDialog();
+		}
+	};
+
+	/**
+	 * Enables to add application specific content to the filters dialog. If the content was not yet added it will be added. The content will be set
+	 * to visible, all other filters dialog content will be set to invisible.
+	 * @public
+	 * @param {sap.ui.core.Control} oContent to be added; if empty, nothing is inserted.
+	 * @returns {sap.ui.core.Control} oContent added or <code>null</code> when filters dialog is not active.
+	 */
+	FilterBar.prototype.addFilterDialogContent = function(oContent) {
+		if (this._oFilterDialog && oContent) {
+			var nIdx = this._oFilterDialog.indexOfContent(oContent);
+			if (nIdx < 0) {
+				this._oFilterDialog.addContent(oContent);
+			}
+
+			return this._setFilterDialogActiveContent(oContent);
+		}
+
+		return null;
+	};
+
+	/**
+	 * Returns the filter dialog content. <code>Node:</code>The original content is a {@link sap.ui.layout.form.Form Form}. The form may be
+	 * enhanced with a toolbar to enable the inner switch to an added custom content. Besides such operations, the original content should not be
+	 * manipulated in any way.
+	 * @public
+	 * @returns {array} of filters dialog content.
+	 */
+	FilterBar.prototype.getFilterDialogContent = function() {
+		if (this._oFilterDialog) {
+			return this._oFilterDialog.getContent();
+		}
+
+		return null;
+	};
+
+	FilterBar.prototype._setFilterDialogActiveContent = function(oNewActiveContent) {
+		var bActiveContentFound = false;
+		if (this._oFilterDialog) {
+
+			this.getFilterDialogContent().forEach(function(oContent) {
+				if (oNewActiveContent === oContent) {
+					oContent.setVisible(true);
+					bActiveContentFound = true;
+				} else {
+					oContent.setVisible(false);
+				}
+			});
+
+			if (bActiveContentFound) {
+				return oNewActiveContent;
+			}
+		}
+
+		return null;
+	};
+
+	FilterBar.prototype._getFilterDialogActiveContent = function() {
+		var oActiveContent = null;
+		if (this._oFilterDialog) {
+
+			this.getFilterDialogContent().some(function(oContent) {
+				if (oContent.getVisible()) {
+					oActiveContent = oContent;
+					return true;
+				}
+
+				return false;
+			});
+		}
+
+		return oActiveContent;
+	};
+
+	/**
+	 * Sets the width of the content area of the dialog. The passed dimension will be interpreted as 'px'.
+	 * @public
+	 * @param {Number} nWidth the content width of the filters dialog.
+	 */
+	FilterBar.prototype.setContentWidth = function(nWidth) {
+		if (this._oFilterDialog) {
+			this._oFilterDialog.setContentWidth(nWidth + "px");
+		}
+	};
+
+	/**
+	 * Sets the height of the content area of the dialog. The passed dimension will be interpreted as 'px'.
+	 * @public
+	 * @param {Number} nHeight the content height of the filters dialog.
+	 */
+	FilterBar.prototype.setContentHeight = function(nHeight) {
+		if (this._oFilterDialog) {
+			this._oFilterDialog.setContentHeight(nHeight + "px");
+		}
+	};
+
+	/**
 	 * Creates and shows the 'Filters'-dialog.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._showFilterDialog = function() {
@@ -3373,8 +4316,10 @@ sap.ui.define([
 
 		var that = this;
 
-		this._oFilterDialog = new sap.m.Dialog({
-			stretch: Device.system.phone
+		this._oFilterDialog = new sap.m.Dialog(this.getId() + "-adapt-filters-dialog", {
+			stretch: Device.system.phone,
+			resizable: true,
+			draggable: true
 		});
 		this._oFilterDialog.setParent(this);
 
@@ -3405,11 +4350,6 @@ sap.ui.define([
 		this._oFiltersSearchField = new SearchField({
 			placeholder: this._oRb.getText("FILTER_BAR_SEARCH")
 		});
-		this._oFiltersSearchField.attachLiveChange(function(oEvent) {
-			if (that._oFilterDialog) {
-				that._triggerSearchInFilterDialog(oEvent);
-			}
-		});
 
 		oSubHeader.addContentRight(this._oFiltersSearchField);
 		this._oFilterDialog.setSubHeader(oSubHeader);
@@ -3421,19 +4361,34 @@ sap.ui.define([
 		}
 		this._oFilterDialog.addContent(oForm);
 
+		this._oFiltersSearchField.attachLiveChange(function(oEvent) {
+			if (this._oFilterDialog) {
+
+				this.fireFiltersDialogSearchForFilters(oEvent.getParameters());
+
+				this._triggerSearchInFilterDialog(oEvent);
+			}
+		}.bind(this));
+
 		this._bOKFiltersDialogTriggered = false;
 		this._bVariantSaveFiltersDialogTriggered = false;
-		this._oFilterDialog._do_not_add_to_basic_area = true;
+		this._oFilterDialog.bDoNotAddToBasicArea = true;
+
+		this._oFilterDialog.attachBeforeOpen(function() {
+			this.fireFiltersDialogBeforeOpen();
+		}.bind(this));
 
 		this._oFilterDialog.attachAfterOpen(function() {
-			if (!that._isPhone()) {
+
+			if (!this._isPhone() && (oForm === this._getFilterDialogActiveContent())) {
 				var oResizeDomRef = that._oFilterDialog.getDomRef("scroll");
 				if (oResizeDomRef) {
-					that._oFilterDialog.setContentWidth(oResizeDomRef.clientWidth + "px");
-					that._oFilterDialog.setContentHeight(oResizeDomRef.clientHeight + "px");
+					this.setContentWidth(oResizeDomRef.clientWidth);
+					this.setContentHeight(oResizeDomRef.clientHeight);
 				}
 			}
-		});
+
+		}.bind(this));
 
 		this._oFilterDialog.attachBeforeClose(function() {
 
@@ -3441,7 +4396,7 @@ sap.ui.define([
 				that._cancelFilterDialog(that._bVariantSaveFiltersDialogTriggered);
 			}
 
-			delete that._oFilterDialog._do_not_add_to_basic_area;
+			delete that._oFilterDialog.bDoNotAddToBasicArea;
 			that._closeDialogAndRestoreFilterBar(oForm);
 		});
 
@@ -3454,7 +4409,10 @@ sap.ui.define([
 
 			that._showHintText();
 
-			that.fireFiltersDialogClosed();
+			var parameter = {};
+			parameter.context = that._bOKFiltersDialogTriggered ? "SEARCH" : "CANCEL";
+
+			that.fireFiltersDialogClosed(parameter);
 
 			if (that._isNewFilterBarDesign()) {
 				that._fHandleResize();
@@ -3467,6 +4425,15 @@ sap.ui.define([
 
 		this._bDirtyViaDialog = false;
 		this._oFilterDialog.open();
+	};
+
+	/**
+	 * Determines if the filters dialog is opene.
+	 * @protected
+	 * @returns {boolean} State of filters dialog
+	 */
+	FilterBar.prototype.isDialogOpen = function() {
+		return this._oFilterDialog ? true : false;
 	};
 
 	FilterBar.prototype._addFilterDialogButtons = function(oForm) {
@@ -3482,9 +4449,8 @@ sap.ui.define([
 		oSearchButton = new Button(this.getId() + "-btnGoFilterDialog", {
 			text: this._oRb.getText("FILTER_BAR_GO"),
 			press: function() {
-				// that._bOKFiltersDialogTriggered = true;
 				oSearchButton.focus();
-				that._searchRequested(oForm);
+				that._dialogSearch(oForm);
 			},
 			layoutData: new sap.m.OverflowToolbarLayoutData({
 				priority: sap.m.OverflowToolbarPriority.NeverOverflow
@@ -3496,26 +4462,30 @@ sap.ui.define([
 		if (!this.getAdvancedMode()) {
 
 			// variant save button
-			if (this._oVariantManagement && this._oVariantManagement.getVisible() && this._oVariantManagement.oVariantSave) {
-				oVariantSaveButton = new Button(this.getId() + "-btnSaveFilterDialog", {
-					text: this._oRb.getText("VARIANT_MANAGEMENT_SAVE"),
-					enabled: this._oVariantManagement.oVariantSave.getEnabled(),
-					press: function() {
-						that._bVariantSaveFiltersDialogTriggered = true;
-						that._variantSavePressed();
-					},
-					layoutData: new sap.m.OverflowToolbarLayoutData({
-						priority: sap.m.OverflowToolbarPriority.Low
-					})
-				});
+			if (this._oVariantManagement && this._oVariantManagement.getVisible()) {
 
-				oModel = this._oVariantManagement.getModel("save_enablement");
+				this._oVariantManagement._delayedControlCreation();
+				if (this._oVariantManagement.oVariantSave) {
 
-				oVariantSaveButton.setModel(oModel);
-				oVariantSaveButton.bindProperty("enabled", "/enabled");
+					oVariantSaveButton = new Button(this.getId() + "-btnSaveFilterDialog", {
+						text: this._oRb.getText("VARIANT_MANAGEMENT_SAVE"),
+						enabled: this._oVariantManagement.oVariantSave.getEnabled(),
+						press: function() {
+							that._dialogVariantSave(oForm);
+						},
+						layoutData: new sap.m.OverflowToolbarLayoutData({
+							priority: sap.m.OverflowToolbarPriority.Low
+						})
+					});
 
-				this._oFilterDialog.addButton(oVariantSaveButton);
+					oModel = this._oVariantManagement.getModel("save_enablement");
 
+					oVariantSaveButton.setModel(oModel);
+					oVariantSaveButton.bindProperty("enabled", "/enabled");
+
+					this._oFilterDialog.addButton(oVariantSaveButton);
+
+				}
 			}
 
 			// clear button
@@ -3523,7 +4493,7 @@ sap.ui.define([
 				text: this._oRb.getText("FILTER_BAR_CLEAR"),
 				visible: this.getShowClearButton(),
 				press: function() {
-					that.clear();
+					that._dialogClear(oForm);
 				},
 				layoutData: new sap.m.OverflowToolbarLayoutData({
 					priority: sap.m.OverflowToolbarPriority.Low
@@ -3537,11 +4507,7 @@ sap.ui.define([
 				text: this._oRb.getText("FILTER_BAR_RESTORE"),
 				visible: this.getShowRestoreButton(),
 				press: function() {
-					that.reset();
-
-					if (that._oVariantManagement) {
-						that._oVariantManagement.currentVariantSetModified(false);
-					}
+					that._dialogRestore(oForm);
 				},
 				layoutData: new sap.m.OverflowToolbarLayoutData({
 					priority: sap.m.OverflowToolbarPriority.Low
@@ -3560,7 +4526,7 @@ sap.ui.define([
 			oCancelButton = new Button(this.getId() + "-btnCancelFilterDialog", {
 				text: this._oRb.getText("FILTER_BAR_CANCEL"),
 				press: function() {
-					that._oFilterDialog.close();
+					that._dialogCancel(oForm);
 				},
 				layoutData: new sap.m.OverflowToolbarLayoutData({
 					priority: sap.m.OverflowToolbarPriority.High
@@ -3570,12 +4536,55 @@ sap.ui.define([
 		}
 	};
 
+	FilterBar.prototype._dialogSearch = function(oForm) {
+
+		this.fireFiltersDialogSearch();
+
+		this._searchRequested();
+
+	};
+
+	FilterBar.prototype._dialogCancel = function(oForm) {
+		if (this._oFilterDialog) {
+			this._bOKFiltersDialogTriggered = false;
+
+			this.fireFiltersDialogCancel();
+
+			this._oFilterDialog.close();
+		}
+	};
+
+	FilterBar.prototype._dialogVariantSave = function(oForm) {
+		this._bVariantSaveFiltersDialogTriggered = true;
+
+		this._variantSavePressed();
+	};
+
+	FilterBar.prototype._dialogRestore = function(oForm) {
+
+		// var bIsNotForm = (this._getFilterDialogActiveContent() !== oForm);
+		// this.reset(bIsNotForm);
+		this.reset();
+
+// if (!bIsNotForm) {
+		if (this._oVariantManagement && !this._oVariantManagement.getInErrorState()) {
+			this._oVariantManagement.currentVariantSetModified(false);
+		}
+// }
+	};
+
+	FilterBar.prototype._dialogClear = function(oForm) {
+		// var bIsNotForm = (this._getFilterDialogActiveContent() !== oForm);
+		this.clear();
+	};
+
 	FilterBar.prototype._createButtons = function(oToolbar) {
 
 		var that = this;
 
 		this._oHideShowButton = new Button(this.getId() + "-btnShowHide", {
 			text: this._oRb.getText("FILTER_BAR_HIDE"),
+			tooltip: this._oRb.getText("FILTER_BAR_HIDE"),
 			type: ButtonType.Transparent,
 			enabled: false
 		});
@@ -3588,6 +4597,7 @@ sap.ui.define([
 		this._oClearButtonOnFB = new Button(this.getId() + "-btnClear", {
 			visible: this.getShowClearOnFB(),
 			text: this._oRb.getText("FILTER_BAR_CLEAR"),
+			tooltip: this._oRb.getText("FILTER_BAR_CLEAR"),
 			type: ButtonType.Transparent,
 			enabled: false
 		});
@@ -3599,6 +4609,7 @@ sap.ui.define([
 		this._oRestoreButtonOnFB = new Button(this.getId() + "-btnRestore", {
 			visible: this.getShowRestoreOnFB(),
 			text: this._oRb.getText("FILTER_BAR_RESTORE"),
+			tooltip: this._oRb.getText("FILTER_BAR_RESTORE"),
 			type: ButtonType.Transparent,
 			enabled: false
 		});
@@ -3613,11 +4624,13 @@ sap.ui.define([
 		this._oFiltersButton = new Button(this.getId() + "-btnFilters", {
 			visible: this.getShowFilterConfiguration() || this._isPhone(),
 			text: this._oRb.getText("FILTER_BAR_ACTIVE_FILTERS_ZERO"),
+			tooltip: this._oRb.getText("FILTER_BAR_ACTIVE_FILTERS_ZERO"),
 			type: ButtonType.Transparent,
 			enabled: false
 		});
 
 		this._oFiltersButton.attachPress(function() {
+			that._oFiltersButton.focus();
 			that._showFilterDialog();
 		});
 		oToolbar.addContent(this._oFiltersButton);
@@ -3625,6 +4638,7 @@ sap.ui.define([
 		this._oSearchButton = new Button(this.getId() + "-btnGo", {
 			visible: this.getShowGoOnFB(),
 			text: this._oRb.getText("FILTER_BAR_GO"),
+			tooltip: this._oRb.getText("FILTER_BAR_GO"),
 			type: ButtonType.Emphasized
 		});
 		this._oSearchButton.attachPress(function() {
@@ -3636,7 +4650,6 @@ sap.ui.define([
 
 	/**
 	 * Creates the variant management.
-	 * 
 	 * @private
 	 * @returns {sap.ui.comp.variants.VariantManagement} the VM control
 	 */
@@ -3653,18 +4666,14 @@ sap.ui.define([
 		return this._oVariantManagement;
 	};
 
-	/**
-	 * Creates the layout for the basic area.
-	 * 
-	 * @private
-	 * @returns {sap.m.Toolbar} the toolbar
-	 */
-	FilterBar.prototype._createToolbar = function() {
+	FilterBar.prototype._createToolbar = function(bIgnoreVM) {
 
 		var oToolbar = new Toolbar(this.getId() + "-toolbar");
 
-		var oVariantLayout = this._createVariantLayout();
-		oToolbar.addContent(oVariantLayout);
+		if (!bIgnoreVM) {
+			var oVariantLayout = this._createVariantLayout();
+			oToolbar.addContent(oVariantLayout);
+		}
 
 		oToolbar.addContent(new ToolbarSpacer());
 
@@ -3694,7 +4703,6 @@ sap.ui.define([
 
 	/**
 	 * Creates the layout for the basic area.
-	 * 
 	 * @private
 	 * @returns {sap.ui.layout.HorizontalLayout} the layout for the selected fields
 	 */
@@ -3713,7 +4721,6 @@ sap.ui.define([
 
 	/**
 	 * Creates the form for the advanced area, where all the filters will be placed. Only relevant for the value help scenario.
-	 * 
 	 * @private
 	 * @returns {sap.ui.layout.form.Form} the form for the filter fields
 	 */
@@ -3735,7 +4742,6 @@ sap.ui.define([
 
 	/**
 	 * Adds a selection field to a FormContainer and this FormContainer to the basic area form.
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.filterbar.FilterBar} oFilterItem filter
 	 * @returns {sap.ui.layout.VerticalLayout} the container
@@ -3762,7 +4768,6 @@ sap.ui.define([
 
 	/**
 	 * Adds a selection field to a FormContainer and the FormContainer to the basic area form
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.filterbar.FilterBar} oFilterItem the filter item
 	 * @param {sap.ui.core.Control} oControl the filter control
@@ -3780,13 +4785,7 @@ sap.ui.define([
 			oControl.setWidth("100%");
 		}
 
-		if (oFilterItem && oFilterItem._iSpan && oFilterItem._iSpan > 1) {
-			var iWidth = this._calculateISpanWidth(oFilterItem._iSpan);
-			oVLayout.setWidth(iWidth);
-		} else {
-			oVLayout.setWidth(this.getFilterContainerWidth());
-		}
-		// }
+		oVLayout.setWidth(this.getFilterContainerWidth());
 
 		if (oLabel) {
 			if (!oLabel.hasStyleClass("sapUiCompFilterLabel")) {
@@ -3794,15 +4793,7 @@ sap.ui.define([
 			}
 			oVLayout.addContent(oLabel);
 
-			var oConditionType = null;
-			if (oFilterItem && this.getConditionTypeByKey) {
-				oConditionType = this.getConditionTypeByKey(oFilterItem.getName());
-			}
-
-			if (oConditionType) {
-				oConditionType.setLabel(oLabel);
-			} else if (oLabel.setLabelFor) {
-
+			if (oLabel.setLabelFor) {
 				if (oFilterItem && oControl) {
 					oLabel.setLabelFor(oControl);
 				} else if (oControl) {
@@ -3822,7 +4813,7 @@ sap.ui.define([
 		oVLayout.addStyleClass("sapUiCompFilterBarPaddingRight");
 		oVLayout.addStyleClass("sapUiCompFilterBarPaddingTop");
 
-		if (!this.getAdvancedMode() && (!this._oFilterDialog || (!this._oFilterDialog.hasOwnProperty("_do_not_add_to_basic_area")))) {
+		if (!this.getAdvancedMode() && (!this._oFilterDialog || (!this._oFilterDialog.hasOwnProperty("bDoNotAddToBasicArea")))) {
 
 			if (oFilterItem && oFilterItem.getVisible() && oFilterItem.getVisibleInFilterBar()) {
 				if (this._isNewFilterBarDesign()) {
@@ -3851,7 +4842,6 @@ sap.ui.define([
 
 	/**
 	 * Recreates the layout for all visible filters in the advanced area.
-	 * 
 	 * @private
 	 * @param {array} aControls list of visible advanced area filter elements
 	 */
@@ -3866,7 +4856,6 @@ sap.ui.define([
 
 	/**
 	 * Recreates the layout for all visible filters in the advanced area. Each Group will be rendered in a FormContainer.
-	 * 
 	 * @private
 	 * @param {array} aControls list of visible advanced area filter elements
 	 */
@@ -3931,7 +4920,6 @@ sap.ui.define([
 	/**
 	 * If only one group with multiple filter fields is available, it will be layouted in two columns. a dummy group will be created and the controls
 	 * will be destributed between them.
-	 * 
 	 * @private
 	 * @param {array} aControls list of visible advanced area filter elements. First element is a group
 	 */
@@ -3962,7 +4950,6 @@ sap.ui.define([
 
 	/**
 	 * Converts the map containing the advanced area filters to an array for simpler handling; only visible filter items are considered.
-	 * 
 	 * @private
 	 * @returns {array} oControl the visible filter fields
 	 */
@@ -3982,7 +4969,7 @@ sap.ui.define([
 					for (i = 0; i < this._mAdvancedAreaFilter[n].items.length; i++) {
 						var oItem = this._mAdvancedAreaFilter[n].items[i];
 
-						if (oItem.filterItem && oItem.filterItem.getVisibleInFilterBar() && oItem.filterItem.getVisible()) {
+						if (oItem.filterItem && oItem.filterItem.getVisibleInFilterBar() && oItem.filterItem.getVisible() && !oItem.filterItem.getHiddenFilter()) {
 
 							if (!bGroupIsAdded) {
 								bGroupIsAdded = true;
@@ -4008,7 +4995,6 @@ sap.ui.define([
 
 	/**
 	 * Executes search in the 'Add/Remove Filters' dialog.
-	 * 
 	 * @private
 	 * @param {string} sValue the search string
 	 */
@@ -4053,7 +5039,6 @@ sap.ui.define([
 
 	/**
 	 * Reacts to search field selection.
-	 * 
 	 * @private
 	 * @param {object} oEvent containing the search string
 	 */
@@ -4075,14 +5060,13 @@ sap.ui.define([
 
 	/**
 	 * Reacts to search field selection. Hide all non matching list entries.
-	 * 
 	 * @private
 	 * @param {string} sValue the search string
 	 */
 	FilterBar.prototype._triggerSearchByValueInFilterDialog = function(sValue) {
 
 		var n = null, i;
-		var sText, sTooltip;
+		var sText;
 		var oGroupElement, oFilterItem;
 		var nCountInvisibleElements;
 		var nCountNonPartOfCurrentVariant;
@@ -4101,19 +5085,22 @@ sap.ui.define([
 						nCountNonPartOfCurrentVariant = 0;
 
 						for (i = 0; i < oGroupElement.items.length; i++) {
-							if (oGroupElement.items[i] && oGroupElement.items[i].filterItem && oGroupElement.items[i].formelement) {
+							if (oGroupElement.items[i] && oGroupElement.items[i].filterItem) {
 
 								oFilterItem = oGroupElement.items[i].filterItem;
 
+								if (oFilterItem.getHiddenFilter()) {
+									++nCountInvisibleElements;
+									continue;
+								}
+
 								if (oFilterItem.getVisible()) {
 
-									if (sValue) {
+									if (sValue && oGroupElement.items[i].formelement) {
 
-										// if (oFilterItem.getPartOfCurrentVariant()) {
 										sText = oFilterItem.getLabel();
-										sTooltip = oFilterItem.getLabelTooltip();
 
-										if ((sText.toLowerCase().indexOf(sValue) >= 0 || (sTooltip && sTooltip.toLowerCase().indexOf(sValue) >= 0))) {
+										if (sText.toLowerCase().indexOf(sValue) >= 0) {
 											if (oFilterItem.getPartOfCurrentVariant()) {
 												oGroupElement.items[i].formelement.setVisible(true);
 											} else {
@@ -4124,7 +5111,7 @@ sap.ui.define([
 											oGroupElement.items[i].formelement.setVisible(false);
 										}
 
-									} else {
+									} else if (oGroupElement.items[i].formelement) {
 										// reset to a state without considering search
 										oGroupElement.items[i].formelement.setVisible(oFilterItem.getVisibleInFilterBar() || oFilterItem.getPartOfCurrentVariant());
 										if (oGroupElement.link && !oGroupElement.link.getVisible()) {
@@ -4169,7 +5156,6 @@ sap.ui.define([
 
 	/**
 	 * Reacts to search from 'Filters'- dialog. Hide all non matching list entries.
-	 * 
 	 * @private
 	 * @param {object} oEvent containing the search string
 	 */
@@ -4193,10 +5179,9 @@ sap.ui.define([
 
 	/**
 	 * Generate for a passed group all the filters in the 'Add/Remove Filters'-dialog
-	 * 
 	 * @private
 	 * @param {string} sGroupName filter group name
-	 * @param {sap.m.List} oList containing the fileds of a group
+	 * @param {sap.m.List} oList containing the fields of a group
 	 */
 	FilterBar.prototype._generateListItems = function(sGroupName, oList) {
 
@@ -4223,7 +5208,7 @@ sap.ui.define([
 
 					if (oItem && oItem.filterItem) {
 
-						if (!oItem.filterItem.getVisible()) {
+						if (!oItem.filterItem.getVisible() || oItem.filterItem.getHiddenFilter()) {
 							continue;
 						}
 
@@ -4280,7 +5265,6 @@ sap.ui.define([
 
 	/**
 	 * Adapts the visibility of the filter containers.
-	 * 
 	 * @private
 	 * @param {object} oItem representing the filter item
 	 */
@@ -4310,7 +5294,6 @@ sap.ui.define([
 
 	/**
 	 * Adapt the visibility for all filter containers.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._rerenderFilters = function() {
@@ -4335,7 +5318,6 @@ sap.ui.define([
 
 	/**
 	 * Adapts the visibility for all filter containers.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype.rerenderFilters = function() {
@@ -4345,7 +5327,6 @@ sap.ui.define([
 
 	/**
 	 * Cleans-up and closes the 'Add/Remove Filters'- dialog.
-	 * 
 	 * @private
 	 * @param {string} sGroupName name of the group for which the filters will be displayed
 	 * @param {sap.m.Link} oLink control from filters dialog
@@ -4363,7 +5344,6 @@ sap.ui.define([
 
 	/**
 	 * Eventhandler for the 'Cancel'-button on the 'Add/Remove Filters'- dialog.
-	 * 
 	 * @private
 	 * @param {string} sGroupName name of the group for which the filters will be displayed
 	 */
@@ -4376,6 +5356,11 @@ sap.ui.define([
 			for (i = 0; i < this._mAdvancedAreaFilter[sGroupName].items.length; i++) {
 				oItem = this._mAdvancedAreaFilter[sGroupName].items[i];
 				if ((oItem.initialPartOfCurrentVariant !== undefined || oItem.initialVisibleInFilterBar !== undefined) && oItem.filterItem) {
+
+					if (oItem.filterItem.getHiddenFilter()) {
+						continue;
+					}
+
 					if ((oItem.initialPartOfCurrentVariant !== undefined) && (oItem.filterItem.getPartOfCurrentVariant() !== oItem.initialPartOfCurrentVariant)) {
 						oItem.filterItem.setPartOfCurrentVariant(oItem.initialPartOfCurrentVariant);
 						this._notifyAboutChangedFilters(oItem.initialPartOfCurrentVariant, oItem.control);
@@ -4395,7 +5380,6 @@ sap.ui.define([
 
 	/**
 	 * Creates the 'Add/Remove Filters' - dialog.
-	 * 
 	 * @private
 	 * @param {string} sGroupName filter group name
 	 * @param {sap.m.Link} oLink more/clear filters link
@@ -4411,8 +5395,10 @@ sap.ui.define([
 			return;
 		}
 
-		this._oDialog = new sap.m.Dialog({
-			stretch: Device.system.phone
+		this._oDialog = new sap.m.Dialog(this.getId() + "-set-filters-dialog", {
+			stretch: Device.system.phone,
+			resizable: true,
+			draggable: true
 		});
 		this._oDialog.addStyleClass("sapUiPopupWithPadding");
 		this._oDialog.addStyleClass("sapUiCompAddRemoveFilterDialog");
@@ -4471,8 +5457,6 @@ sap.ui.define([
 
 		this._oDialog.setInitialFocus(this._oSearchField);
 
-		this._oDialog.setContentHeight("23.25rem"); // 30.25 - 2*2.5rem - 2rem
-
 		if (this._sSearchCriteriaInFiltersDialog) {
 			this._oSearchField.setValue(this._sSearchCriteriaInFiltersDialog);
 			this._triggerSearchByValue(this._sSearchCriteriaInFiltersDialog);
@@ -4495,6 +5479,10 @@ sap.ui.define([
 			that.rerenderFilters();
 
 			that._closeAddRemoveFiltersDialog(sGroupName, oLink);
+
+			if (that._oFilterDialog) {
+				that._oFilterDialog.invalidate();
+			}
 		});
 
 		this._oDialog.attachAfterClose(function() {
@@ -4509,9 +5497,8 @@ sap.ui.define([
 
 	/**
 	 * Handles the selection change of the checkbox in the 'Add/Remove Filters' - dialog.
-	 * 
 	 * @private
-	 * @param {sap.m.Checkbox} oCheckBox representing visible in filter bar
+	 * @param {sap.m.Checkbox} oCheckBox representing visible in FilterBar
 	 * @param {object} oItem internal object associated with this checkbox
 	 */
 	FilterBar.prototype._selectionChangedInAddFiltersDialog = function(oCheckBox, oItem) {
@@ -4542,7 +5529,6 @@ sap.ui.define([
 
 	/**
 	 * Sets the semaphore for variant change.
-	 * 
 	 * @private
 	 * @param {boolean} bFlag setting the semaphore state
 	 */
@@ -4553,7 +5539,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the semaphore for variant change.
-	 * 
 	 * @private
 	 * @returns {boolean} the semaphore state
 	 */
@@ -4564,7 +5549,6 @@ sap.ui.define([
 
 	/**
 	 * Notifies about a filter change.
-	 * 
 	 * @private
 	 * @param {object} oEvent general event object
 	 * @param {boolean} bDoNotPropagate if set do not raise the filterChange event
@@ -4577,7 +5561,7 @@ sap.ui.define([
 			return;
 		}
 
-		if (this._getConsiderFilterChanges() && this._oVariantManagement && this._oVariantManagement.getEnabled()) {
+		if (this._getConsiderFilterChanges() && this._oVariantManagement && !this._oVariantManagement.getInErrorState()) {
 			this._oVariantManagement.currentVariantSetModified(true);
 		}
 
@@ -4589,28 +5573,29 @@ sap.ui.define([
 		this.fireEvent("filterChange", oEvent);
 
 		if (this._isNewFilterBarDesign()) {
-			this._fHandleResize();
+			// this._fHandleResize();
 		}
 	};
 
 	/**
 	 * Prepares event object and fire the 'filterChange' event.
-	 * 
 	 * @private
 	 * @param {boolean} bVisible indicated whether an filter was added or removed
 	 * @param {sap.ui.core.Control} oControl which was either added or removed
 	 */
 	FilterBar.prototype._notifyAboutChangedFilters = function(bVisible, oControl) {
 
-		var oObj;
+		var oObj, oFilterItem = this._determineByControl(oControl);
 
 		if (bVisible) {
 			oObj = {
-				"added": oControl
+				"added": oControl,
+				"filterItem": oFilterItem
 			};
 		} else {
 			oObj = {
-				"deleted": oControl
+				"deleted": oControl,
+				"filterItem": oFilterItem
 			};
 		}
 
@@ -4618,37 +5603,23 @@ sap.ui.define([
 
 	};
 
-	/**
-	 * Prepares the information of all filters for the variant persistency.
-	 * 
-	 * @private
-	 * @param {boolean} bConsiderInvisibleFilters Indicates if invisible filters are considered
-	 * @param {boolean} bIgnoreConsiderFilter Indicates if the considerFilter check is ignored
-	 * @returns {array} of variant specific filter info
-	 */
 	FilterBar.prototype._determineVariantFiltersInfo = function(bConsiderInvisibleFilters, bIgnoreConsiderFilter) {
-
 		var i;
 		var n = null, oItem, oFilter;
-
 		var aFilters = [];
-
 		if (this._mAdvancedAreaFilter) {
-
 			for (n in this._mAdvancedAreaFilter) {
-
 				if (n) {
 					if (this._mAdvancedAreaFilter[n].items) {
-
 						for (i = 0; i < this._mAdvancedAreaFilter[n].items.length; i++) {
 							oItem = this._mAdvancedAreaFilter[n].items[i];
-
 							if (bConsiderInvisibleFilters || oItem.filterItem.getVisible()) {
 								oFilter = {
 									group: oItem.filterItem.getGroupName(),
 									name: oItem.filterItem.getName(),
 									partOfCurrentVariant: oItem.filterItem.getPartOfCurrentVariant(),
-									visibleInFilterBar: oItem.filterItem.getVisibleInFilterBar()
+									visibleInFilterBar: oItem.filterItem.getVisibleInFilterBar(),
+									visible: oItem.filterItem.getVisible()
 								};
 								if (bIgnoreConsiderFilter || this._considerFilter(oFilter)) {
 									aFilters.push(oFilter);
@@ -4746,7 +5717,7 @@ sap.ui.define([
 			return true;
 		}
 
-		if ((oBaseFilter.partOfCurrentVariant !== oFilter.partOfCurrentVariant) || (oBaseFilter.visibleInFilterBar !== oFilter.visibleInFilterBar)) {
+		if ((oBaseFilter.partOfCurrentVariant !== oFilter.partOfCurrentVariant) || (oBaseFilter.visibleInFilterBar !== oFilter.visibleInFilterBar) || (oBaseFilter.visible !== oFilter.visible)) {
 			return true;
 		}
 
@@ -4755,7 +5726,6 @@ sap.ui.define([
 
 	/**
 	 * Adds a filter to the form container.
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.filterbar.FilterItem} oFilterItem the corresponding filter item
 	 * @param {sap.ui.core.Control} oControl the control itself
@@ -4775,7 +5745,6 @@ sap.ui.define([
 
 	/**
 	 * Determines if an item is relevant for the query, based on its visibility.
-	 * 
 	 * @private
 	 * @param {sap.ui.comp.filterbar.FilterItem} oFilterItem which is beeing checked
 	 * @returns {boolean} true for relevant, false for not relevat
@@ -4786,6 +5755,7 @@ sap.ui.define([
 
 		if (oFilterItem) {
 			bVisible = oFilterItem.getVisible() && (oFilterItem.getVisibleInFilterBar() || oFilterItem.getPartOfCurrentVariant());
+			bVisible = bVisible && !oFilterItem.getHiddenFilter();
 		}
 
 		return bVisible;
@@ -4793,7 +5763,6 @@ sap.ui.define([
 
 	/**
 	 * Returns an array of all visible filters.
-	 * 
 	 * @private
 	 * @returns {array} all visible advanced items
 	 */
@@ -4825,36 +5794,45 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the controls for all visible filters.
-	 * 
 	 * @private
-	 * @returns {array} all visible controls from the basic and advanced area area
+	 * @param {boolean} bWithName determines the returning structure. Either list of controls, or list of filter name and control.
+	 * @param {boolean} bConsiderParameters determines if parameters should be considered.
+	 * @returns {array} all visible controls/filter name & controls
 	 */
-	FilterBar.prototype._retrieveCurrentSelectionSet = function() {
+	FilterBar.prototype._retrieveCurrentSelectionSet = function(bWithName, bConsiderParameters) {
 
-		var i;
-		var aControls = [];
+		var i, oItem, oObj, aArray = [];
 
 		var aItems = this._retrieveVisibleAdvancedItems();
 
 		for (i = 0; i < aItems.length; i++) {
-			if (aItems[i].control) {
-				aControls.push(aItems[i].control);
+			oItem = aItems[i];
+			if (oItem.control && oItem.filterItem && (bConsiderParameters || !oItem.filterItem._isParameter())) {
+				if (bWithName) {
+					oObj = {
+						name: aItems[i].filterItem.getName(),
+						control: aItems[i].control
+					};
+				} else {
+					oObj = aItems[i].control;
+				}
+
+				aArray.push(oObj);
 			}
 		}
 
-		return aControls;
+		return aArray;
 	};
 
 	/**
 	 * Executes the search event. Controls of all visible filters will be passed as event-parameters.
-	 * 
-	 * @private
+	 * @public
 	 * @returns {boolean} indicates the validation result. true means no validation errors.
 	 */
 	FilterBar.prototype.search = function() {
 
 		var parameter = {};
-		parameter.selectionSet = this._retrieveCurrentSelectionSet();
+		parameter.selectionSet = this._retrieveCurrentSelectionSet(false);
 
 		this.fireSearch(parameter);
 
@@ -4863,13 +5841,12 @@ sap.ui.define([
 
 	/**
 	 * Executes the clear event. Controls of all visible filters will be passed as event-parameters.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype.clear = function() {
 
 		var parameter = {};
-		parameter.selectionSet = this._retrieveCurrentSelectionSet();
+		parameter.selectionSet = this._retrieveCurrentSelectionSet(false);
 
 		this._clearErrorState();
 
@@ -4880,13 +5857,12 @@ sap.ui.define([
 
 	/**
 	 * Executes the reset event. Controls of all visible filters will be passed as event-parameters.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype.reset = function() {
 
 		var parameter = {};
-		parameter.selectionSet = this._retrieveCurrentSelectionSet();
+		parameter.selectionSet = this._retrieveCurrentSelectionSet(false);
 
 		this.fireReset(parameter);
 
@@ -4896,14 +5872,16 @@ sap.ui.define([
 	/**
 	 * Obtains from the variant management the current selected entry ands applies the corresponding variant. In case nothing was selected variant
 	 * management returns null -> no variant will be applied.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._resetVariant = function() {
 
-		var oVariant = null;
+		var oVariant = null, oVariantSnapshot = null;
+
+		this._resetFiltersInErrorValueState();
 
 		if (this._oVariantManagement) { // in case a variant is currently selected, re-apply this variant
+
 			var sKey = this._oVariantManagement.getSelectionKey();
 			if (sKey) {
 
@@ -4911,30 +5889,46 @@ sap.ui.define([
 				if (this._oVariant) {
 					this._oVariant.content = oVariant;
 					this._oVariant.modified = false;
+
+					if (this.getPersistencyKey() && this._oInitialVariant) {
+						// BCP: 1780323271
+						// reset the snapshot
+						this._oInitialVariant.content = oVariant;
+						this._oInitialVariant.modified = false;
+
+						// BCP: 1770468283
+						// reset the variant key
+						this._oInitialVariant.key = sKey;
+					}
 				}
 
-				this._resetFiltersInErrorValueState();
+				if (!this.getPersistencyKey() && (this.getUseSnapshot() === undefined) && this._oInitialVariant && this._oInitialVariant.content) {
+					oVariantSnapshot = this._oInitialVariant.content;
+				}
 
-				if (oVariant || (!this.getPersistencyKey() && this._oInitialVariant && this._oInitialVariant.content)) {
-					this.applyVariant(oVariant || this._oInitialVariant.content, "RESET");
+				if (oVariant || oVariantSnapshot) {
+					this.applyVariant(oVariant || oVariantSnapshot, "RESET");
 				}
 			}
 		}
 
 		this._resetFilterBarSearch();
+
 		// this._bDirtyViaDialog = false;
 	};
 
 	FilterBar.prototype._resetFilterBarSearch = function() {
 
 		this._sSearchCriteriaInFiltersDialog = "";
-		this._oFiltersSearchField.setValue(this._sSearchCriteriaInFiltersDialog);
-		this._triggerSearchByValueInFilterDialog(this._sSearchCriteriaInFiltersDialog);
+
+		if (this._oFiltersSearchField) {
+			this._oFiltersSearchField.setValue(this._sSearchCriteriaInFiltersDialog);
+			this._triggerSearchByValueInFilterDialog(this._sSearchCriteriaInFiltersDialog);
+		}
 	};
 
 	/**
 	 * Retrieve the data for a specific variant and apply it.
-	 * 
 	 * @private
 	 * @param {object} oVariant the variant
 	 * @param {string} sContext may be undefined, RESET or CANCEL and indicates the source of the appliance
@@ -4961,30 +5955,22 @@ sap.ui.define([
 			this._applyVariantFields(aFieldsAndValues);
 			this._reapplyVisibility(aPersFields);
 
-// this._ensureFilterLoaded(aPersFields);
-// this._reapplyVisibility(aPersFields);
-
 			if (this._oBasicSearchField && this._oBasicSearchField.setValue) {
 				this._oBasicSearchField.setValue("" || oVariant.basicSearch);
 			}
-
-			this.fireAfterVariantLoad(sContext);
-
-			this._setConsiderFilterChanges(true);
-
-			this._updateToolbarText();
 
 			if (oVariant.executeOnSelection) {
 				bExecuteOnSelection = oVariant.executeOnSelection;
 			}
 
-			if (bExecuteOnSelection) {
-				// use delayed search if available
-				if (this.triggerSearch) {
-					this.triggerSearch();
-				} else {
-					this.search();
-				}
+			this.fireAfterVariantLoad(sContext, bExecuteOnSelection);
+
+			this._setConsiderFilterChanges(true);
+
+			this._updateToolbarText();
+
+			if (bExecuteOnSelection || (this.getLiveMode && this.getLiveMode())) {
+				this.search();
 			} else {
 				this._clearErrorState();
 			}
@@ -4997,7 +5983,6 @@ sap.ui.define([
 
 	/**
 	 * Triggers the registered callBack for fetching the current variant data.
-	 * 
 	 * @private
 	 * @returns {Object} the data representing part of the variant content
 	 */
@@ -5018,7 +6003,6 @@ sap.ui.define([
 
 	/**
 	 * Triggers the registered callBack for applying the variant data.
-	 * 
 	 * @private
 	 * @param {Object} oJson the data blob representing part of the variant content
 	 * @returns {object} data to be stored as part of the variant content
@@ -5055,16 +6039,34 @@ sap.ui.define([
 	};
 
 	/**
-	 * Creates and returns the variant representation. This method is executed from the SmartVariantManagement control.
-	 * 
-	 * @param {boolean} bConsiderInvisibleFilters Indicates if invisible filters should be considered
+	 * Returns the information whether the flag 'executeOnSelect' is set or not on current variant.
+	 * @public
+	 * @returns {boolean} Flag 'executeOnSelect' flag. If varaint management is disabled <code>false</code> is retuned.
+	 */
+	FilterBar.prototype.isCurrentVariantExecuteOnSelectEnabled = function() {
+		if (this._oVariantManagement && !this._oVariantManagement.getInErrorState()) {
+
+			var sKey = this.getCurrentVariantId();
+			if (!sKey) {
+				return this._oVariantManagement.getExecuteOnSelectForStandardVariant();
+			}
+
+			var oItem = this._oVariantManagement.getItemByKey(sKey);
+			if (oItem) {
+				return oItem.getExecuteOnSelection();
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Creates and returns the variant representation.
 	 * @returns {object} JSON object
 	 * @public
 	 */
-	FilterBar.prototype.fetchVariant = function(bConsiderInvisibleFilters) {
+	FilterBar.prototype.fetchVariant = function() {
 
-		var aFiltersInfo;
-		var oVariant = {};
+		var aFiltersInfo, oVariant = {}, sBasicSearch;
 
 		if (this._isDeltaHandling()) {
 			if (!this._isStandardVariant()) {
@@ -5074,14 +6076,15 @@ sap.ui.define([
 
 		this.fireBeforeVariantFetch();
 
-		aFiltersInfo = this._determineVariantFiltersInfo(bConsiderInvisibleFilters, !oVariant.version);
+		aFiltersInfo = this._determineVariantFiltersInfo(true, !oVariant.version);
 
 		oVariant.filterbar = (!aFiltersInfo) ? [] : aFiltersInfo;
 
 		oVariant.filterBarVariant = this._fetchVariantFiltersData();
 
-		if (this._oBasicSearchField && this._oBasicSearchField.getValue) {
-			oVariant.basicSearch = this._oBasicSearchField.getValue();
+		sBasicSearch = this._getBasicSearchValue();
+		if (sBasicSearch) {
+			oVariant.basicSearch = sBasicSearch;
 		}
 
 		if (this._oVariant && this._oVariant.content) {
@@ -5092,8 +6095,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Applies the variant. This method is executed from the {@link sap.ui.comp.smartvariants.SmartVariantManagement SmartVariantManagement} control.
-	 * 
+	 * Applies the variant.
 	 * @param {object} oVariant JSON object
 	 * @param {string} sContext Describes in which context the variant is applied. The context is passed on to the application via the
 	 *        afterVariantLoad event
@@ -5109,13 +6111,12 @@ sap.ui.define([
 		this._applyVariant(oVariant, sContext, bInitial);
 
 		if (bInitial && this._isNewFilterBarDesign()) {
-			this._fHandleResize();
+			// this._fHandleResize();
 		}
 	};
 
 	/**
 	 * Retrieves the mandatory filters.
-	 * 
 	 * @public
 	 * @returns {array} Of visible mandatory filters
 	 */
@@ -5139,15 +6140,19 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the control associated to the filter.
-	 * 
 	 * @public
 	 * @param {sap.ui.comp.filterbar.FilterItem} oFilterItem From the aggregations
+	 * @param {boolean} bConsiderParameters check also analytics parameter
 	 * @returns {sap.ui.core.Control} The corresponding control. If no match is found <code>null</code> is returned.
 	 */
-	FilterBar.prototype.determineControlByFilterItem = function(oFilterItem) {
+	FilterBar.prototype.determineControlByFilterItem = function(oFilterItem, bConsiderParameters) {
 
 		var i, n = null;
 		var oItem, oGroupElement;
+
+		if (!oFilterItem || (!bConsiderParameters && oFilterItem._isParameter())) {
+			return null;
+		}
 
 		if (this._aBasicAreaSelection) {
 			for (i = 0; i < this._aBasicAreaSelection.length; i++) {
@@ -5165,7 +6170,7 @@ sap.ui.define([
 					if (oGroupElement && oGroupElement.items) {
 						for (i = 0; i < oGroupElement.items.length; i++) {
 							oItem = oGroupElement.items[i];
-							if (oFilterItem === oItem.filterItem) {
+							if ((bConsiderParameters || !oItem.filterItem._isParameter()) && (oFilterItem === oItem.filterItem)) {
 								return oItem.control;
 							}
 						}
@@ -5179,13 +6184,39 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the control based on the name and group name.
-	 * 
 	 * @public
 	 * @param {string} sName Name of the filter.
 	 * @param {string} sGroupName Group name of the filter; <code>null</code> for filter that belongs to basic group.
 	 * @returns {sap.ui.core.Control} The corresponding control, if no match is found, <code>null</code> is returned.
 	 */
 	FilterBar.prototype.determineControlByName = function(sName, sGroupName) {
+
+		var oItem = this._determineEnsuredItemByName(sName, sGroupName);
+		if (oItem && oItem.filterItem && !oItem.filterItem._isParameter()) {
+			return oItem.control;
+		}
+
+		return null;
+	};
+
+	/**
+	 * Retrieves the associated label based on the name and group name.
+	 * @public
+	 * @param {string} sName Name of the filter.
+	 * @param {string} sGroupName Group name of the filter; <code>null</code> for filter that belongs to basic group.
+	 * @returns {sap.m.Label} The associated Label, if no match is found, <code>null</code> is returned.
+	 */
+	FilterBar.prototype.determineLabelByName = function(sName, sGroupName) {
+
+		var oItem = this._determineEnsuredItemByName(sName, sGroupName);
+		if (oItem && oItem.filterItem) {
+			return oItem.filterItem._oLabel;
+		}
+
+		return null;
+	};
+
+	FilterBar.prototype._determineEnsuredItemByName = function(sName, sGroupName) {
 
 		if (!sGroupName) {
 			sGroupName = this._determineGroupNameByName(sName);
@@ -5198,12 +6229,7 @@ sap.ui.define([
 			}
 		]);
 
-		var oItem = this._determineItemByName(sName, sGroupName);
-		if (oItem) {
-			return oItem.control;
-		}
-
-		return null;
+		return this._determineItemByName(sName, sGroupName);
 	};
 
 	FilterBar.prototype._determineGroupNameByName = function(sName) {
@@ -5216,7 +6242,7 @@ sap.ui.define([
 			}
 		}
 
-		var oFilterItem = this.determineFilterItemByName(sName);
+		var oFilterItem = this._determineFilterItemByName(sName);
 		if (oFilterItem) {
 			var sGroupName = oFilterItem.getGroupName();
 			if (sGroupName !== FilterBar.INTERNAL_GROUP) {
@@ -5229,7 +6255,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the internal filter representation based on the name and (optional) group name.
-	 * 
 	 * @private
 	 * @param {string} sName the control's name
 	 * @param {string} sGrpName sGroupName is null for basic area
@@ -5266,13 +6291,22 @@ sap.ui.define([
 	};
 
 	/**
-	 * Retrieves the filter corresponding to the name.
-	 * 
-	 * @private
+	 * Retrieves the filter corresponding to the filter name.
+	 * @public
 	 * @param {string} sName the control's name
-	 * @returns {sap.ui.comp.filterbar.FilterItem} the corresponding filter item. If no match is found null will returned.
+	 * @returns {sap.ui.comp.filterbar.FilterGroupItem} the corresponding filter item. If no match is found <code>null</code> will returned.
 	 */
 	FilterBar.prototype.determineFilterItemByName = function(sName) {
+
+		var oItem = this._determineEnsuredItemByName(sName);
+		if (oItem && oItem.filterItem) {
+			return oItem.filterItem;
+		}
+
+		return null;
+	};
+
+	FilterBar.prototype._determineFilterItemByName = function(sName) {
 
 		var n, oItem;
 
@@ -5289,34 +6323,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Retrieves the internal represenation for a filter.
-	 * 
-	 * @private
-	 * @param {sap.ui.comp.filterbar.FilterGroupItem} oFilterGroupItem group filter item
-	 * @returns {object} the corresponding internal representation. If no match is found null will returned.
-	 */
-	FilterBar.prototype._determineByFilterGroupItem = function(oFilterGroupItem) {
-
-		var i, sGroupName = oFilterGroupItem.getGroupName();
-
-		if (this._mAdvancedAreaFilter && this._mAdvancedAreaFilter[sGroupName]) {
-
-			var oGroupElement = this._mAdvancedAreaFilter[sGroupName];
-			if (oGroupElement && oGroupElement.items) {
-				for (i = 0; i < oGroupElement.items.length; i++) {
-					if (oGroupElement.items[i] && oGroupElement.items[i].filterItem === oFilterGroupItem) {
-						return oGroupElement.items[i];
-					}
-				}
-			}
-		}
-
-		return null;
-	};
-
-	/**
 	 * Retrives for a givven control the corresponding filter.
-	 * 
 	 * @private
 	 * @param {sap.ui.core.Control} oControl for a filter
 	 * @returns {object} the corresponding internal representation. If no match is found null will returned.
@@ -5345,7 +6352,6 @@ sap.ui.define([
 
 	/**
 	 * Delete all 'Filters'-dialog specific informations.
-	 * 
 	 * @private
 	 */
 	FilterBar.prototype._deleteProperties = function() {
@@ -5359,6 +6365,7 @@ sap.ui.define([
 					if (oGroupElement && oGroupElement.items) {
 
 						if (oGroupElement.formcontainer) {
+							oGroupElement.formcontainer.destroy();
 							delete oGroupElement.formcontainer;
 						}
 
@@ -5380,16 +6387,32 @@ sap.ui.define([
 		}
 	};
 
-	FilterBar.prototype._fHandleResize = function(oEvent) {
+	FilterBar.prototype.onAfterRendering = function(oEvent) {
+		if (!this._bDoItOnce && !(this._isPhone() || this._isTablet())) {
+			this._bDoItOnce = true;
 
-		if (!this._isPhone() && this._oFilterDialog && this._mAdvancedAreaFilter) {
-			// this._repositionAddToFilterBarLabel();
+			if (this._oHintText && this._oHintText.getVisible()) {
+				this.setFilterBarExpanded(false);
+			}
 		}
 
+		this._checkAndAdaptFilterWidth();
+	};
+
+	FilterBar.prototype._fHandleResize = function(oEvent) {
+
+		if (!this._isPhone() && this._oFilterDialog && this._oFilterDialog.isOpen() && this._mAdvancedAreaFilter) {
+			this._repositionAddToFilterBarLabel();
+		}
+
+		this._checkAndAdaptFilterWidth();
+
+	};
+
+	FilterBar.prototype._checkAndAdaptFilterWidth = function() {
 		if (this._isNewFilterBarDesign() && !this._oFilterDialog) {
 			this._adaptFilterWidth();
 		}
-
 	};
 
 	FilterBar.prototype._adaptFilterWidth = function() {
@@ -5400,10 +6423,17 @@ sap.ui.define([
 			return;
 		}
 
+		if (!this._bIsInitialized) {
+			return;
+		}
+
 		var aContainer = this._oBasicAreaLayout.getContent();
 		if (!aContainer) {
 			return;
 		}
+
+		// check if the buttons have to be considered at all
+		var bButtonsVisible = this._isButtonsContainerVisible(this._isPhone() ? aContainer[0] : aContainer[aContainer.length - 1]);
 
 		for (i = aContainer.length - 1; i >= 0; i--) {
 			if (!aContainer[i].getVisible()) {
@@ -5411,9 +6441,13 @@ sap.ui.define([
 			}
 		}
 
-		var nWidthContainer = this._oBasicAreaLayout.$().width();
+		if (aContainer.length < 1) {
+			return;
+		}
 
-		var nWidth, nCalcWidth = this._calculateRequiredWidthAndResetToInitialWidth(aContainer);
+		var nWidthContainer = this._oBasicAreaLayout.$().width() - 1;
+
+		var nWidth, nCalcWidth = this._calculateRequiredWidthAndResetToInitialWidth(aContainer, bButtonsVisible);
 
 		if (nCalcWidth > nWidthContainer) {
 			nWidth = 0;
@@ -5422,13 +6456,17 @@ sap.ui.define([
 		}
 
 		var startIdx = 0, endIdx = aContainer.length - 1;
-		if (this._isPhone()) {
-			startIdx++;
-			endIdx++;
+
+		if (bButtonsVisible) {
+			if (this._isPhone()) {
+				startIdx++;
+			} else {
+				endIdx--;
+			}
 		}
 
 		var nFilters = 0;
-		for (i = startIdx; i < endIdx; i++) {
+		for (i = startIdx; i <= endIdx; i++) {
 
 			if ((nWidth + aContainer[i].$().width() + 16) > nWidthContainer) {
 				break;
@@ -5445,20 +6483,47 @@ sap.ui.define([
 		}
 
 		if (nDeltaFilter > 0) {
-			this._increaseFilterWidth(aContainer, nDeltaFilter, nWidthContainer);
+			this._increaseFilterWidth(aContainer, nDeltaFilter, nWidthContainer, bButtonsVisible);
 		}
 
 	};
 
-	FilterBar.prototype._calculateRequiredWidthAndResetToInitialWidth = function(aContainer) {
-		var i, sWidth, nContainerWidth, nWidth = aContainer[aContainer.length - 1].$().width() + 16; // buttons
+	FilterBar.prototype._isButtonsContainerVisible = function(oContainer) {
+		var bVisible = false, aOuterContent, aInnerContent;
+		if (oContainer && oContainer.getVisible()) {
+			aOuterContent = oContainer.getContent();
+			if (aOuterContent && (aOuterContent.length > 1) && aOuterContent[1]) {
+				aInnerContent = aOuterContent[1].getContent();
+				if (aInnerContent) {
+					aInnerContent.some(function(oItem) {
+						if (oItem.getVisible()) {
+							bVisible = true;
+						}
+
+						return bVisible;
+					});
+				}
+			}
+
+			if (!bVisible) {
+				oContainer.setVisible(bVisible);
+			}
+		}
+
+		return bVisible;
+	};
+
+	FilterBar.prototype._calculateRequiredWidthAndResetToInitialWidth = function(aContainer, bButtonsVisible) {
+		var i, nContainerWidth, nWidth = 0;
 
 		var aItems = this._retrieveVisibleAdvancedItems();
 
-		if (this._isPhone()) {
-			nWidth = aContainer[0].$().width() + 16; // buttons
-		} else {
-			nWidth = aContainer[aContainer.length - 1].$().width() + 16; // buttons
+		if (bButtonsVisible) {
+			if (this._isPhone()) {
+				nWidth = aContainer[0].$().width() + 16; // buttons
+			} else {
+				nWidth = aContainer[aContainer.length - 1].$().width() + 16; // buttons
+			}
 		}
 
 		if (this._oBasicSearchFieldContainer && this._oBasicSearchFieldContainer.$()) {
@@ -5488,15 +6553,9 @@ sap.ui.define([
 							nContainerWidth = aItems[i].filterWidth;
 						}
 					} else {
-						if (aItems[i].filterItem && aItems[i].filterItem._iSpan) {
-							sWidth = this._calculateISpanWidth(aItems[i].filterItem._iSpan);
-							oContainer.$().width(sWidth);
-						} else {
-							oContainer.$().width(this.getFilterContainerWidth());
-						}
 
+						oContainer.$().width(this.getFilterContainerWidth());
 						nContainerWidth = oContainer.$().width();
-
 						aItems[i].filterWidth = nContainerWidth;
 					}
 
@@ -5517,29 +6576,22 @@ sap.ui.define([
 		return nWidth;
 	};
 
-	FilterBar.prototype._calculateISpanWidth = function(nISpan) {
-		var iWidth = parseInt(this.getFilterContainerWidth(), 10), sUnit = this.getFilterContainerWidth().replace("" + iWidth, "");
-		iWidth = iWidth * nISpan + 1; // current assumption: rem
-		return (iWidth + sUnit);
-	};
-
-	FilterBar.prototype._increaseFilterWidth = function(aContainer, nDelta, nWidthContainer) {
+	FilterBar.prototype._increaseFilterWidth = function(aContainer, nDelta, nWidthContainer, bButtonsVisible) {
 
 		var nFilterWidth, startIdx = 0, endIdx = aContainer.length - 1;
 
-		if (this._isPhone()) {
-			startIdx++;
-			endIdx++;
+		if (bButtonsVisible) {
+			if (this._isPhone()) {
+				startIdx++;
+			} else {
+				endIdx--;
+			}
 		}
 
-		for (var i = startIdx; i < endIdx; i++) {
+		for (var i = startIdx; i <= endIdx; i++) {
 			nFilterWidth = aContainer[i].$().width() + nDelta;
 			aContainer[i].$().width(nFilterWidth);
 		}
-	};
-
-	FilterBar.prototype.onAfterRendering = function(oEvent) {
-		this._fHandleResize(oEvent);
 	};
 
 	FilterBar.prototype._destroyLazyFilterControl = function() {
@@ -5619,25 +6671,22 @@ sap.ui.define([
 			this._oVariantManagement.detachSave(this._variantSave, this);
 			this._oVariantManagement.detachAfterSave(this._afterVariantSave, this);
 
-			// VM was created by the smart filterbar and has a custom-data persistency key
+			// VM was created by the smart filterbar without a toolbar and has a custom-data persistency key
 			// BCP: 1680052358
-			if (this._bHostedVariantManagement && this._oVariantManagement.isPageVariant() && !this.getUseToolbar()) {
+			// Destroy the VM whenever it was created, but not added to the UI-tree
+			// BCP: 1670396582
+			if ((!this.getUseToolbar() || this.getAdvancedMode()) && !this._oVariantManagement.getDomRef()) {
 				this._oVariantManagement.destroy();
 			}
 		}
 	};
 
-	/**
-	 * Destroys the control.
-	 * 
-	 * @public
-	 */
 	FilterBar.prototype.destroy = function() {
 
 		// unregister eventhandler for resizing
-		jQuery(window).off("resize." + this.getId());
-		// sap.ui.core.ResizeHandler.deregister(this._hResizeListener);
-		// this._hResizeListener = null;
+		// jQuery(window).off("resize." + this.getId());
+		sap.ui.core.ResizeHandler.deregister(this._hResizeListener);
+		this._hResizeListener = null;
 
 		this._unregisterVariantManagement();
 
@@ -5653,6 +6702,11 @@ sap.ui.define([
 		if (this._oFilterDialog) {
 			this._oFilterDialog.destroy();
 			this._oFilterDialog = null;
+		}
+
+		if (this.oModel) {
+			this.oModel.destroy();
+			this.oModel = null;
 		}
 
 		this._aFields = null;
@@ -5683,7 +6737,101 @@ sap.ui.define([
 
 		this._oBasicSearchField = null;
 		this._oBasicSearchFieldContainer = null;
+
+		this._oButtonsVLayout = null;
 	};
+
+	// Hide the follwing sap.ui.layout.Grid functionality in jDoc
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#setDefaultIndent
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#getDefaultIndent
+	 * @private
+	 */
+
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#setDefaultSpan
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#getDefaultSpan
+	 * @private
+	 */
+
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#setHSpacing
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#getHSpacing
+	 * @private
+	 */
+
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#setVSpacing
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#getVSpacing
+	 * @private
+	 */
+
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#setPosition
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#getPosition
+	 * @private
+	 */
+
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#setContainerQuery
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#getContainerQuery
+	 * @private
+	 */
+
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#addContent
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#insertContent
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#removeContent
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#removeAllContent
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#destroyContent
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#getContent
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#indexOfContent
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#insertFilterItem
+	 * @private
+	 */
+	/**
+	 * @name sap.ui.comp.filterbar.FilterBar#insertFilterGroupItem
+	 * @private
+	 */
 
 	return FilterBar;
 

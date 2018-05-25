@@ -7,24 +7,24 @@
     <deprecation since="1.38">Tf you want to achieve a similar behavior, use a &lt;code&gt;sap.m.Popover&lt;/code&gt; control and open it next to your control.</deprecation>
     <baseType>sap.ui.core/TooltipBase</baseType>
     <properties>
-        <property name="title" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="title">
             <documentation>Tool tip title to be displayed in the header.</documentation>
         </property>
-        <property name="imageSrc" type="sap.ui.core/URI" group="Misc">
+        <property group="Misc" type="sap.ui.core/URI" name="imageSrc">
             <documentation>If RichTooltip contains an image, this property is used to define the source path.</documentation>
         </property>
-        <property name="valueStateText" type="sap.ui.core/string" group="Misc" since="1.11.1">
+        <property since="1.11.1" group="Misc" type="sap.ui.core/string" name="valueStateText">
             <documentation>This property is an individual text that will be used instead of the default ValueState text</documentation>
         </property>
-        <property name="imageAltText" type="sap.ui.core/string" group="Misc" since="1.11.1">
+        <property since="1.11.1" group="Misc" type="sap.ui.core/string" name="imageAltText">
             <documentation>This is the alt text for the image</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="formattedText" type="sap.ui.commons/FormattedTextView" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.commons/FormattedTextView" name="formattedText">
             <documentation>FormattedTextView control used in the content area to enable HTML-text within the content</documentation>
         </aggregation>
-        <aggregation name="individualStateText" type="sap.ui.commons/FormattedTextView" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.commons/FormattedTextView" name="individualStateText">
             <documentation>Value State Text that can be specified individually.</documentation>
         </aggregation>
     </aggregations>

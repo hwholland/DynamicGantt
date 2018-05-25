@@ -1,5 +1,7 @@
 /*
-* ! @copyright@
+* ! SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
 */
 sap.ui.define(["jquery.sap.global","sap/ui/core/mvc/Controller","sap/suite/ui/commons/TimelineItem","sap/m/MessageBox",
                "sap/collaboration/components/utils/LanguageBundle","sap/collaboration/components/utils/DateUtil",
@@ -728,13 +730,14 @@ sap.ui.define(["jquery.sap.global","sap/ui/core/mvc/Controller","sap/suite/ui/co
 		 * @memberOf sap.collaboration.components.feed.views.GroupFeed
 		 */
 		onUserNameClicked: function(oControlEvent){
-			var oTimelineEntry = oControlEvent.getSource();
-			var oTimelineEntryModel = oTimelineEntry.getModel(); 
-			var oSettings = {
-					openingControl: oTimelineEntry._userNameLink,
-					memberId: oTimelineEntryModel.getProperty("/Creator/Email")
-			};
-			this._oSocialProfile.setSettings(oSettings);
+			var oUserNameLink = oControlEvent.getParameter("uiElement");
+			var oTimelineEntryModel = oControlEvent.getSource().getModel();
+			var sMemberId = oTimelineEntryModel.getProperty("/Creator/Email");
+			
+			this._oSocialProfile.setSettings({
+				openingControl: oUserNameLink,
+				memberId: sMemberId
+			});
 			this._oSocialProfile.open();
 		},
 		/**

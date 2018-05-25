@@ -3,7 +3,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  *
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 @import "../../../../../../Base/baseLib/baseTheme/base.less"; /* ORIGINAL IMPORT PATH: "../../../../../sap/ui/core/themes/base/base.less" */
@@ -395,22 +395,33 @@ li.sapMLIBNoFlex.sapCaUiCLI.sapMLIB > .sapMLIBContent > div.sapMLIBContentNF {
 /* ===================================================== */
 
 /* remove the inner content padding */
+.sapUiSizeCompact .sapCaUiCCD.sapMDialog.sapUiPopupWithPadding .sapMDialogScrollCont,
 .sapCaUiCCD.sapMDialog.sapUiPopupWithPadding .sapMDialogScrollCont {
     padding:0;
 }
 
 /* remove the default background on the table subrows */
+.sapUiSizeCompact .sapCaUiCCD .sapMListTblSubRow,
 .sapCaUiCCD .sapMListTblSubRow {
     background:none;
 }
 
+.sapUiSizeCompact .sapCaUiCustomerContextListItem,
 .sapCaUiCustomerContextListItem {
     padding: .875rem .5rem;
 }
 
+.sapUiSizeCompact .sapCaUiCustomerContextListItem  {
+    padding-left: 1rem;
+    vertical-align: top;
+    height: 5rem;
+}
+
+.sapUiSizeCompact .sapCaUiCustomerContextListItem .sapMObjectIdentifierText,
 .sapCaUiCustomerContextListItem .sapMObjectIdentifierText {
     overflow: hidden;
 }
+
 /* END "CustomerContext.css" */
 
 /* START "DatePicker.css" */
@@ -1241,13 +1252,6 @@ html[data-sap-ui-browser="ie8"] .sapCaUiIpeLink > .sapCaUiIpeCont{
     border: none;
 }
 
-.sapCaUiIpeEBtn > .sapMBtnContent > .sapUiIcon {
-    font-size: 0.875rem;
-    line-height: 1.675rem;
-    width: 1.875rem;
-}
-
-
 .sapCaUiIpe > .sapMBtn {
     position: absolute;
     top: 0;
@@ -1255,11 +1259,6 @@ html[data-sap-ui-browser="ie8"] .sapCaUiIpeLink > .sapCaUiIpeCont{
     height: 2.5rem;
 
 }
-
-.sapCaUiIpe > .sapMBtn > .sapMBtnContent > .sapUiIcon {
-    line-height: 2.375rem;
-}
-
 
 /*
 TEMPORARY, WAIT FOR UI5
@@ -1271,6 +1270,7 @@ TEMPORARY, WAIT FOR UI5
 .sapUiFormEdit .sapCaUiIpeEdit {
     vertical-align: middle;
 }
+
 /* END "InPlaceEdit.css" */
 
 /* START "Notes.css" */

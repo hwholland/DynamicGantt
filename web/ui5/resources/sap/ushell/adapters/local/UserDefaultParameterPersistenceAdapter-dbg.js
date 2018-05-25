@@ -1,20 +1,18 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's UserDefaultParameterPersistence adapter for the local
  *               platform.
  *               TODO will be replaced by true persistence within this SP!
  *               This adapter delegates to the Personalization Adapter
  *
- * @version
- * 1.38.26
+ * @version 1.54.3
  */
-(function () {
-    "use strict";
+sap.ui.define(['sap/ushell/services/Personalization'],
+	function(Personalization) {
+	"use strict";
+
     /*jslint nomen: true*/
     /*global jQuery, sap, setTimeout */
-    jQuery.sap.declare("sap.ushell.adapters.local.UserDefaultParameterPersistenceAdapter");
-    jQuery.sap.require("sap.ushell.services.Personalization");
-
     // --- Adapter ---
     /**
      * @class The Unified Shell's UserDefaultParameterPersistence adapter for the local platform.
@@ -33,11 +31,11 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.adapters.local.UserDefaultParameterPersistenceAdapter = function (oSystem, sParameters, oConfig) {
+    var UserDefaultParameterPersistenceAdapter = function (oSystem, sParameters, oConfig) {
         this._oConfig = oConfig && oConfig.config;
     };
 
-    sap.ushell.adapters.local.UserDefaultParameterPersistenceAdapter.prototype._getPersonalizationService = function () {
+    UserDefaultParameterPersistenceAdapter.prototype._getPersonalizationService = function () {
         return sap.ushell.Container.getService("Personalization");
     };
 
@@ -59,14 +57,15 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.adapters.local.UserDefaultParameterPersistenceAdapter.prototype.saveParameterValue = function (sParameterName, oValueObject) {
+    UserDefaultParameterPersistenceAdapter.prototype.saveParameterValue = function (sParameterName, oValueObject) {
         var oDeferred = new jQuery.Deferred();
         if (!(typeof sParameterName === "string" && sParameterName.length <= 40 && /^[A-Za-z0-9.-_]+$/.exec(sParameterName))) {
             jQuery.sap.log.error("Illegal Parameter Key, less than 40 characters and [A-Za-z0-9.-_]+ :\"" + sParameterName + "\"");
         }
         this._getUDContainer().done(function (oContainer) {
             oContainer.setItemValue(sParameterName,oValueObject);
-            oContainer.save().done(oDeferred.resolve.bind(oDeferred)).fail(oDeferred.reject.bind(oDeferred));
+            // saveDeferred: see BCP 1780508932
+            oContainer.saveDeferred(50).done(oDeferred.resolve.bind(oDeferred)).fail(oDeferred.reject.bind(oDeferred));
         }).fail(function (sMsg) {
             jQuery.sap.log.error(sMsg);
             oDeferred.reject(sMsg);
@@ -88,7 +87,7 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.adapters.local.UserDefaultParameterPersistenceAdapter.prototype.deleteParameter = function (sParameterName, oValueObject) {
+    UserDefaultParameterPersistenceAdapter.prototype.deleteParameter = function (sParameterName, oValueObject) {
         var oDeferred = new jQuery.Deferred();
         if (!(typeof sParameterName === "string" && sParameterName.length <= 40 && /^[A-Za-z0-9.-_]+$/.exec(sParameterName))) {
             jQuery.sap.log.error("Illegal Parameter Key, less than 40 characters and [A-Za-z0-9.-_]+ :\"" + sParameterName + "\"");
@@ -117,7 +116,7 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.adapters.local.UserDefaultParameterPersistenceAdapter.prototype.loadParameterValue = function (sParameterName) {
+    UserDefaultParameterPersistenceAdapter.prototype.loadParameterValue = function (sParameterName) {
         var oDeferred = new jQuery.Deferred();
         this._getUDContainer().done(function (oContainer) {
             var v = oContainer.getItemValue(sParameterName);
@@ -145,7 +144,7 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.adapters.local.UserDefaultParameterPersistenceAdapter.prototype.getStoredParameterNames = function () {
+    UserDefaultParameterPersistenceAdapter.prototype.getStoredParameterNames = function () {
         var oDeferred = new jQuery.Deferred();
         this._getUDContainer().done(function (oContainer) {
             var v = oContainer.getItemKeys();
@@ -167,7 +166,7 @@
      * @since 1.32.0
      * @private
      */
-    sap.ushell.adapters.local.UserDefaultParameterPersistenceAdapter.prototype._getUDContainer = function() {
+    UserDefaultParameterPersistenceAdapter.prototype._getUDContainer = function() {
         var oPersonalizationService = this._getPersonalizationService();
         if (this._oPromise) {
             return this._oPromise;
@@ -175,4 +174,8 @@
         this._oPromise = oPersonalizationService.getContainer("sap.ushell.UserDefaultParameter", {keyCategory: oPersonalizationService.constants.keyCategory.FIXED_KEY, writeFrequency: oPersonalizationService.constants.writeFrequency.LOW, clientStorageAllowed: true});
         return this._oPromise;
     };
-}());
+
+
+	return UserDefaultParameterPersistenceAdapter;
+
+}, /* bExport= */ true);

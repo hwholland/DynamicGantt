@@ -1,26 +1,26 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's AppLifeCycle service enables plug-ins to enquire the which
  *    application is currently displayed and listen to life cycle events.
  *
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+    "sap/ui/base/EventProvider"
+], function (EventProvider) {
     "use strict";
     /*global jQuery*/
 
     var S_APP_LOADED_EVENT = "appLoaded";
-
-    jQuery.sap.declare("sap.ushell.services.AppLifeCycle");
-    jQuery.sap.require("sap.ui.base.EventProvider");
-
 
     /**
      * The Unified Shell's AppLifeCycle service
      * This method MUST be called by the Unified Shell's container only, others
      * MUST call <code>sap.ushell.Container.getService("AppLifeCycle")</code>.
      * Constructs a new instance of the AppLifeCycle service.
+     *
+     * @name sap.ushell.services.AppLifeCycle
      *
      * @param {object} oAdapter
      *   The service adapter for the AppLifeCycle service,
@@ -37,7 +37,7 @@
      * @since 1.38
      * @public
      */
-    sap.ushell.services.AppLifeCycle = function (oAdapter, oContainerInterface, sParameter, oConfig) {
+    function AppLifeCycle(oAdapter, oContainerInterface, sParameter, oConfig) {
 
         var oCurrentApplication,
             oEventProvider,
@@ -55,6 +55,7 @@
          *
          * @since 1.38
          * @public
+         * @alias sap.ushell.services.AppLifeCycle#getCurrentApplication
          */
         this.getCurrentApplication = function () {
             return oCurrentApplication;
@@ -74,6 +75,7 @@
          *     handler function).
          * @since 1.38
          * @public
+         * @alias sap.ushell.services.AppLifeCycle#attachAppLoaded
          */
         this.attachAppLoaded = function (oData, fnFunction, oListener) {
             oEventProvider.attachEvent(S_APP_LOADED_EVENT, oData, fnFunction, oListener);
@@ -88,6 +90,7 @@
          *     The object that wanted to be notified when the event occurred
          * @since 1.38
          * @public
+         * @alias sap.ushell.services.AppLifeCycle#detachAppLoaded
          */
         this.detachAppLoaded = function (fnFunction, oListener) {
             oEventProvider.detachEvent(S_APP_LOADED_EVENT, fnFunction, oListener);
@@ -95,16 +98,16 @@
 
 
         // CONSTRUCTOR CODE //
-        oEventProvider = new sap.ui.base.EventProvider();
+        oEventProvider = new EventProvider();
 
         // only continue executing the constructor if the view port container exists in expected format
         oViewPortContainer = sap.ui.getCore().byId("viewPortContainer");
         if (!oViewPortContainer || typeof oViewPortContainer.attachAfterNavigate !== "function") {
             jQuery.sap.log.error(
-                    "Error during instantiation of AppLifeCycle service",
-                    "Could not attach to afterNavigate event",
-                    "sap.ushell.services.AppLifeCycle"
-                );
+                "Error during instantiation of AppLifeCycle service",
+                "Could not attach to afterNavigate event",
+                "sap.ushell.services.AppLifeCycle"
+            );
             return;
         }
 
@@ -151,7 +154,9 @@
                 oEventProvider.fireEvent(S_APP_LOADED_EVENT, oCurrentApplication);
             }, 0);
         });
-    };
+    }
 
-    sap.ushell.services.AppLifeCycle.hasNoAdapter = true;
-}());
+    AppLifeCycle.hasNoAdapter = true;
+    return AppLifeCycle;
+
+}, true/* bExport */);

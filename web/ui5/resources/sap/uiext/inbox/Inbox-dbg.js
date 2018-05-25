@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * A comprehensive UI design approach with graphical and functional elements for search tasks, filter tasks, and take actions on the tasks
  * ("Inbox Pattern").
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -76,14 +76,42 @@ sap.ui.core.Control.extend("sap.uiext.inbox.Inbox", { metadata : {
 	],
 	library : "sap.uiext.inbox",
 	properties : {
+
+		/**
+		 * set the theme URL parameter string to be appended to the task Execution URL. In case of a function callback set for Task Execution PopUp, this string will not be appended.
+		 */
 		"taskExecutionURLThemeValue" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * set this as true for oData Model. If set as false, the user will need to handle task Actions, search and Task Execution URL population. See function call back methods.
+		 */
 		"handleBindings" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * set this to true to enable opening of completed tasks.
+		 */
 		"openCompletedTasks" : {type : "boolean", group : "Misc", defaultValue : false}
 	},
 	events : {
+
+		/**
+		 * If handleBindings property is set to true , the control assumes an oData model is set and handles the complete logic within. In this case once the oData request is complete, this event is fired with additional parameters.
+		 */
 		"oDataRequestCompleted" : {}, 
+
+		/**
+		 * this event is fires to handle refresh Action, when the handleBindings property is set to false.
+		 */
 		"refresh" : {}, 
+
+		/**
+		 * this event is fires to handle task Actions - Claim, Release, when the handleBindings property is set to false.
+		 */
 		"taskAction" : {}, 
+
+		/**
+		 * This event is fired when table row selection is changed in the list view of Inbox control
+		 */
 		"taskSelectionChange" : {}
 	}
 }});
@@ -612,7 +640,60 @@ sap.uiext.inbox.Inbox.M_EVENTS = {'oDataRequestCompleted':'oDataRequestCompleted
 // Start of sap/uiext/inbox/Inbox.js
 /*!
  * @copyright@
+ */
+
+/**
+ * Constructor for a new Inbox.
+ * 
+ * Accepts an object literal <code>mSettings</code> that defines initial 
+ * property values, aggregated and associated objects as well as event handlers. 
+ * 
+ * If the name of a setting is ambiguous (e.g. a property has the same name as an event), 
+ * then the framework assumes property, aggregation, association, event in that order. 
+ * To override this automatic resolution, one of the prefixes "aggregation:", "association:" 
+ * or "event:" can be added to the name of the setting (such a prefixed name must be
+ * enclosed in single or double quotes).
+ *
+ * The supported settings are:
+ * <ul>
+ * <li>Properties
+ * <ul>
+ * <li>{@link #getTaskExecutionURLThemeValue taskExecutionURLThemeValue} : string</li>
+ * <li>{@link #getHandleBindings handleBindings} : boolean (default: true)</li>
+ * <li>{@link #getOpenCompletedTasks openCompletedTasks} : boolean (default: false)</li></ul>
+ * </li>
+ * <li>Aggregations
+ * <ul></ul>
+ * </li>
+ * <li>Associations
+ * <ul></ul>
+ * </li>
+ * <li>Events
+ * <ul>
+ * <li>{@link sap.uiext.inbox.Inbox#event:oDataRequestCompleted oDataRequestCompleted} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
+ * <li>{@link sap.uiext.inbox.Inbox#event:refresh refresh} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
+ * <li>{@link sap.uiext.inbox.Inbox#event:taskAction taskAction} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
+ * <li>{@link sap.uiext.inbox.Inbox#event:taskSelectionChange taskSelectionChange} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li></ul>
+ * </li>
+ * </ul> 
+
+ *
+ * @param {string} [sId] id for the new control, generated automatically if no id is given 
+ * @param {object} [mSettings] initial settings for the new control
+ *
+ * @class
+ * A comprehensive UI design approach with graphical and functional elements for search tasks, filter tasks, and take actions on the tasks
+ * ("Inbox Pattern").
+ * @extends sap.ui.core.Control
+ * @version 1.41.0-SNAPSHOT
+ *
+ * @constructor
+ * @public
+ * @experimental Since version 1.5.2. 
+ * API is not yet finished and might change completely
  * @deprecated Since version 1.38.0
+ * @name sap.uiext.inbox.Inbox
+ * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
  */
 
 jQuery.sap.require("sap.uiext.inbox.InboxConstants");
@@ -1332,6 +1413,7 @@ sap.uiext.inbox.Inbox.prototype.populateViews = function() {
         var oTable = new sap.ui.table.Table(that.getId() + '--' + "listViewTable",{
         	//navigationMode : sap.ui.table.NavigationMode.Paginator
         });
+         
     oTable.attachFilter( function(oEvent) {
     	oEvent.preventDefault(); // preventing oData call for filtering
     	var oColumn = oEvent.getParameter("column");
@@ -1421,6 +1503,23 @@ sap.uiext.inbox.Inbox.prototype.populateViews = function() {
         	});
         oTable.clearSelection();
     }
+	if (jQuery.sap.getUriParameters().get("inbox-width-limit")){
+		if (!oTable.__iTableInboxSizeLimit) {
+
+			setTimeout(function() {
+				oTable.__iTableInboxSizeLimit = oTable.$().width();
+
+				oTable._ibx_orig_afterrendering = oTable.onAfterRendering;
+				oTable.onAfterRendering = function() {
+					this.$().css("max-width", this.__iTableInboxSizeLimit + "px");
+
+					return this._ibx_orig_afterrendering.apply(this, arguments);
+				}
+				oTable.invalidate();
+			}, 1000);
+			
+		}
+	}
     verticalLayout.addContent(oTable);
     verticalLayout.addContent(that.createTableRowSettingsContent());
    //Creating but will be hidden.

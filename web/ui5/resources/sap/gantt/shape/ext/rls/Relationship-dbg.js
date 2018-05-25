@@ -22,7 +22,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -65,6 +65,10 @@ sap.ui.define([
 				*/
 				fromObjectPath: {type: "string"},
 				/**
+				* Expand row index of predecessor element
+				*/
+				fromExpandRowIndex: {type: "int", defaultValue: 0},
+				/**
 				* Shape of predecessor element
 				*/
 				fromShapeId: {type: "string"},
@@ -76,6 +80,10 @@ sap.ui.define([
 				* Path of successor element
 				*/
 				toObjectPath: {type: "string"},
+				/**
+				* Expand row index of successor element
+				*/
+				toExpandRowIndex: {type: "int", defaultValue: 0},
 				/**
 				* Shape of successor element
 				*/
@@ -100,11 +108,11 @@ sap.ui.define([
 				/**
 				* Minimum length for relationship lines 
 				*/
-				minXLen: {type: "number", defaultValue: 10},
+				minXLen: {type: "float", defaultValue: 10},
 				/**
 				* Size of the arrow
 				*/
-				arrowSideLength: {type: "number", defaultValue: 5}
+				arrowSideLength: {type: "float", defaultValue: 5}
 
 			},
 			aggregations: {
@@ -138,6 +146,15 @@ sap.ui.define([
 	Relationship.prototype.getFromObjectPath = function (oData) {
 		return this._configFirst("fromObjectPath", oData);
 	};
+	/**
+     * Gets the expand row index of predecessor object
+     * @returns {int} Expand row index of predecessor element
+     * @param {object} oData Raw data object
+	 * @public
+	 */
+	Relationship.prototype.getFromExpandRowIndex = function (oData) {
+		return oData.hasOwnProperty("fromExpandRowIndex") ? this._configFirst("fromExpandRowIndex", oData) : this.getProperty("fromExpandRowIndex");
+	};
     /**
      * Gets the shape ID of the predecessor element
      * @returns {string} Shape ID of the predecessor element
@@ -164,6 +181,15 @@ sap.ui.define([
      */
 	Relationship.prototype.getToObjectPath = function (oData) {
 		return this._configFirst("toObjectPath", oData);
+	};
+	/**
+     * Gets the expand row index of successor object
+     * @returns {int} Expand row index of successor element
+     * @param {object} oData Raw data object
+	 * @public
+	 */
+	Relationship.prototype.getToExpandRowIndex = function (oData) {
+		return oData.hasOwnProperty("toExpandRowIndex") ? this._configFirst("toExpandRowIndex", oData) : this.getProperty("toExpandRowIndex");
 	};
     /**
      * Gets the shape ID of the successor element
@@ -221,7 +247,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * @returns {string} a string of commands for the "d" attribute of <path> element.
+	 * @returns {string} a string of commands for the "d" attribute of <path> element or null if the generated d is invalid according to the given data.
 	 * @param {object} oData Raw data object
 	 * @param {object} oRowInfo Information about the shape object. The object is like
 	 *                {
@@ -249,11 +275,14 @@ sap.ui.define([
 		var lShapeforTypeFS = this.getLShapeforTypeFS(oData, oRowInfo);
 		
 		// To get the coordinates of the from shape (starting point) and to shape (ending point).
-		var sId = this.mChartInstance._getIdByShapeId(this.getFromShapeId(oData, oRowInfo.from.objectInfo));
-		var oPoints1 = sap.ui.getCore().byId(sId).getRLSAnchors(oRowInfo.from.shapeRawData, oRowInfo.from.objectInfo);
+		var sFromShapeKey = this.getFromShapeId(oData, oRowInfo.from.objectInfo);
+		var oFromShapeInstance = this.mChartInstance.getShapeInstance(sFromShapeKey);
+		var oPoints1 = oFromShapeInstance.getRLSAnchors(oRowInfo.from.shapeRawData, oRowInfo.from.objectInfo);
+
 		// For some shapes that wants to make the point of junction be on the top or the bottom of the shape (e.g. diamond), there are some special treatments based on lShapeforTypeFS.
-		sId = this.mChartInstance._getIdByShapeId(this.getToShapeId(oData, oRowInfo.from.objectInfo));
-		var oPoints2 = sap.ui.getCore().byId(sId).getRLSAnchors(oRowInfo.to.shapeRawData, oRowInfo.to.objectInfo);
+		var sToShapeKey = this.getToShapeId(oData, oRowInfo.from.objectInfo);
+		var oToShapeInstance = this.mChartInstance.getShapeInstance(sToShapeKey);
+		var oPoints2 = oToShapeInstance.getRLSAnchors(oRowInfo.to.shapeRawData, oRowInfo.to.objectInfo);
 		
 		if (this._isRTL) {
 			//For RTL mode, shift the startPoint and endPoint for axis X and Y
@@ -331,7 +360,12 @@ sap.ui.define([
 			}
 		}
 		dStr = dStr.concat("Z");
-		return dStr;
+		if(this.isValid(dStr)) {
+			return dStr;
+		} else {
+			jQuery.sap.log.warning("Relationship shape generated invalid d: " + dStr + " from the given data: " + oData);
+			return null;
+		}
 };
 
 	/**

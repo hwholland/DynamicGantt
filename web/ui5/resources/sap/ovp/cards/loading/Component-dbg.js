@@ -1,42 +1,37 @@
-(function () {
-    "use strict";
-    /*global jQuery, sap */
+sap.ui.define(["sap/ovp/cards/generic/Component", "sap/ovp/cards/loading/State"],
 
-    jQuery.sap.declare("sap.ovp.cards.loading.Component");
-    jQuery.sap.require("sap.ovp.cards.generic.Component");
+    function (CardComponent, LoadingState) {
+        "use strict";
 
-    sap.ovp.cards.loading.State = {
-        ERROR: "Error",
-        LOADING: "Loading"
-    };
-
-    sap.ovp.cards.generic.Component.extend("sap.ovp.cards.loading.Component", {
-        // use inline declaration instead of component.json to save 1 round trip
-        metadata: {
-            properties: {
-                "footerFragment": {
-                    "type": "string",
-                    "defaultValue": "sap.ovp.cards.loading.LoadingFooter"
+        var oLoadingComponent = CardComponent.extend("sap.ovp.cards.loading.Component", {
+            // use inline declaration instead of component.json to save 1 round trip
+            metadata: {
+                properties: {
+                    "footerFragment": {
+                        "type": "string",
+                        "defaultValue": "sap.ovp.cards.loading.LoadingFooter"
+                    },
+                    "state": {
+                        "type": "string",
+                        "defaultValue": LoadingState.LOADING
+                    }
                 },
-                "state": {
-                    "type": "string",
-                    "defaultValue": sap.ovp.cards.loading.State.LOADING
-                }
-            },
 
-            version: "1.38.10",
+                version: "1.54.3",
 
-            library: "sap.ovp",
-            customizing: {
-                "sap.ui.controllerExtensions": {
-                    "sap.ovp.cards.generic.Card": {
-                        controllerName: "sap.ovp.cards.loading.Loading"
+                library: "sap.ovp",
+                customizing: {
+                    "sap.ui.controllerExtensions": {
+                        "sap.ovp.cards.generic.Card": {
+                            controllerName: "sap.ovp.cards.loading.Loading"
+                        }
                     }
                 }
+
             }
 
-        }
+        });
 
+        return oLoadingComponent;
     });
-})();
 

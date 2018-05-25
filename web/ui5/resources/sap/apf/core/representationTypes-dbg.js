@@ -3,16 +3,16 @@
  * 
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
-jQuery.sap.declare("sap.apf.core.representationTypes");
-jQuery.sap.require("sap.apf.core.constants");
-(function() {
+sap.ui.define([
+	"sap/apf/core/constants"
+], function(constants){
 	'use strict';
 	/**
 	 * @memberOf sap.apf.core
 	 * @description Default configuration of representation types. Can be overwritten in the analytical configuration file.
 	 * @returns {object[]} representation types array with configuration objects for representation types
 	 */
-	sap.apf.core.representationTypes = function() {
+	var representationTypes = function() {
 		return [ {
 			"type" : "representationType",
 			"id" : "ColumnChart",
@@ -26,20 +26,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -56,20 +59,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -86,20 +92,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -116,24 +125,28 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS2,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS2,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -141,7 +154,7 @@ jQuery.sap.require("sap.apf.core.constants");
 			"type" : "representationType",
 			"id" : "LineChartWithTimeAxis",
 			"constructor" : "sap.apf.ui.representations.lineChartWithTimeAxis",
-			"picture" : "sap-icon://line-charts",
+			"picture" : "sap-icon://line-chart-time-axis",
 			"label" : {
 				"type" : "label",
 				"kind" : "text",
@@ -150,20 +163,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "1"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "1"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -180,16 +196,46 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.SECTORCOLOR,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.SECTORCOLOR,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.SECTORSIZE,
-						"min" : "1",
-						"max" : "1"
+						"kind" : constants.representationMetadata.kind.SECTORSIZE,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "1"
+					} ]
+				}
+			}
+		}, {
+			"type" : "representationType",
+			"id" : "DonutChart",
+			"constructor" : "sap.apf.ui.representations.donutChart",
+			"picture" : "sap-icon://donut-chart",
+			"label" : {
+				"type" : "label",
+				"kind" : "text",
+				"key" : "DonutChart"
+			},
+			"metadata" : {
+				"dimensions" : {
+					"supportedKinds" : [ {
+						"kind" : constants.representationMetadata.kind.SECTORCOLOR,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
+					} ]
+				},
+				"measures" : {
+					"supportedKinds" : [ {
+						"kind" : constants.representationMetadata.kind.SECTORSIZE,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -206,24 +252,28 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.REGIONCOLOR,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.REGIONCOLOR,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.REGIONSHAPE,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.REGIONSHAPE,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "1"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "1"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "1"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "1"
 					} ]
 				},
 				"sortable" : false
@@ -241,28 +291,33 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.REGIONCOLOR,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.REGIONCOLOR,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.REGIONSHAPE,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.REGIONSHAPE,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "1"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "1"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "1"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "1"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.BUBBLEWIDTH,
-						"min" : "1",
-						"max" : "1"
+						"kind" : constants.representationMetadata.kind.BUBBLEWIDTH,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "1"
 					} ]
 				},
 				"sortable" : false
@@ -280,20 +335,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -310,20 +368,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -340,20 +401,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -370,20 +434,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.LEGEND,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.LEGEND,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.YAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.YAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -400,20 +467,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			"metadata" : {
 				"dimensions" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
 					}, {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.XAXIS2,
-						"min" : "0",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.XAXIS2,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				},
 				"measures" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.SECTORCOLOR,
-						"min" : "1",
-						"max" : "1"
+						"kind" : constants.representationMetadata.kind.SECTORCOLOR,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "1"
 					} ]
 				}
 			}
@@ -425,14 +495,43 @@ jQuery.sap.require("sap.apf.core.constants");
 			"label" : {
 				"type" : "label",
 				"kind" : "text",
-				"key" : "TableRepresentation"
+				"key" : "tableView"
 			},
 			"metadata" : {
 				"properties" : {
 					"supportedKinds" : [ {
-						"kind" : sap.apf.core.constants.representationMetadata.kind.COLUMN,
-						"min" : "1",
-						"max" : "*"
+						"kind" : constants.representationMetadata.kind.COLUMN,
+						"defaultCount" : 1,
+						"max" : "*",
+						"min" : "1"
+					} ]
+				}
+			}
+		}, {
+			"type" : "representationType",
+			"id" : "TreeTableRepresentation",
+			"constructor" : "sap.apf.ui.representations.treeTable",
+			"picture" : "sap-icon://tree",
+			"label" : {
+				"type" : "label",
+				"kind" : "text",
+				"key" : "treeTable"
+			},
+			"metadata" : {
+				"hierarchicalColumn" : {
+					"supportedKinds" : [ {
+						"kind" : constants.representationMetadata.kind.HIERARCHIALCOLUMN,
+						"defaultCount" : 1,
+						"max" : "1",
+						"min" : "0"
+					} ]
+				},
+				"properties" : {
+					"supportedKinds" : [ {
+						"kind" : constants.representationMetadata.kind.COLUMN,
+						"defaultCount" : 0,
+						"max" : "*",
+						"min" : "0"
 					} ]
 				}
 			}
@@ -478,4 +577,5 @@ jQuery.sap.require("sap.apf.core.constants");
 			}
 		} ];
 	};
-}());
+	return representationTypes;
+}, true /* GLOBAL_EXPORT*/);

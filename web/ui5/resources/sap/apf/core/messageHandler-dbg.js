@@ -1,28 +1,32 @@
 /*!
  * SAP APF Analysis Path Framework
  * 
- * (c) Copyright 2012-2014 SAP AG. All rights reserved
+ * (c) Copyright 2012-2018 SAP AG. All rights reserved
  */
 
-/** 
+/**
  * @class MessageHandler of APF
  */
-(function() {
+sap.ui.define([
+	'sap/apf/core/constants',
+	'sap/apf/utils/utils',
+	'sap/apf/core/messageObject',
+	'sap/apf/utils/hashtable',
+	'sap/apf/core/messageDefinition' // unused in this module but guarantees that it is loaded when MessageHandler is loaded.
+], function(constants, utils, MessageObject, HashTable) {
 	'use strict';
 
-	jQuery.sap.declare("sap.apf.core.messageHandler");
-	jQuery.sap.require("sap.apf.core.messageObject");
-	jQuery.sap.require("sap.apf.core.messageDefinition");
-	jQuery.sap.require("sap.apf.utils.hashtable");
-	jQuery.sap.require("sap.apf.core.constants");
-	
-	sap.apf.core.MessageHandler = function(bLogOnCreate) {
+	/*BEGIN_COMPATIBILITY*/
+	HashTable = HashTable || sap.apf.utils.Hashtable;
+	/*END_COMPATIBILITY*/
+
+	function MessageHandler(bLogOnCreate) {
 		// phases of execution
 		var lifeTimePhases = {
-				initial : 0,
-				startup : 1,
-				running : 2,
-				shutdown : 3
+			initial: 0,
+			startup: 1,
+			running: 2,
+			shutdown: 3
 		};
 
 		// Private Vars
@@ -32,17 +36,17 @@
 		var nCurrentLogMessageNumber = 0;
 		var idRegistry;
 		var fnMessageCallback;
-		var fnApplicationMessageCallback = function() {
-		};
+		var callbackForTriggeringFatal;
 		var bOnErrorHandling = false;
-		var bDoNotFurtherProcessException = false;
+		var isInMessageCallbackProcessing = false;
+		var isInTriggerFatalProcessing = false;
 		var bDuringLogWriting = false;
 		var bHintForFirefoxErrorIsThrown = false;
 		var sUniqueErrorId = "";
 		var oDefaultMessageConfiguration = {
-			code : sap.apf.core.constants.message.code.errorUnknown,
-			severity : sap.apf.core.constants.message.severity.error,
-			rawText : "Unknown Error occurred"
+			code: constants.message.code.errorUnknown,
+			severity: constants.message.severity.error,
+			rawText: "Unknown Error occurred"
 		};
 		var lifeTimePhase = lifeTimePhases.initial;
 		var aCollectedMessageObjects = [];
@@ -69,7 +73,7 @@
 			lifeTimePhase = lifeTimePhases.shutdown;
 		};
 		/**
-		 * @returns {boolean} flag, that indicates, whether a fatal error has been put at startup 
+		 * @returns {boolean} flag, that indicates, whether a fatal error has been put at startup
 		 */
 		this.fatalErrorOccurredAtStartup = function() {
 			var i;
@@ -77,7 +81,7 @@
 				return false;
 			}
 			for (i = 0; i < aCollectedMessageObjects.length; i++) {
-				if (aCollectedMessageObjects[i].getSeverity() === sap.apf.core.constants.message.severity.fatal) {
+				if (aCollectedMessageObjects[i].getSeverity() === constants.message.severity.fatal) {
 					return true;
 				}
 			}
@@ -85,26 +89,28 @@
 		};
 
 		/**
-		 * @description Creates a message object. The message processing is started with sap.api.putMessage, which expects as argument a message object 
+		 * @description Creates a message object. The message processing is started with sap.api.putMessage, which expects as argument a message object
 		 * of type sap.apf.core.MessageObject. So first create the message object and afterwards call sap.apf.api.putMessage with the message object as argument.
 		 * @param {object} oConfig Configuration of the message.
 		 * @param {string} oConfig.code The message is classified by its code. The code identifies an entry in the message configuration.
 		 * @param {string[]} oConfig.aParameters Additional parameters for the message. The parameters are filled into the message text, when the message
-		 * will be processed by the message handler. 
-		 * @param {object} oConfig.oCallingObject Reference of the calling object. This can be used later to visualize on the user interface, 
+		 * will be processed by the message handler.
+		 * @param {object} oConfig.oCallingObject Reference of the calling object. This can be used later to visualize on the user interface,
 		 * where the error happened, e.g. path or step.
 		 * @returns {sap.apf.core.MessageObject}
 		 */
 		this.createMessageObject = function(oConfig) {
+			var oMessageObject = new MessageObject(oConfig);
 			if (bLogOnCreate) {
-				var oMessageObject = new sap.apf.core.MessageObject(oConfig);
 				if (oMessageObject.getCode() === undefined) {
-					oMessageObject.setCode(sap.apf.core.constants.message.code.errorUnknown);
+					oMessageObject.setCode(constants.message.code.errorUnknown);
 				}
 				enrichInfoInMessageObject.bind(this)(oMessageObject);
 				logMessage(oMessageObject, 1);
+			} else if (oConfig.enrichInfoInMessageObject === true) {
+				enrichInfoInMessageObject.bind(this)(oMessageObject);
 			}
-			return new sap.apf.core.MessageObject(oConfig);
+			return oMessageObject;
 		};
 		/**
 		 * @description The handling of the window.onerror by the message handler is either switched on or off.
@@ -121,7 +127,7 @@
 			}
 		};
 		/**
-		 * @description Injection setter. Injection is optional. If not injected, putMessage doesn't retrieve the text but instead reacts with some generic message. 
+		 * @description Injection setter. Injection is optional. If not injected, putMessage doesn't retrieve the text but instead reacts with some generic message.
 		 * @param {object} textResourceHandler
 		 */
 		this.setTextResourceHandler = function(textResourceHandler) {
@@ -135,16 +141,16 @@
 		 */
 		this.loadConfig = function(aMessages, bResetRegistry) {
 			if (idRegistry === undefined || bResetRegistry) {
-				idRegistry = new sap.apf.utils.Hashtable(that);
+				idRegistry = new HashTable(that);
 			}
-			for(var i = 0; i < aMessages.length; i++) {
+			for (var i = 0; i < aMessages.length; i++) {
 				loadMessage(aMessages[i]);
 			}
 		};
 		/**
-		 * @description Sets a callback function, so that a message can be further processed. This includes the display of the message on the user interface 
+		 * @description Sets a callback function, so that a message can be further processed. This includes the display of the message on the user interface
 		 * and throwing an error to stop processing in case of errors.
-		 * @param {function} fnCallback Either a function or undefined. The callback function will be called  with the messageObject of type 
+		 * @param {function} fnCallback Either a function or undefined. The callback function will be called  with the messageObject of type
 		 * sap.apf.core.MessageObject as only parameter.
 		 * @returns {undefined}
 		 */
@@ -157,24 +163,19 @@
 			}
 		};
 		/**
-		 * @description Sets an application callback function, which allows applications to register a message callback.
-		 * @param {function} fnCallback Either a function or undefined. The callback function will be called  with the messageObject of type 
+		 * This hook informs, whether an error occurred (putMessage). Currently only used by the serialization mediator
+		 * @param {function} callback. The callback function will be invoked  with the messageObject of type
 		 * sap.apf.core.MessageObject as only parameter.
-		 * @returns {undefined}
 		 */
-		this.setApplicationMessageCallback = function(fnCallback) {
-			if (fnCallback !== undefined && typeof fnCallback === "function") {
-				fnApplicationMessageCallback = fnCallback;
+		this.setCallbackForTriggeringFatal = function(callback) {
+			if (callback !== undefined && typeof callback === "function") {
+				callbackForTriggeringFatal = callback;
 			} else {
-				fnApplicationMessageCallback = function() {
-				};
-				this.putMessage(this.createMessageObject({
-					code : "5031"
-				}));
+				callbackForTriggeringFatal = undefined;
 			}
 		};
 		/**
-		 * @description A message is passed to the message handler for further processing. This can be an information, warning or error. 
+		 * @description A message is passed to the message handler for further processing. This can be an information, warning or error.
 		 * @param {sap.apf.core.MessageObject} oMessageObject The message object shall be created by method sap.apf.api.createMessageObject.
 		 * @returns {undefined}
 		 */
@@ -184,23 +185,23 @@
 			var oMessageObjectFatal;
 
 			if (oMessageObject.getCode() === undefined) {
-				oMessageObject.setCode(sap.apf.core.constants.message.code.errorUnknown);
+				oMessageObject.setCode(constants.message.code.errorUnknown);
 			}
 			enrichInfoInMessageObject.bind(this)(oMessageObject);
-			if (oMessageObject.getSeverity() === sap.apf.core.constants.message.severity.fatal) {
+			if (oMessageObject.getSeverity() === constants.message.severity.fatal) {
 				oMessageObjectFatal = that.createMessageObject({
-					code : sap.apf.core.constants.message.code.errorExitTriggered
+					code: constants.message.code.errorExitTriggered
 				});
 				enrichInfoInMessageObject.bind(this)(oMessageObjectFatal);
-				oMessageObjectFatal.setSeverity(sap.apf.core.constants.message.severity.fatal);
+				oMessageObjectFatal.setSeverity(constants.message.severity.fatal);
 				if (oMessageObjectFatal.getMessage() === "") {
-					oMessageObjectFatal.setMessage("You must log out of the application due to a critical error");
+					oMessageObjectFatal.setMessage("The app has stopped working due to a technical error.");
 				}
 			}
 			oPreviousMessageObject = oMessageObject.getPrevious();
 			while (oPreviousMessageObject !== undefined && oPreviousMessageObject.type && oPreviousMessageObject.type === "messageObject" && nMaxPreviousObjects < 10) {
 				if (oPreviousMessageObject.getCode() === undefined) {
-					oPreviousMessageObject.setCode(sap.apf.core.constants.message.code.errorUnknown);
+					oPreviousMessageObject.setCode(constants.message.code.errorUnknown);
 				}
 				enrichInfoInMessageObject.bind(this)(oPreviousMessageObject);
 				oPreviousMessageObject = oPreviousMessageObject.getPrevious();
@@ -214,23 +215,30 @@
 				logMessage(oMessageObject, 10);
 			}
 			aCollectedMessageObjects.push(oMessageObject);
-			if (bDoNotFurtherProcessException) { // no cycles from ui
+			if (isInMessageCallbackProcessing) { // no cycles from ui
 				return;
 			}
-			if (oMessageObject.getSeverity() === sap.apf.core.constants.message.severity.technError) {
+			if (oMessageObject.getSeverity() === constants.message.severity.technError) {
 				return;
 			}
 			if (fnMessageCallback !== undefined) {
-				if (lifeTimePhase === lifeTimePhases.shutdown || (lifeTimePhase === lifeTimePhases.startup && oMessageObject.getSeverity() !== sap.apf.core.constants.message.severity.fatal)) {
+				if (lifeTimePhase === lifeTimePhases.shutdown || (lifeTimePhase === lifeTimePhases.startup && oMessageObject.getSeverity() !== constants.message.severity.fatal)) {
 					//currently no concept for non fatal errors at startup or shutdown
 					return;
-				} 
-				bDoNotFurtherProcessException = true; // exception could be raised
-				fnMessageCallback(oMessageObject, fnApplicationMessageCallback);
-				bDoNotFurtherProcessException = false;
+				}
+				isInMessageCallbackProcessing = true;
+				fnMessageCallback(oMessageObject);
+				isInMessageCallbackProcessing = false;
 			}
+
+			if (callbackForTriggeringFatal !== undefined && isInTriggerFatalProcessing === false) {
+				isInTriggerFatalProcessing = true;
+				callbackForTriggeringFatal(oMessageObject);
+				isInTriggerFatalProcessing = false;
+			}
+
 			//leave current execution control flow
-			if (oMessageObject.getSeverity() === sap.apf.core.constants.message.severity.fatal && lifeTimePhase !== lifeTimePhases.shutdown) {
+			if (oMessageObject.getSeverity() === constants.message.severity.fatal && lifeTimePhase !== lifeTimePhases.shutdown) {
 				if (sap.ui.Device.browser.firefox) {
 					bHintForFirefoxErrorIsThrown = true;
 				}
@@ -245,11 +253,11 @@
 		 * @returns {undefined}
 		 */
 		this.check = function(booleExpression, sMessage, sCode) {
-			var sErrorCode = sCode || sap.apf.core.constants.message.code.errorCheck;
+			var sErrorCode = sCode || constants.message.code.errorCheck;
 			if (!booleExpression) {
 				var oMessageObject = this.createMessageObject({
-					code : sErrorCode,
-					aParameters : [ sMessage ]
+					code: sErrorCode,
+					aParameters: [sMessage]
 				});
 				that.putMessage(oMessageObject);
 			}
@@ -273,13 +281,12 @@
 			return jQuery.extend(true, [], aLogMessages);
 		};
 		/**
-		 * @description Resets the message handler: Unset the message callback function, loads default message configuration and cleans message log. 
+		 * @description Resets the message handler: Unset the message callback function, loads default message configuration and cleans message log.
 		 * @returns {undefined}
 		 */
 		this.reset = function() {
 			idRegistry = undefined;
 			fnMessageCallback = undefined;
-			fnApplicationMessageCallback = undefined;
 			aLogMessages = [];
 			aCollectedMessageObjects = [];
 		};
@@ -290,6 +297,7 @@
 		this.isOwnException = function(error) {
 			return (error && error.message && error.message.search(sUniqueErrorId) > -1);
 		};
+
 		// Private Functions
 		function isOwnErrorEvent(oEvent) {
 			if (sap.ui.Device.browser.firefox) {
@@ -297,40 +305,29 @@
 			}
 			return (oEvent.originalEvent && oEvent.originalEvent.message && oEvent.originalEvent.message.search(sUniqueErrorId) > -1);
 		}
+
 		function isErrorEventFromOtherApfInstance(oEvent) {
-			return (oEvent.originalEvent && oEvent.originalEvent.message && oEvent.originalEvent.message.search(sUniqueErrorId) === -1 && oEvent.originalEvent.message.search(sap.apf.core.constants.message.code.suppressFurtherException) > -1);
+			return (oEvent.originalEvent && oEvent.originalEvent.message && oEvent.originalEvent.message.search(sUniqueErrorId) === -1 && oEvent.originalEvent.message.search(constants.message.code.suppressFurtherException) > -1);
 		}
+
 		function getUniqueErrorId() {
-			var date = new Date();
-			var uniqueInteger = Math.random() * date.getTime();
-			return sap.apf.core.constants.message.code.suppressFurtherException + uniqueInteger;
+			var uniqueInteger = utils.createPseudoGuid(32);
+			return constants.message.code.suppressFurtherException + uniqueInteger;
 		}
+
 		function isKnownCodeWithoutConfiguration(sCode) {
-			var sNumber = parseInt(sCode, 10);
-			if (sNumber == sap.apf.core.constants.message.code.errorExitTriggered) {
-				return true;
-			} else if (sNumber >= sap.apf.core.constants.message.code.errorUnknown && sNumber <= sap.apf.core.constants.message.code.warningAnalyticalConfig) {
-				return true;
-			}
-			return false;
+			var number = parseInt(sCode, 10);
+			return (number == constants.message.code.errorExitTriggered || number == constants.message.code.errorUnknown || number == constants.message.code.errorInMessageDefinition);
 		}
+
 		function isFatalMessageWithoutConfiguration(sCode) {
-			var sNumber = parseInt(sCode, 10);
-			if (sNumber > sap.apf.core.constants.message.code.errorUnknown && sNumber <= sap.apf.core.constants.message.code.errorInAnalyticalConfig) {
-				return true;
-			}
-			return false;
+			var number = parseInt(sCode, 10);
+			return (number == constants.message.code.errorExitTriggered || number == constants.message.code.errorInMessageDefinition);
 		}
-		function isWarningWithoutConfiguration(sCode) {
-			var sNumber = parseInt(sCode, 10);
-			if (sNumber === sap.apf.core.constants.message.code.warningAnalyticalConfig) {
-				return true;
-			}
-			return false;
-		}
+
 		// Determine and set message text according to configuration
 		function enrichInfoInMessageObject(oMessageObject) {
-			
+
 			function includeParameters(text, parameters) {
 				var nParamIndex = 0;
 				while (text.indexOf("{" + nParamIndex + "}") > -1) {
@@ -343,6 +340,7 @@
 				}
 				return text;
 			}
+
 			var sCode = oMessageObject.getCode();
 			var oMessageConfiguration = that.getConfigurationByCode(sCode);
 			if (oMessageConfiguration === undefined) {
@@ -353,9 +351,7 @@
 					}
 					oMessageConfiguration.rawText += ' ' + oMessageObject.getParameters();
 					if (isFatalMessageWithoutConfiguration(sCode)) {
-						oMessageConfiguration.severity = sap.apf.core.constants.message.severity.fatal;
-					} else if (isWarningWithoutConfiguration(sCode)) {
-						oMessageConfiguration.severity = sap.apf.core.constants.message.severity.warning;
+						oMessageConfiguration.severity = constants.message.severity.fatal;
 					}
 				} else {
 					oMessageConfiguration.rawText = "Message " + sCode + "  " + oMessageObject.getParameters() + " (Message Code has no Configuration)";
@@ -367,14 +363,14 @@
 			if (oMessageConfiguration.severity !== undefined) {
 				oMessageObject.setSeverity(oMessageConfiguration.severity);
 			} else {
-				oMessageObject.setSeverity(sap.apf.core.constants.message.severity.technError);
+				oMessageObject.setSeverity(constants.message.severity.technError);
 			}
 
 			if (oMessageConfiguration.rawText) {
 				oMessageObject.setMessage(oMessageConfiguration.rawText);
 			} else {
 				var aParameters = oMessageObject.getParameters();
-				if (oMessageObject.getSeverity() === sap.apf.core.constants.message.severity.technError) {
+				if (oMessageObject.getSeverity() === constants.message.severity.technError) {
 					var sTechnText = that.getConfigurationByCode(oMessageConfiguration.code).text;
 					if (!sTechnText) {
 						sTechnText = that.getConfigurationByCode(oMessageConfiguration.code).description;
@@ -382,7 +378,7 @@
 					oMessageObject.setMessage(includeParameters(sTechnText, aParameters));
 				} else {
 					try {
-						if (oTextResourceHandler) {
+						if (oTextResourceHandler && oMessageConfiguration.key) {
 							oMessageObject.setMessage(oTextResourceHandler.getMessageText(oMessageConfiguration.key, oMessageObject.getParameters()));
 						} else if (oMessageConfiguration.description) {
 							oMessageObject.setMessage(includeParameters(oMessageConfiguration.description, aParameters));
@@ -399,6 +395,7 @@
 				}
 			}
 		}
+
 		function logMessage(oMessage, nMaxPreviousObjects) {
 			var sLogPrefix = "APF message ";
 			var sPreviousTxt = "";
@@ -422,22 +419,22 @@
 			}
 			bDuringLogWriting = true;
 			//adds fatal log message on first position in array
-			if (oMessage.getSeverity() === sap.apf.core.constants.message.severity.fatal) {
+			if (oMessage.getSeverity() === constants.message.severity.fatal) {
 				if (aLogMessages.length < 2) { // do not show to many fatal messages!
 					aLogMessages.unshift(sLog);
 				}
 			}
 			switch (oMessage.getSeverity()) {
-				case sap.apf.core.constants.message.severity.warning:
+				case constants.message.severity.warning:
 					jQuery.sap.log.warning(sLog);
 					break;
-				case sap.apf.core.constants.message.severity.error:
+				case constants.message.severity.error:
 					jQuery.sap.log.error(sLog);
 					break;
-				case sap.apf.core.constants.message.severity.fatal:
+				case constants.message.severity.fatal:
 					jQuery.sap.log.error(sLog);
 					break;
-				case sap.apf.core.constants.message.severity.technError:
+				case constants.message.severity.technError:
 					jQuery.sap.log.error(sLog);
 					break;
 				default:
@@ -445,17 +442,20 @@
 			}
 			bDuringLogWriting = false;
 		}
+
 		function setItem(oItem) {
-			that.check(oItem !== undefined && oItem.hasOwnProperty("code") !== false, "MessageHandler setItem: oItem is undefined or property 'code' is missing", sap.apf.core.constants.message.code.errorStartUp);
+			that.check(oItem !== undefined && oItem.hasOwnProperty("code") !== false, "MessageHandler setItem: oItem is undefined or property 'code' is missing", constants.message.code.errorInMessageDefinition);
 			var result = idRegistry.setItem(oItem.code, oItem);
-			that.check((result === undefined), "MessageHandler setItem: Configuration includes duplicated codes", sap.apf.core.constants.message.code.errorStartUp);
+			that.check((result === undefined), "MessageHandler setItem: Configuration includes duplicated codes", constants.message.code.errorInMessageDefinition);
 		}
+
 		function loadMessage(oMessage) {
 			if (oMessage.type === undefined) {
 				oMessage.type = "message";
 			}
 			setItem(oMessage);
 		}
+
 		// handle on error will be activated after initialization of the message
 		// handler.
 		function handleOwnErrors(oEvent) {
@@ -478,34 +478,40 @@
 				oEvent.preventDefault();
 			} else if (isErrorEventFromOtherApfInstance(oEvent)) {
 				return;
-			} else if (bDoNotFurtherProcessException) {
-				oMessage = new sap.apf.core.MessageObject({
-					code : sap.apf.core.constants.message.code.errorStopProcessing
-				});
-				oMessage.setSeverity(sap.apf.core.constants.message.severity.error);
-				sText = "Unknown exception happened during processing of error by callback function ";
+			} else if (isInMessageCallbackProcessing) {
+				sText = "";
 				if (bBrowserSupportErrorEvent) {
-					sText = sText + sMessage + " (source: " + sUrl + ":" + lineNumber + ")";
+					sText = sMessage + " (source: " + sUrl + ":" + lineNumber + ")";
 				}
-				oMessage.setMessage(sText);
+				oMessage = new MessageObject({
+					code: "5070",
+					aParameters: [sText]
+				});
+				enrichInfoInMessageObject.bind(this)(oMessage);
 				logMessage(oMessage, 1);
 			} else {
-				oMessage = new sap.apf.core.MessageObject({
-					code : sap.apf.core.constants.message.code.errorUnknown
-				});
-				oMessage.setSeverity(sap.apf.core.constants.message.severity.error);
-				sText = "Unknown exception ";
+				sText = "";
 				if (bBrowserSupportErrorEvent) {
-					sText = sText + sMessage + " (source: " + sUrl + ":" + lineNumber + ")";
+					sText = sMessage + " (source: " + sUrl + ":" + lineNumber + ")";
 				}
-				oMessage.setMessage(sText);
+				oMessage = new MessageObject({
+					code: "5070",
+					aParameters: [sText]
+				});
+				enrichInfoInMessageObject.bind(this)(oMessage);
 				logMessage(oMessage, 1);
 			}
 		}
+
 		function initialize() {
 			sUniqueErrorId = getUniqueErrorId();
 		}
-		initialize();
-	};
 
-}());
+		initialize();
+	}
+
+	/*BEGIN_COMPATIBILITY*/
+	sap.apf.core.MessageHandler = MessageHandler;
+	/*END_COMPATIBILITY*/
+	return MessageHandler;
+});

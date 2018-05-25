@@ -56,7 +56,6 @@ sap.ui.define([], function (Parameters) {
 			oRenderManager.addClass("sapGanttDimensionLegendText");
 			oRenderManager.writeClasses();
 			oRenderManager.addStyle("position", "absolute");
-			oRenderManager.addStyle("width", "202px");
 			oRenderManager.writeStyles();
 			oRenderManager.writeAttributeEscaped("tabindex", (sap.ui.Device.browser.chrome ? null : -1));
 			oRenderManager.writeAttributeEscaped("focusable", false);

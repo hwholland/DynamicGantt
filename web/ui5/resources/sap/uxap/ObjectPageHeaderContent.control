@@ -20,7 +20,7 @@ Documentation links:
     <since>1.30</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="contentDesign" type="sap.uxap/ObjectPageHeaderDesign" defaultValue="Light" group="Misc">
+        <property group="Misc" defaultValue="Light" type="sap.uxap/ObjectPageHeaderDesign" name="contentDesign">
             <documentation>Determines the design of the header - Light or Dark.
 &lt;b&gt;Note: &lt;/b&gt;This property is deprecated. It will continue to work in the Blue Crystal theme,
 but it will not be taken into account for the Belize themes.</documentation>
@@ -28,13 +28,13 @@ but it will not be taken into account for the Belize themes.</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>The list of Objects of type sap.ui.core.Control.</documentation>
         </aggregation>
-        <aggregation name="_editHeaderButton" type="sap.m/Button" cardinality="0..1" visibility="hidden">
-            <documentation>Internal aggregation for the "Edit Header" button.</documentation>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/Button" name="_editHeaderButton">
+            <documentation>Internal aggregation for the &quot;Edit Header&quot; button.</documentation>
         </aggregation>
-        <aggregation name="_objectImage" type="sap.ui.core/Control" cardinality="0..1" visibility="hidden"/>
-        <aggregation name="_placeholder" type="sap.ui.core/Icon" cardinality="0..1" visibility="hidden"/>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.core/Control" name="_objectImage"/>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.core/Icon" name="_placeholder"/>
     </aggregations>
 </control>

@@ -48,7 +48,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -59,9 +59,9 @@ sap.ui.define([
 			properties: {
 				isClosed: {type: "boolean", defaultValue: true},
 
-				base: {type: "number", defaultValue: 10},
-				height: {type: "number", defaultValue: 10},
-				distanceOfyAxisHeight: {type: "number", defaultValue: 5}
+				base: {type: "float", defaultValue: 10},
+				height: {type: "float", defaultValue: 10},
+				distanceOfyAxisHeight: {type: "float", defaultValue: 5}
 			}
 		}
 	});
@@ -96,30 +96,36 @@ sap.ui.define([
 	 * 
 	 * @param {object} oData Shape data.
 	 * @param {object} oRowInfo Information about the row and row data.
-	 * @return {string} Value of property <code>d</code>.
+	 * @return {string} Value of property <code>d</code> or null if the generated d is invalid according to the given data.
 	 * @public
 	 */
 	Triangle.prototype.getD = function (oData, oRowInfo) {
+		var sD;
 		if (this.mShapeConfig.hasShapeProperty("d")) {
-			return this._configFirst("d", oData);
+			sD = this._configFirst("d", oData);
+		} else {
+			var nBase = this.getBase(oData, oRowInfo);
+			var nHeight = this.getHeight(oData, oRowInfo);
+			var nDisOfYaxisH = this.getDistanceOfyAxisHeight(oData, oRowInfo);
+			var nHalfHeight = this.getHeight(oData, oRowInfo) / 2;
+
+			var aCenter = this.getRotationCenter(oData, oRowInfo);
+
+			if (aCenter && aCenter.length === 2 && jQuery.isNumeric(nBase) && jQuery.isNumeric(nHeight) &&
+					jQuery.isNumeric(nDisOfYaxisH) && jQuery.isNumeric(nHalfHeight)) {
+				sD = "M " + aCenter.join(" ") +
+				" m 0 " + nHalfHeight +
+				" l -" + nDisOfYaxisH + " 0 l " + nDisOfYaxisH +
+				" -" + nHeight + " l " + Number(nBase - nDisOfYaxisH) + " " + nHeight + " l -" +
+				Number(nBase - nDisOfYaxisH) + " 0 z";
+			}
 		}
 
-		var nBase = this.getBase(oData, oRowInfo);
-		var nHeight = this.getHeight(oData, oRowInfo);
-		var nDisOfYaxisH = this.getDistanceOfyAxisHeight(oData, oRowInfo);
-		var nHalfHeight = this.getHeight(oData, oRowInfo) / 2;
-
-		var aCenter = this.getRotationCenter(oData, oRowInfo);
-
-		if (aCenter && aCenter.length === 2 && jQuery.isNumeric(nBase) && jQuery.isNumeric(nHeight) &&
-				jQuery.isNumeric(nDisOfYaxisH) && jQuery.isNumeric(nHalfHeight)) {
-			return "M " + aCenter.join(" ") +
-			" m 0 " + nHalfHeight +
-			" l -" + nDisOfYaxisH + " 0 l " + nDisOfYaxisH +
-			" -" + nHeight + " l " + Number(nBase - nDisOfYaxisH) + " " + nHeight + " l -" +
-			Number(nBase - nDisOfYaxisH) + " 0 z";
+		if(this.isValid(sD)) {
+			return sD;
 		} else {
-			return "";
+			jQuery.sap.log.warning("Triangle shape generated invalid d: " + sD + " from the given data: " + oData);
+			return null;
 		}
 	};
 

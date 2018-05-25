@@ -1,35 +1,77 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
-// Provides control sap.ui.comp.smartfield.SmartField.
 sap.ui.define([
-	"jquery.sap.global", "sap/ui/comp/library", "./JSONControlFactory", "./ODataControlFactory", "./BindingUtil", "./SideEffectUtil", "./ODataHelper", "sap/ui/core/Control", "sap/ui/model/ParseException", "sap/ui/model/ValidateException"
-], function(jQuery, library, JSONControlFactory, ODataControlFactory, BindingUtil, SideEffectUtil, ODataHelper, Control, ParseException, ValidateException) {
+	"jquery.sap.global",
+	"sap/ui/comp/library",
+	"./JSONControlFactory",
+	"./ODataControlFactory",
+	"./BindingUtil",
+	"./SideEffectUtil",
+	"./ODataHelper",
+	"sap/ui/core/Control",
+	"sap/ui/model/ParseException",
+	"sap/ui/model/ValidateException",
+	"sap/ui/model/json/JSONModel",
+	"sap/ui/core/ValueState",
+	"sap/ui/model/Filter",
+	"sap/ui/model/FilterOperator"
+], function(jQuery, library, JSONControlFactory, ODataControlFactory, BindingUtil, SideEffectUtil, ODataHelper, Control, ParseException, ValidateException, JSONModel, ValueState, Filter, FilterOperator) {
 	"use strict";
 
+	var TextInEditModeSource = library.smartfield.TextInEditModeSource;
+
 	/**
-	 * Constructor for a new smartfield/SmartField.
+	 * Constructor for a new <code>sap.ui.comp.smartfield.SmartField</code>.
 	 *
-	 * @param {string} [sId] ID for the new control, generated automatically if no id is given
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
-	 * @class The SmartField control is a wrapper for other controls. It interprets OData metadata to determine the control that has to be
-	 *        instantiated. The OData entity is derived from the control's binding context. The OData entity's property that is changed or displayed
-	 *        with the control is derived from the control's value property.
+	 * @class The <code>SmartField</code> control is a wrapper for other controls. It interprets OData metadata to determine the control that has to
+	 * be instantiated. The OData entity is derived from the control's binding context. The OData entity's property that is changed or
+	 * displayed with the control is derived from the control's value property.
+	 *
+	 * <b>Note:</b> For interoperability and accessibility reasons, the <code>SmartField</code> control must be labeled
+	 * by the <code>sap.ui.comp.smartfield.SmartLabel</code> control instead of the <code>sap.m.Label</code> control, as
+	 * the <code>sap.m.Label</code> control does not know of the inner structure of a <code>SmartField</code> control.
+	 * If the <code>SmartField</code> control is rendered inside a smart container control, for example, the <code>SmartForm</code>
+	 * control, the <code>SmartLabel</code> control is automatically generated to reduce the amount of code needed on
+	 * the application side.
+	 * However, in other scenarios when <code>SmartField</code> is used stand-alone or outside a smart container
+	 * control, for example, a <code>SimpleForm</code> control, the <code>SmartLabel</code> control is not automatically
+	 * generated in these cases.
+	 * Although the <code>sap.ui.comp.smartfield.SmartLabel</code> is a private/internal control, the following basic use
+	 * is allowed by applications for labeling the <code>SmartField</code> control.
+	 *
+	 * <i>XML Example of a <code>SmartField</code> control labeled by a <code>SmartLabel</code> control</i>
+	 *
+	 * <pre>
+	 * &lt;sap.ui.comp.smartfield.SmartLabel labelFor=&quot;IDProduct&quot;/&gt;
+	 * &lt;sap.ui.comp.smartfield.SmartField id=&quot;IDProduct&quot; value=&quot;{ProductId}&quot;/&gt;
+	 * </pre>
+	 *
+	 * <b>Note</b>: By default, the <code>com.sap.vocabularies.UI.v1.TextArrangement</code> annotation and the value of
+	 * the <code>displayBehaviour</code> property of the aggregation named <code>configuration</code> are not evaluated
+	 * in edit mode. To enable these features, set the {@link #textInEditModeSource} property to a non-default value.
+	 *
 	 * @extends sap.ui.core.Control
+	 * @implements sap.ui.core.IFormContent
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.smartfield.SmartField
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+	 * @see {@link topic:4864403f08c64ca08a2b0ee1fa9cb5e2 Smart Field}
+	 * @ui5-metamodel This control will also be described in the UI5 (legacy) design time meta model
 	 */
-	var SmartField = Control.extend("sap.ui.comp.smartfield.SmartField", /** @lends sap.ui.comp.smartfield.SmartField.prototype */
-	{
+	var SmartField = Control.extend("sap.ui.comp.smartfield.SmartField", /** @lends sap.ui.comp.smartfield.SmartField.prototype */ {
 		metadata: {
+			interfaces : ["sap.ui.core.IFormContent"],
 			library: "sap.ui.comp",
-			designTime: true,
+			designtime: "sap/ui/comp/designtime/smartfield/SmartField.designtime",
 			properties: {
+
 				/**
 				 * The value property keeps the current value of the control. If a binding expression is configured, this is used to determine the
 				 * property of an OData entity.
@@ -41,7 +83,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * Enables the control.
+				 * Indicates whether the user can interact with the control or not. <b>Note:</b> Disabled controls cannot be focused and they are out
+				 * of the tab order.
 				 */
 				enabled: {
 					type: "boolean",
@@ -55,7 +98,7 @@ sap.ui.define([
 				entitySet: {
 					type: "string",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
@@ -68,9 +111,9 @@ sap.ui.define([
 				},
 
 				/**
-				 * Notifies the control whether controls using the SmartField are editable or not.
+				 * Notifies the control whether controls using the <code>SmartField</code> control are editable.
 				 *
-				 * @since 1.31.0
+				 * @since 1.32.0
 				 */
 				contextEditable: {
 					type: "boolean",
@@ -79,12 +122,12 @@ sap.ui.define([
 				},
 
 				/**
-				 * The width can be set to an absolute value.
+				 * Defines the width of the control.
 				 */
 				width: {
 					type: "sap.ui.core.CSSSize",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
@@ -102,7 +145,7 @@ sap.ui.define([
 				placeholder: {
 					type: "string",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
@@ -111,16 +154,16 @@ sap.ui.define([
 				name: {
 					type: "string",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
-				 * Visualizes warnings or errors.
+				 * Visualizes the validation state of the control, e.g. <code>Error</code>, <code>Warning</code>, <code>Success</code>.
 				 */
 				valueState: {
 					type: "sap.ui.core.ValueState",
 					group: "Appearance",
-					defaultValue: sap.ui.core.ValueState.None
+					defaultValue: ValueState.None
 				},
 
 				/**
@@ -129,11 +172,11 @@ sap.ui.define([
 				valueStateText: {
 					type: "string",
 					group: "Appearance",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
-				 * The text which is shown in the value state message popup.
+				 * Defines whether the value state message is shown or not.
 				 */
 				showValueStateMessage: {
 					type: "boolean",
@@ -142,8 +185,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * Data types to be used, if the SmartField control is interacting with a JSON model. If the value property of the control is bound to
-				 * a property of an OData entity set, this property is not considered.
+				 * Data types to be used, if the <code>SmartField</code> control is interacting with a JSON model. If the value property of the
+				 * control is bound to a property of an OData entity set, this property is not taken into consideration.
 				 *
 				 * @deprecated Since 1.31.0
 				 */
@@ -154,7 +197,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Mandatory property.
+				 * If set to <code>true</code>, a user input is required.
 				 */
 				mandatory: {
 					type: "boolean",
@@ -181,7 +224,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * If set to true, a value help indicator will be displayed inside the hosted control, if the hosted control supports this.
+				 * If set to <code>true</code>, a value help indicator will be displayed inside the hosted control, if the hosted control supports
+				 * this.
 				 */
 				showValueHelp: {
 					type: "boolean",
@@ -190,7 +234,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * If set to false the label is not displayed.
+				 * If set to <code>false</code> the label is not displayed.
 				 */
 				showLabel: {
 					type: "boolean",
@@ -199,26 +243,26 @@ sap.ui.define([
 				},
 
 				/**
-				 * This property contains the text of an associated smart label.
+				 * This property contains the text of an associated <code>SmartLabel</code>.
 				 */
 				textLabel: {
 					type: "string",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
-				 * This property contains the tool tip of the associated smart label.
+				 * This property contains the tool tip of the associated <code>SmartLabel</code> control.
 				 */
 				tooltipLabel: {
 					type: "string",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
-				 * Visible state of the unit, if the SmartField control addresses unit of measure use cases, for example, an amount and its associated
-				 * currency.
+				 * Visible state of the unit, if the <code>SmartField</code> control addresses unit of measure use cases, for example, an amount and
+				 * its associated currency.
 				 */
 				uomVisible: {
 					type: "boolean",
@@ -227,8 +271,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * Editable state of the unit, if the SmartField control addresses unit of measure use cases, for example, an amount and its
-				 * associated currency.
+				 * Editable state of the unit, if the <code>SmartField</code> control addresses unit of measure use cases, for example, an amount
+				 * and its associated currency.
 				 */
 				uomEditable: {
 					type: "boolean",
@@ -237,8 +281,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * Enabled state of the unit, if the SmartField control addresses unit of measure use cases, for example, an amount and its associated
-				 * currency.
+				 * Enabled state of the unit, if the <code>SmartField</code> control addresses unit of measure use cases, for example, an amount and
+				 * its associated currency.
 				 */
 				uomEnabled: {
 					type: "boolean",
@@ -247,19 +291,19 @@ sap.ui.define([
 				},
 
 				/**
-				 * Contains a URL which is used to render a link. The link is rendered, if the OData property which the value property of the control
-				 * is bound to is of type <code>Edm.String</code> and the Smart Field is in display mode.
+				 * Contains a URL which is used to render a link. The link is rendered, if the OData property, to which the value property of the
+				 * control is bound, is of type <code>Edm.String</code> and the <code>SmartField</code> is in display mode.
 				 */
 				url: {
 					type: "string",
 					group: "Misc",
-					defaultValue: null
+					defaultValue: ""
 				},
 
 				/**
 				 * This property is for internal use only.
 				 *
-				 * @since 1.31.0
+				 * @since 1.32.0
 				 */
 				uomEditState: {
 					type: "int",
@@ -268,9 +312,9 @@ sap.ui.define([
 				},
 
 				/**
-				 * Defines in which context the layout of the smart field has to be interpreted.
+				 * Defines the context in which the layout of the <code>SmartField</code> control has to be interpreted.
 				 *
-				 * @since 1.31.0
+				 * @since 1.32.0
 				 */
 				controlContext: {
 					type: "sap.ui.comp.smartfield.ControlContextType",
@@ -279,10 +323,10 @@ sap.ui.define([
 				},
 
 				/**
-				 * Proposes a control to be rendered. The smart field may ignore the proposal.
+				 * Proposes a control to be rendered. The <code>SmartField</code> control can ignore the proposal.
 				 *
 				 * @deprecated Since 1.32.0
-				 * @since 1.31.0
+				 * @since 1.32.0
 				 */
 				proposedControl: {
 					type: "sap.ui.comp.smartfield.ControlProposalType",
@@ -310,11 +354,70 @@ sap.ui.define([
 					type: "boolean",
 					group: "Misc",
 					defaultValue: true
+				},
+
+				/**
+				 * Determines whether the <code>SmartField</code> control fetches its value list to display the description for a given key (<code>value</code>
+				 * property) in read-only mode. If the value list is not fetched by the read-only <code>SmartField</code> control, the application
+				 * has to make sure that the description is requested and made available, for example, by using $expand. In this case the
+				 * <code>SmartField</code> control will display the description if the path to the description has been set using the
+				 * <code>com.sap.vocabularies.Common.v1.Text</code> annotation.
+				 *
+				 * <b>Note:</b> Setting this property to <code>false</code> only has an effect if the <code>value</code>
+				 * property of the <code>SmartField</code> control is bound to an OData property typed as <code>Edm.String</code>.
+				 * @since 1.42.0
+				 */
+				fetchValueListReadOnly: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: true
+				},
+
+				/**
+				 * Indicates if entities related to navigation properties inside the metadata are requested.
+				 * If set to <code>true</code>, then these related entities are loaded with an <code>$expand</code> request.
+				 *
+				 * Annotations that can have navigation properties are the following:
+				 * <ul>
+				 * 	<li> <code>com.sap.vocabularies.Common.v1.Text</code> for text arrangements
+				 * 	<li> <code>Org.OData.Measures.V1.Unit</code> and <code>Org.OData.Measures.V1.ISOCurrency</code> for units
+				 * 	<li> <code>com.sap.vocabularies.Common.v1.FieldControl</code> for field control
+				 * </ul>
+				 *
+				 * <b>Note:</b> Independent of the <code>fetchValueListReadOnly</code> value, setting this flag to <code>true</code>
+				 * requests data from the backend.
+				 *
+				 * <b>Note:</b> The backend request to expand the navigation properties is sent only if the entity to which <code>SmartField</code> is bound is persisted.
+				 * For transient entities, there is no backend request since no such data is available.
+				 *
+				 * @experimental Since 1.48.
+				 * @since 1.48
+				 */
+				expandNavigationProperties: {
+					type: "boolean",
+					group: "Behavior",
+					defaultValue: false
+				},
+
+				/**
+				 * Sets the source from which text values for <code>Codes</code>/<code>IDs</code> are fetched in edit
+				 * mode, for example, for LT (Laptop).
+				 *
+				 * <b>Note</b>: Currently this feature is only supported for OData model properties typed as
+				 * <code>Edm.String</code>.
+				 *
+				 * @experimental Since 1.54.
+				 * @since 1.54
+				 */
+				textInEditModeSource: {
+					type: "sap.ui.comp.smartfield.TextInEditModeSource",
+					group: "Behavior",
+					defaultValue: TextInEditModeSource.None
 				}
 			},
 			aggregations: {
 				/**
-				 * The content aggregation is used to hold the control that is hosted by the SmartField control.
+				 * The content aggregation is used to hold the control that is hosted by the <code>SmartField</code> control.
 				 */
 				_content: {
 					type: "sap.ui.core.Control",
@@ -323,7 +426,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Optional configuration for SmartField.
+				 * Optional configuration for <code>SmartField</code>.
 				 */
 				configuration: {
 					type: "sap.ui.comp.smartfield.Configuration",
@@ -331,7 +434,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Proposes a control to be rendered. The smart field may ignore the proposal.
+				 * Proposes a control to be rendered. The <code>SmartField</code> control can ignore the proposal.
 				 *
 				 * @since 1.32.0
 				 * @deprecated Since 1.34.0
@@ -343,7 +446,7 @@ sap.ui.define([
 
 				/**
 				 * Collects the texts to be used for the ARIA labels.<br>
-				 * The InvisibleText controls will be added to the DOM by the SmartField control.
+				 * The InvisibleText controls will be added to the DOM by the <code>SmartField</code> control.
 				 *
 				 * @since 1.34.2
 				 */
@@ -351,11 +454,19 @@ sap.ui.define([
 					type: "sap.ui.core.InvisibleText",
 					multiple: true,
 					visibility: "hidden"
+				},
+
+				/**
+				 * The Semantic Object Controller allows the user to specify and overwrite functionality for semantic object navigation.
+				 */
+				semanticObjectController: {
+					type: "sap.ui.comp.navpopover.SemanticObjectController",
+					multiple: false
 				}
 			},
 			associations: {
 				/**
-				 * Association with controls / IDs that label this control (see WAI-ARIA attribute aria-labelledby).
+				 * Association to controls / IDs which label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
 				 *
 				 * @since 1.34.2
 				 */
@@ -370,39 +481,93 @@ sap.ui.define([
 				 * The OData entity set is either derived from the control's binding context or from control's entity set property, if a value for it
 				 * is specified. In both cases this event is fired.
 				 */
-				entitySetFound: {},
+				entitySetFound: {
+					parameters: {
+						/**
+						 * The path to the found entity set
+						 */
+						entitySet: {
+							type: "string"
+						}
+					}
+				},
 
 				/**
-				 * The event is fired after the text in the field has changed and the focus leaves the TextField or Enter is pressed.
+				 * The event is fired after the text in the field has been changed and the focus leaves the field, or after the Enter key has been
+				 * pressed.
+				 *
 				 */
-				change: {},
+				change: {
+					parameters: {
+						/**
+						 * The current value inside the text field
+						 */
+						value: {
+							type: "string"
+						},
+						/**
+						 * The new value inside the text field
+						 */
+						newValue: {
+							type: "string"
+						}
+					}
+				},
 
 				/**
 				 * The event is fired after the smart field has calculated its metadata.
+				 *
 				 */
 				initialise: {},
 
 				/**
 				 * The event is fired after the visibility of the control has changed.
 				 */
-				visibleChanged: {},
+				visibleChanged: {
+					parameters: {
+						/**
+						 * If <code>true</code>, the control is visible
+						 */
+						visible: {
+							type: "boolean"
+						}
+					}
+				},
 
 				/**
 				 * The event is fired after the value of editable property of the control has changed.
 				 *
 				 * @since 1.30.0
 				 */
-				editableChanged: {},
+				editableChanged: {
+					parameters: {
+						/**
+						 * If <code>true</code>, the control is in edit mode
+						 */
+						editable: {
+							type: "boolean"
+						}
+					}
+				},
 
 				/**
 				 * The event is fired after the context editable property of the control has changed.
 				 *
-				 * @since 1.31.0
+				 * @since 1.32.0
 				 */
-				contextEditableChanged: {},
+				contextEditableChanged: {
+					parameters: {
+						/**
+						 * The value of the context editable property of the control
+						 */
+						editable: {
+							type: "boolean"
+						}
+					}
+				},
 
 				/**
-				 * The event is fired after the inner controls have been created.
+				 * The event is fired after the inner controls have been created. The created controls can be obtained via oControl.getInnerControls().
 				 */
 				innerControlsCreated: {},
 
@@ -410,11 +575,22 @@ sap.ui.define([
 				 * The event is fired when after selection of values with value help or auto-suggest, the model is updated with the selected data.
 				 *
 				 * @since 1.31.0
+				 *
 				 */
-				valueListChanged: {},
+				valueListChanged: {
+					parameters: {
+						/**
+						 * An array of selected values
+						 */
+						changes: {
+							type: "sap.ui.core.Control[]"
+						}
+					}
+				},
 
 				/**
 				 * Fires when the user triggers the link control or taps/clicks on an active title of the object identifier control.
+				 *
 				 *
 				 * @since 1.36.0
 				 */
@@ -427,7 +603,7 @@ sap.ui.define([
 		 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
 		 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered.
 		 * @private
-		 * @since 1.33.0
+		 * @since 1.34.0
 		 */
 		renderer: function(oRm, oControl) {
 			oRm.write("<div ");
@@ -435,7 +611,7 @@ sap.ui.define([
 			oRm.addClass("sapUiCompSmartField");
 			oRm.writeClasses();
 			oRm.write(">");
-			oRm.renderControl(oControl.getAggregation("_content"));
+			oRm.renderControl(oControl.getContent());
 			if (oControl.getAggregation("_ariaLabelInvisibleText")) {
 				oControl.getAggregation("_ariaLabelInvisibleText").forEach(function(oInvisibleText) {
 					oRm.renderControl(oInvisibleText);
@@ -479,123 +655,205 @@ sap.ui.define([
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 
-	/**
-	 * Initialize the control.
-	 *
-	 * @private
-	 */
 	SmartField.prototype.init = function() {
 		this._bInDestroy = false;
 		this._oSideEffects = new SideEffectUtil(this);
 		this._oFactory = null;
+
 		this._oControl = {
 			display: null,
 			"display_uom": null,
 			edit: null,
 			current: null
 		};
+
 		this._oValue = {
 			display: null,
 			edit: null,
 			uom: null,
 			uomset: null
 		};
+
 		this._oError = {
 			bComplex: false,
 			bFirst: false,
 			bSecond: false
 		};
+
 		this._sBindingContextPath = "";
 		this._oValueBind = null;
 		this._oUtil = new BindingUtil();
 		this._bSuppressToggleControl = false;
+		this.bWaitingForValueValidation = false;
+		this.attachEvent("innerControlsCreated",SmartField.prototype._setOnInnerControl,this);//inner controls not ready wait for creation
 	};
 
-	/**
-	 * Setter for property <code>visible</code>. Default value is <code>true</code>.
-	 *
-	 * @param {boolean} bValue New value for property <code>editable</code>
-	 * @param {boolean} bSuppressInvalidate If <code>true</code>, the managed object is not marked as changed
-	 * @return {sap.ui.comp.smartfield.SmartField} <code>this</code> to allow method chaining
-	 * @public
-	 */
-	SmartField.prototype.setVisible = function(bValue, bSuppressInvalidate) {
+	SmartField.prototype.setVisible = function(bVisible, bSuppressInvalidate) {
+		var bOldVisible = this.getVisible();
 		Control.prototype.setVisible.apply(this, arguments);
-		this.fireVisibleChanged({
-			visible: bValue
-		});
+		bVisible = this.getVisible();
 
-// var oEmbeddedSmartField = this._getEmbeddedSmartField();
-// if (oEmbeddedSmartField) {
-// oEmbeddedSmartField.setVisible(bValue, bSuppressInvalidate);
-// }
+		if (bVisible !== bOldVisible) {
+			this.fireVisibleChanged({
+				visible: bVisible
+			});
+		}
+
 		return this;
 	};
 
-	/**
-	 * Setter for property <code>editable</code>. Default value is <code>false</code>.
-	 *
-	 * @param {boolean} bValue New value for property <code>editable</code>
-	 * @return {sap.ui.comp.smartfield.SmartField} <code>this</code> to allow method chaining
-	 * @public
-	 */
-	SmartField.prototype.setEditable = function(bValue) {
-		this.setProperty("editable", bValue, true);
-
-		this._bPendigEditableState = false;
-
+	SmartField.prototype.setEditable = function(bEditable) {
+		var bOldEditable = this.getEditable();
+		this.setProperty("editable", bEditable, true);
+		bEditable = this.getEditable();
+		this._bPendingEditableState = false;
 		this._toggleControl();
-		this.fireEditableChanged({
-			editable: bValue
-		});
+
+		if (bEditable !== bOldEditable) {
+			this.fireEditableChanged({
+				editable: bEditable
+			});
+		}
 
 		return this;
 	};
 
-	/**
-	 * Setter for property <code>contextEditable</code>. Default value is <code>false</code>.
-	 *
-	 * @param {boolean} bValue New value for property <code>editable</code>
-	 * @return {sap.ui.comp.smartfield.SmartField} <code>this</code> to allow method chaining
-	 * @public
-	 * @since 1.31.0
-	 */
-	SmartField.prototype.setContextEditable = function(bValue) {
-		this.setProperty("contextEditable", bValue, true);
-
-		this._bPendigEditableState = false;
-
+	SmartField.prototype.setContextEditable = function(bContextEditable) {
+		var bOldContextEditable = this.getContextEditable();
+		this.setProperty("contextEditable", bContextEditable, true);
+		bContextEditable = this.getContextEditable();
+		this._bPendingEditableState = false;
 		this._toggleControl();
-		this.fireContextEditableChanged({
-			editable: bValue
-		});
+
+		if (bContextEditable !== bOldContextEditable) {
+			this.fireContextEditableChanged({
+				editable: bContextEditable
+			});
+		}
 
 		return this;
 	};
 
-	/**
-	 * Setter for property <code>width</code>.
-	 *
-	 * @param {string} sWidth The new value for property <code>width</code>
-	 * @return {sap.ui.comp.smartfield.SmartField} <code>this</code> to allow method chaining
-	 * @public
-	 */
+	SmartField.prototype.setMandatory = function(bMandatory) {
+		this.setProperty("mandatory", bMandatory, false);
+		this._setOnInnerControl();
+		return this;
+	};
+
 	SmartField.prototype.setWidth = function(sWidth) {
 		this.setProperty("width", sWidth, true);
 		this._setOnInnerControl();
 		return this;
 	};
 
-	/**
-	 * Setter for property <code>wrapping</code>. The wrapping is only relevant for the table control context.
-	 *
-	 * @param {boolean} bWrapping The new value for property <code>wrapping</code>
-	 * @return {sap.ui.comp.smartfield.SmartField} <code>this</code> to allow method chaining
-	 * @public
-	 */
 	SmartField.prototype.setWrapping = function(bWrapping) {
 		this.setProperty("wrapping", bWrapping, true);
 		this._setOnInnerControl();
+		return this;
+	};
+
+	SmartField.prototype.setTextAlign = function(sTextAlign) {
+		this.setProperty("textAlign", sTextAlign, true);
+		this._setOnInnerControl();
+		return this;
+	};
+
+	SmartField.prototype.setPlaceholder = function(sPlaceholder) {
+		this.setProperty("placeholder", sPlaceholder, true);
+		this._setOnInnerControl();
+		return this;
+	};
+
+	SmartField.prototype.setName = function(sName) {
+		this.setProperty("name", sName, true);
+		this._setOnInnerControl();
+		return this;
+	};
+
+	SmartField.prototype.setMaxLength = function(iMaxLength) {
+		this.setProperty("maxLength", iMaxLength, true);
+		this._setOnInnerControl();
+		return this;
+	};
+
+	SmartField.prototype.setShowValueHelp = function(bValueHelp) {
+		var bPreviousValueHelp = this.getShowValueHelp();
+		this.setProperty("showValueHelp", bValueHelp, true);
+		var oChild = this.getContent();
+
+		if (oChild && (typeof oChild.setShowValueHelp === "function")) {
+			bValueHelp = this.getShowValueHelp();
+			var bValueHelpStateChanged = bValueHelp !== bPreviousValueHelp,
+				oFactory = this._oFactory;
+
+			if (bValueHelpStateChanged && oFactory) {
+
+				if (bValueHelp) {
+
+					if (oFactory.shouldCreateValueHelpForControl(oChild)) {
+						oFactory._createValueHelp();
+					}
+				} else {
+					oFactory.destroyValueHelp();
+				}
+			}
+
+			oChild.setShowValueHelp(bValueHelp);
+		}
+
+		return this;
+	};
+
+	SmartField.prototype.setShowSuggestion = function(bShowSuggestion) {
+		var bPreviousShowSuggestion = this.getShowSuggestion();
+		this.setProperty("showSuggestion", bShowSuggestion, true);
+		var oChild = this.getContent();
+
+		if (oChild && (typeof oChild.setShowSuggestion === "function")) {
+			bShowSuggestion = this.getShowSuggestion();
+			var bShowSuggestionStateChanged = bShowSuggestion !== bPreviousShowSuggestion,
+				oFactory = this._oFactory;
+
+			if (bShowSuggestionStateChanged && oFactory) {
+
+				if (bShowSuggestion) {
+
+					if (oFactory.shouldCreateValueHelpForControl(oChild)) {
+						oFactory._createValueHelp();
+					}
+				} else {
+					oFactory.destroyValueHelp();
+				}
+			}
+
+			oChild.setShowSuggestion(bShowSuggestion);
+		}
+
+		return this;
+	};
+
+	SmartField.prototype.setTextInEditModeSource = function(sTextInEditModeSource) {
+		var sOldTextInEditModeSource = this.getTextInEditModeSource();
+		this.setProperty("textInEditModeSource", sTextInEditModeSource, false);
+		sTextInEditModeSource = this.getTextInEditModeSource();
+
+		if (sTextInEditModeSource !== sOldTextInEditModeSource) {
+			this._destroyChildControls();
+			this._toggleControl();
+		}
+
+		return this;
+	};
+
+	SmartField.prototype.setTooltip = function(vTooltip) {
+		this._refreshTooltipBaseDelegate(vTooltip);
+		this.setAggregation("tooltip", vTooltip, true);
+		var oChild = this.getFirstChildControl();
+
+		if (oChild) {
+			oChild.setTooltip(vTooltip);
+		}
+
 		return this;
 	};
 
@@ -606,14 +864,12 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._setOnInnerControl = function() {
-		var oChild, sWidth, bWrapping;
-
-		oChild = this.getAggregation("_content");
+		var oChild = this.getContent();
 
 		if (oChild) {
 
-			if (oChild.setWidth) {
-				sWidth = this.getWidth();
+			if (typeof oChild.setWidth === "function") {
+				var sWidth = this.getWidth();
 
 				// set the width if and only if a value other than the default is available (default is "")
 				// the problem is that some controls (e.g. sap.m.Select and sap.m.ComboBox) have a width set during creation
@@ -624,13 +880,80 @@ sap.ui.define([
 				}
 			}
 
-			bWrapping = this.getWrapping();
-			if (!bWrapping && oChild.setWrapping && (this.getControlContext() === "table")) {
-				oChild.setWrapping(bWrapping);
+			if (typeof oChild.setWrapping === "function") {
+				oChild.setWrapping(this._getWrappingForInnerControl(oChild));
+			}
+
+			if (typeof oChild.setName === "function") {
+				oChild.setName(this.getName());
+			}
+
+			if (typeof oChild.setPlaceholder === "function") {
+				oChild.setPlaceholder(this.getPlaceholder());
+			}
+
+			if (typeof oChild.setTextAlign === "function") {
+				oChild.setTextAlign(this.getTextAlign());
+			}
+
+			if (this.isInEditMode()) {
+				this._setPropertyOnInnerControls("required", this.getMandatory(), this.getInnerControls());
 			}
 		}
 
 		return this;
+	};
+
+	SmartField.prototype._setPropertyOnInnerControls = function(sProperty, vValue, aControls) {
+		aControls = aControls || this.getInnerControls();
+
+		aControls.forEach(function(oControl) {
+			var sMutator = "set" + sProperty.charAt(0).toUpperCase() + sProperty.slice(1);
+
+			if (typeof oControl[sMutator] === "function") {
+				oControl[sMutator](vValue);
+			}
+		}, this);
+	};
+
+	/**
+	 * Gets the wrapping value for the inner control aggregation.
+	 *
+	 * @param {sap.ui.core.Control} [oChild] Control to propagate the wrapping behavior
+	 * @returns {boolean|string} The value depending on the <code>wrapping</code> property's type
+	 * @private
+	 * @since 1.46
+	 */
+	SmartField.prototype._getWrappingForInnerControl = function(oChild) {
+		var bWrapping = this.getWrapping(),
+			oProperty;
+
+		oChild = oChild || this.getContent();
+
+		if (oChild) {
+			oProperty = oChild.getMetadata().getProperty("wrapping");
+		}
+
+		if (oProperty) {
+
+			switch (oProperty.type) {
+				case "boolean":
+					return bWrapping;
+
+				case "sap.ui.core.Wrapping":
+					var mWrappingMode = sap.ui.core.Wrapping;
+
+					if (bWrapping) {
+						return mWrappingMode.Soft;
+					}
+
+					return mWrappingMode.None;
+
+				// no default
+			}
+		}
+
+		return bWrapping;
 	};
 
 	/**
@@ -646,13 +969,6 @@ sap.ui.define([
 		return this;
 	};
 
-	/**
-	 * Setter for property <code>entitySet</code>. Default value is <code>undefined</code>.
-	 *
-	 * @param {string} sValue The new value for property <code>entitySet</code>
-	 * @return {sap.ui.comp.smartfield.SmartField} <code>this</code> to allow method chaining
-	 * @public
-	 */
 	SmartField.prototype.setEntitySet = function(sValue) {
 		this.setProperty("entitySet", sValue, true);
 		this.fireEntitySetFound({
@@ -662,13 +978,12 @@ sap.ui.define([
 	};
 
 	/*
-	 * Due to the sequence of calls from binding during the rows creation, in read-only scenarios the edit-part of the SF was also created. This leads
-	 * to a major performance penalty. With the handling of the pedingEditableState this issue should be overcome.
+	 * If set to <code>false</code>, creation of inner controls is suspended until editable or contextEditable is set. As the default for editable
+	 * is <code>true</code> the edit control would be created even in display scenarios. The method is used by the SmartTable control for
+	 * performance reasons.
 	 */
 	SmartField.prototype._setPendingEditState = function(bDisplayState) {
-
-		this.data("pedingEditableState", !bDisplayState);
-
+		this.data("pendingEditableState", !bDisplayState);
 	};
 
 	SmartField.prototype.applySettings = function(mSettings) {
@@ -676,73 +991,73 @@ sap.ui.define([
 		if (mSettings && mSettings.customData) {
 			for (var i = 0; i < mSettings.customData.length; i++) {
 				var oCustomData = mSettings.customData[i];
-				if (oCustomData && oCustomData.mProperties && oCustomData.mProperties.key === "pedingEditableState") {
-					this._bPendigEditableState = oCustomData.mProperties.value;
+
+				if (oCustomData && oCustomData.mProperties && oCustomData.mProperties.key === "pendingEditableState") {
+					this._bPendingEditableState = oCustomData.mProperties.value;
 				}
 			}
 		}
 
-		Control.prototype.applySettings.apply(this, arguments);
-
+		return Control.prototype.applySettings.apply(this, arguments);
 	};
 
-	/**
-	 * Setter for property <code>enabled</code>. Default value is <code>true</code>.
-	 *
-	 * @param {boolean} bValue The new value for property <code>enabled</code>.
-	 * @return {sap.ui.comp.smartfield.SmartField} <code>this</code> to allow method chaining
-	 * @public
-	 */
 	SmartField.prototype.setEnabled = function(bValue) {
 		this.setProperty("enabled", bValue, true);
 		this._toggleControl();
-
-// var oEmbeddedSmartField = this._getEmbeddedSmartField();
-// if (oEmbeddedSmartField) {
-// oEmbeddedSmartField.setContextEditable(bValue, true);
-// }
 		return this;
 	};
 
-	/**
-	 * Returns the value of the <code>value</code> property.
+	SmartField.prototype.setContent = function(vContent) {
+		return this.setAggregation("_content", vContent);
+	};
+
+	SmartField.prototype.getContent = function() {
+		return this.getAggregation("_content");
+	};
+
+	/*
+	 * Gets the control factory object.
 	 *
-	 * @return {any} The value of the property
-	 * @public
+	 * @returns {sap.ui.comp.smartfield.ControlFactoryBase} The control factory object
+	 * @protected
+	 * @since 1.48
 	 */
+	SmartField.prototype.getControlFactory = function() {
+		return this._oFactory;
+	};
+
 	SmartField.prototype.getValue = function() {
-		var sProp, fProp;
 
 		// as two-way-binding cannot be assumed to be a prerequisite,
 		// check for a call-back and return the current value.
-		sProp = this._getMode();
-		fProp = this._oValue[sProp];
+		var fnProp = this.getInnerValueFunction();
 
-		if (fProp) {
-			return fProp();
+		if (fnProp) {
+			return fnProp();
 		}
 
 		// as fall-back return the property value.
 		return this.getProperty("value");
 	};
 
-	/**
-	 * Getter for property <code>valueState</code>. Default value is <code>None</code>.
-	 *
-	 * @return {sap.ui.core.ValueState} The property value
-	 * @public
-	 */
-	SmartField.prototype.getValueState = function() {
-		var aChildren, iIndex;
+	SmartField.prototype.getInnerValueFunction = function() {
 
-		aChildren = this.getInnerControls();
-		iIndex = this._getMaxSeverity(aChildren);
+		if (this._oValue && (typeof this._oValue[this.getMode()] === "function")) {
+			return this._oValue[this.getMode()];
+		}
+
+		return null;
+	};
+
+	SmartField.prototype.getValueState = function() {
+		var aChildren = this.getInnerControls(),
+			iIndex = this._getMaxSeverity(aChildren);
 
 		if (iIndex > -1) {
 			return aChildren[iIndex].getValueState();
 		}
 
-		return sap.ui.core.ValueState.None;
+		return ValueState.None;
 	};
 
 	/**
@@ -754,9 +1069,9 @@ sap.ui.define([
 	 * @public
 	 */
 	SmartField.prototype.setValueState = function(sValueState) {
-		var aChildren, oChild, sMethod = "setSimpleClientError";
-
-		aChildren = this.getInnerControls();
+		var aChildren = this.getInnerControls(),
+			oChild,
+			sMethod = "setSimpleClientError";
 
 		if (aChildren && aChildren.length) {
 			oChild = aChildren[0];
@@ -771,23 +1086,15 @@ sap.ui.define([
 		// set a possible error on the first child.
 		if (oChild && oChild.setValueState) {
 			oChild.setValueState(sValueState);
-			this[sMethod](sValueState === sap.ui.core.ValueState.Error);
+			this[sMethod](sValueState === ValueState.Error);
 		}
 
 		return this;
 	};
 
-	/**
-	 * Getter for property <code>valueStateText</code>. Default value is empty/<code>undefined</code>.
-	 *
-	 * @return {string} The property value
-	 * @public
-	 */
 	SmartField.prototype.getValueStateText = function() {
-		var aChildren, iIndex;
-
-		aChildren = this.getInnerControls();
-		iIndex = this._getMaxSeverity(aChildren);
+		var aChildren = this.getInnerControls(),
+			iIndex = this._getMaxSeverity(aChildren);
 
 		if (iIndex > -1) {
 			return aChildren[iIndex].getValueStateText();
@@ -805,9 +1112,8 @@ sap.ui.define([
 	 * @public
 	 */
 	SmartField.prototype.setValueStateText = function(sText) {
-		var aChildren, oChild;
-
-		aChildren = this.getInnerControls();
+		var aChildren = this.getInnerControls(),
+			oChild;
 
 		if (aChildren && aChildren.length) {
 			oChild = aChildren[0];
@@ -831,12 +1137,18 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._getMaxSeverity = function(aChildren) {
-		var oState, oChild, i, len, iState = 0, iIndex = -1, mState = {
-			"Error": 3,
-			"Warning": 2,
-			"Success": 1,
-			"None": 0
-		};
+		var oState,
+			oChild,
+			i,
+			len,
+			iState = 0,
+			iIndex = -1,
+			mState = {
+				"Error": 3,
+				"Warning": 2,
+				"Success": 1,
+				"None": 0
+			};
 
 		len = aChildren.length;
 
@@ -863,10 +1175,9 @@ sap.ui.define([
 	 * @public
 	 */
 	SmartField.prototype.getFocusDomRef = function() {
-		var aChildren, oChild, len;
-
-		aChildren = this.getInnerControls();
-		len = aChildren.length;
+		var aChildren = this.getInnerControls(),
+			oChild,
+			len = aChildren.length;
 
 		if (len > 0) {
 			oChild = aChildren[0];
@@ -876,19 +1187,33 @@ sap.ui.define([
 			return oChild.getFocusDomRef();
 		}
 
-		return sap.ui.core.Element.prototype.getFocusDomRef.apply(this, []);
+		return Control.prototype.getFocusDomRef.apply(this, arguments);
 	};
 
 	/**
-	 * Updates the binding context of this object and all aggregated children.
+	 * Gets the ID of the control to which the label should point.
 	 *
-	 * @param {boolean} bSkipLocal If set to <code>true</code>, the binding context of this object is not updated, aggregated children are
-	 *        considered
-	 * @param {string} sModelName The optional name of a specific model to update
-	 * @param {boolean} bUpdateAll If set to <code>true</code>, all known models are used for the update
-	 * @private
+	 * @returns {string} The ID of the inner control if it exists, otherwise the ID of the <code>SmartField</code> control
+	 * @public
 	 */
+	SmartField.prototype.getIdForLabel = function() {
+		var aChildren = this.getInnerControls(),
+			oChild,
+			iLen = aChildren.length;
+
+		if (iLen > 0) {
+			oChild = aChildren[0];
+		}
+
+		if (oChild && (typeof oChild.getIdForLabel === "function")) {
+			return oChild.getIdForLabel();
+		}
+
+		return this.getId();
+	};
+
 	SmartField.prototype.updateBindingContext = function(bSkipLocal, sModelName, bUpdateAll) {
+
 		if (this._bInDestroy) {
 			return;
 		}
@@ -896,9 +1221,11 @@ sap.ui.define([
 		this._init(sModelName);
 
 		if (this._oFactory) {
+
 			if (this.getBindingContext()) {
 				this._sBindingContextPath = this.getBindingContext().getPath();
 			}
+
 			if (this._oFactory.bind) {
 				this._oFactory.bind();
 
@@ -916,20 +1243,32 @@ sap.ui.define([
 	 * Returns the current SmartField's edit mode
 	 *
 	 * @returns {string} Returns "edit" or "display" or "display_uom"
-	 * @private
+	 * @protected
 	 */
-	SmartField.prototype._getMode = function() {
-		var bEditable = this.getEditable(), bEnabled = this.getEnabled(), bContextEditable = this.getContextEditable();
+	SmartField.prototype.getMode = function() {
+		var bEditable = this.getEditable(),
+			bEnabled = this.getEnabled(),
+			bContextEditable = this.getContextEditable();
 
 		// check for configuration.
 		if (this.getControlContext() === "responsiveTable" && this.data("suppressUnit") !== "true") {
+
 			// somehow the control is disabled
 			if (!bEditable || !bContextEditable || !bEnabled || (this.getUomEditState() === 0)) {
 				return "display_uom";
 			}
 		}
 
+		// context editable in smart form is on parent's parent in UOM for unit.
+		if (bContextEditable && this.data("configdata") && this.data("configdata").configdata.isUOM && this.data("configdata").configdata.isInnerControl && this.data("configdata").configdata.getContextEditable) {
+			bContextEditable = this.data("configdata").configdata.getContextEditable();
+		}
+
 		return bEditable && bEnabled && bContextEditable ? "edit" : "display";
+	};
+
+	SmartField.prototype.isInEditMode = function() {
+		return this.getMode() === "edit";
 	};
 
 	/**
@@ -939,9 +1278,12 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._toggleControl = function() {
-		var sMode, oValue, oConfig, bCreate = true;
+		var sMode,
+			oValue,
+			oConfig,
+			bCreate = true;
 
-		if (this._bPendigEditableState || this._bSuppressToggleControl) {
+		if (this._bPendingEditableState || this._bSuppressToggleControl) {
 			return;
 		}
 
@@ -949,9 +1291,10 @@ sap.ui.define([
 			return;
 		}
 
-		sMode = this._getMode();
+		sMode = this.getMode();
 
 		if (sMode === "edit" || sMode === "display_uom") { // always create control if in edit mode
+
 			// _createControl sets the current mode.
 			this._createControl(sMode);
 		} else {
@@ -968,10 +1311,12 @@ sap.ui.define([
 			}
 
 			if (bCreate) { // in display mode, only create control if value is not empty
+
 				// _createControl sets the current mode.
 				this._createControl(sMode);
 			} else {
-				this.setAggregation("_content", null); // if value is empty, our content has to be null
+				this.setContent(null); // if value is empty, the content has to be null
+
 				// better set the current mode, otherwise toggling gets out-of-sync.
 				this._oControl.current = "display";
 			}
@@ -980,21 +1325,43 @@ sap.ui.define([
 		this._setOnInnerControl();
 	};
 
-	/**
-	 * Setter for property <code>value</code>. Default value is <code>true</code>.
-	 *
-	 * @param {object} oValue The new value for property <code>value</code>
-	 * @return {sap.ui.comp.smartfield.SmartField} <code>this</code> to allow method chaining
-	 * @public
-	 */
-	SmartField.prototype.setValue = function(oValue) {
-		var oReturnValue = this.setProperty("value", oValue, true);
+	SmartField.prototype.setValue = function(sValue) {
+		var sOldValue = this.getProperty("value");
+		this.setProperty("value", sValue, true);
+		var oFactory = this._oFactory;
 
-		if (this._oFactory && !this._oFactory.bPending) {
+		if (oFactory && !oFactory.bPending) {
 			this._toggleControl();
 		}
 
-		return oReturnValue;
+		sValue = this.getProperty("value");
+
+		// This flag indicates whether the .setValue() mutator method is called by the framework
+		// due to a property binding change e.g.: by calling .updateProperty("value")
+		var bModelUpdate = this.isBound("value") && this.getBindingInfo("value").skipModelUpdate;
+
+		// In edit mode, if the textInEditModeSource property is set to TextInEditModeSource.NavigationProperty or
+		// to TextInEditModeSource.ValueList, a composite binding is used for the hosted inner control (usually a sap.m.Input).
+		// So, calling .setValue() on the SmartField, would not update all model properties of the hosted inner
+		// control. Therefore a model update for the value property is forced by calling the oControl.updateModelProperty()
+		// which internally triggers parsing, validation and formatting.
+		if (this.isTextInEditModeSourceValid() && (sValue !== sOldValue) && !bModelUpdate) {
+			var oControl = this._oControl;
+			oControl = oControl[oControl.current];
+			var oBinding = oControl && oControl.getBinding("value");
+
+			if (oBinding) {
+
+				// force parsing, validation and formatting of the TextArrangementString data type
+				oControl.updateModelProperty("value", sValue, oBinding.getValue());
+			}
+		}
+
+		return this;
+	};
+
+	SmartField.prototype.isTextInEditModeSourceValid = function() {
+		return (this.getTextInEditModeSource() !== TextInEditModeSource.None);
 	};
 
 	/**
@@ -1004,13 +1371,13 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._createControl = function(sMode) {
-		var oControl;
 
 		if (this._oFactory) {
-			if (sMode !== this._oControl.current || !this._oControl[sMode]) {
+
+			if ((sMode !== this._oControl.current) || !this._oControl[sMode]) {
+
 				if (!this._oControl[sMode]) {
-					// create the control and set it.
-					oControl = this._oFactory.createControl();
+					var oControl = this._oFactory.createControl();
 
 					if (oControl) {
 						this._oControl[sMode] = oControl.control;
@@ -1020,13 +1387,10 @@ sap.ui.define([
 
 				// set the content.
 				this._oControl.current = sMode;
-				this.setAggregation("_content", this._oControl[sMode]);
-
+				this.setContent(this._oControl[sMode]);
 				this.fireInnerControlsCreated(this.getInnerControls());
-			} else {
-				if (!this.getAggregation("_content")) {
-					this.setAggregation("_content", this._oControl[sMode]);
-				}
+			} else if (!this.getContent()) {
+				this.setContent(this._oControl[sMode]);
 			}
 		}
 	};
@@ -1039,6 +1403,7 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._placeCallBacks = function(oControl, sMode) {
+
 		// set the value call-back.
 		if (oControl.params && oControl.params.getValue) {
 			this._oValue[sMode] = oControl.params.getValue;
@@ -1062,10 +1427,12 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._init = function(sModelName) {
-		var oModel, oBindingInfo, oConfig;
+		var oModel,
+			oBindingInfo,
+			oConfig;
 
 		// destroy factory if entity type changed
-		if (this._oFactory && this._sBindingContextPath && this.getBindingContext() && this._sBindingContextPath != this.getBindingContext().getPath()) {
+		if (this._oFactory && this._sBindingContextPath && this.getBindingContext() && (this._sBindingContextPath !== this.getBindingContext().getPath())) {
 			this._destroyFactory();
 		}
 
@@ -1079,11 +1446,14 @@ sap.ui.define([
 			oBindingInfo = this._getBindingInfo(sModelName, "value");
 
 			if (oBindingInfo) {
+
 				if (oConfig || oModel) {
 					this._oFactory = this._createFactory(sModelName, oModel, oBindingInfo, oConfig);
 				}
-			} else if (oModel && !(oModel instanceof sap.ui.model.json.JSONModel)) {
+			} else if (oModel && !(oModel instanceof JSONModel)) {
+
 				if (this.getBindingInfo("url") || this.getUrl()) {
+
 					if (oConfig || oModel) {
 						this._oFactory = this._createFactory(sModelName, oModel, oBindingInfo, oConfig);
 					}
@@ -1099,6 +1469,7 @@ sap.ui.define([
 	 */
 	SmartField.prototype._destroyFactory = function() {
 		this._bSuppressToggleControl = true;
+		this._bSideEffects = false;
 
 		if (this._oFactory) {
 			this._oFactory.destroy();
@@ -1106,29 +1477,38 @@ sap.ui.define([
 
 		this._oFactory = null;
 		this._bSuppressToggleControl = false;
+		this._destroyChildControls();
+	};
 
-		if (this._oControl["display"]) {
-			this._oControl["display"].destroy();
+	SmartField.prototype._destroyChildControls = function() {
+
+		if (this._oControl) {
+
+			if (this._oControl.display) {
+				this._oControl.display.destroy();
+			}
+
+			if (this._oControl["display_uom"]) {
+				this._oControl["display_uom"].destroy();
+			}
+
+			if (this._oControl.edit) {
+				this._oControl.edit.destroy();
+			}
+
+			this._oControl.display = null;
+			this._oControl["display_uom"] = null;
+			this._oControl.edit = null;
+			this._oControl.current = null;
 		}
 
-		if (this._oControl["display_uom"]) {
-			this._oControl["display_uom"].destroy();
-		}
-
-		if (this._oControl["edit"]) {
-			this._oControl["edit"].destroy();
-		}
-
-		this._oControl["display"] = null;
-		this._oControl["display_uom"] = null;
-		this._oControl["edit"] = null;
-		this._oControl["current"] = null;
 		this._oValue = {
 			display: null,
 			edit: null,
 			uom: null,
 			uomset: null
 		};
+
 		this.destroyAggregation("_content");
 	};
 
@@ -1144,10 +1524,11 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._createFactory = function(sModelName, oModel, oBindingInfo, oConfig) {
-		var sEntitySet, oParam;
+		var sEntitySet,
+			oParam;
 
 		// check whether JSONControlFactoryl can be created.
-		if (oModel && oModel instanceof sap.ui.model.json.JSONModel) {
+		if (oModel && oModel instanceof JSONModel) {
 			return new JSONControlFactory(oModel, this, {
 				model: sModelName,
 				path: oBindingInfo.path
@@ -1185,21 +1566,19 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._getEntitySet = function(sModelName) {
-		var oBindingContext, sEntitySet;
-
-		// check the entity set property.
-		sEntitySet = this.getEntitySet();
+		var sEntitySet = this.getEntitySet();
 
 		if (sEntitySet && !sModelName) {
 			return sEntitySet;
 		}
 
 		// take the entity set from the binding context.
-		oBindingContext = this.getBindingContext(sModelName);
+		var oBindingContext = this.getBindingContext(sModelName);
 
 		if (oBindingContext) {
+
 			// check for a defective binding.
-			if (!oBindingContext.sPath || (oBindingContext.sPath && oBindingContext.sPath === "/undefined")) {
+			if (!oBindingContext.sPath || (oBindingContext.sPath === "/undefined")) {
 				return "";
 			}
 
@@ -1224,6 +1603,7 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._getBindingInfo = function(sModel, sName) {
+
 		if (!this._oValueBind) {
 			this._oValueBind = this.getBindingInfo(sName);
 
@@ -1235,6 +1615,7 @@ sap.ui.define([
 		}
 
 		if (this._oValueBind) {
+
 			if (!this._oValueBind.model && !sModel) {
 				return this._oValueBind;
 			}
@@ -1258,6 +1639,7 @@ sap.ui.define([
 		var oProp;
 
 		if (this._oFactory) {
+
 			// only ODataControlFactory has the method getDataType.
 			if (this._oFactory.getDataProperty) {
 				oProp = this._oFactory.getDataProperty();
@@ -1280,7 +1662,9 @@ sap.ui.define([
 	 * @public
 	 */
 	SmartField.prototype.getDataProperty = function() {
+
 		if (this._oFactory) {
+
 			// only ODataControlFactory has the method getDataProperty.
 			if (this._oFactory.getDataProperty) {
 				return this._oFactory.getDataProperty();
@@ -1300,6 +1684,7 @@ sap.ui.define([
 	 * @public
 	 */
 	SmartField.prototype.getUnitOfMeasure = function() {
+
 		if (this._oValue.uom) {
 			return this._oValue.uom();
 		}
@@ -1321,7 +1706,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Marks the SmartField control as having a client error.
+	 * Marks the <code>SmartField</code> control as having a client error.
 	 *
 	 * @param {boolean} bError If set to <code>true</code> the field is marked as having an error
 	 * @private
@@ -1331,7 +1716,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Marks the SmartField control as having a client error.
+	 * Marks the <code>SmartField</code> control and the first inner control as having a client error.
 	 *
 	 * @param {boolean} bError If set to <code>true</code> the field is marked as having an error
 	 * @private
@@ -1342,7 +1727,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Marks the SmartField control as having a client error.
+	 * Marks the <code>SmartField</code> control and the second inner control as having a client error.
 	 *
 	 * @param {boolean} bError If set to <code>true</code> the field is marked as having an error
 	 * @private
@@ -1353,7 +1738,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Marks the SmartField control as having a client error.
+	 * Marks the hosting <code>SmartField</code> control as having a client error.
 	 *
 	 * @param {boolean} bError If set to <code>true</code> the field is marked as having an error
 	 * @private
@@ -1370,6 +1755,7 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._hasClientError = function() {
+
 		if (this._oError.bComplex) {
 			return this._oError.bFirst || this._oError.bSecond;
 		}
@@ -1378,16 +1764,16 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns whether a client error has been detected. Additionally the error message is shown, if this is not the case already.
+	 * Checks whether a client error has been detected. Additionally the error message is shown, if this is not the
+	 * case already.
 	 *
 	 * @returns {boolean} <code>true</code>, if a client error has been detected, <code>false</code> otherwise
 	 * @public
 	 */
 	SmartField.prototype.checkClientError = function() {
-		var aChildren, len, i;
 
 		// in display mode: no error.
-		if (this._getMode() === "display") {
+		if (this.getMode() === "display") {
 			return false;
 		}
 
@@ -1397,12 +1783,7 @@ sap.ui.define([
 		}
 
 		// check again.
-		aChildren = this.getInnerControls();
-		len = aChildren.length;
-
-		for (i = 0; i < len; i++) {
-			this._checkClientError(aChildren[i]);
-		}
+		this.getInnerControls().forEach(this._checkClientError, this);
 
 		// return a possibly detected error.
 		return this._hasClientError();
@@ -1415,42 +1796,55 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._checkClientError = function(oControl) {
-		var sValue = null, oType = null, oParsedValue = null;
-
-		var oBind, sMethod, sParam, mParameters = {
-			"sap.m.Input": "value",
-			"sap.m.DatePicker": "value",
-			"sap.m.ComboBox": "selectedKey"
-		};
+		var oBinding,
+			sParam,
+			mControlProperties = {
+				"sap.m.Input": "value",
+				"sap.m.DatePicker": "value",
+				"sap.m.DateTimePicker": "value",
+				"sap.m.ComboBox": "selectedKey",
+				"sap.m.TextArea": "value"
+			};
 
 		if (oControl) {
-			sParam = mParameters[oControl.getMetadata()._sClassName];
+			sParam = mControlProperties[oControl.getMetadata().getName()];
 		}
 
 		if (sParam) {
-			oBind = oControl.getBinding(sParam);
+			oBinding = oControl.getBinding(sParam);
 		}
 
-		if (oBind) {
-			try {
-				sMethod = "get" + sParam.substring(0, 1).toUpperCase() + sParam.substring(1);
-				sValue = oControl[sMethod]();
-				oType = oBind.getType();
-				if (oBind.sInternalType) {
-					oParsedValue = oType.parseValue(sValue, oBind.sInternalType);
-					oType.validateValue(oParsedValue);
-				}
-			} catch (ex) {
-				if (ex instanceof ParseException) {
-					oControl.fireParseError({
-						exception: ex
-					});
-				}
+		if (oBinding) {
+			var sValue;
 
-				if (ex instanceof ValidateException) {
-					oControl.fireValidationError({
-						exception: ex
-					});
+			try {
+				var sMethod = "get" + sParam.substring(0, 1).toUpperCase() + sParam.substring(1),
+					oType = oBinding.getType();
+
+				sValue = oControl[sMethod]();
+
+				if (oBinding.sInternalType && oType && !oType.bValueValidated) {
+					var sParsedValue = oType.parseValue(sValue, oBinding.sInternalType);
+					oType.validateValue(sParsedValue);
+				}
+			} catch (oException) {
+
+				var mParameters = {
+					element: oControl,
+					property: sParam,
+					type: oBinding.getType(),
+					newValue: sValue,
+					oldValue: oBinding.getValue(),
+					exception: oException,
+					message: oException.message
+				};
+
+				if (oException instanceof ParseException) {
+					oControl.fireParseError(mParameters);
+				} else if (oException instanceof ValidateException) {
+					oControl.fireValidationError(mParameters);
+				} else {
+					throw oException;
 				}
 			}
 		}
@@ -1459,23 +1853,42 @@ sap.ui.define([
 	/*
 	 * Returns whether the current control context points to a table.
 	 *
-	 * @returns {boolean} <code>true</code> if the current SmartField control is used inside a table, <code>false</code> otherwise
+	 * @returns {boolean} <code>true</code> if the current <code>SmartField</code> control is used inside a table, <code>false</code> otherwise
 	 * @protected
 	 */
 	SmartField.prototype.isContextTable = function() {
-		return (this.getControlContext() === "responsiveTable" || this.getControlContext() === "table" || this.getControlContext() === "smartFormGrid");
+		return (this.getControlContext() === "responsiveTable" || this.getControlContext() === "table");
+	};
+
+	/*
+	 * Determines whether the <code>SmartField</code> is displayed in the form context by explicitly setting the
+	 * <code>controlContext</code> property.
+	 *
+	 * @returns {boolean} <code>true</code> if the <code>controlContext</code> control property is set to "form" or
+	 * "smartFormGrid", <code>false</code> otherwise
+	 * @since 1.54
+	 * @protected
+	 */
+	SmartField.prototype.isFormContextType = function() {
+		var sSmartFieldControlContext = this.getControlContext(),
+			mControlContextType = library.smartfield.ControlContextType;
+		return (sSmartFieldControlContext === mControlContextType.Form) || (sSmartFieldControlContext === mControlContextType.SmartFormGrid);
 	};
 
 	/**
-	 * Resolves the controls hosted currently by this SmartField.
+	 * Resolves the controls hosted currently by this <code>SmartField</code> control.
 	 *
-	 * @returns {array} The controls hosted currently by this SmartField
-	 * @public
+	 * @returns {array} The controls hosted currently by this <code>SmartField</code>
+	 * @protected
 	 */
 	SmartField.prototype.getInnerControls = function() {
-		var oContent, fContent, mComplex = {
+		var oContent,
+			fContent,
+			mComplex = {
 			"sap.m.HBox": function(oControl) {
-				var oChild, aItems, len = 0;
+				var oChild,
+					aItems,
+					len = 0;
 
 				aItems = oControl.getItems();
 
@@ -1493,7 +1906,7 @@ sap.ui.define([
 					];
 				}
 
-				oChild = aItems[1].getAggregation("_content");
+				oChild = aItems[1].getContent();
 
 				if (oChild) {
 					return [
@@ -1520,7 +1933,7 @@ sap.ui.define([
 			}
 		};
 
-		oContent = this.getAggregation("_content");
+		oContent = this.getContent();
 
 		if (oContent) {
 			fContent = mComplex[oContent.getMetadata()._sClassName];
@@ -1540,18 +1953,23 @@ sap.ui.define([
 	};
 
 	/**
-	 * Resolves the controls hosted currently by this SmartField.
+	 * Resolves the controls hosted currently by this <code>SmartField</code>.
 	 *
-	 * @returns {array} The controls hosted currently by this SmartField
+	 * @returns {array} The controls hosted currently by this <code>SmartField</code>
 	 * @public
 	 */
 	SmartField.prototype._getEmbeddedSmartField = function() {
-		var aContent = this.getAggregation("_content");
+		var aContent = this.getContent();
+
 		if (aContent) {
+
 			if (aContent instanceof sap.m.HBox) {
 				var aHBoxContent = aContent.getItems();
+
 				if (aHBoxContent) {
+
 					for (var j = 0; j < aHBoxContent.length; j++) {
+
 						if (aHBoxContent[j] instanceof SmartField) {
 							return aHBoxContent[j];
 						}
@@ -1569,6 +1987,7 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype.onAfterRendering = function() {
+
 		if (Control.prototype.onAfterRendering) {
 			Control.prototype.onAfterRendering.apply(this);
 		}
@@ -1580,9 +1999,12 @@ sap.ui.define([
 	SmartField.prototype.onBeforeRendering = function() {
 		var aFields = this.getInnerControls();
 		var that = this;
+
 		if (this.getAriaLabelledBy().length > 0) {
 			aFields.forEach(function(oField) {
+
 				if (oField.addAriaLabelledBy && oField.getAriaLabelledBy) {
+
 					if (oField.getAriaLabelledBy().length === 0) {
 						oField.addAriaLabelledBy(that.getAriaLabelledBy()[0]);
 					}
@@ -1591,15 +2013,120 @@ sap.ui.define([
 		}
 	};
 
+	SmartField.prototype.onBeforeValidateValue = function(sValue) {
+		var oModel = this.getModel(),
+			oControl = this._oControl.edit,
+			oBinding = oControl && oControl.getBinding("value"),
+			oValueListAnnotation = this.getControlFactory().getDataProperty().valueListAnnotation;
+
+		oModel.read("/" + oValueListAnnotation.valueListEntitySetName, {
+			filters: getValueListFilters(sValue, {
+				keyFieldPath: oValueListAnnotation.keyField,
+				descriptionFieldPath: oValueListAnnotation.descriptionField
+			}),
+			success: this.onRequestValueListDataSuccess.bind(this, {
+				value: sValue,
+				oldValue: oBinding.getValue()
+			}),
+			error: this.onRequestValueListDataError.bind(this)
+		});
+
+		oControl.setBusyIndicatorDelay(300);
+		oControl.setBusy(true);
+	};
+
+	SmartField.prototype.onRequestValueListDataSuccess = function(mSettings, oData, oResponse) {
+		var oControl = this._oControl.edit,
+			oBinding = oControl && oControl.getBinding("value"),
+			oType = oBinding && oBinding.getType();
+
+		if (oType) {
+			oType.bNewDataLoaded = true;
+			oType.oSettings.data = oData.results;
+		}
+
+		if (oControl && oBinding) {
+
+			// trigger parsing, validation and formatting
+			oControl.updateModelProperty("value", mSettings.value, mSettings.oldValue);
+
+			// restore the busy and busy indicator delay states to the initial value
+			oControl.setBusyIndicatorDelay(0);
+			oControl.setBusy(false);
+		}
+	};
+
+	SmartField.prototype.onRequestValueListDataError = function(oError) {
+		var oControl = this._oControl.edit,
+			oBinding = oControl && oControl.getBinding("value"),
+			oType = oBinding && oBinding.getType();
+
+		if (oType) {
+			oType.bNewDataLoaded = true;
+			oType.oSettings.data = [];
+		}
+
+		if (oControl) {
+
+			// restore the busy and busy indicator delay states to the initial value
+			oControl.setBusyIndicatorDelay(0);
+			oControl.setBusy(false);
+		}
+	};
+
+	SmartField.prototype.onAfterValidateValue = function(sValue) {
+
+		if (this.bWaitingForValueValidation) {
+			this.fireChange({
+				value: sValue
+			});
+		}
+
+		this.bWaitingForValueValidation = false;
+	};
+
+	SmartField.prototype.getFirstChildControl = function() {
+		var aControls = this.getInnerControls();
+
+		if (aControls.length) {
+			return aControls[0] || null;
+		}
+
+		return null;
+	};
+
+	function getValueListFilters(vValue, oSettings) {
+		return [
+			new Filter({
+				and: false,
+				filters: [
+					new Filter({
+						path: oSettings.keyFieldPath,
+						operator: FilterOperator.EQ,
+						value1: vValue
+					}),
+					new Filter({
+						path: oSettings.descriptionFieldPath,
+						operator: FilterOperator.Contains,
+						value1: vValue
+					})
+				]
+			})
+		];
+	}
+
 	/**
 	 * Checks whether field groups can be set.
 	 *
 	 * @private
 	 */
 	SmartField.prototype._checkFieldGroups = function() {
-		var oView, oMetaData, sMode = this._getMode();
+		var oView,
+			oMetaData,
+			sMode = this.getMode();
 
-		if (this.getBindingContext() && this._oFactory && this._oFactory.getMetaData && sMode === "edit" && !this._bSideEffects) {
+		if (this.getBindingContext() && this._oFactory && this._oFactory.getMetaData && (sMode === "edit") && !this._bSideEffects) {
+
 			// check whether the meta data for the smart field has already been calculated.
 			oMetaData = this._oFactory.getMetaData();
 
@@ -1629,7 +2156,8 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype._setFieldGroup = function(oMetaData, oView) {
-		var aControls, aIDs = this._oSideEffects.getFieldGroupIDs(oMetaData, oView);
+		var aControls,
+			aIDs = this._oSideEffects.getFieldGroupIDs(oMetaData, oView);
 
 		if (aIDs) {
 			aControls = this.getInnerControls();
@@ -1669,10 +2197,13 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField.prototype.refreshDataState = function(sName, oDataState) {
-		var oBindingContext, oObject;
+		var oBindingContext,
+			oObject;
 
 		if (sName === "value") {
+
 			if (oDataState.isLaundering()) {
+
 				if (this.getEditable()) {
 					oBindingContext = this.getBindingContext();
 
@@ -1722,6 +2253,7 @@ sap.ui.define([
 		// destroy only inactive control
 		// active control will be destroyed via content aggregation
 		if (oControl) {
+
 			if (oControl.current === "edit") {
 				oInactiveInnerControl = oControl["display"] || oControl["display_uom"];
 			} else {
@@ -1746,22 +2278,28 @@ sap.ui.define([
 		this._oValueBind = null;
 		this._oSideEffects = null;
 		this._sBindingContextPath = "";
+
+		this.detachEvent("innerControlsCreated",SmartField.prototype._setOnInnerControl,this);//inner controls not ready wait for creation
 	};
 
 	/**
-	 * Calculates the paths to the annotations used by the SmartField.
+	 * Calculates the paths to the annotations used by the <code>SmartField</code> control.
 	 *
 	 * @param {sap.ui.model.odata.ODataMetaModel} oMetaModel The given OData meta model
 	 * @param {object} oEntitySet The given entity set
-	 * @param {string} sValueBinding The path identifying the OData property the value property of the SmartField is bound to
+	 * @param {string} sValueBinding The path identifying the OData property to which the value property of the <code>SmartField</code> is bound
 	 * @param {boolean} bNavigationPathsOnly If set to <code>true</code>, no properties are returned
 	 * @returns {array} The resulting paths are returned
 	 * @public
 	 */
 	SmartField.getSupportedAnnotationPaths = function(oMetaModel, oEntitySet, sValueBinding, bNavigationPathsOnly) {
-		var oConfig, oUOM, aResult = [], oMetaData;
+		var oConfig,
+			oUOM,
+			aResult = [],
+			oMetaData;
 
 		if (oMetaModel && oEntitySet && sValueBinding) {
+
 			// prepare the meta data.
 			oMetaData = {
 				entitySet: oEntitySet,
@@ -1838,7 +2376,11 @@ sap.ui.define([
 	 * @private
 	 */
 	SmartField._push = function(sPath, aResult, oMetaData, oConfig) {
-		var aPath, sPart, len, sOut, oResult = {};
+		var aPath,
+			sPart,
+			len,
+			sOut,
+			oResult = {};
 
 		if (sPath) {
 			if (oConfig.navigationPathOnly) {
@@ -1871,6 +2413,7 @@ sap.ui.define([
 		}
 
 		if (sOut) {
+
 			if (oMetaData.navigationPath) {
 				aResult.push(oMetaData.navigationPath + "/" + sOut);
 			} else {
@@ -1907,39 +2450,68 @@ sap.ui.define([
 		}
 	};
 
-	/**
-	 * Adds some object with the ID <code>sId</code> to the association identified by <code>sAssociationName</code> and marks this ManagedObject
-	 * as changed. This method does not avoid duplicates. <b>Note:</b> This method is a low-level API as described in <a href="#lowlevelapi">the
-	 * class documentation</a>. Applications or frameworks must not use this method to generically add an object to an association. Use the concrete
-	 * method add<i>XYZ</i> for association 'XYZ' or the generic {@link #applySettings} instead.
-	 *
-	 * @param {string} sAssociationName the string identifying the association the object should be added to.
-	 * @param {string | sap.ui.base.ManagedObject} sId the ID of the ManagedObject object to add; if empty, nothing is added; if a
-	 *        <code>sap.ui.base.ManagedObject</code> is given, its ID is added
-	 * @param {boolean} [bSuppressInvalidate] if true, this managed object as well as the newly associated object are not marked as changed
-	 * @return {sap.ui.base.ManagedObject} Returns <code>this</code> to allow method chaining
-	 * @protected
-	 */
 	SmartField.prototype.addAssociation = function(sAssociationName, sId, bSuppressInvalidate) {
+
 		if (sAssociationName === "ariaLabelledBy") {
 			this.getInnerControls().forEach(function(oControl) {
+
 				if (oControl.addAriaLabelledBy) {
 					oControl.addAriaLabelledBy(sId);
 				}
 			});
 		}
-		Control.prototype.addAssociation.apply(this, arguments);
+
+		return Control.prototype.addAssociation.apply(this, arguments);
 	};
 
-	/**
-	 * @see sap.ui.core.Control#getAccessibilityInfo
-	 * @protected
-	 */
+	SmartField.prototype.removeAssociation = function(sAssociationName, vObject, bSuppressInvalidate) {
+		var sId = Control.prototype.removeAssociation.apply(this, arguments);
+
+		if (sAssociationName === "ariaLabelledBy" && sId) {
+			this.getInnerControls().forEach(function(oControl) {
+				if (oControl.removeAriaLabelledBy) {
+					oControl.removeAriaLabelledBy(sId);
+				}
+			});
+		}
+
+		return sId;
+	};
+
 	SmartField.prototype.getAccessibilityInfo = function() {
-		var oControl = this.getAggregation("_content");
+		var oControl = this.getContent();
 		return oControl && oControl.getAccessibilityInfo ? oControl.getAccessibilityInfo() : null;
 	};
 
-	return SmartField;
+	/*
+	 * If SmartFiels is inside of a Form use Forms aria logic for label
+	 */
+	SmartField.prototype.enhanceAccessibilityState = function(oElement, mAriaProps) {
+		var oParent = this.getParent();
 
+		if (oParent && oParent.enhanceAccessibilityState) {
+			// use SmartField as control, but aria proprties of rendered inner control.
+			oParent.enhanceAccessibilityState(this, mAriaProps);
+		}
+	};
+
+	/**
+	 * Returns the value of the <code>mandatory</code> property if the <code>SmartField</code> is editable.
+	 *
+	 * This function is needed as the "mandatory" feature is named "required" in a lot of other controls
+	 * (like <code>Label</code> or <code>Form</code>).
+	 * @returns {boolean} the true if the <code>SmartField</code> should be marked as required
+	 * @since 1.48.0
+	 * @protected
+	 */
+	SmartField.prototype.getRequired = function() {
+
+		if (this.getContextEditable() && this.getEditable()) {
+			return this.getMandatory();
+		} else {
+			return false;
+		}
+	};
+
+	return SmartField;
 }, /* bExport= */true);

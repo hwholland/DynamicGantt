@@ -16,7 +16,7 @@ This control cannot be used stand-alone, it just renders a &lt;code&gt;Form&lt;/
     <since>1.16.0</since>
     <baseType>sap.ui.layout/form/FormLayout</baseType>
     <properties>
-        <property name="singleColumn" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
+        <property group="Misc" defaultValue="false" type="sap.ui.core/boolean" name="singleColumn">
             <documentation>If set, the grid renders only one &lt;code&gt;FormContainer&lt;/code&gt; per column. That means one &lt;code&gt;FormContainer&lt;/code&gt; is below the other. The whole grid has 8 cells per row.
 
 If not set, &lt;code&gt;FormContainer&lt;/code&gt; can use the full width of the grid or two &lt;code&gt;FormContainers&lt;/code&gt; can be placed beside each other. In this case the whole grid has 16 cells per row.</documentation>

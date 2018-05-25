@@ -1,12 +1,11 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(['sap/ui/core/IconPool','sap/ushell/ui/launchpad/GroupListItem', 'sap/ushell/override'],
+	function(IconPool, GroupListItem, override) {
+	"use strict";
+
     /*global jQuery, sap, document */
     /*jslint plusplus: true, nomen: true */
-
-    jQuery.sap.require("sap.ushell.ui.launchpad.GroupListItem");
-    jQuery.sap.require("sap.ui.core.IconPool");
 
     sap.ui.jsview("sap.ushell.components.flp.launchpad.group_list.GroupList", {
         createContent: function (oController) {
@@ -49,8 +48,7 @@
 
                 that.oController.handleScroll();
             };
-            jQuery.sap.require("sap.ushell.override");
-            this.oGroupList.updateItems = sap.ushell.override.updateAggregatesFactory("items");
+            this.oGroupList.updateItems = override.updateAggregatesFactory("items");
 
             if (this.getViewData().enablePersonalization === undefined || this.getViewData().enablePersonalization !== false) {
                 this.oActionList = new sap.m.List({
@@ -112,7 +110,7 @@
                 jQuery(this.getDomRef()).attr("tabindex", "0");
             };
 
-            return new sap.ushell.ui.launchpad.GroupListItem({
+            return new GroupListItem({
                 index : "{index}",
                 title : "{title}",
                 tooltip : "{title}",
@@ -141,4 +139,6 @@
             return "sap.ushell.components.flp.launchpad.group_list.GroupList";
         }
     });
-}());
+
+
+}, /* bExport= */ true);

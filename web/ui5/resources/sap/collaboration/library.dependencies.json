@@ -2,353 +2,353 @@
   "modules" : [
     {
       "name" : "sap/collaboration/components/controls/FeedEntryEmbedded.js",
-      "description" : "! @copyright@",
-      "size" : 17611,
-      "compressedSize" : 7606,
-      "required" : ["jquery.sap.global.js", "sap/ui/core/Control.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/collaboration/components/controls/PlaceholderUtility.js", "sap/collaboration/components/utils/MediaTypeToSAPIcon.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 17704,
+      "compressedSize" : 7699,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/controls/PlaceholderUtility.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/collaboration/components/utils/MediaTypeToSAPIcon.js", "sap/ui/core/Control.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/controls/FeedEntryEmbeddedRenderer.js",
-      "description" : "! @copyright@",
-      "size" : 6059,
-      "compressedSize" : 2022,
-      "required" : ["jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 6152,
+      "compressedSize" : 2115,
+      "required" : ["ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/controls/FilterPopover.js",
-      "description" : "! @copyright@",
-      "size" : 9619,
-      "compressedSize" : 3379,
-      "required" : ["jquery.sap.global.js", "sap/ui/core/Control.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 9712,
+      "compressedSize" : 3472,
+      "required" : ["jquery.sap.global.js", "sap/ui/core/Control.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/controls/PlaceholderUtility.js",
-      "description" : "! @copyright@",
-      "size" : 7223,
-      "compressedSize" : 1430,
-      "required" : ["sap/ui/base/Object.js", "jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 7316,
+      "compressedSize" : 1523,
+      "required" : ["sap/ui/base/Object.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/controls/ReplyPopover.js",
-      "description" : "! @copyright@",
-      "size" : 15568,
-      "compressedSize" : 7828,
-      "required" : ["sap/collaboration/components/utils/LanguageBundle.js", "jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 16478,
+      "compressedSize" : 8197,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/LanguageBundle.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/controls/SocialTextArea.js",
-      "size" : 25486,
-      "compressedSize" : 9571,
-      "required" : ["jquery.sap.global.js", "sap/ui/model/json/JSONModel.js", "sap/m/TextArea.js", "sap/m/InputBase.js", "sap/m/Popover.js", "sap/m/List.js", "sap/m/StandardListItem.js", "sap/collaboration/components/controls/SuggestionUtility.js", "sap/collaboration/components/utils/LanguageBundle.js"],
+      "size" : 25579,
+      "compressedSize" : 9664,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/controls/SuggestionUtility.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/m/InputBase.js", "sap/m/List.js", "sap/m/Popover.js", "sap/m/StandardListItem.js", "sap/m/TextArea.js", "sap/ui/model/json/JSONModel.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/controls/SuggestionUtility.js",
-      "size" : 12693,
-      "compressedSize" : 3182,
+      "size" : 12786,
+      "compressedSize" : 3275,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/controls/TimelineEntryEmbedded.js",
-      "description" : "! @copyright@",
-      "size" : 8788,
-      "compressedSize" : 3570,
-      "required" : ["jquery.sap.global.js", "sap/ui/core/Control.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/collaboration/components/controls/PlaceholderUtility.js", "sap/collaboration/components/utils/MediaTypeToSAPIcon.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 8881,
+      "compressedSize" : 3663,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/controls/PlaceholderUtility.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/collaboration/components/utils/MediaTypeToSAPIcon.js", "sap/ui/core/Control.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/controls/TimelineEntryEmbeddedRenderer.js",
-      "description" : "! @copyright@",
-      "size" : 1039,
-      "compressedSize" : 189,
-      "required" : ["jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 1132,
+      "compressedSize" : 282,
+      "required" : ["ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/BOMode.js",
-      "description" : "! @copyright@",
-      "size" : 18756,
-      "compressedSize" : 6974,
-      "required" : ["sap/collaboration/components/feed/Mode.js", "sap/m/CustomListItem.js", "sap/m/Label.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "sap/collaboration/components/utils/PendingRequestsUtil.js", "jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 18849,
+      "compressedSize" : 7067,
+      "required" : ["sap/collaboration/components/feed/Mode.js", "sap/collaboration/components/utils/PendingRequestsUtil.js", "sap/m/CustomListItem.js", "sap/m/Label.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/Component.js",
       "size" : 8496,
       "compressedSize" : 1775,
-      "required" : ["sap/ui/core/UIComponent.js", "sap/suite/ui/commons/library.js"],
+      "required" : ["sap/suite/ui/commons/library.js", "sap/ui/core/UIComponent.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/GroupIDsMode.js",
-      "description" : "! @copyright@",
-      "size" : 8717,
-      "compressedSize" : 3805,
-      "required" : ["sap/collaboration/components/feed/Mode.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "sap/collaboration/components/utils/PendingRequestsUtil.js", "jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 8810,
+      "compressedSize" : 3898,
+      "required" : ["sap/collaboration/components/feed/Mode.js", "sap/collaboration/components/utils/PendingRequestsUtil.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/Mode.js",
-      "description" : "! @copyright@",
-      "size" : 7802,
-      "compressedSize" : 3402,
-      "required" : ["sap/ui/base/Object.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "sap/ui/core/Fragment.js", "sap/collaboration/components/utils/CommonUtil.js", "jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 7895,
+      "compressedSize" : 3495,
+      "required" : ["sap/collaboration/components/utils/CommonUtil.js", "sap/ui/base/Object.js", "sap/ui/core/Fragment.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/ModeFactory.js",
-      "description" : "! @copyright@",
-      "size" : 2248,
-      "compressedSize" : 932,
-      "required" : ["sap/collaboration/components/feed/GroupIDsMode.js", "sap/collaboration/components/feed/BOMode.js", "sap/collaboration/components/feed/UserMode.js", "jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 2341,
+      "compressedSize" : 1025,
+      "required" : ["sap/collaboration/components/feed/BOMode.js", "sap/collaboration/components/feed/GroupIDsMode.js", "sap/collaboration/components/feed/UserMode.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/UserMode.js",
-      "description" : "! @copyright@",
-      "size" : 5408,
-      "compressedSize" : 1712,
-      "required" : ["sap/collaboration/components/feed/Mode.js", "jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 5501,
+      "compressedSize" : 1805,
+      "required" : ["sap/collaboration/components/feed/Mode.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/fragments/CustomListItem.fragment.xml",
       "size" : 265,
-      "required" : ["sap/ui/core/Fragment.js", "sap/m/CustomListItem.js", "sap/m/Label.js"],
+      "required" : ["sap/m/CustomListItem.js", "sap/m/Label.js", "sap/ui/core/Fragment.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/fragments/GroupSelector.fragment.xml",
       "size" : 568,
-      "required" : ["sap/ui/core/Fragment.js", "sap/m/ResponsivePopover.js", "sap/m/SearchField.js", "sap/m/List.js"],
+      "required" : ["sap/m/List.js", "sap/m/ResponsivePopover.js", "sap/m/SearchField.js", "sap/ui/core/Fragment.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/views/GroupFeed.controller.js",
-      "description" : "! @copyright@",
-      "size" : 52268,
-      "compressedSize" : 23809,
-      "required" : ["jquery.sap.global.js", "sap/ui/core/mvc/Controller.js", "sap/suite/ui/commons/TimelineItem.js", "sap/m/MessageBox.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/collaboration/components/utils/DateUtil.js", "sap/collaboration/components/controls/FeedEntryEmbedded.js", "sap/collaboration/components/controls/ReplyPopover.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/collaboration/components/controls/FilterPopover.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/feed/ModeFactory.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 52371,
+      "compressedSize" : 23914,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/controls/FeedEntryEmbedded.js", "sap/collaboration/components/controls/FilterPopover.js", "sap/collaboration/components/controls/ReplyPopover.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/collaboration/components/feed/ModeFactory.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/DateUtil.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/m/MessageBox.js", "sap/suite/ui/commons/TimelineItem.js", "sap/ui/core/mvc/Controller.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/feed/views/GroupFeed.view.xml",
       "size" : 569,
-      "required" : ["sap/ui/core/mvc/XMLView.js", "sap/collaboration/components/feed/views/GroupFeed.controller.js", "sap/suite/ui/commons/Timeline.js"],
+      "required" : ["sap/collaboration/components/feed/views/GroupFeed.controller.js", "sap/suite/ui/commons/Timeline.js", "sap/ui/core/mvc/XMLView.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/Component.js",
-      "size" : 11625,
-      "compressedSize" : 4429,
-      "required" : ["sap/collaboration/library.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/JamUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/ui/core/UIComponent.js", "jquery.sap.global.js"],
+      "size" : 11703,
+      "compressedSize" : 4522,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/JamUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/library.js", "sap/ui/core/UIComponent.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/app/App.controller.js",
-      "size" : 12697,
-      "compressedSize" : 5499,
+      "size" : 12790,
+      "compressedSize" : 5592,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/app/App.view.js",
-      "size" : 1175,
-      "compressedSize" : 313,
+      "size" : 1268,
+      "compressedSize" : 406,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/commons/Detail.controller.js",
-      "size" : 4087,
-      "compressedSize" : 1861,
-      "required" : ["sap/collaboration/components/utils/JamUtil.js", "jquery.sap.global.js"],
+      "size" : 4180,
+      "compressedSize" : 1954,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/JamUtil.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/commons/Detail.view.js",
-      "size" : 1610,
-      "compressedSize" : 599,
+      "size" : 1703,
+      "compressedSize" : 692,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/dialog/Component.js",
-      "size" : 24752,
-      "compressedSize" : 8896,
-      "required" : ["sap/collaboration/library.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/JamUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/ui/core/UIComponent.js", "jquery.sap.global.js"],
+      "size" : 24845,
+      "compressedSize" : 8989,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/JamUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/library.js", "sap/ui/core/UIComponent.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/splitApp/FeedTypeMaster.controller.js",
-      "size" : 4597,
-      "compressedSize" : 1782,
+      "size" : 4690,
+      "compressedSize" : 1875,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/splitApp/FeedTypeMaster.view.js",
-      "size" : 2649,
-      "compressedSize" : 1208,
+      "size" : 2742,
+      "compressedSize" : 1301,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/splitApp/GroupMaster.controller.js",
-      "size" : 4589,
-      "compressedSize" : 2439,
+      "size" : 4682,
+      "compressedSize" : 2532,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/splitApp/GroupMaster.view.js",
-      "size" : 1478,
-      "compressedSize" : 534,
+      "size" : 1571,
+      "compressedSize" : 627,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/splitApp/SplitApp.controller.js",
-      "size" : 5521,
-      "compressedSize" : 2369,
+      "size" : 5614,
+      "compressedSize" : 2462,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/feed/splitApp/SplitApp.view.js",
-      "size" : 1298,
-      "compressedSize" : 353,
+      "size" : 1391,
+      "compressedSize" : 446,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/notification/Component.js",
-      "size" : 6089,
-      "compressedSize" : 2724,
-      "required" : ["sap/collaboration/library.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/ui/core/UIComponent.js", "sap/ui/commons/Button.js", "sap/m/MessageBox.js", "jquery.sap.global.js"],
+      "size" : 6182,
+      "compressedSize" : 2817,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/library.js", "sap/m/MessageBox.js", "sap/ui/commons/Button.js", "sap/ui/core/UIComponent.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/notification/Notification.controller.js",
-      "size" : 19686,
-      "compressedSize" : 10656,
-      "required" : ["sap/collaboration/components/utils/NotificationTypeUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/components/utils/CommonUtil.js", "jquery.sap.global.js"],
+      "size" : 19779,
+      "compressedSize" : 10749,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/NotificationTypeUtil.js", "sap/collaboration/components/utils/OdataUtil.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/notification/Notification.view.js",
-      "size" : 5571,
-      "compressedSize" : 3791,
-      "required" : ["sap/collaboration/library.js", "sap/collaboration/components/fiori/notification/NotificationContainer.js", "jquery.sap.global.js"],
+      "size" : 5664,
+      "compressedSize" : 3884,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/fiori/notification/NotificationContainer.js", "sap/collaboration/library.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/notification/NotificationContainer.js",
-      "description" : "! @copyright@",
-      "size" : 824,
-      "compressedSize" : 520,
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 917,
+      "compressedSize" : 613,
       "required" : ["jquery.sap.global.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/Component.js",
-      "size" : 12059,
-      "compressedSize" : 5215,
-      "required" : ["sap/collaboration/library.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/ui/core/UIComponent.js", "sap/m/MessageBox.js", "jquery.sap.global.js"],
+      "size" : 12142,
+      "compressedSize" : 5308,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/library.js", "sap/m/MessageBox.js", "sap/ui/core/UIComponent.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/FolderSelection.controller.js",
-      "size" : 9289,
-      "compressedSize" : 4489,
+      "size" : 9382,
+      "compressedSize" : 4582,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/FolderSelection.view.js",
-      "size" : 1322,
-      "compressedSize" : 618,
+      "size" : 1415,
+      "compressedSize" : 711,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/NoGroups.controller.js",
-      "size" : 1139,
-      "compressedSize" : 300,
-      "required" : ["sap/collaboration/components/utils/CommonUtil.js", "jquery.sap.global.js"],
+      "size" : 1232,
+      "compressedSize" : 393,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/NoGroups.view.js",
-      "size" : 2023,
-      "compressedSize" : 920,
+      "size" : 2116,
+      "compressedSize" : 1013,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/Sharing.controller.js",
-      "size" : 27243,
-      "compressedSize" : 14905,
-      "required" : ["sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/components/fiori/sharing/helper/ShareUtil.js", "sap/collaboration/components/fiori/sharing/helper/AttachmentsUtil.js", "sap/m/MessageToast.js", "jquery.sap.global.js"],
+      "size" : 27336,
+      "compressedSize" : 14998,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/fiori/sharing/helper/AttachmentsUtil.js", "sap/collaboration/components/fiori/sharing/helper/ShareUtil.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/m/MessageToast.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/Sharing.view.js",
-      "size" : 5811,
-      "compressedSize" : 3584,
+      "size" : 5904,
+      "compressedSize" : 3677,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/attachment/Attachment.js",
       "description" : "This module is a class whose objects are meant to hold information about a single file.",
-      "size" : 2725,
-      "compressedSize" : 1637,
-      "required" : ["sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentConstructorArgumentsException.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentParameterException.js", "jquery.sap.global.js"],
+      "size" : 2818,
+      "compressedSize" : 1730,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentConstructorArgumentsException.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentParameterException.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentConstructorArgumentsException.js",
       "description" : "This module is an exception class whose objects are thrown during File class object construction. An exception of this kind is thrown when the File constructor isn't provided the arguments it need to build an instance of the File class.",
-      "size" : 659,
-      "compressedSize" : 372,
+      "size" : 752,
+      "compressedSize" : 465,
       "required" : ["jquery.sap.global.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentParameterException.js",
-      "description" : "! @copyright@",
-      "size" : 394,
-      "compressedSize" : 344,
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 487,
+      "compressedSize" : 437,
       "required" : ["jquery.sap.global.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/dialog/Component.js",
-      "size" : 14687,
-      "compressedSize" : 7426,
-      "required" : ["sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/ui/core/UIComponent.js", "sap/m/MessageToast.js", "jquery.sap.global.js"],
+      "size" : 14780,
+      "compressedSize" : 7519,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/m/MessageToast.js", "sap/ui/core/UIComponent.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/helper/AttachmentsUtil.js",
       "description" : "AttachmentsUtil helper class",
-      "size" : 7010,
-      "compressedSize" : 3923,
-      "required" : ["sap/collaboration/components/utils/CommonUtil.js", "jquery.sap.global.js"],
+      "size" : 7103,
+      "compressedSize" : 4016,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/fiori/sharing/helper/ShareUtil.js",
       "description" : "JamUtil helper class  Is responsible for the integration and communication with the JAM APIs",
-      "size" : 16681,
-      "compressedSize" : 8403,
+      "size" : 16774,
+      "compressedSize" : 8496,
       "required" : ["jquery.sap.global.js"],
       "includes" : []
     },
@@ -600,22 +600,22 @@
     },
     {
       "name" : "sap/collaboration/components/socialprofile/Component.js",
-      "size" : 13533,
-      "compressedSize" : 4358,
-      "required" : ["sap/ui/core/UIComponent.js", "sap/collaboration/components/utils/CommonUtil.js", "jquery.sap.global.js"],
+      "size" : 13626,
+      "compressedSize" : 4451,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/ui/core/UIComponent.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/socialprofile/SocialProfile.controller.js",
-      "size" : 6943,
-      "compressedSize" : 3674,
-      "required" : ["sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "jquery.sap.global.js"],
+      "size" : 7036,
+      "compressedSize" : 3767,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/OdataUtil.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/socialprofile/SocialProfile.view.js",
-      "size" : 5919,
-      "compressedSize" : 3311,
+      "size" : 6012,
+      "compressedSize" : 3404,
       "required" : [],
       "includes" : []
     },
@@ -623,44 +623,44 @@
       "name" : "sap/collaboration/components/socialtimeline/Component.js",
       "size" : 66202,
       "compressedSize" : 28279,
-      "required" : ["sap/ui/core/UIComponent.js", "sap/suite/ui/commons/Timeline.js", "sap/suite/ui/commons/TimelineItem.js", "sap/collaboration/components/socialtimeline/validation/InputValidator.js", "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbedded.js", "sap/collaboration/components/socialtimeline/datahandlers/TimelineDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/JamDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/ServiceDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/SMIntegrationDataHandler.js", "sap/collaboration/components/socialtimeline/annotations/TimelineTermsUtility.js", "sap/collaboration/components/socialtimeline/filter/FilterType.js", "sap/collaboration/components/controls/ReplyPopover.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/collaboration/components/controls/FilterPopover.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/DateUtil.js", "jquery.sap.global.js"],
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/controls/FilterPopover.js", "sap/collaboration/components/controls/ReplyPopover.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/collaboration/components/socialtimeline/annotations/TimelineTermsUtility.js", "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbedded.js", "sap/collaboration/components/socialtimeline/datahandlers/JamDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/SMIntegrationDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/ServiceDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/TimelineDataHandler.js", "sap/collaboration/components/socialtimeline/filter/FilterType.js", "sap/collaboration/components/socialtimeline/validation/InputValidator.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/DateUtil.js", "sap/suite/ui/commons/Timeline.js", "sap/suite/ui/commons/TimelineItem.js", "sap/ui/core/UIComponent.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/socialtimeline/annotations/Metadata.js",
-      "size" : 3534,
-      "compressedSize" : 1627,
-      "required" : ["sap/ui/base/Object.js", "jquery.sap.global.js"],
+      "size" : 3627,
+      "compressedSize" : 1720,
+      "required" : ["jquery.sap.global.js", "sap/ui/base/Object.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/socialtimeline/annotations/MetadataException.js",
-      "size" : 464,
-      "compressedSize" : 411,
-      "required" : ["sap/ui/base/Object.js", "jquery.sap.global.js"],
+      "size" : 557,
+      "compressedSize" : 504,
+      "required" : ["jquery.sap.global.js", "sap/ui/base/Object.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/socialtimeline/annotations/TimelineTermsUtility.js",
       "size" : 14231,
       "compressedSize" : 6769,
-      "required" : ["sap/collaboration/components/socialtimeline/annotations/MetadataException.js", "jquery.sap.global.js"],
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/socialtimeline/annotations/MetadataException.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbedded.js",
-      "description" : "! @copyright@",
-      "size" : 3707,
-      "compressedSize" : 1209,
-      "required" : ["jquery.sap.global.js", "sap/ui/core/Control.js", "sap/collaboration/components/controls/TimelineEntryEmbedded.js", "sap/collaboration/components/controls/FeedEntryEmbedded.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 3800,
+      "compressedSize" : 1302,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/controls/FeedEntryEmbedded.js", "sap/collaboration/components/controls/TimelineEntryEmbedded.js", "sap/ui/core/Control.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbeddedRenderer.js",
-      "description" : "! @copyright@",
-      "size" : 663,
-      "compressedSize" : 142,
-      "required" : ["jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 756,
+      "compressedSize" : 235,
+      "required" : ["ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
@@ -668,7 +668,7 @@
       "description" : "! SAP UI development toolkit for HTML5 (SAPUI5) (c) Copyright 2009-2014 SAP AG. All rights reserved",
       "size" : 32279,
       "compressedSize" : 11676,
-      "required" : ["sap/collaboration/components/utils/OdataUtil.js", "jquery.sap.global.js"],
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/OdataUtil.js"],
       "includes" : []
     },
     {
@@ -676,7 +676,7 @@
       "description" : "! SAP UI development toolkit for HTML5 (SAPUI5) (c) Copyright 2009-2014 SAP AG. All rights reserved",
       "size" : 4257,
       "compressedSize" : 1902,
-      "required" : ["sap/collaboration/components/utils/OdataUtil.js", "jquery.sap.global.js"],
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/OdataUtil.js"],
       "includes" : []
     },
     {
@@ -706,89 +706,113 @@
       "name" : "sap/collaboration/components/socialtimeline/validation/InputValidator.js",
       "size" : 8081,
       "compressedSize" : 3847,
-      "required" : ["sap/collaboration/library.js", "jquery.sap.global.js"],
+      "required" : ["jquery.sap.global.js", "sap/collaboration/library.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/CommonUtil.js",
-      "size" : 7904,
-      "compressedSize" : 3647,
-      "required" : ["sap/m/MessageBox.js", "sap/collaboration/components/utils/MessageQueueUtil.js", "jquery.sap.global.js"],
+      "size" : 7997,
+      "compressedSize" : 3740,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/MessageQueueUtil.js", "sap/m/MessageBox.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/DateUtil.js",
-      "description" : "! @copyright@",
-      "size" : 1578,
-      "compressedSize" : 762,
-      "required" : ["jquery.sap.global.js", "sap/ui/base/Object.js", "sap/collaboration/components/utils/LanguageBundle.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 1671,
+      "compressedSize" : 855,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/ui/base/Object.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/JamUtil.js",
       "description" : "JamUtil helper class  Is responsible for the integration and communication with the JAM APIs",
-      "size" : 7804,
-      "compressedSize" : 3960,
+      "size" : 7897,
+      "compressedSize" : 4053,
       "required" : ["jquery.sap.global.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/LanguageBundle.js",
-      "description" : "! @copyright@",
-      "size" : 973,
-      "compressedSize" : 560,
-      "required" : ["jquery.sap.global.js", "sap/ui/base/Object.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 1066,
+      "compressedSize" : 653,
+      "required" : ["jquery.sap.global.js", "sap/ui/base/Object.js", "ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/MediaTypeToSAPIcon.js",
-      "size" : 2172,
-      "compressedSize" : 1690,
+      "size" : 2265,
+      "compressedSize" : 1783,
       "required" : [],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/MessageQueueUtil.js",
-      "size" : 2660,
-      "compressedSize" : 1254,
-      "required" : ["sap/m/MessageBox.js", "sap/m/MessageToast.js", "jquery.sap.global.js"],
+      "size" : 2753,
+      "compressedSize" : 1347,
+      "required" : ["jquery.sap.global.js", "sap/m/MessageBox.js", "sap/m/MessageToast.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/NotificationTypeUtil.js",
       "description" : "OdataUtil helper class  Is responsible for the integration and communication with the Backend OData Server",
-      "size" : 2597,
-      "compressedSize" : 1718,
+      "size" : 2690,
+      "compressedSize" : 1811,
       "required" : ["jquery.sap.global.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/OdataUtil.js",
       "description" : "OdataUtil helper class  Is responsible for the integration and communication with the Backend OData Server",
-      "size" : 26124,
-      "compressedSize" : 11154,
-      "required" : ["sap/collaboration/components/utils/CommonUtil.js", "jquery.sap.global.js"],
+      "size" : 26217,
+      "compressedSize" : 11247,
+      "required" : ["jquery.sap.global.js", "sap/collaboration/components/utils/CommonUtil.js"],
       "includes" : []
     },
     {
       "name" : "sap/collaboration/components/utils/PendingRequestsUtil.js",
-      "description" : "! @copyright@",
-      "size" : 1559,
-      "compressedSize" : 650,
-      "required" : ["jquery.sap.global.js"],
+      "description" : "! SAP UI development toolkit for HTML5 (SAPUI5)  (c) Copyright 2009-2017 SAP SE. All rights reserved",
+      "size" : 1652,
+      "compressedSize" : 743,
+      "required" : ["ui5loader-autoconfig.js"],
       "includes" : []
     },
     {
+      "name" : "sap/collaboration/library-h2-preload.js",
+      "size" : 11495,
+      "required" : ["jquery.sap.global.js", "sap/m/CustomListItem.js", "sap/m/InputBase.js", "sap/m/Label.js", "sap/m/List.js", "sap/m/MessageBox.js", "sap/m/MessageToast.js", "sap/m/Popover.js", "sap/m/ResponsivePopover.js", "sap/m/SearchField.js", "sap/m/StandardListItem.js", "sap/m/TextArea.js", "sap/suite/ui/commons/Timeline.js", "sap/suite/ui/commons/TimelineItem.js", "sap/suite/ui/commons/library.js", "sap/ui/base/Object.js", "sap/ui/commons/Button.js", "sap/ui/core/Control.js", "sap/ui/core/Core.js", "sap/ui/core/Fragment.js", "sap/ui/core/UIComponent.js", "sap/ui/core/library.js", "sap/ui/core/mvc/Controller.js", "sap/ui/core/mvc/XMLView.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "sap/ui/model/json/JSONModel.js", "ui5loader-autoconfig.js"],
+      "includes" : ["sap/collaboration/library.js", "sap/collaboration/manifest.json", "sap/collaboration/components/controls/FeedEntryEmbedded.js", "sap/collaboration/components/controls/FeedEntryEmbeddedRenderer.js", "sap/collaboration/components/controls/FilterPopover.js", "sap/collaboration/components/controls/PlaceholderUtility.js", "sap/collaboration/components/controls/ReplyPopover.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/collaboration/components/controls/SuggestionUtility.js", "sap/collaboration/components/controls/TimelineEntryEmbedded.js", "sap/collaboration/components/controls/TimelineEntryEmbeddedRenderer.js", "sap/collaboration/components/feed/BOMode.js", "sap/collaboration/components/feed/Component.js", "sap/collaboration/components/feed/GroupIDsMode.js", "sap/collaboration/components/feed/Mode.js", "sap/collaboration/components/feed/ModeFactory.js", "sap/collaboration/components/feed/UserMode.js", "sap/collaboration/components/feed/fragments/CustomListItem.fragment.xml", "sap/collaboration/components/feed/fragments/GroupSelector.fragment.xml", "sap/collaboration/components/feed/views/GroupFeed.controller.js", "sap/collaboration/components/feed/views/GroupFeed.view.xml", "sap/collaboration/components/fiori/feed/Component.js", "sap/collaboration/components/fiori/feed/app/App.controller.js", "sap/collaboration/components/fiori/feed/app/App.view.js", "sap/collaboration/components/fiori/feed/commons/Detail.controller.js", "sap/collaboration/components/fiori/feed/commons/Detail.view.js", "sap/collaboration/components/fiori/feed/dialog/Component.js", "sap/collaboration/components/fiori/feed/splitApp/FeedTypeMaster.controller.js", "sap/collaboration/components/fiori/feed/splitApp/FeedTypeMaster.view.js", "sap/collaboration/components/fiori/feed/splitApp/GroupMaster.controller.js", "sap/collaboration/components/fiori/feed/splitApp/GroupMaster.view.js", "sap/collaboration/components/fiori/feed/splitApp/SplitApp.controller.js", "sap/collaboration/components/fiori/feed/splitApp/SplitApp.view.js", "sap/collaboration/components/fiori/notification/Component.js", "sap/collaboration/components/fiori/notification/Notification.controller.js", "sap/collaboration/components/fiori/notification/Notification.view.js", "sap/collaboration/components/fiori/notification/NotificationContainer.js", "sap/collaboration/components/fiori/sharing/Component.js", "sap/collaboration/components/fiori/sharing/FolderSelection.controller.js", "sap/collaboration/components/fiori/sharing/FolderSelection.view.js", "sap/collaboration/components/fiori/sharing/NoGroups.controller.js", "sap/collaboration/components/fiori/sharing/NoGroups.view.js", "sap/collaboration/components/fiori/sharing/Sharing.controller.js", "sap/collaboration/components/fiori/sharing/Sharing.view.js", "sap/collaboration/components/fiori/sharing/attachment/Attachment.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentConstructorArgumentsException.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentParameterException.js", "sap/collaboration/components/fiori/sharing/dialog/Component.js", "sap/collaboration/components/fiori/sharing/helper/AttachmentsUtil.js", "sap/collaboration/components/fiori/sharing/helper/ShareUtil.js", "sap/collaboration/components/socialprofile/Component.js", "sap/collaboration/components/socialprofile/SocialProfile.controller.js", "sap/collaboration/components/socialprofile/SocialProfile.view.js", "sap/collaboration/components/socialtimeline/Component.js", "sap/collaboration/components/socialtimeline/annotations/Metadata.js", "sap/collaboration/components/socialtimeline/annotations/MetadataException.js", "sap/collaboration/components/socialtimeline/annotations/TimelineTermsUtility.js", "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbedded.js", "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbeddedRenderer.js", "sap/collaboration/components/socialtimeline/datahandlers/JamDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/SMIntegrationDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/ServiceDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/TimelineDataHandler.js", "sap/collaboration/components/socialtimeline/filter/FilterType.js", "sap/collaboration/components/socialtimeline/validation/InputValidator.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/DateUtil.js", "sap/collaboration/components/utils/JamUtil.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/collaboration/components/utils/MediaTypeToSAPIcon.js", "sap/collaboration/components/utils/MessageQueueUtil.js", "sap/collaboration/components/utils/NotificationTypeUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/components/utils/PendingRequestsUtil.js"]
+    },
+    {
+      "name" : "sap/collaboration/library-preload.js",
+      "size" : 292952,
+      "required" : ["jquery.sap.global.js", "sap/m/CustomListItem.js", "sap/m/InputBase.js", "sap/m/Label.js", "sap/m/List.js", "sap/m/MessageBox.js", "sap/m/MessageToast.js", "sap/m/Popover.js", "sap/m/ResponsivePopover.js", "sap/m/SearchField.js", "sap/m/StandardListItem.js", "sap/m/TextArea.js", "sap/suite/ui/commons/Timeline.js", "sap/suite/ui/commons/TimelineItem.js", "sap/suite/ui/commons/library.js", "sap/ui/base/Object.js", "sap/ui/commons/Button.js", "sap/ui/core/Control.js", "sap/ui/core/Core.js", "sap/ui/core/Fragment.js", "sap/ui/core/UIComponent.js", "sap/ui/core/library.js", "sap/ui/core/mvc/Controller.js", "sap/ui/core/mvc/XMLView.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "sap/ui/model/json/JSONModel.js", "ui5loader-autoconfig.js"],
+      "includes" : ["sap/collaboration/components/controls/FeedEntryEmbedded.js", "sap/collaboration/components/controls/FeedEntryEmbeddedRenderer.js", "sap/collaboration/components/controls/FilterPopover.js", "sap/collaboration/components/controls/PlaceholderUtility.js", "sap/collaboration/components/controls/ReplyPopover.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/collaboration/components/controls/SuggestionUtility.js", "sap/collaboration/components/controls/TimelineEntryEmbedded.js", "sap/collaboration/components/controls/TimelineEntryEmbeddedRenderer.js", "sap/collaboration/components/feed/BOMode.js", "sap/collaboration/components/feed/Component.js", "sap/collaboration/components/feed/GroupIDsMode.js", "sap/collaboration/components/feed/Mode.js", "sap/collaboration/components/feed/ModeFactory.js", "sap/collaboration/components/feed/UserMode.js", "sap/collaboration/components/feed/fragments/CustomListItem.fragment.xml", "sap/collaboration/components/feed/fragments/GroupSelector.fragment.xml", "sap/collaboration/components/feed/views/GroupFeed.controller.js", "sap/collaboration/components/feed/views/GroupFeed.view.xml", "sap/collaboration/components/fiori/feed/Component.js", "sap/collaboration/components/fiori/feed/app/App.controller.js", "sap/collaboration/components/fiori/feed/app/App.view.js", "sap/collaboration/components/fiori/feed/commons/Detail.controller.js", "sap/collaboration/components/fiori/feed/commons/Detail.view.js", "sap/collaboration/components/fiori/feed/dialog/Component.js", "sap/collaboration/components/fiori/feed/splitApp/FeedTypeMaster.controller.js", "sap/collaboration/components/fiori/feed/splitApp/FeedTypeMaster.view.js", "sap/collaboration/components/fiori/feed/splitApp/GroupMaster.controller.js", "sap/collaboration/components/fiori/feed/splitApp/GroupMaster.view.js", "sap/collaboration/components/fiori/feed/splitApp/SplitApp.controller.js", "sap/collaboration/components/fiori/feed/splitApp/SplitApp.view.js", "sap/collaboration/components/fiori/notification/Component.js", "sap/collaboration/components/fiori/notification/Notification.controller.js", "sap/collaboration/components/fiori/notification/Notification.view.js", "sap/collaboration/components/fiori/notification/NotificationContainer.js", "sap/collaboration/components/fiori/sharing/Component.js", "sap/collaboration/components/fiori/sharing/FolderSelection.controller.js", "sap/collaboration/components/fiori/sharing/FolderSelection.view.js", "sap/collaboration/components/fiori/sharing/NoGroups.controller.js", "sap/collaboration/components/fiori/sharing/NoGroups.view.js", "sap/collaboration/components/fiori/sharing/Sharing.controller.js", "sap/collaboration/components/fiori/sharing/Sharing.view.js", "sap/collaboration/components/fiori/sharing/attachment/Attachment.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentConstructorArgumentsException.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentParameterException.js", "sap/collaboration/components/fiori/sharing/dialog/Component.js", "sap/collaboration/components/fiori/sharing/helper/AttachmentsUtil.js", "sap/collaboration/components/fiori/sharing/helper/ShareUtil.js", "sap/collaboration/components/socialprofile/Component.js", "sap/collaboration/components/socialprofile/SocialProfile.controller.js", "sap/collaboration/components/socialprofile/SocialProfile.view.js", "sap/collaboration/components/socialtimeline/Component.js", "sap/collaboration/components/socialtimeline/annotations/Metadata.js", "sap/collaboration/components/socialtimeline/annotations/MetadataException.js", "sap/collaboration/components/socialtimeline/annotations/TimelineTermsUtility.js", "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbedded.js", "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbeddedRenderer.js", "sap/collaboration/components/socialtimeline/datahandlers/JamDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/SMIntegrationDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/ServiceDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/TimelineDataHandler.js", "sap/collaboration/components/socialtimeline/filter/FilterType.js", "sap/collaboration/components/socialtimeline/validation/InputValidator.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/DateUtil.js", "sap/collaboration/components/utils/JamUtil.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/collaboration/components/utils/MediaTypeToSAPIcon.js", "sap/collaboration/components/utils/MessageQueueUtil.js", "sap/collaboration/components/utils/NotificationTypeUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/components/utils/PendingRequestsUtil.js", "sap/collaboration/library.js", "sap/collaboration/manifest.json"]
+    },
+    {
+      "name" : "sap/collaboration/library-preload.json",
+      "size" : 0,
+      "required" : ["jquery.sap.global.js", "sap/m/CustomListItem.js", "sap/m/InputBase.js", "sap/m/Label.js", "sap/m/List.js", "sap/m/MessageBox.js", "sap/m/MessageToast.js", "sap/m/Popover.js", "sap/m/ResponsivePopover.js", "sap/m/SearchField.js", "sap/m/StandardListItem.js", "sap/m/TextArea.js", "sap/suite/ui/commons/Timeline.js", "sap/suite/ui/commons/TimelineItem.js", "sap/suite/ui/commons/library-preload.json", "sap/suite/ui/commons/library.js", "sap/ui/base/Object.js", "sap/ui/commons/Button.js", "sap/ui/core/Control.js", "sap/ui/core/Core.js", "sap/ui/core/Fragment.js", "sap/ui/core/UIComponent.js", "sap/ui/core/library-preload.json", "sap/ui/core/library.js", "sap/ui/core/mvc/Controller.js", "sap/ui/core/mvc/XMLView.js", "sap/ui/model/Filter.js", "sap/ui/model/FilterOperator.js", "sap/ui/model/json/JSONModel.js", "ui5loader-autoconfig.js"],
+      "includes" : ["sap/collaboration/components/controls/FeedEntryEmbedded.js", "sap/collaboration/components/controls/FeedEntryEmbeddedRenderer.js", "sap/collaboration/components/controls/FilterPopover.js", "sap/collaboration/components/controls/PlaceholderUtility.js", "sap/collaboration/components/controls/ReplyPopover.js", "sap/collaboration/components/controls/SocialTextArea.js", "sap/collaboration/components/controls/SuggestionUtility.js", "sap/collaboration/components/controls/TimelineEntryEmbedded.js", "sap/collaboration/components/controls/TimelineEntryEmbeddedRenderer.js", "sap/collaboration/components/feed/BOMode.js", "sap/collaboration/components/feed/Component.js", "sap/collaboration/components/feed/GroupIDsMode.js", "sap/collaboration/components/feed/Mode.js", "sap/collaboration/components/feed/ModeFactory.js", "sap/collaboration/components/feed/UserMode.js", "sap/collaboration/components/feed/fragments/CustomListItem.fragment.xml", "sap/collaboration/components/feed/fragments/GroupSelector.fragment.xml", "sap/collaboration/components/feed/views/GroupFeed.controller.js", "sap/collaboration/components/feed/views/GroupFeed.view.xml", "sap/collaboration/components/fiori/feed/Component.js", "sap/collaboration/components/fiori/feed/app/App.controller.js", "sap/collaboration/components/fiori/feed/app/App.view.js", "sap/collaboration/components/fiori/feed/commons/Detail.controller.js", "sap/collaboration/components/fiori/feed/commons/Detail.view.js", "sap/collaboration/components/fiori/feed/dialog/Component.js", "sap/collaboration/components/fiori/feed/splitApp/FeedTypeMaster.controller.js", "sap/collaboration/components/fiori/feed/splitApp/FeedTypeMaster.view.js", "sap/collaboration/components/fiori/feed/splitApp/GroupMaster.controller.js", "sap/collaboration/components/fiori/feed/splitApp/GroupMaster.view.js", "sap/collaboration/components/fiori/feed/splitApp/SplitApp.controller.js", "sap/collaboration/components/fiori/feed/splitApp/SplitApp.view.js", "sap/collaboration/components/fiori/notification/Component.js", "sap/collaboration/components/fiori/notification/Notification.controller.js", "sap/collaboration/components/fiori/notification/Notification.view.js", "sap/collaboration/components/fiori/notification/NotificationContainer.js", "sap/collaboration/components/fiori/sharing/Component.js", "sap/collaboration/components/fiori/sharing/FolderSelection.controller.js", "sap/collaboration/components/fiori/sharing/FolderSelection.view.js", "sap/collaboration/components/fiori/sharing/NoGroups.controller.js", "sap/collaboration/components/fiori/sharing/NoGroups.view.js", "sap/collaboration/components/fiori/sharing/Sharing.controller.js", "sap/collaboration/components/fiori/sharing/Sharing.view.js", "sap/collaboration/components/fiori/sharing/attachment/Attachment.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentConstructorArgumentsException.js", "sap/collaboration/components/fiori/sharing/attachment/InvalidAttachmentParameterException.js", "sap/collaboration/components/fiori/sharing/dialog/Component.js", "sap/collaboration/components/fiori/sharing/helper/AttachmentsUtil.js", "sap/collaboration/components/fiori/sharing/helper/ShareUtil.js", "sap/collaboration/components/socialprofile/Component.js", "sap/collaboration/components/socialprofile/SocialProfile.controller.js", "sap/collaboration/components/socialprofile/SocialProfile.view.js", "sap/collaboration/components/socialtimeline/Component.js", "sap/collaboration/components/socialtimeline/annotations/Metadata.js", "sap/collaboration/components/socialtimeline/annotations/MetadataException.js", "sap/collaboration/components/socialtimeline/annotations/TimelineTermsUtility.js", "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbedded.js", "sap/collaboration/components/socialtimeline/controls/TimelineItemEmbeddedRenderer.js", "sap/collaboration/components/socialtimeline/datahandlers/JamDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/SMIntegrationDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/ServiceDataHandler.js", "sap/collaboration/components/socialtimeline/datahandlers/TimelineDataHandler.js", "sap/collaboration/components/socialtimeline/filter/FilterType.js", "sap/collaboration/components/socialtimeline/validation/InputValidator.js", "sap/collaboration/components/utils/CommonUtil.js", "sap/collaboration/components/utils/DateUtil.js", "sap/collaboration/components/utils/JamUtil.js", "sap/collaboration/components/utils/LanguageBundle.js", "sap/collaboration/components/utils/MediaTypeToSAPIcon.js", "sap/collaboration/components/utils/MessageQueueUtil.js", "sap/collaboration/components/utils/NotificationTypeUtil.js", "sap/collaboration/components/utils/OdataUtil.js", "sap/collaboration/components/utils/PendingRequestsUtil.js", "sap/collaboration/library.js", "sap/collaboration/manifest.json"]
+    },
+    {
       "name" : "sap/collaboration/library.js",
-      "description" : "Initialization Code and shared classes of library sap.collaboration (1.38.7)",
-      "size" : 5610,
-      "compressedSize" : 1020,
-      "required" : ["sap/ui/core/Core.js", "sap/ui/core/library.js", "sap/suite/ui/commons/library.js", "jquery.sap.global.js"],
+      "description" : "Initialization Code and shared classes of library sap.collaboration (1.54.0)",
+      "size" : 6078,
+      "compressedSize" : 1136,
+      "required" : ["jquery.sap.global.js", "sap/suite/ui/commons/library.js", "sap/ui/core/Core.js", "sap/ui/core/library.js"],
       "includes" : ["sap/collaboration/AppType.js", "sap/collaboration/DisplayFeedType.js", "sap/collaboration/FeedType.js"]
     },
     {
       "name" : "sap/collaboration/library.properties",
       "size" : 298,
+      "required" : [],
+      "includes" : []
+    },
+    {
+      "name" : "sap/collaboration/manifest.json",
+      "size" : 1113,
       "required" : [],
       "includes" : []
     }

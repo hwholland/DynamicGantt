@@ -55,7 +55,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -74,6 +74,7 @@ sap.ui.define([
 	});
 	
 	Path.prototype.init = function() {
+		Shape.prototype.init.apply(this, arguments);
 		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
 		this.setProperty("ariaLabel", oRb.getText("ARIA_PATH"));
 	};
@@ -120,27 +121,35 @@ sap.ui.define([
 	 * 
 	 * @param {object} oData Shape data.
 	 * @param {object} oRowInfo Information about the row and the row data.
-	 * @return {string} Value of property <code>d</code>.
+	 * @return {string} Value of property <code>d</code> or null if the generated d is invalid according to the given data.
 	 * @public
 	 */
 	Path.prototype.getD = function (oData, oRowInfo) {
+		var sD;
 		if (this.mShapeConfig.hasShapeProperty("d")) {
-			return this._configFirst("d", oData);
-		}
-		
-		var aCenter = this._getCenter(oData, oRowInfo),
-			bIsDuration = this.getIsDuration(oData, oRowInfo),
-			sMode = this.mChartInstance.getSapUiSizeClass();
-		var nHalfLength = Utility.scaleBySapUiSize(sMode, 7.5);
-		
-		if (bIsDuration) {
-			var aEndCenter = this._getCenter(oData, oRowInfo, true);
-			nHalfLength = (aEndCenter[0] - aCenter[0]) / 2;
-		}
-		
-		return "M " + aCenter[0] + " " + aCenter[1] +
+			sD = this._configFirst("d", oData);
+		} else {
+			var aCenter = this._getCenter(oData, oRowInfo),
+				bIsDuration = this.getIsDuration(oData, oRowInfo),
+				sMode = this.mChartInstance.getSapUiSizeClass();
+			var nHalfLength = Utility.scaleBySapUiSize(sMode, 7.5);
+			
+			if (bIsDuration) {
+				var aEndCenter = this._getCenter(oData, oRowInfo, true);
+				nHalfLength = (aEndCenter[0] - aCenter[0]) / 2;
+			}
+			
+			sD = "M " + aCenter[0] + " " + aCenter[1] +
 			" c 0," + -nHalfLength + " " + nHalfLength + "," + -nHalfLength + " " + nHalfLength +
 			",0 c 0," + nHalfLength + " " + nHalfLength + "," + nHalfLength + " " + nHalfLength + ",0";
+		}
+		
+		if(this.isValid(sD)) {
+			return sD;
+		} else {
+			jQuery.sap.log.warning("Path shape generated invalid d: " + sD + " from the given data: " + oData);
+			return null;
+		}
 	};
 	
 	/**
@@ -159,5 +168,28 @@ sap.ui.define([
 		return this._configFirst("isClosed", oData);
 	};
 
+	Path.prototype.getStyle = function(oData, oRowInfo) {
+		var sInheritedStyle = Shape.prototype.getStyle.apply(this, arguments);
+		var oStyles = {
+			"fill": this.determineValueColor(this.getFill(oData, oRowInfo)),
+			"stroke-dasharray:": this.getStrokeDasharray(oData, oRowInfo)
+		};
+		if (this.getIsClosed(oData, oRowInfo)) {
+			oStyles["fill-opacity"] = this.getFillOpacity(oData, oRowInfo);
+			oStyles["stroke-opacity"] = this.getStrokeOpacity(oData, oRowInfo);
+		}
+		return sInheritedStyle + this.getInlineStyle(oStyles);
+	};
+	
+	/**
+	 * Check whether the given d is valid.
+	 * 
+	 * @param {string} sD attribute of this path
+	 * @return {boolean} whether the given d is valid
+	 */
+	Path.prototype.isValid = function(sD) {
+		return !!sD && sD.indexOf("NaN") === -1 && sD.indexOf("undefined") === -1 && sD.indexOf("null") === -1;
+	};
+	
 	return Path;
 }, true);

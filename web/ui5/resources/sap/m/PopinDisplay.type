@@ -11,7 +11,7 @@
         <value name="Inline">
             <documentation>Inside the table popin, cell content is displayed next to the header in the same line. Note: If there is not enough space for the cell content then it jumps to the next line.</documentation>
         </value>
-        <value name="WithoutHeader" since="1.28">
+        <value since="1.28" name="WithoutHeader">
             <documentation>Inside the table popin, only the cell content will be visible.</documentation>
         </value>
     </enumeration>

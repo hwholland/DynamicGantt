@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides class sap.ui.core.BaseChartMetadata
@@ -18,7 +18,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/ElementMetadata'],
 	 *
 	 * @class
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.30.0
 	 * @alias sap.viz.ui5.core.BaseChartMetadata
 	 */

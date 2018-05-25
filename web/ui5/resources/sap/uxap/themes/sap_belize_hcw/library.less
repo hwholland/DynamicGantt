@@ -143,12 +143,9 @@ html[dir=rtl] .sapUxAPAnchorBar.sapUxAPAnchorBarScrollLeft .anchorBarArrowLeft {
 	top: 0;
 }
 
-/* OVERVIEW BUTTON IE, Edge focus fix */
-html[data-sap-ui-browser^="ie"],
-html[data-sap-ui-browser^="ed"] {
-	.sapUxAPAnchorBar.sapUxAPAnchorBarOverflow .sapUxAPHierarchicalSelect.sapMSltIconOnly:not(.sapMSltPressed):focus,
-	.sapUxAPAnchorBar.sapUxAPAnchorBarOverflow .sapUxAPHierarchicalSelect.sapMSltIconOnly:not(.sapMSltExpanded):active,
-	.sapUxAPAnchorBar.sapUxAPAnchorBarOverflow .sapUxAPHierarchicalSelect.sapMSltIconOnly.sapMSltPressed:not(.sapMSltExpanded) {
+/* OVERVIEW BUTTON IE focus fix */
+html[data-sap-ui-browser^="ie"] {
+	.sapUxAPAnchorBar.sapUxAPAnchorBarOverflow .sapUxAPHierarchicalSelect.sapMSltIconOnly:focus {
 		right: -28px;
 		overflow: visible;
 		&:before {
@@ -157,12 +154,10 @@ html[data-sap-ui-browser^="ed"] {
 	}
 }
 
-html[data-sap-ui-browser^="ie"].sapUiMedia-Std-Tablet .sapUiSizeCompact,
-html[data-sap-ui-browser^="ed"].sapUiMedia-Std-Tablet .sapUiSizeCompact {
-	.sapUxAPAnchorBar.sapUxAPAnchorBarOverflow .sapUxAPHierarchicalSelect.sapMSltIconOnly:not(.sapMSltPressed):focus .sapMSltIcon,
-	.sapUxAPAnchorBar.sapUxAPAnchorBarOverflow .sapUxAPHierarchicalSelect.sapMSltIconOnly:not(.sapMSltExpanded):active .sapMSltIcon,
-	.sapUxAPAnchorBar.sapUxAPAnchorBarOverflow .sapUxAPHierarchicalSelect.sapMSltIconOnly.sapMSltPressed:not(.sapMSltExpanded) .sapMSltIcon {
-		top: 0.5rem;
+/* OVERVIEW BUTTON EDGE focus fix */
+html[data-sap-ui-browser^="ed"] {
+	.sapUxAPAnchorBar.sapUxAPAnchorBarOverflow .sapUxAPHierarchicalSelect.sapMSltIconOnly:focus {
+		overflow: visible;
 	}
 }
 

@@ -39,10 +39,17 @@
                     }
                 }.bind(this));
             } else {
-                var headerHeight = this.view.byId('ovpPageHeader').$().height();
-                jqFlexContainer.css({bottom: "-" + headerHeight + "px"});
-                translate = "translateY(-" + headerHeight + "px)";
-                jqFlexContainerParent.add(jqHeaderVbox).css({"transform": translate, "-webkit-transform": translate});
+                var oHeader = this.getView().byId('ovpMain').getHeader();
+                //Animate dynamic header only when it is present
+                if (oHeader) {
+                    var headerHeight = oHeader.$().height();
+                    jqFlexContainer.css({bottom: "-" + headerHeight + "px"});
+                    translate = "translateY(-" + headerHeight + "px)";
+                    jqFlexContainerParent.add(jqHeaderVbox).css({
+                        "transform": translate,
+                        "-webkit-transform": translate
+                    });
+                }
             }
         },
 

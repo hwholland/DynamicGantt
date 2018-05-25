@@ -21,21 +21,23 @@ sap.ui.define(['jquery.sap.global',
 				'sap/ui/base/Object',
 				'sap/ui/core/mvc/View',
 				'./matchers/Ancestor',
-				'./matchers/MatcherFactory',
+				'./matchers/Interactable',
+				'./matchers/Visible',
 				'./pipelines/MatcherPipeline',
 				'sap/ui/test/_opaCorePlugin',
 				'sap/ui/test/_OpaLogger'],
-	function ($, UI5Object, View, Ancestor, MatcherFactory,
+	function ($, UI5Object, View, Ancestor, Interactable, Visible,
 			MatcherPipeline, _opaCorePlugin, _OpaLogger) {
 
-		var oMatcherFactory = new MatcherFactory();
-		var oMatcherPipeline = new MatcherPipeline();
-		var aControlSelectorsForMatchingControls = [
-			"id",
-			"viewName",
-			"controlType",
-			"searchOpenDialogs"
-		];
+		var oMatcherPipeline = new MatcherPipeline(),
+			oInteractableMatcher = new Interactable(),
+			oVisibleMatcher = new Visible(),
+			aControlSelectorsForMatchingControls = [
+				"id",
+				"viewName",
+				"controlType",
+				"searchOpenDialogs"
+			];
 
 		/**
 		 * @class A Plugin to search UI5 controls.
@@ -217,7 +219,6 @@ sap.ui.define(['jquery.sap.global',
 					return typeof oOptions.id === "string" ? vResult : [];
 				}
 
-				// TODO: make all of these conditions matchers
 				if (oOptions.searchOpenDialogs) {
 					vResult = this.getAllControlsInContainer($("#sap-ui-static"), oOptions.controlType, oOptions.sOriginalControlType, "the static UI area");
 				} else if (oOptions.viewName) {
@@ -234,10 +235,18 @@ sap.ui.define(['jquery.sap.global',
 					return vResult;
 				}
 
-				var oInteractabilityMatchers = oMatcherFactory.getInteractabilityMatchers(oOptions.interactable);
+				// TODO: make all of the conditions above matchers and create this array in a factory
+				var aMatchers = [];
+
+				if (oOptions.interactable) {
+					aMatchers.push(oInteractableMatcher);
+				} else {
+					aMatchers.push(oVisibleMatcher);
+				}
+
 				var vPipelineResult = oMatcherPipeline.process({
 					control: vResult,
-					matchers: oInteractabilityMatchers
+					matchers: aMatchers
 				});
 
 				// all controls are filtered out
@@ -262,27 +271,13 @@ sap.ui.define(['jquery.sap.global',
 			 * uses getMatchingControls to retrieve controls
 			 * enforces use of Interactable matcher and autoWait when neccessary
 			 * returns special marker FILTER_FOUND_NO_CONTROLS if nothing is found
-			 * found control values can be null, a single control or an array of controls
 			 * @private
 			 */
 			_getFilteredControls : function(oOptions) {
-				var vControl = this._filterControlsByCondition(oOptions);
-
-				return vControl === OpaPlugin.FILTER_FOUND_NO_CONTROLS
-					? OpaPlugin.FILTER_FOUND_NO_CONTROLS : this._filterControlsByMatchers(oOptions, vControl);
-			},
-
-			_getFilteredControlsByDeclaration: function (oOptions) {
-				var vControl = this._filterControlsByCondition(oOptions);
-				var oMatcherFilterOptions = $.extend({}, oOptions, {useDeclarativeMatchers: true});
-
-				return vControl === OpaPlugin.FILTER_FOUND_NO_CONTROLS
-					? OpaPlugin.FILTER_FOUND_NO_CONTROLS : this._filterControlsByMatchers(oMatcherFilterOptions, vControl);
-			},
-
-			_filterControlsByCondition: function (oOptions) {
-				var vControl = null;
 				var bPluginLooksForControls = this._isLookingForAControl(oOptions);
+				// found control values can be null, a single control or an array of controls
+				var vControl = null;
+				var vResult = null;
 
 				if (bPluginLooksForControls) {
 					vControl = this.getMatchingControls(oOptions);
@@ -297,27 +292,23 @@ sap.ui.define(['jquery.sap.global',
 					oOptions.controlType && $.isArray(vControl) && !vControl.length // search by control type globally
 				];
 
-				return aControlsNotFoundConditions.some(Boolean)
-					? OpaPlugin.FILTER_FOUND_NO_CONTROLS : vControl;
-			},
-
-			_filterControlsByMatchers: function (oOptions, vControl) {
-				var aMatchers = oOptions.useDeclarativeMatchers ? oMatcherFactory.getFilteringMatchers(oOptions) : oOptions.matchers;
-				var bPluginLooksForControls = this._isLookingForAControl(oOptions);
-				var vResult = null;
+				if (aControlsNotFoundConditions.some(Boolean)) {
+					return OpaPlugin.FILTER_FOUND_NO_CONTROLS;
+				}
 
 				/*
-				 * If the plugin does not look for controls execute matchers even if vControl is falsy.
-				 * This is used when you smuggle in values to success through matchers:
+				 * If the plugin does not look for controls execute matchers even if vControl is falsy
+				 * used when you smuggle in values to success through matchers:
 				 * matchers: function () {return "foo";},
 				 * success: function (sFoo) {}
 				 */
-				if ((vControl || !bPluginLooksForControls) && aMatchers) {
+				if ((vControl || !bPluginLooksForControls) && oOptions.matchers) {
 					vResult = oMatcherPipeline.process({
-						matchers: aMatchers,
+						matchers: oOptions.matchers,
 						control: vControl
 					});
 
+					// no control matched
 					if (!vResult) {
 						return OpaPlugin.FILTER_FOUND_NO_CONTROLS;
 					}

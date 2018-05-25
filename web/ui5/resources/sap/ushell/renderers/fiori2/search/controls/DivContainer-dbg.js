@@ -1,8 +1,8 @@
 /* global sap */
-(function() {
+sap.ui.define([], function() {
     "use strict";
 
-    sap.ui.core.Control.extend("sap.ushell.renderers.fiori2.search.controls.DivContainer", {
+    return sap.ui.core.Control.extend("sap.ushell.renderers.fiori2.search.controls.DivContainer", {
 
         metadata: {
             properties: {
@@ -28,7 +28,5 @@
             }
             oRm.write('</div>');
         }
-
     });
-
-})();
+});

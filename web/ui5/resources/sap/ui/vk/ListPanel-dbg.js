@@ -7,13 +7,13 @@
 
 // Provides control sap.ui.vk.ListPanel.
 sap.ui.define([
-	'./library', 'sap/ui/core/Control', 'sap/m/library'
-], function(library, Control, m_library) {
+	"./library", "sap/ui/core/Control", "sap/m/library"
+], function(library, Control, mobileLibrary) {
 	"use strict";
 
 	/**
 	 * Constructor for a new ListPanel.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Aggregation control for the Legend
@@ -129,20 +129,20 @@ sap.ui.define([
 				/**
 				 * Event is fired when an item is pressed unless the item's <code>type</code> property is <code>Inactive</code>.
 				 */
-				itemPress : {
-					parameters : {
+				itemPress: {
+					parameters: {
 
 						/**
 						 * The item which fired the pressed event.
 						 */
-						listItem : {type : "sap.m.ListItemBase"},
+						listItem: { type: "sap.m.ListItemBase" },
 
 						/**
 						 * The control which caused the press event within the container.
 						 */
-						srcControl : {type : "sap.ui.core.Control"}
+						srcControl: { type: "sap.ui.core.Control" }
 					}
-				}				
+				}
 			}
 		}
 	});
@@ -152,18 +152,17 @@ sap.ui.define([
 	// ...........................................................................//
 	// Public API functions
 	// ............................................................................//
-	
+
 	/**
 	 * Returns selected list item. When no item is selected, "null" is returned. When "multi-selection" is enabled and multiple items are selected, only the up-most selected item is returned.
-	 *
-	 * @type sap.m.ListItemBase
+	 * @returns {sap.m.ListItemBase} Selected item.
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	ListPanel.prototype.getSelectedItem = function() {
 		return this._oList.getSelectedItem();
 	};
-	
+
 	/**
 	 * Selects or deselects the given list item.
 	 *
@@ -171,17 +170,18 @@ sap.ui.define([
 	 *         The list item whose selection to be changed. This parameter is mandatory.
 	 * @param {boolean} bSelect
 	 *         Sets selected status of the list item. Default value is true.
+	 * @param {boolean} bFireEvent Whether to fire the event or not.
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	ListPanel.prototype.setSelectedItem = function(oListItem, bSelect, bFireEvent) {
 		this._oList.setSelectedItem(oListItem, bSelect, bFireEvent);
 	};
-	
+
 	/**
 	 * Returns an array containing the selected list items. If no items are selected, an empty array is returned.
 	 *
-	 * @type sap.m.ListItemBase[]
+	 * @returns {sap.m.ListItemBase[]} Selected items
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -318,7 +318,7 @@ sap.ui.define([
 
 	ListPanel.prototype._onHeaderToolbarPress = function(oEvent) {
 		this._oPanel.setExpanded(!this._oPanel.getExpanded());
-	};	
+	};
 
 	return ListPanel;
 

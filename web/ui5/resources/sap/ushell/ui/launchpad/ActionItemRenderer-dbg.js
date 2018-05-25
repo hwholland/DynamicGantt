@@ -1,19 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap, navigator*/
 
-(function () {
-    "use strict";
-    /*jslint nomen: true*/
-    jQuery.sap.declare("sap.ushell.ui.launchpad.ActionItemRenderer");
-    jQuery.sap.require('sap.ui.core.Renderer');
-    jQuery.sap.require('sap.m.ButtonRenderer');
+sap.ui.define(['sap/m/ButtonRenderer','sap/ui/core/Renderer'],
+	function(ButtonRenderer, Renderer) {
+	"use strict";
 
+    /*jslint nomen: true*/
     /**
      * @class sap.ushell.ui.launchpad.LoadingDialogRenderer
      * @static
      * @private
      */
-    sap.ushell.ui.launchpad.ActionItemRenderer = {};
+    var ActionItemRenderer = {};
 
 
     /**
@@ -23,6 +21,10 @@
      * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
      * @private
      */
-    sap.ushell.ui.launchpad.ActionItemRenderer = sap.ui.core.Renderer.extend(sap.m.ButtonRenderer);
+    var ActionItemRenderer = Renderer.extend(ButtonRenderer);
 
-}());
+
+
+	return ActionItemRenderer;
+
+}, /* bExport= */ true);

@@ -1,13 +1,12 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The <code>sap.ushell.System</code> object with related functions.
  */
 
-(function () {
-    "use strict";
-    /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.System");
+sap.ui.define(function() {
+	"use strict";
 
+    /*global jQuery, sap */
     // "private" methods (static) without need to access properties -------------
 
 
@@ -31,7 +30,7 @@
      * @since 1.15.0
      * @public
      */
-    sap.ushell.System = function (oData) {
+    var System = function (oData) {
 
         // BEWARE: constructor code below!
 
@@ -131,4 +130,8 @@
 
     };
 
-}());
+
+
+	return System;
+
+}, /* bExport= */ true);

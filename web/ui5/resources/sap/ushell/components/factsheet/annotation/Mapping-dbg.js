@@ -1,18 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview This file contains an annotation parser for factsheets.
  */
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global sap, jQuery, window, XMLHttpRequest, ActiveXObject, XPathResult */
 
-    jQuery.sap.declare("sap.ushell.components.factsheet.annotation.Mapping");
+    var Mapping = {};
+    Mapping.initialized = [];
 
-    sap.ushell.components.factsheet.annotation.Mapping = {};
-    sap.ushell.components.factsheet.annotation.Mapping.initialized = [];
-
-    sap.ushell.components.factsheet.annotation.Mapping.parse = function (oMetadata, sAnnotationUri) {
+    Mapping.parse = function (oMetadata, sAnnotationUri) {
         var xPath = {}, getHttpResponseXML, getAllPropertiesMetadata, setEdmTypes, getEdmType, getPropertyValueAttributes,
             replaceWithAlias, getSimpleNodeValue, getPropertyValue, getPropertyValues, getApplyFunctions, isNavProperty,
             sAlias, mappingList = {}, xmlDoc, schemaNodes, oSchema = {}, i, schemaNode, oAlias = {},
@@ -568,4 +567,8 @@
         }
         return mappingList;
     };
-}());
+
+
+	return Mapping;
+
+}, /* bExport= */ true);

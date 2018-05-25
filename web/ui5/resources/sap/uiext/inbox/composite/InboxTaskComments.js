@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.composite.InboxTaskComments");jQuery.sap.require("sap.uiext.inbox.library");jQuery.sap.require("sap.ui.core.Control");sap.ui.core.Control.extend("sap.uiext.inbox.composite.InboxTaskComments",{metadata:{library:"sap.uiext.inbox",properties:{"feederSender":{type:"string",group:"Data",defaultValue:null},"feederThumbnailSrc":{type:"sap.ui.core.URI",group:"Data",defaultValue:null},"showFeeder":{type:"boolean",group:"Data",defaultValue:true},"showHeader":{type:"boolean",group:"Misc",defaultValue:false}},aggregations:{"comments":{type:"sap.uiext.inbox.composite.InboxComment",multiple:true,singularName:"comment"},"busyIndicator":{type:"sap.uiext.inbox.composite.InboxBusyIndicator",multiple:false,visibility:"hidden"}},events:{"commentSubmit":{}}}});sap.uiext.inbox.composite.InboxTaskComments.M_EVENTS={'commentSubmit':'commentSubmit'};
 /*!

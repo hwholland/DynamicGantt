@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview
  * Tile action mode implementation.
@@ -23,7 +23,7 @@
  *  - Deactivation handler
  *  - Rendering tile action menu
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
 /**
  * @namespace
@@ -33,13 +33,11 @@
  * @since 1.26.0
  * @private
  */
-(function () {
-    "use strict";
+sap.ui.define([], function() {
+	"use strict";
 
     /*global jQuery, sap, window, hasher, $ */
     /*jslint nomen: true */
-    jQuery.sap.declare("sap.ushell.components.flp.ActionMode");
-
     /**
      * Constructor function
      * Creates action mode activation buttons:
@@ -70,31 +68,48 @@
     * - Changes the appearance of the floating activation button
     */
     ActionMode.prototype.activate = function () {
-        var oFloatingActionButton,
-            oTileActionsButton;
+        var oTileActionsButton;
 
-        jQuery.sap.require("sap.m.MessageToast");
-        sap.m.MessageToast.show(sap.ushell.resources.i18n.getText("actionModeActivated"), {duration: 4000});
         this.oModel.setProperty('/tileActionModeActive', true);
         this.aOrigHiddenGroupsIds = sap.ushell.utils.getCurrentHiddenGroupIds(this.oModel);
-
-        // Change floating button display
-        oFloatingActionButton = sap.ui.getCore().byId("floatingActionBtn");
-        if (oFloatingActionButton) {
-            oFloatingActionButton.addStyleClass("sapUshellActive");
-            oFloatingActionButton.setTooltip(sap.ushell.resources.i18n.getText("deactivateActionMode"));
-        }
+        var oDashboardGroups = sap.ui.getCore().byId("dashboardGroups");
+        oDashboardGroups.addLinksToUnselectedGroups();
 
         // Change action mode button display in the user actions menu
         oTileActionsButton = sap.ui.getCore().byId("ActionModeBtn");
         if (oTileActionsButton) {
-            oTileActionsButton.setText(sap.ushell.resources.i18n.getText("exitPersonalizationMode"));
+            oTileActionsButton.setTooltip(sap.ushell.resources.i18n.getText("exitEditMode"));
+            oTileActionsButton.setText(sap.ushell.resources.i18n.getText("exitEditMode"));
+            if(oTileActionsButton.data("isShellHeader")){
+                oTileActionsButton.setSelected(true);
+            }
         }
         this.oEventBus.publish('launchpad', 'actionModeActive');
     };
 
     ActionMode.prototype.scrollToViewPoint = function () {
-        window.setTimeout(jQuery.proxy(this.oEventBus.publish, this.oEventBus, "launchpad", "scrollToFirstVisibleGroup", this.viewPoint), 0);
+        var oData = this.viewPoint;
+        oData.restoreLastFocusedTile = true;
+
+        // if we switch from edit mode to non-edit mode
+        if (!this.oModel.getProperty('/tileActionModeActive')) {
+
+            // if before me switch to non-edit mode we were focused on the TileContainer header
+            // we need to restore focus such as the tile that will be focused will belong to this group
+            var jqLastFocusedHeader = jQuery(".sapUshellTileContainerHeader[tabindex=0]");
+            if (jqLastFocusedHeader && jqLastFocusedHeader.length > 0) {
+                var jqTileContainer = jqLastFocusedHeader[0].closest('.sapUshellTileContainer');
+                if (jqTileContainer) {
+
+                    // adding the focused header tile-container ID
+                    oData.restoreLastFocusedTileContainerById = jqTileContainer.id;
+                }
+            }
+
+        }
+
+        oData.iDuration = 0;
+        window.setTimeout(jQuery.proxy(this.oEventBus.publish, this.oEventBus, "launchpad", "scrollToGroup", oData), 0);
     };
 
     /**
@@ -111,33 +126,32 @@
      */
     ActionMode.prototype.deactivate = function () {
         var tileActionsMenu = sap.ui.getCore().byId("TileActions"),
-            oTileActionsButton,
-            oFloatingActionButton;
+            oTileActionsButton;
 
         this.oModel.setProperty('/tileActionModeActive', false);
         this.oEventBus.publish("launchpad", 'actionModeInactive', this.aOrigHiddenGroupsIds);
         if (tileActionsMenu !== undefined) {
             tileActionsMenu.destroy();
         }
-
-        // Change floating button display
-        oFloatingActionButton = sap.ui.getCore().byId("floatingActionBtn");
-        if (oFloatingActionButton) {
-            oFloatingActionButton.removeStyleClass("sapUshellActive");
-            oFloatingActionButton.setTooltip(sap.ushell.resources.i18n.getText("activateActionMode"));
-        }
-
+        sap.ui.require(['sap/m/MessageToast'],
+            function (MessageToast) {
+                MessageToast.show(sap.ushell.resources.i18n.getText("savedChanges"), {duration: 4000});
+            });
         // Change action mode button display in the user actions menu
         oTileActionsButton = sap.ui.getCore().byId("ActionModeBtn");
         if (oTileActionsButton) {
-            oTileActionsButton.setTooltip(sap.ushell.resources.i18n.getText("activateActionMode"));
-            oTileActionsButton.setText(sap.ushell.resources.i18n.getText("activateActionMode"));
+            oTileActionsButton.setTooltip(sap.ushell.resources.i18n.getText("activateEditMode"));
+            oTileActionsButton.setText(sap.ushell.resources.i18n.getText("activateEditMode"));
+            if(oTileActionsButton.data("isShellHeader")) {
+                oTileActionsButton.setSelected(false);
+            }
         }
     };
 
     ActionMode.prototype.toggleActionMode = function (oModel, sSource, dashboardGroups) {
         var bTileActionModeActive = oModel.getProperty('/tileActionModeActive');
         var currentGroupIndex = oModel.getProperty('/topGroupInViewPortIndex');
+        var sHomePageGroupDisplay = oModel.getProperty("/homePageGroupDisplay");
         if (!dashboardGroups) {
             dashboardGroups = [];
         }
@@ -147,9 +161,13 @@
 
         var currentGroup = visibleGroups[currentGroupIndex];
         if (currentGroup) {
-            //49 - height of "+add group"
             var editModelDelta = bTileActionModeActive ? -49 : 49;
-            var groupScrolled = document.getElementById("sapUshellDashboardPage-cont").scrollTop - currentGroup.getDomRef().offsetTop;
+            var domRef = (sHomePageGroupDisplay === "tabs") ? dashboardGroups[0].getDomRef() : currentGroup.getDomRef();
+            var iSkipScrollTo = 0;
+            if (domRef) {
+                iSkipScrollTo = domRef.offsetTop;
+            }
+            var groupScrolled = document.getElementById("sapUshellDashboardPage-cont").scrollTop - iSkipScrollTo;
             this.viewPoint = {
                 group: visibleGroups[currentGroupIndex],
                 fromTop: groupScrolled + editModelDelta
@@ -189,9 +207,9 @@
     *
     * @param oEvent Event object of the tile click action
     */
-    ActionMode.prototype._openActionsMenu = function (oEvent, oTilePressed) {
+    ActionMode.prototype._openActionsMenu = function (oEvent, oView) {
         var that = this,
-            oTileControl = oTilePressed || oEvent.getSource(),
+            oTileControl = oView ? oView : oEvent.getSource(),
             launchPageServ =  sap.ushell.Container.getService("LaunchPage"),
             aActions = [],
             oActionSheet = sap.ui.getCore().byId("TileActions"),
@@ -215,7 +233,7 @@
         coverDiv.addClass("sapUshellTileActionLayerDivSelected");
         if (oActionSheet === undefined) {
             oActionSheet = new sap.m.ActionSheet("TileActions", {
-                placement: sap.m.PlacementType.Auto,
+                placement: sap.m.PlacementType.Bottom,
                 afterClose: function () {
                     $(".sapUshellTileActionLayerDivSelected").removeClass("sapUshellTileActionLayerDivSelected");
                     var oEventBus = sap.ui.getCore().getEventBus();
@@ -244,7 +262,7 @@
                 // The press handler of a button (representing a single action) in a tile's action sheet
                 fnHandleActionPress = function (oAction) {
                     return function () {
-                        that._handleActionPress(oAction);
+                        that._handleActionPress(oAction, oTileControl);
                     };
                 }(oAction);
                 oButton = new sap.m.Button({
@@ -257,11 +275,20 @@
             /*eslint-enable no-loop-func*/
             /*eslint-enable wrap-iife*/
         }
-        actionSheetIconInEditMode = oEvent.getSource().getActionSheetIcon();
+        actionSheetIconInEditMode = oEvent.getSource().getActionSheetIcon ? oEvent.getSource().getActionSheetIcon() : undefined;
+        //For tiles - actions menu is opened by "more" icon, for links, there is an action button
+        //Which cannot be controlled by FLP code.
+        //In case of link, we first try to access the "more" button and open an action sheet by it.
+        //Otherwise the action sheet will not be located under the "more" button and other weird things will happen.
         if (actionSheetIconInEditMode) {
             oActionSheet.openBy(actionSheetIconInEditMode);
         } else {
-            oActionSheet.openBy(oEvent.getSource());
+            var oMoreAction = sap.ui.getCore().byId(oEvent.getSource().getId() + "-action-more");
+            if (oMoreAction) {
+                oActionSheet.openBy(oMoreAction);
+            } else {
+                oActionSheet.openBy(oEvent.getSource());
+            }
         }
     };
 
@@ -275,9 +302,9 @@
      *               2. A "targetUrl" property that includes either a hash part of a full URL.
      *                  In this case the action (chosen by the user) is launched by navigating to the URL
      */
-    ActionMode.prototype._handleActionPress = function (oAction) {
+    ActionMode.prototype._handleActionPress = function (oAction, oTileControl) {
         if (oAction.press) {
-            oAction.press.call();
+            oAction.press.call(oAction, oTileControl);
         } else if (oAction.targetURL) {
             if (oAction.targetURL.indexOf("#") === 0) {
                 hasher.setHash(oAction.targetURL);
@@ -285,9 +312,13 @@
                 window.open(oAction.targetURL, '_blank');
             }
         } else {
-            sap.m.MessageToast.show("No Action");
+            sap.ui.require(['sap/m/MessageToast'],
+                function (MessageToast) {
+                    MessageToast.show("No Action");
+                });
         }
     };
 
-    sap.ushell.components.flp.ActionMode = new ActionMode();
-}());
+	return new ActionMode();
+
+}, /* bExport= */ true);

@@ -5,7 +5,7 @@
     <documentation>A string type that represents CSS size values.
 
 The CSS specifications calls this the &lt;code&gt;'&amp;lt;length&amp;gt; type'&lt;/code&gt;.
-Allowed values are CSS sizes like "1px" or "2em" or "50%". The special values &lt;code&gt;auto&lt;/code&gt;
+Allowed values are CSS sizes like &quot;1px&quot; or &quot;2em&quot; or &quot;50%&quot;. The special values &lt;code&gt;auto&lt;/code&gt;
 and &lt;code&gt;inherit&lt;/code&gt; are also accepted as well as mathematical expressions using the CSS3
 &lt;code&gt;calc(&lt;i&gt;expression&lt;/i&gt;)&lt;/code&gt; operator.
 

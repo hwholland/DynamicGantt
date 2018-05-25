@@ -1,51 +1,59 @@
-(function() {
-	"use strict";
-	/*global jQuery, sap */
+sap.ui.define(["sap/ovp/cards/generic/Component", "sap/ovp/cards/linklist/AnnotationHelper"],
 
-	jQuery.sap.declare("sap.ovp.cards.linklist.Component");
-	jQuery.sap.require("sap.ovp.cards.generic.Component");
-	jQuery.sap.require("sap.ovp.cards.linklist.AnnotationHelper");
+    function (CardComponent, AnnotationHelper) {
+        "use strict";
 
-	sap.ovp.cards.generic.Component.extend("sap.ovp.cards.linklist.Component", {
-		// use inline declaration instead of component.json to save 1 round trip
+        return CardComponent.extend("sap.ovp.cards.linklist.Component", {
+            // use inline declaration instead of component.json to save 1 round trip
 
-		metadata: {
-			properties: {
-				"contentFragment": {
-					"type": "string",
-					"defaultValue": "sap.ovp.cards.linklist.LinkList"
-				},
-				"annotationPath": {
-					"type": "string",
-					"defaultValue": "com.sap.vocabularies.UI.v1.HeaderInfo"
-				},
-				"communicationPath": {
-					"type": "string",
-					"defaultValue": "com.sap.vocabularies.Communication.v1.Contact"
-				}				
-			},
+            metadata: {
+                properties: {
+                    /**
+                     *  The default values for the properties, if they are not mentioned.
+                     *  Example : If headerAnnotationPath is not mentioned in the manifest.json,
+                     *  the path mentioned in the "defaultValue" property is used as default.
+                     */
 
-			version: "1.38.10",
+                    "contentFragment": {
+                        "type": "string",
+                        "defaultValue": "sap.ovp.cards.linklist.LinkList"
+                    },
+                    "communicationPath": {
+                        "type": "string",
+                        "defaultValue": "com.sap.vocabularies.Communication.v1.Contact"
+                    },
+                    "headerAnnotationPath": {
+                        "type": "string",
+                        "defaultValue": "com.sap.vocabularies.UI.v1.HeaderInfo"
+                    },
+                    "identificationAnnotationPath": {
+                        "type": "string",
+                        "defaultValue": "com.sap.vocabularies.UI.v1.Identification"
+                    }
+                },
 
-			library: "sap.ovp",
+                version: "1.54.3",
 
-			includes: [],
+                library: "sap.ovp",
 
-			dependencies: {
-				libs: ["sap.m"],
-				components: []
-			},
-			config: {},
-			customizing: {
-				"sap.ui.controllerExtensions": {
-					"sap.ovp.cards.generic.Card": {
-						controllerName: "sap.ovp.cards.linklist.LinkList"
-					}
-				}
-			}
-		},
+                includes: [],
 
-		getCustomPreprocessor: function() {
-		}
-	});
-})();
+                dependencies: {
+                    libs: [],
+                    components: []
+                },
+                config: {},
+                customizing: {
+                    "sap.ui.controllerExtensions": {
+                        "sap.ovp.cards.generic.Card": {
+                            controllerName: "sap.ovp.cards.linklist.LinkList"
+                        }
+                    }
+                }
+            },
+
+            getCustomPreprocessor: function () {
+            }
+        });
+    }
+);

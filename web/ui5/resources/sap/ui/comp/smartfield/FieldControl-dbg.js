@@ -1,21 +1,18 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 /**
- * Field Control Implementation for SmartField Control. The implementation operates on OData meta data, so an instance of
- * <code>sap.ui.model.odata.ODataModel</code>.
+ * Field Control Implementation for <code>SmartField</code> Control. The implementation operates on OData meta data.
  *
- * @private
  * @name sap.ui.comp.smartfield.FieldControl
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
+ * @private
  * @since 1.28.0
- * @param {jquery.sap.global} jQuery a reference to the jQuery implementation.
- * @param {sap.ui.comp.smartfield.BindingUtil} BindingUtil a reference to the binding utility implementation.
- * @param {sap.ui.model.ParseException} ParseException a reference to the parse exception implementation.
  * @returns {sap.ui.comp.smartfield.FieldControl} the field control class.
  */
 sap.ui.define([
@@ -55,9 +52,16 @@ sap.ui.define([
 
 		// in case of table there is no need to bind visible and mandatory properties.
 		if (oConfig && (oConfig.configdata && !oConfig.configdata.isUOM || !oConfig.configdata)) {
-			return [
-				"editable"
-			];
+
+			if (oConfig.configdata && oConfig.configdata.property && oConfig.configdata.property.property && this._oAnnotation.getFieldControlPath(oConfig.configdata.property.property)) {
+				return [
+					"editable", "visible"
+				];
+			} else {
+				return [
+					"editable"
+				];
+			}
 		}
 
 		if (bNoMandatory) {
@@ -184,7 +188,9 @@ sap.ui.define([
 				];
 			},
 			formatter: function(vValue, p1, p2, p3) {
-				var aArgs = [], oBindingContext, oObject;
+				var aArgs = [],
+					oBindingContext,
+					oObject;
 
 				if (that._bIsDestroyed) {
 					return false;
@@ -194,8 +200,14 @@ sap.ui.define([
 					return false;
 				}
 
-				// check the modeled static values.
-				oBindingContext = that._oParent.getBindingContext();
+				// if the formatter function is called with the expected "this" context
+				if (this && (typeof this.getBindingContext === "function")) {
+					oBindingContext = this.getBindingContext();
+
+				// otherwise use the cached that._oParent context
+				} else {
+					oBindingContext = that._oParent.getBindingContext();
+				}
 
 				if (!oBindingContext) {
 					return vValue;
@@ -218,7 +230,8 @@ sap.ui.define([
 					aArgs.push(arguments[iPropertyPos] !== 1);
 				}
 
-				if (iEntitySetPos > -1) {
+				// ignore updatable-path during create
+				if (iEntitySetPos > -1 && (!oObject || !oObject.__metadata || !oObject.__metadata.created)) {
 					aArgs.push(!!arguments[iEntitySetPos]);
 				}
 
@@ -478,10 +491,14 @@ sap.ui.define([
 					return true;
 				}
 
-				// no field control, so check for null-able.
+				// no field control, so check for null-able or static mandatory.
 				// default for null-able is true, so it has to be set to false to make a property mandatory.
-				if (oMetaData.property && oMetaData.property.property && oMetaData.property.property.nullable) {
-					aArgs.push(oMetaData.property.property.nullable === "false");
+				if (oMetaData.property && oMetaData.property.property) {
+					if (oMetaData.property.property.nullable === "false" || (that._oAnnotation && that._oAnnotation.isStaticMandatory(oMetaData.property.property))) {
+						aArgs.push(true);
+					} else if (oMetaData.property.property.nullable) {
+						aArgs.push(false);
+					}
 				}
 
 				// check, if field-control is active.
@@ -517,6 +534,7 @@ sap.ui.define([
 	 * @private
 	 */
 	FieldControl.prototype._toPath = function(oMetaData, sPath) {
+
 		// if the original property is a complex path,
 		// impossible to have a navigation property in sPath.
 		// so we assume this as a prerequisite.
@@ -550,7 +568,8 @@ sap.ui.define([
 				case "Edm.Time":
 				case "Edm.String":
 					fReturn = function(sValue) {
-						if (that._oParent && that._oParent.getMandatory() && that._oParent.getClientSideMandatoryCheck() && !sValue) {
+						if (that._oParent && that._oParent.getMandatory() && that._oParent.getClientSideMandatoryCheck() &&
+							(!that._oAnnotation || !that._oAnnotation.isStaticMandatory(oProperty.property) || !that._oAnnotation.isNullable(oProperty.property)) && !sValue) {
 							throw new ParseException(sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("VALUEHELPVALDLG_FIELDMESSAGE"));
 						}
 					};
@@ -565,7 +584,9 @@ sap.ui.define([
 				case "Edm.Byte":
 				case "Edm.SByte":
 					fReturn = function(sValue) {
-						if (that._oParent && that._oParent.getMandatory() && that._oParent.getClientSideMandatoryCheck() && (sValue === null || sValue === undefined || sValue === "")) {
+						if (that._oParent && that._oParent.getMandatory() && that._oParent.getClientSideMandatoryCheck() &&
+							(!that._oAnnotation || !that._oAnnotation.isStaticMandatory(oProperty.property) || !that._oAnnotation.isNullable(oProperty.property)) &&
+							(sValue === null || sValue === undefined || sValue === "")) {
 							throw new ParseException(sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("VALUEHELPVALDLG_FIELDMESSAGE"));
 						}
 					};

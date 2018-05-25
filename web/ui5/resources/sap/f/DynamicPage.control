@@ -51,7 +51,7 @@ the content that is displayed.</documentation>
     <since>1.42</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="preserveHeaderStateOnScroll" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="preserveHeaderStateOnScroll">
             <documentation>Preserves the current header state when scrolling.
 For example, if the user expands the header by clicking on the title and then scrolls down the page, the header will remain expanded.
 
@@ -59,7 +59,7 @@ For example, if the user expands the header by clicking on the title and then sc
 when the control is rendered on tablet or mobile and the control`s title and header
 are with height larger than the given threshold.</documentation>
         </property>
-        <property name="headerExpanded" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="headerExpanded">
             <documentation>Determines whether the header is expanded.
 
 The header can be also expanded/collapsed by user interaction,
@@ -67,7 +67,7 @@ which requires the property to be internally mutated by the control to reflect t
 
 &lt;b&gt;Note:&lt;/b&gt; As of version 1.48, you can initialize the control in collapsed header state by setting this property to &lt;code&gt;false&lt;/code&gt;.</documentation>
         </property>
-        <property name="toggleHeaderOnTitleClick" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="toggleHeaderOnTitleClick">
             <documentation>Determines whether the user can switch between the expanded/collapsed states of the
 &lt;code&gt;DynamicPageHeader&lt;/code&gt; by clicking on the &lt;code&gt;DynamicPageTitle&lt;/code&gt;
 or by using the expand/collapse visual indicators,
@@ -76,10 +76,10 @@ If set to &lt;code&gt;false&lt;/code&gt;, the &lt;code&gt;DynamicPageTitle&lt;/c
 the visual indicators are not available and the application
 must provide other means for expanding/collapsing the &lt;code&gt;DynamicPageHeader&lt;/code&gt;, if necessary.</documentation>
         </property>
-        <property name="showFooter" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="showFooter">
             <documentation>Determines whether the footer is visible.</documentation>
         </property>
-        <property name="fitContent" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="fitContent">
             <documentation>Optimizes &lt;code&gt;DynamicPage&lt;/code&gt; responsiveness on small screens and behavior
 when expanding/collapsing the &lt;code&gt;DynamicPageHeader&lt;/code&gt;.
 
@@ -89,19 +89,19 @@ such as {@link sap.ui.table.Table} and  {@link sap.ui.table.AnalyticalTable}.</d
         </property>
     </properties>
     <aggregations>
-        <aggregation name="title" type="sap.f/DynamicPageTitle" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.f/DynamicPageTitle" name="title">
             <documentation>&lt;code&gt;DynamicPage&lt;/code&gt; title.</documentation>
         </aggregation>
-        <aggregation name="header" type="sap.f/DynamicPageHeader" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.f/DynamicPageHeader" name="header">
             <documentation>&lt;code&gt;DynamicPage&lt;/code&gt; header.</documentation>
         </aggregation>
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="content">
             <documentation>&lt;code&gt;DynamicPage&lt;/code&gt; content.</documentation>
         </aggregation>
-        <aggregation name="footer" type="sap.m/IBar" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/IBar" name="footer">
             <documentation>&lt;code&gt;DynamicPage&lt;/code&gt; floating footer.</documentation>
         </aggregation>
-        <aggregation name="_scrollBar" type="sap.ui.core/ScrollBar" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.core/ScrollBar" name="_scrollBar">
             <documentation>&lt;code&gt;DynamicPage&lt;/code&gt; custom &lt;code&gt;ScrollBar&lt;/code&gt;.</documentation>
         </aggregation>
     </aggregations>

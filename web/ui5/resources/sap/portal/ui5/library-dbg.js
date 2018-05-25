@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.portal.ui5 (1.38.1)
+ * Initialization Code and shared classes of library sap.portal.ui5 (1.54.0)
  */
 jQuery.sap.declare("sap.portal.ui5.library");
 jQuery.sap.require("sap.ui.core.Core");
@@ -32,7 +32,8 @@ sap.ui.getCore().initLibrary({
 	interfaces: [],
 	controls: [],
 	elements: [],
-	version: "1.38.1"
+	noLibraryCSS: true,
+	version: "1.54.0"
 });
 
 

@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap */
 /**
@@ -33,13 +33,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/layout/Grid'],
                         var sIcon = oControl.getIcon();
                         var oIcon = sap.ui.core.IconPool.createControlByURI(sIcon);
 
-                        oRm.write('<div tabindex="0" class="sapUshellNavMiniTile" ');
+                        oRm.write('<div tabindex="-1" class="sapUshellNavMiniTile" ');
                         oRm.writeControlData(oControl);
-                        oRm.writeAttributeEscaped("aria-label", sTitle);
+                        oRm.writeAttributeEscaped("role", "option");
+                        oRm.writeAttributeEscaped("aria-label", sSubtitle ? sTitle + " " + sSubtitle : sTitle);
                         oRm.write('>');
 
                         oRm.write('<div>');
-                        oRm.write('<span tabindex="0" class="sapUshellNavMiniTileTitle" >');
+                        oRm.write('<span class="sapUshellNavMiniTileTitle" >');
                         if (sTitle) {
                             oRm.writeEscaped(sTitle);
                         }
@@ -48,13 +49,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/layout/Grid'],
 
                         if (oIcon) {
                             oRm.write('<div>');
-                            oRm.write('<span tabindex="0" class="sapUshellNavMiniTileIcon">');
+                            oRm.write('<span class="sapUshellNavMiniTileIcon">');
                             oRm.renderControl(oIcon);
                             oRm.write("</span>");
                             oRm.write('</div>');
                         } else {
                             oRm.write('<div>');
-                            oRm.write('<span tabindex="0" class="sapUshellNavMiniTileSubtitle" >');
+                            oRm.write('<span class="sapUshellNavMiniTileSubtitle" >');
                             if (sSubtitle) {
                                 oRm.writeEscaped(sSubtitle);
                             }

@@ -1,3 +1,0 @@
-sap.ui.require.preload({
-	"web/ui5/test-resources/sap/ui/core/qunit/component/v2models/empty/Component.js": "/*\n * UI development toolkit for HTML5 (OpenUI5)\n * (c) Copyright 2009-2016 SAP SE or an SAP affiliate company.\n * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.\n */\nsap.ui.define([\"sap/ui/test/v2models/parent/Component\"],function(e){return e.extend(\"sap.ui.test.v2models.empty.Component\",{metadata:{manifest:\"json\"}})},!0);"
-}, "web/ui5/test-resources/sap/ui/core/qunit/component/v2models/empty/Component-preload");

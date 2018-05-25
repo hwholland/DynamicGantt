@@ -8,25 +8,25 @@ The filling can be displayed in color only, or additionally with the percentage 
     <deprecation since="1.14">This control is replaced by sap.m.ProgressIndicator</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="visible">
             <documentation>Invisible controls are not rendered</documentation>
         </property>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>Switches enabled state of the control. Disabled fields have different colors, and cannot be focused.</documentation>
         </property>
-        <property name="barColor" type="sap.ui.core/BarColor" defaultValue="NEUTRAL" group="Appearance">
+        <property group="Appearance" defaultValue="NEUTRAL" type="sap.ui.core/BarColor" name="barColor">
             <documentation>The color of the bar. Enumeration sap.ui.core.BarColor provides CRITICAL (yellow), NEGATIVE (red), POSITIVE (green), NEUTRAL (blue) (default value).</documentation>
         </property>
-        <property name="displayValue" type="sap.ui.core/string" defaultValue="0%" group="Appearance">
+        <property group="Appearance" defaultValue="0%" type="sap.ui.core/string" name="displayValue">
             <documentation>The text value to be displayed in the bar.</documentation>
         </property>
-        <property name="percentValue" type="sap.ui.core/int" defaultValue="0" group="Data">
+        <property group="Data" defaultValue="0" type="sap.ui.core/int" name="percentValue">
             <documentation>The numerical value for the displayed length of the progress bar.</documentation>
         </property>
-        <property name="showValue" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="showValue">
             <documentation>Specifies whether the current value shall be rendered inside the bar.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="100%" group="Dimension">
+        <property group="Dimension" defaultValue="100%" type="sap.ui.core/CSSSize" name="width">
             <documentation>The width of the control.</documentation>
         </property>
     </properties>

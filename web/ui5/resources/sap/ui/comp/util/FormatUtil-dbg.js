@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // --------------------------------------------------------------------------------
@@ -20,52 +21,52 @@ sap.ui.define([
 	var FormatUtil = {
 		/**
 		 * Static function that returns a formatted expression based on the displayBehaviour. Fallback is to return the Id (sId)
-		 * @param {string} sDisplayBehaviour - the display behaviour (e.g. as defined in:
-		 *        sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR)
+		 * @param {string} sDisplayBehaviour - the display behaviour (e.g. as defined in: sap.ui.comp.smartfilterbar.DisplayBehaviour)
 		 * @param {string} sId - the Id field value
 		 * @param {string} sDescription - the Description field value
 		 * @returns {string} the formatted string value based on the displayBehaviour
 		 * @private
 		 */
 		getFormattedExpressionFromDisplayBehaviour: function(sDisplayBehaviour, sId, sDescription) {
-			var sTextBinding = null;
-
-			if (!sId) {
-				return sDescription ? sDescription : "";
-			}
-
+			var oTexts = this.getTextsFromDisplayBehaviour(sDisplayBehaviour, sId, sDescription);
+			return oTexts.secondText ? oTexts.firstText + " (" + oTexts.secondText + ")" : oTexts.firstText;
+		},
+		/**
+		 * Static function that returns an object with first and second text values based on the displayBehaviour. Fallback is to return the Id (sId)
+		 * @param {string} sDisplayBehaviour The display behaviour (e.g. as defined in: sap.ui.comp.smartfilterbar.DisplayBehaviour)
+		 * @param {string | null} sId The ID field value
+		 * @param {string} sDescription The Description field value
+		 * @returns {object} Object with first and second text values based on the <code>sDisplayBehaviour</code>
+		 * @private
+		 */
+		getTextsFromDisplayBehaviour: function(sDisplayBehaviour, sId, sDescription) {
 			switch (sDisplayBehaviour) {
 				case "descriptionAndId":
-					if (sDescription && sId) {
-						sTextBinding = sDescription + " (" + sId + ")";
-					} else if (!sDescription) {
-						sTextBinding = sId;
-					}
-					break;
+					return {
+						firstText: sDescription ? sDescription : sId,
+						secondText: sDescription ? sId : undefined
+					};
 				case "idAndDescription":
-					if (sDescription && sId) {
-						sTextBinding = sId + " (" + sDescription + ")";
-					} else if (!sDescription) {
-						sTextBinding = sId;
-					}
-					break;
+					return {
+						firstText: sId,
+						secondText: sDescription ? sDescription : undefined
+					};
 				case "descriptionOnly":
-					sTextBinding = sDescription;
-					if (!sDescription) {
-						sTextBinding = sId;
-					}
-					break;
-				// fallback to Id in case nothing was specified
+					return {
+						firstText: sDescription ? sDescription : sId,
+						secondText: undefined
+					};
+					// idOnly and fallback to Id in case nothing was specified
 				default:
-					sTextBinding = sId;
-					break;
+					return {
+						firstText: sId,
+						secondText: undefined
+					};
 			}
-			return sTextBinding;
 		},
 		/**
 		 * Static function that returns a formatted binding expression based on the displayBehaviour. Fallback is to return the Id (sId)
-		 * @param {string} sDisplayBehaviour - the display behaviour (e.g. as defined in:
-		 *        sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR)
+		 * @param {string} sDisplayBehaviour - the display behaviour (e.g. as defined in: sap.ui.comp.smartfilterbar.DisplayBehaviour)
 		 * @param {string} sId - the Id field name/path in the model
 		 * @param {string} sDescription - the Description field name/path in the model
 		 * @returns {string} the calculated binding path based on the displayBehaviour
@@ -221,7 +222,7 @@ sap.ui.define([
 		/**
 		 * creates and returns an inline Measure Unit formatter, for formatting measure and unit values separated by a space
 		 * @private
-		 * @returns {function} a formatter function accepting strings for value and unit (unit is not used currently)
+		 * @returns {function} a formatter function accepting strings for value and unit
 		 */
 		getInlineMeasureUnitFormatter: function() {
 			FormatUtil._initialiseSpaceChars();
@@ -238,6 +239,27 @@ sap.ui.define([
 				};
 			}
 			return FormatUtil._fInlineMeasureFormatter;
+		},
+		/**
+		 * creates and returns an inline Amount Currency formatter, for formatting amount and currency values separated by a space
+		 * @private
+		 * @returns {function} a formatter function accepting strings for amount and currency
+		 */
+		getInlineAmountFormatter: function() {
+			FormatUtil._initialiseCurrencyFormatter();
+			if (!FormatUtil._fInlineAmountFormatter) {
+				FormatUtil._fInlineAmountFormatter = function(oAmount, sCurrency) {
+					var sValue;
+					if (oAmount === undefined || oAmount === null || sCurrency === "*") {
+						return "";
+					}
+					// Get the formatted numeric value
+					sValue = FormatUtil._oCurrencyFormatter.format(oAmount, sCurrency);
+
+					return sValue + FormatUtil._FIGURE_SPACE + sCurrency;
+				};
+			}
+			return FormatUtil._fInlineAmountFormatter;
 		},
 		/**
 		 * Returns Time in 'PT'HH'H'mm'M'ss'S' format (as expected by Edm.Time fields)
@@ -271,7 +293,7 @@ sap.ui.define([
 				iMin = 3;
 			}
 			// Force set the width to 9em for date fields
-			if (oField.type === "Edm.DateTime" && oField.displayFormat === "Date") {
+			if (oField.type === "Edm.DateTime" && oField.displayFormat === "Date" || oField.isCalendarDate) {
 				sWidth = "9em";
 			} else if (sWidth) {
 				// Use max width if "Max is set in the
@@ -321,6 +343,25 @@ sap.ui.define([
 			}
 
 			return aResult;
+		},
+
+		parseDateTimeOffsetInterval: function(sValue) {
+			var aValues = sValue.split('-'), aRetValues = sValue, nIdx = 0;
+
+			if ((aValues.length % 2) === 0) {
+
+				aRetValues = [];
+
+				for (var i = 0; i < aValues.length / 2; i++) {
+					nIdx = sValue.indexOf('-', ++nIdx);
+				}
+
+				aRetValues.push(sValue.substr(0, nIdx).replace(/\s+/g, ''));
+				aRetValues.push(sValue.substr(nIdx + 1).replace(/\s+/g, ''));
+
+			}
+
+			return aRetValues;
 		}
 	};
 

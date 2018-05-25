@@ -1,38 +1,37 @@
-(function () {
-    "use strict";
-    /*global jQuery, sap */
+sap.ui.define(["sap/ovp/cards/generic/Component"],
 
-    jQuery.sap.declare("sap.ovp.cards.image.Component");
-    jQuery.sap.require("sap.ovp.cards.generic.Component");
+    function (CardComponent) {
+        "use strict";
 
-    sap.ovp.cards.generic.Component.extend("sap.ovp.cards.image.Component", {
-        // use inline declaration instead of component.json to save 1 round trip
-        metadata: {
-            properties: {
-                "contentFragment": {
-                    "type": "string",
-                    "defaultValue": "sap.ovp.cards.image.Image"
-                }
-            },
+        return CardComponent.extend("sap.ovp.cards.image.Component", {
+            // use inline declaration instead of component.json to save 1 round trip
+            metadata: {
+                properties: {
+                    "contentFragment": {
+                        "type": "string",
+                        "defaultValue": "sap.ovp.cards.image.Image"
+                    }
+                },
 
-            version: "1.38.10",
+                version: "1.54.3",
 
-            library: "sap.ovp",
+                library: "sap.ovp",
 
-            includes: [],
+                includes: [],
 
-            dependencies: {
-                libs: [ "sap.m" ],
-                components: []
-            },
-            config: {},
-            customizing: {
-                "sap.ui.controllerExtensions": {
-                    "sap.ovp.cards.generic.Card": {
-                        controllerName: "sap.ovp.cards.image.Image"
+                dependencies: {
+                    libs: [],
+                    components: []
+                },
+                config: {},
+                customizing: {
+                    "sap.ui.controllerExtensions": {
+                        "sap.ovp.cards.generic.Card": {
+                            controllerName: "sap.ovp.cards.image.Image"
+                        }
                     }
                 }
             }
-        }
-    });
-})();
+        });
+    }
+);

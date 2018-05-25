@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 /**
  * @class GroupHeaderButton renderer.
@@ -7,11 +7,10 @@
  * @private
  */
 
-(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.ui.launchpad.GroupHeaderActionsRenderer");
+sap.ui.define(function() {
+	"use strict";
 
-    sap.ushell.ui.launchpad.GroupHeaderActionsRenderer = {};
+    var GroupHeaderActionsRenderer = {};
 
     /**
      * Renders the HTML for the given control, using the provided
@@ -24,7 +23,7 @@
      *            oControl an object representation of the control that should be
      *            rendered
      */
-    sap.ushell.ui.launchpad.GroupHeaderActionsRenderer.render = function (oRm, oControl) {
+    GroupHeaderActionsRenderer.render = function (oRm, oControl) {
         var isOverflow = oControl.getIsOverflow(),
             isTileActionModeActive = oControl.getTileActionModeActive();
 
@@ -48,4 +47,8 @@
         }
         oRm.write("</div>");
     };
-}());
+
+
+	return GroupHeaderActionsRenderer;
+
+}, /* bExport= */ true);

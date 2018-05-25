@@ -7,16 +7,16 @@
 jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 (function(un) {
 	"use strict";
-	var isTouchDevice, isNotTouchDevice;
-	var deviceDetect = (function() {
+	var isTouchDevice, isNotTouchDevice; //KS wrong naming? global variables
+	(function() {
 		var isTouchDeviceInIE = navigator.maxTouchPoints;
 		var isTouchDeviceOtherThanIE = 'ontouchstart' in window ? true : false;
 		isTouchDevice = isTouchDeviceOtherThanIE || isTouchDeviceInIE;
-		if('onclick' in window) {
+		if ('onclick' in window) {
 			isNotTouchDevice = true;
 		}
 	})();
-	sap.apf.ui.controls.draggableCarousel.DraggableCarousel = function(opts) {
+	sap.apf.ui.controls.draggableCarousel.DraggableCarousel = function(opts) {//KS no jsdoc for options
 		var options = opts || {};
 		this.eleRefs = {
 			blocks : [],
@@ -36,13 +36,17 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 		};
 		this.elems = {
 			separator : options.separator,
-			removeIcon : options.removeIcon
+			removeIcon : options.removeIcon,
+			ariaTextForCarouselBlock : options.ariaTextForCarouselBlock
 		};
 		this.callbacks = {
 			onBeforeDrag : options.onBeforeDrag,
 			onAfterDrop : options.onAfterDrop,
 			onAfterRemove : options.onAfterRemove,
-			onAfterSelect : options.onAfterSelect
+			onAfterSelect : options.onAfterSelect,
+			setAriaTextWhenEnterPressOnBlock : options.setAriaTextWhenEnterPressOnBlock,
+			setAriaTextwhenDeleteKeyPressOnBlock : options.setAriaTextwhenDeleteKeyPressOnBlock,
+			setAriaTextWhenFocusOnBlock : options.setAriaTextWhenFocusOnBlock
 		};
 		this.eleRefs.containerEle = this._drawSkeleton();
 		this._initDimensions();
@@ -121,6 +125,8 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 			this._keypress(blockWrapper, 13, function(ele, e) {
 				var selectIndex = blocks.indexOf(ele);
 				self.callbacks.onAfterSelect.apply(ele, [ selectIndex ]);
+				jQuery('.DnD-block').parent().wrap("<div>").find("[tabindex='0'][drag-state='true']").attr('aria-labelledby', self.elems.ariaTextForCarouselBlock);
+				sap.ui.getCore().byId(self.elems.ariaTextForCarouselBlock).setText(self.callbacks.setAriaTextWhenEnterPressOnBlock.apply(ele, [ jQuery('.activeStepTitle').text() ]));
 			});
 			this._keypress(blockWrapper, 32, function(ele, e) {
 				var selectIndex = blocks.indexOf(ele);
@@ -143,12 +149,21 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 			if (removable === true) {
 				//Delete Event on press of the block
 				this._keypress(blockWrapper, 46, function(ele, e) {
-					var removeIndex = blocks.indexOf(ele);
+					var removeIndex = blocks.indexOf(ele), i;
 					self.removeBlock(removeIndex, self.callbacks.onAfterRemove);
 					//Tab Index Grouping
 					self._grouping(blocks);
 					//Set focus to tab-index active
-					jQuery(blocks).parent().wrap("<div>").find("[tabindex='0']").focus();
+					jQuery('.DnD-block').parent().wrap("<div>").find("[tabindex='0'][drag-state='true']").attr('aria-labelledby', self.elems.ariaTextForCarouselBlock);
+					sap.ui.getCore().byId(self.elems.ariaTextForCarouselBlock).setText(self.callbacks.setAriaTextwhenDeleteKeyPressOnBlock.apply(ele, [ jQuery('.activeStepTitle').text() ]));
+					for(i = 0; i < jQuery('.DnD-block').parent().wrap('<div>').find("[drag-state='true']").length; i++) {
+						if (jQuery('.DnD-block').parent().wrap('<div>').find("[drag-state='true']")[i].getElementsByClassName('activeStepTitle')[0] !== undefined) {
+							var oActiveElement = jQuery('.DnD-block').parent().wrap('<div>').find("[drag-state='true']")[i];
+							setTimeout(function() {
+								oActiveElement.focus();
+							}, 10);
+						}
+					}
 				});
 			}
 			blockWrapper.appendChild(block);
@@ -238,9 +253,9 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 			return true;
 		},
 		insertBlock : function(blockObj, index) {
+			var self = this, i;
 			var blocks = this.eleRefs.blocks;
 			blocks.push({});
-			var i;
 			for(i = blocks.length - 1; i > index; i--) {
 				blocks[i] = blocks[i - 1];
 				var yValue = i * this._mFactor;
@@ -252,6 +267,16 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 			blockWrapper.style.cssText = blockWrapper.style.cssText + this._getTransformCss(y);
 			var container = this.eleRefs.containerEle;
 			container.appendChild(blockWrapper);
+			jQuery('.DnD-block').parent().wrap("<div>").find("[tabindex='0'][drag-state='true']").attr('aria-labelledby', self.elems.ariaTextForCarouselBlock);
+			for(i = 0; i < jQuery('.DnD-block').parent().wrap('<div>').find("[drag-state='true']").length; i++) {
+				jQuery('.DnD-block').parent().wrap('<div>').find("[drag-state='true']")[i].onkeydown = function(e) {
+					if (e.which == 13) {
+						setTimeout(function() {
+							jQuery('.DnD-block').parent().wrap("<div>").find("[tabindex='0'][drag-state='true']").focus();
+						}, 10);
+					}
+				};
+			}
 			this._setHorizontalBlockMargin();
 			if (this.elems.separator !== un) {
 				var separator = this._getSeparatorEle();
@@ -515,9 +540,11 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 		},
 		_onRemoveBlock : function(e, ctx, removeIconWrapper) {
 			e.stopPropagation();
-			var removeBlock = removeIconWrapper.parentElement;
-			var removeIndex = ctx.eleRefs.blocks.indexOf(removeBlock);
-			ctx.removeBlock(removeIndex, ctx.callbacks.onAfterRemove);
+			window.setTimeout(function() {
+				var removeBlock = removeIconWrapper.parentElement;
+				var removeIndex = ctx.eleRefs.blocks.indexOf(removeBlock);
+				ctx.removeBlock(removeIndex, ctx.callbacks.onAfterRemove);
+			}, 100);
 		},
 		_swapArray : function(array, from, to) {
 			var temp = array[from];
@@ -526,6 +553,7 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 			return array;
 		},
 		_grouping : function(arrEle) {
+			var self = this;
 			var childNode = arrEle;
 			var activeIndex = (arrEle.length > 2) ? arrEle.length - 2 : 0;
 			//Set first child or last child as tabindex active and other inactive
@@ -538,6 +566,9 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 				if (index === 0) {
 					return;
 				}
+				if (jQuery('.stepTitle')[index - 1]) {
+					sap.ui.getCore().byId(self.elems.ariaTextForCarouselBlock).setText(self.callbacks.setAriaTextWhenFocusOnBlock.apply(ele, [ jQuery('.stepTitle')[index - 1].textContent ]));
+				}
 				jQuery(childNode).removeAttr("tabindex");
 				jQuery(childNode).attr("tabindex", -1);
 				jQuery(childNode[index - 1]).attr("tabindex", 0);
@@ -548,6 +579,9 @@ jQuery.sap.declare("sap.apf.ui.controls.draggableCarousel.DraggableCarousel");
 				var index = childNode.indexOf(ele);
 				if (index === childNode.length - 1) {
 					return;
+				}
+				if (jQuery('.stepTitle')[index + 1]) {
+					sap.ui.getCore().byId(self.elems.ariaTextForCarouselBlock).setText(self.callbacks.setAriaTextWhenFocusOnBlock.apply(ele, [ jQuery('.stepTitle')[index + 1].textContent ]));
 				}
 				jQuery(childNode).removeAttr("tabindex");
 				jQuery(childNode).attr("tabindex", -1);

@@ -69,6 +69,7 @@ sap.ui.define([
 				}
 			});
 
+		this.addDataAttributes(aShape);
 		aShape.exit().remove();
 	};
 	
@@ -78,22 +79,22 @@ sap.ui.define([
 
 		aShape.select("title").remove();
 		aShape.insert("title", ":first-child")
-				.each(function (d) {
-					var oSelf = d3.select(this);
-					oSelf.selectAll("tspan").remove();
-					if (sap.ui.Device.browser.msie) {
-						var aLines = oShape.getTitle(d, fFindObjectInfo(this, oShape, that)).split("\n");
-						for (var i = 0; i < aLines.length; i++) {
-							oSelf.append("tspan")
-								.classed("sapGanttTooltipLine", true)
-								.text(aLines[i]);
-						}
-					} else {
-						oSelf.text(oShape.getTitle(d, fFindObjectInfo(this, oShape, that)));
+			.each(function (d) {
+				var oSelf = d3.select(this);
+				oSelf.selectAll("tspan").remove();
+				if (sap.ui.Device.browser.msie) {
+					var aLines = oShape.getTitle(d, fFindObjectInfo(this, oShape)).split("\n");
+					for(var i = 0; i < aLines.length; i++) {
+						oSelf.append("tspan")
+							.classed("sapGanttTooltipLine", true)
+							.text(aLines[i]);
 					}
-				});
+				} else {
+					oSelf.text(oShape.getTitle(d, fFindObjectInfo(this, oShape)));
+				}
+			});
 	};
-	
+
 	ShapeCrossRow.prototype._findObjectInfo = function (oNode, oShape, oThis, isSelectedShape) {
 		// Since relationship raw data has been processed by _drawShapes method, oRawData (i.e. oNode.__data__.rawData) has already have "fromShapeInstance", "toShapeInstance" attributes.
 		// To get the coordinates of the from shape (starting point) and to shape (ending point), it 
@@ -119,10 +120,10 @@ sap.ui.define([
 		};
 		return rlsRetVal;
 	};
-	
+
 	ShapeCrossRow.prototype.destroySvg = function (aSvgNode, oShape) {
 	};
-	
+
 	ShapeCrossRow.prototype.generateRelationshipDataSet = function (aSvgNode, oShapeMap, aNonVisibleShapeData, aShapeDataNames, oRelationship, oAxisTime, oAxisOrdinal) {
 			/*
 			 * This piece of code searches aRelationship and finds all relationships whose starting point and ending point are both expanded. 
@@ -205,7 +206,7 @@ sap.ui.define([
 						relationship = aRelationship[i];
 						relationshipRawData = relationship;
 						var fromObjectPath = relationshipClass.getFromObjectPath(relationshipRawData, null);
-						var fromObject = objectIdPathMap[fromObjectPath];
+						var fromObject = objectIdPathMap[fromObjectPath + "-" + relationshipClass.getFromExpandRowIndex(relationshipRawData, null)];
 						
 						//If fromObject doesn't exist in the map or it doesn't have 'y' attribute, it means the row isn't expanded,
 						//then we are NOT displaying the relationship.
@@ -218,7 +219,7 @@ sap.ui.define([
 						//that the raw data of ref object is available.
 						
 						var toObjectPath = relationshipClass.getToObjectPath(relationshipRawData, null);
-						var toObject = objectIdPathMap[toObjectPath];
+						var toObject = objectIdPathMap[toObjectPath + "-" + relationshipClass.getToExpandRowIndex(relationshipRawData, null)];
 						
 						//If toObject doesn't exist in the map or it doesn't have 'y' attribute, it means the row isn't expanded,
 						//then we are NOT displaying the relationship.
@@ -335,7 +336,7 @@ sap.ui.define([
 			}
 
 			for (var i = 0; i < aShapeData.length; i++) {
-				if (aShapeData[i].id !== undefined && aShapeData[i].id == sShapeDataId) {
+				if (aShapeData[i].__id__ !== undefined && aShapeData[i].__id__ == sShapeDataId) {
 					oShapeData = aShapeData[i];
 					break;
 				}
@@ -345,6 +346,21 @@ sap.ui.define([
 			}
 			
 			return oShapeData;
+		};
+
+		/**
+		 * Add DataSet attribute on the Shape DOM element for quick reference.
+		 * 
+		 * If consumer doesn't specify the id <b>reserved keyword</b> in their data, use
+		 * jQuery.sap.uid() instead
+		 * 
+		 * @param {object} oShape D3 DOM element
+		 * @private
+		 */
+		ShapeCrossRow.prototype.addDataAttributes = function(oShape) {
+			oShape.attr("data-sap-gantt-shape-id", function(d){
+				return d.__id__;
+			});
 		};
 
 	return ShapeCrossRow;

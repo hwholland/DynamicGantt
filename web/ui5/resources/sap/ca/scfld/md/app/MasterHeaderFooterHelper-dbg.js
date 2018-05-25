@@ -299,6 +299,7 @@ sap.ui.base.Object.extend("sap.ca.scfld.md.app.MasterHeaderFooterHelper", {
 				sTitleId = this.oCommonHeaderFooterHelper.createId(oController, sTitleId);
 			}
 			oController._oControlStore.oMasterTitle = new sap.m.Title(sTitleId, {level: sap.ui.core.TitleLevel.H2});
+			oController.getList().addAriaLabelledBy(oController._oControlStore.oMasterTitle);
 			oCustHeader.addContentMiddle(oController._oControlStore.oMasterTitle);
 		}
 		this.setMasterTitle(oController, iCount);

@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap */
 sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device', 'sap/ui/core/theming/Parameters'],
@@ -16,7 +16,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device', 'sap/
                     textVisible: {type: "boolean", group : "Appearance", defaultValue : true},
                     insertItemsWithAnimation: {type: "boolean", group : "Appearance", defaultValue : true},
                     hideItemsAfterPresentation: {type: "boolean", group : "Appearance", defaultValue : false},
-                    enableBounceAnimations: {type: "boolean", group : "Appearance", defaultValue : false}
+                    enableBounceAnimations: {type: "boolean", group : "Appearance", defaultValue : false},
+                    actAsPreviewContainer: {type: "boolean", group : "Appearance", defaultValue : false}
+
                 },
                 aggregations: {
                     floatingContainerItems : {type : "sap.ui.core.Control", multiple : true}
@@ -31,24 +33,42 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device', 'sap/
             renderer: {
                 render: function (rm, oRightFloatingContainer) {
                     var bIsRTL = sap.ui.getCore().getConfiguration().getRTL();
-
-                    rm.write("<ul");
+                    rm.write("<div");
                     rm.writeControlData(oRightFloatingContainer);
+                    rm.addClass("sapUshellRightFloatingContainer");
+                    rm.writeClasses();
                     rm.addStyle('top', oRightFloatingContainer.getTop() + 'rem');
                     rm.addStyle(bIsRTL ? 'left' : 'right', oRightFloatingContainer.getRight());
                     rm.writeStyles();
-                    rm.addClass("sapUshellRightFloatingContainer");
+                    rm.writeAttribute("data-role", "alert");
+                    rm.write(">");
+                    rm.write("<ul");
+                    rm.addClass("sapUshellNotificationListContainer");
                     rm.writeClasses();
+                    rm.writeAttribute("role", "list");
                     rm.write(">");
                     this.renderFloatingContainerItems(rm, oRightFloatingContainer);
                     rm.write("</ul>");
+                    rm.write("</div>");
                 },
 
                 renderFloatingContainerItems: function (rm, oRightFloatingContainer) {
-
-                    var aItems = oRightFloatingContainer.getFloatingContainerItems(),
+                    var bInsertItemsWithAnimation = oRightFloatingContainer.getInsertItemsWithAnimation(),
+                        bActAsPreviewContainer = oRightFloatingContainer.getActAsPreviewContainer(),
+                        aItems = oRightFloatingContainer.getFloatingContainerItems(),
                         i;
+
                     for (i = 0; i < aItems.length; i++) {
+                        if (bActAsPreviewContainer && !bInsertItemsWithAnimation) {
+                            aItems[i].addStyleClass('sapUshellNonAnimatedNotificationListItem');
+                        } else if (aItems[i].hasStyleClass('sapUshellNonAnimatedNotificationListItem')) {
+                            aItems[i].addStyleClass('sapUshellNotificationsListItem');
+                            aItems[i].addStyleClass('sapUshellRightFloatingContainerItemBackToViewport');
+                            aItems[i].addStyleClass('sapUshellRightFloatingContainerItemHidden');
+                            aItems[i].addStyleClass('sapUshellRightFloatingContainerItmHeightVisible');
+                            aItems[i].removeStyleClass('sapUshellNonAnimatedNotificationListItem');
+                        }
+
                         rm.renderControl(aItems[i]);
                     }
                 }
@@ -76,6 +96,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device', 'sap/
                     nWindowHeight = window.innerHeight,
                     oDomRef = this.getDomRef(),
                     nTopOffset = oDomRef.getBoundingClientRect().top,
+                    // we need to leave 3.5rem space for the page floating footer in edit mode in compact mode and 4rem in cozy
+                    nBottomOffset = jQuery(".sapUiSizeCompact").length > 0 ? 56 : 64,
                     jqItem = jQuery(oDomRef).find('li').first(),
                     nItemHeight,
                     aItems;
@@ -84,8 +106,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device', 'sap/
                     return;
                 }
                 nItemHeight = jqItem[0].clientHeight;
+
+                var editModeFooter = jQuery("#sapUshellDashboardFooter").outerHeight();
+
                 //the maximum amount of items to display is 5 (if needed, this can be changed to a configuration later on)
-                this.iRequiredItemsNumber = Math.min(parseInt((nWindowHeight - nTopOffset) / nItemHeight, 10), 5);
+                this.iRequiredItemsNumber = Math.min(parseInt((nWindowHeight - nTopOffset - nBottomOffset - editModeFooter) / nItemHeight, 10), 5);
                 if (nPreviousRequiredItems !== this.iRequiredItemsNumber) {
                     aItems = this.getFloatingContainerItems();
                     for (var i = 0; i < aItems.length; i++) {
@@ -106,6 +131,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device', 'sap/
             setTimeout(function () {
                 this._handleResize();
             }.bind(this), 500);
+
+            this.addStyleClass('sapContrastPlus');
+            this.addStyleClass('sapContrast');
+            this.addStyleClass('sapUshellNotificationsListItem');
         };
         RightFloatingContainer.prototype.setVisible = function (bVisible) {
             this.setProperty('visible', bVisible, true);
@@ -117,37 +146,69 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device', 'sap/
         };
         RightFloatingContainer.prototype.setFloatingContainerItemsVisiblity = function (bVisible) {
             var items = this.getFloatingContainerItems(),
-                timeout = bVisible ? 300 : 0;
+                timeout = bVisible ? 300 : 0,
+                bInsertItemsWithAnimation = this.getInsertItemsWithAnimation(),
+                bActAsPreviewContainer = this.getActAsPreviewContainer(),
+                _fnHandleFloatingContainerItemVisibility = function (index) {
+                    if (bVisible) {
+                        items[index].removeStyleClass("sapUshellRightFloatingContainerItemBounceOut").addStyleClass("sapUshellRightFloatingContainerItemBounceIn");
+                    } else {
+                        items[index].removeStyleClass("sapUshellRightFloatingContainerItemBounceIn").addStyleClass("sapUshellRightFloatingContainerItemBounceOut");
+                    }
+                };
 
+            /*eslint-disable no-loop-func*/
             for (var i = 0; i < items.length; i++) {
                 (function (index) {
                     return function () {
-                        setTimeout(function () {
-                            if (bVisible) {
-                                items[index].removeStyleClass("sapUshellRightFloatingContainerItemBounceOut").addStyleClass("sapUshellRightFloatingContainerItemBounceIn");
-                            } else {
-                                items[index].removeStyleClass("sapUshellRightFloatingContainerItemBounceIn").addStyleClass("sapUshellRightFloatingContainerItemBounceOut");
-                            }
-                        }, timeout + index * 100);
+                        //items[index].toggleStyleClass('sapUshellNonAnimatedNotificationListItem', bActAsPreviewContainer);
+                        if (bInsertItemsWithAnimation) {
+                            setTimeout(function () {
+                                _fnHandleFloatingContainerItemVisibility(index);
+                            }, timeout + index * 100);
+                        } else {
+                            items[index].setVisible(bVisible);
+                            //_fnHandleFloatingContainerItemVisibility(index);
+                        }
                     };
                 })(i)();
             }
         };
+        RightFloatingContainer.prototype._animationBouncer = function _animationBouncer(oNotificationListItem) {
+            var _animateItem = function () {
+                if (!_animationBouncer._animationQueue.length) {
+                    _animationBouncer._itemTimeoutId = undefined;
+                    return;
+                }
+                var item = _animationBouncer._animationQueue.shift();
+                item.addStyleClass("sapUshellRightFloatingContainerItmHeightVisible").addStyleClass('sapUshellRightFloatingContainerItemBounceIn');
+                _animationBouncer._itemTimeoutId = setTimeout(_animateItem, 100);
+            }.bind(this);
+
+            if (!_animationBouncer._animationQueue) {
+                _animationBouncer._animationQueue = [];
+            }
+            _animationBouncer._animationQueue.push(oNotificationListItem);
+            if (_animationBouncer._mainTimeoutId || _animationBouncer._itemTimeoutId) {
+                return;
+            }
+            _animationBouncer._mainTimeoutId = setTimeout(function () {
+                _animationBouncer._mainTimeoutId = undefined;
+                _animateItem();
+            }.bind(this), 500);
+        };
 
         RightFloatingContainer.prototype.addFloatingContainerItem = function (oNotificationListItem) {
             this.addAggregation('floatingContainerItems', oNotificationListItem);
+            oNotificationListItem.addStyleClass('sapContrastPlus');
 
             if (this.getInsertItemsWithAnimation()) {
+                oNotificationListItem.addStyleClass("sapUshellNotificationsListItem");
                 //Initially, add items as hidden (with height 0 and 'right' out of the viewport) and later, present them gradually with animation.
                 oNotificationListItem.addStyleClass("sapUshellRightFloatingContainerItemHidden");
 
                 if (this.getEnableBounceAnimations()) {
-                    var items = this.getFloatingContainerItems(),
-                        itemIndex = items.indexOf(oNotificationListItem);
-
-                    setTimeout(function () {
-                        oNotificationListItem.addStyleClass("sapUshellRightFloatingContainerItmHeightVisible").addStyleClass('sapUshellRightFloatingContainerItemBounceIn');
-                    }, 500 + itemIndex * 100);
+                    RightFloatingContainer.prototype._animationBouncer(oNotificationListItem);
                 } else {
                     setTimeout(function () {
                         var items = this.getFloatingContainerItems();
@@ -160,6 +221,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device', 'sap/
                         oNotificationListItem.addStyleClass('sapUshellRightFloatingContainerItemBackToViewport').addStyleClass("sapUshellRightFloatingContainerItmHeightVisible");
                     }.bind(this), 500);
                 }
+            } else if (this.getActAsPreviewContainer()) {
+                oNotificationListItem.addStyleClass('sapUshellNonAnimatedNotificationListItem')
             }
             if (this.getHideItemsAfterPresentation()) {
                 //Remove it after 3 secounds.

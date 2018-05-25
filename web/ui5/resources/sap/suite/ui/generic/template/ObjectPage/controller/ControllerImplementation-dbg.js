@@ -1,61 +1,229 @@
 sap.ui
 	.define(
-		["sap/ui/base/Object", "sap/ui/core/format/DateFormat", "sap/ui/core/routing/HashChanger", "sap/m/ActionSheet", "sap/m/Button",
-			"sap/m/MessageBox", "sap/m/MessageToast", "sap/ui/model/json/JSONModel", "sap/ushell/ui/footerbar/AddBookmarkButton",
-			"sap/ui/table/AnalyticalTable", "sap/ui/generic/app/navigation/service/SelectionVariant",
-			"sap/suite/ui/generic/template/lib/MessageButtonHelper",
-			"sap/suite/ui/generic/template/ObjectPage/extensionAPI/ExtensionAPI", "sap/suite/ui/generic/template/lib/MessageUtils"
+		["jquery.sap.global", "sap/ui/core/format/DateFormat",
+			"sap/m/MessageBox", "sap/m/MessageToast", "sap/ui/model/Filter", "sap/ui/model/Sorter",
+			"sap/ui/comp/smarttable/SmartTable", "sap/ui/generic/app/navigation/service/SelectionVariant",
+			"sap/suite/ui/generic/template/lib/testableHelper", "sap/suite/ui/generic/template/detailTemplates/detailUtils",
+			"sap/suite/ui/generic/template/ObjectPage/extensionAPI/ExtensionAPI", "sap/ui/model/json/JSONModel", "sap/suite/ui/generic/template/js/AnnotationHelper", "sap/ui/core/mvc/ViewType", "sap/m/Table",
+			"sap/ui/layout/DynamicSideContent"
 		],
-		function(BaseObject, DateFormat, HashChanger, ActionSheet, Button, MessageBox, MessageToast, JSONModel, AddBookmarkButton,
-			AnalyticalTable, SelectionVariant, MessageButtonHelper, ExtensionAPI, MessageUtils) {
+		function(jQuery, DateFormat, MessageBox, MessageToast, Filter, Sorter,
+			SmartTable, SelectionVariant, testableHelper, detailUtils, ExtensionAPI, JSONModel, AnnotationHelper, ViewType, ResponsiveTable, DynamicSideContent) {
 			"use strict";
-
-			return {
-				getMethods: function(oTemplateUtils, oController) {
-					var oState = {}; // contains attributes oSmartFilterbar and oSmartTable. Initialized in onInit.
-					var bIsObjectRoot; // will currently be set first time, when edit button is pressed
-					var oMessageButtonHelper;
-
-					// Helper Functions
-					function handleError(sOperation, reject, oError, mParameters) {
-						MessageUtils.handleError(sOperation, oController, oTemplateUtils.oCommonUtils.getContentDensityClass(), oTemplateUtils.oServices, oError, mParameters);
-						return (reject || jQuery.noop)(oError);
+			function fnIsEventForTableWithInlineCreate(oSmartTable){
+				return oSmartTable.data("inlineCreate") === "true";
+			}
+			
+			function fnSetPropertyBindingInternalType(oBinding, sInternalType){
+				if (oBinding.getBindings){ // composite Binding
+					var aBindings = oBinding.getBindings();
+					for (var i = 0; i < aBindings.length; i++){
+						fnSetPropertyBindingInternalType(aBindings[i], sInternalType);	
 					}
-
-					function setEditable(bIsEditable) {
-						var oUIModel = oController.getView().getModel("ui");
-						oUIModel.setProperty("/editable", bIsEditable);
-						if (!oTemplateUtils.oCommonUtils.isDraftEnabled() && bIsObjectRoot) {
-							oTemplateUtils.oComponentUtils.setEditableNDC(bIsEditable);
+				} else {
+					var oType = oBinding.getType();
+					oBinding.setType(oType, sInternalType);
+				}
+			}
+			
+			var oMethods = {
+				getMethods: function(oViewProxy, oTemplateUtils, oController) {
+					var oBase = detailUtils.getControllerBase(oViewProxy, oTemplateUtils, oController);
+					oBase.state.aUnsavedDataCheckFunctions = []; //array for external unsaved data check functions that can be registered
+					var bIsObjectRoot; // will currently be set first time, when edit button is pressed
+					var oObjectPage;  // the object page, initialized in onInit
+					
+					// current state
+					var sSectionId;  // id of the last section that was navigated to
+					
+					
+					// end of current state
+					
+					function onActivateImpl() {
+						if (oTemplateUtils.oServices.oApplication.getBusyHelper().isBusy()){
+							jQuery.sap.log.info("Activation of object suppressed, since App is currently busy");
+							return; // this is again tested by the CRUDManager. But in order to suppress the AfterActivate-Event in the busy case we also need to check this here.
 						}
+						jQuery.sap.log.info("Activate object");
+						var oActivationPromise = oTemplateUtils.oServices.oCRUDManager.activateDraftEntity();
+						oActivationPromise.then(function(oResponse) {
+							oTemplateUtils.oServices.oApplication.showMessageToast(oTemplateUtils.oCommonUtils.getText("OBJECT_SAVED"));
+							if (oResponse && oResponse.context) {
+								// it's not enough to set root to dirty: Scenario: subitem has been displayed (active document), then changed (draft) and shall be
+								// displayed again after activation - now data has to be read again
+								// therefore we set all pages to dirty, excluding the current one (here the active data is already returned by the function import)
+								var oComponent = oController.getOwnerComponent();
+								oTemplateUtils.oServices.oViewDependencyHelper.setAllPagesDirty([oComponent.getId()]);
+								oTemplateUtils.oServices.oViewDependencyHelper.unbindChildren(oComponent);
+								var bNavToListOnSave = oController.getOwnerComponent().getNavToListOnSave();
+								// Draft activation is a kind of cross navigation -> invalidate paginator info
+								oTemplateUtils.oServices.oApplication.invalidatePaginatorInfo();              								
+								if (bNavToListOnSave) {
+									// Activate and navigate to List Report Page
+									oTemplateUtils.oServices.oNavigationController.navigateToRoot(true);
+								} else {
+									// navigate to activate document
+									oTemplateUtils.oServices.oNavigationController.navigateToContext(
+											oResponse.context, undefined, true);
+								}
+							}
+						});
+						var oEvent = {
+							activationPromise: oActivationPromise
+						};
+						oTemplateUtils.oComponentUtils.fire(oController, "AfterActivate", oEvent);
 					}
 					
-					function fnProcessNonDraftDataLossConfirmationAndFunction(fnProcessFunction) {
-						// DataLost Popup only for Non-Draft
-						if (!oTemplateUtils.oCommonUtils.isDraftEnabled()) {
-							if (oController.getView().getModel().hasPendingChanges()) {
-								oTemplateUtils.oCommonUtils.dataLossConfirmation(function() {
-									setEditable(false);
-									oController.getView().getModel().resetChanges();
-									//Notification for reuse components and extensions
-									oTemplateUtils.oComponentUtils.fire(oController, "AfterCancel", {});
-									fnProcessFunction();
-								});
-								return;
-							}
-							setEditable(false);
-						}
-						fnProcessFunction();
-					}
+					function fnOpenConfirmationDialog(oScope, aPersistentMessageModel, sMessageType) {
+					    var oMessageTemplate = new sap.m.MessageItem({
+					        type: '{type}',
+					        title: '{title}'
+					    });
+					    var oModel = new JSONModel();
+					    var that = oScope;
 
+					    oModel.setData(aPersistentMessageModel);
+
+					    oScope._oMessageView = new sap.m.MessageView({
+					        showDetailsPageHeader: false,
+					        itemSelect: function() {
+					            that._oBackButton.setVisible(true);
+					        },
+					        items: {
+					            path: "/",
+					            template: oMessageTemplate
+					        }
+					    });
+
+					    oScope._oBackButton = new sap.m.Button({
+					        icon: sap.ui.core.IconPool.getIconURI("nav-back"),
+					        visible: false,
+					        press: function() {
+					            that._oMessageView.navigateBack();
+					            oScope.setVisible(false);
+					        }
+					    });
+
+					    oScope._oMessageView.setModel(oModel);
+					    var oDialog = oTemplateUtils.oCommonUtils.getDialogFragment("sap.suite.ui.generic.template.ObjectPage.view.fragments.ShowConfirmationOnDraftActivate", {
+							onCancel: function() {
+								oDialog.close();
+							},
+							onSave: function() {
+								oDialog.close();
+								oTemplateUtils.oServices.oApplication.performAfterSideEffectExecution(onActivateImpl);
+							}
+						});
+					    oDialog.removeAllContent();
+					    oDialog.addContent(oScope._oMessageView);
+					    oDialog.setContentHeight("300px");
+					    oDialog.setContentWidth("500px");
+					    oDialog.setVerticalScrolling(false);
+					    oDialog.aCustomStyleClasses = ["sapMNavItem"];
+					    oDialog.setState(sMessageType);
+					    oDialog.open();
+					}
+					
+					function onActivate() {
+					    if ((oController.getOwnerComponent().getShowConfirmationOnDraftActivate()) === true) {
+					        var oMessagePopover = oTemplateUtils.oCommonUtils.getDialogFragment("sap.suite.ui.generic.template.fragments.MessagePopover");
+					        var aBindingForPersistentMessage = oMessagePopover.getBinding("items").aIndices;
+					        var aPersistentMessageModel = [];
+					        var iWarningCount = 0;
+					        var sMessageType = "Warning";
+					        for (var i in aBindingForPersistentMessage) {
+					            var sState = oMessagePopover.getBinding("items").oList[aBindingForPersistentMessage[i]].type;
+					            if (sState == "Warning") {
+					                iWarningCount++;
+					            } else if (sState == "Error") {
+					                sMessageType = "Error";
+					            }
+					            var sMessage = oMessagePopover.getBinding("items").oList[aBindingForPersistentMessage[i]].message;
+					            aPersistentMessageModel.push({
+					                type: sState,
+					                title: sMessage
+					            });
+					        }
+					        if (iWarningCount) {
+					            fnOpenConfirmationDialog(this, aPersistentMessageModel, sMessageType);
+					        } else {
+					            oTemplateUtils.oServices.oApplication.performAfterSideEffectExecution(onActivateImpl);
+					        }
+					    } else {
+					        oTemplateUtils.oServices.oApplication.performAfterSideEffectExecution(onActivateImpl);
+					    }
+					}
+					
+					function fnAdaptBindingParamsForInlineCreate(oEvent) {
+						if (fnIsEventForTableWithInlineCreate(oEvent.getSource())) {
+							var oBindingParams = oEvent.getParameter("bindingParams");
+							if (oBindingParams.filters && oBindingParams.filters.length) {
+								/*
+								 * Add a new filter condition to always show all items that are just created. In case we are in a draft,
+								 * that just means to add "or HasActiveEntity = false". For active documents however, that condition
+								 * would always be true. Thus, we have to add 
+								 * "or (HasActiveEntity = false and IsActiveEntity = false)". 
+								 * However, this condition is not evaluated correctly by gateway, so we have to transform it to
+								 * (IsActvieEntity = true and x) or (Is ActvieEntity = false and (x or HasActvieEntity = false)), 
+								 * where x is the condition provided by the user
+								 */
+								var oUserFilter = new Filter(oBindingParams.filters);
+								oBindingParams.filters = new Filter({
+									filters: [new Filter({
+										filters: [new Filter({
+											path: "IsActiveEntity",
+											operator: "EQ",
+											value1: true
+										}), oUserFilter],
+										and: true
+									}), new Filter({
+										filters: [new Filter({
+											path: "IsActiveEntity",
+											operator: "EQ",
+											value1: false
+										}), new Filter({
+											filters: [oUserFilter, new Filter({
+												path: "HasActiveEntity",
+												operator: "EQ",
+												value1: false
+											})],
+											and: false
+										})],
+										and: true
+									})],
+									and: false
+								});
+							}
+							var fnGroup = oBindingParams.sorter[0] && oBindingParams.sorter[0].getGroupFunction();
+							var fnGroupExtended = fnGroup && function(oContext){
+								var oObject = oContext.getObject();
+								if (oObject.IsActiveEntity || oObject.HasActiveEntity){
+									var oRet =  jQuery.extend({}, fnGroup(oContext));
+									oRet.key = oRet.key.charAt(0) === "§" ? "§" + oRet.key : oRet.key;
+									return oRet;
+								}
+								return {
+									key: "§",
+									text: oTemplateUtils.oCommonUtils.getText("NEW_ENTRY_GROUP")
+								};
+							};
+							oBindingParams.sorter.unshift(new Sorter("HasActiveEntity", false, fnGroupExtended));
+						}
+					}
 					function fnOnShareObjectPageEmailPress(sObjectTitle, sObjectSubtitle) {
 						var sEmailSubject = sObjectTitle;
 						if (sObjectSubtitle) {
 							sEmailSubject = sEmailSubject + " - " + sObjectSubtitle;
 						}
-						sap.m.URLHelper.triggerEmail(null, sEmailSubject, document.URL);
+						var emailBody = document.URL;
+						if ((emailBody.indexOf("(") === 0)) {
+							emailBody = "%28" + emailBody.slice(1, emailBody.length);
+						}
+						if ((emailBody.lastIndexOf(")") === (emailBody.length - 1))) {
+							emailBody = emailBody.slice(0, (emailBody.length - 1)) + "%29";
+						}
+						sap.m.URLHelper.triggerEmail(null, sEmailSubject, emailBody);
 					}
-
 					function fnOnShareObjectPageInJamPress(sObjectTitle, sObjectSubtitle) {
 						var oShareDialog = sap.ui.getCore().createComponent({
 							name: "sap.collaboration.components.fiori.sharing.dialog",
@@ -70,24 +238,21 @@ sap.ui
 					}
 
 					function getObjectHeader() {
-						var oObjectPage = oController.byId("objectPage");
 						return oObjectPage.getHeaderTitle();
 					}
 
 					function onShareObjectPageActionButtonPress(oEvent) {
+						var oTemplatePrivateModel = oTemplateUtils.oComponentUtils.getTemplatePrivateModel();
 						var oShareActionSheet = oTemplateUtils.oCommonUtils.getDialogFragment(
-							"sap.suite.ui.generic.template.ObjectPage.view.fragments.ShareSheet", {
+							"sap.suite.ui.generic.template.fragments.ShareSheet", {
 								shareEmailPressed: function() {
-									var oShareModel = oShareActionSheet.getModel("share");
-									fnOnShareObjectPageEmailPress(oShareModel.getProperty("/objectTitle"), oShareModel
-										.getProperty("/objectSubtitle"));
+									fnOnShareObjectPageEmailPress(oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectTitle"), 
+										oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectSubtitle"));
 								},
 								shareJamPressed: function() {
-									var oShareModel = oShareActionSheet.getModel("share");
-									fnOnShareObjectPageInJamPress(oShareModel.getProperty("/objectTitle"), oShareModel
-										.getProperty("/objectSubtitle"));
+									fnOnShareObjectPageInJamPress(oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectTitle"),
+										oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectSubtitle"));
 								}
-
 							}, "share", function(oFragment, oShareModel) {
 								var oResource = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 								oShareModel.setProperty("/emailButtonText", oResource.getText("SEMANTIC_CONTROL_SEND_EMAIL"));
@@ -98,9 +263,8 @@ sap.ui
 								oShareModel.setProperty("/jamVisible", !!fnGetUser && fnGetUser().isJamActive());
 							});
 						var oShareModel = oShareActionSheet.getModel("share");
-						var oObjectHeader = getObjectHeader();
-						oShareModel.setProperty("/objectTitle", oObjectHeader.getProperty("objectTitle"));
-						oShareModel.setProperty("/objectSubtitle", oObjectHeader.getProperty("objectSubtitle"));
+						oShareModel.setProperty("/objectTitle", oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectTitle"));
+						oShareModel.setProperty("/objectSubtitle", oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectSubtitle"));
 						oShareModel.setProperty("/bookmarkCustomUrl", document.URL);
 						oShareActionSheet.openBy(oEvent.getSource());
 					}
@@ -114,9 +278,8 @@ sap.ui
 									var oLink = oButtonsContext.getProperty("link");
 									var oParam = oButtonsContext.getProperty("param");
 									var str = oLink.intent;
-									var sSemanticObject = str.substring(1, str.indexOf("-"));
-									var sPos = (str.indexOf("~") > -1) ? str.indexOf("~") : str.length;
-									var sAction = str.substring(str.indexOf("-") + 1, sPos);
+									var sSemanticObject = str.split('#')[1].split('-')[0];
+									var sAction = str.split('-')[1].split('?')[0].split('~')[0];
 									var oNavArguments = {
 										target: {
 											semanticObject: sSemanticObject,
@@ -124,21 +287,36 @@ sap.ui
 										},
 										params: oParam
 									};
+								//Extension point to remove properties from link for external navigation will be NOT supported for related apps
 									sap.ushell.Container.getService("CrossApplicationNavigation").toExternal(oNavArguments);
 								}
 							}, "buttons");
 						return oRelatedAppsSheet;
 					}
 
-					function showDeleteMsgBox() {
+					function onDeleteImpl() {
+						var oBusyHelper = oTemplateUtils.oServices.oApplication.getBusyHelper();
+						if (oBusyHelper.isBusy()){
+							return;
+						}
 						var oComponent = oController.getOwnerComponent();
 						var sNavigationProperty = oComponent.getNavigationProperty();
 						var oUtils = oTemplateUtils.oCommonUtils;
-						var oPageHeader = oController.byId("objectPageHeader");
-
-						var sParam2 = oPageHeader.getProperty("objectSubtitle") ? oPageHeader.getProperty("objectSubtitle") : '';
-						var aParams = [oController.byId("objectTypeName").getText(), oPageHeader.getProperty("objectTitle").trim(), sParam2];
-						var sMessageText = oUtils.getText("DELETE_WITH_OBJECTINFO", aParams);
+						var oTemplatePrivateModel = oTemplateUtils.oComponentUtils.getTemplatePrivateModel();
+						var sObjectTitle = (oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectTitle") || "").trim();
+						var sObjectSubtitle = oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectSubtitle");
+						var sMessageText, aParams;
+						if (sObjectTitle) {
+							if (sObjectSubtitle) {
+								aParams = [" ", sObjectTitle, sObjectSubtitle];
+								sMessageText = oUtils.getText("DELETE_WITH_OBJECTINFO", aParams);
+							} else {
+								aParams = [sObjectSubtitle];
+								sMessageText = oUtils.getText("DELETE_WITH_OBJECTTITLE", aParams);
+							}
+						} else {
+							sMessageText = oUtils.getText("ST_GENERIC_DELETE_SELECTED");
+						}
 
 						MessageBox.show(sMessageText, {
 							icon: MessageBox.Icon.WARNING,
@@ -147,90 +325,83 @@ sap.ui
 							actions: [MessageBox.Action.DELETE, MessageBox.Action.CANCEL],
 							onClose: function(oAction) {
 								if (oAction === MessageBox.Action.DELETE) {
+									var oTemplPrivGlobal = oComponent.getModel("_templPrivGlobal");
+									var oObjPage = {objectPage: {currentEntitySet : oComponent.getProperty("entitySet")}};
+									oTemplPrivGlobal.setProperty("/generic/multipleViews", oObjPage);
 									var oDeleteEntityPromise = oTemplateUtils.oServices.oCRUDManager.deleteEntity();
-									oDeleteEntityPromise.then(function() {
-										oTemplateUtils.oServices.oNavigationController.setParentToDirty(oComponent, sNavigationProperty);
-										oTemplateUtils.oServices.oNavigationController.unbindChildren(oComponent);
+									var sPath = oComponent.getBindingContext().getPath();
+									var mObjectsToDelete = Object.create(null);
+									mObjectsToDelete[sPath] = oDeleteEntityPromise;
 
-										// document was deleted, go back to previous page
-										window.history.back();
+									oTemplateUtils.oServices.oApplication.prepareDeletion(mObjectsToDelete);
+
+									oDeleteEntityPromise.then(function() {
+										oTemplateUtils.oServices.oViewDependencyHelper.setParentToDirty(oComponent, sNavigationProperty, 1);
+										oTemplateUtils.oServices.oViewDependencyHelper.unbindChildren(oComponent, true);
 									});
 									var oEvent = {
 										deleteEntityPromise: oDeleteEntityPromise
 									};
+									oBusyHelper.setBusy(oDeleteEntityPromise);
 									oTemplateUtils.oComponentUtils.fire(oController, "AfterDelete", oEvent);
 								}
 							}
 						});
 					}
 
+					function onDelete(oEvent) {
+						oTemplateUtils.oServices.oApplication.performAfterSideEffectExecution(onDeleteImpl);
+					}
+					
+					// This method is called when editing of an entity has started and the corresponding context is available
 					function fnStartEditing(oResult){
 						var oDraft, oContext;
 						if (oResult) {
-						    oContext = oResult.context || oResult;
-						    if (oTemplateUtils.oServices.oDraftController.getDraftContext().hasDraft(oContext)) {
-								oTemplateUtils.oServices.oNavigationController.setRootPageToDirty();
+							oContext = oResult.context || oResult;
+							if (oTemplateUtils.oServices.oDraftController.getDraftContext().hasDraft(oContext)) {
+								oTemplateUtils.oServices.oViewDependencyHelper.setRootPageToDirty();
 								oDraft = oResult.context && oResult.context.context || oResult.context || oResult;
-					        }
+							}
 						}
 						if (oDraft) {
 							// navigate to draft
-							oTemplateUtils.oServices.oNavigationController.navigateToContext(oDraft, undefined, true);
+							// is a kind of cross navigation -> invalidate paginator info
+							oTemplateUtils.oServices.oApplication.invalidatePaginatorInfo();
+							if (oBase.fclInfo.navigateToDraft) {
+								oBase.fclInfo.navigateToDraft(oDraft);
+							} else {
+								oTemplateUtils.oServices.oNavigationController.navigateToContext(oDraft, undefined, true, 2);
+							}
 						} else {
-							setEditable(true);
+							var oTemplatePrivateModel = oTemplateUtils.oComponentUtils.getTemplatePrivateModel();
+							oTemplatePrivateModel.setProperty("/objectPage/displayMode", 2);
 						}
+						//set Editable independent of the fact that the instance is a draft or not
+						oViewProxy.setEditable(true);
 					}
 
-					function fnEditEntity(bPreserveChanges) {
-						oTemplateUtils.oServices.oCRUDManager.editEntity(bPreserveChanges).then(
-								function(oResult) {
-									if (oResult && oResult.unsavedChanges) {
-										//check edit status: rc409 can also mean status = locked
-										var oComponent = oController.getOwnerComponent();
-										var sEntitySet = oComponent.getEntitySet();
-										// check whether Draft exists
-										var oDraftContext = oTemplateUtils.oServices.oDraftController.getDraftContext();
-										if (oDraftContext.isDraftRoot(sEntitySet)) {
-											// In case of DeepLink the DraftAdministrativeData still not retrieved
-											var oBindingContext = oComponent.getBindingContext();
-											var oModel = oComponent.getModel();
-											oModel.read(oBindingContext.getPath(), {
-												urlParameters: {
-													"$expand": "DraftAdministrativeData"
-												},
-												success: function(oResponseData) {
-													// check whether lock by other user is expired
-													if (!oResponseData.DraftAdministrativeData.DraftIsProcessedByMe &&
-															!oResponseData.DraftAdministrativeData.InProcessByUser) {
-
-														// start "Expired Lock Dialog", because lock by other user is expired
-														fnExpiredLockDialog(oResponseData.DraftAdministrativeData.CreatedByUserDescription || oResponseData.DraftAdministrativeData.CreatedByUser);
-													} else if (!oResponseData.DraftAdministrativeData.DraftIsProcessedByMe && oResponseData.DraftAdministrativeData.InProcessByUser) {
-														handleError(MessageUtils.operations.editEntity, null, oResult, oResult);
-													} else {
-														//start editing
-														fnStartEditing(oResult);
-													}
-												}
-											});
-											return; // in this case editing is delayed until admin data have been read successfully
-										} else {
-											handleError(MessageUtils.operations.editEntity, null, oResult, oResult);
-										}
-									} else {
-										//start editing
-										fnStartEditing(oResult);
-									}
-								}
-						);
+					var fnExpiredLockDialog;  // declare function already here, to avoid usage before declaration
+					// This method is called when the user decides to edit an entity.
+					// Parameter bUnconditional contains the information, whether the user has already confirmed to take over unsaved changes of another user, or whether this is still open
+					function fnEditEntity(bUnconditional) {
+						oTemplateUtils.oServices.oCRUDManager.editEntity(bUnconditional).then(function(oEditInfo){
+							if (oEditInfo.draftAdministrativeData){
+								fnExpiredLockDialog(oEditInfo.draftAdministrativeData.CreatedByUserDescription || oEditInfo.draftAdministrativeData.CreatedByUser);
+							} else {
+								fnStartEditing(oEditInfo.context);
+							}
+						});
 					}
 
-					function fnExpiredLockDialog(sCreatedByUser) {
+					// This method is called when the user wants to edit an entity, for which a non-locking draft of another user exists.
+					// The method asks the user, whether he wants to continue editing anyway. If this is the case editing is triggered.
+					// sCreatedByUser is the name of the user possessing the non-locking draft
+					fnExpiredLockDialog = function(sCreatedByUser) {
 						var oUnsavedChangesDialog = oTemplateUtils.oCommonUtils.getDialogFragment(
 							"sap.suite.ui.generic.template.ObjectPage.view.fragments.UnsavedChangesDialog", {
 								onEdit: function() {
 									oUnsavedChangesDialog.close();
-									fnEditEntity();
+									fnEditEntity(true);
 								},
 								onCancel: function() {
 									oUnsavedChangesDialog.close();
@@ -240,105 +411,366 @@ sap.ui
 						var sDialogContentText = oTemplateUtils.oCommonUtils.getText("DRAFT_LOCK_EXPIRED", [sCreatedByUser]);
 						oDialogModel.setProperty("/unsavedChangesQuestion", sDialogContentText);
 						oUnsavedChangesDialog.open();
-					}
+					};
 
-					var sDefaultObjectTitleForCreated; // instantiated on demand
-
-					function getDefaultObjectTitleForCreated() {
-						sDefaultObjectTitleForCreated = sDefaultObjectTitleForCreated || oTemplateUtils.oCommonUtils
-							.getText("NEW_OBJECT", [oController.byId("objectTypeName").getText()]);
-						return sDefaultObjectTitleForCreated;
-					}
-
-					// Helper functions for view-proxy for component
-					var oHashChanger; // initialized on first use
-					function fnBindBreadcrumbs(aSections) {
-						if (!aSections.length) {
+					function fnRefreshBlock(mRefreshInfos, bForceRefresh, oBlock){
+						if (oBlock instanceof DynamicSideContent) {
+							oBlock = oBlock.getMainContent()[0];
+						} else if (!oBlock.getContent){ // dummy-blocks need not to be refreshed
 							return;
 						}
+						oBlock.getContent().forEach(function (oContent) {
+							if (oContent instanceof SmartTable) {
+								if (bForceRefresh || mRefreshInfos[oContent.getTableBindingPath()]) {
+									if (oContent.isInitialised()){
+										oTemplateUtils.oCommonUtils.refreshSmartTable(oContent);
+									} else {
+										oContent.attachInitialise(function(){
+											oTemplateUtils.oCommonUtils.refreshSmartTable(oContent);
+										});
+									}
 
-						// there's at least one section left - create / bind breadcrumbs
-						var oTitle = getObjectHeader();
-						var aBreadCrumbs = oTitle && oTitle.getBreadCrumbsLinks();
-
-						if (!aBreadCrumbs || !aBreadCrumbs.length) {
-							return;
-						}
-
-						oHashChanger = oHashChanger || HashChanger.getInstance();
-
-						var sBreadCrumbLink = "",
-							oCustomData, sEntitySet, sSection, oLink, aSubSections, sCanonicalUrl, sHash;
-						for (var i = 0; i < aSections.length; i++) {
-							sSection = aSections[i];
-							sBreadCrumbLink = sBreadCrumbLink + "/" + sSection;
-
-							if (aBreadCrumbs[i]) {
-								oLink = aBreadCrumbs[i];
-
-								/*
-								 * we don't use the navigation path but the canonical URL. The reason for this is that there's no
-								 * join done in the backend, therefore the GET-request is much faster in deeper breadcrumbs. Also
-								 * the UI5 Odata model keeps track of already requested ressources, so if user navigates from the
-								 * top level there's no additional request, if he uses a bookmark the request is only done once. We
-								 * assume that the key of the navigation path is the same as the canonical URL. This is an
-								 * assumption that does not fit to all ODATA services (but 99% of them) - BUT: Smart Templates and
-								 * the navigation controller already takes this assumption. Once this is changed also this coding
-								 * needs to be changed. Ideally with a configuration as most of the ODATA services have a big
-								 * benefit through reading with the canonical URL
-								 */
-
-								oCustomData = oLink.getCustomData() && oLink.getCustomData()[0];
-								if (oCustomData && oCustomData.getKey() === "entitySet") {
-									sEntitySet = oCustomData.getValue();
-									aSubSections = sSection.split("(");
-									if (aSubSections && aSubSections[1]) {
-
-										if (oHashChanger.hrefForAppSpecificHash) {
-											// shell active, ask shell for hash
-											sHash = oHashChanger.hrefForAppSpecificHash(sBreadCrumbLink);
-										} else {
-											sHash = "#" + sBreadCrumbLink;
-										}
-
-										sCanonicalUrl = "/" + sEntitySet + "(" + aSubSections[1];
-										oLink.setHref(sHash);
-										oLink.bindElement(sCanonicalUrl);
+									if (!bForceRefresh) {
+										oTemplateUtils.oServices.oApplicationController.executeSideEffects(oController.getOwnerComponent().getBindingContext(), [], [oContent.getTableBindingPath()]);
 									}
 								}
 							}
-						}
-					}
-
-					function fnRefreshFacets(mRefreshInfos) {
-						oController.getView().getContent()[0].getContent()[0].getSections().forEach(function (oSection) {
-							oSection.getSubSections().forEach(function (oSubSection) {
-								oSubSection.getBlocks().forEach(function (oBlock) {
-									oBlock.getContent().forEach(function (oContent) {
-										if (oContent instanceof sap.ui.comp.smarttable.SmartTable) {
-											if (mRefreshInfos[oContent.getTableBindingPath()]) {
-												oContent.rebindTable();
-												if (oTemplateUtils.oCommonUtils.isDraftEnabled()) {
-													oController.getOwnerComponent().getAppComponent().getApplicationController().executeSideEffects(oController.getOwnerComponent().getBindingContext(), [], [oContent.getTableBindingPath()]);
-												}
-											}
-										}
-									});
-								});
-							});
 						});
 					}
 
+					function getSelectionVariant() {
+						// oTemplateUtils, oController
+						// if there is no selection we pass an empty one with the important escaping of ", passing "" or
+						// null...was not possible
+						// "{\"SelectionVariantID\":\"\"}";
+						var sResult = "{\"SelectionVariantID\":\"\"}";
 
-					function setLockButtonVisible(bVisible) {
-						var oLockButton = sap.ui.getCore().byId(getObjectHeader().getId() + "-lock");
-						oLockButton.setVisible(bVisible);
+						/*
+						 * rules don't follow 1:1 association, only header entity type fields don't send fields with empty
+						 * values also send not visible fields remove Ux fields (e.g. UxFcBankStatementDate) send all kinds of
+						 * types String, Boolean, ... but stringify all types
+						 */
+
+						var oComponent = oController.getOwnerComponent();
+						var sEntitySet = oComponent.getEntitySet();
+						var model = oComponent.getModel();
+						var oMetaModel = model.getMetaModel();
+						var oEntitySet = oMetaModel.getODataEntitySet(sEntitySet);
+						var oEntityType = oMetaModel.getODataEntityType(oEntitySet.entityType);
+						var aAllFieldsMetaModel = oEntityType.property;
+
+						//collect the names of attributes to be deleted 
+						//objects with existing sap:field-control -> mapped to com.sap.vocabularies.Common.v1.FieldControl attribute
+						//e.g. ProductForEdit_fc field control fields shouldn't be transferred
+						var aFieldsToBeIgnored = [];
+						for (var x in aAllFieldsMetaModel) {
+							var controlname = aAllFieldsMetaModel[x]["com.sap.vocabularies.Common.v1.FieldControl"] &&
+								aAllFieldsMetaModel[x]["com.sap.vocabularies.Common.v1.FieldControl"].Path;
+							if (controlname && aFieldsToBeIgnored.indexOf(controlname) < 0) {
+								aFieldsToBeIgnored.push(controlname);
+							}
+						}
+
+						var context = oController.getView().getBindingContext();
+						var object = context.getObject();
+
+						var oSelectionVariant = new SelectionVariant();
+						for (var i in aAllFieldsMetaModel) {
+							var type = aAllFieldsMetaModel[i].type;
+							var name = aAllFieldsMetaModel[i].name;
+							var value = object[aAllFieldsMetaModel[i].name];
+
+							if (aFieldsToBeIgnored.indexOf(name) > -1) {
+								continue;
+							}
+
+							if (name && (value || type === "Edm.Boolean")) { // also if boolean is false this must be sent
+								if (type === "Edm.Time" && value.ms !== undefined) { // in case of Time an object is returned
+									value = value.ms;
+								}
+								if (typeof value !== "string") {
+									try {
+										value = value.toString();
+									} catch (e) {
+										value = value + "";
+									}
+								}
+								oSelectionVariant.addParameter(name, value);
+							}
+						}
+
+						sResult = oSelectionVariant.toJSONString();
+						return sResult;
 					}
 
-					function fnDraftResume(oSiblingContext, oActiveEntity, oDraftAdministrativeData) {
+					function fnIsEntryDeletable(oContext, oSmartTable) {
+						var bDeletable = true;
+						var oModel = oSmartTable.getModel();
+						var oDeleteRestrictions = oTemplateUtils.oCommonUtils.getDeleteRestrictions(oSmartTable);
+						var sDeletablePath = oDeleteRestrictions && oDeleteRestrictions.Deletable && oDeleteRestrictions.Deletable.Path;
+						if (sDeletablePath) {
+							 bDeletable = oModel.getProperty(sDeletablePath, oContext);
+						}
+						return bDeletable;
+					}
+
+					var oEventSource;
+					var oSmartTable;
+					/**
+					 * Return an instance of the DeleteConfirmation fragment
+					 *
+					 * @param {sap.m.Table} Table
+					 * @param {event from where the delete was triggered} source event
+					 * @return {sap.m.Dialog} - returns the Delete Confirmation Dialog
+					 * @private
+					 */
+					function getTableDeleteDialog(oCurrentEventSource, oCurrentSmartTable) {
+						// make current parameters available in closure to avaid usage of old values in handlers of dialog
+						oEventSource = oCurrentEventSource;
+						oSmartTable = oCurrentSmartTable;
+						var aPath = [];
+						var sTableId = oSmartTable.getId().substring(oSmartTable.getId().indexOf(oController.getOwnerComponent().getEntitySet()), oSmartTable.getId().lastIndexOf("::"));
+						sTableId = sTableId.replace(/--/g, "|").replace(/::/g, "|");
+						return oTemplateUtils.oCommonUtils.getDialogFragment("sap.suite.ui.generic.template.ObjectPage.view.fragments.TableDeleteConfirmation",{
+							onCancel: function(oEvent) {
+							var oDialog = oEvent.getSource().getParent();
+							oDialog.close();
+						},
+						onDelete: function(oEvent) {
+							var oBusyHelper = oTemplateUtils.oServices.oApplication.getBusyHelper();
+							var oDialog = oEvent.getSource().getParent();
+							var aContexts = oTemplateUtils.oCommonUtils.getSelectedContexts(oSmartTable);
+							aPath = [];
+							for (var i = 0; i < aContexts.length; i++){
+								// check if item is deletable
+								if (fnIsEntryDeletable(aContexts[i], oSmartTable)) {
+								aPath.push(aContexts[i].getPath());
+								} 
+							}
+							var oDeletePromise = oTemplateUtils.oServices.oCRUDManager.deleteEntities(aPath);
+							oBusyHelper.setBusy(oDeletePromise);
+							oTemplateUtils.oServices.oApplicationController.executeSideEffects(oSmartTable.getBindingContext(), [], [oSmartTable.getTableBindingPath()]);
+							var sUiElementId = oEventSource.getParent().getParent().getId();
+							oDeletePromise.then(function(aFailedPath) {
+								oTemplateUtils.oServices.oViewDependencyHelper.unbindChildren(oController.getOwnerComponent());
+								oTemplateUtils.oCommonUtils.refreshSmartTable(oSmartTable);
+								var iSuccessfullyDeleted = aPath.length - aFailedPath.length;
+								var sSuccessMessage = "";
+								var sDeleteItemMessage = "";
+								var sDeleteItemsMessage = "";
+								if (aFailedPath.length > 0) {
+									var sErrorMessage = "";
+									if (iSuccessfullyDeleted > 0) {
+										// successful deleted
+										sDeleteItemsMessage = (oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_PLURAL_WITH_COUNT|" + sTableId) === "DELETE_SUCCESS_PLURAL_WITH_COUNT|" + sTableId) ? oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_PLURAL_WITH_COUNT", [iSuccessfullyDeleted]) : oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_PLURAL_WITH_COUNT|" + sTableId, [iSuccessfullyDeleted]);
+										sDeleteItemMessage = (oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_WITH_COUNT|" + sTableId) === "DELETE_SUCCESS_WITH_COUNT|" + sTableId) ? oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_WITH_COUNT", [iSuccessfullyDeleted]) : oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_WITH_COUNT|" + sTableId, [iSuccessfullyDeleted]);
+										sErrorMessage += (iSuccessfullyDeleted > 1) ? sDeleteItemsMessage : sDeleteItemMessage;
+
+										// failed deletes
+										sErrorMessage += "\n";
+										sDeleteItemsMessage = (oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_PLURAL_WITH_COUNT|" + sTableId) === "DELETE_ERROR_PLURAL_WITH_COUNT|" + sTableId) ? oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_PLURAL_WITH_COUNT", [aFailedPath.length]) : oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_PLURAL_WITH_COUNT|" + sTableId, [aFailedPath.length]);
+										sDeleteItemMessage = (oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_WITH_COUNT|" + sTableId) === "DELETE_ERROR_WITH_COUNT|" + sTableId) ? oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_WITH_COUNT", [aFailedPath.length]) : oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_WITH_COUNT|" + sTableId, [aFailedPath.length]);
+										sErrorMessage += (aFailedPath.length > 1) ? sDeleteItemsMessage : sDeleteItemMessage;
+									} else {
+										sDeleteItemsMessage = (oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_PLURAL|" + sTableId) === "DELETE_ERROR_PLURAL|" + sTableId) ? oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_PLURAL") : oTemplateUtils.oCommonUtils.getText("DELETE_ERROR_PLURAL|" + sTableId);
+										sDeleteItemMessage = (oTemplateUtils.oCommonUtils.getText("DELETE_ERROR|" + sTableId) === "DELETE_ERROR|" + sTableId) ? oTemplateUtils.oCommonUtils.getText("DELETE_ERROR") : oTemplateUtils.oCommonUtils.getText("DELETE_ERROR|" + sTableId);
+										sErrorMessage = (aFailedPath.length > 1) ? sDeleteItemsMessage : sDeleteItemMessage;
+									}
+
+									MessageBox.error(sErrorMessage);
+									} else {
+										sDeleteItemsMessage = (oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_PLURAL|" + sTableId) === "DELETE_SUCCESS_PLURAL|" + sTableId) ? oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_PLURAL") : oTemplateUtils.oCommonUtils.getText("DELETE_SUCCESS_PLURAL|" + sTableId);
+										sDeleteItemMessage = (oTemplateUtils.oCommonUtils.getText("ITEM_DELETED|" + sTableId) === "ITEM_DELETED|" + sTableId) ? oTemplateUtils.oCommonUtils.getText("ITEM_DELETED") : oTemplateUtils.oCommonUtils.getText("ITEM_DELETED|" + sTableId);
+										sSuccessMessage = (iSuccessfullyDeleted > 1) ? sDeleteItemsMessage : sDeleteItemMessage;
+										oTemplateUtils.oServices.oApplication.showMessageToast(sSuccessMessage);
+									}
+							});
+
+							// This object will be consumed by Application Developer via attachAfterLineItemDelete extension API                                      
+							var oAttachAfterLineItemDeleteProperties = {
+									deleteEntitiesPromise: oDeletePromise,
+									sUiElementId: sUiElementId,
+									aContexts: aContexts
+									};
+							oTemplateUtils.oComponentUtils.fire(oController, "AfterLineItemDelete", oAttachAfterLineItemDeleteProperties);
+							oDialog.close();
+							}
+						},"delete");
+					}
+					
+					function fnDeleteEntries(oEvent){
+						var oBusyHelper = oTemplateUtils.oServices.oApplication.getBusyHelper();
+						if (oBusyHelper.isBusy()){
+							return; // this is again tested by the CRUDManager. But in order to suppress the check for selected lines in the busy case we also need to check this here.
+						}
+						var oEventSource = oEvent.getSource();
+						var oSmartTable = oTemplateUtils.oCommonUtils.getOwnerControl(oEventSource);
+						var sTableId = oSmartTable.getId().substring(oSmartTable.getId().indexOf(oController.getOwnerComponent().getEntitySet()), oSmartTable.getId().lastIndexOf("::"));
+						sTableId = sTableId.replace(/--/g, "|").replace(/::/g, "|");
+						var aContexts = oTemplateUtils.oCommonUtils.getSelectedContexts(oSmartTable);
+						var deleteModel = {
+								title: undefined,
+								undeletableText: undefined,
+								text: undefined
+						};
+						if (aContexts.length === 0){
+							MessageBox.error(oTemplateUtils.oCommonUtils.getText("ST_GENERIC_NO_ITEM_SELECTED"), {
+								styleClass: oTemplateUtils.oCommonUtils.getContentDensityClass()
+							});
+							return;
+						}
+						
+						var aPath = [];
+						var aNonDeletableContext = [];
+						for (var i = 0; i < aContexts.length; i++){
+							// check if item is deletable
+							if (fnIsEntryDeletable(aContexts[i], oSmartTable)) {
+							aPath.push(aContexts[i].getPath());
+							} else {
+								aNonDeletableContext.push(aContexts[i]);
+							}
+						}
+						
+						if (aContexts.length > 1) {
+							deleteModel.title = oTemplateUtils.oCommonUtils.getText("ST_GENERIC_DELETE_TITLE_WITH_COUNT", [aContexts.length]); 
+							deleteModel.text = oTemplateUtils.oCommonUtils.getText("DELETE_SELECTED_ITEMS|" + sTableId) === "DELETE_SELECTED_ITEMS|" + sTableId ? oTemplateUtils.oCommonUtils.getText("DELETE_SELECTED_ITEMS") : oTemplateUtils.oCommonUtils.getText("DELETE_SELECTED_ITEMS|" + sTableId);
+						} else {
+							deleteModel.text = oTemplateUtils.oCommonUtils.getText("DELETE_SELECTED_ITEM|" + sTableId) === "DELETE_SELECTED_ITEM|" + sTableId ? oTemplateUtils.oCommonUtils.getText("DELETE_SELECTED_ITEM") : oTemplateUtils.oCommonUtils.getText("DELETE_SELECTED_ITEM|" + sTableId);
+							deleteModel.title = oTemplateUtils.oCommonUtils.getText("ST_GENERIC_DELETE_TITLE");
+						}
+						
+						if (aNonDeletableContext.length > 0) {
+							deleteModel.undeletableText = oTemplateUtils.oCommonUtils.getText("DELETE_UNDELETABLE_ITEMS|" + sTableId) === "DELETE_UNDELETABLE_ITEMS|" + sTableId ? oTemplateUtils.oCommonUtils.getText("DELETE_UNDELETABLE_ITEMS", [aNonDeletableContext.length, aContexts.length]) : oTemplateUtils.oCommonUtils.getText("DELETE_UNDELETABLE_ITEMS|" + sTableId, [aNonDeletableContext.length, aContexts.length]);
+						}
+						
+						// get Delete Confirmation Popup fragment
+						var oDialog = getTableDeleteDialog(oEventSource,oSmartTable);
+						var oDeleteDialogModel = oDialog.getModel("delete");
+						oDeleteDialogModel.setData(deleteModel);
+						oDialog.open();
+						
+					}
+
+					function getImageDialog() {
+						var oImageDialog = oController.byId("imageDialog") || oTemplateUtils.oCommonUtils.getDialogFragment(
+							"sap.suite.ui.generic.template.ObjectPage.view.fragments.ImageDialog", {
+								onImageDialogClose: function() {
+									oImageDialog.close();
+								}
+							}, "headerImage");
+
+						return oImageDialog;
+					}
+
+					//handle the visibility of the Image in the Header Title
+					function fnHandleVisibilityofImageInHeaderTitle() {
+						var oTitleImage = oController.byId("template::ObjectPage::TitleImage");
+						if (!oTitleImage) {
+							return;
+						}
+						var oObjectPageDynamicHeaderTitle = oController.getView().byId("template::ObjectPage::ObjectPageHeader");
+						oTitleImage.setVisible(false);
+						oObjectPageDynamicHeaderTitle.attachStateChange(function(oEvent) {
+							var bExpanded = oEvent.getParameter("isExpanded");
+							oTitleImage.setVisible(!bExpanded);
+						});
+					}
+					
+					// This function will be called in onInit. It ensures that the /objectPage/headerInfo/ segment of the template private model will be updated
+					// according to the content of the corresponding customData.
+					// Note that there is a special logic which ensures a fallback title which is derived from i18n-properties will	be used in createMode when no title can be derived from the OData model.
+					// This fallback does not apply, when the title is a constant anyway.
+					function fnEnsureTitleTransfer(){
+						var sDefaultObjectTitleForCreated; // initialized on demand
+						var oTemplatePrivateModel = oTemplateUtils.oComponentUtils.getTemplatePrivateModel();
+						var fnCreateChangeHandlerForTitle = function(sKey){ // This function produces the change handler which will be added to the binding of the customData for key sKey.
+							return function(oEvent){ // the change handler which will be applied to the property binding
+								var oBinding = oEvent.getSource();
+								var sValue = oBinding.getExternalValue();
+								oTemplatePrivateModel.setProperty("/objectPage/headerInfo/" + sKey, sValue);
+								if (!sValue && sKey === "objectTitle"){ // If no value for the title can be derived from the binding we have to check whether we are in create mode
+									var oHeaderDataAvailablePromise = oTemplateUtils.oComponentUtils.getHeaderDataAvailablePromise();
+									oHeaderDataAvailablePromise.then(function(oContext){ // evaluation must be postponed, until property createMode in the ui model has been set accordingly
+										sValue = oBinding.getExternalValue();
+										if (sValue){
+											return; // If meanwhile a value has been determined, ignore this asynchronous call
+										}
+										var oView = oController.getView();
+										var oObject = oContext.getObject();
+										var oUiModel = oView.getModel("ui");
+										var bCreateMode = oUiModel.getProperty("/createMode");
+										if (bCreateMode && oObject && (oObject.IsActiveEntity === undefined || oObject.IsActiveEntity === false || oObject.HasActiveEntity === false)){
+											sDefaultObjectTitleForCreated = sDefaultObjectTitleForCreated || oTemplateUtils.oCommonUtils.getText("NEW_OBJECT");
+											oTemplatePrivateModel.setProperty("/objectPage/headerInfo/objectTitle", sDefaultObjectTitleForCreated);
+										}
+									});
+								}
+							};
+						};
+						// Loop over customData and attach changeHandler (if necesary)
+						oObjectPage.getCustomData().forEach(function(oCustomDataElement) {
+							var sKey = oCustomDataElement.getKey();
+							if (sKey === "objectTitle" || sKey === "objectSubtitle"){
+								var oBinding = 	oCustomDataElement.getBinding("value");
+								// UI5 does not gurantee the binding to be already available at this point in time.
+								// If the binding is not available, we access the binding info as a fallback								
+								var oBindingInfo = !oBinding && oCustomDataElement.getBindingInfo("value");
+								if (!oBinding && !oBindingInfo){ // constant -> No change handler needed, but the value must be transfered to the template private model once
+									oTemplatePrivateModel.setProperty("/objectPage/headerInfo/" + sKey, oCustomDataElement.getValue());
+									return; // done
+								}
+								var fnChangeHandler = fnCreateChangeHandlerForTitle(sKey); // Now we have the change handler
+								// Moreover, the internal type of the binding must be changed from "any" (default for the value-property of the CustomData) to "string"
+								if (oBinding){ // If the binding is already available we attach the change handler to the binding
+									oBinding.attachChange(fnChangeHandler);
+									fnSetPropertyBindingInternalType(oBinding, "string");
+								} else { // otherwise the binding info will be enhanced accordingly -> binding will already be created with the corresponding change-handler
+									oBindingInfo.events = {
+										change: fnChangeHandler
+									};
+									for (var i = 0; i < oBindingInfo.parts.length; i++){
+										oBindingInfo.parts[i].targetType = "string";	
+									}
+								}
+							}
+						});
+					}
+					
+					// Begin: Filling the viewProxy with functions provided for the TemplateComponent to be called on the view
+					
+					oViewProxy.refreshFacets = function(mRefreshInfos, bForceRefresh) {
+						var fnMyRefreshBlock = fnRefreshBlock.bind(null, mRefreshInfos, bForceRefresh);
+						var fnRefreshSubSection = function(oSubSection){
+							oSubSection.getBlocks().forEach(fnMyRefreshBlock);
+							oSubSection.getMoreBlocks().forEach(fnMyRefreshBlock);							
+						};
+						oObjectPage.getSections().forEach(function(oSection){
+							oSection.getSubSections().forEach(fnRefreshSubSection);
+						});
+					};
+					
+					oViewProxy.getHeaderInfoTitleForNavigationMenue = function(){
+						var oTemplatePrivateModel = oTemplateUtils.oComponentUtils.getTemplatePrivateModel();
+						var iViewLevel = oTemplatePrivateModel.getProperty("/generic/viewLevel");
+						var sTitle = oTemplatePrivateModel.getProperty("/objectPage/headerInfo/objectTitle");
+						oTemplateUtils.oServices.oApplication.subTitleForViewLevelChanged(iViewLevel, sTitle);
+					};
+					
+					oViewProxy.onComponentActivate = oBase.onComponentActivate;
+					
+					//Function is called if there is a draft document and the user navigates to the active document
+					// This can have two reasons:
+					// 1. The draft belongs to another user
+					// 2. The draft belongs to the current user. This is actually only possible, when the user has
+					//    navigated to the active version via a bookmark or by using the history. Any explicit navigation
+					//    within the tool should automatically have forwarded him to the draft.
+					// Case 1 is harmless, whereas in case 2 we have to deal with the draft.
+					// Hence, additional data (oSiblingContext, oDraftAdministrativeData) have been read.
+					// They are now evaluated and action is performed accordingly.
+					oViewProxy.draftResume = function(oSiblingContext, oActiveEntity, oDraftAdministrativeData) {
 						var oSiblingEntity = oSiblingContext.getObject();
 						if (!oSiblingEntity || !oSiblingEntity.hasOwnProperty("IsActiveEntity") || oSiblingEntity.IsActiveEntity !== false) {
-							return;
+							return; // case 1
 						}
 
 						var oModel = oController.getView().getModel();
@@ -347,31 +779,6 @@ sap.ui
 						var oDataEntityType = oMetaModel.getODataEntityType(oModelEntitySet.entityType);
 
 						var sType = "";
-						var sPath;
-						// TODO: not use String directly but Thomas Ch. helpers, sometimes the value is behind a path
-						// to do so best way would be to extract this in a DraftResumeDialoge
-						// determining the value from an annotation path is not yet supported
-						if (oDataEntityType["com.sap.vocabularies.Common.v1.Label"]) {
-							sType = oDataEntityType["com.sap.vocabularies.Common.v1.Label"].String;
-							if (sType === "") {
-								sPath = oDataEntityType["com.sap.vocabularies.Common.v1.Label"].Path;
-								if (sPath) {
-									sType = oActiveEntity[sPath];
-								}
-							}
-						}
-						if (oDataEntityType["com.sap.vocabularies.UI.v1.HeaderInfo"] && oDataEntityType["com.sap.vocabularies.UI.v1.HeaderInfo"].TypeName) {
-							if (sType === "") {
-								sType = oDataEntityType["com.sap.vocabularies.UI.v1.HeaderInfo"].TypeName.String;
-							}
-							if (sType === "") {
-								sPath = oDataEntityType["com.sap.vocabularies.UI.v1.HeaderInfo"].TypeName.Path;
-								if (sPath) {
-									sType = oActiveEntity[sPath];
-								}
-							}
-						}
-
 						var sObjectKey = "";
 						var aSemKey = oDataEntityType["com.sap.vocabularies.Common.v1.SemanticKey"];
 						for (var i in aSemKey) {
@@ -411,18 +818,11 @@ sap.ui
 									oController.getView().getModel("ui").setProperty("/enabled", true);
 									// delete the draft node
 									oTemplateUtils.oServices.oCRUDManager.deleteEntity(true);
-									setLockButtonVisible(false);
 									// Do not use variable oActiveEntity directly, because this will always be the instance used at
 									// the first use of this fragment!
 									oDialogModel.getProperty("/activeEntity").HasDraftEntity = false;
 									// refresh the nodes
-									var oContainers = oTemplateUtils.oServices.oNavigationController.getViews();
-									for (var sContainer in oContainers) {
-										var oContainerComponent = oContainers[sContainer].getComponentInstance();
-										if (oContainerComponent.setIsRefreshRequired) {
-											oContainerComponent.setIsRefreshRequired(true);
-										}
-									}
+									oTemplateUtils.oServices.oViewDependencyHelper.setAllPagesDirty();
 								},
 								onResumeDialogClosed: function() {
 									// support garbage collection
@@ -435,178 +835,246 @@ sap.ui
 						oDialogModel.setProperty("/siblingContext", oSiblingContext);
 						oDialogModel.setProperty("/activeEntity", oActiveEntity);
 						oResumeDialog.open();
-					}
+					};
 
-					function getSelectionVariant() {
-						// oTemplateUtils, oController
-						// if there is no selection we pass an empty one with the important escaping of ", passing "" or
-						// null...was not possible
-						// "{\"SelectionVariantID\":\"\"}";
-						var sResult = "{\"SelectionVariantID\":\"\"}";
 
-						/*
-						 * rules don't follow 1:1 association, only header entity type fields don't send fields with empty
-						 * values also send not visible fields remove Ux fields (e.g. UxFcBankStatementDate) send all kinds of
-						 * types String, Boolean, ... but stringify all types
-						 */
-
-						var oComponent = oController.getOwnerComponent();
-						var sEntitySet = oComponent.getEntitySet();
-						var model = oComponent.getModel();
-						var oMetaModel = model.getMetaModel();
-						var oEntitySet = oMetaModel.getODataEntitySet(sEntitySet);
-						var oEntityType = oMetaModel.getODataEntityType(oEntitySet.entityType);
-						var aAllFieldsMetaModel = oEntityType.property;
-
-						// collect the names of attributes to be deleted (objects with existing sap:field-control attribute)
-						var aFieldsToBeIgnored = [];
-						for (var x in aAllFieldsMetaModel) {
-							var controlname = aAllFieldsMetaModel[x]["sap:field-control"];
-							if (controlname && aFieldsToBeIgnored.indexOf(controlname) < 0) {
-								aFieldsToBeIgnored.push(aAllFieldsMetaModel[x]["sap:field-control"]);
+					var mStrategiesForVisibilityChangeOfSubsection = {
+						lazyLoading: function(bIsGettingVisible, oSubSection){
+							// Call of setBindingContext with value null sets the current binding to inactive.
+							// Call of setBindingContext with value undefined sets the current binding to active
+							oSubSection.setBindingContext(bIsGettingVisible ? undefined : null);	
+						},
+						reuseComponent: function(bIsGettingVisible, oSubSection){
+							var oComponentContainer = oSubSection.getBlocks()[0];
+							oTemplateUtils.oComponentUtils.onVisibilityChangeOfReuseComponent(bIsGettingVisible, oComponentContainer);	
+						}
+					};
+					
+					function getStrategyForVisibilityChangeOfSubsection(oSubSection){
+						var aCustomData = oSubSection.getCustomData();
+						for (var i = 0; i < aCustomData.length; i++){
+							var oCustomData = aCustomData[i];
+							if (oCustomData.getProperty("key") === "strategyForVisibilityChange"){
+								return mStrategiesForVisibilityChangeOfSubsection[oCustomData.getProperty("value")];
 							}
 						}
-
-						var context = oController.getView().getBindingContext();
-						var object = context.getObject();
-
-						var oSelectionVariant = new SelectionVariant();
-						for (var i in aAllFieldsMetaModel) {
-							var type = aAllFieldsMetaModel[i].type;
-							var name = aAllFieldsMetaModel[i].name;
-							var value = object[aAllFieldsMetaModel[i].name];
-
-							if (aFieldsToBeIgnored.indexOf(name) > -1) {
-								continue;
-							}
-
-							if (name && (value || type === "Edm.Boolean")) { // also if boolean is false this must be sent
-								if (type === "Edm.Time" && value.ms !== undefined) { // in case of Time an object is returned
-									value = value.ms;
-								}
-								if (typeof value !== "string") {
-									value = value.toString();
-								}
-								oSelectionVariant.addParameter(name, value);
+					}
+			
+					function fnHandleVisibilityChangeOfSubsection(bIsGettingVisible, oSubSection){
+						var fnStrategy = getStrategyForVisibilityChangeOfSubsection(oSubSection);
+						if (fnStrategy){
+							if (bIsGettingVisible){
+								var oHeaderDataAvailablePromise = oTemplateUtils.oComponentUtils.getHeaderDataAvailablePromise() || Promise.resolve();
+								oHeaderDataAvailablePromise.then(function(){
+									fnStrategy(true, oSubSection);
+								});						
+							} else {
+								fnStrategy(false, oSubSection);	
 							}
 						}
-
-						sResult = oSelectionVariant.toJSONString();
-						return sResult;
+					}
+					
+					function fnHandleVisibilityLossOfSubsection(oSubSection){
+						fnHandleVisibilityChangeOfSubsection(false, oSubSection);					
+					}
+					
+					function fnHandleVisibilityLossOfSection(oSection){
+						oSection.getSubSections().forEach(fnHandleVisibilityLossOfSubsection);	
+					}
+					
+					function adjustSectionId(oEvent){
+						var oSection = oEvent && oEvent.getParameter("section");
+						sSectionId = oSection ? oSection.getId() : oObjectPage.getSelectedSection();
+					}
+					
+					function onSectionNavigate(oEvent){
+						adjustSectionId(oEvent);
+						oBase.stateChanged();
+					}
+					// Returns custom text for hide side content button if provided by developer,
+					// else returns the default text.
+					function getHideSideContentText(sId) {
+						var oResourceBundle = oController.getOwnerComponent() && oController.getOwnerComponent().getModel("i18n") && oController.getOwnerComponent().getModel("i18n").getResourceBundle();
+						if (oResourceBundle && oResourceBundle.getText("HideSideContent|" + sId) !== ("HideSideContent|" + sId)) {
+							return  oResourceBundle.getText("HideSideContent|" + sId);
+						} else if (oResourceBundle && oResourceBundle.getText("HIDE_SIDE_CONTENT") !== "HIDE_SIDE_CONTENT"){
+							return oResourceBundle.getText("HIDE_SIDE_CONTENT");
+						}
+					}
+					// Returns custom text for show side content button if provided by developer,
+					// else returns the default text.
+					function getShowSideContentText(sId) {
+						var oResourceBundle = oController.getOwnerComponent() && oController.getOwnerComponent().getModel("i18n") && oController.getOwnerComponent().getModel("i18n").getResourceBundle();
+						if (oResourceBundle && oResourceBundle.getText("ShowSideContent|" + sId) !== ("ShowSideContent|" + sId)) {
+							return  oResourceBundle.getText("ShowSideContent|" + sId);
+						} else if (oResourceBundle && oResourceBundle.getText("SHOW_SIDE_CONTENT") !== "SHOW_SIDE_CONTENT"){
+							return oResourceBundle.getText("SHOW_SIDE_CONTENT");
+						}
 					}
 
-					function getImageDialog() {
-						var oImageDialog = oController.byId("imageDialog") || oTemplateUtils.oCommonUtils.getDialogFragment(
-							"sap.suite.ui.generic.template.ObjectPage.view.fragments.ImageDialog", {
-								onImageDialogClose: function() {
-									oImageDialog.close();
+					oViewProxy.getCurrentState = function(){
+						var oRet = Object.create(null);
+						if (sSectionId){
+							oRet.section = 	{
+								data: sSectionId,
+								lifecycle: {
+									permanent: true,
+									pagination: true
 								}
-							}, "headerImage");
-
-						return oImageDialog;
-					}
-
-					var mEntriesFromPreviousPage = {};
-					var oDataFromPreviousPage;
-
-					function onComponentActivate(sBindingPath) {
-						var oDisplayObject = oTemplateUtils.oComponentUtils.getCurrentDisplayObject();
-						if (oDisplayObject.isBack) {
-							oDataFromPreviousPage = mEntriesFromPreviousPage[sBindingPath];
+							};
+						}
+						var oCustomState = Object.create(null);
+						oController.provideCustomStateExtension(oCustomState);
+						for (var sCustomKey in oCustomState){
+							oRet["$custom$" + sCustomKey] = oCustomState[sCustomKey];
+						}
+						return oRet;
+					};
+					
+					oViewProxy.applyState = function(oState, bIsSameAsLast){
+						var oCustomState = Object.create(null);
+						for (var sKey in oState){
+							if (sKey.indexOf("$custom$") === 0){
+								oCustomState[sKey.substring(8)] = oState[sKey];
+							}
+						}
+						oController.applyCustomStateExtension(oCustomState, bIsSameAsLast);
+						if (bIsSameAsLast){
+							if (sSectionId !== (oState.section || "")){
+								oBase.stateChanged();	
+							}	
+							return;  // rely on the fact that the state needs not to be adapted, since view is like we left it
+						}
+						if (oState.section){
+							oObjectPage.setSelectedSection(oState.section);
+							adjustSectionId();
 						} else {
-							oDataFromPreviousPage = oDisplayObject.dataFromLastPage;
-							mEntriesFromPreviousPage[sBindingPath] = oDataFromPreviousPage;
-						}
-						oMessageButtonHelper.adaptToContext(sBindingPath);
-                        // set visibility of up/down buttons based for back navigation scenario
-                        computeAndSetVisibleParamsForNavigationBtns();
-					}
-
-					// This method returns the data provided form the page this page was originally reached by.
-					// The data must have been provided by method addDataForNextPage of class sap.suite.ui.generic.template.lib.Application.
-					// Note that these data can normally also be retrieved via method getCurrentDisplayObject of the same class.
-					// The two versions differ, when the page is reached via a back navigation.
-					// Assume the navigation is as follows: A -> B -> C -> B, where the last navigation is a back navigation.
-					// In this case getCurrentDisplayObject provides the data provided by C, whereas getDataFromPreviousPage still provides
-					// the data provided by A.
-
-                    function getDataFromPreviousPage() {
-                        return oDataFromPreviousPage;
-                    }
-
-                    function computeAndSetVisibleParamsForNavigationBtns() {
-                        var oDataFromLastOPage = getDataFromPreviousPage() || oTemplateUtils.oComponentUtils.getCurrentDisplayObject().dataFromLastPage;
-                        var oComponent = oController.getOwnerComponent();
-                        var oTemplatePrivateModel = oComponent.getModel("_templPriv");
-						if (!oTemplatePrivateModel.getProperty("/objectPage")) {
-							oTemplatePrivateModel.setProperty("/objectPage", {});
-						}
-						var oResource = sap.ui.getCore().getLibraryResourceBundle("sap.m");
-						oTemplatePrivateModel.setProperty("/objectPage/navDownTooltip", oResource.getText("FACETFILTER_NEXT"));
-						oTemplatePrivateModel.setProperty("/objectPage/navUpTooltip", oResource.getText("FACETFILTER_PREVIOUS"));
-
-                        if (oDataFromLastOPage && oDataFromLastOPage.nextObjectPageInfo) {
-                            var oCurrentObjectNavPage = oDataFromLastOPage.nextObjectPageInfo;
-
-                            var bNavUpEnabled, bNavDownEnabled;
-
-                            var aAllContexts = oCurrentObjectNavPage.objectPageNavigationContexts;
-
-                            bNavDownEnabled = !!aAllContexts && ((oCurrentObjectNavPage.selectedRelativeIndex) !== oCurrentObjectNavPage.endIndex);
-                            bNavUpEnabled = !!aAllContexts && !(oCurrentObjectNavPage.selectedRelativeIndex <= 0 && oCurrentObjectNavPage.startIndex <= 0);
-                            oTemplatePrivateModel.setProperty("/objectPage/navUpEnabled", bNavUpEnabled);
-                            oTemplatePrivateModel.setProperty("/objectPage/navDownEnabled", bNavDownEnabled);
-
-
-                            // if both buttons are disabled - hide them all
-                            if (!bNavDownEnabled && !bNavUpEnabled) {
-                                oTemplatePrivateModel.setProperty("/objectPage/navBtnsVisible", false);
-                            } else {
-                                oTemplatePrivateModel.setProperty("/objectPage/navBtnsVisible", true);
-                            }
-                        } else {
-                            oTemplatePrivateModel.setProperty("/objectPage/navUpEnabled", false);
-                            oTemplatePrivateModel.setProperty("/objectPage/navDownEnabled", false);
-                            oTemplatePrivateModel.setProperty("/objectPage/navBtnsVisible", false);
-                        }
-                    }
-					// Generation of Event Handlers
-					return {
-						onInit: function() {
-							oTemplateUtils.oCommonUtils.executeGlobalSideEffect();
-							// Register myself at my component and provide suitable functions that may be called by it
-							oTemplateUtils.oComponentAPI.registerView({
-								onComponentActivate: onComponentActivate,
-								draftResume: fnDraftResume,
-								bindBreadCrumbs: fnBindBreadcrumbs,
-								isDraftEnabled: oTemplateUtils.oCommonUtils.isDraftEnabled,
-								refreshFacets: fnRefreshFacets
+							Promise.all([oTemplateUtils.oComponentUtils.getHeaderDataAvailablePromise(), oTemplateUtils.oComponentUtils.getNavigationFinishedPromise()]).then(function(){
+								var aSections = oObjectPage.getSections();
+								var oObjectPageFirstSection = aSections[0];
+								if (oObjectPageFirstSection){
+									oObjectPage.scrollToSection(oObjectPageFirstSection.getId(), 0);
+								}
+								var oDelegate = oObjectPage.getScrollDelegate();
+								if (oDelegate){
+									oDelegate.scrollTo(0, 0);
+								}
 							});
-							oMessageButtonHelper = new MessageButtonHelper(oTemplateUtils.oCommonUtils, oController);
-							oState.messageButtonHelper = oMessageButtonHelper;
+							sSectionId = "";
+						}
+					};
+
+					oViewProxy.beforeRebind = function(){
+						oObjectPage.getSections().forEach(fnHandleVisibilityLossOfSection);
+					};
+
+					oViewProxy.afterRebind = function(){
+						oObjectPage._triggerVisibleSubSectionsEvents();
+					};
+					
+					// End: Filling the viewProxy with functions provided for the TemplateComponent to be called on the view.
+					// Note that one last member is added to the viewProxy in onInit, since it is only available at this point in time.
+
+					// Expose selected private functions to unit tests
+					/* eslint-disable */
+					var fnEditEntity = testableHelper.testable(fnEditEntity, "editEntity");
+					var fnIsEntryDeletable = testableHelper.testable(fnIsEntryDeletable, "isEntryDeletable");
+					var onActivateImpl = testableHelper.testable(onActivateImpl, "onActivateImpl");
+					var onActivate = testableHelper.testable(onActivate, "onActivate");
+					var fnOpenConfirmationDialog = testableHelper.testable(fnOpenConfirmationDialog, "fnOpenConfirmationDialog");
+					/* eslint-enable */
+								
+					// Generation of Event Handlers
+					var oControllerImplementation = {
+						onInit: function() {
+							oObjectPage = oController.byId("objectPage");													
+							// there's at least one section left - create / bind breadcrumbs
+							var oTitle = getObjectHeader();
+							var oConfig = oController.getOwnerComponent().getAppComponent().getConfig();
+							var bIsObjectPageDynamicHeaderTitleUsed = oConfig && oConfig.settings && oConfig.settings.objectPageDynamicHeaderTitleWithVM;
+							oViewProxy.aBreadCrumbs = oTitle && (bIsObjectPageDynamicHeaderTitleUsed ? oTitle.getBreadcrumbs().getLinks() : oTitle.getBreadCrumbsLinks()); // If ObjectPageDynamicHeaderTitle is used then oTitle.getBreadcrumbs().getLinks() is used
+							if (bIsObjectPageDynamicHeaderTitleUsed) {
+								fnHandleVisibilityofImageInHeaderTitle();
+							}
+							oBase.onInit();
+							fnEnsureTitleTransfer();
+							oTemplateUtils.oCommonUtils.executeGlobalSideEffect();
+							oObjectPage.attachEvent("subSectionEnteredViewPort", function(oEvent) {
+								var oSubSection = oEvent.getParameter("subSection");
+								fnHandleVisibilityChangeOfSubsection(true, oSubSection);
+							});
+							// For changing the side content button text if required during screen resize.
+							sap.ui.Device.resize.attachHandler(function(oSize){
+							var sText = "";
+							var oComponent = oController.getOwnerComponent();
+							var oSections = oObjectPage.getSections();
+							for (var i = 1 ; i < oSections.length ; i++ ) {
+								var oSubsections = oSections[i].getSubSections();
+								for (var j = 0 ; j < oSubsections.length ; j++ ) {
+									var oSubsection = oSubsections[j];
+									if (oSubsection.getBlocks()[0] instanceof DynamicSideContent) {
+										var oDynamicSideContent = sap.ui.getCore().byId(oSubsection.getBlocks()[0].getId());
+										var oSideContentButton = oSubsection.getActions()[(oSubsection.getActions().length) - 1];
+										var sId = oSubsection.getId();
+										sId = sId.substring(sId.indexOf(oComponent.getEntitySet()), sId.lastIndexOf("::"));
+										sId = sId.replace(/--/g, "|").replace(/::/g, "|");
+										if (oDynamicSideContent.getShowSideContent() === true) {
+											sText = getHideSideContentText(sId);
+											oSideContentButton.setText(sText);
+											if (oSize.width > 720) {
+												oDynamicSideContent.setShowMainContent(true);
+											}
+										} else {
+											sText = getShowSideContentText(sId);
+											oSideContentButton.setText(sText);
+										}
+									}
+								}
+							}
+							}, oObjectPage);
 						},
 
 						handlers: {
 							addEntry: function(oEvent) {
-								oTemplateUtils.oCommonEventHandlers.addEntry(oEvent);
+								var oEventSource = oEvent.getSource();
+								var oSmartTable = oTemplateUtils.oCommonUtils.getOwnerControl(oEventSource);
+								var bSuppressNavigation = fnIsEventForTableWithInlineCreate(oSmartTable);
+
+								if (!oEventSource.data("CrossNavigation") && bSuppressNavigation) {
+									oTemplateUtils.oCommonEventHandlers.addEntry(oEventSource, true);
+									return;
+								}
+								oTemplateUtils.oCommonUtils.processDataLossConfirmationIfNonDraft(function(){
+									oTemplateUtils.oCommonEventHandlers.addEntry(oEventSource, false);
+								}, jQuery.noop, oBase.state);
 							},
 
-							onBack: function() {
-								fnProcessNonDraftDataLossConfirmationAndFunction(function() {
-									window.history.back();
-								});
-								
+							deleteEntries: fnDeleteEntries,
+
+							onSelectionChange: function(oEvent) {
+								oTemplateUtils.oCommonUtils.setEnabledToolbarButtons(oEvent.getSource());
 							},
+
 							//Cancel event is only triggered in non-draft scenario. For draft see onDiscardDraft
-							onCancel: function() {
-								setEditable(false);
-								oController.getView().getModel().resetChanges();
-								//Notification for reuse components and extensions
-                                oTemplateUtils.oComponentUtils.fire(oController, "AfterCancel", {});
-								if (oTemplateUtils.oComponentUtils.getCreateMode()) {
-									// in case of create mode navigate back to list
-									window.history.back();
+							// oEvent is passed to attach the DiscardPopover on Cancel button in case of NonDraft Applications
+							onCancel: function(oEvent) {
+								var sMode = "Proceed";
+								var bNoBusyCheck; // Passed to processDataLossConfirmationIfNonDraft along with oEvent 
+								if (oTemplateUtils.oComponentUtils.isNonDraftCreate() || !bIsObjectRoot){
+									sMode = "LeavePage";
 								}
+								oTemplateUtils.oCommonUtils.processDataLossConfirmationIfNonDraft(function() {
+									var oTemplatePrivateModel = oTemplateUtils.oComponentUtils.getTemplatePrivateModel();
+									oTemplatePrivateModel.setProperty("/objectPage/displayMode", 1);
+									if (oTemplateUtils.oComponentUtils.isNonDraftCreate()) {
+										oViewProxy.setEditable(false);
+									} else if (bIsObjectRoot){
+										oViewProxy.setEditable(false);
+									}
+									if (oTemplateUtils.oComponentUtils.isNonDraftCreate() || !bIsObjectRoot) {
+										oTemplateUtils.oServices.oNavigationController.navigateBack();
+									}
+								}, jQuery.noop, oBase.state, sMode, bNoBusyCheck, oEvent);
 							},
 
 							onContactDetails: function(oEvent) {
@@ -619,51 +1087,84 @@ sap.ui
 
 								oTemplateUtils.oCommonUtils.showDraftPopover(oBindingContext, oLockButton);
 							},
+							onPressDraftInfoObjectPageDynamicHeaderTitle: function(oEvent) {
+								var oBindingContext = oController.getView().getBindingContext();
+								var oLockButton = oController.byId("template::ObjectPage::ObjectMarkerObjectPageDynamicHeaderTitle");
+								oTemplateUtils.oCommonUtils.showDraftPopover(oBindingContext, oLockButton);
+							},
+							
 							onShareObjectPageActionButtonPress: onShareObjectPageActionButtonPress,
 							onRelatedApps: function(oEvent) {
-								var oButton = oEvent.getSource();
-								var oParsedUrl = sap.ushell.Container.getService("URLParsing").parseShellHash(
+								var oButton, oURLParsing, oParsedUrl, oViewBindingContext, oAppComponent, oXApplNavigation, oLinksDeferred;
+								var oActionSheet, oButtonsModel, oUshellContainer, sCurrentSemObj, sCurrentAction;
+								oButton = oEvent.getSource();
+								oUshellContainer = sap.ushell && sap.ushell.Container;
+								oURLParsing = oUshellContainer && oUshellContainer.getService("URLParsing");
+								oParsedUrl = oURLParsing.parseShellHash(
 									document.location.hash);
-								var oLinks = sap.ushell.Container.getService("CrossApplicationNavigation").getSemanticObjectLinks(
-									oParsedUrl.semanticObject);
-								var oActionSheet = getRelatedAppsSheet();
-								var oButtonsModel = oActionSheet.getModel("buttons");
+								sCurrentSemObj = oParsedUrl.semanticObject;
+								sCurrentAction = oParsedUrl.action;
+								oViewBindingContext = oController.getView && oController.getView().getBindingContext();
+
+								var oMetaModel = oController.getOwnerComponent().getModel().getMetaModel();
+
+								var oEntity = oViewBindingContext.getObject();
+								var sEntityType = oEntity.__metadata.type;
+								var oDataEntityType = oMetaModel.getODataEntityType(sEntityType);
+								var aSemKey = oDataEntityType["com.sap.vocabularies.Common.v1.SemanticKey"];
+								var oParam = {};
+								// var oSemKeyParam = {};
+								if (aSemKey && aSemKey.length > 0) {
+									for (var j = 0; j < aSemKey.length; j++) {
+										var sSemKey = aSemKey[j].PropertyPath;
+										if (!oParam[sSemKey]) {
+											oParam[sSemKey] = [];
+											oParam[sSemKey].push(oEntity[sSemKey]);
+										}
+									}
+								} else {
+									// Fallback if no SemanticKey
+									for (var k in oDataEntityType.key.propertyRef) {
+										var sObjKey = oDataEntityType.key.propertyRef[k].name;
+										if (!oParam[sObjKey]) {
+											oParam[sObjKey] = [];
+											oParam[sObjKey].push(oEntity[sObjKey]);
+										}
+									}
+								}
+
+								oAppComponent = oController.getOwnerComponent().getAppComponent();
+								oXApplNavigation = oUshellContainer && oUshellContainer.getService("CrossApplicationNavigation");
+
+								oLinksDeferred = oXApplNavigation.getLinks({
+									semanticObject: sCurrentSemObj,
+									params: oParam,
+									ui5Component: oAppComponent
+								});
+
+								oActionSheet = getRelatedAppsSheet();
+								oButtonsModel = oActionSheet.getModel("buttons");
 								oButtonsModel.setProperty("/buttons", []);
 								oActionSheet.openBy(oButton);
-								oLinks
+								oLinksDeferred
 									.done(function(aLinks) {
-										var oMetaModel = oController.getOwnerComponent().getModel().getMetaModel();
-										var oContext = oController.getView().getBindingContext();
-										var oEntity = oContext.getObject();
-										var sEntityType = oEntity.__metadata.type;
-										var oDataEntityType = oMetaModel.getODataEntityType(sEntityType);
-										var aSemKey = oDataEntityType["com.sap.vocabularies.Common.v1.SemanticKey"];
-										var oParam = {};
-										// var oSemKeyParam = {};
-										if (aSemKey && aSemKey.length > 0) {
-											for (var j = 0; j < aSemKey.length; j++) {
-												var sSemKey = aSemKey[j].PropertyPath;
-												if (!oParam[sSemKey]) {
-													oParam[sSemKey] = [];
-													oParam[sSemKey].push(oEntity[sSemKey]);
-												}
-											}
-										} else {
-											// Fallback if no SemanticKey
-											for (var k in oDataEntityType.key.propertyRef) {
-												var sObjKey = oDataEntityType.key.propertyRef[k].name;
-												if (!oParam[sObjKey]) {
-													oParam[sObjKey] = [];
-													oParam[sObjKey].push(oEntity[sObjKey]);
-												}
-											}
-										}
-										// filter current semanticObject-action
 										var aButtons = [];
-										var sCurrentAction = "#" + oParsedUrl.semanticObject + "-" + oParsedUrl.action;
+										// Sorting the related app links alphabetically to align with Navigation Popover in List Report - BCP(1770251716)
+										aLinks.sort(function(oLink1, oLink2){
+											if (oLink1.text < oLink2.text) {
+                                                                                          return -1;
+                                                                                        }
+											if (oLink1.text > oLink2.text) {
+                                                                                          return 1;
+                                                                                        }
+											return 0;
+										});
+										// filter current semanticObject-action
 										for (var i = 0; i < aLinks.length; i++) {
 											var oLink = aLinks[i];
-											if (oLink.intent != sCurrentAction) {	
+											var sIntent = oLink.intent;
+											var sAction = sIntent.split("-")[1].split("?")[0];
+											if (sAction !== sCurrentAction) {
 												aButtons.push({
 													enabled: true, // used in declarative binding
 													text: oLink.text, // used in declarative binding
@@ -683,411 +1184,293 @@ sap.ui
 										oButtonsModel.setProperty("/buttons", aButtons);
 									});
 							},
-                            handleNavigateToObject: function (oContext, oCurrentObjectNavPage) {
-                                if (oCurrentObjectNavPage) {
-                                    // Get navigation property.. to be used in construction of new URL
-                                    if (oContext !== null && oContext !== undefined && oCurrentObjectNavPage) {
-                                        var sNavigationProperty = oCurrentObjectNavPage.NavPropertyToUse;
-                                        // set data for next page
-                                        oTemplateUtils.oComponentUtils.addDataForNextPage({
-                                            "nextObjectPageInfo": oCurrentObjectNavPage
-                                        });
-
-                                        if (oCurrentObjectNavPage.nested) {
-                                            // for the case where you navigate to an object page from an object page
-                                            oTemplateUtils.oServices.oNavigationController.navigateToContext(oContext, sNavigationProperty, true);
-                                        } else {
-                                            oTemplateUtils.oServices.oNavigationController.navigateToContext(oContext, null, true);
-                                        }
-                                    }
-                                }
-                            },
-
-                            handleShowNextObject: function (oEvent) {
-                                // now navigate to next object page
-                                var oDataFromLastPage = getDataFromPreviousPage() || oTemplateUtils.oComponentUtils.getCurrentDisplayObject().dataFromLastPage;
-                                if (oDataFromLastPage && oDataFromLastPage.nextObjectPageInfo) {
-                                    var oCurrentObjectNavPage = jQuery.extend(true, {}, oDataFromLastPage.nextObjectPageInfo);
-
-                                    var oListBinding = oCurrentObjectNavPage.listBinding;
-                                    var iEndIdx = oCurrentObjectNavPage.endIndex;
-                                    var iNextIdx = oCurrentObjectNavPage.selectedRelativeIndex + 1;
-                                    var aAllContexts = oCurrentObjectNavPage.objectPageNavigationContexts;
-                                    var iTableMaxCount = oCurrentObjectNavPage.tableMaxItems;
-                                    var iTableGrowingIncrement = oCurrentObjectNavPage.growingThreshold;
-                                    var oComponent = oController.getOwnerComponent();
-                                    var oTemplatePrivateModel = oComponent.getModel("_templPriv");
-
-                                    if (iNextIdx && aAllContexts) {
-                                        var oNextContext = aAllContexts[iNextIdx];
-
-                                        if (oNextContext &&
-                                            oNextContext.getPath &&
-                                            iNextIdx < iEndIdx &&
-                                            iNextIdx !== iTableMaxCount - 1) {
-                                            oCurrentObjectNavPage.selectedRelativeIndex = iNextIdx;
-                                            oController._templateEventHandlers.handleNavigateToObject(oNextContext, oCurrentObjectNavPage);
-                                        } else if (iNextIdx === iEndIdx &&
-                                            iNextIdx !== iTableMaxCount - 1) {
-                                            var newEndIdx = iEndIdx + 1 + iTableGrowingIncrement;
-
-                                            var fetchAndUpdateRecords = function (mParameters) {
-                                                // get new fetched contexts and do stuff
-                                                var aAllContexts = mParameters.oSource.getContexts(0, newEndIdx);
-                                                oCurrentObjectNavPage.objectPageNavigationContexts = aAllContexts;
-                                                oCurrentObjectNavPage.endIndex = newEndIdx;
-                                                oNextContext = aAllContexts[iNextIdx];
-
-                                                if (oNextContext && oNextContext.getPath) {
-                                                    // enable the down button
-                                                    oTemplatePrivateModel.setProperty("/objectPage/navDownEnabled", true);
-                                                }
-                                                oListBinding.detachDataReceived(fetchAndUpdateRecords);
-                                            };
-
-                                            oListBinding.attachDataReceived(fetchAndUpdateRecords);
-
-                                            oListBinding.loadData(0, newEndIdx);
-
-                                            // also.. navigate
-                                            oCurrentObjectNavPage.selectedRelativeIndex = iNextIdx;
-                                            oController._templateEventHandlers.handleNavigateToObject(oNextContext, oCurrentObjectNavPage);
-                                        } else if (iNextIdx === iTableMaxCount - 1) {
-                                            // just navigate
-                                            oCurrentObjectNavPage.selectedRelativeIndex = iNextIdx;
-                                            oController._templateEventHandlers.handleNavigateToObject(oNextContext, oCurrentObjectNavPage);
-                                        }
-                                    }
-                                }
-                            },
-
-                            handleShowPrevObject: function (oEvent) {
-                                // get data from "temp" model
-                                var oDataFromLastPage = getDataFromPreviousPage() || oTemplateUtils.oComponentUtils.getCurrentDisplayObject().dataFromLastPage;
-                                if (oDataFromLastPage && oDataFromLastPage.nextObjectPageInfo) {
-                                    var oCurrentObjectNavPage = jQuery.extend(true, {}, oDataFromLastPage.nextObjectPageInfo);
-                                    var iNextIdx = oCurrentObjectNavPage.selectedRelativeIndex - 1;
-                                    var aAllContexts = oCurrentObjectNavPage.objectPageNavigationContexts;
-
-                                    if (iNextIdx && aAllContexts) {
-                                        var oNextContext = aAllContexts[iNextIdx];
-                                        if (oNextContext &&
-                                            oNextContext.getPath) {
-                                            oCurrentObjectNavPage.selectedRelativeIndex = iNextIdx;
-                                            oController._templateEventHandlers.handleNavigateToObject(oNextContext, oCurrentObjectNavPage);
-                                        }
-                                    }
-                                }
-                            },
-							onShowMessages: function(oEvent) {
-								oMessageButtonHelper.showMessagePopover(oEvent);
+							onSemanticObjectLinkPopoverLinkPressed: function(oEvent) {
+								oTemplateUtils.oCommonEventHandlers.onSemanticObjectLinkPopoverLinkPressed(oEvent, oBase.state);
 							},
 
-							onEdit: function() {
-								bIsObjectRoot = true; // temporarily logic until we know how to decide this in onInit
-
-								// "Expired Lock Dialog" for "unsaved changes" in case of "lock of other user expired"
-								// check whether Draft exists
-								if (oTemplateUtils.oCommonUtils.isDraftEnabled) {
-									var oDraftContext = oTemplateUtils.oServices.oDraftController.getDraftContext();
-									var oComponent = oController.getOwnerComponent();
-									var sEntitySet = oComponent.getEntitySet();
-									if (oDraftContext.isDraftRoot(sEntitySet)) {
-										//if edit action has preserveChanges parameter, directly start editing (with preserving changes)
-										//otherwise, keep old logic (read DraftAdministrativeData first)
-										var oBindingContext = oComponent.getBindingContext();
-										if (oDraftContext.hasPreserveChanges(oBindingContext)){
-											fnEditEntity(true); //add preserveChanges=true; consider unsaved changes
-										} else {
-											// In case of DeepLink the DraftAdministrativeData still is not retrieved
-											var oModel = oComponent.getModel();
-											oModel.read(oBindingContext.getPath(), {
-												urlParameters: {
-													"$expand": "DraftAdministrativeData"
-												},
-												success: function(oResponseData) {
-													// check whether lock by other user is expired
-													if (oResponseData.DraftAdministrativeData && !oResponseData.DraftAdministrativeData.DraftIsProcessedByMe && !oResponseData.DraftAdministrativeData
-															.InProcessByUser) {
-														// start "Expired Lock Dialog", because lock by other user is expired
-														fnExpiredLockDialog(oResponseData.DraftAdministrativeData.CreatedByUserDescription || oResponseData.DraftAdministrativeData.CreatedByUser);
-													} else {
-														fnEditEntity();
-													}
-												}
-											});
-										}
-										return;
-									}
+							onEdit: function(oEvent) {
+								var oEventSource = oEvent.getSource();
+								if (oEventSource.data("CrossNavigation")) {
+									// intent based navigation
+									oTemplateUtils.oCommonEventHandlers.onEditNavigateIntent(oEventSource);
+									return;
 								}
-								fnEditEntity(); //preserveChanges is not necessary in all other cases
+								bIsObjectRoot = true; // temporarily logic until we know how to decide this in onInit
+								fnEditEntity();
 							},
-
 							// The event is only called in a non-draft scenario. For draft see onActivate
 							onSave: function() {
+								if (oTemplateUtils.oServices.oApplication.getBusyHelper().isBusy()){
+									return; // this is again tested by the CRUDManager. But in order to suppress the AfterSave-Event in the busy case we also need to check this here.
+								}
 								var oCurrentContext = oController.getView().getBindingContext();
 								var oPendingChanges =  oController.getView().getModel().getPendingChanges();
 								oPendingChanges = oPendingChanges && oPendingChanges[oCurrentContext.getPath().replace("/", "")] || {};
 								var aPendingChanges = Object.keys(oPendingChanges) || [];
+								var bCreateMode = oTemplateUtils.oComponentUtils.isNonDraftCreate();
+								/*	The OData model returns also a __metadata object with the canonical URL and further
+									information. As we don't want to check if sideEffects are annotated for this
+									property we remove it from the pending changes
+								*/
+								var iMetaDataIndex = aPendingChanges.indexOf("__metadata");
+								if (iMetaDataIndex > -1){
+									aPendingChanges.splice(iMetaDataIndex,1);
+								}
 
 								var oSaveEntityPromise = oTemplateUtils.oServices.oCRUDManager.saveEntity();
 								oSaveEntityPromise.then(function(oContext) {
-									// switch to display mode
-									if (!oTemplateUtils.oCommonUtils.isDraftEnabled() && bIsObjectRoot) {
-										setEditable(false);
-									}else if ( oTemplateUtils.oCommonUtils.isDraftEnabled() ){
-										setEditable(false);
-									}
+									var oTemplatePrivateModel = oTemplateUtils.oComponentUtils.getTemplatePrivateModel();
+									oTemplatePrivateModel.setProperty("/objectPage/displayMode", 1);
+									//	switch to display mode
+									oViewProxy.setEditable(false);
 
-									if (oTemplateUtils.oComponentUtils.getCreateMode()) {
+									if (bCreateMode) {
 										// in case of create mode navigate to new item
-										if (oContext) {
+										if (oContext && oContext.getPath() !== "/undefined") {
 											oTemplateUtils.oServices.oNavigationController.navigateToContext(oContext, undefined, true);
+										} else {
+											// fallback no context returned / correct path determined by transaction controller
+											oTemplateUtils.oServices.oNavigationController.navigateBack();
 										}
-
-										// setTimeout: assumption: needed because of navigation, navigationController should return a
-										// promise better
-										// sap.m.MessageToast - use via sap.ui.define?
-										setTimeout(function() {
-											MessageToast.show(oTemplateUtils.oCommonUtils.getText("OBJECT_CREATED")); // "Object was
-											// created");
-										}, 10);
+										oTemplateUtils.oServices.oApplication.showMessageToast(oTemplateUtils.oCommonUtils.getText("OBJECT_CREATED"));
 									} else {
-										MessageToast.show(oTemplateUtils.oCommonUtils.getText("OBJECT_SAVED")); // "Object was saved");
-									  //for NON-Draf: navigate back after save if not root object
-										if (!oTemplateUtils.oCommonUtils.isDraftEnabled() && !bIsObjectRoot) {
-											window.history.back();
+										oTemplateUtils.oServices.oApplication.showMessageToast(oTemplateUtils.oCommonUtils.getText("OBJECT_SAVED"));
+										//for NON-Draft: navigate back after save if not root object
+										if (!oTemplateUtils.oComponentUtils.isDraftEnabled() && !bIsObjectRoot) {
+											oTemplateUtils.oServices.oNavigationController.navigateBack();
 										}
 									}
-
-									if (oPendingChanges){
+									if (aPendingChanges.length > 0){
 										oTemplateUtils.oServices.oApplicationController.executeSideEffects(oCurrentContext, aPendingChanges);
 									}
-
 								});
 								var oEvent = {
 									saveEntityPromise: oSaveEntityPromise
 								};
 								oTemplateUtils.oComponentUtils.fire(oController, "AfterSave", oEvent);
 							},
-
-							onActivate: function() {
-								var oActivationPromise = oTemplateUtils.oServices.oCRUDManager.activateDraftEntity();
-								oActivationPromise.then(function(oResponse) {
-									MessageToast.show(oTemplateUtils.oCommonUtils.getText("OBJECT_SAVED"));
-									if (oResponse && oResponse.context) {
-										// Set Root to dirty
-										oTemplateUtils.oServices.oNavigationController.setRootPageToDirty();
-										oTemplateUtils.oServices.oNavigationController.unbindChildren(oController.getOwnerComponent());
-
-										// navigate to activate document
-										oTemplateUtils.oServices.oNavigationController.navigateToContext(
-											oResponse.context, undefined, true);
-									}
-								});
-								var oEvent = {
-									activationPromise: oActivationPromise
-								};
-								oTemplateUtils.oComponentUtils.fire(oController, "AfterActivate", oEvent);
+							onActivate: onActivate,
+							onSmartFieldUrlPressed: function(oEvent) {
+								oTemplateUtils.oCommonEventHandlers.onSmartFieldUrlPressed(oEvent, oBase.state);
 							},
-
-							onChange: function(oEvent) {
-								oTemplateUtils.oCommonEventHandlers.onChange(oEvent);
+							onBreadCrumbUrlPressed: function(oEvent) {
+								oTemplateUtils.oCommonEventHandlers.onBreadCrumbUrlPressed(oEvent, oBase.state);
 							},
-
 							onDiscardDraft: function(oEvent) {
 								oTemplateUtils.oCommonEventHandlers.onDiscardDraft(oEvent);
 							},
-
-							onDelete: function(oEvent) {
-								showDeleteMsgBox();
+							onDelete: onDelete         ,
+							onCallActionFromToolBar: function (oEvent) {
+								oTemplateUtils.oCommonEventHandlers.onCallActionFromToolBar(oEvent, oBase.state);
 							},
-
 							onCallAction: function(oEvent) {
 								var oComponent = oController.getOwnerComponent();
 								var sNavigationProperty = oComponent.getNavigationProperty();
-
 								var oCustomData = oTemplateUtils.oCommonUtils.getCustomData(oEvent);
 								var aContext = [];
 								aContext.push(oController.getView().getBindingContext());
 								if (aContext[0] && oCustomData.Type === "com.sap.vocabularies.UI.v1.DataFieldForAction") {
-									var mParameters = {
-										functionImportPath: oCustomData.Action,
-										contexts: aContext,
-										sourceControl: "",
-										label: oCustomData.Label,
-										operationGrouping: oCustomData.OperationGrouping,
-										navigationProperty: oController.getOwnerComponent().getNavigationProperty()
-									};
-									oTemplateUtils.oServices.oCRUDManager.callAction(mParameters).then(function(aResponses){
-										var oResponse = aResponses && aResponses[0];
-										if (oResponse && oResponse.response && oResponse.response.context && (!oResponse.actionContext || oResponse.actionContext && oResponse.response.context.getPath() !== oResponse.actionContext.getPath())){
-											// set my parent page to dirty
-											oTemplateUtils.oServices.oNavigationController.setParentToDirty(oComponent, sNavigationProperty);
-										}
-									});
+									//var oEventSource = oEvent.getSource();
+									oTemplateUtils.oCommonUtils.processDataLossConfirmationIfNonDraft(function() {
+										var mParameters = {
+											functionImportPath: oCustomData.Action,
+											contexts: aContext,
+											sourceControl: "",
+											label: oCustomData.Label,
+											operationGrouping: oCustomData.InvocationGrouping,
+											navigationProperty: oController.getOwnerComponent().getNavigationProperty()
+										};
+										oTemplateUtils.oServices.oCRUDManager.callAction(mParameters).then(function(aResponses){
+											var oResponse = aResponses && aResponses[0];
+											if (oResponse && oResponse.response && oResponse.response.context && (!oResponse.actionContext || oResponse.actionContext && oResponse.response.context.getPath() !== oResponse.actionContext.getPath())){
+												// set my parent page to dirty
+												oTemplateUtils.oServices.oViewDependencyHelper.setParentToDirty(oComponent, sNavigationProperty, 1);
+											}
+										});
+									}, jQuery.noop, oBase.state, "Proceed");
 								}
 							},
-							onCallActionFromList: function(oEvent) {
-								oTemplateUtils.oCommonEventHandlers.onCallActionFromList(oEvent);
+							onDataFieldForIntentBasedNavigation: function(oEvent) {
+								oTemplateUtils.oCommonEventHandlers.onDataFieldForIntentBasedNavigation(oEvent,oBase.state);
+							},
+							onDataFieldWithIntentBasedNavigation: function(oEvent) {
+								oTemplateUtils.oCommonEventHandlers.onDataFieldWithIntentBasedNavigation(oEvent, oBase.state);
+							},
+							onDataFieldWithNavigationPath: function(oEvent) {
+								oTemplateUtils.oCommonEventHandlers.onDataFieldWithNavigationPath(oEvent);
+							},
+							onChartInit: function (oEvent) {
+								var oChart = oEvent.getSource().getChart();
+								var fnOnSelectionChange = oController._templateEventHandlers.onSelectionChange;
+								oChart.attachSelectData(fnOnSelectionChange).attachDeselectData(fnOnSelectionChange);
+								var oSmartChart = oChart.getParent();
+								oTemplateUtils.oCommonUtils.checkToolbarIntentsSupported(oSmartChart);
+							},
+							onDataReceived: function(oEvent){
+								oTemplateUtils.oCommonEventHandlers.onDataReceived(oEvent);
 							},
 							onBeforeRebindDetailTable: function(oEvent) {
 								oTemplateUtils.oCommonEventHandlers.onBeforeRebindTable(oEvent);
-
-								if (oEvent.getSource().getTable() instanceof AnalyticalTable) {
+								oController.onBeforeRebindTableExtension(oEvent);
+								fnAdaptBindingParamsForInlineCreate(oEvent);
+								if (oTemplateUtils.oCommonUtils.isAnalyticalTable(oEvent.getSource().getTable())) {
 									var oBindingParams = oEvent.getParameter("bindingParams");
 									oBindingParams.parameters.entitySet = oEvent.getSource().getEntitySet();
 								}
 							},
 							onShowDetails: function(oEvent) {
-								var oEventSource = oEvent.getSource();
-								fnProcessNonDraftDataLossConfirmationAndFunction(function() {
-									oTemplateUtils.oCommonEventHandlers.onShowDetails(oEventSource);
-								});
-							},
-							onShowDetailsIntent: function(oEvent) {
-								var oEventSource = oEvent.getSource();
-								fnProcessNonDraftDataLossConfirmationAndFunction(function() {
-									oTemplateUtils.oCommonEventHandlers.onShowDetailsIntent(oEventSource);
-								});
+								oTemplateUtils.oCommonEventHandlers.onShowDetails(oEvent.getSource(), oBase.state);
 							},
 							onListNavigate: function(oEvent) {
-								var oEventSource = oEvent.getSource();
-								fnProcessNonDraftDataLossConfirmationAndFunction(function() {
-									oTemplateUtils.oCommonEventHandlers.onListNavigate(oEventSource);
-								});
-							},
-							onListNavigateIntent: function(oEvent) {
-								var oEventSource = oEvent.getSource();
-								fnProcessNonDraftDataLossConfirmationAndFunction(function() {
-									oTemplateUtils.oCommonEventHandlers.onListNavigateIntent(oEventSource);
-								});
+								if (!oController.onListNavigationExtension(oEvent)){
+								oTemplateUtils.oCommonEventHandlers.onListNavigate(oEvent.getSource(), oBase.state);
+								}
 							},
 							onBeforeSemanticObjectLinkPopoverOpens: function(oEvent) {
-								var oNavigationHandler = oTemplateUtils.oCommonUtils.getNavigationHandler();
-								if (oNavigationHandler) {
+								var oEventParameters = oEvent.getParameters();
+								oTemplateUtils.oCommonUtils.processDataLossConfirmationIfNonDraft(function(){
+									//Success function
 									var sSelectionVariant = getSelectionVariant();
-									var oParams = oEvent.getParameters();
-									oNavigationHandler.processBeforeSmartLinkPopoverOpens(oParams, sSelectionVariant);
-								} else {
-									oEvent.getParameters().open();
-								}
+									oTemplateUtils.oCommonUtils.semanticObjectLinkNavigation(oEventParameters, sSelectionVariant, oController);
+								}, jQuery.noop, oBase.state, jQuery.noop);
 							},
-							onDataReceived: function(oEvent) {
-								var oPage = oController.getOwnerComponent().getAggregation("rootControl");
-								var oSmartTable = oEvent.getSource().getTable();
-								var oTableLengthText = oPage.byId(oSmartTable.sId + "-tableLengthText");
-
-								// oTableLengthText is only available if long table feature is activated
-								if (oTableLengthText) {
-									var totalLength, visibleLength = 0;
-									var oRowBinding = oSmartTable.getBinding("items"); // ResponsiveTable: binding is "items"
-									if (!oRowBinding) {
-										// GridTable or Analytical: binding is "rows"
-										oRowBinding = oSmartTable.getBinding("rows");
-									}
-
-									totalLength = oRowBinding.getLength();
-									if (totalLength > 5) {
-										visibleLength = 5;
-									} else {
-										visibleLength = totalLength;
-									}
-									var oBundle = this.getView().getModel("i18n").getResourceBundle();
-									oTableLengthText.setText(oBundle.getText("TABLE_LENGTH", [visibleLength, totalLength]));
-								}
+							
+							onSemanticObjectLinkNavigationPressed : function(oEvent) {
+								var oEventParameters = oEvent.getParameters();
+								var oEventSource = oEvent.getSource();
+								oTemplateUtils.oCommonEventHandlers.onSemanticObjectLinkNavigationPressed(oEventSource, oEventParameters);
 							},
-							onShowAll: function(oEvent) {
-								var oAppComponent = oController.getOwnerComponent().getAppComponent();
-								var sEntitySet = oEvent.getSource().getParent().getParent().getEntitySet();
-								var sNavProp = oTemplateUtils.oCommonUtils.getNavigationProperty(oAppComponent.getConfig().pages[0].pages, sEntitySet);
-								oAppComponent.getNavigationController().navigateToContext(null, sNavProp);
+							
+							onSemanticObjectLinkNavigationTargetObtained : function(oEvent) {
+								var oEventParameters = oEvent.getParameters();
+								var oEventSource = oEvent.getSource(); //set on semanticObjectController
+								oTemplateUtils.oCommonEventHandlers.onSemanticObjectLinkNavigationTargetObtained(oEventSource, oEventParameters, oBase.state);
+								//fnOnSemanticObjectLinkNavigationTargetObtained(oEvent);
+							},
+							onSemanticObjectLinkNavigationTargetObtainedSmartLink : function(oEvent) {
+								var oEventParameters, oEventSource;
+								oEventParameters = oEvent.getParameters();
+								oEventSource = oEvent.getSource(); //set on smart link
+								oEventSource = oEventSource.getParent().getParent().getParent().getParent(); //set on smart table
+								oTemplateUtils.oCommonEventHandlers.onSemanticObjectLinkNavigationTargetObtained(oEventSource, oEventParameters, oBase.state);
 							},
 							onHeaderImagePress: function(oEvent) {
 								var oImageDialog = getImageDialog();
+								var sId = oEvent.getSource().getId();
+								oImageDialog.addAriaLabelledBy(sId);
 								var oImageDialogModel = oImageDialog.getModel("headerImage");
 								oImageDialogModel.setProperty("/src", oEvent.getSource().getSrc());
-
 								if (sap.ui.Device.system.phone) {
 									oImageDialog.setProperty("stretch", true);
 								}
-
 								oImageDialog.open();
 							},
+							sectionNavigate: onSectionNavigate,
 							onInlineDataFieldForAction: function(oEvent) {
-								// Assuming that this action is triggered from an action inside a table row.
-								// Also this action is intended for triggering an OData operation.
-								// i.e: Action, ActionImport, Function, FunctionImport
-								// We require some properties to be defined in the Button's customData:
-								//   Action: Fully qualified name of an Action, ActionImport, Function or FunctionImport to be called
-								//   Label: Used to display in error messages
-								var oButton = oEvent.getSource();
-								var oCustomData = oTemplateUtils.oCommonUtils.getElementCustomData(oButton);
-								var oTable = oTemplateUtils.oCommonUtils.getParentTable(oButton);
-								var sTablePath = oTable.getParent().getTableBindingPath();
-								oTemplateUtils.oServices.oCRUDManager.callAction({
-									functionImportPath: oCustomData.Action,
-									contexts: [oButton.getBindingContext()],
-									sourceControl: oTable,
-									label: oCustomData.Label,
-									operationGrouping: "",
-									navigationProperty: ""
-								}).then(function(aResponses) {
-									if (aResponses) {
-										var oResponse = aResponses[0];
-
-										if (oResponse.response && oResponse.response.context && (!oResponse.actionContext || oResponse.actionContext && oResponse.response.context.getPath() !== oResponse.actionContext.getPath())) {
-											oTemplateUtils.oServices.oNavigationController.setMeToDirty(this.getOwnerComponent(), sTablePath);
-										}
-									}
-								});
+								oTemplateUtils.oCommonEventHandlers.onInlineDataFieldForAction(oEvent,oBase.state);
 							},
 							onInlineDataFieldForIntentBasedNavigation: function(oEvent) {
-								// Assuming that this action is triggered from an action inside a table row.
-								// Also this action is intended for triggering an intent based navigation.
-								// We require some properties to be defined in the Button's customData:
-								//   Action: The view to be displayed within the application
-								//   Label: Used to display in error messages
-								//   SemanticOject: Application to navigate to
-								var oButton = oEvent.getSource();
-								var oCustomData = oTemplateUtils.oCommonUtils.getElementCustomData(oButton);
-								var oNavigationHandler = oTemplateUtils.oCommonUtils.getNavigationHandler();
-								if (oNavigationHandler) {
-									var mSemanticAttributes = {};
-									mSemanticAttributes = oButton.getBindingContext().getObject();
-									delete mSemanticAttributes.__metadata;
-									jQuery.extend(mSemanticAttributes, this.getView().getBindingContext().getObject());
-									var mOutboundParameters = oTemplateUtils.oCommonUtils.extractODataEntityPropertiesFromODataJSONFormattedEntity(mSemanticAttributes);
-									mOutboundParameters = JSON.stringify(mOutboundParameters);
-									var oInnerAppData = {};
-									oNavigationHandler.navigate(oCustomData.SemanticObject, oCustomData.Action, mOutboundParameters, oInnerAppData, function(oError) {
-										if (oError instanceof sap.ui.generic.app.navigation.service.NavError) {
-											sap.m.MessageBox.show(oError.getErrorCode(), {
-												title: oTemplateUtils.oCommonUtils.getText("ST_GENERIC_ERROR_TITLE")
-											});
-										}
-									});
-								}
+								oTemplateUtils.oCommonEventHandlers.onInlineDataFieldForIntentBasedNavigation(oEvent.getSource(), oBase.state);
+							},
+							onDeterminingDataFieldForAction: function(oEvent) {
+								oTemplateUtils.oCommonEventHandlers.onDeterminingDataFieldForAction(oEvent);
 							},
 							onBeforeRebindChart: function(oEvent) {
 								var oSmartChart = oEvent.getSource();
 								oSmartChart.oModels = oSmartChart.getChart().oPropagatedProperties.oModels;
+							},
+							onToggleDynamicSideContent: function (oEvent){
+								var sText = "";
+								var oSubsection = oEvent.getSource().getParent();
+								var oComponent = oController.getOwnerComponent();
+								var sId = oSubsection.getId();
+								sId = sId.substring(sId.indexOf(oComponent.getEntitySet()), sId.lastIndexOf("::"));
+								sId = sId.replace(/--/g, "|").replace(/::/g, "|");
+
+								var oDynamicSideContent = sap.ui.getCore().byId(oSubsection.getBlocks()[0].getId());
+								if (oDynamicSideContent.getShowSideContent() === false) {
+									sText = getHideSideContentText(sId);
+									if (sap.ui.Device.resize.width <= 720) {
+										oDynamicSideContent.setShowMainContent(false);
+									}
+									oDynamicSideContent.setShowSideContent(true);
+									oEvent.getSource().setText(sText);
+								} else {
+									sText = getShowSideContentText(sId);
+									if (sap.ui.Device.resize.width <= 720) {
+										oDynamicSideContent.setShowMainContent(true);
+									}
+									oDynamicSideContent.setShowSideContent(false);
+									oEvent.getSource().setText(sText);
+								}
+							},
+
+							onTableInit: function(oEvent) {
+								var oSmartTable = oEvent.getSource();
+								var oTable = oSmartTable.getTable();
+
+								oTemplateUtils.oCommonUtils.checkToolbarIntentsSupported(oSmartTable);
+								oSmartTable.attachModelContextChange(function() {
+									if (oSmartTable.getCustomToolbar && oSmartTable.getCustomToolbar().getContent){
+										var oContents = oSmartTable.getCustomToolbar().getContent();
+										for (var i in oContents){
+											if (oContents[i].getShowSearchButton){
+												oContents[i].setValue("");
+												oSmartTable.rebindTable();
+												break;
+											}
+										}
+									}
+								});
+								// CTRL + ENTER Shortcut to add an entry for tables with inline support.
+								if (fnIsEventForTableWithInlineCreate(oSmartTable) && !oSmartTable.data("CrossNavigation")) {
+									oTable.addEventDelegate({
+										onkeyup: function(oEvent) {
+											if (oEvent.ctrlKey && oEvent.keyCode == jQuery.sap.KeyCodes.ENTER && oSmartTable.getEditable()) {
+												oTemplateUtils.oCommonEventHandlers.addEntry(oSmartTable, true);
+												oEvent.preventDefault();
+												oEvent.setMarked();
+											}
+										}
+									});
+								}
+							},
+							onSearchObjectPage: function (oEvent) {
+								var oSmartTable = (oEvent.getSource().getParent()).getParent();
+								oSmartTable.data("searchString", oEvent.getSource().getValue());
+								oSmartTable.data("allowSearch", true);
+								oSmartTable.data("tableId", oSmartTable.getId());
+								oSmartTable.data("objectPath", oSmartTable.getBindingContext().getPath());
+// check whether oCommonUtils.refreshSmartTable has to called instead or additionally
+								oSmartTable.rebindTable();
 							}
 						},
 						formatters: {
-							formatDefaultObjectTitle: function(bCreateMode) {
-								// return DefaultTitle in createMode
-								var oContext = oController.getView().getBindingContext();
-								var oObject = oContext && oContext.getObject();
-								if (bCreateMode && oObject && (oObject.IsActiveEntity === undefined || oObject.IsActiveEntity === false || oObject.HasActiveEntity ===
-									false)) {
-									return getDefaultObjectTitleForCreated();
-								}
+
+							// Sets custom noData text for smart table if provided by developer,
+							// else returns "", which will load default noData text by SmartTable
+							setNoDataTextForSmartTable: function() {
+								var oResourceBundle = oController.getOwnerComponent() && oController.getOwnerComponent().getModel("i18n") && oController.getOwnerComponent().getModel("i18n").getResourceBundle();
+								if (oResourceBundle && oResourceBundle.getText("NOITEMS_SMARTTABLE") !== "NOITEMS_SMARTTABLE") {
+									return oResourceBundle.getText("NOITEMS_SMARTTABLE");
+									} else {
+										var oAppComponent = oController.getOwnerComponent().getAppComponent();
+										oResourceBundle = oAppComponent && oAppComponent.getModel("i18n") && oAppComponent.getModel("i18n").getResourceBundle();
+										if (oResourceBundle && oResourceBundle.hasText("NOITEMS_SMARTTABLE")) {
+											return oResourceBundle.getText("NOITEMS_SMARTTABLE");
+										} else {
+											return "";
+										}
+									}
 							}
 						},
-						extensionAPI: new ExtensionAPI(oTemplateUtils, oController, oState)
+						extensionAPI: new ExtensionAPI(oTemplateUtils, oController, oBase)
 					};
+					
+					oControllerImplementation.handlers = jQuery.extend(oBase.handlers, oControllerImplementation.handlers);
+					
+					return oControllerImplementation;
 				}
 			};
-
+			return oMethods;
 		});

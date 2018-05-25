@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
  */
 sap.ui.define(['jquery.sap.global', 'sap/ui/core/CustomData', 'sap/ushell/library'],
     function (jQuery, CustomData, library) {

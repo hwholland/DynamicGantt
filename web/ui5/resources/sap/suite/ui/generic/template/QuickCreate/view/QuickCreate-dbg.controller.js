@@ -6,11 +6,13 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
 
     var QCController = BaseController.extend("sap.suite.ui.generic.template.QuickCreate.view.QuickCreate", {
 
-        _initialize: function () {
+        onInit: function () {
             if (!this._bIsInitialized) {
-                BaseController.prototype._initialize.apply(this);
+                BaseController.prototype.onInit.apply(this);
 
-                this.oQuickCreateAPI = this.getOwnerComponent().getAppComponent().oQuickCreateAPI;
+                this.oQuickCreateAPI = this.oComponent.oQuickCreateAPI;
+
+                this.oTransactionController = this.oComponent.getTransactionController();
 
                 if (this.oQuickCreateAPI) {
                   this.oQuickCreateAPI.setRootView(this.getView());
@@ -20,7 +22,7 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
                 this.bIsCreator = this.oQuickCreateAPI ? this.oQuickCreateAPI.isCurrentUserCreator() : true;
                 this.sQuickCreateUserName = this.oQuickCreateAPI ? this.oQuickCreateAPI.getQuickCreateItem().createdByName : "";
 
-                this.bFormEnabled = !this.bDraftEnabled || this.bIsCreator;
+                this.bFormEnabled = this.bIsCreator;
                 this._sDeferredGroupId = "QuickCreateChanges";
 
                 var quickCreateModel = new JSONModel({});
@@ -39,6 +41,11 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
                 // subscribe to line items found on quick create
                 if (this.oQuickCreateAPI) {
                     this.oQuickCreateAPI.attachAutofillLineItems(this._onLineItemsFound, this);
+                }
+
+                //Extension point: onQCViewInit
+                if (typeof this.oComponent.onQCViewInit === "function") {
+                  this.oComponent.onQCViewInit(this);
                 }
             }
         },
@@ -66,8 +73,16 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
 
         onBeforeRendering: function () {
             BaseController.prototype.onBeforeRendering.apply(this);
+            if (!this.getView().getModel("ui")) {
+              var uiModel = new JSONModel({});
+              this.getView().setModel(uiModel, "ui");
+            }
             this.getView().getModel("ui").setProperty("/enabled", this.bFormEnabled);
             this.getView().getModel("ui").setProperty("/editable", true);
+            //Extension point: onQCBeforeRendering
+            if (typeof this.oComponent.onQCBeforeRendering === "function") {
+              this.oComponent.onQCBeforeRendering(this.getView());
+            }
         },
 
 
@@ -139,7 +154,34 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
 
         onChange: function (oEvent) {
             if (this.bDraftEnabled) {
-                this.oTemplateUtils.oCommonEventHandlers.onChange(oEvent);
+              var oBinding = this.getView().getElementBinding();
+              var modifyPromise = new Promise(jQuery.proxy(function(resolve, reject) {
+                var sEntitySet = this.oComponent.getEntitySet();
+                var sValue = oEvent.getSource().getBindingPath("value");
+                var oControl = oEvent.getSource();
+                var oServiceController = null;
+                if (oControl) {
+                  oServiceController = this.oComponent.getApplicationController();
+                } else {
+                  oServiceController = this.oComponent.getTransactionController();
+                }
+
+                oServiceController.propertyChanged(sEntitySet, sValue, oBinding, oControl).then(
+                        function(){
+                            if (resolve) {
+                              resolve();
+                            }
+                        },
+                        function(){
+                            if (reject) {
+                              reject();
+                            }
+                        });
+              }, this));
+
+              modifyPromise.then(function(){
+                oBinding.refresh();
+              });
             }
         },
 
@@ -177,12 +219,12 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
                 });
 
                 if (context) {
-                    MessageToast.show(that.oTemplateUtils.oCommonUtils.getText("QuickCreate_Success_CreateObject"));
+                    MessageToast.show(that.formatI18NMessage("QuickCreate_Success_CreateObject"));
                     if (that.oQuickCreateAPI) {
                         that.oQuickCreateAPI.objectCreated(context);
                     }
                 } else {
-                    this._showErrorMessage({message: that.oTemplateUtils.oCommonUtils.getText("QuickCreate_No_Created_Object")});
+                    this._showErrorMessage({message: that.formatI18NMessage("QuickCreate_No_Created_Object")});
                 }
             };
 
@@ -194,8 +236,21 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
                 that.onError(oError);
             };
 
+            var onQCBeforeCreatePromise;
             if (this.bDraftEnabled) {
-                this.oDraftController.activateDraftEntity(this.getView().getBindingContext()).then(resolve, reject);
+              //Extension point: onQCBeforeCreate
+              var doActivateDraft = function () {
+                  that.oDraftController.activateDraftEntity(that.getView().getBindingContext()).then(resolve, reject);
+              };
+
+              if (typeof this.oComponent.onQCBeforeCreate === "function") {
+                  onQCBeforeCreatePromise = this.oComponent.onQCBeforeCreate(this.getView().getBindingContext(), this.getView().getBindingContext().getObject());
+              }
+              if (onQCBeforeCreatePromise && onQCBeforeCreatePromise instanceof Promise) {
+                  onQCBeforeCreatePromise.then(doActivateDraft, reject);
+              } else {
+                  doActivateDraft();
+              }
             } else {
 
                 var context = this.getView().getBindingContext();
@@ -229,14 +284,27 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
 
                 ODataModelHelper.findObjects(oModelObject, params);
 
-                this.getView().getModel().create("/" + this.sEntitySet, oModelObject, {
-                    success: resolve,
-                    error: reject
-                });
+                //Extension point: onQCBeforeCreate
+                var doCreate = function () {
+                    that.getView().getModel().create("/" + that.sEntitySet, oModelObject, {
+                        success: resolve,
+                        error: reject
+                    });
+                };
+
+                if (typeof this.oComponent.onQCBeforeCreate === "function") {
+                    onQCBeforeCreatePromise = this.oComponent.onQCBeforeCreate(context, oModelObject);
+                }
+                if (onQCBeforeCreatePromise && onQCBeforeCreatePromise instanceof Promise) {
+                    onQCBeforeCreatePromise.then(doCreate, reject);
+                } else {
+                    doCreate();
+                }
             }
         },
 
         onAddLineItemPress: function (oEvent) {
+            this._getLineItemsTableFromEvent(oEvent);
             var that = this;
             this.setBusy(true);
             var context = this.getView().getBindingContext();
@@ -254,7 +322,7 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
             };
 
             if (this.bDraftEnabled) {
-                this.oTemplateUtils.oServices.oTransactionController.triggerSubmitChanges().then(function (oSubmitResponse) {
+                this.oTransactionController.triggerSubmitChanges().then(function (oSubmitResponse) {
                     createLineItem(oSubmitResponse);
                 }, jQuery.proxy(this.onError, this));
             } else {
@@ -268,7 +336,7 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
             var context = oEvent.getSource().getBindingContext();
 
             if (this.bDraftEnabled) {
-                this.oTemplateUtils.oServices.oTransactionController.triggerSubmitChanges().then(function (oResponse) {
+                this.oTransactionController.triggerSubmitChanges().then(function (oResponse) {
                     that._deleteLineItem(context);
                 }, jQuery.proxy(function (oError) {
                     this.setBusy(false);
@@ -295,16 +363,8 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
             }
 
             if (oContext._bLocalBinding) {
-                    this._setBindingContext(oContext);
-
-                    if (!this.bFormEnabled) {
-                        // no backend requests in read-only mode
-                        if (typeof this.getView().getModel()._submitRequest === 'function') {
-                            this.getView().getModel()._submitRequest = function () {};
-                        }
-                    }
-
-                    this._refreshLineItems();
+                this._setBindingContext(oContext);
+                this._refreshLineItems();
             } else {
                 BaseController.prototype.bindView.apply(this, arguments);
             }
@@ -370,7 +430,7 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
         },
 
         _deleteLineItem: function (oContext) {
-            this.oTemplateUtils.oServices.oTransactionController.deleteEntity(oContext).then(jQuery.proxy(function (oResponse) {
+            this.oTransactionController.deleteEntity(oContext).then(jQuery.proxy(function (oResponse) {
                 this._refreshLineItems();
                 this.setBusy(false);
                 if (this.oQuickCreateAPI) {
@@ -414,9 +474,28 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
         },
 
         onTableUpdateStarted: function (oEvent) {
-            this._lineItemsTable = oEvent.getSource();
+            this._getLineItemsTableFromEvent(oEvent);
 
         },
+
+        _getLineItemsTableFromEvent: function(oEvent) {
+            if (!this._lineItemsTable && oEvent && oEvent.getSource) {
+              var current = oEvent.getSource();
+              while (current) {
+                if (current instanceof sap.m.Table) {
+                  this._lineItemsTable = current;
+                  return;
+                }
+
+                if (typeof current.getParent === 'function') {
+                  current = current.getParent();
+                } else {
+                  return;
+                }
+              }
+            }
+        },
+
 
         onTableUpdateFinished: function (oEvent) {
             // ensure header fields are editable in case Field control is overwriting this
@@ -436,26 +515,10 @@ sap.ui.define(["../../js/QuickTemplates/QuickActionBaseController", "../../js/Qu
         },
 
         _updateFieldControl: function (oContext) {
-            // Find out more how to handle this, for demo purposes make sure header fields are editable!
+            // Find out more how to handle this, for now make sure header fields are editable!
             var context = oContext ? oContext : this.getView().getBindingContext();
             if (context && this.getView().getModel().getProperty(context.getPath() + "/Update_mc") !== undefined) {
                 this.getView().getModel().setProperty(context.getPath() + "/Update_mc", true);
-            }
-
-            // REMOVE THIS AFTER STABILIZATION!!!!
-            if (context) {
-              var headerProps = QCAnnotationHelper.getAllPropertyPathsFromFacet(context, "FieldGroup");
-              var fc = 0;
-              jQuery.each(headerProps, jQuery.proxy(function(i, path){
-                fc = this.getView().getModel().getProperty(context.getPath() + "/" + path + "_fc");
-                if ( fc !== undefined && (fc === 0 || fc === 1)) {
-                  if (path.indexOf("BillToParty") >= 0 || path.indexOf("CustomerContact") >= 0) {
-                    this.getView().getModel().setProperty(context.getPath() + "/" + path + "_fc", 7);
-                  } else {
-                    this.getView().getModel().setProperty(context.getPath() + "/" + path + "_fc", 3);
-                  }
-                }
-              }, this));
             }
         }
 

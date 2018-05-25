@@ -1,13 +1,11 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// This control displays the history of values as a line mini chart or an area mini chart.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
-	function(jQuery, library, Element) {
+sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element', 'sap/ui/core/Control'],
+	function(jQuery, library, Element, Control) {
 	"use strict";
 
 	/**
@@ -20,7 +18,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * Defines the column chart data.
 	 * @extends sap.ui.core.Control
 	 *
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -41,7 +39,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 				 * The line title.
 				 */
 				label: {type : "string", group : "Misc", defaultValue : "" },
-				
+
 				/**
 				 * The actual value.
 				 */
@@ -57,7 +55,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	});
 
 	ColumnMicroChartData.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
+		Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
 		if (this.getParent()) {
 			this.getParent().setBarPressable(this.getParent().getColumns().indexOf(this), true);
 		}
@@ -65,13 +63,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	};
 
 	ColumnMicroChartData.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
+		Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
 		if (this.getParent()) {
 			this.getParent().setBarPressable(this.getParent().getColumns().indexOf(this), false);
 		}
 		return this;
 	};
-	
+
 	return ColumnMicroChartData;
 
 });

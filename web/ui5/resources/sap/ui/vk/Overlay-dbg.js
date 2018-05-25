@@ -7,13 +7,15 @@
 
 // Provides control sap.ui.vk.Overlay.
 sap.ui.define([
-	'jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/vbm/library', 'sap/ui/vbm/lib/sapvbi', './Messages'
-], function(jQuery, library, Control, vbm_library, sapvbi, Messages) {
+	"jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/vbm/library", "sap/ui/vbm/lib/sapvbi", "./Messages"
+], function(jQuery, library, Control, vbmLibrary, sapvbi, Messages) {
 	"use strict";
+
+	/* global VBI */
 
 	/**
 	 * Constructor for a new Overlay.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Constructor for a new Overlay.
@@ -112,14 +114,14 @@ sap.ui.define([
 	});
 
 	// ...........................................................................//
-	// This file defines behavior for the control,...............................//
+	// This file defines behavior for the control...............................//
 	// ...........................................................................//
 	// Public API functions
 	// ............................................................................//
 
 	/**
 	 * Trigger the interactive creation mode to get a position or position array.
-	 * 
+	 *
 	 * @param {boolean} bPosArray Indicator if a single position or an array is requested
 	 * @param {function} callback Callback function func( sPosArray ) to be called when done. Position(array) sPosArray is provided in format
 	 *        "x;y;0;..."
@@ -164,7 +166,7 @@ sap.ui.define([
 
 	/**
 	 * open the context menu
-	 * 
+	 *
 	 * @param {object} oMenu the context menu to be opened
 	 * @returns {void}
 	 * @public
@@ -177,7 +179,7 @@ sap.ui.define([
 	/**
 	 * Pan and Zoom for the Overlay. The offsets <i><code>nDeltaX</code></i> and <i><code>nDeltaY</code></i> are applied to the current center
 	 * position. If zooming is involved as well the offsets are applied after the zooming.
-	 * 
+	 *
 	 * @param {int} nDeltaX the move of the center in x-direction in pixels
 	 * @param {int} nDeltaY the move of the center in y-direction in pixels
 	 * @param {float} fZoom the zoom factor to apply to the current state
@@ -211,7 +213,7 @@ sap.ui.define([
 
 	/**
 	 * Reset the Overlay to its initial size and position.
-	 * 
+	 *
 	 * @returns {sap.ui.vk.Overlay} This allows method chaining
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -224,6 +226,7 @@ sap.ui.define([
 				0.5, 0.5
 			]), this.initialZoom);
 		} // else: nothing to reset!
+		return this;
 	};
 
 	// ........................................................................//
@@ -231,7 +234,6 @@ sap.ui.define([
 	// ........................................................................//
 
 	Overlay.prototype.init = function() {
-		this._messages = new Messages();
 		this.aLoadQueue = null; // load queue...................//
 
 		this.oTargetDomRef = null;
@@ -343,9 +345,12 @@ sap.ui.define([
 				};
 				jQuery(domref).width(placing.width).height(placing.height).css("position", "absolute");
 
-				// TODO: find better solution
-// jQuery(domref).css("top", placing.top + "px");
-// jQuery(domref).css("left", placing.left + "px");
+				/*
+				 * TO DO:
+				 * Find a better solution.
+				 */
+				// jQuery(domref).css("top", placing.top + "px");
+				// jQuery(domref).css("left", placing.left + "px");
 				jQuery(domref).css("top", "0px").css("left", "0px").css("visibility", "");
 			} catch (e) {
 
@@ -450,9 +455,9 @@ sap.ui.define([
 		// the....//
 		// beginning of the string we try to skip
 		// this............................//
-		if (typeof data == 'string') {
-			dat = JSON.parse(data.indexOf('{') ? data.substr(data.indexOf('{')) : data);
-		} else if (typeof data == 'object') {
+		if (typeof data == "string") {
+			dat = JSON.parse(data.indexOf("{") ? data.substr(data.indexOf("{")) : data);
+		} else if (typeof data == "object") {
 			dat = data; // this is already an object
 		}
 		// return immediately when data can not be
@@ -473,7 +478,10 @@ sap.ui.define([
 			}
 		}
 
-		// todo: do correct handling when change flags get
+		/*
+		 * TO DO:
+		 * Do correct handling when change flags set
+		 */
 		// set....................//
 		var bModifiedData = false;
 		var bModifiedScenes = false;
@@ -481,12 +489,12 @@ sap.ui.define([
 
 		// the data can be a json
 		// object..........................................//
-		if (jQuery.type(dat) == 'object') {
+		if (jQuery.type(dat) == "object") {
 			if (dat.SAPVB) {
 				// process configuration
 				// ...........................................//
 				if (dat.SAPVB.Config) {
-					// load the configuraiont
+					// load the configuration
 					// .......................................//
 					this.mVBIContext.GetConfig().load(dat.SAPVB.Config, this.mVBIContext);
 				}
@@ -502,11 +510,11 @@ sap.ui.define([
 				if (dat.SAPVB.DataTypes) {
 					// load the datatype
 					// provider....................................//
-					if (!this.mVBIContext.m_DataTypeProvider) {
-						this.mVBIContext.m_DataTypeProvider = new VBI.DataTypeProvider();
+					if (!this.mVBIContext["m_DataTypeProvider"]) {
+						this.mVBIContext["m_DataTypeProvider"] = new VBI.DataTypeProvider();
 					}
 
-					this.mVBIContext.m_DataTypeProvider.load(dat.SAPVB.DataTypes, this.mVBIContext);
+					this.mVBIContext["m_DataTypeProvider"].load(dat.SAPVB.DataTypes, this.mVBIContext);
 				}
 				// process
 				// datacontext..............................................//
@@ -515,46 +523,46 @@ sap.ui.define([
 					// datacontext..........................................//
 					// when the datacontext is loaded, provide the datatype
 					// info.....//
-					if (!this.mVBIContext.m_DataProvider) {
-						this.mVBIContext.m_DataProvider = new VBI.DataProvider();
+					if (!this.mVBIContext["m_DataProvider"]) {
+						this.mVBIContext["m_DataProvider"] = new VBI.DataProvider();
 					}
 
-					this.mVBIContext.m_DataProvider.load(dat.SAPVB.Data, this.mVBIContext);
+					this.mVBIContext["m_DataProvider"].load(dat.SAPVB.Data, this.mVBIContext);
 					bModifiedData = true;
 				}
 
 				// process
 				// windows..................................................//
 				if (dat.SAPVB.Windows) {
-					if (!this.mVBIContext.m_Windows) {
-						this.mVBIContext.m_Windows = new VBI.Windows();
+					if (!this.mVBIContext["m_Windows"]) {
+						this.mVBIContext["m_Windows"] = new VBI.Windows();
 					}
-					this.mVBIContext.m_Windows.load(dat.SAPVB.Windows, this.mVBIContext);
+					this.mVBIContext["m_Windows"].load(dat.SAPVB.Windows, this.mVBIContext);
 					bModifiedWindows = true;
 				}
 				// process
 				// actions..................................................//
 				if (dat.SAPVB.Actions) {
-					if (!this.mVBIContext.m_Actions) {
-						this.mVBIContext.m_Actions = new VBI.Actions();
+					if (!this.mVBIContext["m_Actions"]) {
+						this.mVBIContext["m_Actions"] = new VBI.Actions();
 					}
-					this.mVBIContext.m_Actions.load(dat.SAPVB.Actions, this.mVBIContext);
+					this.mVBIContext["m_Actions"].load(dat.SAPVB.Actions, this.mVBIContext);
 				}
 				// process
 				// automations..............................................//
 				if (dat.SAPVB.Automation) {
-					if (!this.mVBIContext.m_Automations) {
-						this.mVBIContext.m_Automations = new VBI.Automations();
+					if (!this.mVBIContext["m_Automations"]) {
+						this.mVBIContext["m_Automations"] = new VBI.Automations();
 					}
-					this.mVBIContext.m_Automations.load(dat.SAPVB.Automation, this.mVBIContext);
+					this.mVBIContext["m_Automations"].load(dat.SAPVB.Automation, this.mVBIContext);
 				}
 				// context menues
 				// ..................................................//
 				if (dat.SAPVB.Menus) {
-					if (!this.mVBIContext.m_Menus) {
-						this.mVBIContext.m_Menus = new VBI.Menus();
+					if (!this.mVBIContext["m_Menus"]) {
+						this.mVBIContext["m_Menus"] = new VBI.Menus();
 					}
-					this.mVBIContext.m_Menus.load(dat.SAPVB.Menus, this.mVBIContext);
+					this.mVBIContext["m_Menus"].load(dat.SAPVB.Menus, this.mVBIContext);
 				}
 
 				// process
@@ -562,10 +570,10 @@ sap.ui.define([
 				// Note: process scenes last! Since it triggers a re-rendering
 				// everything should be updated before
 				if (dat.SAPVB.Scenes) {
-					if (!this.mVBIContext.m_SceneManager) {
-						this.mVBIContext.m_SceneManager = new VBI.SceneManager();
+					if (!this.mVBIContext["m_SceneManager"]) {
+						this.mVBIContext["m_SceneManager"] = new VBI.SceneManager();
 					}
-					this.mVBIContext.m_SceneManager.load(dat.SAPVB.Scenes, this.mVBIContext);
+					this.mVBIContext["m_SceneManager"].load(dat.SAPVB.Scenes, this.mVBIContext);
 					bModifiedScenes = true;
 				}
 
@@ -574,21 +582,21 @@ sap.ui.define([
 			// notify framework about data
 			// modifications...........................//
 			if (bModifiedData) {
-				if (this.mVBIContext.m_Windows) {
-					this.mVBIContext.m_Windows.NotifyDataChange();
+				if (this.mVBIContext["m_Windows"]) {
+					this.mVBIContext["m_Windows"].NotifyDataChange();
 				}
 			}
 
 			// control context is loaded
 			if (bModifiedScenes || bModifiedWindows) {
-				if (this.mVBIContext.m_Windows) {
-					this.mVBIContext.m_Windows.Awake(sOverlayId);
+				if (this.mVBIContext["m_Windows"]) {
+					this.mVBIContext["m_Windows"].Awake(sOverlayId);
 				}
 			}
 
 			if (bModifiedScenes || bModifiedData) {
-				if (this.mVBIContext.m_Windows) {
-					this.mVBIContext.m_Windows.RenderAsync();
+				if (this.mVBIContext["m_Windows"]) {
+					this.mVBIContext["m_Windows"].RenderAsync();
 				}
 			}
 		}
@@ -596,8 +604,8 @@ sap.ui.define([
 
 	Overlay.prototype._openContextMenu = function(sTyp, oInst, oMenu) {
 		if (oMenu && oMenu.vbi_data && oMenu.vbi_data.VBIName == "DynContextMenu") {
-			if (!this.mVBIContext.m_Menus) {
-				this.mVBIContext.m_Menus = new window.VBI.Menus();
+			if (!this.mVBIContext["m_Menus"]) {
+				this.mVBIContext["m_Menus"] = new window.VBI.Menus();
 			}
 			// add additional menu items
 			for (var nI = 0; nI < this.mAddMenuItems.length; ++nI) {
@@ -660,33 +668,53 @@ sap.ui.define([
 	};
 
 	Overlay.prototype._minimizeApp = function(oApp) {
-		// todo: calculate a hash instead of caching the json string..............//
+		/*
+		 * TO DO:
+		 * calculate a hash instead of caching the json string
+		 */
 
 		// remove windows section when not necessary..............................//
 		var t, s;
+		// We use the condition variable as a temporary variable to replace the shortcircuits
+		var condition;
 		s = null;
 		if (!this.bWindowsDirty) {
-			(t = oApp) && (t = t.SAPVB) && (t = t.Windows) && (s = JSON.stringify(t)) && (s == this.mCurWindows) && (delete oApp.SAPVB.Windows) || (this.mCurWindows = s ? s : this.mCurWindows);
+			condition = (t = oApp) && (t = t.SAPVB) && (t = t.Windows) && (s = JSON.stringify(t)) && (s == this.mCurWindows) && (delete oApp.SAPVB.Windows);
+			if (!condition) {
+				this.mCurWindows = s ? s : this.mCurWindows;
+			}
 		} else {
 			this.bWindowsDirty = false;
 		}
 
 		// remove unmodified scenes...............................................//
 		s = null;
-		(t = oApp) && (t = t.SAPVB) && (t = t.Scenes) && (s = JSON.stringify(t)) && (s == this.mCurScenes) && (delete oApp.SAPVB.Scenes) || (this.mCurScenes = s ? s : this.mCurScenes);
+		condition = (t = oApp) && (t = t.SAPVB) && (t = t.Scenes) && (s = JSON.stringify(t)) && (s == this.mCurScenes) && (delete oApp.SAPVB.Scenes);
+		if (!condition) {
+			this.mCurScenes = s ? s : this.mCurScenes;
+		}
 
 		// remove unmodified actions..............................................//
 		s = null;
-		(t = oApp) && (t = t.SAPVB) && (t = t.Actions) && (s = JSON.stringify(t)) && (s == this.mCurActions) && (delete oApp.SAPVB.Actions) || (this.mCurActions = s ? s : this.mCurActions);
+		condition = (t = oApp) && (t = t.SAPVB) && (t = t.Actions) && (s = JSON.stringify(t)) && (s == this.mCurActions) && (delete oApp.SAPVB.Actions);
+		if (!condition) {
+			this.mCurActions = s ? s : this.mCurActions;
+		}
 
 		// remove unmodified datatypes............................................//
 		s = null;
-		(t = oApp) && (t = t.SAPVB) && (t = t.DataTypes) && (s = JSON.stringify(t)) && (s == this.mCurDataTypes) && (delete oApp.SAPVB.DataTypes) || (this.mCurDataTypes = s ? s : this.mCurDataTypes);
+		condition = (t = oApp) && (t = t.SAPVB) && (t = t.DataTypes) && (s = JSON.stringify(t)) && (s == this.mCurDataTypes) && (delete oApp.SAPVB.DataTypes);
+		if (!condition) {
+			this.mCurDataTypes = s ? s : this.mCurDataTypes;
+		}
 
 		// remove unmodified data.................................................//
 		if (!this.bForceDataUpdate) {
 			s = null;
-			(t = oApp) && (t = t.SAPVB) && (t = t.Data) && (s = JSON.stringify(t)) && (s == this.mCurData) && (delete oApp.SAPVB.Data) || (this.mCurData = s ? s : this.mCurData);
+			condition = (t = oApp) && (t = t.SAPVB) && (t = t.Data) && (s = JSON.stringify(t)) && (s == this.mCurData) && (delete oApp.SAPVB.Data);
+			if (!condition) {
+				this.mCurData = s ? s : this.mCurData;
+			}
 		} else {
 			this.bForceDataUpdate = false; // reset
 		}
@@ -835,41 +863,41 @@ sap.ui.define([
 			datasource: "OverlayArea",
 			type: "{00100000-2012-0004-B001-F311DE491C77}"
 		};
-		oOverlayAreaDef['posarray.bind'] = oOverlayAreaDef.id + ".P";
+		oOverlayAreaDef["posarray.bind"] = oOverlayAreaDef.id + ".P";
 		if (oBindInfo.C) {
-			oOverlayAreaDef['color.bind'] = oOverlayAreaDef.id + ".C";
+			oOverlayAreaDef["color.bind"] = oOverlayAreaDef.id + ".C";
 		} else {
 			oOverlayAreaDef.color = oVoTemplate.getColor();
 		}
 		if (oBindInfo.CB) {
-			oOverlayAreaDef['colorBorder.bind'] = oOverlayAreaDef.id + ".C";
+			oOverlayAreaDef["colorBorder.bind"] = oOverlayAreaDef.id + ".C";
 		} else {
 			oOverlayAreaDef.colorBorder = oVoTemplate.getColorBorder();
 		}
 		if (oBindInfo.DCH) {
-			oOverlayAreaDef['hotDeltaColor.bind'] = oOverlayAreaDef.id + ".DCH";
+			oOverlayAreaDef["hotDeltaColor.bind"] = oOverlayAreaDef.id + ".DCH";
 		} else {
 			oOverlayAreaDef.hotDeltaColor = oVoTemplate.getDeltaColorHot();
 		}
 		if (oBindInfo.CS) {
-			oOverlayAreaDef['colorSelect.bind'] = oOverlayAreaDef.id + ".C";
+			oOverlayAreaDef["colorSelect.bind"] = oOverlayAreaDef.id + ".C";
 		} else {
 			oOverlayAreaDef.colorSelect = oVoTemplate.getColorSelect();
 		}
 		if (oBindInfo.CNS) {
-			oOverlayAreaDef['colorNonSelect.bind'] = oOverlayAreaDef.id + ".C";
+			oOverlayAreaDef["colorNonSelect.bind"] = oOverlayAreaDef.id + ".C";
 		} else {
 			oOverlayAreaDef.colorNonSelect = oVoTemplate.getColorNonSelect();
 		}
 		if (!oBindInfo.M) {
-			oOverlayAreaDef['VB:c'] = oVoTemplate.getChangeable();
+			oOverlayAreaDef["VB:c"] = oVoTemplate.getChangeable();
 		}
 		saVO.push(oOverlayAreaDef);
 
 		// Overlay Area Data Type
 		var oOverlayAreaType = {
 			name: oOverlayAreaDef.id,
-			key: 'K'
+			key: "K"
 		};
 		// extend the object type.................................................//
 		oOverlayAreaType.A = [
@@ -1040,7 +1068,7 @@ sap.ui.define([
 			delete oVOMap[oNew[nJ].id]; // remove processed VOs from map
 		}
 		// remove VOs remaining on map
-		for ( var id in oVOMap) {
+		for (var id in oVOMap) {
 			aRemove.push({
 				"id": id,
 				"type": "VO"
@@ -1151,7 +1179,7 @@ sap.ui.define([
 			try {
 				oElem.handleEvent(event);
 			} catch (exc) {
-				jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(this._messages.messages.VIT11.summary), this._messages.messages.VIT11.code, "sap.ui.vk.Overlay");
+				jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(Messages.VIT11.summary), Messages.VIT11.code, "sap.ui.vk.Overlay");
 			}
 		}
 
@@ -1167,6 +1195,7 @@ sap.ui.define([
 	// ..........................................................................//
 	// Compatibility functions, needed by VBI context
 	/**
+	 * @param {object} e Event fired by the VBI context.
 	 * @private
 	 */
 	Overlay.prototype.fireSubmit = function(e) {
@@ -1188,7 +1217,7 @@ sap.ui.define([
 			var sActionName = datEvent.Action.name, clickPos;
 			if (sActionName === "click" || sActionName === "contextMenu") {
 				clickPos = [
-					datEvent.Action.Params.Param[0]['#'], datEvent.Action.Params.Param[1]['#']
+					datEvent.Action.Params.Param[0]["#"], datEvent.Action.Params.Param[1]["#"]
 				];
 			}
 			switch (sActionName) {
@@ -1196,7 +1225,7 @@ sap.ui.define([
 					// Interactive Position gathering finished
 					if (this.mIACreateCB) {
 						try {
-							this.mIACreateCB(datEvent.Action.Params.Param[0]['#']);
+							this.mIACreateCB(datEvent.Action.Params.Param[0]["#"]);
 							this.mIACreateCB = null;
 						} catch (exc) {
 							// clear callback function in any case
@@ -1210,7 +1239,7 @@ sap.ui.define([
 					this.fireClick({
 						clientX: clickPos[0],
 						clientY: clickPos[1],
-						pos: datEvent.Action.AddActionProperties.AddActionProperty[0]['#']
+						pos: datEvent.Action.AddActionProperties.AddActionProperty[0]["#"]
 					});
 					break;
 				case "contextMenu":
@@ -1220,14 +1249,14 @@ sap.ui.define([
 					}
 					sap.ui.getCore().loadLibrary("sap.ui.unified");
 					var oMenuObject = new sap.ui.unified.Menu();
-					oMenuObject.vbi_data = {};
-					oMenuObject.vbi_data.menuRef = "CTM";
-					oMenuObject.vbi_data.VBIName = "DynContextMenu";
+					oMenuObject["vbi_data"] = {};
+					oMenuObject["vbi_data"].menuRef = "CTM";
+					oMenuObject["vbi_data"].VBIName = "DynContextMenu";
 					// store the click pos
 					this.mClickPos = clickPos;
 					// fire the contextMenu..................................................//
 					this.fireContextMenu({
-						pos: datEvent.Action.AddActionProperties.AddActionProperty[0]['#'],
+						pos: datEvent.Action.AddActionProperties.AddActionProperty[0]["#"],
 						menu: oMenuObject
 					});
 					break;
@@ -1238,26 +1267,31 @@ sap.ui.define([
 		}
 	};
 	/**
+	 * @param {object} data Object whose only property is the VBI scene canvas element.
 	 * @private
 	 */
 	Overlay.prototype.fireRender = function(data) {
 	};
 	/**
+	 * @param {object} data Object whose only property is the VBI scene canvas element.
 	 * @private
 	 */
 	Overlay.prototype.fireMove = function(data) {
 	};
 	/**
+	 * @param {object} data Object whose only property is the VBI scene canvas element.
 	 * @private
 	 */
 	Overlay.prototype.fireZoom = function(data) {
 	};
 	/**
+	 * @param {object} data Object whose only property is the VBI scene canvas element.
 	 * @private
 	 */
 	Overlay.prototype.fireOpenWindow = function(data) {
 	};
 	/**
+	 * @param {object} data Object whose only property is the VBI scene canvas element.
 	 * @private
 	 */
 	Overlay.prototype.fireCloseWindow = function(data) {

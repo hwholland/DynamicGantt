@@ -235,6 +235,8 @@ VBI.ScenePointerEvents = function(scene, ele) {
 // touch events..............................................................//
 VBI.SceneTouchEvents = function(scene, ele) {
 	"use strict";
+	var isNavigationDisabled = scene.m_SuppressedNavigation.move && scene.m_SuppressedNavigation.zoom;
+
 	this.m_Events = [
 		"touchstart", "touchend", "touchmove", "touchcancel"
 	];
@@ -275,11 +277,15 @@ VBI.SceneTouchEvents = function(scene, ele) {
 	scene.processtouchstart = function(e) {
 		var handled = false;
 
-		var ctx = scene.m_Ctx; // closing menu in case we have an open one
+		var ctx = scene.m_Ctx;
+		// closing menu(s) in case we have an open one
 		if (ctx.m_strOpenMenu) {
+			ctx.m_Menus.findMenuByID(ctx.m_strOpenMenu).close();
 			ctx.m_strOpenMenu = undefined;
-			var oMenuObject = ctx.m_Menus.findMenuByID(ctx.m_strOpenMenu);
-			oMenuObject.close();
+		}
+		if (ctx.m_HitMenu) {
+			ctx.m_HitMenu.close();
+			ctx.m_HitMenu.destroy();
 		}
 
 		if (VBI.m_bTrace) {
@@ -296,6 +302,7 @@ VBI.SceneTouchEvents = function(scene, ele) {
 
 		// store the touch event...............................................//
 		scene.m_Touches.push(e);
+		scene.m_TouchStarted = true;
 		scene.m_Touches.m_bMoveWasDone = false;
 
 		if (e.touches.length == 1 && !scene.m_SuppressedNavigation.move) {
@@ -338,7 +345,7 @@ VBI.SceneTouchEvents = function(scene, ele) {
 			handled = true;
 		}
 
-		if (handled) {
+		if (handled && !isNavigationDisabled) {
 			e.preventDefault();
 			return false;
 		}
@@ -575,8 +582,9 @@ VBI.SceneTouchEvents = function(scene, ele) {
 				scene.m_Touches = [];
 			}
 		}
-
-		e.preventDefault();
+		if (!isNavigationDisabled) {
+			e.preventDefault();
+		}
 	};
 
 	scene.processtouchcancel = function(e) {
@@ -588,7 +596,9 @@ VBI.SceneTouchEvents = function(scene, ele) {
 			return;
 		}
 		scene.SetInputMode(VBI.InputModeDefault);
-		e.preventDefault();
+		if (!isNavigationDisabled) {
+			e.preventDefault();
+		}
 	};
 
 	scene.processtouchmove = function(e) {
@@ -606,13 +616,23 @@ VBI.SceneTouchEvents = function(scene, ele) {
 		} // (mouse) sometimes touchmove seems to be trigger on Androids withhout touchstart
 
 		var dx, dy, touch = {}, touch1;
+
 		if (e.touches.length == 1) {
 			touch = e.touches[0];
 			dx = touch.clientX - scene.m_currentMouseX;
 			dy = touch.clientY - scene.m_currentMouseY;
-			if ((dx == 0) && (dy == 0)) {
-				e.stopPropagation();
-				return true;
+
+			if (scene.m_TouchStarted) {
+				var threshold = sap.ui.Device.support.retina ? 4 : 2; // higher value for HDPI displays
+
+				if (Math.abs(dx) < threshold || Math.abs(dy) < threshold) { // ignore small movements right after touch started
+					e.stopPropagation();
+					return true;
+				} else {
+					scene.m_TouchStarted = false; // if movement is significant enough -> back to normal processing
+					scene.m_currentMouseX = touch.clientX; // updating coordinates accordingly
+					scene.m_currentMouseY = touch.clientY;
+				}
 			}
 		}
 
@@ -625,7 +645,7 @@ VBI.SceneTouchEvents = function(scene, ele) {
 				e.stopPropagation();
 				return true;
 			}
-		} // Android raises a move event also without move; Mouse must be in middle of both touches
+		} // Android raises a move event also without move; Mouse must be in middle of both touches (i.e skipping useless events)
 
 		scene.m_Touches.m_bMoveWasDone = true;
 		window.clearInterval(scene.m_ContextMenuTimer);
@@ -687,7 +707,7 @@ VBI.SceneTouchEvents = function(scene, ele) {
 			handled = true;
 		}
 
-		if (handled) {
+		if (handled && !isNavigationDisabled) {
 			e.stopPropagation();
 			return true;
 		}
@@ -718,7 +738,7 @@ VBI.SceneEvent = function(scene, ele) {
 	VBI.m_bMouseSupported = false;
 
 	this.m_Events = [
-		"mousedown", "mouseup", "mousemove", "mousewheel", "wheel", "mouseout", "click", "dblclick", "contextmenu", "selectstart", "dragstart", "dragenter", "dragover", "dragleave", "drop", "dragend", "keydown"
+		"mousedown", "mouseup", "mousemove", "mousewheel", "wheel", "mouseout", "click", "dblclick", "contextmenu", "selectstart", "dragstart", "dragenter", "dragover", "dragleave", "drop", "dragend", "keydown", "keypress", "keyup"
 	];
 
 // additional stuff.......................................................//
@@ -787,7 +807,7 @@ VBI.SceneEvent = function(scene, ele) {
 
 	// mouse events are supported
 	VBI.m_bMouseSupported = true;
-	
+
 	// ........................................................................//
 	// helper functions.......................................................//
 	scene.SetInputModeTrackMap = function(bSet) {
@@ -943,90 +963,203 @@ VBI.SceneEvent = function(scene, ele) {
 		}
 	};
 
+	scene.BuildKeyEventParams = function(event) {
+		return {
+			key: event.key,
+			code: event.keyCode,
+			shift: event.shiftKey,
+			ctrl: event.ctrlKey,
+			alt: event.altKey,
+			meta: event.metaKey
+		};
+	};
+
+	scene.processkeyup = function(event) {
+		if (VBI.m_bTrace) {
+			VBI.Trace("scene.processkeyup");
+		}
+		if (event.code == undefined) {
+			event.code = event.keyCode;
+		}
+		var down = scene.m_KeysDown.indexOf(event.code);
+		var up = scene.m_KeysSkipUp.indexOf(event.code);
+		var press = scene.m_KeysSkipPress.indexOf(event.code);
+
+		if (down != -1) {
+			scene.m_KeysDown.splice(down, 1); //reset down state
+		}
+		if (press != -1) {
+			scene.m_KeysSkipPress.splice(press, 1); //reset press state
+		}
+		if (up != -1) {
+			scene.m_KeysSkipUp.splice(up, 1); //reset skip up state & skip processing
+			return;
+		}
+		if (scene.m_Ctx.m_Actions) { // check for subscribed action and raise it
+			var action = scene.m_Ctx.m_Actions.findAction("KeyUp", scene); // check if action is subscribed
+			if (action) {
+				scene.m_Ctx.FireAction(action, scene, this, null, scene.BuildKeyEventParams(event));
+			}
+		}
+	};
+
+	scene.processkeypress = function(event) {
+		if (VBI.m_bTrace) {
+			VBI.Trace("scene.processkeypress");
+		}
+		if (event.code == undefined) {
+			event.code = event.keyCode;
+		}
+		var press = scene.m_KeysSkipPress.indexOf(event.code);
+
+		if (press != -1) {
+			scene.m_KeysSkipPress.splice(press, 1); //reset press state & skip processing
+			return;
+		}
+		//skip if event is not recorded in the list of down events due to code modification
+		if (scene.m_KeysDown.indexOf(event.code) == -1) {
+			return;
+		}
+		if (scene.m_Ctx.m_Actions) { // check for subscribed action and raise it
+			var action = scene.m_Ctx.m_Actions.findAction("KeyPress", scene); // check if action is subscribed
+			if (action) {
+				scene.m_Ctx.FireAction(action, scene, this, null, scene.BuildKeyEventParams(event));
+			}
+		}
+	};
+
 	scene.processkeydown = function(event) {
 		if (VBI.m_bTrace) {
 			VBI.Trace("scene.processkeydown");
 		}
+		event.m_Repeat = event.repeat;
 
-		var bHandled = false, keyCode = event.keyCode;
-
-		// dispatch the keydown event..........................................//
-		if (scene.DispatchEvent(event, "sapkeydown") == true) { // dispatch the event
+		if (event.code == undefined) {
+			event.code = event.keyCode;
+		}
+		if (scene.m_KeysDown.indexOf(event.code) != -1) { //key down flag is not cleared -> IE repeating case
+			event.m_Repeat = true;
+		} else {
+			scene.m_KeysDown.push(event.code); //mark which keys is in down state
+		}
+		// if repeat is not allowed -> skip it & following press event as well, but keep up event intact
+		if (event.m_Repeat && !scene.m_Ctx.m_Control.getAllowKeyEventRepeat()) {
+			if (scene.m_KeysSkipPress.indexOf(event.code) == -1) {
+				scene.m_KeysSkipPress.push(event.code); //mark which key press event should be skipped
+			}
 			return;
 		}
+		if (event.code == scene.m_lastKey && scene.m_lastKeyDown != null && (Date.now() - scene.m_lastKeyDown) < scene.m_Ctx.m_Control.getKeyEventDelay()) {
+			// if down event is too frequent -> skip it (applies only to repeats or same key sequences)
+			// and following press and up events as well
+			if (scene.m_KeysSkipPress.indexOf(event.code) == -1) {
+				scene.m_KeysSkipPress.push(event.code); //mark which press event should be skipped
+			}
+			if (!event.m_Repeat) {
+				if (scene.m_KeysSkipUp.indexOf(event.code) == -1) {
+					scene.m_KeysSkipUp.push(event.code); //mark which up event should be skipped
+				}
+			}
+			return;
+		}
+		scene.m_lastKey = event.code;
+		scene.m_lastKeyDown = Date.now(); // keep time stamp of last processed event
 
 		var rectDiv = scene.GetInternalDivClientRect();
 		if ((rectDiv.width != scene.m_nDivWidth) || (rectDiv.height != scene.m_nDivHeight)) {
 			scene.resizeCanvas(0);
 		}
-		if (keyCode == 72) { // 'h' for got to initial start position
-			scene.GoToInitialStart();
-			bHandled = true;
-		} else if (keyCode == 90) { // 'z' for rectangular zoom mode
-			scene.endTrackingMode();
-			new scene.RectangularZoom();
-			scene.m_Ctx.onChangeTrackingMode(VBI.InputModeRectZoom, true);
-			bHandled = true;
-		} else if (keyCode == 82) { // 'r' for rectangular selection
-			scene.endTrackingMode();
-			new scene.RectSelection();
-			scene.m_Ctx.onChangeTrackingMode(VBI.InputModeRectSelect, true);
-			bHandled = true;
-		} else if (keyCode == 65) { // 'a' for lasso selection
-			scene.endTrackingMode();
-			new scene.LassoSelection();
-			scene.m_Ctx.onChangeTrackingMode(VBI.InputModeLassoSelect, true);
-			bHandled = true;
-		} else {
+		var defaultAction = true;
+
+		if (scene.m_Ctx.m_Actions) { // check for subscribed action and raise it
+			var action = scene.m_Ctx.m_Actions.findAction("KeyDown", scene); // check if action is subscribed
+			if (action) {
+				defaultAction = scene.m_Ctx.FireAction(action, scene, this, null, scene.BuildKeyEventParams(event), null, true);
+			}
+		}
+
+		if (defaultAction) { //default processing of key events
+			var handled = false;
+
+			switch (event.keyCode) {
+				case 72: // 'h' for got to initial start position
+					scene.GoToInitialStart();
+					handled = true;
+					break;
+				case 90: // 'z' for rectangular zoom mode
+					scene.endTrackingMode();
+					new scene.RectangularZoom();
+					scene.m_Ctx.onChangeTrackingMode(VBI.InputModeRectZoom, true);
+					handled = true;
+					break;
+				case 82: // 'r' for rectangular selection
+					scene.endTrackingMode();
+					new scene.RectSelection();
+					scene.m_Ctx.onChangeTrackingMode(VBI.InputModeRectSelect, true);
+					handled = true;
+					break;
+				case 65: // 'a' for lasso selection
+					scene.endTrackingMode();
+					new scene.LassoSelection();
+					scene.m_Ctx.onChangeTrackingMode(VBI.InputModeLassoSelect, true);
+					handled = true;
+					break;
+			}
 			if (!scene.m_SuppressedNavigation.zoom) {
 				var zoomStep = 0;
-				var centerPoint = scene.GetCenterPos();
-				var newZoomLevel = scene.getCanvas().m_nExactLOD;
-				if (keyCode == 187 || keyCode == 107 || keyCode == 171 /* 171 for Firefox!! */) { // +
-					zoomStep = 1;
-				} else if (keyCode == 189 || keyCode == 109 || keyCode == 173 /* 173 for Firefox!! */) { // -
-					zoomStep = -1;
+
+				switch (event.keyCode) {
+					case 107: // zoom in (+)
+					case 171: // 171 for Firefox!!
+					case 187:
+						zoomStep = 1;
+						break;
+					case 109: // zoom out (-)
+					case 173: // 173 for Firefox!!
+					case 189:
+						zoomStep = -1;
+						break;
 				}
-				if (zoomStep) {
+				if (zoomStep != 0) {
+					var centerPoint = scene.GetCenterPos();
+					var newZoomLevel = scene.getCanvas().m_nExactLOD;
 					var minLOD = scene.GetMinLOD();
-					if ((zoomStep > 0) && (newZoomLevel == minLOD) && (newZoomLevel != Math.ceil(newZoomLevel))) {
+
+					if (zoomStep > 0 && newZoomLevel == minLOD && newZoomLevel != Math.ceil(newZoomLevel)) {
 						newZoomLevel = Math.ceil(newZoomLevel);
 					} else {
 						newZoomLevel += zoomStep;
 					}
 					scene.AnimateZoomToGeo(centerPoint, Math.round(newZoomLevel), 5);
-					bHandled = true;
+					handled = true;
 				}
 			}
 			if (!scene.m_SuppressedNavigation.move) {
 				var distance = 20;
-				switch (keyCode) {
+
+				switch (event.keyCode) {
 					case 37: // arrow left
 						scene.MoveMap(distance, 0);
-						bHandled = true;
+						handled = true;
 						break;
 					case 39: // arrow right
 						scene.MoveMap(-distance, 0);
-						bHandled = true;
+						handled = true;
 						break;
 					case 38: // arrow up
 						scene.MoveMap(0, distance);
-						bHandled = true;
+						handled = true;
 						break;
 					case 40: // arrow down
 						scene.MoveMap(0, -distance);
-						bHandled = true;
-						break;
-					default:
+						handled = true;
 						break;
 				}
 			}
+			if (handled) {
+				event.preventDefault();
+			}
 		}
-
-		if (bHandled) {
-			event.preventDefault();
-		}
-		return;
 	};
 
 	scene.processcontextmenu = function(event) {
@@ -1168,14 +1301,12 @@ VBI.SceneEvent = function(scene, ele) {
 		event.m_OffsetY = event.clientY - rect.top;
 		event.m_Delta = delta;
 
-		if (sap.ui.Device.os.macintosh) {
-			var timeNow = Date.now();
-			var bMustReturn = ((scene.m_LastCWEvent != undefined) && (timeNow - scene.m_LastCWEvent < 100));
-			scene.m_LastCWEvent = timeNow;
-			if (bMustReturn) {
-				return;
-			}
+		var timeNow = Date.now();
+		if ((scene.m_LastCWEvent != undefined) && (timeNow - scene.m_LastCWEvent < 200)) {
+			return;
 		}
+		scene.m_LastCWEvent = timeNow;
+
 		if (VBI.m_bTrace) {
 			VBI.Trace("processcommonwheel");
 		}

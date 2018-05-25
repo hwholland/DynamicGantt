@@ -6,15 +6,15 @@
     <documentation>List item should be used for a label and an input field.</documentation>
     <baseType>sap.m/ListItemBase</baseType>
     <properties>
-        <property name="label" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="label">
             <documentation>Label of the list item</documentation>
         </property>
-        <property name="labelTextDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance" since="1.30.0">
+        <property since="1.30.0" group="Appearance" defaultValue="Inherit" type="sap.ui.core/TextDirection" name="labelTextDirection">
             <documentation>This property specifies the label text directionality with enumerated options. By default, the label inherits text direction from the DOM.</documentation>
         </property>
     </properties>
     <aggregations default="content">
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>Content controls can be added</documentation>
         </aggregation>
     </aggregations>

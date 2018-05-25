@@ -1,39 +1,21 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's user activity service.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+    "sap/ushell/services/AppType"
+], function (appType) {
     "use strict";
     /*jslint nomen:true */
     /*global jQuery, sap, console */
-    jQuery.sap.declare("sap.ushell.services.UserRecents");
-    jQuery.sap.require("sap.ushell.services.Personalization");
-    sap.ushell.services.AppType = {
-        OVP : "OVP",
-        SEARCH: "Search",
-        FACTSHEET: "FactSheet",
-        COPILOT: "Co-Pilot",
-        APP: "Application",
-
-        getDisplayName: function(sAppType) {
-            switch (sAppType) {
-                case this.OVP:
-                case this.SEARCH:
-                case this.FACTSHEET:
-                case this.COPILOT:
-                    return sAppType;
-
-                default:
-                    return "App";
-            }
-        }
-    };
 
     /**
      * This method is just for internal use within this service.
      * Constructs a new instance of a recent list, used for recent searches and recent apps.
+     *
+     * @name sap.ushell.services.UserRecents
      *
      * @param {integer} iMaxLength
      *     maximum number of entries in the list
@@ -77,6 +59,21 @@
                 }
                 aRecents.push(oNewEntry);
             };
+
+
+        // public interface
+        this.clearAllActivities = function () {
+            var oDeferred = new jQuery.Deferred();
+
+            fnSave([]).done(function (data) {
+                oDeferred.resolve(data);
+            }).fail(function () {
+                oDeferred.reject();
+            });
+
+            return oDeferred.promise();
+        };
+
 
         // public interface
         this.newItem = function (oItem) {
@@ -135,24 +132,50 @@
      * @constructor
      */
     function RecentActivity(iMaxLength, fnEquals, fnCompare, fnLoad, fnSave) {
-        var aRecents = [],
+        var iMaximumDays = 30,
+            oRecentActivities,
 
         // private functions
             fnUpdateIfAlreadyIn = function (oItem, iTimestampNow) {
-                return aRecents.some(function (oRecentEntry) {
+                return oRecentActivities.recentUsageArray.some(function (oRecentEntry) {
                     var bFound;
                     if (fnEquals(oRecentEntry.oItem, oItem)) {
-                        if ((oRecentEntry.oItem.appType === oItem.appType) || (oRecentEntry.oItem.appType !== oItem.appType && oItem.appType !== 'Application')) {
+
+                        /*
+                         in case both items considered as equal (by fnEquals function), we will override the saved item
+                         only in case its type is not type 'Application'.
+
+                         As the shell always adds user recent entry after every app closed, it might be that a different
+                         App as 'OVP' for example will also use API to add its app as user-recent entry, and the information
+                         they provide regarding the item to save is with higher value then the information the shell
+                         constructs (icon title etc)
+                         */
+                        if ((oItem.appType === oRecentEntry.oItem.appType) ||
+                            (oItem.appType !== appType.APP)) {
+
+                            // override the item
                             jQuery.extend(oRecentEntry.oItem, oItem);
                             oRecentEntry.iTimestamp = iTimestampNow;
                             oRecentEntry.oItem.timestamp = iTimestampNow;
-                            oRecentEntry.iCount = oRecentEntry.iCount + 1;
                             oRecentEntry.mobile = undefined;
                             oRecentEntry.tablet = undefined;
                             oRecentEntry.desktop = undefined;
+
+                            // we update the counter if -
+                            // - existing item and new item are of the same type OR
+                            // - existing item and new item is not of same type BUT both are not Application
+                            if ((oItem.appType === oRecentEntry.oItem.appType) ||
+                                (oItem.appType !== appType.APP && oRecentEntry.oItem.appType !== appType.APP)){
+
+                                // update both the usage array's last day and the global entry counter
+                                oRecentEntry.aUsageArray[oRecentEntry.aUsageArray.length-1] += 1;
+                                oRecentEntry.iCount += 1;
+                            }
+
+                            oRecentActivities.recentUsageArray.sort(fnCompare);
                         }
+
                         bFound = true;
-                        aRecents.sort(fnCompare);
                     } else {
                         bFound = false;
                     }
@@ -162,18 +185,21 @@
 
             fnInsertNew = function (oItem, iTimestampNow, sIcon) {
                 oItem.timestamp = iTimestampNow;
-                oItem.icon = sIcon;
+                if (sIcon) {
+                    oItem.icon = sIcon;
+                }
                 var oNewEntry = {oItem: oItem,
                     iTimestamp: iTimestampNow,
+                    aUsageArray: [1],
                     iCount: 1,
                     mobile: undefined,
                     tablet: undefined,
                     desktop: undefined
                     };
-                if (aRecents.length === iMaxLength) {
-                    aRecents.pop();
+                if (oRecentActivities.recentUsageArray.length === iMaxLength) {
+                    oRecentActivities.recentUsageArray.pop();
                 }
-                aRecents.unshift(oNewEntry);
+                oRecentActivities.recentUsageArray.unshift(oNewEntry);
             };
 
         // public interface
@@ -181,16 +207,24 @@
             var oDeferred = new jQuery.Deferred();
 
             var iTimestampNow = +new Date(),  // timestamp: thanks to http://stackoverflow.com/a/221297
-                sIcon =  oItem.icon ? oItem.icon : this.getActivityIcon(oItem.appType),
-                bAlreadyIn;
+                sIcon =  this.getActivityIcon(oItem.appType, oItem.icon),
+                bAlreadyIn,
+                that = this,
+                currentDay = this.getDayFromDateObj(new Date());
             fnLoad().done(function (aLoadedRecents) {
-                aRecents = aLoadedRecents || [];
+                oRecentActivities = that.getRecentActivitiesFromLoadedData(aLoadedRecents);
+                // If the current day is different than the recent one -
+                // add a new entry (for the current day's usage) to each usage array
+                if (currentDay != oRecentActivities.recentDay) {
+                    that.addNewDay();
+                    oRecentActivities.recentDay = currentDay;
+                }
 
                 bAlreadyIn = fnUpdateIfAlreadyIn(oItem, iTimestampNow);
                 if (!bAlreadyIn) {
                     fnInsertNew(oItem, iTimestampNow, sIcon);
                 }
-                fnSave(aRecents).done(function (data) {
+                fnSave(oRecentActivities).done(function (data) {
                     oDeferred.resolve(data);
                 }).fail(function () {
                     oDeferred.reject();
@@ -199,21 +233,27 @@
 
             return oDeferred.promise();
         };
-        this.getActivityIcon = function (sAppType) {
-            //TODO: the icon urls are only for mock - should be changed with actual urls
+        this.getActivityIcon = function (sAppType, sIcon) {
             switch (sAppType) {
-                case sap.ushell.services.AppType.OVP:
-                    return "sap-icon://competitor";
-                case sap.ushell.services.AppType.SEARCH:
-                    return "sap-icon://search";
-                case sap.ushell.services.AppType.COPILOT:
-                    return "sap-icon://BusinessSuiteInAppSymbols/icon-heart";
-                case sap.ushell.services.AppType.FACTSHEET:
-                    return "sap-icon://lead";
+                case appType.SEARCH:
+                    return sIcon ? sIcon : "sap-icon://search";
+                case appType.COPILOT:
+                    return sIcon ? sIcon : "sap-icon://co";
                 default:
-                    return "sap-icon://BusinessSuiteInAppSymbols/icon-heart";
+                    return undefined;
             }
+        };
 
+        this.clearAllActivities = function () {
+            var oDeferred = new jQuery.Deferred();
+
+            fnSave([]).done(function (data) {
+                oDeferred.resolve(data);
+            }).fail(function () {
+                oDeferred.reject();
+            });
+
+            return oDeferred.promise();
         };
 
         /**
@@ -221,32 +261,32 @@
          * - Check if for the current device we have unresolved entries.
          * - resolve the unresolved entries and set the attribute according to the current device.
          * - persist data.
-         * - return the last 30 entries.
+         * - return the last <maxNumOfActivities> entries or all entries supported by current device (if maxNumOfActivities was not provided).
          */
-        this.getRecentItems = function () {
-            var oDeferred = new jQuery.Deferred(),
+        this.getRecentItemsHelper = function (maxNumOfActivities) {
+            var that = this,
+                oDeferred = new jQuery.Deferred(),
                 activityIndex,
                 oActivity,
                 sCurrentDevice,
                 bIsResolved = false,
                 aIntentsToResolve = [],
-            //Helper funtion the returns the last 30 recent activity supported by current device.
+                currentDay = this.getDayFromDateObj(new Date()),
+            //Helper function that returns the last <maxNumOfActivities> recent activities supported by current device.
                 getRecentItemsForDevice = function (aLoadedRecents) {
                     var recentActivityForDevice = [],
                         iDeviceDependentActivityCounter = 0,
                         iRecentActivityCounter;
 
-                    for (iRecentActivityCounter = 0; iRecentActivityCounter < aLoadedRecents.length && iDeviceDependentActivityCounter < 30; iRecentActivityCounter++) {
-                        oActivity = aLoadedRecents[iRecentActivityCounter];
+                    for (iRecentActivityCounter = 0; iRecentActivityCounter < aLoadedRecents.recentUsageArray.length && (!maxNumOfActivities || iDeviceDependentActivityCounter < maxNumOfActivities); iRecentActivityCounter++) {
+                        oActivity = aLoadedRecents.recentUsageArray[iRecentActivityCounter];
                         if (oActivity[sCurrentDevice]) {
                             recentActivityForDevice.push(oActivity);
                             iDeviceDependentActivityCounter++;
                         }
                     }
 
-                    oDeferred.resolve(jQuery.map(recentActivityForDevice, function (oRecentEntry) {
-                        return oRecentEntry.oItem;
-                    }));
+                    oDeferred.resolve(recentActivityForDevice);
                 };
 
             if (sap.ui.Device.system.desktop) {
@@ -258,13 +298,32 @@
             }
 
             fnLoad().done(function (aLoadedRecents) {
-                aLoadedRecents = aLoadedRecents || [];
+                oRecentActivities = that.getRecentActivitiesFromLoadedData(aLoadedRecents);
+                // If the current day is different than the recent one -
+                // add a new entry (for the current day's usage) to each usage array
+                var newDayAdded = false;
+                if (currentDay != oRecentActivities.recentDay) {
+                    that.addNewDay();
+                    oRecentActivities.recentDay = currentDay;
+                    newDayAdded = true;
+                }
 
                 //collect all unresolved activities for current device.
-                for (activityIndex = 0; activityIndex < aLoadedRecents.length && !bIsResolved; activityIndex++) {
-                    oActivity = aLoadedRecents[activityIndex];
+                for (activityIndex = 0; activityIndex < oRecentActivities.recentUsageArray.length && !bIsResolved; activityIndex++) {
+                    oActivity = oRecentActivities.recentUsageArray[activityIndex];
                     if (oActivity[sCurrentDevice] === undefined) {
-                        aIntentsToResolve.push(oActivity.oItem.appId);
+                        // check if url contains the mandatory parameters then add it to intents
+                        if(oActivity.oItem.url.indexOf("?")>-1){
+                            var mandatoryParams = oActivity.oItem.url.substring(oActivity.oItem.url.indexOf("?"));
+                            // remove search app parameters
+                            if(mandatoryParams.indexOf("&/")>-1){
+                                mandatoryParams = mandatoryParams.substring(0,mandatoryParams.indexOf("&/"));
+                            }
+                            aIntentsToResolve.push(oActivity.oItem.appId + mandatoryParams);
+                        }
+                        else{
+                            aIntentsToResolve.push(oActivity.oItem.appId);
+                        }
                     } else {
                         //we have resolved the activities from here, no need to continue.
                         bIsResolved = true;
@@ -278,10 +337,18 @@
                             //save resolutions in aLoadedRecents
                             bIsResolved = false;
 
-                            for (activityIndex = 0; activityIndex < aLoadedRecents.length && !bIsResolved; activityIndex++) {
-                                oActivity = aLoadedRecents[activityIndex];
+                            for (activityIndex = 0; activityIndex < oRecentActivities.recentUsageArray.length && !bIsResolved; activityIndex++) {
+                                oActivity = oRecentActivities.recentUsageArray[activityIndex];
                                 if (oActivity[sCurrentDevice] === undefined) {
-                                    var oItem = oResolved[oActivity.oItem.appId];
+                                    mandatoryParams = "";
+                                    if (oActivity.oItem.url.indexOf("?")>-1) {
+                                        mandatoryParams = oActivity.oItem.url.substring(oActivity.oItem.url.indexOf("?"));
+                                        // remove search app parameters
+                                        if (mandatoryParams.indexOf("&/")>-1) {
+                                            mandatoryParams = mandatoryParams.substring(0,mandatoryParams.indexOf("&/"));
+                                        }
+                                    }
+                                    var oItem = oResolved[oActivity.oItem.appId + mandatoryParams];
                                     oActivity[sCurrentDevice] = oItem && oItem.supported ? true : false;
                                 } else {
                                     bIsResolved = true;
@@ -289,8 +356,8 @@
                             }
 
                             // persist it.
-                            fnSave(aLoadedRecents).done(function (data) {
-                                oDeferred.resolve(getRecentItemsForDevice(aLoadedRecents));
+                            fnSave(oRecentActivities).done(function (data) {
+                                oDeferred.resolve(getRecentItemsForDevice(oRecentActivities));
                             }).fail(function () {
                                 oDeferred.reject();
                             });
@@ -299,14 +366,114 @@
                             oDeferred.reject(sMsg);
                         });
                 } else {
-                    getRecentItemsForDevice(aLoadedRecents);
+                    if (newDayAdded) {
+                        // If a new day was added, persist it.
+                        fnSave(oRecentActivities).done(function (data) {
+                            oDeferred.resolve(getRecentItemsForDevice(oRecentActivities));
+                        }).fail(function () {
+                            oDeferred.reject();
+                        });
+                    } else {
+                        oDeferred.resolve(getRecentItemsForDevice(oRecentActivities));
+                    }
                 }
             });
 
             return oDeferred.promise();
         };
-    }
 
+        this.getRecentItems = function () {
+            var oDeferred = new jQuery.Deferred();
+            //Return only the 30 most recent items
+            this.getRecentItemsHelper(30).done(function (recentItems) {
+                oDeferred.resolve(jQuery.map(recentItems, function (oRecentEntry) {
+                    return oRecentEntry.oItem;
+                }));
+            });
+            return oDeferred.promise();
+        };
+
+        this.getFrequentItems = function () {
+            var oDeferred = new jQuery.Deferred();
+            this.getRecentItemsHelper().done(function (recentItems) {
+                var activityIndex,
+                    iWorkingDaysCounter = 0,
+                    aFrequentActivity = [],
+                    oActivity,
+                    previousActivityDate = recentItems[0] ? new Date(recentItems[0].iTimestamp) : undefined,
+                    currentActivityDate;
+                //Go through the recent activities list and leave only activities from the last 30 working days
+                for (activityIndex = 0; activityIndex < recentItems.length && iWorkingDaysCounter < 30; activityIndex++) {
+                    oActivity = recentItems[activityIndex];
+                    //Add only activities that happened more than once
+                    if (oActivity.iCount > 1) {
+                        aFrequentActivity.push(oActivity);
+                    }
+                    currentActivityDate = new Date(oActivity.iTimestamp);
+                    if (previousActivityDate.toDateString() != currentActivityDate.toDateString()) {
+                        //If found an activity with a different date than the previous one, increase the days counter
+                        iWorkingDaysCounter++;
+                        previousActivityDate = currentActivityDate;
+                    }
+                }
+                //Sort in descending order according to the count
+                aFrequentActivity.sort(function(a,b){
+                    return b.iCount - a.iCount;
+                });
+                //Take only first 30 items (30 most frequent items)
+                aFrequentActivity = aFrequentActivity.slice(0,30);
+                oDeferred.resolve(jQuery.map(aFrequentActivity, function (oRecentEntry) {
+                    return oRecentEntry.oItem;
+                }));
+            });
+            return oDeferred.promise();
+        };
+
+        this.addNewDay = function () {
+            var activityIndex,
+                aCurrentActivityArray;
+            for (activityIndex = 0; activityIndex < oRecentActivities.recentUsageArray.length; activityIndex++) {
+                // Get the array of app usage
+                if (oRecentActivities.recentUsageArray[activityIndex].aUsageArray) {
+                    aCurrentActivityArray = oRecentActivities.recentUsageArray[activityIndex].aUsageArray;
+                } else {
+                    // If no array exists, add an empty array and also set iCount to 0
+                    aCurrentActivityArray = [];
+                    oRecentActivities.recentUsageArray[activityIndex].aUsageArray = aCurrentActivityArray;
+                    oRecentActivities.recentUsageArray[activityIndex].iCount = 0;
+                }
+
+                // Add an item in the Array for the new day
+                aCurrentActivityArray[aCurrentActivityArray.length] = 0;
+
+                // If the array size is > iMaximumDays, remove the first (oldest) entry and update the count accordingly
+                if (aCurrentActivityArray.length > iMaximumDays) {
+                    oRecentActivities.recentUsageArray[activityIndex].iCount -= aCurrentActivityArray[0];
+                    aCurrentActivityArray.shift();
+                }
+            }
+        };
+
+        this.getDayFromDateObj = function (dateObj) {
+            return (dateObj.getUTCFullYear() + "/" + (dateObj.getUTCMonth() + 1) + "/" + dateObj.getUTCDate());
+        };
+
+        this.getRecentActivitiesFromLoadedData = function (loadedRecents) {
+            var recentActivities;
+            if (jQuery.isArray(loadedRecents)) {
+                recentActivities = {
+                    recentDay : null,
+                    recentUsageArray : loadedRecents
+                };
+            } else {
+                recentActivities = loadedRecents || {
+                    recentDay : null,
+                    recentUsageArray : []
+                };
+            }
+            return recentActivities;
+        }
+    }
 
 
     /**
@@ -547,7 +714,7 @@
      * @see sap.ushell.services.Container#getService
      * @since 1.15.0
      */
-    sap.ushell.services.UserRecents = function () {
+    function UserRecents () {
         var oRecentSearches,
             oRecentApps,
             oRecentActivity,
@@ -580,9 +747,25 @@
          *     the updated LRU list
          * @since 1.32.0
          * @public
+         * @alias sap.ushell.services.UserRecents#addActivity
          */
         this.addActivity = function (oActionItem) {
             return oRecentActivity.newItem(oActionItem);
+        };
+
+        /**
+         * Clear the ist of activities 
+         *
+         * @since 1.54.0
+         * @public
+         * @alias sap.ushell.services.UserRecents#clearRecentActivities
+         */
+        this.clearRecentActivities = function (oActiontem) {
+            var oDeferred = new jQuery.Deferred();
+            oRecentActivity.clearAllActivities().done(function(){
+                oDeferred.resolve();
+            });
+            return oDeferred.promise();
         };
 
         /**
@@ -592,9 +775,23 @@
          *     the LRU list
          * @since 1.32.0
          * @public
+         * @alias sap.ushell.services.UserRecents#getRecentActivity
          */
         this.getRecentActivity = function () {
             return oRecentActivity.getRecentItems();
+        };
+
+        /**
+         * Returns a list of frequently used activities.
+         *
+         * @returns {object[]}
+         *     a list of frequently used activities
+         * @since 1.42.0
+         * @public
+         * @alias sap.ushell.services.UserRecents#getFrequentActivity
+         */
+        this.getFrequentActivity = function () {
+            return oRecentActivity.getFrequentItems();
         };
 
 
@@ -608,6 +805,7 @@
          *     the updated LRU list
          * @since 1.19.0
          * @public
+         * @alias sap.ushell.services.UserRecents#noticeDataSource
          */
         this.noticeDataSource = function (oDataSource) {
 
@@ -629,6 +827,7 @@
          *     the LRU list
          * @since 1.19.0
          * @public
+         * @alias sap.ushell.services.UserRecents#getRecentDataSources
          */
         this.getRecentDataSources = function () {
             return oRecentDataSources.getRecentItems();
@@ -644,6 +843,7 @@
          *     the updated LRU list
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.UserRecents#noticeSearch
          */
         this.noticeSearch = function (oSearchItem) {
             oRecentSearches.newItem(oSearchItem);
@@ -657,6 +857,7 @@
          *     the LRU list
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.UserRecents#getRecentSearches
          */
         this.getRecentSearches = function () {
             return oRecentSearches.getRecentItems();
@@ -671,6 +872,7 @@
          *     the updated LRU list
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.UserRecents#noticeApp
          */
         this.noticeApp = function (oAppItem) {
             oRecentApps.newItem(oAppItem);
@@ -684,6 +886,7 @@
          *     the LRU list
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.UserRecents#getRecentApps
          */
         this.getRecentApps = function () {
             return oRecentApps.getRecentItems();
@@ -795,13 +998,13 @@
 
         oRecentActivity = new RecentActivity(500, function (x, y) {
             if (x.appType === y.appType) {
-                if (x.appType !== 'Application') {
+                if (x.appType !== appType.APP) {
                     return x.url === y.url;
                 } else {
                     return x.appId === y.appId;
                 }
             } else {
-                if (x.appType === "Application" || y.appType === "Application") {
+                if (x.appType === appType.APP || y.appType === appType.APP) {
                     return (x.appId === y.appId) && (x.url === y.url);
                 } else {
                     return false;
@@ -815,5 +1018,7 @@
         oAppsUsage = new RecentAppsUsage(fnLoad.bind(this, oAppsUsagePersonalizer), fnSave.bind(this, oAppsUsagePersonalizer));
     };
 
-    sap.ushell.services.UserRecents.hasNoAdapter = true;
-}());
+    UserRecents.hasNoAdapter = true;
+    return UserRecents;
+
+}, true /* bExport */);

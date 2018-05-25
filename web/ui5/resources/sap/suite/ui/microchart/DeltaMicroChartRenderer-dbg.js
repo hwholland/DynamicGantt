@@ -1,12 +1,11 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-sap.ui.define(['jquery.sap.global'],
-	function() {
+sap.ui.define([ 'jquery.sap.global' ],
+	function(jQuery) {
 	"use strict";
 
 	/**

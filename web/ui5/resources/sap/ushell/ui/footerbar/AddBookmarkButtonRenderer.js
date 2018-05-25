@@ -1,2 +1,2 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-(function(){"use strict";jQuery.sap.declare("sap.ushell.ui.footerbar.AddBookmarkButtonRenderer");jQuery.sap.require("sap.ui.core.Renderer");jQuery.sap.require("sap.m.ButtonRenderer");sap.ushell.ui.footerbar.AddBookmarkButtonRenderer=sap.ui.core.Renderer.extend(sap.m.ButtonRenderer);}());
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(['sap/m/ButtonRenderer','sap/ui/core/Renderer'],function(B,R){"use strict";var A=R.extend(B);return A;},true);

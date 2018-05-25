@@ -55,7 +55,7 @@ jQuery.sap.require("sap.ca.ui.charts.Chart");
  * @class
  * Allows you to create a chart using vertical bars and lines to represent the data
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

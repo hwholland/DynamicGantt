@@ -1,10 +1,10 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview This file contains an annotation parser for factsheets.
  */
 
-(function() {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
 
  // Exception Object
     function ParameterException(parameter, template, url) {
@@ -17,10 +17,7 @@
         };
     }
 
-    jQuery.sap
-            .declare("sap.ushell.components.factsheet.tools.ODataUrlTemplating");
-
-    sap.ushell.components.factsheet.tools.ODataUrlTemplating = {
+    var ODataUrlTemplating = {
         ParameterException : ParameterException,
         resolve : function(template, data) {
             var sEntityUrl, value, parameter, i,
@@ -51,4 +48,8 @@
             return sEntityUrl;
         }
     };
-})();
+
+
+	return ODataUrlTemplating;
+
+}, /* bExport= */ true);

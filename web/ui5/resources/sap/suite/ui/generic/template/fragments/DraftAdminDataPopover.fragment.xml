@@ -5,7 +5,7 @@
 			 verticalScrolling="false"
 			 class="sapSmartTemplatesListReportPopover sapUiContentPadding">
 		<endButton>
-				<Button icon="sap-icon://decline" press="closeDraftAdminPopover" />
+				<Button icon="sap-icon://decline" tooltip="{i18n>CLOSE}" press="closeDraftAdminPopover" />
 		</endButton>
 
 		<VBox class="sapUiContentPadding">
@@ -14,7 +14,7 @@
 			</VBox>
 
 			<VBox visible="{= ${admin>/IsActiveEntity} === true  &amp;&amp; ${InProcessByUser} === ''}">
-				<Text text="{parts: [{path: 'i18n>UNSAVED_OBJECT_POPOVER_TEXT'},
+				<Text text="{parts: [{path: 'i18n>ST_GENERIC_UNSAVED_OBJECT_POPOVER_TEXT'},
 										{path: 'LastChangedByUserDescription'},
 										{path: 'LastChangeDateTime', type: 'sap.ui.model.type.DateTime'},
 										{path: 'i18n>LOCKED_OBJECT_POPOVER_NO_DATA_TEXT'},
@@ -24,7 +24,7 @@
 			</VBox>
 
 			<VBox visible="{= ${admin>/IsActiveEntity} === true  &amp;&amp; !!${InProcessByUser}}">
-				<Text text="{parts: [{path: 'i18n>LOCKED_OBJECT_POPOVER_TEXT'},
+				<Text text="{parts: [{path: 'i18n>ST_GENERIC_LOCKED_OBJECT_POPOVER_TEXT'},
 										{path: 'InProcessByUserDescription'},
 										{path: 'LastChangeDateTime', type: 'sap.ui.model.type.DateTime'},
 										{path: 'i18n>LOCKED_OBJECT_POPOVER_NO_DATA_TEXT'},

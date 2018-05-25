@@ -7,9 +7,9 @@
 sap.ui.define([
 	"./library", "sap/ui/core/Control", "sap/ui/layout/Splitter", "sap/ui/layout/SplitterLayoutData", "sap/ui/core/Orientation",
 	"./legend/LegendContainer", "./control/Toolbar", "./control/AssociateContainer",
-	"./config/TimeHorizon", "./misc/Utility"
+	"./config/TimeHorizon", "./misc/Utility", "./misc/Format"
 ], function (library, Control, Splitter, SplitterLayoutData, Orientation, LegendContainer, Toolbar, AssociateContainer,
-	TimeHorizon, Utility) {
+	TimeHorizon, Utility, Format) {
 	"use strict";
 
 	/**
@@ -42,7 +42,7 @@ sap.ui.define([
 	 * @extend sap.ui.core.Control
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -90,39 +90,51 @@ sap.ui.define([
 				enableVerticalLine: {type: "boolean", defaultValue: true},
 
 				/**
+				 * Switch to enable and disable adhoc lines representing milestones and events along the time axis.
+				 *
+				 * When this value is set, it overrides the corresponding value on instances of aggregation <code>ganttCharts</code>.
+				 */
+				enableAdhocLine: {type: "boolean", defaultValue: true},
+
+				/**
 				 * Definitions of paint servers used for advanced shape features around SVG fill, stroke, and filter attributes.
 				 * 
 				 * If this property is provided, the paint server definition of the SVG is rendered. Method <code>getDefString()</code> should be
 				 * implemented by all paint server classes that are passed in in this property. It is easier to assign a common paint server definition
 				 * in this class instead of in separate instances of <code>sap.gantt.GanttChartBase</code>. Then the definition is 
 				 * rendered only once.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.def.SvgDefs</code>. Otherwise some properties you set may not function properly.
 				 */
-				svgDefs: {type: "sap.gantt.def.SvgDefs", defaultValue: null},
+				svgDefs: {type: "object", defaultValue: null},
 
 				/**
 				 * List of available modes. To apply modes to the toolbar and shapes, further configuration is needed. (specifically, 
 				 * in property <code>toolbarSchemes</code>, and properties <code>toolbarSchemes</code> and <code>shapes</code> in 
 				 * the <code>GanttChartBase</code> class)If not provided, a default configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Mode[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				modes: {type: "array", defaultValue: sap.gantt.config.DEFAULT_MODES},
+				modes: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_MODES},
 
 				/**
 				 * List of available toolbar schemes. If not provided, a default configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ToolbarScheme[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				toolbarSchemes: {type: "array", defaultValue: sap.gantt.config.DEFAULT_CONTAINER_TOOLBAR_SCHEMES},
+				toolbarSchemes: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_CONTAINER_TOOLBAR_SCHEMES},
 
 				/**
 				 * List of available hierarchies. If not provided, a default configuration is provided.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Hierarchy[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				hierarchies: {type: "array", defaultValue: sap.gantt.config.DEFAULT_HIERARCHYS},
+				hierarchies: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_HIERARCHYS},
 
 				/**
 				 * Configuration of container layouts.
 				 * 
 				 * This configuration affects the data source selection ComboBox in the Container Toolbar. When the selection
 				 * changes, the <code>ganttChartChangeRequested</code> event that is triggered includes the corresponding layout key.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ContainerLayout[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				containerLayouts: {type: "array", defaultValue: sap.gantt.config.DEFAULT_CONTAINER_LAYOUTS},
+				containerLayouts: {type: "object[]", defaultValue: sap.gantt.config.DEFAULT_CONTAINER_LAYOUTS},
 
 				/**
 				 * Current container layout key.
@@ -135,8 +147,9 @@ sap.ui.define([
 				 * Define the amount of units to change the time zoom slider.
 				 *
 				 * See {@link sap.m.Slider#setStep}
+				 * @deprecated As of version 1.44, please set the property 'stepCountOfSlider' in sap.gantt.config.TimeZoomGroup.
 				 */
-				sliderStep: {type: "int", defaultValue: 10},
+				sliderStep: {type: "int", defautValue: undefined},
 
 				/**
 				 * Define the maximum number of Gantt charts to be displayed on the same screen. 
@@ -281,13 +294,14 @@ sap.ui.define([
 			type: sap.gantt.control.ToolbarType.Global,
 			sourceId: sap.gantt.config.DEFAULT_CONTAINER_SINGLE_LAYOUT_KEY
 		});
-		this._oToolbar.setSliderStep(this.getSliderStep());
 		this.setAggregation("_toolbar", this._oToolbar);
 		this._oToolbar.attachSourceChange(this._onToolbarSourceChange, this);
 		this._oToolbar.attachLayoutChange(this._onToolbarLayoutChange, this);
 		this._oToolbar.attachExpandChartChange(this._onToolbarExpandChartChange, this);
-		this._oToolbar.attachZoomRateChange(this._onToolbarZoomRateChange, this);
+		this._oToolbar.attachZoomStopChange(this._onToolbarZoomStopChange, this);
 		this._oToolbar.attachSettingsChange(this._onToolbarSettingsChange, this);
+		this._oToolbar.attachBirdEye(this._onToolbarBirdEye, this);
+		this._oToolbar.attachEvent("_zoomControlTypeChange", this._onToolbarZoomControlTypeChange, this);
 		this._oToolbar.data("holder", this);
 
 		this._oSplitter = new Splitter({
@@ -334,13 +348,7 @@ sap.ui.define([
 		}
 		return this;
 	};
-
-	GanttChartContainer.prototype.setSliderStep = function (step) {
-		this.setProperty("sliderStep", step);
-		this._oToolbar.setSliderStep(step);
-		return this;
-	};
-
+	
 	GanttChartContainer.prototype.setTimeZoomRate = function (fTimeZoomRate) {
 		var aGanttCharts = this.getGanttCharts();
 		var i, oGanttChart;
@@ -348,7 +356,16 @@ sap.ui.define([
 			oGanttChart = aGanttCharts[i];
 			oGanttChart.setTimeZoomRate(fTimeZoomRate);
 		}
-		this._setToolbarZoomInfo();
+		return this;
+	};
+	
+	GanttChartContainer.prototype.setTimeZoomStop = function (oTimeZoomStop) {
+		var aGanttCharts = this.getGanttCharts();
+		var i, oGanttChart;
+		for (i = 0; i < aGanttCharts.length; i++) {
+			oGanttChart = aGanttCharts[i];
+			oGanttChart.setTimeZoomStop(oTimeZoomStop);
+		}
 		return this;
 	};
 
@@ -424,15 +441,18 @@ sap.ui.define([
 		return this;
 	};
 
-	GanttChartContainer.prototype.setEnableTimeScrollSync = function (bEnableTimeScrollSync) {
-		this.setProperty("enableTimeScrollSync", bEnableTimeScrollSync);
+	GanttChartContainer.prototype.setEnableAdhocLine = function (bEnableAdhocLine) {
+		this.setProperty("enableAdhocLine", bEnableAdhocLine);
 		var aGanttCharts = this.getGanttCharts();
 		for (var i = 0; i < aGanttCharts.length; i++) {
-			aGanttCharts[i].detachHorizontalScroll(this._onGanttChartHSBScroll, this);
-			if (bEnableTimeScrollSync) {
-				aGanttCharts[i].attachHorizontalScroll(this._onGanttChartHSBScroll, this);
-			}
+			aGanttCharts[i].setEnableAdhocLine(bEnableAdhocLine);
 		}
+		this.getAggregation("_toolbar").setEnableAdhocLine(bEnableAdhocLine);
+		return this;
+	};
+
+	GanttChartContainer.prototype.setEnableTimeScrollSync = function (bEnableTimeScrollSync) {
+		this.setProperty("enableTimeScrollSync", bEnableTimeScrollSync);
 		this.getAggregation("_toolbar").setEnableTimeScrollSync(bEnableTimeScrollSync);
 		return this;
 	};
@@ -443,7 +463,9 @@ sap.ui.define([
 			return this;
 		}
 		this.setProperty("containerLayoutKey", sContainerLayoutKey);
+
 		this._oToolbar.setSourceId(sContainerLayoutKey);
+
 		if (this.getContainerLayouts()) {
 			this.switchOrientation(null, true);
 		}
@@ -456,7 +478,7 @@ sap.ui.define([
 			this._oToolbar.setLegend(new AssociateContainer({
 				content: oLegendContainer.getId()
 			}));
-		} 
+		}
 		return this;
 	};
 
@@ -505,11 +527,15 @@ sap.ui.define([
 				sSelectionPanelSize = oLayoutData ? oLayoutData.getSize() : sSelectionPanelSize;
 			}
 		}
-		oGanttChart.setSelectionPanelSize(sSelectionPanelSize);
-		//keep the zoom rate
-		var fRate = oFirstGanttChart.getTimeZoomRate();
-		oGanttChart.setTimeZoomRate(fRate);
-
+		if ( oGanttChart === oFirstGanttChart){
+			this._oToolbar.setZoomLevel(oGanttChart.getAxisTimeStrategy().getZoomLevel());
+		} else {
+			oGanttChart.setSelectionPanelSize(sSelectionPanelSize);
+			oGanttChart.getAxisTimeStrategy().setZoomLevel(this._oToolbar.getZoomLevel());
+			oGanttChart.getAxisTimeStrategy().setZoomLevels(this._oToolbar.getZoomLevels());
+			oGanttChart.getAxisTimeStrategy().setTimeLineOption(oFirstGanttChart.getAxisTimeStrategy().getTimeLineOption());
+			oGanttChart.getAxisTimeStrategy().setVisibleHorizon(oFirstGanttChart.getAxisTimeStrategy().getVisibleHorizon());
+		}
 		// wrap association container
 		var oAssociateContainer = new AssociateContainer({
 			content: oGanttChart.getId(),
@@ -525,20 +551,84 @@ sap.ui.define([
 		this._adjustSplitterLayoutData(bReadSPConfig, bReadConfig);
 		this._oSplitter.triggerResize(true);
 		// attach events
-		if (this.getEnableTimeScrollSync()) {
-			oGanttChart.attachHorizontalScroll(this._onGanttChartHSBScroll, this);
-		}
-
+		oGanttChart.attachEvent("_visibleHorizonUpdate", this._onGanttChartVisibleHorizonUpdate, this);
+		oGanttChart.attachEvent("_timePeriodZoomStatusChange", this._onGanttChartTimePeriodZoomStatusChange, this);
+		oGanttChart.attachEvent("_timePeriodZoomOperation", this._onGanttChartTimePeriodZoomOperation, this);
 		oGanttChart.attachSplitterResize(this._onViewSplitterResize, this);
 		oGanttChart.attachGanttChartSwitchRequested(this._onGanttChartSwitchRequested, this);
 		oGanttChart.attachChartDragEnter(this._onChartDragEnter, this);
 		oGanttChart.attachChartDragLeave(this._onChartDragLeave, this);
-		oGanttChart.attachShapeDragEnd(this._onChartDragEnd, this);
+		oGanttChart.attachShapeDragEnd(this._onShapeDragEnd, this);
 		oGanttChart.attachTreeTableToggleEvent(this._onTreeTableToggle, this);
 		oGanttChart.attachEvent("_zoomInfoUpdated", this._onZoomInfoUpdated, this);
-		oGanttChart.attachEvent("_shapesUpdated", this._onShapesUpdated, this);
-
+		oGanttChart.getAxisTimeStrategy()._updateZoomControlType(this._oToolbar._getZoomControlType());
 		jQuery.sap.measure.end("GanttChartContainer _insertGanttChart");
+	};
+
+	GanttChartContainer.prototype._onGanttChartVisibleHorizonUpdate = function(oEvent){
+		var oParameter = oEvent.getParameters();
+		var aGanttCharts = this.getGanttCharts();
+		if (!this.getEnableTimeScrollSync()) {
+			if (oParameter.reasonCode === "visibleHorizonUpdated"){
+				//in this default situation we will handle sync all gantt charts when user directly set visible horizon in axisTimeStartegy
+				for (var i = 0; i < aGanttCharts.length; i++){
+					if (oEvent.getSource().getId() === aGanttCharts[i].getId()){
+						continue;
+					}
+
+					aGanttCharts[i].syncVisibleHorizon(oParameter.visibleHorizon, oParameter.visibleWidth, true);
+				}
+			} else {
+				//at here we can handle some strange and specific sync logic, such as mouse wheel zoom
+				var sSyncFunctionName;
+				if (oParameter.reasonCode === "mouseWheelZoom"){
+					sSyncFunctionName = "syncMouseWheelZoom";
+				} 
+
+				if (sSyncFunctionName){
+					for (var i = 0; i < aGanttCharts.length; i++){
+						if (oEvent.getSource().getId() === aGanttCharts[i].getId()){
+							continue;
+						}
+						aGanttCharts[i][sSyncFunctionName](oParameter);
+					}
+				}
+			}
+
+		} else {
+			//here we only need care default sync because the time scroll sync is set as true 
+			for (var i = 0; i < aGanttCharts.length; i++){
+				if (oEvent.getSource().getId() === aGanttCharts[i].getId()){
+					continue;
+				}
+
+				aGanttCharts[i].syncVisibleHorizon(oParameter.visibleHorizon, oParameter.visibleWidth);
+			}
+		}
+	};
+
+	GanttChartContainer.prototype._onGanttChartTimePeriodZoomStatusChange = function(oEvent){
+		var oParameter = oEvent.getParameters();
+		var aGanttCharts = this.getGanttCharts();
+		for (var i = 0; i < aGanttCharts.length; i++){
+			if (oEvent.getSource().getId() === aGanttCharts[i].getId()){
+				continue;
+			}
+
+			aGanttCharts[i].syncTimePeriodZoomStatus(oParameter.isActive);
+		}
+	};
+
+	GanttChartContainer.prototype._onGanttChartTimePeriodZoomOperation = function (oEvent){
+		var bTimeScrollSync = this.getEnableTimeScrollSync();
+		var aGanttCharts = this.getGanttCharts();
+		for (var i = 0; i < aGanttCharts.length; i++){
+			if (oEvent.getSource().getId() === aGanttCharts[i].getId()){
+				continue;
+			}
+			var sOrientation = this._oSplitter.getOrientation();
+			aGanttCharts[i].syncTimePeriodZoomOperation(oEvent, bTimeScrollSync, sOrientation);
+		}
 	};
 
 	/**
@@ -637,12 +727,11 @@ sap.ui.define([
 			this._adjustSplitterLayoutData();
 			this._oSplitter.triggerResize(true);
 			// detach events
-			oGanttChart.detachHorizontalScroll(this._onGanttChartHSBScroll, this);
 			oGanttChart.detachSplitterResize(this._onViewSplitterResize, this);
 			oGanttChart.detachGanttChartSwitchRequested(this._onGanttChartSwitchRequested, this);
 			oGanttChart.detachChartDragEnter(this._onChartDragEnter, this);
 			oGanttChart.detachChartDragLeave(this._onChartDragLeave, this);
-			oGanttChart.detachShapeDragEnd(this._onChartDragEnd, this);
+			oGanttChart.detachShapeDragEnd(this._onShapeDragEnd, this);
 			oGanttChart.detachTreeTableToggleEvent(this._onTreeTableToggle, this);
 		}
 	};
@@ -654,6 +743,7 @@ sap.ui.define([
 		this._oToolbar.setEnableCursorLine(this.getEnableCursorLine());
 		this._oToolbar.setEnableNowLine(this.getEnableNowLine());
 		this._oToolbar.setEnableVerticalLine(this.getEnableVerticalLine());
+		this._oToolbar.setEnableAdhocLine(this.getEnableAdhocLine());
 
 		var aGanttCharts = this.getGanttCharts();
 		// Views need to respect the setting in Gantt, especially when changing
@@ -663,6 +753,7 @@ sap.ui.define([
 			oGanttChart.setEnableCursorLine(this.getEnableCursorLine());
 			oGanttChart.setEnableNowLine(this.getEnableNowLine());
 			oGanttChart.setEnableVerticalLine(this.getEnableVerticalLine());
+			oGanttChart.setEnableAdhocLine(this.getEnableAdhocLine());
 		}
 	};
 
@@ -680,18 +771,48 @@ sap.ui.define([
 		this._oToolbar.detachSourceChange(this._onToolbarSourceChange, this);
 		this._oToolbar.detachLayoutChange(this._onToolbarLayoutChange, this);
 		this._oToolbar.detachExpandChartChange(this._onToolbarExpandChartChange, this);
-		this._oToolbar.detachZoomRateChange(this._onToolbarZoomRateChange, this);
+		this._oToolbar.detachZoomStopChange(this._onToolbarZoomStopChange, this);
 		this._oToolbar.detachSettingsChange(this._onToolbarSettingsChange, this);
+		this._oToolbar.detachBirdEye(this._onToolbarBirdEye, this);
+		this._oToolbar.detachEvent("_zoomControlTypeChange", this._onToolbarZoomControlTypeChange, this);
 	};
-	
-	GanttChartContainer.prototype._onGanttChartHSBScroll = function(oEvent){
-		var fLeftOffsetRate = oEvent.getParameters().leftOffsetRate;
+
+	GanttChartContainer.prototype._onToolbarBirdEye = function (oEvent) {
 		var aGanttCharts = this.getGanttCharts();
+		var oTargetStartTime;
+		var oTargetEndTime;
+		var oParameter = oEvent.getParameters();
+		var sBirdEyeRange = oParameter.birdEyeRange;
+
 		for (var i = 0; i < aGanttCharts.length; i++){
-			if (oEvent.oSource.getId() === aGanttCharts[i].getId()){
-				continue;
+			var oLargestHorizon = aGanttCharts[i].getLargestHorizonByDataRange(sBirdEyeRange);
+			if (oLargestHorizon) {
+				var oStartTime = Format.abapTimestampToDate(oLargestHorizon.getStartTime());
+				var oEndTime = Format.abapTimestampToDate(oLargestHorizon.getEndTime());
+				if (!oTargetStartTime && !oTargetEndTime){
+					oTargetStartTime = new Date();
+					oTargetStartTime.setTime(oStartTime.getTime());
+					oTargetEndTime = new Date();
+					oTargetEndTime.setTime(oEndTime.getTime());
+				} else {
+					if (oStartTime.getTime() < oTargetStartTime.getTime()){
+						oTargetStartTime.setTime(oStartTime.getTime());
+					}
+					if (oTargetEndTime.getTime() < oEndTime.getTime()){
+						oTargetEndTime.setTime(oEndTime.getTime());
+					}
+				}
 			}
-			aGanttCharts[i].jumpToPosition(fLeftOffsetRate);
+		}
+		if (oTargetStartTime && oTargetEndTime) {
+			var oTargetVisibleHorizon = new TimeHorizon({
+				startTime: oTargetStartTime,
+				endTime: oTargetEndTime
+			});
+			
+			for (i = 0; i < aGanttCharts.length; i++){
+				aGanttCharts[i].syncVisibleHorizon(oTargetVisibleHorizon);
+			}
 		}
 	};
 
@@ -701,62 +822,25 @@ sap.ui.define([
 		}
 	};
 	
-	GanttChartContainer.prototype._onShapesUpdated = function (oEvent) {
-		var i, oGanttChart;
-		var aGanttCharts = this.getGanttCharts();
-		if (!this._bInitHorizonApplied) {
-			for (i = 0; i < aGanttCharts.length; i++) {
-				oGanttChart = aGanttCharts[i];
-				oGanttChart.jumpToPosition();
-			}
-			this._bInitHorizonApplied = true;
-		}
-	};
-	
 	GanttChartContainer.prototype._onZoomInfoUpdated = function (oEvent) {
-		var i, oGanttChart;
-		var aGanttCharts = this.getGanttCharts();
-		
-		var fLastZoomRate = this._oToolbar.getZoomRate();
-		var oZoomInfo = oEvent.getParameter("zoomInfo");
-		if (!fLastZoomRate
-			|| !Utility.floatEqual(fLastZoomRate, oZoomInfo.determinedByConfig.fRate)) {
-			for (i = 0; i < aGanttCharts.length; i++) {
-				if (oEvent.oSource.getId() !== aGanttCharts[i].getId()){
-					oGanttChart = aGanttCharts[i];
-					oGanttChart.setTimeZoomRate(oZoomInfo.determinedByConfig.fRate);
-				}
-			}
-		}
+		var oSourceGantt = oEvent.getSource();
+		var bZoomLevelChanged = oEvent.getParameter("zoomLevelChanged");
 
-		this._setToolbarZoomInfo(oEvent);
-	};
-	
-	GanttChartContainer.prototype._setToolbarZoomInfo = function (oEvent) {
-		var oZoomInfo;
-		var aGanttCharts = this.getGanttCharts();
-		for (var i = 0; i < aGanttCharts.length; i++){
-			var oCurZoomInfo;
-			if (oEvent && oEvent.oSource.getId() === aGanttCharts[i].getId()){
-				oCurZoomInfo = oEvent.getParameter("zoomInfo");
-			} else {
-				oCurZoomInfo = aGanttCharts[i].getZoomInfo();
-			}
-			if (!oZoomInfo || (oCurZoomInfo && oZoomInfo.determinedByChartWidth.fMinRate < oCurZoomInfo.determinedByChartWidth.fMinRate)) {
-				oZoomInfo = oCurZoomInfo;
-			}
+		if (bZoomLevelChanged){
+			this._oToolbar.updateZoomLevel(oSourceGantt.getAxisTime().getZoomStrategy().getZoomLevel());
 		}
-		this._oToolbar.setZoomInfo(oZoomInfo);
 	};
+
 	
 	GanttChartContainer.prototype._syncSelectionPanelSizeBetweenViews = function (oEvent) {
 		var aGanttCharts = this.getGanttCharts();
 		for (var i = 0; i < aGanttCharts.length; i++) {
-			if (oEvent.oSource.getId() === aGanttCharts[i].getId() && aGanttCharts.length > 1) {
+			if (oEvent.getSource().getId() === aGanttCharts[i].getId() && aGanttCharts.length > 1) {
 				continue;
 			}
 			var selectionPanelSize = oEvent.getParameter("newSizes")[0];
 			var ganttChartSize = oEvent.getParameter("newSizes")[1];
+			
 			if (selectionPanelSize >= 0 && (selectionPanelSize + ganttChartSize) !== 0) {
 				var selectionPanelSizeInPercentage = (100 * selectionPanelSize / (selectionPanelSize + ganttChartSize)).toFixed(0);
 				aGanttCharts[i].setSelectionPanelSize(selectionPanelSizeInPercentage + "%", true);
@@ -773,6 +857,7 @@ sap.ui.define([
 			action: "switchGanttChart",
 			hierarchyKey: oEvent.getParameter("hierarchyKey"),
 			oldHierarchyKey: oEvent.getParameter("oldHierarchyKey"),
+			oldMode: oEvent.getParameter("oldMode"),
 			ganttChartIndex: this.getGanttCharts().indexOf(oEvent.getSource())
 		});
 	};
@@ -795,7 +880,8 @@ sap.ui.define([
 			case "add":
 				this.fireGanttChartChangeRequested({
 					action: "addGanttChart",
-					hierarchyKey: oEventValue.hierarchyKey
+					hierarchyKey: oEventValue.hierarchyKey,
+					ganttChartIndex: this.getGanttCharts().length
 				});
 				break;
 			case "less":
@@ -817,7 +903,6 @@ sap.ui.define([
 		}
 
 		this.setContainerLayoutKey(oEvent.getParameter("id"));
-		this._bInitHorizonApplied = false;
 		this.fireGanttChartChangeRequested({
 			action: "switchContainerLayout",
 			containerLayoutKey: oEvent.getParameter("id")
@@ -835,20 +920,33 @@ sap.ui.define([
 
 	};
 
-	GanttChartContainer.prototype._onToolbarZoomRateChange = function (oEvent) {
+	GanttChartContainer.prototype._onToolbarZoomStopChange = function (oEvent) {
 		var aGanttCharts = this.getGanttCharts();
-		var i, oGanttChart;
-		for (i = 0; i < aGanttCharts.length; i++) {
-			oGanttChart = aGanttCharts[i];
-			oGanttChart.setTimeZoomRate(oEvent.getParameter("zoomRate"));
-		}
+
+		aGanttCharts.forEach(function (oGanttChart){
+			oGanttChart.getAxisTimeStrategy().updateStopInfo({
+				index: oEvent.getParameter("index"),
+				selectedItem: oEvent.getParameter("selectedItem")
+			});
+		});
 	};
-	
+
+	GanttChartContainer.prototype._onToolbarZoomControlTypeChange = function (oEvent) {
+		this._handleZoomControlType(oEvent.getParameter("zoomControlType"));
+	};
+
+	GanttChartContainer.prototype._handleZoomControlType = function (sZoomControlType) {
+		var aGanttCharts = this.getGanttCharts();
+		aGanttCharts.forEach(function (oGanttChart){
+			oGanttChart.getAxisTimeStrategy()._updateZoomControlType(sZoomControlType);
+		});
+	};
+
 	GanttChartContainer.prototype._onChartDragEnter = function (oEvent) {
 		//do the following only when the mouse is still down
 		var oSourceEvent = oEvent.getParameter("originEvent");
 		var oGanttChart = oEvent.getSource();
-		if (oSourceEvent.button == 0 && oSourceEvent.buttons !== 0 && this._oDraggingSource !== undefined) {
+		if (oSourceEvent.button === 0 && oSourceEvent.buttons !== 0 && this._oDraggingSource !== undefined) {
 			oGanttChart.setDraggingData(this._oDraggingSource);
 			this._oDraggingSource = undefined;
 		}else {
@@ -856,7 +954,7 @@ sap.ui.define([
 			oGanttChart.setDraggingData(this._oDraggingSource);
 		}
 	};
-	
+
 	GanttChartContainer.prototype._onChartDragLeave = function (oEvent) {
 		var oParam = oEvent.getParameters();
 		if (oParam.draggingSource !== undefined) {
@@ -866,11 +964,22 @@ sap.ui.define([
 			this._oDraggingSource = undefined;
 		}
 	};
-	
-	GanttChartContainer.prototype._onChartDragEnd = function (oEvent) {
+
+	GanttChartContainer.prototype._onShapeDragEnd = function (oEvent) {
 		this._oDraggingSource = undefined;
+
+		// On multiple Gantt scenario, when dragging a shape from one to another, 
+		// Shape selection is wrong on the source Gantt after D&D
+		// So explicitly set event status to shapeDragEnd on both Gantt instances fix the issue.
+		this.getGanttCharts().forEach(function(oItem){
+			var oChart = oItem.getAggregation("_chart");
+			// Need ensure on GanttChart instance
+			if (oChart && oChart._setEventStatus) {
+				oChart._setEventStatus("shapeDragEnd");
+			}
+		});
 	};
-	
+
 	GanttChartContainer.prototype._onToolbarSettingsChange = function(oEvent){
 		var oParameters = oEvent.getParameters();
 		for (var i = 0; i < oParameters.length; i++) {
@@ -895,11 +1004,15 @@ sap.ui.define([
 						this.setEnableVerticalLine(oParameters[i].value);
 					}
 					break;
+				case sap.gantt.config.SETTING_ITEM_ENABLE_ADHOC_LINE_KEY:
+					if (this.getEnableAdhocLine() !== oParameters[i].value) {
+						this.setEnableAdhocLine(oParameters[i].value);
+					}
+					break;
 				default:
 					this.fireCustomSettingChange(oParameters[i]);
 			}
 		}
-		
 	};
 
 	/**

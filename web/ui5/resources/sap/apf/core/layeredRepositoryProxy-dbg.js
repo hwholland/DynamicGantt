@@ -1,3 +1,18 @@
+/*!
+ * SAP APF Analysis Path Framework
+ *
+ * (c) Copyright 2012-2018 SAP SE. All rights reserved
+ */
+/*global sap, jQuery*/
+/** typedef appeaseESLint
+ * @property fl
+ * @property getLanguage
+ * @property applySettings
+ * @property expect
+ * @property Deferred
+ * @property when
+ */
+
 jQuery.sap.declare("sap.apf.core.layeredRepositoryProxy");
 jQuery.sap.require('sap.apf.utils.utils');
 jQuery.sap.require('sap.apf.core.constants');
@@ -8,7 +23,7 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 	'use strict';
 	/**
 	 * @param {String} serviceConfiguration -  this param is yet of no interest in case of layered repository proxy
-	 * @param {object] inject injection of instances and constructor functions
+	 * @param {object} inject injection of instances and constructor functions
 	 * @param {sap.apf.core.MessageHandler} inject.instances.messageHandler
 	 * @param {sap.ui.fl.LrepConnector} inject.constructors.LrepConnector connector interface to the layered repository
 	 */
@@ -20,6 +35,8 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 		var textfileName = 'text.properties';
 		var applicationTextsTable = new sap.apf.utils.Hashtable(inject.instances.messageHandler);
 		var applicationConfigurationsTable = new sap.apf.utils.Hashtable(inject.instances.messageHandler);
+		var changeList;
+		var changeListHasBeenFetched = false;
 		/**
 		 * @private
 		 * @returns {sap.ui.fl.LrepConnector} connector
@@ -28,16 +45,18 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 			return connector; 
 		};
 		/**
-		 * odata get operation for specific single entity (application or configuration)
-		 * @param {string} entitySet value from sap.apf.core.constants.entitySets
+		 * odata get operation for specific single entity (application or configuration) in asynchronous mode
+		 * @param {string} entitySetName name from sap.apf.core.constants.entitySets
 		 * @param {function} callback function of form fn(entityData, metadata, messageObject)
 		 * @param {object[]} [inputParameters]
 		 * @param {string[]} [selectList] holds all properties, that shall be in the select list
-		 * @param {boolean} [async] Boolean value has to be set to false, if request should be send synchronously. Default value is true. 
 		 * @param {string} application guid of the Application
+		 * @param {object} options
 		 * @param {string} options.layer has values VENDOR, PARTNER, CUSTOMER, and ALL, if the highest conf shall be read.
+		 * @param {object} directives
+		 * @param {object} directives.noMetadata true/false indicates, that no metadata should be read
 		 */
-		this.readEntity = function(entitySetName, callback, inputParameters, selectList, async, application, options) {
+		this.readEntity = function(entitySetName, callback, inputParameters, selectList, application, options, directives) {
 			var configuration = inputParameters[0].value;
 			var applicationNamespace = getApplicationNamespace(application);
 			var promises = [];
@@ -57,16 +76,34 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 
 			messageHandler.check(entitySetName === 'configuration', "layered repository proxy - only read entity of configuration supported");
 
-			if (async !== undefined && async === false) {
-				return readConfigurationsSync(callback, configuration, application, selectList, options);
-			}
+			if (directives && directives.noMetadata) {
+				connector.getStaticResource(applicationNamespace, configuration, 'apfconfiguration').then(function(results){
 
+					data = {
+							Application : application
+					};
+
+					configFile = results.response;
+					if (typeof configFile === 'string') {
+						data.SerializedAnalyticalConfiguration = configFile;
+					} else {
+						data.SerializedAnalyticalConfiguration = JSON.stringify(configFile);
+					}
+
+					data.AnalyticalConfiguration = configuration;
+					callback(data, getMetadata());
+
+				}, function(error) {
+					callback(undefined, getMetadata(), createErrorMessageObject({ code : '5221', aParameters : [ application, configuration]}, error && error.messages));
+				});
+				return;
+			}
 			if (selectList === undefined || selectList.indexOf("SerializedAnalyticalConfiguration") >= 0) {
 				serializedConfigurationRequested = true;
 				if (layer === 'VENDOR') {
 					var mOptions = {
 							contentType : 'application/json'
-						};
+					};
 					var aParams = [];
 					aParams.push({ name : "layer", value : layer });
 					aParams.push({ name: "dt", value: "true" });
@@ -95,7 +132,7 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 				data = renameProperties(application, metadata);
 				if (serializedConfigurationRequested) {
 					configFile = aResults[configurationDataIndex].response;
-					if (configFile instanceof String) {
+					if (typeof configFile === 'string') {
 						data.SerializedAnalyticalConfiguration = configFile;
 					} else {
 						data.SerializedAnalyticalConfiguration = JSON.stringify(configFile);
@@ -114,7 +151,7 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 				}
 				callback(data, getMetadata());
 			}, function(error) {
-				callback(undefined, getMetadata(), createErrorMessageObject('5201'));
+				callback(undefined, getMetadata(), createErrorMessageObject({ code : '5221', aParameters : [ application, configuration]}, error && error.messages));
 			});
 
 		};
@@ -150,12 +187,11 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 
 		};
 		/**
-			 * multiple reads in a batch operation
-			 * @param {object[]} requestConfigurations with properties entitySetName, filter, selectList, inputParameters, method
-			 * @param {function} callback with parameters data - array with results and messageObject
-			 * @param {boolean} [async] Boolean value has to be set to false, if request should be send synchronously. Default value is true. 
-			 */
-		this.readCollectionsInBatch = function(requestConfigurations, callback, async) {
+		 * multiple reads in a batch operation - asynchronous
+		 * @param {object[]} requestConfigurations with properties entitySetName, filter, selectList, inputParameters, method
+		 * @param {function} callback with parameters data - array with results and messageObject 
+		 */
+		this.readCollectionsInBatch = function(requestConfigurations, callback) {
 			var numberOfRequests = requestConfigurations.length;
 			var result = [];
 			var requestsFulfilled = 0;
@@ -175,22 +211,21 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 			}
 			for(var i = 0; i < numberOfRequests; i++) {
 				var request = requestConfigurations[i];
-				this.readCollection(request.entitySetName, createCallbackForReadCollection(i), request.inputParameters, request.selectList, request.filter, async);
+				this.readCollection(request.entitySetName, createCallbackForReadCollection(i), request.inputParameters, request.selectList, request.filter);
 			}
 		};
 		/**
-		* odata get operation for specific type (application or configuration)
-		* @param {string} entitySetName value from sap.apf.core.constants.entitySets
-		* @param {function} callback function of form fn(result, metadata, messageObject)
-		* @param {object[]|undefined} [inputParameters]
-		* @param {string[]|undefined} [selectList] holds all properties, that shall be in the select list
-		* @param {sap.apf.core.utils.Filter} [filter] additional filter expressions
-		* @param {boolean} [async] Boolean value has to be set to false, if request should be send synchronously. Default value is true. 
-		* @param {string} options.layer has values VENDOR, PARTNER, CUSTOMER, and ALL, if the highest conf shall be read.
-		*/
-		this.readCollection = function(entitySetName, callback, inputParameters, selectList, filter, async, options) {
-			var that = this;
-			var aTerms, application, result;
+		 * odata get operation for specific type (application or configuration) asynchronously
+		 * @param {string} entitySetName value from sap.apf.core.constants.entitySets
+		 * @param {function} callback function of form fn(result, metadata, messageObject)
+		 * @param {object[]|undefined} [inputParameters]
+		 * @param {string[]|undefined} [selectList] holds all properties, that shall be in the select list
+		 * @param {sap.apf.core.utils.Filter} [filter] additional filter expressions
+		 * @param {object} options
+		 * @param {string} options.layer has values VENDOR, PARTNER, CUSTOMER, and ALL, if the highest conf shall be read.
+		 */
+		this.readCollection = function(entitySetName, callback, inputParameters, selectList, filter, options) {
+			var aTerms, application;
 			var promiseForGetTexts;
 			var layer;
 			if	(options && options.layer) {
@@ -199,61 +234,54 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 				layer = "CUSTOMER";
 			}
 
-			var handleReceivedTexts = function(result) {
+			var handleReceivedTexts = function(result, status) {
+				if (status && (status === "error" || status === "timeout" || status === "abort" || status === "parsererror")) {
+					callback(undefined, getMetadata(), createErrorMessageObject({ code : '5222', aParameters : [ application ]}, [status]));
+					return;
+				}
 				var textTable = new sap.apf.utils.Hashtable(messageHandler);
 				var texts = [];
 				var textFile = (result && result.response) || (result && result.responseText) || "";
 				var parseResult = sap.apf.utils.parseTextPropertyFile(textFile, { instances : { messageHandler : messageHandler }});
+				var explainingMessageObject, currentMessageObject;
+				if (parseResult.Messages.length > 0) {
+					explainingMessageObject = messageHandler.createMessageObject({ code : '5416' });
+					currentMessageObject = explainingMessageObject;
+					parseResult.Messages.forEach(function(messageObject){
+						currentMessageObject.setPrevious(messageObject);
+						currentMessageObject = messageObject;
+					});
+				}
 				textTable = new sap.apf.utils.Hashtable(messageHandler);
 				parseResult.TextElements.forEach(function(text) {
-					textTable.setItem(text.TextElement, text);
-					texts.push(text);
+					if (text.TextElement) {
+						textTable.setItem(text.TextElement, text);
+						texts.push(text);
+					}
 				});
 				applicationTextsTable.setItem(application, textTable);
-				callback(texts, getMetadata());
+				callback(texts, getMetadata(), explainingMessageObject);
 			};
 
 			if (entitySetName === 'application') {
 				messageHandler.check(!inputParameters && !selectList && !filter, "unsupported parameters when calling readCollection for application");
-				messageHandler.check(async === undefined || async === true, 'no async readCollection of application supported');
 				readCollectionOfApplications(callback, layer);
 			} else if (entitySetName === 'texts') {
 				aTerms = filter.getFilterTermsForProperty('Application');
 				application = aTerms[0].getValue();
 
-				if (async !== undefined && async === false) {
-					textLoading(application, handleReceivedTexts, true, options);
-				} else {
-					promiseForGetTexts = textLoading(application, undefined, false, options);
 
-					promiseForGetTexts.then(function(result) {
-						handleReceivedTexts(result);
-					}, function(error) {
-						var messageObject = createMessageObjectFromErrorResponse(Error);
-						callback(undefined, getMetadata(), messageObject);
-					});
-				}
+				promiseForGetTexts = textLoading(application, options);
+
+				promiseForGetTexts.then(function(result) {
+					handleReceivedTexts(result);
+				}, function(error) {
+					callback(undefined, getMetadata(),  createErrorMessageObject({ code : '5222', aParameters : [ application ]}, error && error.messages));
+				});
 			} else if (entitySetName === 'configuration') {
 				aTerms = filter.getFilterTermsForProperty('Application');
 				application = aTerms[0].getValue();
-				result = [];
-				var callbackFromListConfigurations = function(configurations, messageObject) {
-					function callbackFromReadEntity(data, metadata, messageObject) {
-						result.push(data);
-						if (result.length === configurations.length) {
-							callback(result, getMetadata(), messageObject);
-						}
-					}
-					if (configurations.length === 0) {
-						callback(result, getMetadata(), messageObject);
-					}
-					configurations.forEach(function(configuration) {
-						that.readEntity('configuration', callbackFromReadEntity, [ {
-							value : configuration
-						} ], selectList, async, application);
-					});
-				};
-				listConfigurations(application, callbackFromListConfigurations);
+				listConfigurations(application, callback, selectList);
 			}
 		};
 		/**
@@ -278,22 +306,19 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 			}
 		};
 		/**
-		 * odata post operation for specific type (application or configuration)
+		 * odata post operation for specific type (application or configuration) - asynchronously
 		 * @param {string} entitySetName value from sap.apf.core.constants.entitySets
 		 * @param {object} data object with properties of object, that shall be posted
 		 * @param {function} callback function of form fn(result, metadata, messageObject)
-		 * @param {undefined|boolean} async asynchronous operation default is false
 		 * @param {object} options special options for the layered repository
 		 */
-		this.create = function(entitySetName, data, callback, async, options) {
+		this.create = function(entitySetName, data, callback,  options) {
 			if (entitySetName === 'application') {
-				messageHandler.check(async === undefined || async === true, 'no async creation of application supported');
 				createApplication(data, callback, options);
 			} else if (entitySetName === 'configuration') {
-				messageHandler.check(async === undefined || async === true, 'no async creation of configuration supported');
 				createConfiguration(data, callback,  options);
-			} else if (entitySetName === 'texts' && async === false) {
-				createText(data, callback, false);
+			} else if (entitySetName === 'texts') {
+				createText(data, callback);
 			} else {
 				messageHandler.check(false, 'the create operation on entity set ' + entitySetName + ' is currently not supported by the lrep proxy');
 			}
@@ -303,9 +328,8 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 		 * @param {string} entitySetName value from sap.apf.core.constants.entitySets
 		 * @param {object} data object with properties of object, that shall be posted
 		 * @param {function} callback function of form fn( metadata, messageObject)
-		 * @param {object[]} [inputParameters]
 		 */
-		this.update = function(entitySetName, data, callback, inputParameters) {
+		this.update = function(entitySetName, data, callback) {
 			if (entitySetName === 'configuration') {
 				updateConfiguration(data, callback);
 			} else if (entitySetName === 'application') {
@@ -315,17 +339,18 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 				messageHandler.check(false, 'the update operation on entity set ' + entitySetName + ' is currently not supported by the lrep proxy');
 			}
 		};
-		function sendLrepDeepReadRequest(layer) {
-			// /sap/bc/lrep/content/sap/apf/dt/?deep-read=true&metadata=true&sap-client=120&layer=(CUSTOMER|VENDOR)
+		function sendLrepDeepReadRequest(layer, fileType) {
+			// /sap/bc/lrep/content/sap/apf/dt/?deep-read=true&metadata=true&sap-client=120&type=(apfconfiguration|apfapplication)&layer=(CUSTOMER|VENDOR)
 			var mOptions = {
 					async : true,
 					contentType : 'application/json'
-				};
+			};
 			var aParams = [];
 
 			aParams.push({ name : "layer", value : layer});
 			aParams.push({ name : "deep-read", value : true});
 			aParams.push({ name : "metadata", value : true});
+			aParams.push({ name : "type", value : fileType});
 
 			var sRequestPath = "/sap/bc/lrep/content/" + namespace + "/";
 
@@ -337,7 +362,7 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 			return namespace[namespace.length - 2];
 		}
 		function getElementValueFromMetadata(data, elementName) {
-			var value;
+			var value = undefined;
 			data.metadata.forEach(function(element) {
 				if (element.name === elementName) {
 					value = element.value;
@@ -352,7 +377,7 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 		this.readAllConfigurationsFromVendorLayer = function (){
 			var deferred = jQuery.Deferred();
 			var configurations = [];
-			sendLrepDeepReadRequest('VENDOR').then(function(result) {
+			sendLrepDeepReadRequest('VENDOR', 'apf*').then(function(result) {
 				var applicationNames = {};
 				result.response.forEach(function(data){
 					if (data.fileType && data.fileType === 'apfapplication'){
@@ -375,8 +400,8 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 					}
 				});
 				deferred.resolve(configurations);
-			}, function() {
-					deferred.reject(messageHandler.createMessageObject( {code : '5201'} ));
+			}, function(error) {
+				deferred.reject(createErrorMessageObject({code : '5231'}, error && error.messages ));
 			});
 			return deferred.promise();
 		};
@@ -390,11 +415,11 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 			if (!connector._sClient) {
 				connector._sClient = coreApi.getStartParameterFacade().getSapClient();
 			}
-		}		
+		}
 		function getConfigurationMetadataFromHashTable(application, configuration){
 			var applicationHashtable = applicationConfigurationsTable.getItem(application);
 			if (applicationHashtable === undefined) {
-				return;
+				return undefined;
 			}
 			configuration = applicationHashtable.getItem(configuration);
 			return configuration;
@@ -414,17 +439,22 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 			}
 			return layer;
 		}
-		function createErrorMessageObject(messageCode, parameters) {
-			return messageHandler.createMessageObject({
-				code : messageCode,
-				aParameters : parameters
-			});
+		function createErrorMessageObject(messageDefinition, errorMessagesFromServer) {
+			var messageObject = messageHandler.createMessageObject(messageDefinition);
+			var messages = "";
+			if (errorMessagesFromServer) {
+				errorMessagesFromServer.forEach(function(message){
+					messages = messages + message + ' ';
+				});
+				messageObject.setPrevious( messageHandler.createMessageObject({ code : 5220, aParameters : [ messages]}));
+			}
+			return messageObject;
 		}
 		function getMetadata() {
 			return {};
 		}
-		function getApplicationNamespace(applicationGuid) {
-			return namespace + '/' + applicationGuid;
+		function getApplicationNamespace(applicationId) {
+			return namespace + '/' + applicationId;
 		}
 		function deleteText(data, callback) {
 			var application = data.application;
@@ -435,11 +465,11 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 				textTable = applicationTextsTable.getItem(application);
 				textTable.removeItem(textElement);
 				callback(data, getMetadata());
-			}).fail(function() {
-				callback(undefined, getMetadata(), createErrorMessageObject('5201'));
+			}).fail(function(messageObject) {
+				callback(undefined, getMetadata(), messageObject);
 			});
 		}
-		function textLoading(application, callbackForComplete, sync, options) {
+		function textLoading(application, options) {
 			var mOptions;
 			var aParams = [];
 			var sRequestPath = "/sap/bc/lrep/content/";
@@ -453,19 +483,17 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 				});
 			}
 			mOptions = {
-				contentType : 'text/plain'
+					contentType : 'text/plain'
 			};
-			if (sync) {
-				mOptions.complete = callbackForComplete;
-				mOptions.async = false;
-			}
+
 			sRequestPath += connector._buildParams(aParams);
 			return connector.send(sRequestPath, 'GET', undefined, mOptions);
 		}
-		function initTexts(application, bAsync) {
+		function initTexts(application) {
 			var deferred = jQuery.Deferred();
 			var promise;
 			var textTable = applicationTextsTable.getItem(application);
+
 
 			var processReceivedTexts = function(result) {
 				var textFile = (result && result.response) || (result && result.responseText) || "";
@@ -473,7 +501,9 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 
 				textTable = new sap.apf.utils.Hashtable(messageHandler);
 				parseResult.TextElements.forEach(function(text) {
-					textTable.setItem(text.TextElement, text);
+					if (text.TextElement) {
+						textTable.setItem(text.TextElement, text);
+					}
 				});
 
 				applicationTextsTable.setItem(application, textTable);
@@ -482,17 +512,12 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 
 			if (textTable === undefined) {
 
-				if (bAsync !== undefined && bAsync === false) {
-					textLoading(application, processReceivedTexts, true);
-				} else {
-
-					promise = textLoading(application, undefined, false);
-					promise.then(function(result) {
-						 processReceivedTexts(result);
-					}, function(error) {
-						deferred.reject(createErrorMessageObject('5201'));
-					});
-				}
+				promise = textLoading(application);
+				promise.then(function(result) {
+					processReceivedTexts(result);
+				}, function(error) {
+					deferred.reject(createErrorMessageObject({ code : '5222', aParameters : [ application ]}, error && error.messages));
+				});
 
 			} else {
 				deferred.resolve({});
@@ -500,36 +525,36 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 
 			return deferred.promise();
 		}
-		function createText(data, callback, bAsync) {
+		function createText(data, callback) {
 			var application = data.Application;
 			if (data.TextElement === undefined || !sap.apf.utils.isValidGuid(data.TextElement)) {
 				data.TextElement = sap.apf.utils.createPseudoGuid();
 			}
 
-			initTexts(application, bAsync).done(function() {
+			initTexts(application).done(function() {
 				var textTable = applicationTextsTable.getItem(application);
 				textTable.setItem(data.TextElement, data);
 				callback(data, getMetadata());
-			}).fail(function() {
-				callback(undefined, getMetadata(), createErrorMessageObject('5201'));
+			}).fail(function(messageObject) {
+				callback(undefined, getMetadata(), messageObject);
 			});
 		}
-		function updateTexts(applicationGuid, callback, doNotReadTexts) {
-			var applicationNamespace = getApplicationNamespace(applicationGuid);
+		function updateTexts(applicationId, callback, doNotReadTexts) {
+			var applicationNamespace = getApplicationNamespace(applicationId);
 			var textsTable;
 
 			function upsertTexts() {
-				var textPropertyFile = sap.apf.utils.renderHeaderOfTextPropertyFile(applicationGuid, messageHandler);
+				var textPropertyFile = sap.apf.utils.renderHeaderOfTextPropertyFile(applicationId, messageHandler);
 				textPropertyFile = textPropertyFile + sap.apf.utils.renderTextEntries(textsTable, messageHandler);
 				var promiseForUpdateTexts = connector.upsert(applicationNamespace, 'text', 'properties', "CUSTOMER", textPropertyFile, 'text/plain');
-				promiseForUpdateTexts.then(function(result) {
+				promiseForUpdateTexts.then(function() {
 					callback(getMetadata());
 				}, function(error) {
-					callback(getMetadata(), createErrorMessageObject('5201'));
+					callback(getMetadata(), createErrorMessageObject({code: '5230', aParameters: [applicationId]}, error && error.messages));
 				});
 			}
 
-			textsTable = applicationTextsTable.getItem(applicationGuid);
+			textsTable = applicationTextsTable.getItem(applicationId);
 			if (!textsTable) {
 				callback(getMetadata());
 				return;
@@ -537,7 +562,7 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 			if (doNotReadTexts) {
 				upsertTexts();
 			} else {
-				var promise = textLoading(applicationGuid, undefined, false);
+				var promise = textLoading(applicationId);
 				promise.then(function(result) {
 					var textFile = (result && result.response) || "";
 					var parseResult = sap.apf.utils.parseTextPropertyFile(textFile, {
@@ -546,30 +571,103 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 						}
 					});
 					parseResult.TextElements.forEach(function(text) {
-						textsTable.setItem(text.TextElement, text);
+						if (text.TextElement) {
+							textsTable.setItem(text.TextElement, text);
+						}
 					});
 					upsertTexts();
 				}, function(error) {
-					callback(getMetadata(), createErrorMessageObject('5201'));
+					callback(getMetadata(), createErrorMessageObject({ code : '5222', aParameters : [ applicationId ]}, error && error.messages));
 				});
 			}
-		}		
-		function listConfigurations(application, callback) {
-			var i, configurations;
+		}
+		function listConfigurations(application, callback, selectList) {
+			var configurations = [];
 			var applicationNamespace = getApplicationNamespace(application);
-			var promise = connector.listContent(applicationNamespace, 'CUSTOMER');
+			var params = connector._buildParams([{
+				name: "layer",
+				value: "CUSTOMER"
+			},{
+				name: "metadata",
+				value: "true"
+			},{
+				name: "type",
+				value: "apfconfiguration"
+			}]);
+			var promise = connector.send("/sap/bc/lrep/content/" + applicationNamespace + params);
 			promise.then(function(result) {
 				var files = result.response;
-				configurations = [];
-				for(i = 0; i < files.length; i++) {
-					if (files[i].fileType === "apfconfiguration") {
-						configurations.push(files[i].name);
+				files.forEach(function(file){
+					if(file.fileType === "apfconfiguration"){
+						file.metadata.forEach(function(metadata){
+							if(metadata.name === "apfdt-configname"){
+								configurations.push({
+									AnalyticalConfiguration : file.name,
+									Application : application,
+									AnalyticalConfigurationName : metadata.value
+								});
+							}
+						});
 					}
+				});
+				if (selectList && selectList.indexOf("SerializedAnalyticalConfiguration") >= 0 ){
+					var configurationPromises = [];
+					configurations.forEach(function(configuration){
+						var configurationPromise = jQuery.Deferred();
+						configurationPromises.push(configurationPromise);
+						connector.getStaticResource(applicationNamespace, configuration.AnalyticalConfiguration, 'apfconfiguration').then(function(responseObject){
+							if(responseObject.response){
+								configuration.SerializedAnalyticalConfiguration = JSON.stringify(responseObject.response);
+								configurationPromise.resolve();
+							} else {
+								configurationPromise.reject();
+							}
+						}, function(error){
+							configurationPromise.reject(error);
+						});
+					});
+					jQuery.when.apply(jQuery, configurationPromises).then(function(){
+						callback(configurations, getMetadata());
+					}, function(error){
+						callback([], getMetadata(), createErrorMessageObject({ code : '5223', aParameters : [ application ]}, error && error.messages));
+					});
+				} else {
+					callback(configurations, getMetadata());
 				}
-				callback(configurations);
 			}, function(error) {
-				callback([]);
+				callback([], getMetadata(), createErrorMessageObject({ code : '5223', aParameters : [ application ]}, error && error.messages));
 			});
+		}
+		/**
+		 * when updating, deleting, creating a configuration, the constant 'ATO_NOTIFICATION' has to be supplied in the
+		 * parameter for the change list for these operations. This is only the case, when ATO is active and enabled in the layered repository.
+		 * ATO is the transport management system in the cloud. So this method has to read the settings of the layered repository regarding
+		 * the ATO settings.
+		 */
+		function getChangeList() {
+			var deferred = jQuery.Deferred();
+			var aParams = [];
+
+			if (changeListHasBeenFetched) {
+				deferred.resolve(changeList);
+			} else {
+				aParams.push({ name : "dt", value : false});
+				var sRequestPath = "/sap/bc/lrep/content/sap/ui/fl/settings/main.flsettings";
+
+				sRequestPath += connector._buildParams(aParams);
+				var promise = connector.send(sRequestPath, 'GET', undefined);
+				promise.then(function(result){
+					var settings = result && result.response || {};
+					changeListHasBeenFetched = true;
+					if (settings.isAtoEnabled === true) {
+						changeList = "ATO_NOTIFICATION";
+					}
+					deferred.resolve(changeList);
+				}, function(error){
+					deferred.reject(error);
+				});
+			}
+			return deferred.promise();
 		}
 		function updateConfigurationTable(application, configuration, callback, layer) {
 			var sLayer = layer || 'CUSTOMER';
@@ -584,111 +682,127 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 					callback(getMetadata());
 				}
 			}, function(error) {
-				callback(getMetadata(), createErrorMessageObject('5201'));
+				callback(getMetadata(), createErrorMessageObject({ code : '5232', aParameters : [application, configuration]},  error && error.messages));
 			});
 		}
 		function updateConfiguration(configurationData, callback, layer) {
 			if (!layer) {
 				layer = "CUSTOMER";
 			}
-			var applicationGuid = configurationData.Application;
+			var applicationId = configurationData.Application;
 			var configurationGuid = configurationData.AnalyticalConfiguration;
 			var analyticalConfiguration = JSON.parse(configurationData.SerializedAnalyticalConfiguration);
-			var applicationNamespace = getApplicationNamespace(applicationGuid);
-			var promiseForApplicationData = connector.getStaticResource(applicationNamespace, "metadata", "apfapplication");
-			promiseForApplicationData.then(function(result) {
-				var configHeader = {
-					Application : applicationGuid,
-					ApplicationName : result.response.ApplicationName,
-					SemanticObject : result.response.SemanticObject,
-					AnalyticalConfiguration : configurationGuid,
-					AnalyticalConfigurationName : configurationData.AnalyticalConfigurationName,
-					//UI5Version : ,
-					CreationUTCDateTime : configurationData.CreationUTCDateTime,
-					LastChangeUTCDateTime : configurationData.LastChangeUTCDateTime
-				};
-				analyticalConfiguration = jQuery.extend(true, analyticalConfiguration, {
-					configHeader : configHeader
-				});
-				analyticalConfiguration = JSON.stringify(analyticalConfiguration);
+			var applicationNamespace = getApplicationNamespace(applicationId);
 
-				var promiseForCreate = connector.upsert(applicationNamespace, configurationGuid, 'apfconfiguration', layer, analyticalConfiguration, 'application/json');
-				return promiseForCreate;
+			var promiseForChangeList = getChangeList();
+			promiseForChangeList.then(function(changeList){
+				var promiseForApplicationData = connector.getStaticResource(applicationNamespace, "metadata", "apfapplication");
+				promiseForApplicationData.then(function(result) {
+					var configHeader = {
+							Application : applicationId,
+							ApplicationName : result.response.ApplicationName,
+							SemanticObject : result.response.SemanticObject,
+							AnalyticalConfiguration : configurationGuid,
+							AnalyticalConfigurationName : configurationData.AnalyticalConfigurationName,
+							//UI5Version : ,
+							CreationUTCDateTime : configurationData.CreationUTCDateTime,
+							LastChangeUTCDateTime : configurationData.LastChangeUTCDateTime
+					};
+					analyticalConfiguration = jQuery.extend(true, analyticalConfiguration, {
+						configHeader : configHeader
+					});
+					analyticalConfiguration = JSON.stringify(analyticalConfiguration);
+
+					var promiseForCreate = connector.upsert(applicationNamespace, configurationGuid, 'apfconfiguration', layer, analyticalConfiguration, 'application/json', changeList);
+					return promiseForCreate;
+				}, function(error) {
+					callback(getMetadata(), createErrorMessageObject({ code : '5233', aParameters : [ applicationId, configurationGuid]}, error && error.messages));
+				}).then(function() {
+					updateConfigurationTable(applicationId, configurationGuid, callback, layer);
+				}, function(error) {
+					callback(getMetadata(), createErrorMessageObject({ code : '5233', aParameters : [ applicationId, configurationGuid]}, error && error.messages));
+				});
 			}, function(error) {
-				callback(getMetadata(), createErrorMessageObject('5201'));
-			}).then(function(result) {
-				updateConfigurationTable(applicationGuid, configurationGuid, callback, layer);
-			}, function(error) {
-				callback(getMetadata(), createErrorMessageObject('5201'));
+				callback(getMetadata(), createErrorMessageObject({ code : '5224'} , error && error.messages));
 			});
 		}
 		function createConfiguration(configurationData, callback, options) {
 			var layer = determineLayerFromOptions(options);
-			var applicationGuid = configurationData.Application;
+			var applicationId = configurationData.Application;
 			var configurationGuid = configurationData.AnalyticalConfiguration;
 			if (configurationGuid === undefined || !sap.apf.utils.isValidGuid(configurationGuid)) {
 				configurationGuid = sap.apf.utils.createPseudoGuid(32);
 			}
 			var analyticalConfiguration = JSON.parse(configurationData.SerializedAnalyticalConfiguration);
-			var applicationNamespace = getApplicationNamespace(applicationGuid);
+			var applicationNamespace = getApplicationNamespace(applicationId);
 			var promiseForApplicationData = connector.getStaticResource(applicationNamespace, "metadata", "apfapplication");
 			promiseForApplicationData.then(function(result) {
 				var configHeader = {
-					Application : applicationGuid,
-					ApplicationName : result.response.ApplicationName,
-					SemanticObject : result.response.SemanticObject,
-					AnalyticalConfiguration : configurationGuid,
-					AnalyticalConfigurationName : analyticalConfiguration.analyticalConfigurationName,
-					//UI5Version : ,
-					CreationUTCDateTime : configurationData.CreationUTCDateTime,
-					LastChangeUTCDateTime : configurationData.LastChangeUTCDateTime
+						Application : applicationId,
+						ApplicationName : result.response.ApplicationName,
+						SemanticObject : result.response.SemanticObject,
+						AnalyticalConfiguration : configurationGuid,
+						AnalyticalConfigurationName : analyticalConfiguration.analyticalConfigurationName,
+						//UI5Version : ,
+						CreationUTCDateTime : configurationData.CreationUTCDateTime,
+						LastChangeUTCDateTime : configurationData.LastChangeUTCDateTime
 				};
 				analyticalConfiguration = jQuery.extend(true, analyticalConfiguration, {
 					configHeader : configHeader
 				});
 				analyticalConfiguration = JSON.stringify(analyticalConfiguration);
-				createAnalyticalConfigurationInLrep(applicationGuid, configurationGuid, configurationData.AnalyticalConfigurationName, analyticalConfiguration, callback);
+				createAnalyticalConfigurationInLrep(applicationId, configurationGuid, configurationData.AnalyticalConfigurationName, analyticalConfiguration, callback);
 			}, function(error) {
-				callback(undefined, getMetadata(), createErrorMessageObject('5201'));
+				callback(undefined, getMetadata(), createErrorMessageObject({ code : '5223', aParameters : [ applicationId ]}, error && error.messages));
 			});
-			function createAnalyticalConfigurationInLrep(applicationGuid, configurationGuid, AnalyticalConfigurationName, analyticalConfiguration, callback) {
-				var applicationNamespace = getApplicationNamespace(applicationGuid);
-				var promiseForCreate = connector.upsert(applicationNamespace, configurationGuid, 'apfconfiguration', layer, analyticalConfiguration, 'application/json');
-				promiseForCreate.then(function(result) {
-					updateConfigurationTable(applicationGuid, configurationGuid, function(response, data, messageObject) {
+			function createAnalyticalConfigurationInLrep(applicationId, configurationGuid, AnalyticalConfigurationName, analyticalConfiguration, callback) {
+				var applicationNamespace = getApplicationNamespace(applicationId);
+				var promiseForChangeList = getChangeList();
 
-						if (!messageObject) {
-							callback({
-								AnalyticalConfiguration : configurationGuid,
-								AnalyticalConfigurationName : configurationData.AnalyticalConfigurationName
-							}, getMetadata());
-						} else {
-							callback(undefined, getMetadata(), createErrorMessageObject('5201'));
-						}
+				promiseForChangeList.then(function(changeList) {
+					var promiseForCreate = connector.upsert(applicationNamespace, configurationGuid, 'apfconfiguration', layer, analyticalConfiguration, 'application/json', changeList);
+					promiseForCreate.then(function() {
+						updateConfigurationTable(applicationId, configurationGuid, function(response, messageObject) {
 
-					}, layer);
+							if (!messageObject) {
+								callback({
+									AnalyticalConfiguration : configurationGuid,
+									AnalyticalConfigurationName : configurationData.AnalyticalConfigurationName
+								}, getMetadata());
+							} else {
+								callback(undefined, getMetadata(), messageObject);
+							}
 
+						}, layer);
+
+					}, function(error) {
+						callback(undefined, getMetadata(), createErrorMessageObject({code : '5226', aParameters : [applicationId, configurationGuid]}, error && error.messages));
+					});
 				}, function(error) {
-					callback(undefined, getMetadata(), createErrorMessageObject('5201'));
+					callback(undefined, getMetadata(), createErrorMessageObject({ code : '5224'}, error && error.messages));
 				});
-			}			
+			}
 		}
-		function deleteConfiguration(configurationData, callback, applicationGuid, layer) {
+		function deleteConfiguration(configurationData, callback, applicationId, layer) {
 			var configurationGuid = configurationData[0].value;
 			messageHandler.check(configurationGuid !== undefined, "configuration may not be undefined");
-			messageHandler.check(applicationGuid !== undefined, "application of configuration not found");
-			var applicationNamespace = getApplicationNamespace(applicationGuid);
-			var promiseForDelete = connector.deleteFile(applicationNamespace, configurationGuid, 'apfconfiguration', layer);
-			promiseForDelete.then(function(result) {
-				callback(getMetadata());
+			messageHandler.check(applicationId !== undefined, "application of configuration not found");
+			var applicationNamespace = getApplicationNamespace(applicationId);
+			getChangeList().then(function(changeList){
+				var promiseForDelete = connector.deleteFile(applicationNamespace, configurationGuid, 'apfconfiguration', layer, changeList);
+				promiseForDelete.then(function() {
+					callback(getMetadata());
+				}, function(error) {
+					callback(getMetadata(), createErrorMessageObject({code : '5225', aParameters : [applicationId, configurationGuid]}, error && error.messages));
+				});
 			}, function(error) {
-				callback(getMetadata(), createErrorMessageObject('5201'));
+				callback(getMetadata(), createErrorMessageObject({ code : '5224'}, error && error.messages));
 			});
 		}
-		function renameProperties(applicationGuid, applicationProperties) {
-			var i = 0;
+		function renameProperties(applicationId, applicationProperties) {
+			var i;
 			var data = {
-				Application : applicationGuid
+					Application : applicationId
 			};
 			var propertyName, propertyValue;
 			for(i = 0; i < applicationProperties.length; i++) {
@@ -715,32 +829,31 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 		}
 		function createApplication(applicationData, callback, options) {
 			messageHandler.check(applicationData.ApplicationName !== undefined && applicationData.ApplicationName !== "", "Valid application name is required");
-			var applicationGuid = applicationData.Application;
-			if (applicationGuid === undefined || !sap.apf.utils.isValidGuid(applicationGuid)) {
-				applicationGuid = sap.apf.utils.createPseudoGuid(32);
+			var applicationId = applicationData.Application;
+			if (applicationId === undefined || !sap.apf.utils.isValidGuid(applicationId)) {
+				applicationId = sap.apf.utils.createPseudoGuid(32);
 			}
 			var content = JSON.stringify({
 				ApplicationName : applicationData.ApplicationName,
 				SemanticObject : applicationData.SemanticObject,
-				Application : applicationGuid
+				Application : applicationId
 			});
 
-			var textfile = sap.apf.utils.renderHeaderOfTextPropertyFile(applicationGuid, messageHandler);
+			var textfile = sap.apf.utils.renderHeaderOfTextPropertyFile(applicationId, messageHandler);
 			var layer = determineLayerFromOptions(options);
 
-			function errorResponse() {
-				callback(undefined, getMetadata(), createErrorMessageObject('5201'));
+			function errorResponse(error) {
+				callback(undefined, getMetadata(), createErrorMessageObject({code: '5227'} , error && error.messages));
 			}
-			var applicationNamespace = getApplicationNamespace(applicationGuid);
+			var applicationNamespace = getApplicationNamespace(applicationId);
 			var promiseForMetadataUpsert = connector.upsert(applicationNamespace, 'metadata', 'apfapplication', layer, content, 'application/json');
-			promiseForMetadataUpsert.then(function(metadataUpsertResult) {
-
+			promiseForMetadataUpsert.then(function() {
 				var promiseForTextsUpsert = connector.upsert(applicationNamespace, 'text', 'properties', layer, textfile, 'text/plain');
 
-				promiseForTextsUpsert.then(function(textUpsertResult) {
-					applicationTextsTable.setItem(applicationGuid, new sap.apf.utils.Hashtable(messageHandler));
+				promiseForTextsUpsert.then(function() {
+					applicationTextsTable.setItem(applicationId, new sap.apf.utils.Hashtable(messageHandler));
 					callback({
-						Application : applicationGuid,
+						Application : applicationId,
 						ApplicationName : applicationData.ApplicationName,
 						SemanticObject : applicationData.SemanticObject
 					}, getMetadata());
@@ -749,66 +862,74 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 		}
 		function updateApplication(applicationData, callback) {
 			messageHandler.check(applicationData.ApplicationName !== undefined && applicationData.ApplicationName !== "", "Valid application name is required");
-			var applicationGuid = applicationData.Application;
+			var applicationId = applicationData.Application;
 			var content = JSON.stringify({
 				ApplicationName : applicationData.ApplicationName,
 				SemanticObject : applicationData.SemanticObject,
-				Application : applicationGuid
+				Application : applicationId
 			});
-			function errorResponse() {
-				callback(undefined, createErrorMessageObject('5201'));
+			function errorResponse(error) {
+				callback(undefined, createErrorMessageObject({code: '5228', aParameters: [applicationId]}, error && error.messages));
 			}
-			var applicationNamespace = getApplicationNamespace(applicationGuid);
+			var applicationNamespace = getApplicationNamespace(applicationId);
 			var promiseForUpdateApplication = connector.upsert(applicationNamespace, 'metadata', 'apfapplication', 'CUSTOMER', content, 'application/json');
-			promiseForUpdateApplication.then(function(metadataUpdateResult) {
+			promiseForUpdateApplication.then(function() {
 				callback({
-					Application : applicationGuid,
+					Application : applicationId,
 					ApplicationName : applicationData.ApplicationName,
 					SemanticObject : applicationData.SemanticObject
 				});
 			}, errorResponse);
 		}
 		function deleteApplication(applicationData, callback, layer) {
-			var applicationGuid = applicationData[0].value;
+			var applicationId = applicationData[0].value;
 			function fnError(oError) {
 				var messageObject = createMessageObjectFromErrorResponse(oError);
 				callback(getMetadata(), messageObject);
 			}
-			var sApplicationNamespace = getApplicationNamespace(applicationGuid);
+			var sApplicationNamespace = getApplicationNamespace(applicationId);
 			var promiseGetFilesUnderApplication = connector.listContent(sApplicationNamespace, layer);
 			promiseGetFilesUnderApplication.then(function(result) {
 				var aFiles = result.response;
 				var aPromises = [];
 				aFiles.forEach(function(file) {
-					aPromises.push(connector.deleteFile(sApplicationNamespace, file.name, file.fileType, file.layer));
+					if(file.fileType === "apfconfiguration"){
+						getChangeList().then(function(changeList){
+							aPromises.push(connector.deleteFile(sApplicationNamespace, file.name, file.fileType, file.layer, changeList));
+						}, function(error) {
+							callback(getMetadata(), createErrorMessageObject({ code : '5224'},  error && error.messages));
+						});
+					} else {
+						aPromises.push(connector.deleteFile(sApplicationNamespace, file.name, file.fileType, file.layer));
+					}
 				});
 				var promiseForDeleteApplicationContent = Promise.all(aPromises);
 				return promiseForDeleteApplicationContent;
-			}, fnError).then(function(result) {
+			}, fnError).then(function() {
 				callback(getMetadata());
 			}, fnError);
 		}
 		function createMessageObjectFromErrorResponse(oError) {
 			var messageObject;
-			if (oError.messageObject && oError.messageObject.getCode) {
+			if (oError && oError.messageObject && oError.messageObject.getCode) {
 				messageObject = oError.messageObject;
-			} else if (oError.response && oError.response.statusCode && oError.response.statusCode >= 400) { //Bad HTTP request returned status code {0} with status text {1}
+			} else if (oError && oError.response && oError.response.statusCode && oError.response.statusCode >= 400) { //Bad HTTP request returned status code {0} with status text {1}
 				messageObject = messageHandler.createMessageObject({
 					code : '11005',
 					aParameters : [ oError.response.statusCode.toString(), oError.response.statusText ]
 				});
 			} else {
 				messageObject = messageHandler.createMessageObject({ //Unknown server error.
-					code : '5201'
+					code : '5201',
+					aParameters : (oError && oError.messages) || []
 				});
 			}
-			messageHandler.putMessage(messageObject);
 			return messageObject;
 		}
 
 		function readCollectionOfApplications(callback, layer) {
 			var applicationData = [];
-			sendLrepDeepReadRequest(layer).then(function(result) {
+			sendLrepDeepReadRequest(layer, "apfapplication").then(function(result) {
 				var data = result.response;
 				data.forEach(function(data){
 					var applicationId;
@@ -819,7 +940,6 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 						if (!sap.apf.utils.isValidPseudoGuid(applicationId)) {
 							return;
 						}
-						applicationName = "";
 						var semanticObject = "";
 						applicationName = getElementValueFromMetadata(data, 'apfdt-applname');
 						applicationData.push({ Application : applicationId, ApplicationName : applicationName, SemanticObject : semanticObject });
@@ -828,39 +948,9 @@ jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
 				callback(applicationData, getMetadata());
 			}, processError);
 			function processError(error) {
-				callback(undefined, getMetadata(), 
-						messageHandler.createMessageObject({code : '5201'}));
+				callback(undefined, getMetadata(), createErrorMessageObject({code : '5229'}, error && error.messages));
 			}
 		}
-		function readConfigurationsSync(callback, configuration, application, selectList, options) {
-			var layer = determineLayerFromOptions(options);
-			var mOptions = {
-				async : false,
-				complete : function(result) {
-					var data = {};
-					data.SerializedAnalyticalConfiguration = result.responseText;
-					callback(data, getMetadata());
-				}
-			};
-			var aParams = [];
-			var promiseForGetConfiguration;
-			var sRequestPath = "/sap/bc/lrep/content/";
-			messageHandler.check(selectList === undefined || selectList.indexOf("SerializedAnalyticalConfiguration") >= 0, "layered repository proxy - read configuration async without analytical configuration - not supported call");
 
-			sRequestPath += namespace + "/" + application + '/' + configuration + '.apfconfiguration';
-			if (layer) {
-				aParams.push({
-					name : "layer",
-					value : layer
-				});
-			}
-			sRequestPath += connector._buildParams(aParams);
-			promiseForGetConfiguration = connector.send(sRequestPath, 'GET', undefined, mOptions);
-			promiseForGetConfiguration.then(function(result) {
-
-			}, function(error) {
-				callback(undefined, getMetadata(), createErrorMessageObject('5201'));
-			});
-		}
 	};
 }());

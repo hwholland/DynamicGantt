@@ -1,13 +1,12 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// This control displays the history of values as a line mini chart or an area mini chart.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
-	function(jQuery, library, Element) {
+sap.ui.define([
+	"jquery.sap.global", "./library", "sap/ui/core/Element"
+], function(jQuery, library, Element) {
 	"use strict";
 
 	/**
@@ -21,7 +20,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -29,39 +28,38 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var HarveyBallMicroChartItem = Element.extend("sap.suite.ui.microchart.HarveyBallMicroChartItem", /** @lends sap.suite.ui.microchart.HarveyBallMicroChartItem.prototype */ {
-		metadata : {
+		metadata: {
 			library: "sap.suite.ui.microchart",
 			properties: {
-				
+
 				/**
-				*The slice color.
-				*/
-				color: {group:"Misc", type:"sap.m.ValueColor", defaultValue:"Neutral"},
-				
+				 *The value label color.
+				 */
+				color: { group: "Misc", type: "sap.m.ValueColor", defaultValue: "Neutral" },
+
 				/**
-				*The fraction value.
-				*/
-				fraction: {group:"Misc", type:"float", defaultValue:"0"},
-				
+				 *The fraction value.
+				 */
+				fraction: { group: "Misc", type: "float", defaultValue: "0" },
+
 				/**
-				*The fraction label. If specified, it is displayed instead of the fraction value.
-				*/
-				fractionLabel: {group:"Misc", type:"string"},
-				
+				 *The fraction label. If specified, it is displayed instead of the fraction value.
+				 */
+				fractionLabel: { group: "Misc", type: "string" },
+
 				/**
-				*The scaling factor that is displayed after the fraction value.
-				*/
-				fractionScale: {group:"Misc", type:"string"},
-				
+				 *The scaling factor that is displayed after the fraction value.
+				 */
+				fractionScale: { group: "Misc", type: "string" },
+
 				/**
-				*If set to true, the fractionLabel parameter is considered as the combination of the fraction value and scaling factor. The default value is false. It means that the fraction value and the scaling factor are defined separately by the fraction and the fractionScale properties accordingly.
-				*/
-				formattedLabel: {group:"Misc", type:"boolean", defaultValue:"false"}
-				
+				 *If set to true, the fractionLabel parameter is considered as the combination of the fraction value and scaling factor. The default value is false. It means that the fraction value and the scaling factor are defined separately by the fraction and the fractionScale properties accordingly.
+				 */
+				formattedLabel: { group: "Misc", type: "boolean", defaultValue: false }
+
 			}
 		}
 	});
-	
-	return HarveyBallMicroChartItem;
 
+	return HarveyBallMicroChartItem;
 });

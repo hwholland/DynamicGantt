@@ -1,12 +1,11 @@
 {
-  "_version": "1.2.0",
+  "_version": "1.9.0",
   "sap.app": {
-    "_version": "1.2.0",
     "id": "sap.landvisz",
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.38.6"
+      "version": "1.54.0"
     },
     "title": "sap.landvisz library for UI developments",
     "description": "sap.landvisz library for UI developments",
@@ -14,24 +13,24 @@
     "offline": true
   },
   "sap.ui": {
-    "_version": "1.1.0",
     "technology": "UI5",
     "supportedThemes": [
       "base",
       "sap_bluecrystal",
-      "sap_goldreflection",
       "sap_hcb"
     ]
   },
   "sap.ui5": {
-    "_version": "1.1.0",
     "dependencies": {
-      "minUI5Version": "1.38",
+      "minUI5Version": "1.54",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.38.12"
+          "minVersion": "1.54.0"
         }
       }
+    },
+    "library": {
+      "i18n": "messagebundle.properties"
     }
   }
 }

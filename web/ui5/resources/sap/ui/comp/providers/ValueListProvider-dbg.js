@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 // -----------------------------------------------------------------------------
 // Retrieves the data for a value list from the OData metadata to bind to a given control/aggregation
@@ -18,7 +19,7 @@ sap.ui.define([
 	 * @experimental This module is only for internal/experimental use!
 	 * @public
 	 * @param {object} mParams - map containing the control,aggregation,annotation and the oODataModel
-	 * @author Pavan Nayak, Thomas Biesemann
+	 * @author SAP SE
 	 */
 	var ValueListProvider = BaseValueListProvider.extend("sap.ui.comp.providers.ValueListProvider", {
 		constructor: function(mParams) {
@@ -33,27 +34,24 @@ sap.ui.define([
 	});
 
 	/**
-	 * Metadata is available --> Initialise the relevant stuff
+	 * Initialise the relevant stuff
 	 * @private
 	 */
 	ValueListProvider.prototype._onInitialise = function() {
-		var oEventDelegate;
+
 		if (!this.bTypeAheadEnabled) {
+
 			/**
 			 * Delay the fetch of data for standard dropdowns until the rendering is done! This inherently causes only the relevant data to be fetched
 			 * from the backend!
 			 */
-			oEventDelegate = {
-				onAfterRendering: function() {
-					if (this.bInitialised) {
-						this.oControl.removeEventDelegate(oEventDelegate, this);
-						this._createDropDownTemplate();
-						this._fetchData();
-					}
-				}
+			this.oAfterRenderingEventDelegate = {
+				onAfterRendering: this._onMetadataInitialised
 			};
-			this.oControl.addEventDelegate(oEventDelegate, this);
+			this.oControl.addEventDelegate(this.oAfterRenderingEventDelegate, this);
+
 		} else if (this.oControl.attachSuggest) {
+
 			// Check if Suggest is supported by the control
 			this._fSuggest = function(oEvent) {
 				this.oControl = oEvent.getSource();
@@ -68,7 +66,60 @@ sap.ui.define([
 			}.bind(this);
 			this.oControl.attachSuggest(this._fSuggest);
 
+			if (!this.oFilterModel) {
+				var that = this;
+
+				// store original reference to the ManagedObject.prototype.setParent() method
+				var fnSetParent = this.oControl.setParent;
+
+				// decorate the .setParent() method of the this.oControl control instance to detect when the control is removed
+				// from the control tree
+				this.oControl.setParent = function(oNewParent, sAggregationName, bSuppressInvalidate) {
+
+					// get the current parent
+					var oOldParent = this.getParent();
+
+					// call the ManagedObject.prototype.setParent() method with the same arguments passed to this function
+					var oReturn = fnSetParent.apply(this, arguments);
+
+					// get the possible new parent
+					oNewParent = this.getParent();
+
+					var bAggregationChanged = !(oNewParent && (oOldParent === null));
+
+					// unbind the aggregation only if the parent changes
+					if ((oNewParent !== oOldParent) && bAggregationChanged) {
+						that.unbindAggregation();
+					}
+
+					return oReturn;
+				};
+			}
+
 			this._handleSelect();
+		}
+	};
+
+	/**
+	 * Metadata is available --> Initialise the relevant stuff
+	 * @private
+	 */
+	ValueListProvider.prototype._onMetadataInitialised = function() {
+		if (this.bInitialised) {
+
+			if (this.oAfterRenderingEventDelegate) {
+				this.oControl.removeEventDelegate(this.oAfterRenderingEventDelegate, this);
+			}
+			if (this.sAggregationName && this.sAggregationName == "suggestionRows") {
+				this._createSuggestionTemplate();
+			} else {
+				this._createDropDownTemplate();
+			}
+			this._fetchData();
+
+			if (this.oAfterRenderingEventDelegate) {
+				delete this.oAfterRenderingEventDelegate;
+			}
 		}
 	};
 
@@ -83,7 +134,7 @@ sap.ui.define([
 			return false;
 		}
 
-		return true;
+		return false;
 	};
 
 	/**
@@ -100,7 +151,8 @@ sap.ui.define([
 
 		// ComboBox/MultiComboBox:
 		// Sort based on key if displayBehaviour is based on id
-		if (this.sDDLBDisplayBehaviour === sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR.idOnly || this.sDDLBDisplayBehaviour === sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR.idAndDescription) {
+		if (this.sDDLBDisplayBehaviour === sap.ui.comp.smartfilterbar.DisplayBehaviour.idOnly || this.sDDLBDisplayBehaviour === sap.ui.comp.smartfilterbar.DisplayBehaviour.idAndDescription) {
+
 			if (this._isSortable(this.sKey)) {
 				this._oSorter = new Sorter(this.sKey);
 			}
@@ -142,7 +194,7 @@ sap.ui.define([
 					header: new Text({
 						wrapping: false,
 						text: this._aCols[i].label,
-						tooltip: this._aCols[i].label
+						tooltip: this._aCols[i].tooltip || this._aCols[i].label
 					}),
 					demandPopin: bDemandPopin,
 					popinDisplay: sap.m.PopinDisplay.Inline,
@@ -173,10 +225,12 @@ sap.ui.define([
 				}
 			}
 
-			// set the total width of all columns as Width for the suggest popover (this property is not a MaxWidth)
-			// The width which we set will be used, only when there is not enough space on the window the popover will be smaller.
+			// set the total width of all columns as Width for the suggest popover.
+			// Add a small delta based on number of columns since there seems to be a padding added for some browsers
 			if (fSuggestWidth > 0) {
-				this.oControl.setMaxSuggestionWidth(fSuggestWidth + "em");
+				// BCP: 1770294638
+				// this.oControl.setMaxSuggestionWidth(fSuggestWidth + iLen + "em");
+				this.oControl.setProperty('maxSuggestionWidth', fSuggestWidth + iLen + "em", true);
 			}
 		}
 		this.oControl.data("_hassuggestionTemplate", true);
@@ -203,7 +257,7 @@ sap.ui.define([
 				sText = oDataModelRow[this.sDescription];
 			}
 			// Key found
-			if (sKey) {
+			if (sKey || (sKey === "")) {
 				// MultiInput field --> Create a token with the selected key
 				if (this.oControl.addToken) {
 					// Format the text as per the displayBehaviour
@@ -239,16 +293,37 @@ sap.ui.define([
 		var fAfterTokenValidate = function() {
 			// trigger search on the SmartFilter if search was pending
 			if (this.oFilterProvider && this.oFilterProvider._oSmartFilter && this.oFilterProvider._oSmartFilter.bIsSearchPending && this.oFilterProvider._oSmartFilter.search) {
+				if (this.oFilterProvider._oSmartFilter.getLiveMode && this.oFilterProvider._oSmartFilter.getLiveMode()) {
+					return;
+				}
+
 				this.oFilterProvider._oSmartFilter.search();
 			}
 		}.bind(this);
 		// Selection handling has to be done manually for Multi-Column suggest!
 		// add Validators --> Only available for Multi-Input
 		if (this.oControl.addValidator) {
+			var aValidators = this.oControl._tokenizer ? this.oControl._tokenizer._aTokenValidators.slice() : [];
+			this.oControl.removeAllValidators();
+
 			this._fValidator = function(oData) {
 				if (!this.bInitialised) {
 					return;
 				}
+
+				// queue the validator calls
+				if (aValidators) {
+					var oToken;
+					aValidators.some(function(fValidator) {
+						oToken = fValidator(oData);
+						return oToken;
+					}, this);
+
+					if (oToken) {
+						return oToken;
+					}
+				}
+
 				var oRow = oData.suggestionObject, oDataModelRow, sInput = oData.text, aFilters = [], mParams;
 				// Selection via suggestion row --> no round trip needed
 				if (oRow) {
@@ -380,7 +455,12 @@ sap.ui.define([
 			}
 			// If SearchSupported = false; create a $filter for the keyfield with a StartsWith operator for the typed in/search text
 			if (!this.bSupportBasicSearch) {
-				aFilters.push(new Filter(this.sKey, sap.ui.model.FilterOperator.StartsWith, sSearchText));
+
+				if (this._fieldViewMetadata && this._fieldViewMetadata.filterType === "numc") {
+					aFilters.push(new Filter(this.sKey, sap.ui.model.FilterOperator.Contains, sSearchText));
+				} else {
+					aFilters.push(new Filter(this.sKey, sap.ui.model.FilterOperator.StartsWith, sSearchText));
+				}
 			}
 			// Restrict to 10 records for type Ahead
 			length = 10;
@@ -409,6 +489,10 @@ sap.ui.define([
 			mParams["select"] = this.aSelect.toString();
 		}
 
+		if (!this.sValueListEntitySetName) {
+			jQuery.sap.log.error("ValueListProvider", "Empty sValueListEntitySetName for " + this.sAggregationName + " binding! (missing primaryValueListAnnotation)");
+		}
+
 		// Bind the specified aggregation with valueList path in the model
 		this.oControl.bindAggregation(this.sAggregationName, {
 			path: "/" + this.sValueListEntitySetName,
@@ -417,8 +501,24 @@ sap.ui.define([
 			filters: aFilters,
 			sorter: this._oSorter,
 			events: oEvents,
-			template: this._oTemplate
+			template: this._oTemplate,
+			templateShareable: false
 		});
+	};
+
+	/**
+	 * Unbind the aggregation from the model.
+	 *
+	 * @returns {sap.ui.comp.providers.ValueListProvider} The <code>this</code> instance to allow method chaining
+	 * @protected
+	 * @since 1.54
+	 */
+	ValueListProvider.prototype.unbindAggregation = function() {
+		if (this.oControl) {
+			this.oControl.unbindAggregation(this.sAggregationName);
+		}
+
+		return this;
 	};
 
 	/**
@@ -448,6 +548,11 @@ sap.ui.define([
 			this.oJsonModel.destroy();
 			this.oJsonModel = null;
 		}
+
+		if (this._oTemplate) {
+			this._oTemplate.destroy();
+		}
+
 		this._oTemplate = null;
 		this.sAggregationName = null;
 		this.bTypeAheadEnabled = null;

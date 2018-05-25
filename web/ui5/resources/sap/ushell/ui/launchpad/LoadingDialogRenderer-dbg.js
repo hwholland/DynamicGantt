@@ -1,17 +1,16 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap, navigator*/
 
-(function () {
-    "use strict";
-    /*jslint nomen: true*/
-    jQuery.sap.declare("sap.ushell.ui.launchpad.LoadingDialogRenderer");
+sap.ui.define(function() {
+	"use strict";
 
+    /*jslint nomen: true*/
     /**
      * @class sap.ushell.ui.launchpad.LoadingDialogRenderer
      * @static
      * @private
      */
-    sap.ushell.ui.launchpad.LoadingDialogRenderer = {};
+    var LoadingDialogRenderer = {};
 
 
     /**
@@ -21,38 +20,14 @@
      * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
      * @private
      */
-    sap.ushell.ui.launchpad.LoadingDialogRenderer.render = function (oRm, oControl) {
+    LoadingDialogRenderer.render = function (oRm, oControl) {
         var sTooltip = oControl.getTooltip_AsString();
-
-        if (jQuery("#sapUshellLoadingAccessibilityHelper").length === 0) {
-            oRm.write("<div");
-            oRm.writeAttribute("id", "sapUshellLoadingAccessibilityHelper");
-            oRm.addClass("sapUshellLoadingAccessibilityHelper");
-            oRm.writeClasses();
-            oRm.write(">");
-            oRm.write("<div");
-            oRm.writeAttribute("id", "sapUshellLoadingAccessibilityHelper-appInfo");
-            oRm.writeAttribute("aria-atomic", "true");
-            oRm.writeAttribute("role", "alert");
-            oRm.write(">");
-            oRm.write("</div>");
-            oRm.write("<div");
-            oRm.writeAttribute("id", "sapUshellLoadingAccessibilityHelper-loadingComplete");
-            oRm.writeAttribute("aria-atomic", "true");
-            oRm.writeAttribute("aria-live", "polite");
-            oRm.write(">");
-
-            oRm.write("</div>");
-
-            oRm.write("</div>");
-        }
         // add custom class to label
         oControl._oLabel.addStyleClass("sapUshellLoadingDialogLabel");
         oRm.write("<div");
         oRm.writeControlData(oControl);
         oRm.addClass("sapUshellLoadingDialogControl");
         oRm.writeClasses();
-
         if (sTooltip) {
             oRm.writeAttributeEscaped("title", sTooltip);
         }
@@ -68,17 +43,23 @@
         oRm.write("</div>");
     };
 
-    sap.ushell.ui.launchpad.LoadingDialogRenderer.renderAppInfo = function (oRm, oControl) {
-        oRm.write("<div").addClass("sapUshellLoadingDialogAppData").writeClasses();
-        oRm.write(">");
+    LoadingDialogRenderer.renderAppInfo = function (oRm, oControl) {
+        oRm.write("<div").addClass("sapUshellLoadingDialogAppData").writeClasses().write(">");
         if (oControl.getIconUri()) {
             oRm.renderControl(oControl.oIcon);
         }
+        oRm.write("<span");
+        oRm.writeAttribute("id", oControl.getId() + "accessibility-helper");
+        oRm.addClass("sapUshellAccessibilityHelper");
+        oRm.writeClasses();
+        oRm.writeAccessibilityState(oControl, {live: "rude", "relevant": "additions text"});
+        oRm.write(">");
+        oRm.write("</span>");
         oRm.renderControl(oControl._oLabel);
         oRm.write("</div>");
     };
 
-    sap.ushell.ui.launchpad.LoadingDialogRenderer.renderFioriFlower = function (oRm, oControl) {
+    LoadingDialogRenderer.renderFioriFlower = function (oRm, oControl) {
         /*jslint regexp: true */
         var i,
             bReplaceFlower = false,
@@ -112,4 +93,8 @@
         }
     };
 
-}());
+
+
+	return LoadingDialogRenderer;
+
+}, /* bExport= */ true);

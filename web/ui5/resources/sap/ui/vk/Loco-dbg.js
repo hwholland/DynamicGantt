@@ -7,8 +7,8 @@
 
 // Provides control sap.ui.vk.Loco.
 sap.ui.define([
-	"jquery.sap.global", "sap/ui/base/EventProvider", "./InputDevicePointer", "./InputDeviceMouse", "./InputDeviceTouch"
-], function(jQuery, EventProvider, InputDevicePointer, InputDeviceMouse, InputDeviceTouch) {
+	"jquery.sap.global", "sap/ui/base/EventProvider", "./InputDevicePointer", "./InputDeviceMouse", "./InputDeviceTouch", "./InputDeviceKeyboard"
+], function(jQuery, EventProvider, InputDevicePointer, InputDeviceMouse, InputDeviceTouch, InputDeviceKeyboard) {
 	"use strict";
 
 	/**
@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.EventProvider
 	 *
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 *
 	 * @constructor
 	 * @public
@@ -30,12 +30,12 @@ sap.ui.define([
 	var Loco = EventProvider.extend("sap.ui.vk.Loco", {
 		metadata: {
 			publicMethods: [
-			    "addHandler",
-			    "removeHandler",
-			    "beginGesture",
-			    "move",
-			    "endGesture",
-			    "contextMenu"
+				"addHandler",
+				"removeHandler",
+				"beginGesture",
+				"move",
+				"endGesture",
+				"contextMenu"
 			]
 		},
 
@@ -47,7 +47,8 @@ sap.ui.define([
 			EventProvider.apply(this);
 			/* Array of ViewportHandler object */
 			this._handlers = [];
-			this._gesture = false;
+			this._handlerMap = [];
+			this._gesture = [];
 
 			/* Click, double-click simulation */
 			this._touchOrigin = {
@@ -75,7 +76,7 @@ sap.ui.define([
 	 * @public
 	 */
 	Loco.prototype.destroy = function() {
-		this._gesture = false;
+		this._gesture = [];
 		this._handlers = [];
 	};
 
@@ -87,8 +88,20 @@ sap.ui.define([
 	 * @public
 	 */
 	Loco.prototype.addHandler = function(handler) {
+		if (this._handlers.indexOf(handler) >= 0) {
+			return;
+		}
 		this._handlers.push(handler);
 		var viewport = handler.getViewport();
+		var handlers = this._handlerMap[viewport];
+
+		if (handlers == null) {
+			this._handlerMap[viewport] = [];
+			handlers = this._handlerMap[viewport];
+			handlers.push(handler);
+		} else if (handlers.indexOf(handler) == -1) {
+			handlers.push(handler);
+		}
 
 		var pointer = new InputDevicePointer(this);
 		if (pointer.isSupported()) {
@@ -107,6 +120,8 @@ sap.ui.define([
 				viewport._touch = touch;
 			}
 		}
+		viewport._keyboard = new InputDeviceKeyboard(this);
+		viewport._keyboard.enable(viewport);
 	};
 
 	/**
@@ -117,85 +132,92 @@ sap.ui.define([
 	 * @public
 	 */
 	Loco.prototype.removeHandler = function(handler) {
-		var h = this._handlers;
-		var count = h.length;
 		var viewport = handler.getViewport();
+		var h = this._handlers;
+		var handlers = this._handlerMap[viewport];
+		var handlerIndex;
 
-		for (var i = count - 1; i >= 0; i--) {
-			if (h[i] == handler) {
-				h.splice(i, 1);
+		if (handlers != null) {
+			handlerIndex = handlers.indexOf(handler);
+			if (handlerIndex >= 0) {
+				handlers.splice(handlerIndex, 1);
+			}
+		}
 
-				if (viewport._pointer) {
-					viewport._pointer.disable();
-					viewport._pointer = null;
-				}
+		handlerIndex = h.indexOf(handler);
+		if (handlerIndex >= 0) {
+			h.splice(handlerIndex, 1);
 
-				if (viewport._touch) {
-					viewport._touch.disable();
-					viewport._touch = null;
-				}
+			if (viewport._pointer) {
+				viewport._pointer.disable();
+				viewport._pointer = null;
+			}
 
-				if (viewport._mouse) {
-					viewport._mouse.disable();
-					viewport._mouse = null;
-				}
+			if (viewport._touch) {
+				viewport._touch.disable();
+				viewport._touch = null;
+			}
 
-				break;
+			if (viewport._mouse) {
+				viewport._mouse.disable();
+				viewport._mouse = null;
+			}
+
+			if (viewport._keyboard) {
+				viewport._keyboard.disable();
+				viewport._keyboard = null;
 			}
 		}
 	};
 
 	/**
+	 * It processes the click event.
+	 * @param {boolean} isDoubleClick This parameter specifies whether it is a double-click event or not.
+	 * @param {object} viewport The viewport which received the event.
 	 * @private
 	 */
-	Loco.prototype._processClick = function(dblclk) {
+	Loco.prototype._processClick = function(isDoubleClick, viewport) {
 		this._clickTimer = 0;
 
 		var event = {
-			x: 0,
-			y: 0,
-			z: 0,
+			x: this._touchOrigin.x,
+			y: this._touchOrigin.y,
+			z: this._touchOrigin.z,
 			d: 0,
 			n: 0,
-			buttons: 0,
+			buttons: this._touchButton,
 			scrolls: [],
 			points: [],
 			handled: false
 		};
-		event.x = this._touchOrigin.x;
-		event.y = this._touchOrigin.y;
-		event.z = this._touchOrigin.z;
-		event.buttons = this._touchButton;
 
-		var h = this._handlers;
-		var count = h.length;
-
-		for (var i = count - 1; i >= 0; i--) {
-			if (dblclk) {
-				var nativeViewportId = h[i]._viewport.getId();
-				//We extract the parent viewer id.
-				//if it exists, it has to be a string which ends in "-nativeViewport"
-				var parentViewerId = /-nativeViewport$/.test(nativeViewportId) ? nativeViewportId.replace(/-nativeViewport$/, '') : null;
-				//We get the parent viewer by id
-				var parentViewer = sap.ui.getCore().byId(parentViewerId);
-				//If the parent viewert exists, it has an overlay and also the overlay drawing is in progress,
-				//then we don't send the double click event to the viewport handler.
-				//We know the drawing is in progress because the mIACreateCB function is defined. If the drawing hasn't started
-				//or it has already finished, that function is cleared and it becomes undefined.
-				if (!parentViewer || !parentViewer.getOverlay() || !(typeof parentViewer.getOverlay().mIACreateCB === "function")) {
-					h[i].doubleClick(event);
+		var handlers = this._handlerMap[viewport];
+		if (handlers != null) {
+			for (var i = handlers.length - 1; i >= 0 && !event.handled; i--) {
+				if (isDoubleClick) {
+					var nativeViewportId = handlers[i].getViewport().getId();
+					// We extract the parent viewer id.
+					// if it exists, it has to be a string which ends in "-nativeViewport"
+					var parentViewerId = /-nativeViewport$/.test(nativeViewportId) ? nativeViewportId.replace(/-nativeViewport$/, "") : null;
+					// We get the parent viewer by id
+					var parentViewer = sap.ui.getCore().byId(parentViewerId);
+					// If the parent viewert exists, it has an overlay and also the overlay drawing is in progress,
+					// then we don't send the double click event to the viewport handler.
+					// We know the drawing is in progress because the mIACreateCB function is defined. If the drawing hasn't started
+					// or it has already finished, that function is cleared and it becomes undefined.
+					if (!parentViewer || !parentViewer.getOverlay() || !(typeof parentViewer.getOverlay().mIACreateCB === "function")) {
+						handlers[i].doubleClick(event, viewport);
+					}
+				} else {
+					handlers[i].click(event, viewport);
 				}
-			} else {
-				h[i].click(event);
-			}
-
-			if (event.handled) {
-				break;
 			}
 		}
 	};
 
 	/**
+	 * @param {object} event JSON object including input event data.
+	 * @returns {object} event Processed event object.
 	 * @private
 	 */
 	Loco.prototype._processInput = function(event) {
@@ -232,12 +254,12 @@ sap.ui.define([
 	/**
 	 * Signal begin of a input gesture.
 	 *
-	 * @param {event} JSON object including input event data.
-	 *
+	 * @param {object} event JSON object including input event data.
+	 * @param {object} viewport The viewport which received the event.
 	 * @public
 	 */
-	Loco.prototype.beginGesture = function(event) {
-		if (this._gesture) {
+	Loco.prototype.beginGesture = function(event, viewport) {
+		if (this._gesture[viewport]) {
 			return;
 		}
 
@@ -247,26 +269,26 @@ sap.ui.define([
 			this._isDoubleClick = true;
 
 			if (event.n == 1 && event.buttons <= 1 && this._touchButton <= 1) {
-				this._processClick(true);
+				this._processClick(true, viewport);
 			}
 		}
 
 		this._processInput(event);
-		var h = this._handlers;
-		var count = h.length;
 
-		for (var i = count - 1; i >= 0; i--) {
-			h[i].beginGesture(event);
-
-			if (event.handled) {
-				break;
+		var handlers = this._handlerMap[viewport];
+		if (handlers != null) {
+			for (var i = handlers.length - 1; i >= 0; i--) {
+				handlers[i].beginGesture(event);
+				if (event.handled) {
+					break;
+				}
 			}
 		}
 
 		var now = new Date();
 		this._touchStart = now.getTime();
 		this._touchMoved = false;
-		this._gesture = true;
+		this._gesture[viewport] = true;
 
 		this._touchOrigin.x = event.x;
 		this._touchOrigin.y = event.y;
@@ -281,57 +303,65 @@ sap.ui.define([
 	/**
 	 * Signal movement of a input gesture.
 	 *
-	 * @param {event} JSON object including input event data.
-	 *
+	 * @param {object} event JSON object including input event data.
+	 * @param {object} viewport The viewport which received the event.
 	 * @public
 	 */
-	Loco.prototype.move = function(event) {
-		if (!this._gesture) {
-			return;
-		}
-
+	Loco.prototype.move = function(event, viewport) {
 		this._processInput(event);
-		var h = this._handlers;
-		var count = h.length;
+		var handlers = this._handlerMap[viewport];
 
-		for (var i = count - 1; i >= 0; i--) {
-			h[i].move(event);
-
-			if (event.handled) {
-				break;
+		var i;
+		if (this._gesture[viewport]) {
+			if (handlers != null) {
+				for (i = handlers.length - 1; i >= 0; i--) {
+					handlers[i].move(event);
+					if (event.handled) {
+						break;
+					}
+				}
 			}
-		}
 
-		var dx = this._touchOrigin.x - event.x;
-		var dy = this._touchOrigin.y - event.y;
-		var dz = this._touchOrigin.z - event.z;
+			var dx = this._touchOrigin.x - event.x;
+			var dy = this._touchOrigin.y - event.y;
+			var dz = this._touchOrigin.z - event.z;
 
-		if ((dx * dx + dy * dy + dz * dz) > 8) {
-			this._touchMoved = true;
+			if ((dx * dx + dy * dy + dz * dz) > 8) {
+				this._touchMoved = true;
+			}
+		} else if (handlers != null) {
+			for (i = handlers.length - 1; i >= 0; i--) {
+				if (handlers[i].hover != undefined) {
+					handlers[i].hover(event);
+					if (event.handled) {
+						break;
+					}
+				}
+			}
 		}
 	};
 
 	/**
 	 * Signal end of a input gesture.
 	 *
-	 * @param {event} JSON object including input event data.
-	 *
+	 * @param {object} event JSON object including input event data.
+	 * @param {object} viewport The viewport which received the event.
 	 * @public
 	 */
-	Loco.prototype.endGesture = function(event) {
-		if (!this._gesture) {
+	Loco.prototype.endGesture = function(event, viewport) {
+		if (!this._gesture[viewport]) {
 			return;
 		}
 
 		this._processInput(event);
-		var h = this._handlers;
-		var count = h.length;
 
-		for (var i = count - 1; i >= 0; i--) {
-			h[i].endGesture(event);
-
-			if (event.handled) {
-				break;
+		var handlers = this._handlerMap[viewport];
+		if (handlers != null) {
+			for (var i = handlers.length - 1; i >= 0; i--) {
+				handlers[i].endGesture(event);
+				if (event.handled) {
+					break;
+				}
 			}
 		}
 
@@ -339,36 +369,58 @@ sap.ui.define([
 		this._touchEnd = now.getTime();
 
 		if (!this._touchMoved && !this._isDoubleClick && (this._touchEnd - this._touchStart) < 2000) {
-			this._clickTimer = setTimeout(function(that) {
-				that._processClick(false);
+			this._clickTimer = setTimeout(function(loco) {
+				loco._processClick(false, viewport);
 			}, 200, this);
 		}
 
 		this._isDoubleClick = false;
-		this._gesture = false;
+		this._gesture[viewport] = false;
+	};
+
+	Loco.prototype._resetClickTimer = function() {
+		if (this._clickTimer > 0) {
+			clearTimeout(this._clickTimer);
+			this._clickTimer = 0;
+		}
 	};
 
 	/**
 	 * Signal context menu event.
 	 *
-	 * @param {event} JSON object including input event data
-	 *
+	 * @param {object} event JSON object including input event data
+	 * @param {object} viewport The viewport which received the event.
 	 * @public
 	 */
-	Loco.prototype.contextMenu = function(event) {
+	Loco.prototype.contextMenu = function(event, viewport) {
 		this._processInput(event);
-
-		var h = this._handlers;
-		var count = h.length;
-
-		for (var i = count - 1; i >= 0; i--) {
-			h[i].contextMenu(event);
-
-			if (event.handled) {
-				break;
+		var handlers = this._handlerMap[viewport];
+		if (handlers != null) {
+			for (var i = handlers.length - 1; i >= 0; i--) {
+				handlers[i].contextMenu(event);
+				if (event.handled) {
+					break;
+				}
 			}
 		}
 	};
 
+	/**
+	 * Signal keyboard event.
+	 *
+	 * @param {object} event Keyboard event object.
+	 * @param {object} viewport The viewport which received the event.
+	 * @public
+	 */
+	Loco.prototype.keyEventHandler = function(event, viewport) {
+		var handlers = this._handlerMap[viewport];
+		if (handlers !== null && handlers !== undefined) {
+			for (var i = handlers.length - 1; i >= 0; i--) {
+				if (handlers[i].keyEventHandler) {
+					handlers[i].keyEventHandler(event);
+				}
+			}
+		}
+	};
 	return Loco;
 }, /* bExport= */ true);

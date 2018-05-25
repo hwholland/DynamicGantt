@@ -1,12 +1,12 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/Control" ],
-	function(jQuery, library, MobileLibrary, Control) {
+sap.ui.define([
+	"jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/Control", "sap/m/FlexBox", "sap/ui/Device", "sap/ui/core/ResizeHandler"
+], function(jQuery, library, MobileLibrary, Control, FlexBox, Device, ResizeHandler) {
 	"use strict";
 
 	/**
@@ -19,7 +19,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 	 * Displays a colored horizontal bar representing a current value on top of a background bar representing the compared value. The vertical bars can represent the numeric values, the scaling factors, the thresholds, and the target values.  This control replaces the deprecated sap.suite.ui.commons.BulletChart.
 	 * @extends sap.ui.core.Control
 	 *
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -68,22 +68,22 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 			/**
 			 * If set to true, shows the numeric actual value. This property works in Actual mode only.
 			 */
-			showActualValue: {type: "boolean", group: "Misc", defaultValue: "true"},
+			showActualValue: {type: "boolean", group: "Misc", defaultValue: true},
 
 			/**
 			 * If set to true, shows the calculated delta value instead of the numeric actual value regardless of the showActualValue setting. This property works in Delta mode only.
 			 */
-			showDeltaValue: {type: "boolean", group: "Misc", defaultValue: "true"},
+			showDeltaValue: {type: "boolean", group: "Misc", defaultValue: true},
 
 			/**
 			 * If set to true, shows the numeric target value.
 			 */
-			showTargetValue: {type: "boolean", group: "Misc", defaultValue: "true"},
+			showTargetValue: {type: "boolean", group: "Misc", defaultValue: true},
 
 			/**
 			 * If set to true, shows the value marker.
 			 */
-			showValueMarker: {type: "boolean", group: "Misc", defaultValue: "false"},
+			showValueMarker: {type: "boolean", group: "Misc", defaultValue: false},
 
 			/**
 			 * If set, displays a specified label instead of the numeric actual value.
@@ -106,7 +106,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 			width: {type: "sap.ui.core.CSSSize", group: "Misc"},
 
 			/**
-			 * The background color of the scale.
+			 * The background color of the scale. The theming is enabled only for the default value of this property.
 			 */
 			scaleColor: {type: "sap.suite.ui.microchart.CommonBackgroundType", group: "Misc", defaultValue: "MediumLight"},
 
@@ -165,8 +165,8 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 	};
 
 	/**
-	 * The chart will only be rendered if the theme is applied. If this is the case,
-	 * the control invalidates itself.
+	 * The chart will only be rendered if the theme is applied.
+	 * If this is the case, the control invalidates itself.
 	 *
 	 * @private
 	 */
@@ -242,8 +242,8 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 
 		var nActualValuePct, nTargetValuePct;
 		if (this.getMode() === library.BulletMicroChartModeType.Delta) {
-			// In case delta mode is used, the zero handling is different, as the left position is 49 instead of 0
-			nActualValuePct = (!this.getActual() || !this.getActual()._isValueSet || (fTotal === 0 && this.getActual().getValue() === 0)) ? 49 : (0.05 + (fActual - fLowestValue) * fScaleWidthPct / fTotal).toFixed(2);
+			// In case delat mode is used, the zero handling is different, as the left position is 49 instead of 0
+			nActualValuePct = (!this.getActual() || !this.getActual()._isValueSet || fTotal === 0) ? 49 : (0.05 + (fActual - fLowestValue) * fScaleWidthPct / fTotal).toFixed(2);
 			nTargetValuePct = (!this._isTargetValueSet || fTotal === 0) ? 49 : ((fTarget - fLowestValue) * fScaleWidthPct / fTotal).toFixed(2);
 		} else {
 			nActualValuePct = (!this.getActual() || !this.getActual()._isValueSet || fTotal === 0 || fLowestValue === 0 && this.getActual().getValue() === 0) ? 0 : (0.05 + (fActual - fLowestValue) * fScaleWidthPct / fTotal).toFixed(2);
@@ -310,8 +310,20 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 		return this.setProperty("forecastValue", this._isForecastValueSet ? fForecastValue : NaN);
 	};
 
+	BulletMicroChart.prototype.setSize = function(size) {
+		if (this.getSize() !== size) {
+			if (size === MobileLibrary.Size.Responsive) {
+				this.setProperty("isResponsive", true, true);
+			} else {
+				this.setProperty("isResponsive", false, true);
+			}
+			this.setProperty("size", size, false);
+		}
+		return this;
+	};
+
 	BulletMicroChart.prototype.ontap = function(oEvent) {
-		if (sap.ui.Device.browser.internet_explorer) {
+		if (Device.browser.msie) {
 			this.$().focus();
 		}
 		this.firePress();
@@ -335,7 +347,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 	};
 
 	BulletMicroChart.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
+		Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
 		if (this.hasListeners("press")) {
 			this.$().attr("tabindex", 0).addClass("sapSuiteUiMicroChartPointer");
 		}
@@ -343,7 +355,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 	};
 
 	BulletMicroChart.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
+		Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
 		if (!this.hasListeners("press")) {
 			this.$().removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer");
 		}
@@ -356,7 +368,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 			library._removeStandardMargins(this);
 		}
 		if (this._sChartResizeHandlerId ) {
-			sap.ui.core.ResizeHandler.deregister(this._sChartResizeHandlerId);
+			ResizeHandler.deregister(this._sChartResizeHandlerId);
 		}
 		if (this.getIsResponsive() && !this.data("_parentRenderingContext") && jQuery.isFunction(this.getParent)) {
 			this.data("_parentRenderingContext", this.getParent());
@@ -384,7 +396,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 	 */
 	BulletMicroChart.prototype._onControlIsVisible = function() {
 		this._onResize();
-		this._sChartResizeHandlerId = sap.ui.core.ResizeHandler.register(this, jQuery.proxy(this._onResize, this));
+		this._sChartResizeHandlerId = ResizeHandler.register(this, jQuery.proxy(this._onResize, this));
 		if (this.getShowValueMarker()) {
 			this._adjustValueToMarker();
 		}
@@ -403,6 +415,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 			this._resizeVertically();
 		} else {
 			this._adjustLabelsPos();
+			this._adjustValueToMarker();
 		}
 	};
 
@@ -412,7 +425,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 	 * @private
 	 */
 	BulletMicroChart.prototype._adjustToParent = function() {
-		if (this.data("_parentRenderingContext") && this.data("_parentRenderingContext") instanceof sap.m.FlexBox) {
+		if (this.data("_parentRenderingContext") && this.data("_parentRenderingContext") instanceof FlexBox) {
 			var $Parent = this.data("_parentRenderingContext").$();
 			var sParentHeight = parseInt($Parent.height(), 10);
 			var sParentWidth = parseInt($Parent.width(), 10);
@@ -488,7 +501,7 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 	};
 
 	BulletMicroChart.prototype.exit = function() {
-		sap.ui.core.ResizeHandler.deregister(this._sChartResizeHandlerId);
+		ResizeHandler.deregister(this._sChartResizeHandlerId);
 	};
 
 	BulletMicroChart.prototype._adjustLabelsPos = function() {
@@ -626,8 +639,18 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 		return oTooltip ? oTooltip : "";
 	};
 
+	/**
+	 * Returns the translated accessibility control type. It describes the type of the MicroChart control.
+	 *
+	 * @returns {string} The translated accessibility control type
+	 * @private
+	 */
+	BulletMicroChart.prototype._getAccessibilityControlType = function() {
+		return this._oRb.getText("ACC_CTR_TYPE_BULLETMICROCHART");
+	};
+
 	BulletMicroChart.prototype.clone = function(sIdSuffix, aLocalIds, oOptions) {
-		var oClone = sap.ui.core.Control.prototype.clone.apply(this, arguments);
+		var oClone = Control.prototype.clone.apply(this, arguments);
 		oClone._isMinValueSet = this._isMinValueSet;
 		oClone._isMaxValueSet = this._isMaxValueSet;
 		oClone._isForecastValueSet = this._isForecastValueSet;
@@ -687,6 +710,8 @@ sap.ui.define([ "jquery.sap.global", "./library", "sap/m/library", "sap/ui/core/
 			this.$().unbind("mouseleave", this._oMouseEnterLeaveHandler.mouseLeaveChart);
 		}
 	};
+
+	library._overrideGetAccessibilityInfo(BulletMicroChart.prototype);
 
 	return BulletMicroChart;
 });

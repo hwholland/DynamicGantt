@@ -1,98 +1,43 @@
 /*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
-
-/* ----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying 
- * source files only (*.control, *.js) or they will be lost after the next generation.
- * ---------------------------------------------------------------------------------- */
 
 // Provides control sap.ushell.ui.footerbar.AboutButton.
-jQuery.sap.declare("sap.ushell.ui.footerbar.AboutButton");
-jQuery.sap.require("sap.ushell.library");
-jQuery.sap.require("sap.ushell.ui.launchpad.ActionItem");
-
-
-/**
- * Constructor for a new ui/footerbar/AboutButton.
- * 
- * Accepts an object literal <code>mSettings</code> that defines initial 
- * property values, aggregated and associated objects as well as event handlers. 
- * 
- * If the name of a setting is ambiguous (e.g. a property has the same name as an event), 
- * then the framework assumes property, aggregation, association, event in that order. 
- * To override this automatic resolution, one of the prefixes "aggregation:", "association:" 
- * or "event:" can be added to the name of the setting (such a prefixed name must be
- * enclosed in single or double quotes).
- *
- * The supported settings are:
- * <ul>
- * <li>Properties
- * <ul></ul>
- * </li>
- * <li>Aggregations
- * <ul></ul>
- * </li>
- * <li>Associations
- * <ul></ul>
- * </li>
- * <li>Events
- * <ul></ul>
- * </li>
- * </ul> 
- *
- * 
- * In addition, all settings applicable to the base type {@link sap.ushell.ui.launchpad.ActionItem#constructor sap.ushell.ui.launchpad.ActionItem}
- * can be used as well.
- *
- * @param {string} [sId] id for the new control, generated automatically if no id is given 
- * @param {object} [mSettings] initial settings for the new control
- *
- * @class
- * Add your documentation for the newui/footerbar/AboutButton
- * @extends sap.ushell.ui.launchpad.ActionItem
- * @version 1.38.26
- *
- * @constructor
- * @public
- * @name sap.ushell.ui.footerbar.AboutButton
- * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
- */
-sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.AboutButton", { metadata : {
-
-	library : "sap.ushell"
-}});
-
-
-/**
- * Creates a new subclass of class sap.ushell.ui.footerbar.AboutButton with name <code>sClassName</code> 
- * and enriches it with the information contained in <code>oClassInfo</code>.
- * 
- * <code>oClassInfo</code> might contain the same kind of informations as described in {@link sap.ui.core.Element.extend Element.extend}.
- *   
- * @param {string} sClassName name of the class to be created
- * @param {object} [oClassInfo] object literal with informations about the class  
- * @param {function} [FNMetaImpl] constructor function for the metadata object. If not given, it defaults to sap.ui.core.ElementMetadata.
- * @return {function} the created class / constructor function
- * @public
- * @static
- * @name sap.ushell.ui.footerbar.AboutButton.extend
- * @function
- */
-
-// Start of sap/ushell/ui/footerbar/AboutButton.js
-(function () {
+sap.ui.define([
+    'sap/m/Button',
+    'sap/m/Dialog',
+    'sap/m/ObjectHeader',
+    'sap/m/VBox',
+    'sap/ui/layout/form/SimpleForm',
+    'sap/ushell/library',
+    'sap/ushell/resources',
+    'sap/ushell/ui/launchpad/ActionItem',
+    'sap/ushell/services/AppConfiguration',
+    'sap/m/Label',
+    'sap/m/Text'
+], function (Button, Dialog, ObjectHeader, VBox, SimpleForm, library, resources, ActionItem, AppConfiguration, Label, Text) {
     "use strict";
+
+   /**
+    * Constructor for a new ui/footerbar/AboutButton.
+    *
+    * @param {string} [sId] id for the new control, generated automatically if no id is given 
+    * @param {object} [mSettings] initial settings for the new control
+    *
+    * @class
+    * Add your documentation for the newui/footerbar/AboutButton
+    * @extends sap.ushell.ui.launchpad.ActionItem
+    *
+    * @constructor
+    * @public
+    * @name sap.ushell.ui.footerbar.AboutButton
+    * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+    */
+    var AboutButton = ActionItem.extend("sap.ushell.ui.footerbar.AboutButton", /** @lends sap.ushell.ui.footerbar.AboutButton.prototype */ { metadata : {
+        library : "sap.ushell"
+    }});
+
     /*global jQuery, sap, navigator*/
-
-    jQuery.sap.require("sap.ui.layout.form.SimpleForm");
-    jQuery.sap.require("sap.m.ObjectHeader");
-    jQuery.sap.require("sap.m.VBox");
-    jQuery.sap.require("sap.m.Dialog");
-    jQuery.sap.require("sap.m.Button");
-    jQuery.sap.require("sap.ushell.resources");
-
-    jQuery.sap.declare("sap.ushell.ui.footerbar.AboutButton");
 
     /**
      * AboutButton
@@ -101,64 +46,72 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.AboutButton",
      * @private
      * @since 1.16.0
      */
-    sap.ushell.ui.footerbar.AboutButton.prototype.init = function () {
+    AboutButton.prototype.init = function () {
         //call the parent sap.ushell.ui.launchpad.ActionItem init method
-        if (sap.ushell.ui.launchpad.ActionItem.prototype.init) {
-            sap.ushell.ui.launchpad.ActionItem.prototype.init.apply(this, arguments);
+        if (ActionItem.prototype.init) {
+            ActionItem.prototype.init.apply(this, arguments);
         }
         this.setIcon('sap-icon://hint');
-        this.setText(sap.ushell.resources.i18n.getText("about"));
-        this.setTooltip(sap.ushell.resources.i18n.getText("about"));
+        this.setText(resources.i18n.getText("about"));
+        this.setTooltip(resources.i18n.getText("about"));
         this.attachPress(this.showAboutDialog);
     };
 
-    sap.ushell.ui.footerbar.AboutButton.prototype.showAboutDialog = function () {
+    AboutButton.prototype.showAboutDialog = function () {
 
-        jQuery.sap.require("sap.ushell.services.AppConfiguration");
-
-        var translationBundle = sap.ushell.resources.i18n,
-            metaData = sap.ushell.services.AppConfiguration.getMetadata(),
-            oSimpleForm = new sap.ui.layout.form.SimpleForm({
+        var translationBundle = resources.i18n,
+            metaData = AppConfiguration.getMetadata(),
+            oApplication = AppConfiguration.getCurrentApplication(),
+            oComponentHandle = oApplication ? oApplication.componentHandle : undefined,
+            oManifest = oComponentHandle && oComponentHandle.getMetadata() ? oComponentHandle.getMetadata().getManifest() : undefined,
+            aRegistrationIds = oManifest && oManifest["sap.fiori"] ? oManifest["sap.fiori"].registrationIds : undefined,
+            sAppId = aRegistrationIds && aRegistrationIds.length ? aRegistrationIds[0] : undefined,
+            oSimpleForm = new SimpleForm({
                 id: 'aboutDialogFormID',
                 editable: false,
                 content : [
-                    new sap.m.Label({text : translationBundle.getText("technicalName")}),
-                    new sap.m.Text({text : metaData.libraryName || ''}),
-                    new sap.m.Label({text : translationBundle.getText("fioriVersionFld")}),
-                    new sap.m.Text({text : metaData.version || ''}),
-//                    new sap.m.Label({text : translationBundle.getText("fioriBuildFld")}),
-//                    new sap.m.Text({text : sap.ui.buildinfo.buildtime || ''}),
-                    new sap.m.Label({text : translationBundle.getText("sapui5Fld")}),
-                    new sap.m.Text({text : (sap.ui.version || "") + (' (' + (sap.ui.buildinfo.buildtime || "") + ')') || ''}),
-                    new sap.m.Label({text : translationBundle.getText("userAgentFld")}),
-                    new sap.m.Text({text : navigator.userAgent || ''}),
-                    new sap.m.Label({text : ''})
+                    new Label({text : translationBundle.getText("technicalName")}),
+                    new Text({text : metaData.libraryName || ''}),
+                    new Label({text : translationBundle.getText("fioriVersionFld")}),
+                    new Text({text : metaData.version || ''}),
+//                    new Label({text : translationBundle.getText("fioriBuildFld")}),
+//                    new Text({text : sap.ui.buildinfo.buildtime || ''}),
+                    new Label({text : translationBundle.getText("sapui5Fld")}),
+                    new Text({text : (sap.ui.version || "") + (' (' + (sap.ui.buildinfo.buildtime || "") + ')') || ''}),
+                    new Label({text : translationBundle.getText("userAgentFld")}),
+                    new Text({text : navigator.userAgent || ''}),
+                    new Label({text : ''})
                 ]
             }),
-            oHeader = new sap.m.ObjectHeader({
+            oHeader = new ObjectHeader({
                 title : metaData.title,
                 icon : metaData.icon
             }).addStyleClass('sapUshellAboutDialogHeader'),
             oDialog,
             oVBox,
-            okButton = new sap.m.Button({
+            okButton = new Button({
                 text : translationBundle.getText("okBtn"),
                 press : function () {
                     oDialog.close();
                 }
             });
 
+        if (sAppId) {
+            oSimpleForm.addContent(new Label({text : translationBundle.getText("fioriAppId")}));
+            oSimpleForm.addContent(new Text({text : sAppId}));
+        }
+
         if (jQuery.isEmptyObject(metaData) || !metaData.icon) {
-            oVBox = new sap.m.VBox({
+            oVBox = new VBox({
                 items: [oSimpleForm]
             });
         } else {
-            oVBox = new sap.m.VBox({
+            oVBox = new VBox({
                 items: [oHeader, oSimpleForm]
             });
         }
 
-        oDialog = new sap.m.Dialog({
+        oDialog = new Dialog({
             id: "aboutContainerDialogID",
             title: translationBundle.getText("about"),
             contentWidth : "25rem",
@@ -172,4 +125,7 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.AboutButton",
         oDialog.addContent(oVBox);
         oDialog.open();
     };
-}());
+
+    return AboutButton;
+},/* bExport= */true);
+

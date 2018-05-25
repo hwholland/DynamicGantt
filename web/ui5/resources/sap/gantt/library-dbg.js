@@ -26,14 +26,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 	// delegate further initialization of this library to the Core
 	sap.ui.getCore().initLibrary({
 		name : "sap.gantt",
-		dependencies : ["sap.ui.core", "sap.ui.layout", "sap.ui.table", "sap.m", "sap.ui.unified"],
+		dependencies : ["sap.ui.core", "sap.ui.layout", "sap.ui.table", "sap.m"],
 		types: [
 			"sap.gantt.control.ToolbarType",
 			"sap.gantt.SelectionMode",
 			"sap.gantt.shape.ShapeCategory",
 			"sap.gantt.def.filter.MorphologyOperator",
 			"sap.gantt.def.filter.ColorMatrixValue",
-			"sap.gantt.shape.ext.rls.RelationshipType"
+			"sap.gantt.shape.ext.rls.RelationshipType",
+			"sap.gantt.config.ZoomControlType",
+			"sap.gantt.config.BirdEyeRange",
+			"sap.gantt.GenericArray",
+			"sap.gantt.dragdrop.GhostAlignment"
 		],
 		interfaces: [
 			"sap.gantt.GanttChartBase"
@@ -54,6 +58,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			"sap.gantt.config.ExpandChart",
 			"sap.gantt.config.ExpandChartGroup",
 			"sap.gantt.config.TimeZoomGroup",
+			"sap.gantt.config.BirdEyeGroup",
 			"sap.gantt.config.ToolbarScheme",
 			"sap.gantt.config.Hierarchy",
 			"sap.gantt.config.HierarchyColumn",
@@ -65,10 +70,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			"sap.gantt.config.ObjectType",
 			"sap.gantt.config.ChartScheme",
 			"sap.gantt.config.Locale",
-			"sap.gantt.config.Shape"
+			"sap.gantt.config.Shape",
+			"sap.gantt.def.SvgDefs",
+			"sap.gantt.axistime.AxisTimeStrategyBase",
+			"sap.gantt.AdhocLine"
 		],
 		noLibraryCSS: false,
-		version: "1.38.22"
+		version: "1.54.2"
 	});
 	
 	this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
@@ -82,6 +90,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 
 		/**
 		 * Support Multiple Selection with Ctrl key
+		 * From version 1.40 to upper versions, support multiple selection without Ctrl key for rows
 		 * @private
 		 */
 		MultiWithKeyboard : "MultiWithKeyboard",
@@ -104,12 +113,34 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 		 */
 		None : "None"
 	};	
-	
+
+	/**
+	 * The layer of adhoc line in chart area
+	 *
+	 * @enum {string}
+	 * @public
+	 */
+	sap.gantt.AdhocLineLayer = {
+
+		/**
+		 * Adhoc lines are on top of all other shapes and patterns.
+		 * @public
+		 */
+		Top : "TOP",
+
+		/**
+		 * Adhoc lines are below all other shapes. If a calendar is shown in the chart area,
+		 * adhoc lines are on top of the calendar.
+		 * @public
+		 */
+		Bottom : "BOTTOM"
+	};
+
 	/**
 	 * Different types for a tool bar (predefined types)
 	 *
 	 * @enum {string}
-	 * @private
+	 * @public
 	 */
 	sap.gantt.control.ToolbarType = {
 
@@ -217,7 +248,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 		 */
 		Relationship: "relationship"
 	};
-	
+
 	/**
 	 * Morphology Operators.
 	 * 
@@ -297,7 +328,77 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 		StartToStart: 3
 	};
 
-	
+	/**
+	 * Define the type of zoom control in global tool bar 
+	 * 
+	 * @enum {string}
+	 * @name sap.gantt.config.ZoomControlType
+	 * @public
+	 */
+	sap.gantt.config.ZoomControlType = {
+			/**
+			 * Uses the SliderWithButtons control to modify the time zoom rate.
+			 * The SliderWithButtons control consists of zoom in and zoom out magnifier buttons and a slider. 
+			 * @public
+			 */
+			SliderWithButtons: "sliderWithButtons",
+			
+			/**
+		     * Uses the SliderOnly control to modify the time zoom rate.
+			 * The SliderOnly control only consists of a slider.   
+			 * @public
+			 */
+			SliderOnly: "sliderOnly",
+			
+			/**
+			 * Uses the ButtonsOnly control to modify the time zoom rate.
+			 * The SliderOnly control only consists of zoom in and zoom out buttons. 
+			 * @public
+			 */
+			ButtonsOnly: "buttonsOnly",
+			
+			/**
+			 * Uses the Select control to modify the time zoom rate.
+			 * The Select control consists of a drop down list to select a suitable zoom rate.
+			 * @public
+			 */
+			Select: "select",
+			
+			/**
+			 * Display no zoom control
+			 * @public
+			 */
+			None: "none"
+		};
+
+	/**
+	 * Define the range of data that bird eye would use to calculate visibleHorizon
+	 *
+	 * @enum {string}
+	 * @name sap.gantt.config.BirdEyeRange
+	 * @public
+	 */
+	sap.gantt.config.BirdEyeRange = {
+			/**
+			 * Bird eye will calculate visibleHorizon based on all rows of current view, but this mode may cause 
+			 * low performance.
+			 * Using this bird eye range, the result is not influenced by vertical scroll bar position as the total rows 
+			 * never changes.
+			 *
+			 * @public
+			 */
+			AllRows: "AllRows",
+
+			/**
+			 * Bird eye will calculate visibleHorizon based on row data only in visible rows.
+			 * Using this bird eye range, the result can be influenced by vertical scroll bar position as visible rows
+			 * may change with the movement of the vertical scroll bar position.
+			 *
+			 * @public
+			 */
+			VisibleRows: "VisibleRows"
+		};
+
 	/**
 	 * Different time units used as part of the zoom level. They are names of d3 time unit classes.
 	 * 
@@ -345,6 +446,168 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 	};
 
 	/**
+	 * Different first day of week used as time axis.
+	 * 
+	 * @enum {string}
+	 * @name sap.gantt.config.WeekFirstDay
+	 * @private
+	 */
+	sap.gantt.config.WeekFirstDay = {
+		"ad": "d3.time.monday",
+		"ae": "d3.time.saturday",
+		"af": "d3.time.saturday",
+		"ag": "d3.time.sunday",
+		"ai": "d3.time.monday",
+		"al": "d3.time.monday",
+		"am": "d3.time.monday",
+		"an": "d3.time.monday",
+		"ar": "d3.time.sunday",
+		"as": "d3.time.sunday",
+		"at": "d3.time.monday",
+		"au": "d3.time.sunday",
+		"ax": "d3.time.monday",
+		"az": "d3.time.monday",
+		"ba": "d3.time.monday",
+		"bd": "d3.time.friday",
+		"be": "d3.time.monday",
+		"bg": "d3.time.monday",
+		"bh": "d3.time.saturday",
+		"bm": "d3.time.monday",
+		"bn": "d3.time.monday",
+		"br": "d3.time.sunday",
+		"bs": "d3.time.sunday",
+		"bt": "d3.time.sunday",
+		"bw": "d3.time.sunday",
+		"by": "d3.time.monday",
+		"bz": "d3.time.sunday",
+		"ca": "d3.time.sunday",
+		"ch": "d3.time.monday",
+		"cl": "d3.time.monday",
+		"cm": "d3.time.monday",
+		"cn": "d3.time.sunday",
+		"co": "d3.time.sunday",
+		"cr": "d3.time.monday",
+		"cy": "d3.time.monday",
+		"cz": "d3.time.monday",
+		"de": "d3.time.monday",
+		"dj": "d3.time.saturday",
+		"dk": "d3.time.monday",
+		"dm": "d3.time.sunday",
+		"do": "d3.time.sunday",
+		"dz": "d3.time.saturday",
+		"ec": "d3.time.monday",
+		"ee": "d3.time.monday",
+		"eg": "d3.time.saturday",
+		"es": "d3.time.monday",
+		"et": "d3.time.sunday",
+		"fi": "d3.time.monday",
+		"fj": "d3.time.monday",
+		"fo": "d3.time.monday",
+		"fr": "d3.time.monday",
+		"gb": "d3.time.monday",
+		"gb-alt-variant": "d3.time.sunday",
+		"ge": "d3.time.monday",
+		"gf": "d3.time.monday",
+		"gp": "d3.time.monday",
+		"gr": "d3.time.monday",
+		"gt": "d3.time.sunday",
+		"gu": "d3.time.sunday",
+		"hk": "d3.time.sunday",
+		"hn": "d3.time.sunday",
+		"hr": "d3.time.monday",
+		"hu": "d3.time.monday",
+		"id": "d3.time.sunday",
+		"ie": "d3.time.sunday",
+		"il": "d3.time.sunday",
+		"in": "d3.time.sunday",
+		"iq": "d3.time.saturday",
+		"ir": "d3.time.saturday",
+		"is": "d3.time.monday",
+		"it": "d3.time.monday",
+		"jm": "d3.time.sunday",
+		"jo": "d3.time.saturday",
+		"jp": "d3.time.sunday",
+		"ke": "d3.time.sunday",
+		"kg": "d3.time.monday",
+		"kh": "d3.time.sunday",
+		"kr": "d3.time.sunday",
+		"kw": "d3.time.saturday",
+		"kz": "d3.time.monday",
+		"la": "d3.time.sunday",
+		"lb": "d3.time.monday",
+		"li": "d3.time.monday",
+		"lk": "d3.time.monday",
+		"lt": "d3.time.monday",
+		"lu": "d3.time.monday",
+		"lv": "d3.time.monday",
+		"ly": "d3.time.saturday",
+		"ma": "d3.time.saturday",
+		"mc": "d3.time.monday",
+		"md": "d3.time.monday",
+		"me": "d3.time.monday",
+		"mh": "d3.time.sunday",
+		"mk": "d3.time.monday",
+		"mm": "d3.time.sunday",
+		"mn": "d3.time.monday",
+		"mo": "d3.time.sunday",
+		"mq": "d3.time.monday",
+		"mt": "d3.time.sunday",
+		"mv": "d3.time.friday",
+		"mx": "d3.time.sunday",
+		"my": "d3.time.monday",
+		"mz": "d3.time.sunday",
+		"ni": "d3.time.sunday",
+		"nl": "d3.time.monday",
+		"no": "d3.time.monday",
+		"np": "d3.time.sunday",
+		"nz": "d3.time.monday",
+		"om": "d3.time.saturday",
+		"pa": "d3.time.sunday",
+		"pe": "d3.time.sunday",
+		"ph": "d3.time.sunday",
+		"pk": "d3.time.sunday",
+		"pl": "d3.time.monday",
+		"pr": "d3.time.sunday",
+		"pt": "d3.time.monday",
+		"py": "d3.time.sunday",
+		"qa": "d3.time.saturday",
+		"re": "d3.time.monday",
+		"ro": "d3.time.monday",
+		"rs": "d3.time.monday",
+		"ru": "d3.time.monday",
+		"sa": "d3.time.sunday",
+		"sd": "d3.time.saturday",
+		"se": "d3.time.monday",
+		"sg": "d3.time.sunday",
+		"si": "d3.time.monday",
+		"sk": "d3.time.monday",
+		"sm": "d3.time.monday",
+		"sv": "d3.time.sunday",
+		"sy": "d3.time.saturday",
+		"th": "d3.time.sunday",
+		"tj": "d3.time.monday",
+		"tm": "d3.time.monday",
+		"tn": "d3.time.sunday",
+		"tr": "d3.time.monday",
+		"tt": "d3.time.sunday",
+		"tw": "d3.time.sunday",
+		"ua": "d3.time.monday",
+		"um": "d3.time.sunday",
+		"us": "d3.time.sunday",
+		"uy": "d3.time.monday",
+		"uz": "d3.time.monday",
+		"va": "d3.time.monday",
+		"ve": "d3.time.sunday",
+		"vi": "d3.time.sunday",
+		"vn": "d3.time.monday",
+		"ws": "d3.time.sunday",
+		"xk": "d3.time.monday",
+		"ye": "d3.time.sunday",
+		"za": "d3.time.sunday",
+		"zw": "d3.time.sunday"
+	};
+
+	/**
 	 * Defines the default configuration planHorizon.
 	 * 
 	 * <p>From one year ago, to one year from now.</p>
@@ -358,7 +621,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 	/**
 	 * Defines the default configuration initHorizon.
 	 * 
-	 * <p>From one month ago, to one month from now.</p>
+	 * <p>From one month ago, to one year from now.</p>
 	 * @public
 	 */
 	sap.gantt.config.DEFAULT_INIT_HORIZON = new sap.gantt.config.TimeHorizon({
@@ -390,7 +653,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 	 * 					<ul>
 	 * 						<li><code>"unit": sap.gantt.config.TimeUnit.day</code> - </li>
 	 * 						<li><code>"span": 1</code> - Time span is 1.</li>
-	 * 						<li><code>"format": "cccc dd.M.yyyy"</code> - Formats the string in CLDR date/time symbols.</li>
+	 * 						<li><code>"pattern": "cccc dd.M.yyyy"</code> - Formats the string in CLDR date/time symbols.</li>
 	 * 					</ul>
 	 * 				</li>
 	 * 				<li>
@@ -398,7 +661,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 	 * 					<ul>
 	 * 						<li><code>"unit": sap.gantt.config.TimeUnit.hour</code> - Time unit is hour.</li>
 	 * 						<li><code>"span": 12</code> - Time span is 12.</li>
-	 * 						<li><code>"format": "HH:mm"</code> - Formats the string in CLDR date/time symbols.</li>
+	 * 						<li><code>"pattern": "HH:mm"</code> - Formats the string in CLDR date/time symbols.</li>
 	 * 					</ul>
 	 * 				</li>
 	 * 			</ul>
@@ -415,6 +678,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 	 * 
 	 * @public
 	 */
+	var sUnitDayPattern = sap.ui.getCore().getConfiguration().getRTL() ? ".M.d" : "d.M.";
 	sap.gantt.config.DEFAULT_TIME_ZOOM_STRATEGY = {
 		"5min": {
 			innerInterval: {
@@ -425,12 +689,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.minute,
 				span: 5,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"10min": {
@@ -442,12 +706,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.minute,
 				span: 10,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"15min": {
@@ -459,12 +723,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.minute,
 				span: 15,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"30min": {
@@ -476,12 +740,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.minute,
 				span: 30,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"1hour": {
@@ -493,12 +757,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.hour,
 				span: 1,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"2hour": {
@@ -510,12 +774,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.hour,
 				span: 2,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"4hour": {
@@ -527,12 +791,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.hour,
 				span: 4,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"6hour": {
@@ -544,12 +808,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.hour,
 				span: 6,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"12hour": {
@@ -561,12 +825,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: "cccc d.M.yyyy"
+				format: "yyMMMEEEEd"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.hour,
 				span: 12,
-				format: "HH:mm"
+				pattern: "HH:mm"
 			}
 		},
 		"1day": {
@@ -578,12 +842,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 1,
-				format: "MMMM yyyy"
+				format: "yyyyMMMM"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 1,
-				format: sap.ui.getCore().getConfiguration().getRTL() ? ".d.M" : "d.M."
+				pattern: sUnitDayPattern
 			}
 		},
 		"2day": {
@@ -595,12 +859,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 1,
-				format: "MMMM yyyy"
+				format: "yyyyMMMM"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 2,
-				format: sap.ui.getCore().getConfiguration().getRTL() ? ".d.M" : "d.M."
+				pattern: sUnitDayPattern
 			}
 		},
 		"4day": {
@@ -612,12 +876,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 1,
-				format: "MMMM yyyy"
+				format: "yyyyMMMM"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.day,
 				span: 4,
-				format: sap.ui.getCore().getConfiguration().getRTL() ? ".d.M" : "d.M."
+				pattern: sUnitDayPattern
 			}
 		},
 		"1week": {
@@ -629,12 +893,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 1,
-				format: "MMMM yyyy"
+				format: "yyyyMMMM"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.week,
 				span: 1,
-				format: sap.ui.getCore().getConfiguration().getRTL() ? ".d.M" : "d.M."
+				pattern: sUnitDayPattern
 			}
 		},
 		"2week": {
@@ -646,12 +910,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 1,
-				format: "MMMM yyyy"
+				format: "yyyyMMMM"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.week,
 				span: 2,
-				format: sap.ui.getCore().getConfiguration().getRTL() ? ".d.M" : "d.M."
+				pattern: sUnitDayPattern
 			}
 		},
 		"1month": {
@@ -663,12 +927,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 6,
-				format: "MMMM yyyy"
+				format: "yyyyMMMM"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 1,
-				format: sap.ui.getCore().getConfiguration().getRTL() ? ".d.M" : "d.M."
+				pattern: sUnitDayPattern
 			}
 		},
 		"2month": {
@@ -680,12 +944,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			largeInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 6,
-				format: "MMMM yyyy"
+				format: "yyyyMMMM"
 			},
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 2,
-				format: sap.ui.getCore().getConfiguration().getRTL() ? ".d.M" : "d.M."
+				pattern: sUnitDayPattern
 			}
 		},
 		"4month": {
@@ -702,7 +966,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 4,
-				format: "MMMM"
+				pattern: "MMMM"
 			}
 		},
 		"6month": {
@@ -719,7 +983,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.month,
 				span: 6,
-				format: "MMMM"
+				pattern: "MMMM"
 			}
 		},
 		"1year": {
@@ -736,7 +1000,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.year,
 				span: 1,
-				format: "MMMM"
+				pattern: "MMMM"
 			}
 		},
 		"2year": {
@@ -753,7 +1017,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.year,
 				span: 2,
-				format: "MMMM"
+				pattern: "MMMM"
 			}
 		},
 		"5year": {
@@ -770,7 +1034,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 			smallInterval: {
 				unit: sap.gantt.config.TimeUnit.year,
 				span: 5,
-				format: "MMMM"
+				pattern: "MMMM"
 			}
 		}
 	};
@@ -959,7 +1223,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 		displayText: this._oRb.getText("XCKL_CURSOR_LINE"),
 		tooltip: this._oRb.getText("TLTP_CURSOR_LINE")
 	});
-	
+
 	/**
 	 * Defines the default setting item key for the vertical lines.
 	 * 
@@ -968,7 +1232,16 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 	 * @type {string}
 	 */
 	sap.gantt.config.SETTING_ITEM_ENABLE_VERTICAL_LINE_KEY = "sap_enableVerticalLine";
-	
+
+	/**
+	 * Defines the default setting item key for the adhoc lines.
+	 * 
+	 * The default setting item key for adhoc lines is used in the default settings group configuration.
+	 * @public 
+	 * @type {string}
+	 */
+	sap.gantt.config.SETTING_ITEM_ENABLE_ADHOC_LINE_KEY = "sap_enableAdhocLine";
+
 	/**
 	 * Defines the default configuration object for enabling vertical line setting item.
 	 * Default values:
@@ -987,7 +1260,26 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 		displayText: this._oRb.getText("XCKL_VERTICAL_LINE"),
 		tooltip: this._oRb.getText("TLTP_VERTICAL_LINE")
 	});
-	
+
+	/**
+	 * Defines the default configuration object for enabling the adhoc line setting item.
+	 * Default values:
+	 * <ul>
+	 * 		<li>key - <code>sap.gantt.config.SETTING_ITEM_ENABLE_ADHOC_LINE_KEY</code></li>
+	 * 		<li>checked - true</li>
+	 * 		<li>displayText - "Show Adhoc Lines"</li>
+	 * 		<li>tooltip - "Show Adhoc Lines"</li>
+	 * </ul>
+	 * @public
+	 * @type {object}
+	 */
+	sap.gantt.config.SETTING_ITEM_ENABLE_ADHOC_LINE = new sap.gantt.config.SettingItem({
+		key: sap.gantt.config.SETTING_ITEM_ENABLE_ADHOC_LINE_KEY,
+		checked: true,
+		displayText: this._oRb.getText("XCKL_ADHOC_LINE"),
+		tooltip: this._oRb.getText("TLTP_ADHOC_LINE")
+	});
+
 	/**
 	 * Defines the default setting item key for synchronized time scroll.
 	 * 
@@ -1033,6 +1325,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 		sap.gantt.config.SETTING_ITEM_ENABLE_NOW_LINE,
 		sap.gantt.config.SETTING_ITEM_ENABLE_CURSOR_LINE,
 		sap.gantt.config.SETTING_ITEM_ENABLE_VERTICAL_LINE,
+		sap.gantt.config.SETTING_ITEM_ENABLE_ADHOC_LINE,
 		sap.gantt.config.SETTING_ITEM_ENABLE_TIME_SCROLL_SYNC
 	];
 	
@@ -1303,7 +1596,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 		sap.gantt.config.DEFAULT_CONTAINER_SINGLE_LAYOUT,
 		sap.gantt.config.DEFAULT_CONTAINER_DUAL_LAYOUT
 	];
-	
+
 	/**
 	 * Defines the default configuration object Locale.
 	 * 
@@ -1331,6 +1624,140 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/library', 'sap/gantt/misc/Utili
 
 	sap.gantt.DIMENSION_LEGEND_NIL = "NIL";
 
+	/**
+	 * Different zoom type for mouse wheel zooming
+	 *
+	 * @enum {string}
+	 * @public
+	 */
+	sap.gantt.MouseWheelZoomType = {
+
+		/**
+		 * The granularity is the unit time range of innerInterval under current zoom level
+		 * @public
+		 */
+		FineGranular : "FineGranular",
+
+		/**
+		 * The granularity is a whole zoom level, just like the global zoom slider does
+		 * @public
+		 */
+		Stepwise : "Stepwise",
+
+		/**
+		 * Do not support mouse wheel zooming
+		 * @public
+		 */
+		None : "None"
+	};
+
+	/**
+	 * A hybrid data type that can represent an array of string, or array of object.
+	 * The result value parsed by this data type are "string[]" or "object[]"
+	 *
+	 * Examples of valid values in js:
+	 * 1. ["order", "activity"]
+	 * 2. [{name:"order", idName:"OrderNo"},{name:"activity"}]
+	 * 3. [{name:"order", idName:"OrderNo"},"activity"]
+	 *
+	 * Examples of valid values in xml view:
+	 * 1. "order,activity"
+	 * 2. "order, activity"
+	 * 3. "[order,activity]"
+	 * 4. "[order, activity]"
+	 * 5. '[{"name":"order", "idName":"OrderNo"},{"name":"activity"}]'
+	 * 6. "[{'name':'order', 'idName':'OrderNo'},{'name':'activity'}]"
+	 *
+	 * @public
+	 */
+	sap.gantt.GenericArray = DataType.createType('sap.gantt.GenericArray', {
+		isValid : function(vValue) {
+			if (typeof vValue === "string" || vValue instanceof String) {
+				return true;
+			}
+			if (Array.isArray(vValue)) {
+				for (var i = 0; i < vValue.length; i++) {
+					if (!(typeof vValue[i] === "string" || vValue[i] instanceof String || typeof vValue[i] === "object")) {
+						return false;
+					}
+				}
+				return true;
+			}
+			return false;
+		},
+		parseValue : function (sValue) {
+			if (sValue) {
+				if (Array.isArray(sValue)) {
+					return sValue;
+				} else if (typeof sValue === "string") {
+					var aValues;
+
+					//for valid example #5, #6, need to replace ' with ", because of JSON.parse
+					if (sValue.indexOf("[") > -1 && sValue.indexOf("{") > -1) {
+						sValue = sValue.replace(/\'/g,"\"");
+						aValues = JSON.parse(sValue);
+					} else {
+						// for valid expample #3-#4, need to get the content between the '[]'
+						if (sValue.indexOf("[") > -1) {
+							var regex = /^\[(.*)\]$/g;
+							var matches = regex.exec(sValue);
+							if (matches) {
+								sValue = matches[1];
+							}
+						}
+						// for valid example #1-#4, just split by the ','
+						aValues = sValue.split(",");
+						for (var i = 0; i < aValues.length; i++) {
+							//for valid example #2, #4, need to remove the blank space
+							aValues[i] = aValues[i].trim();
+						}
+					}
+					return aValues;
+				}
+			}
+			return sValue;
+		}
+	}, DataType.getType("any"));
+
+	/**
+	 * Defines how Gantt Chart aligns a draggable shape to the mouse pointer before dragging.
+	 * 
+	 * @enum {string}
+	 * @namespace
+	 * @name sap.gantt.dragdrop.GhostAlignment
+	 * @public
+	 */
+	sap.gantt.dragdrop.GhostAlignment = {
+		/**
+		 * When you click on a shape to start a drag-and-drop operation, the upper-left corner
+		 * of the shape is automatically moved to the mouse pointer before you start dragging.
+		 * This option makes the start time of the shape align with the cursor line through
+		 * the whole drag-and-drop process, and thus you can precisely determine the start
+		 * time when you drop the shape.
+		 * @public
+		 */
+		Start: "Start",
+
+		/**
+		 * Default drag-and-drop behavior. When you click on a shape to start a drag-and-drop
+		 * operation, Gantt Chart does not move the shape before you start dragging. This option
+		 * keeps the relative position between the shape and the mouse pointer intact through
+		 * the whole drag-and-drop process.
+		 * @public
+		 */
+		None: "None",
+
+		/**
+		 * When you click on a shape to start a drag-and-drop operation, the upper-right corner
+		 * of the shape is automatically moved to the mouse pointer before you start dragging.
+		 * This option makes the end time of the shape align with the cursor line through the
+		 * whole drag-and-drop process, and thus you can precisely determine the end time when
+		 * you drop the shape.
+		 * @public
+		 */
+		End: "End"
+	};
+
 	return sap.gantt;
-	
+
 });

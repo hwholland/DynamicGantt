@@ -1,16 +1,17 @@
 /*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 */
 
-jQuery.sap.declare("sap.ushell.components.factsheet.controls.PictureTileRenderer");
-jQuery.sap.require("sap.m.CustomTileRenderer");
+sap.ui.define(['sap/m/CustomTileRenderer', 'sap/ui/core/Renderer'],
+	function(CustomTileRenderer, Renderer) {
+	"use strict";
 
 /**
  * @class PictureTile renderer. 
  * @static
  */
 
-sap.ushell.components.factsheet.controls.PictureTileRenderer = sap.ui.core.Renderer.extend(sap.m.CustomTileRenderer);
+var PictureTileRenderer = Renderer.extend(CustomTileRenderer);
 
 /**
  * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
@@ -19,7 +20,7 @@ sap.ushell.components.factsheet.controls.PictureTileRenderer = sap.ui.core.Rende
  * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
  */
 
- sap.ushell.components.factsheet.controls.PictureTileRenderer.render = function(oRm, oControl) {
+ PictureTileRenderer.render = function(oRm, oControl) {
 
 	jQuery.sap.log.debug("PictureTileRenderer :: begin rendering");
 	
@@ -47,6 +48,11 @@ sap.ushell.components.factsheet.controls.PictureTileRenderer = sap.ui.core.Rende
 	oRm.write("</div></div>");
 };
 
-sap.ushell.components.factsheet.controls.PictureTileRenderer._renderContent = function(rm, oTile) {
+PictureTileRenderer._renderContent = function(rm, oTile) {
 	rm.renderControl(oTile.getContent());
 };
+
+
+	return PictureTileRenderer;
+
+}, /* bExport= */ true);

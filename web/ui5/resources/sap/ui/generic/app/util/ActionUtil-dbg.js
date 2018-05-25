@@ -1,12 +1,15 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
+
+sap.ui.getCore().loadLibrary("sap.m");
+sap.ui.getCore().loadLibrary("sap.ui.comp");
+
 sap.ui.define([
-	"jquery.sap.global", "sap/ui/base/ManagedObject", "sap/m/MessageBox", "sap/ui/layout/form/SimpleForm", "sap/ui/comp/smartform/Group", "sap/ui/comp/smartform/GroupElement", "sap/ui/comp/smartfield/SmartField", "sap/ui/comp/smartfield/SmartLabel", "sap/m/Dialog", "sap/ui/generic/app/util/ModelUtil", "sap/m/VBox", "sap/m/Text"
-], function(jQuery, ManagedObject, MessageBox, SimpleForm, Group, GroupElement, SmartField, SmartLabel, Dialog, ModelUtil, VBox, Text) {
+	"jquery.sap.global", "sap/ui/base/ManagedObject", "sap/m/MessageBox", "sap/ui/layout/form/SimpleForm", "sap/ui/comp/smartfield/SmartField", "sap/ui/comp/smartfield/SmartLabel", "sap/m/Dialog", "sap/ui/generic/app/util/ModelUtil", "sap/m/VBox", "sap/m/Text"
+], function (jQuery, ManagedObject, MessageBox, SimpleForm, SmartField, SmartLabel, Dialog, ModelUtil, VBox, Text) {
 	"use strict";
 
 	var ActionUtil = ManagedObject.extend("sap.ui.generic.app.util.ActionUtil", {
@@ -44,6 +47,14 @@ sap.ui.define([
 					type: "function",
 					group: "Misc",
 					defaultValue: null
+				},
+				/**
+				 * The callback that is called after the action has been successfully executed.
+				 */
+				operationGrouping: {
+					type: "string",
+					group: "Misc",
+					defaultValue: null
 				}
 			}
 		}
@@ -57,23 +68,28 @@ sap.ui.define([
 	 * @param {string} sFunctionImportPath The function import that is called
 	 * @param {string} [sFunctionImportLabel] Optional parameter for the confirmation popup text
 	 *
-	 * @returns {Promise} A Promise that resolves if the action has been executed successfully.
-	 * If the user cancels the action execution with the confirmation dialog mentioned above, the Promise also resolves.
-	 * The Promise rejects if the action execution wasn't successful.
+	 * @returns {Promise} There are two cases:
+	 * Case 1: Action is triggered immediately w/o further user interaction (i.e. when no further
+	 * parameters are needed or expected for processing).
+	 * A <code>Promise</code> is returned that resolves immediately and provides as parameter an
+	 * <code>Object</code> that contains another promise in the member <code>executionPromise</code>.
+	 * Case 2: Action is triggered with a dialog beforehand that could be cancelled by the user.
+	 * Same as above with the exception that the returned <code>Promise</code> is rejected directly
+	 * when the user decides to cancel the action processing.
 	 *
 	 * @protected
 	 */
-	ActionUtil.prototype.call = function(sFunctionImportPath, sFunctionImportLabel) {
+	ActionUtil.prototype.call = function (sFunctionImportPath, sFunctionImportLabel) {
 		var that = this;
-		return new Promise(function(resolve, reject) {
+		return new Promise(function (resolve, reject) {
 			var mActionParams;
-			that._oActionPromiseCallback = { resolve: resolve, reject: reject};
+			that._oActionPromiseCallback = { resolve: resolve, reject: reject };
 
 			that._sFunctionImportPath = sFunctionImportPath;
 
 			var oController = that.getController();
 			if (!oController) {
-				throw new Error("Controller not provided");
+				reject("Controller not provided");
 			}
 
 			that._oMetaModel = oController.getView().getModel().getMetaModel();
@@ -85,32 +101,40 @@ sap.ui.define([
 			that._sFunctionImportLabel = sFunctionImportLabel || sFunctionName;
 
 			if (!that._oFunctionImport) {
-				throw new Error("Unknown Function Import " + sFunctionName);
+				reject("Unknown Function Import " + sFunctionName);
 			}
 
 			if (that._isActionCritical()) {
-				var sMsgBoxText = sap.ui.getCore().getLibraryResourceBundle("sap.ui.generic.template").getText("ACTION_CONFIRM");
-				sMsgBoxText = jQuery.sap.formatMessage(sMsgBoxText, that._sFunctionImportLabel);
+				var sCustomMessageKey = "ACTION_CONFIRM|" + sFunctionName; // Key for i18n in application for custom message
+				var sMsgBoxText;
+				var oResourceBundle = oController.getOwnerComponent().getAppComponent && oController.getOwnerComponent().getAppComponent().getModel("i18n") && oController.getOwnerComponent().getAppComponent().getModel("i18n").getResourceBundle();
+				if (oResourceBundle && oResourceBundle.hasText(sCustomMessageKey)) {
+					sMsgBoxText = oResourceBundle.getText(sCustomMessageKey);
+				} else {
+					// Fallback in case key does not exist in i18n file of Application
+					sMsgBoxText = sap.ui.getCore().getLibraryResourceBundle("sap.ui.generic.app").getText("ACTION_CONFIRM");
+					sMsgBoxText = jQuery.sap.formatMessage(sMsgBoxText, that._sFunctionImportLabel);
+				}
 				MessageBox.confirm(sMsgBoxText, {
 					title: that._sFunctionImportLabel,
-					onClose: function(oAction) {
+					onClose: function (oAction) {
 						if (oAction === "OK") {
-							mActionParams = that._prepareParameters();
+							mActionParams = that._prepareParameters(that.getContexts());
 							that._initiateCall(mActionParams);
 						} else if (oAction === "CANCEL") {
-							that._oActionPromiseCallback.resolve(null);
+							that._oActionPromiseCallback.reject();
 						}
 					},
 					sClass: that._getCompactModeStyleClass()
 				});
 			} else {
-				mActionParams = that._prepareParameters();
+				mActionParams = that._prepareParameters(that.getContexts());
 				that._initiateCall(mActionParams);
 			}
 		});
 	};
 
-	ActionUtil.prototype._getCompactModeStyleClass = function() {
+	ActionUtil.prototype._getCompactModeStyleClass = function () {
 		if (this.getController().getView().$().closest(".sapUiSizeCompact").length) {
 			return "sapUiSizeCompact";
 		}
@@ -123,7 +147,7 @@ sap.ui.define([
 	 * @private
 	 * @returns {boolean} true if the action is critical otherwise false
 	 */
-	ActionUtil.prototype._isActionCritical = function() {
+	ActionUtil.prototype._isActionCritical = function () {
 		var oCritical = this._oFunctionImport["com.sap.vocabularies.Common.v1.IsActionCritical"];
 
 		if (!oCritical) {
@@ -143,7 +167,7 @@ sap.ui.define([
 	 * @private
 	 * @returns {boolean} Boolean value
 	 */
-	ActionUtil.prototype._toBoolean = function(oParameterValue) {
+	ActionUtil.prototype._toBoolean = function (oParameterValue) {
 		if (typeof oParameterValue === "string") {
 			var oValue = oParameterValue.toLowerCase();
 			return !(oValue == "false" || oValue == "" || oValue == " ");
@@ -155,24 +179,32 @@ sap.ui.define([
 	/**
 	 * Prepares the parameters which are needed as input for the action
 	 *
+	 * @param {array} 		aContexts Array of contexts used for action processing
 	 *
-	 * @returns {object} mActionParams
+	 * @returns {object} 	mActionParams Parameters that describe the Function Import:
+	 * 						mActionParams.parameterData Array with mandatory parameters
+	 *						mActionParams.additionalParameters Array with additional parameters
 	 *
 	 * @private
 	 */
-	ActionUtil.prototype._prepareParameters = function() {
+	ActionUtil.prototype._prepareParameters = function (aContexts) {
 
-		var oSingleContext;
+		var oSingleContext, oEntityType = null;
 
 		// Multi action scenario or "no" scenario? --> If yes we do no preparation sugar
-		if (jQuery.isArray(this.getContexts()) && this.getContexts().length != 1) {
-			return;
-
+		if (jQuery.isArray(aContexts) && aContexts.length != 1) {
+			return undefined;
 		} else {
-			oSingleContext = this.getContexts()[0];
+			oSingleContext = aContexts[0];
 		}
-		this._oContextObject = oSingleContext.getObject();
-		var oEntityType = this._getEntityType(oSingleContext);
+
+		var oContextObject = oSingleContext.getObject();
+		if (oSingleContext && oSingleContext.getPath()) {
+			var sEntitySet = ModelUtil.getEntitySetFromContext(oSingleContext);
+			var oEntitySet = this._oMetaModel.getODataEntitySet(sEntitySet, false);
+			oEntityType = this._oMetaModel.getODataEntityType(oEntitySet.entityType, false);
+		}
+
 		var oKeyProperties = this._getPropertyKeys(oEntityType);
 		var oParameterValue;
 		var mActionParams = {
@@ -190,8 +222,8 @@ sap.ui.define([
 				var bIsKey = !!oKeyProperties[sParameterName];
 
 				oParameterValue = undefined;
-				if (this._oContextObject.hasOwnProperty(sParameterName)) {
-					oParameterValue = this._oContextObject[sParameterName];
+				if (oContextObject.hasOwnProperty(sParameterName)) {
+					oParameterValue = oContextObject[sParameterName];
 				} else if (bIsKey) {
 					// parameter is key but not part of the current projection - raise error
 					jQuery.sap.log.error("Key parameter of action not found in current context: " + sParameterName);
@@ -229,47 +261,29 @@ sap.ui.define([
 	};
 
 	/**
-	 * returns the entity type for a context
-	 *
-	 * @param {sap.ui.model.Context} oContext Context for which the entity type is determined
-	 *
-	 * @private
-	 * @returns {object} the entity type
-	 */
-	ActionUtil.prototype._getEntityType = function(oContext) {
-		var oEntityType = null;
-		if (oContext && oContext.getPath()) {
-			var sEntitySet = ModelUtil.getEntitySetFromContext(oContext);
-			var oEntitySet = this._oMetaModel.getODataEntitySet(sEntitySet, false);
-			oEntityType = this._oMetaModel.getODataEntityType(oEntitySet.entityType, false);
-		}
-		return oEntityType;
-	};
-
-	/**
 	 * Initiate action call.
 	 *
 	 * @param {object} [mActionParams] Optional map with parameters that are used in action call.
 	 *
 	 */
-	ActionUtil.prototype._initiateCall = function(mActionParams) {
+	ActionUtil.prototype._initiateCall = function (mActionParams) {
 		if (mActionParams != undefined && mActionParams.additionalParameters.length == 0) {
 			this._call(mActionParams.parameterData);
 		} else if (mActionParams != undefined && mActionParams.additionalParameters.length > 0) {
 			var that = this;
 			var mParameters = {
-				urlParameters : {}
+				urlParameters: {}
 			};
 
 			var oEntityContext = this.getContexts()[0];
 
 			var oFuncHandle = this.getApplicationController().getNewActionContext(this._sFunctionImportPath, oEntityContext, mParameters);
 
-			oFuncHandle.context.then(function(oActionContext){
+			oFuncHandle.context.then(function (oActionContext) {
 				var mParameterForm = that._buildParametersForm(mActionParams, oActionContext);
 
-				for (var sKey in mActionParams.parameterData){
-					oActionContext.oModel.getData(oActionContext.sPath)[sKey] = mActionParams.parameterData[sKey];
+				for (var sKey in mActionParams.parameterData) {
+					oActionContext.oModel.setProperty(sKey, mActionParams.parameterData[sKey], oActionContext);
 				}
 				var bActionPromiseDone = false;
 				var oParameterDialog = new Dialog({
@@ -279,26 +293,31 @@ sap.ui.define([
 					],
 					beginButton: new sap.m.Button({
 						text: that._sFunctionImportLabel,
-						press: function(oEvent) {
+						press: function (oEvent) {
 							if (mParameterForm.hasNoClientErrors()) {
 								if (mParameterForm.getEmptyMandatoryFields().length == 0) {
 									oParameterDialog.close();
 
-									bActionPromiseDone = true; //Promise is resolved or rejected in ".then(...)"
-									oFuncHandle.result.then(function(aResults){
-										that._bExecutedSuccessfully = true;
-										that._oActionPromiseCallback.resolve(aResults);
-									}, function(oError) {
-										that._bExecutedSuccessfully = false;
-										that._oActionPromiseCallback.reject(oError);
+									that._oActionPromiseCallback.resolve({
+										executionPromise: oFuncHandle.result.then(function (aResults) {
+											that._bExecutedSuccessfully = true;
+											return aResults;
+										}, function (oError) {
+											that._bExecutedSuccessfully = false;
+											//TODO: Think about throwing errors. Maybe not needed in a failing Promise...?
+											throw oError;
+										})
 									});
 
-									that.getApplicationController().submitActionContext(oActionContext, this._sFunctionImportName);
+									bActionPromiseDone = true;
+
+									var sFunctionImportName = that._sFunctionImportPath.split('/')[1];
+									that.getApplicationController().submitActionContext(oEntityContext, oActionContext, sFunctionImportName);
 
 								} else {
 									var oContent = new VBox();
 
-									var sRootMessage = sap.ui.getCore().getLibraryResourceBundle("sap.ui.generic.template").getText("ACTION_MISSING_MANDATORY");
+									var sRootMessage = sap.ui.getCore().getLibraryResourceBundle("sap.ui.generic.app").getText("ACTION_MISSING_MANDATORY");
 
 									for (var i = 0; i < mParameterForm.getEmptyMandatoryFields().length; i++) {
 										var sText = jQuery.sap.formatMessage(sRootMessage, mParameterForm.getEmptyMandatoryFields()[i].getTextLabel());
@@ -311,23 +330,23 @@ sap.ui.define([
 										sClass: that._getCompactModeStyleClass()
 									});
 								}
-								
+
 							}
 						}
 					}),
 					endButton: new sap.m.Button({
-						text: sap.ui.getCore().getLibraryResourceBundle("sap.ui.generic.template").getText("ACTION_CANCEL"),
-						press: function() {
+						text: sap.ui.getCore().getLibraryResourceBundle("sap.ui.generic.app").getText("ACTION_CANCEL"),
+						press: function () {
 							oParameterDialog.close();
-							//"Resolve" (instead of reject) as this is intended - no error handling should be triggered
-							that._oActionPromiseCallback.resolve();
+							that._oActionPromiseCallback.reject();
 							bActionPromiseDone = true;
 						}
 					}),
-					afterClose: function(oControlEvent) {
+					afterClose: function (oControlEvent) {
 						oParameterDialog.destroy();
-						if (!bActionPromiseDone){
-							that._oActionPromiseCallback.resolve();
+						// Tidy up at the end: if the action hasn't been triggered, do the same as it was cancelled.
+						if (!bActionPromiseDone) {
+							that._oActionPromiseCallback.reject();
 						}
 					}
 				}).addStyleClass("sapUiNoContentPadding");
@@ -344,25 +363,31 @@ sap.ui.define([
 		}
 	};
 
-	ActionUtil.prototype._call = function(mUrlParameters) {
+	ActionUtil.prototype._call = function (mUrlParameters) {
 		var aCurrentContexts = this.getContexts();
 		var mParameters = {
-			urlParameters: mUrlParameters
+			urlParameters: mUrlParameters,
+			operationGrouping: this.getOperationGrouping()
 		};
 		var oController = this.getController();
 		var oApplicationController = this.getApplicationController() || oController.getApplicationController();
 		var that = this;
 
-		oApplicationController.invokeActions(this._sFunctionImportPath, aCurrentContexts, mParameters).then(function(oResponse) {
-			that._bExecutedSuccessfully = true;
-			that._oActionPromiseCallback.resolve(oResponse);
-		}, function(oError) {
-			that._bExecutedSuccessfully = false;
-			that._oActionPromiseCallback.reject(oError);
+
+		that._oActionPromiseCallback.resolve({
+			executionPromise: oApplicationController.invokeActions(this._sFunctionImportPath, aCurrentContexts, mParameters).then(function (oResponse) {
+				that._bExecutedSuccessfully = true;
+				return oResponse;
+			}, function (oError) {
+				that._bExecutedSuccessfully = false;
+				//TODO: Think about throwing errors. Maybe not needed in a failing Promise...?
+				throw oError;
+			})
+
 		});
 	};
 
-	ActionUtil.prototype._getActionParameterData = function(oParameterModel) {
+	ActionUtil.prototype._getActionParameterData = function (oParameterModel) {
 		var aMissingMandatoryParameters = [];
 
 		// raw parameter list contains all action parameters as key/value - no check required
@@ -401,20 +426,21 @@ sap.ui.define([
 
 
 	/**
-	 * Initiate a simple form with all needed controls to allow providing missing
-	 * information which is needed for the triggered action.
+	 * Initiate a form with all needed controls to allow providing missing
+	 * parameters which are needed by the triggered action.
 	 *
-	 * @param {object} mParameters
+	 * @param {object} mParameters Map that contains the parameters - prefilled and additional
+	 * @param {object} oContext Context object of the triggered action
 	 *
 	 * @returns {object} A map with the two members: "form" and "hasNoClientErrors"
 	 *
 	 * @private
 	 */
-	ActionUtil.prototype._buildParametersForm = function(mParameters, oContext) {
+	ActionUtil.prototype._buildParametersForm = function (mParameters, oContext) {
 		var oForm = new SimpleForm({
 			editable: true
 		});
-		
+
 		oForm.setBindingContext(oContext);
 		// list of all smart fields for input check
 		var oField;
@@ -423,6 +449,8 @@ sap.ui.define([
 
 		for (var i = 0; i < mParameters.additionalParameters.length; i++) {
 			var oParameter = mParameters.additionalParameters[i];
+
+			var sValueType = oParameter["com.sap.vocabularies.Common.v1.ValueListWithFixedValues"] ? "fixed-values" : undefined;
 
 			//Create a smartfield with data form outside
 			oField = new SmartField({
@@ -435,7 +463,8 @@ sap.ui.define([
 					path: oParameter.name,
 					entitySetObject: {},
 					annotations: {
-						valuelist: oParameter["com.sap.vocabularies.Common.v1.ValueList"]
+						valuelist: oParameter["com.sap.vocabularies.Common.v1.ValueList"],
+						valuelistType: sValueType
 					},
 					modelObject: oContext.oModel,
 					entityType: oParameter.type,
@@ -447,7 +476,7 @@ sap.ui.define([
 			});
 
 			//set mandatory if requested
-			if (oParameter.nullable == "false"){
+			if (oParameter.nullable == "false") {
 				oField.setMandatory(true);
 			}
 
@@ -455,29 +484,29 @@ sap.ui.define([
 
 			sLabel = new SmartLabel();
 			sLabel.setLabelFor(oField);
-			
+
 			oForm.addContent(sLabel);
 			oForm.addContent(oField);
 		}
 
 		// for now: always return false, as smart fields currently do not handle JSON models correctly
-		var fnHasNoClientErrors = function() {
+		var fnHasNoClientErrors = function () {
 			var bNoClientErrors = true;
-			for (var i = 0; i < aFields.length; i++){
-				if (aFields[i].getValueState() != "None"){
+			for (var i = 0; i < aFields.length; i++) {
+				if (aFields[i].getValueState() != "None") {
 					bNoClientErrors = false;
 					break;
 				}
 			}
 			return bNoClientErrors;
 		};
-		
-		var fnGetEmptyMandatoryFields = function() {
-			var aMandatoryFields = jQuery.grep(aFields, function(oField){ 
-				return ( oField.getMandatory() == true 
-						&& oField.getValue() == "" 
-						&& oField.getDataType() != "Edm.Boolean" 
-				); 
+
+		var fnGetEmptyMandatoryFields = function () {
+			var aMandatoryFields = jQuery.grep(aFields, function (oField) {
+				return (oField.getMandatory() == true
+					&& oField.getValue() == ""
+					&& oField.getDataType() != "Edm.Boolean"
+				);
 			});
 			return aMandatoryFields;
 		};
@@ -490,12 +519,12 @@ sap.ui.define([
 	};
 
 
-	ActionUtil.prototype._getParameterName = function(oParameter) {
+	ActionUtil.prototype._getParameterName = function (oParameter) {
 		// if no label is set for parameter use parameter name as fallback
 		return oParameter["com.sap.vocabularies.Common.v1.Label"] ? oParameter["com.sap.vocabularies.Common.v1.Label"].String : oParameter.name;
 	};
 
-	ActionUtil.prototype._addParameterLabel = function(oParameter, oEntityType) {
+	ActionUtil.prototype._addParameterLabel = function (oParameter, oEntityType) {
 		if (oEntityType && oParameter && !oParameter["com.sap.vocabularies.Common.v1.Label"]) {
 
 			var oProperty = this._oMetaModel.getODataProperty(oEntityType, oParameter.name, false);
@@ -513,7 +542,7 @@ sap.ui.define([
 	 * @protected
 	 * @returns {string} the function import label
 	 */
-	ActionUtil.prototype.getFunctionImportLabel = function(){
+	ActionUtil.prototype.getFunctionImportLabel = function () {
 		return this._sFunctionImportLabel;
 	};
 
@@ -524,7 +553,7 @@ sap.ui.define([
 	 * @protected
 	 * @returns {boolean} true if the action has executed successfully
 	 */
-	ActionUtil.prototype.getExecutedSuccessfully = function(){
+	ActionUtil.prototype.getExecutedSuccessfully = function () {
 		return this._bExecutedSuccessfully;
 	};
 

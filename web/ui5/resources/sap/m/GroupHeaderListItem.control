@@ -8,18 +8,18 @@
     <since>1.12</since>
     <baseType>sap.m/ListItemBase</baseType>
     <properties>
-        <property name="title" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="title">
             <documentation>Defines the title of the group header.</documentation>
         </property>
-        <property name="count" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="count">
             <documentation>Defines the count of items in the group, but it could also be an amount which represents the sum of all amounts in the group.
 &lt;b&gt;Note:&lt;/b&gt; Will not be displayed if not set.</documentation>
         </property>
-        <property name="upperCase" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.13.2">
+        <property since="1.13.2" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="upperCase">
             <documentation>Allows to uppercase the group title.</documentation>
             <deprecation since="1.40.10"></deprecation>
         </property>
-        <property name="titleTextDirection" type="sap.ui.core/TextDirection" defaultValue="Inherit" group="Appearance" since="1.28.0">
+        <property since="1.28.0" group="Appearance" defaultValue="Inherit" type="sap.ui.core/TextDirection" name="titleTextDirection">
             <documentation>Defines the title text directionality with enumerated options. By default, the control inherits text direction from the DOM.</documentation>
         </property>
     </properties>

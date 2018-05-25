@@ -1027,12 +1027,7 @@ html[data-sap-ui-browser*='ie'] .sapMBtnContentWithIcon {
 		margin-right:     0.4375rem;
 	}
 	.sapMBtnIconLeft + .sapMBtnIconLeft {
-		left: 0;
-	}
-	.sapMBtnText {
-	  .sapMBtnIconLeft + .sapMBtnIconLeft {
 		left: 1.875rem;
-	  }
 	}
 	.sapMBtnInner > img {
 		height:           1.500rem;
@@ -1323,6 +1318,7 @@ html.sap-desktop .sapMFooter-CTX .sapMBtnInner :not(.sapMBtnDisabled) {
 }
 
 .sapMIBar-CTX .sapMBtnTransparent:not(.sapMBtnDisabled):not(.sapMToggleBtnPressed) {
+	color:            @sapUiButtonLiteTextColor;
 	text-shadow:      none;
 	border-color:     @sapUiButtonLiteBorderColor;
 }
@@ -1361,6 +1357,16 @@ html.sap-desktop .sapMFooter-CTX .sapMBtnInner :not(.sapMBtnDisabled) {
 
 .sapMTB-Transparent-CTX .sapMBtn:not(.sapMBtnDisabled) > .sapMBtnInner:not(.sapMToggleBtnPressed):not(.sapMBtnEmphasized):not(.sapMBtnAccept):not(.sapMBtnReject):not(.sapMBtnGhost):not(.sapMBtnActive):hover {
 	background: @sapUiButtonLiteHoverBackground;
+}
+
+/* overwrite list's default active state color */
+.sapMLIBActive span.sapMBtnInner {
+	color: @sapUiButtonTextColor;
+}
+
+/* overwrite the sapContrast rule for button in an active state list */
+.sapMLIBActive .sapContrast span.sapMBtnInner {
+	color: @sapUiButtonLiteTextColor;
 }
 
 /* ------------------------------------------------ */
@@ -2827,7 +2833,6 @@ html.sapUiMedia-Std-Phone .sapMDateTimePopupCont {
 	height: 100%;
 	min-width: 20rem;
 	overflow: auto !important; /* allow scrolling in landscape mode */
-	display: block;
 }
 
 html.sap-phone .sapUiSizeCompact .sapMDateTimePopupCont,
@@ -5554,15 +5559,14 @@ html[data-sap-ui-browser*='ie'], html[data-sap-ui-browser*='ed'], html[data-sap-
 	text-transform: uppercase;
 }
 
-.sapMGHLI > .sapMLIBContent,
-.sapMGHLICell > .sapMLIBContent {
+.sapMGHLI > .sapMLIBContent {
 	display: -webkit-box;
 	display: flex;
 	-webkit-box-align: center;
 	align-items: center;
 }
 
-.sapMGHLITitle,
+.sapMGHLITitle, 
 .sapMGHLICounter {
 	display: block;
 	overflow: hidden;
@@ -7443,33 +7447,19 @@ html[data-sap-ui-browser^="ed"] {
 /* ------------------------------ */
 
 .sapMComboBoxTextField {
-	background-color: @sapUiFieldBackground;
 	border: 1px solid @sapUiFieldBorderColor;
 	margin: 0.25rem 0;
 	height: 2.5rem;
-
-	&:not(.sapMComboBoxTextFieldReadonly):not(.sapMComboBoxTextFieldState):not(.sapMComboBoxTextFieldDisabled):hover {
-		border-color: @sapUiFieldHoverBorderColor !important;
-	}
-
-	& .sapMInputDivWrapper {
-		height: 100% !important;
-		max-width: 100%;
-
-		&:not(.sapMInputBaseReadonlyInner):not(.sapMInputBaseStateInner):not(.sapMInputBaseDisabledInner):hover {
-			background: transparent;
-			border-color: transparent;
-		}
-	}
 }
 
 input.sapMComboBoxTextFieldInner {
 	border: none;
 	margin: 0;
+}
 
-	&:not(.sapMComboBoxTextFieldInnerReadonly) {
-		background-color: transparent;
-	}
+.sapMComboBoxTextField .sapMInputDivWrapper {
+	height: 100% !important;
+	max-width: 100%;
 }
 
 .sapMComboBoxTextFieldInnerWidthExtraPadding:not(.sapMComboBoxTextFieldInnerReadonly) {
@@ -8891,6 +8881,12 @@ html.sap-phone .sapMListInsetBG > .sapMListSwp {
 	color: @sapUiListActiveTextColor;
 }
 
+/* Overrides strong Button rule to enforce correct color */
+.sapMLIB :not(.sapMBtnDisabled) > .sapMBtnInner.sapMBtnActive .sapMBtnIcon,
+.sapMLIBActive .sapMBtnTransparent > .sapMBtnIcon {
+	color: @sapUiListActiveTextColor !important;
+	text-shadow: none;
+}
 
 .sapMListBGTransparent .sapMLIB {
 	background: fade(@sapUiListBackground, 0);
@@ -9003,7 +8999,7 @@ html.sap-phone .sapMListInsetBG > .sapMListSwp {
 .sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner:not(.sapMBtnText) {
 	padding-right: 1.4375rem;
 }
-
+	
 .sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner::after {
 	position: absolute;
 	top: 0;
@@ -9044,6 +9040,11 @@ html.sap-phone .sapMListInsetBG > .sapMListSwp {
 	}
 }
 
+//type Default, Transparent(header)
+.sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner.sapMBtnActive::after {
+	color: @sapUiButtonActiveTextColor;
+}
+
 //type Emphasized
 .sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner.sapMBtnEmphasized::after {
 	color: @sapUiButtonEmphasizedTextColor;
@@ -9063,11 +9064,6 @@ html.sap-phone .sapMListInsetBG > .sapMListSwp {
 //type Reject
 .sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner.sapMBtnReject::after {
 	color: @sapUiButtonRejectTextColor;
-}
-
-//type Default, Transparent(header)
-.sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner.sapMBtnActive::after {
-  color: @sapUiButtonActiveTextColor;
 }
 
 //Transparent(footer)
@@ -11629,22 +11625,14 @@ html[dir=rtl] .sapMNCValueScr {
 	text-overflow: ellipsis;
 }
 
-.sapMListTblCell .sapMObjectAttributeActive {
-	white-space: normal;
-}
-
 .sapMObjectAttributeActive .sapMObjectAttributeTitle,
 .sapMObjectAttributeActive .sapMObjectAttributeText {
+	display: inline-block;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 50%;
 	vertical-align: middle;
-}
-
-.sapMListTblCell .sapMObjectAttributeActive .sapMObjectAttributeTitle,
-.sapMListTblCell .sapMObjectAttributeActive .sapMObjectAttributeText {
-	white-space: normal;
 }
 
 .sapMObjectAttributeText > .sapMLnk {
@@ -14628,39 +14616,18 @@ html[data-sap-ui-browser^="ie"].sap-desktop .sapMPlanCal .sapUiCalRow:not(.sapUi
 }
 
 .sapMPlanCal {
-	.sapMListTbl .sapMSLIImgIcon.sapUiIcon:not(.sapMLIBImgNav):not(.sapMBtnIcon) {
-		font-size: 1.375rem;
-		height: 2rem;
-		width: 2rem;
-		line-height: 2rem;
-		margin: 0.5rem 0.75rem 0.5rem 0;
-	}
-
-	.sapMPlanCalRowHead {
-		.sapMLIBContent {
-			position: relative;
-		}
-
-		.sapMSLIImg {
-			max-width: 3rem;
-			max-height: 3rem;
-			width: auto;
-			height: auto;
-			margin: 0;
-		}
-
-		.sapMSLIDiv {
-			box-sizing: border-box;
-			position: absolute;
-			padding-left: calc(3rem + 0.75rem); // Width of the image + right margin
-			width: 100%;
-
-			.sapMSLITitleOnly,
-			.sapMSLITitle {
-				white-space: normal;
-			}
-		}
-	}
+  .sapMListTbl .sapMSLIImgIcon.sapUiIcon:not(.sapMLIBImgNav):not(.sapMBtnIcon) {
+	font-size: 1.375rem;
+	height: 2rem;
+	width: 2rem;
+	line-height: 2rem;
+	margin: 0.5rem 0.75rem 0.5rem 0;
+  }
+  .sapMSLIImg {
+	height: 2rem;
+	width: 2rem;
+	margin: 0.5rem 0.75rem 0.5rem 0;
+  }
 }
 
 .sapMPlanCal .sapUiCalDateInt .sapUiCalHeadB1 {

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define(function() {
@@ -16,7 +16,6 @@ sap.ui.define(function() {
 	  "sapUiChartLabelHoverColor":                        [
 	                                                        "categoryAxis.hoverShadow.color",
 	                                                        "categoryAxis2.hoverShadow.color",
-	                                                        "legend.hoverShadow.color",
 	                                                        "rowAxis.hoverShadow.color",
 	                                                        "columnAxis.hoverShadow.color",
 	                                                        "timeAxis.hoverShadow.color"
@@ -24,7 +23,6 @@ sap.ui.define(function() {
 	  "sapUiChartLabelPressedColor":                      [
 	                                                        "categoryAxis.mouseDownShadow.color",
 	                                                        "categoryAxis2.mouseDownShadow.color",
-	                                                        "legend.mouseDownShadow.color",
 	                                                        "rowAxis.mouseDownShadow.color",
 	                                                        "columnAxis.mouseDownShadow.color",
 	                                                        "timeAxis.mouseDownShadow.color"
@@ -36,14 +34,14 @@ sap.ui.define(function() {
 	                                                        "categoryAxis2.label.parentStyle.color",
 	                                                        "columnAxis.label.style.color",
 	                                                        "rowAxis.label.style.color",
-	                                                        "timeAxis.label.style.color"
+	                                                        "timeAxis.label.style.color",
+	                                                        "plotArea.callout.label.style.color"
 	                                                      ],
 	  "sapUiChartValueAxisLabelFontColor":                [
 	                                                        "valueAxis.label.style.color",
-	                                                        "valueAxis2.label.style.color",
-	                                                        "plotArea.callout.label.style.color"
+	                                                        "valueAxis2.label.style.color"
 	                                                      ],
-	  "sapUiChartCategoryAxislabelFontSize":              [
+	  "sapUiChartCategoryAxisLabelFontSize":              [
 	                                                        "categoryAxis.label.style.fontSize",
 	                                                        "categoryAxis2.label.style.fontSize",
 	                                                        "categoryAxis.label.parentStyle.fontSize",
@@ -52,7 +50,7 @@ sap.ui.define(function() {
 	                                                        "columnAxis.label.style.fontSize",
 	                                                        "timeAxis.label.style.fontSize"
 	                                                      ],
-	  "sapUiChartValueAxislabelFontSize":                 [
+	  "sapUiChartValueAxisLabelFontSize":                 [
 	                                                        "valueAxis.label.style.fontSize",
 	                                                        "valueAxis2.label.style.fontSize"
 	                                                      ],
@@ -62,16 +60,6 @@ sap.ui.define(function() {
 	                                                        "timeAxis.color"
 	                                                      ],
 	  "sapUiChartValueAxisLineColor":                     [
-	                                                        "valueAxis.color",
-	                                                        "valueAxis2.color",
-	                                                        "plotArea.callout.line.color"
-	                                                      ],
-	  "sapUiChartCategoryAxisTickColor":                  [
-	                                                        "categoryAxis.color",
-	                                                        "categoryAxis2.color",
-	                                                        "timeAxis.color"
-	                                                      ],
-	  "sapUiChartValueAxisTickColor":                     [
 	                                                        "valueAxis.color",
 	                                                        "valueAxis2.color"
 	                                                      ],
@@ -104,7 +92,8 @@ sap.ui.define(function() {
 	                                                        "legend.label.style.fontFamily",
 	                                                        "sizeLegend.title.style.fontFamily",
 	                                                        "sizeLegend.label.style.fontFamily",
-	                                                        "title.style.fontFamily"
+	                                                        "title.style.fontFamily",
+	                                                        "plotArea.callout.label.style.fontFamily"
 	                                                      ],
 	  "sapUiChartLabelFontWeight":                        [
 	                                                        "plotArea.dataLabel.style.fontWeight",
@@ -139,11 +128,16 @@ sap.ui.define(function() {
 	                                                        "sizeLegend.label.style.fontSize"
 	                                                      ],
 	  "sapUiChartPaletteUndefinedColor":                  "plotArea.defaultOthersStyle.color",
+	  "sapUiChartPaletteSemanticBadLight1":               "general.defaultTimePeriodColor",
 	  "sapUiChartGridlineColor":                          [
 	                                                        "plotArea.gridline.color",
-	                                                        "plotArea.grid.line.color"
+	                                                        "plotArea.grid.line.color",
+	                                                        "plotArea.dataLabel.line.color"
 	                                                      ],
-	  "sapUiChartReferenceLineColor":                     "plotArea.referenceLine.defaultStyle.color",
+	  "sapUiChartReferenceLineColor":                     ["plotArea.referenceLine.defaultStyle.color",
+	                                                        "plotArea.referenceLine.defaultStyle.label.background",
+	                                                        "plotArea.callout.line.color"
+	                                                      ],
 	  "sapUiChartReferenceLineLabelColor":                "plotArea.referenceLine.defaultStyle.label.color",
 	  "sapUiChartDataLabelFontSize":                      [
 	                                                        "plotArea.dataLabel.style.fontSize",
@@ -222,7 +216,7 @@ sap.ui.define(function() {
 	  													   "plotArea.linkline.color"],
 	  "sapUiChartTargetShadowColor":                      "plotArea.target.shadowColor",
 	  "sapUiChartBubbleBGOpacity":                        "plotArea.dataPoint.opacity",
-	  "sapVizChartTooltipBackgroundColor":                "tooltip.background.color",
+	  "sapUiGroupContentBackground":                      "tooltip.background.color",
 	  "sapVizChartTooltipBorderStroke":                   [
 	                                                        "tooltip.background.borderColor",
 	                                                        "tooltip.separationLine.color"
@@ -234,11 +228,17 @@ sap.ui.define(function() {
 	                                                        "tooltip.bodyMeasureValue.color",
 	                                                        "tooltip.footerLabel.color"
 	                                                      ],
+	  "sapUiChartLegendHoverBackground":                   ["legend.hoverShadow.color"],
+	  "sapUiChartLegendSelectionBackground":               ["legend.mouseDownShadow.color"],
+	  "sapUiChartLegendSelectionHoverBackground":          ["legend.hoverSelectedShadow.color"],
 	  "sapUiChartPaletteSemanticNeutral":                 ["plotArea.dataPoint.color.total"],
 	  "sapUiChartPaletteQualitativeHue1":                 ["plotArea.dataPoint.color.positive"],
 	  "sapUiChartPaletteQualitativeHue2":                 ["plotArea.dataPoint.color.negative"],
 	  "sapUiChartLightText":                              ["timeAxis.label.style.parentColor"],
-	  "sapUiChartZeroAxisColor":                          ["plotArea.gridline.zeroLine.color"]
+	  "sapUiChartZeroAxisColor":                          ["plotArea.gridline.zeroLine.color"],
+      "sapUiChartDataLabelFontColor":                     ["plotArea.dataLabel.style.color"],
+      "sapUiChartFocusWidth": 							  ["interaction.keyboard.width"],
+      "sapUiContentFocusColor": 					  ["interaction.keyboard.color"]
 	};
 
 	(function () {
@@ -282,13 +282,13 @@ sap.ui.define(function() {
 	 * @example {"plot.dataLabel.style.color": "0xff00ff", "title.style.color":
 	 *          "0x00ff00", ...}
 	 */
-	Util.readCSSParameters = function(chartType) {
+	Util.readCSSParameters = function(chartType, oControl) {
 	  var property = {};
 	  var mapping = Util._mapping;
 	  var exclude = Util._exclude;
 	  for (var key in mapping) {
 	    if (mapping.hasOwnProperty(key)) {
-	      var value = sap.ui.core.theming.Parameters.get(key);
+	      var value = sap.ui.core.theming.Parameters.get(key, oControl);
 	      if (value) {
 	        var index = value.indexOf('rem');
 	        if (index > -1) {

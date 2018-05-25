@@ -4,7 +4,8 @@ jQuery.sap.require("sap.ushell.components.tiles.indicatorTileUtils.smartBusiness
 jQuery.sap.require("sap.ushell.components.tiles.sbtilecontent");
 jQuery.sap.require("sap.ui.model.analytics.odata4analytics");
 jQuery.sap.require("sap.ui.core.mvc.Controller");
-"use strict";
+	"use strict";
+
 sap.ui.core.mvc.Controller.extend("sap.ushell.components.tiles.generic", {
 
 	getTile : function() {
@@ -152,14 +153,14 @@ sap.ui.core.mvc.Controller.extend("sap.ushell.components.tiles.generic", {
 					oThresholdObject.sTarget =  sap.ushell.components.tiles.indicatorTileUtils.util.getEvalValueMeasureName(that.oConfig, "TA", "MEASURE");
 					oThresholdObject.sTrend =  sap.ushell.components.tiles.indicatorTileUtils.util.getEvalValueMeasureName(that.oConfig, "TC", "MEASURE");
 					oThresholdObject.fullyFormedMeasure += that.formSelectStatement(oThresholdObject);
-					/* Code fix for incident 366767. Cached Data passed was incorrect*/
-					if (cacheData && cacheData.Data && cacheData.Data.length){
-						cacheData.Data = JSON.parse(cacheData.Data);
-						oThresholdObject.trendValue = Number(cacheData.Data.trend);
-						oThresholdObject.targetValue = Number(cacheData.Data.target);
-						oThresholdObject.criticalHighValue =  Number(cacheData.Data.ch);
-						oThresholdObject.warningHighValue = Number(cacheData.Data.wh);
-						cacheData.Data = JSON.stringify(cacheData.Data);
+                                                                           /* Code fix for incident 366767. Cached Data passed was incorrect*/
+                                                                           if (cacheData && cacheData.Data && cacheData.Data.length){
+                                                                                          cacheData.Data = JSON.parse(cacheData.Data);
+                                                                                          oThresholdObject.trendValue = Number(cacheData.Data.trend);
+                                                                                          oThresholdObject.targetValue = Number(cacheData.Data.target);
+                                                                                          oThresholdObject.criticalHighValue =  Number(cacheData.Data.ch);
+                                                                                          oThresholdObject.warningHighValue = Number(cacheData.Data.wh);
+                                                                                          cacheData.Data = JSON.stringify(cacheData.Data);
 					}
 					break;
 				case "MA" :
@@ -168,13 +169,13 @@ sap.ui.core.mvc.Controller.extend("sap.ushell.components.tiles.generic", {
 					oThresholdObject.sTarget =  sap.ushell.components.tiles.indicatorTileUtils.util.getEvalValueMeasureName(that.oConfig, "TA", "MEASURE");
 					oThresholdObject.sTrend =  sap.ushell.components.tiles.indicatorTileUtils.util.getEvalValueMeasureName(that.oConfig, "TC", "MEASURE");
 					oThresholdObject.fullyFormedMeasure += that.formSelectStatement(oThresholdObject);
-					if (cacheData && cacheData.Data && cacheData.Data.length){
-						cacheData.Data = JSON.parse(cacheData.Data);
-						oThresholdObject.criticalLowValue = Number(cacheData.Data.cl);
-						oThresholdObject.warningLowValue = Number(cacheData.Data.wl);
-						oThresholdObject.trendValue = Number(cacheData.Data.trend);
-						oThresholdObject.targetValue = Number(cacheData.Data.target);
-						cacheData.Data = JSON.stringify(cacheData.Data);
+                                                                           if (cacheData && cacheData.Data && cacheData.Data.length){
+                                                                                          cacheData.Data = JSON.parse(cacheData.Data);
+                                                                                          oThresholdObject.criticalLowValue = Number(cacheData.Data.cl);
+                                                                                          oThresholdObject.warningLowValue = Number(cacheData.Data.wl);
+                                                                                          oThresholdObject.trendValue = Number(cacheData.Data.trend);
+                                                                                          oThresholdObject.targetValue = Number(cacheData.Data.target);
+                                                                                          cacheData.Data = JSON.stringify(cacheData.Data);
 					}
 					break;
 				case "RA" :
@@ -185,15 +186,15 @@ sap.ui.core.mvc.Controller.extend("sap.ushell.components.tiles.generic", {
 					oThresholdObject.sWarningLow =  sap.ushell.components.tiles.indicatorTileUtils.util.getEvalValueMeasureName(that.oConfig, "WL", "MEASURE");
 					oThresholdObject.sCriticalLow =  sap.ushell.components.tiles.indicatorTileUtils.util.getEvalValueMeasureName(that.oConfig, "CL", "MEASURE");
 					oThresholdObject.fullyFormedMeasure += that.formSelectStatement(oThresholdObject);
-					if (cacheData && cacheData.Data && cacheData.Data.length){
-						cacheData.Data = JSON.parse(cacheData.Data);
-						oThresholdObject.criticalLowValue = Number(cacheData.Data.cl);
-						oThresholdObject.warningLowValue = Number(cacheData.Data.wl);
-						oThresholdObject.trendValue = Number(cacheData.Data.trend);
-						oThresholdObject.targetValue = Number(cacheData.Data.target);
-						oThresholdObject.criticalHighValue =  Number(cacheData.Data.ch);
-						oThresholdObject.warningHighValue = Number(cacheData.Data.wh);
-						cacheData.Data = JSON.stringify(cacheData.Data);
+                                                                           if (cacheData && cacheData.Data && cacheData.Data.length){
+                                                                                          cacheData.Data = JSON.parse(cacheData.Data);
+                                                                                          oThresholdObject.criticalLowValue = Number(cacheData.Data.cl);
+                                                                                          oThresholdObject.warningLowValue = Number(cacheData.Data.wl);
+                                                                                          oThresholdObject.trendValue = Number(cacheData.Data.trend);
+                                                                                          oThresholdObject.targetValue = Number(cacheData.Data.target);
+                                                                                          oThresholdObject.criticalHighValue =  Number(cacheData.Data.ch);
+                                                                                          oThresholdObject.warningHighValue = Number(cacheData.Data.wh);
+                                                                                          cacheData.Data = JSON.stringify(cacheData.Data);
 					}
 					break;
 				}
@@ -509,6 +510,9 @@ writeData.numericValue = kpiValue;
 		}
 	},
 	getRunTimeODataModel: function(sUrl, fnS){
+		if (window["sap-ushell-config"].cacheBusting){
+			sUrl = sap.ushell.components.tiles.smartBusinessUtil.cacheBustingMechanism(sUrl);
+			}
 		if (!this.oRunTimeODataModel) {
 			this.oRunTimeODataModel = sap.ushell.components.tiles.indicatorTileUtils.util.getODataModelByServiceUri(sUrl);
 		}
@@ -661,7 +665,7 @@ writeData.numericValue = kpiValue;
 	visibleHandler : function (isVisible) {
 		if (!isVisible) {
 			this.firstTimeVisible = false;
-			sap.ushell.components.tiles.indicatorTileUtils.util.abortPendingODataCalls(this.queryServiceUriODataReadRef);
+		   sap.ushell.components.tiles.indicatorTileUtils.util.abortPendingODataCalls(this.queryServiceUriODataReadRef);
 			sap.ushell.components.tiles.indicatorTileUtils.util.abortPendingODataCalls(this.trendChartODataReadRef);
 			sap.ushell.components.tiles.indicatorTileUtils.util.abortPendingODataCalls(this.comparisionChartODataRef);
 		}

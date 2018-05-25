@@ -1,44 +1,31 @@
-/* global jQuery, sap, window, $ */
-(function() {
+/* global jQuery, sap, window */
+
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper',
+    'sap/ui/core/format/NumberFormat',
+    'sap/m/StandardListItem'
+], function(SearchHelper) {
     "use strict";
 
-    jQuery.sap.require('sap.m.StandardListItem');
-
-    sap.m.StandardListItem.extend('sap.ushell.renderers.fiori2.search.controls.SearchFacetItem', {
+    return sap.m.StandardListItem.extend('sap.ushell.renderers.fiori2.search.controls.SearchFacetItem', {
 
         constructor: function(sId, options) {
             var that = this;
             that.options = jQuery.extend({}, {
                 type: sap.m.ListType.Active,
                 title: "{label}",
-                tooltip: "{label}" + " " + "{value}",
-                //key: "{id}",
-                //level: "{level}",
-                info: "{valueLabel}",
-                // do we need this logic? TODO
-                //                info: {
-                //                    parts: [{
-                //                        path: 'selected'
-                //                    }, {
-                //                        path: '/boCount'
-                //                    }, {
-                //                        path: '/appCount'
-                //                    }, {
-                //                        path: '/dataSource'
-                //                    }, {
-                //                        path: 'valueLabel'
-                //                    }],
-                //                    formatter: function(selected, boCount, appCount, ds, valueLabel) {
-                //                        if (selected) {
-                //                            if (ds && ds.objectName && ds.objectName.value === "$$APP$$") {
-                //                                return appCount;
-                //                            }
-                //                            return boCount;
-                //                        }
-                //                    }
-                //                },
+                tooltip: "{label}" + ": " + "{valueLabel}",
+                info: {
+                    parts: [{
+                        path: 'value'
+                    }],
+                    formatter: function(valueLabel) {
+                        return typeof valueLabel === "number" ? SearchHelper.formatInteger(valueLabel) : "";
+                    }
+                },
                 selected: "{selected}"
             }, options);
+
             sap.m.StandardListItem.prototype.constructor.apply(this, [sId, that.options]);
             this.addStyleClass('sapUshellSearchFacetItem');
             this.addEventDelegate({
@@ -51,21 +38,11 @@
                             jQuery(that.getDomRef()).children(".sapMLIBContent").css("padding-left", level + "rem");
                         }
                     }
-                    var elem;
-                    var allLabels = $('.sapUshellSearchFacetItem .sapMSLITitleOnly');
-                    for (var i = 0; i < allLabels.length; i++) {
-                        elem = allLabels[i];
-                        if (!elem.nextSibling) {
-                            elem.style.fontWeight = "600";
-                        }
-                    }
 
                 }
             });
         },
 
-
-
         renderer: 'sap.m.StandardListItemRenderer'
     });
-})();
+});

@@ -51,7 +51,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * A control to render deployment type of a component
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public

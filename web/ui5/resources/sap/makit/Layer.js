@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.makit.Layer");jQuery.sap.require("sap.makit.library");jQuery.sap.require("sap.ui.core.Element");sap.ui.core.Element.extend("sap.makit.Layer",{metadata:{deprecated:true,publicMethods:["getSelectedSeries"],library:"sap.makit",properties:{"type":{type:"sap.makit.ChartType",group:"Appearance",defaultValue:sap.makit.ChartType.Column},"lineThickness":{type:"float",group:"Appearance",defaultValue:1},"primaryColorPalette":{type:"any",group:"Misc",defaultValue:null},"drawOnSecondaryAxis":{type:"boolean",group:"Misc",defaultValue:false}},aggregations:{"rows":{type:"sap.makit.Row",multiple:true,singularName:"row",bindable:"bindable"},"columns":{type:"sap.makit.Column",multiple:true,singularName:"column",bindable:"bindable"},"series":{type:"sap.makit.Series",multiple:false},"values":{type:"sap.makit.Value",multiple:true,singularName:"value"}}}});
 /*!

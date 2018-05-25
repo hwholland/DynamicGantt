@@ -49,8 +49,10 @@ jQuery.sap.require("sap.m.MessageBox");
 		return bSessionTimeOut;
 	}
 	function _openDetailedLogDialog(oController, oMessageObject) {
-		var oDetailLogDialog = new sap.m.Dialog({
-			title : oMessageObject.getSeverity(),
+		var oDetailLogDialog = new sap.m.Dialog(oController.createId("idShowDetailsDialog"), {
+			contentWidth : jQuery(window).height() * 0.6 + "px",
+			contentHeight : jQuery(window).height() * 0.6 + "px",
+			title : oViewData.oCoreApi.getTextNotHtmlEncoded("error"),
 			type : sap.m.DialogType.Message,
 			state : sap.ui.core.ValueState.Error,
 			content : new sap.ui.core.HTML({
@@ -72,12 +74,12 @@ jQuery.sap.require("sap.m.MessageBox");
 	}
 	function _showFatalErrorDialog(oController, oMessageObject) {
 		var bSessionTimeOut = _checkIsSessionTimeOut(oController);
-		var oDialog = new sap.m.Dialog({
-			title : oMessageObject.getSeverity(),
+		var oDialog = new sap.m.Dialog(oController.createId("idFatalDialog"), {
+			title : oViewData.oCoreApi.getTextNotHtmlEncoded("error"),
 			type : sap.m.DialogType.Message,
 			state : sap.ui.core.ValueState.Error,
 			content : [ new sap.m.Text({
-				text : bSessionTimeOut ? oViewData.oCoreApi.getTextNotHtmlEncoded("application-reload") : oMessageObject.getMessage()
+				text : bSessionTimeOut ? oViewData.oCoreApi.getTextNotHtmlEncoded("application-reload") : oViewData.oCoreApi.getTextNotHtmlEncoded("fatalErrorMessage")
 			}), new sap.m.VBox({
 				alignItems : sap.m.FlexAlignItems.End,
 				items : [ new sap.m.Link({
@@ -88,7 +90,7 @@ jQuery.sap.require("sap.m.MessageBox");
 				}) ]
 			}) ],
 			beginButton : new sap.m.Button({
-				text : oViewData.oCoreApi.getTextNotHtmlEncoded("ok"),
+				text : oViewData.oCoreApi.getTextNotHtmlEncoded("close"),
 				press : function() {
 					_closeApplication();
 				}
@@ -99,6 +101,63 @@ jQuery.sap.require("sap.m.MessageBox");
 		});
 		oDialog.setInitialFocus(oDialog);
 		oDialog.open();
+	}
+	function _showLastValidStateDialog(oController, oMessageObject) {
+		var oCoreApi = oViewData.oCoreApi;
+		var oUiApi = oViewData.uiApi;
+		var oDialog = new sap.m.Dialog(oController.createId("idShowValidStateDialog"), {
+			title : oCoreApi.getTextNotHtmlEncoded("error"),
+			type : sap.m.DialogType.Message,
+			state : sap.ui.core.ValueState.Error,
+			content : [ new sap.m.Text({
+				text : oCoreApi.getTextNotHtmlEncoded("lastValidStateMessage")
+			}), new sap.m.VBox({
+				alignItems : sap.m.FlexAlignItems.End,
+				items : [ new sap.m.Link({
+					text : oCoreApi.getTextNotHtmlEncoded("showDetails"),
+					press : function() {
+						_openDetailedLogDialog(oController, oMessageObject);
+					}
+				}) ]
+			}) ],
+			beginButton : new sap.m.Button({
+				text : oCoreApi.getTextNotHtmlEncoded("gobackToValidState"),
+				press : function() {
+					var oPromise = oCoreApi.restoreApfState();
+					oPromise.then(function() {
+						oUiApi.getAnalysisPath().getController().bLastValidState = true;
+						oUiApi.getAnalysisPath().getCarousel().getController().removeAllSteps();
+						oCoreApi.updatePath(oUiApi.getAnalysisPath().getController().callBackForUpdatePath.bind(oUiApi.getAnalysisPath().getController()));
+						oUiApi.getAnalysisPath().getController().setPathTitle();
+						oDialog.close();
+						oUiApi.getAnalysisPath().getCarousel().rerender();
+						oUiApi.getLayoutView().setBusy(false);
+					}, function() {
+						oDialog.close();
+					});
+				}
+			}),
+			endButton : new sap.m.Button({
+				text : oCoreApi.getTextNotHtmlEncoded("startNewAnalysis"),
+				press : function() {
+					oUiApi.getAnalysisPath().getToolbar().getController().resetAnalysisPath();
+					oDialog.close();
+				}
+			}),
+			afterClose : function() {
+				oDialog.destroy();
+			}
+		});
+		oDialog.setInitialFocus(oDialog);
+		oDialog.open();
+	}
+	function _checkIfLastValidStateIsAvailable(oController, oMessageObject) {
+		var bIsLastValidStateAvailable = oViewData.oCoreApi.isApfStateAvailable();
+		if (bIsLastValidStateAvailable) {
+			_showLastValidStateDialog(oController, oMessageObject);
+		} else {
+			_showFatalErrorDialog(oController, oMessageObject);
+		}
 	}
 	sap.ui.controller("sap.apf.ui.reuse.controller.messageHandler", {
 		onInit : function() {
@@ -111,25 +170,26 @@ jQuery.sap.require("sap.m.MessageBox");
 		showMessage : function(oMessageObject) {
 			var oController = this;
 			var severity = oMessageObject.getSeverity();
+			var oSeverityConstant = sap.apf.core.constants.message.severity;
 			switch (severity) {
-				case sap.apf.core.constants.message.severity.fatal:
+				case oSeverityConstant.fatal:
 					oViewData.uiApi.getLayoutView().setBusy(false);
-					_showFatalErrorDialog(oController, oMessageObject);
+					_checkIfLastValidStateIsAvailable(oController, oMessageObject);
 					break;
-				case sap.apf.core.constants.message.severity.error:
+				case oSeverityConstant.error:
 					oViewData.uiApi.getLayoutView().setBusy(false);
 					break;
-				case sap.apf.core.constants.message.severity.information:
+				case oSeverityConstant.information:
 					_showInfoMessageBox(oController, oMessageObject);
 					break;
-				case sap.apf.core.constants.message.severity.success:
+				case oSeverityConstant.success:
 					_showSuccessMsgToast(oController, oMessageObject);
 					break;
 				default:
 					jQuery.sap.log.error("Error type not defined");
 					break;
 			}
-			if (severity === sap.apf.core.constants.message.severity.warning || severity === sap.apf.core.constants.message.severity.error) {
+			if (severity === oSeverityConstant.warning || severity === oSeverityConstant.error) {
 				sap.m.MessageToast.show(oMessageObject.getMessage(), {
 					width : "40%",
 					offset : "0 -50",

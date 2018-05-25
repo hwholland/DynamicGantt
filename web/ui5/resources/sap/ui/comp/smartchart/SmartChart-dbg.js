@@ -1,18 +1,19 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.smartchart.SmartChart.
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/comp/library', 'sap/chart/Chart', 'sap/chart/library', 'sap/chart/data/Dimension', 'sap/chart/data/Measure', 'sap/m/SegmentedButton', 'sap/m/Button', 'sap/m/Text', 'sap/m/FlexItemData', 'sap/ui/core/Item', 'sap/m/OverflowToolbar', 'sap/m/OverflowToolbarButton', 'sap/m/ToolbarSeparator', 'sap/m/ToolbarDesign', 'sap/m/ToolbarSpacer', 'sap/m/VBox', 'sap/m/VBoxRenderer', 'sap/ui/comp/providers/ChartProvider', 'sap/ui/comp/smartfilterbar/FilterProvider', 'sap/ui/comp/smartvariants/SmartVariantManagement', 'sap/ui/model/Filter', 'sap/ui/model/FilterOperator', 'sap/ui/comp/personalization/Util', 'sap/ui/Device', 'sap/ui/comp/odata/ODataModelUtil'
-], function(jQuery, library, Chart, ChartLibrary, Dimension, Measure, SegmentedButton, Button, Text, FlexItemData, Item, OverflowToolbar, OverflowToolbarButton, ToolbarSeparator, ToolbarDesign, ToolbarSpacer, VBox, VBoxRenderer, ChartProvider, FilterProvider, SmartVariantManagement, Filter, FilterOperator, PersoUtil, Device, ODataModelUtil) {
+	'jquery.sap.global', 'sap/ui/comp/library', 'sap/chart/Chart', 'sap/chart/library', 'sap/chart/data/HierarchyDimension', 'sap/chart/data/Dimension', 'sap/chart/data/Measure', 'sap/m/SegmentedButton', 'sap/m/Button', 'sap/m/Text', 'sap/m/FlexItemData', 'sap/ui/core/Item', 'sap/m/OverflowToolbar', 'sap/m/OverflowToolbarButton', 'sap/m/ToolbarSeparator', 'sap/m/ToolbarDesign', 'sap/m/ToolbarSpacer', 'sap/m/VBox', 'sap/m/VBoxRenderer', 'sap/ui/comp/providers/ChartProvider', 'sap/ui/comp/smartfilterbar/FilterProvider', 'sap/ui/comp/smartvariants/SmartVariantManagement', 'sap/ui/model/Filter', 'sap/ui/model/FilterOperator', 'sap/ui/comp/personalization/Util', 'sap/ui/Device', 'sap/ui/comp/odata/ODataModelUtil', 'sap/ui/comp/odata/MetadataAnalyser', "sap/m/P13nFilterItem", "sap/viz/ui5/controls/VizTooltip", "sap/ui/comp/state/UIState", "sap/m/SelectionDetails", "sap/m/SelectionDetailsItem", "sap/m/SelectionDetailsItemLine", "sap/m/Title", "sap/ui/comp/util/FormatUtil", "sap/ui/comp/navpopover/NavigationPopoverHandler", "sap/ui/core/InvisibleText", "sap/m/OverflowToolbarLayoutData"
+], function(jQuery, library, Chart, ChartLibrary, HierarchyDimension, Dimension, Measure, SegmentedButton, Button, Text, FlexItemData, Item, OverflowToolbar, OverflowToolbarButton, ToolbarSeparator, ToolbarDesign, ToolbarSpacer, VBox, VBoxRenderer, ChartProvider, FilterProvider, SmartVariantManagement, Filter, FilterOperator, PersoUtil, Device, ODataModelUtil, MetadataAnalyser, P13nFilterItem, VizTooltip, UIState, SelectionDetails, SelectionDetailsItem, SelectionDetailsItemLine, Title, FormatUtil, NavigationPopoverHandler, InvisibleText, OverflowToolbarLayoutData) {
 	"use strict";
 
 	/**
 	 * Constructor for a new smartchart/SmartChart.
-	 * 
+	 *
 	 * @param {string} [sId] ID for the new control that is generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
 	 * @class The SmartChart control creates a chart based on OData metadata and the configuration specified. The entitySet property must be specified
@@ -21,10 +22,11 @@ sap.ui.define([
 	 *        Based on the chartType property, this control will render the corresponding chart.<br>
 	 *        <b>Note:</b> Most of the attributes are not dynamic and cannot be changed once the control has been initialized.
 	 * @extends sap.m.VBox
-	 * @author Franz Mueller, Pavan Nayak
+	 * @author SAP SE
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.smartchart.SmartChart
+	 * @see {@link topic:7a32157697474864b041fa739fcc51ba Smart Chart}
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var SmartChart = VBox.extend("sap.ui.comp.smartchart.SmartChart", /** @lends sap.ui.comp.smartchart.SmartChart.prototype */
@@ -32,7 +34,7 @@ sap.ui.define([
 		metadata: {
 
 			library: "sap.ui.comp",
-			designTime: true,
+			designtime: "sap/ui/comp/designtime/smartchart/SmartChart.designtime",
 			properties: {
 
 				/**
@@ -70,7 +72,8 @@ sap.ui.define([
 				 * This property is mainly meant to be used if there is no PresentationVariant annotation.<br>
 				 * If both this property and the PresentationVariant annotation exist, the select request sent to the backend would be a combination
 				 * of both.<br>
-				 * <b>Note:</b> No validation is done. Please ensure that you do not add spaces or special characters.
+				 * <b>Note:</b> No validation is done. Please ensure that you do not add spaces or special characters. Also, setting this property
+				 * during runtime, will delete the current drill-stack and lead to a loss of the drill history.
 				 */
 				requestAtLeastFields: {
 					type: "string",
@@ -184,7 +187,7 @@ sap.ui.define([
 
 				/**
 				 * Controls the visibility of the Zoom In and Zoom Out buttons.
-				 * 
+				 *
 				 * @since 1.36
 				 */
 				showZoomButtons: {
@@ -195,7 +198,7 @@ sap.ui.define([
 
 				/**
 				 * Controls the visibility of the Navigation button
-				 * 
+				 *
 				 * @since 1.36
 				 */
 				showSemanticNavigationButton: {
@@ -206,7 +209,7 @@ sap.ui.define([
 				},
 				/**
 				 * Controls the visibility of the Variant Management.
-				 * 
+				 *
 				 * @since 1.38
 				 */
 				showVariantManagement: {
@@ -215,34 +218,50 @@ sap.ui.define([
 					defaultValue: true
 				},
 				/**
+				 * Controls the visibility of the chart print button.
+				 *
+				 * @since 1.39
+				 */
+				/*
+				 * showPrintButton: { type: "boolean", group: "Misc", defaultValue: true // false },
+				 */
+				/**
+				 * Controls the visibility of the chart download button.
+				 *
+				 * @since 1.39
+				 */
+				showDownloadButton: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
+				},
+				/**
 				 * Controls the visibility of the Details button. If set to <code>true</code>, the datapoint tooltip will be disabled as the
 				 * information of selected datapoints will be found in the details popover. This will also set the drill-down button to invisible.
-				 * 
+				 *
 				 * @since 1.38
 				 */
 				showDetailsButton: {
 					type: "boolean",
 					group: "Misc",
 					defaultValue: false
-				// true
 				},
 
 				/**
 				 * Controls the visibility of the Breadcrumbs control for drilling up within the visible dimensions. If set to <code>true</code>,
 				 * the toolbar header will be replaced by the Breadcrumbs control. This will also set the drill-up button to invisible.
-				 * 
+				 *
 				 * @since 1.38
 				 */
 				showDrillBreadcrumbs: {
 					type: "boolean",
 					group: "Misc",
 					defaultValue: false
-				// true
 				},
 				/**
-				 * Controls the visibility of the chart tooltip. If set to <code>true </code>, the chart tooltip will be shown when hovering over a
-				 * data point.
-				 * 
+				 * Controls the visibility of the chart tooltip. If set to <code>true </code>, an instance of sap.viz.ui5.controls.VizTooltip will
+				 * be created and shown when hovering over a data point.
+				 *
 				 * @since 1.38
 				 */
 				showChartTooltip: {
@@ -253,7 +272,7 @@ sap.ui.define([
 				},
 				/**
 				 * Controls the visibility of the Navigation button
-				 * 
+				 *
 				 * @since 1.36
 				 */
 				showLegendButton: {
@@ -264,7 +283,7 @@ sap.ui.define([
 
 				/**
 				 * Set chart's legend properties.
-				 * 
+				 *
 				 * @since 1.36
 				 */
 				legendVisible: {
@@ -276,7 +295,7 @@ sap.ui.define([
 				/**
 				 * Chart selection mode. Supported values are {@link sap.chart.SelectionMode.Single} or {@link sap.chart.SelectionMode.Multi}, case
 				 * insensitive, always return in upper case. Unsupported values will be ignored.
-				 * 
+				 *
 				 * @since 1.36
 				 */
 				selectionMode: {
@@ -287,7 +306,7 @@ sap.ui.define([
 
 				/**
 				 * Controls the visibility of the FullScreen button.
-				 * 
+				 *
 				 * @since 1.36
 				 */
 				showFullScreenButton: {
@@ -297,8 +316,9 @@ sap.ui.define([
 				},
 
 				/**
-				 * Controls the usage either of the tooltip or the popover. If set to <code>true</code>, a tooltip will be displayed.
-				 * 
+				 * Controls the usage either of an instance of sap.viz.ui5.controls.VizTooltip or sap.viz.ui5.controls.Popover. If set to
+				 * <code>true</code>, the tooltip will be displayed, the popover otherwise.
+				 *
 				 * @since 1.36
 				 */
 				useTooltip: {
@@ -311,10 +331,72 @@ sap.ui.define([
 				 * Controls the visualization for chart type selection. If set to <code>true</code>, the list of available chart types will be
 				 * displayed. If set to <code>false</code> and there are three or fewer available chart types, the chart types will be displayed as
 				 * separate buttons in the toolbar. If there are more than three chart types, a list will be shown.
-				 * 
+				 *
+				 * @deprecated As of version 1.48.0. Setting the property to <code>false</code> will have no effect on the visualization of chart
+				 *             type selection anymore. <code>SmartChart</code> will always show a list of chart types, regardless of how many are
+				 *             available.
 				 * @since 1.38
 				 */
 				useListForChartTypeSelection: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: true
+				},
+				/**
+				 * Controls the visibility of the chart type selection button.
+				 *
+				 * @since 1.48
+				 */
+				showChartTypeSelectionButton: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: true
+				},
+				/**
+				 * Defines the custom text that will be displayed in case no data is found for the current binding.
+				 *
+				 * @since 1.46
+				 */
+				noData: {
+					type: "string",
+					group: "Misc",
+					defaultValue: null
+				},
+				/**
+				 * Controls the visibility of the toolbar.
+				 *
+				 * @since 1.54
+				 */
+				showToolbar: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: true
+				},
+				/**
+				 * Defines the visual style of the smart charts <code>Toolbar</code>. <b>Note:</b> The visual styles are theme-dependent.
+				 * 
+				 * @since 1.54
+				 */
+				toolbarStyle: {
+					type: "sap.m.ToolbarStyle",
+					group: "Appearance"
+				},
+				/**
+				 * Controls the visibility of the title in the dimension area of the chart.
+				 *
+				 * @since 1.54
+				 */
+				showDimensionsTitle: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: true
+				},
+				/**
+				 * Controls the visibility of the title in the measure area of the chart.
+				 *
+				 * @since 1.54
+				 */
+				showMeasuresTitle: {
 					type: "boolean",
 					group: "Misc",
 					defaultValue: true
@@ -323,7 +405,7 @@ sap.ui.define([
 			associations: {
 				/**
 				 * Identifies the SmartVariant control which should be used for the personalization. Will be ignored if the advanced mode is set.
-				 * 
+				 *
 				 * @since 1.38
 				 */
 				smartVariant: {
@@ -334,8 +416,9 @@ sap.ui.define([
 			aggregations: {
 
 				/**
-				 * A toolbar that can be added by the user to define their own custom buttons, icons, etc. If this is specified, the SmartChart
-				 * control does not create an additional toolbar, but uses this one.
+				 * A custom toolbar that can be specified by the user to define their own buttons, icons, etc. If this is added, the SmartChart
+				 * control does not create its own toolbar, but uses this one instead. However, if default actions, such as showSemanticNavigation,
+				 * showFullScreenButton etc. are set, these actions are added at the left-hand side of the toolbar.
 				 */
 				toolbar: {
 					type: "sap.m.Toolbar",
@@ -344,33 +427,71 @@ sap.ui.define([
 
 				/**
 				 * The Semantic Object Controller allows the user to specify and overwrite functionality for semantic object navigation.
-				 * 
+				 *
 				 * @since 1.36
 				 */
 				semanticObjectController: {
 					type: "sap.ui.comp.navpopover.SemanticObjectController",
 					multiple: false
+				},
+				/**
+				 * Actions on item level which can be specified for the selection details popover.
+				 *
+				 * @experimental Since 1.48 since 1.48
+				 */
+				selectionDetailsItemActions: {
+					type: "sap.ui.core.Item",
+					multiple: true
+				},
+				/**
+				 * Actions on footer level which can be specified for the selection details popover.
+				 *
+				 * @experimental Since 1.48 since 1.48
+				 */
+				selectionDetailsActions: {
+					type: "sap.ui.core.Item",
+					multiple: true
+				},
+				/**
+				 * Actions on group level which can be specified for the selection details popover.
+				 *
+				 * @experimental Since 1.48 since 1.48
+				 */
+				selectionDetailsActionGroups: {
+					type: "sap.ui.core.Item",
+					multiple: true
 				}
 			},
 			events: {
-
 				/**
 				 * This event is fired once the control has been initialized.
 				 */
 				initialise: {},
 
 				/**
-				 * This event is fired right before the binding is done.
-				 * 
-				 * @param {object} [bindingParams] The bindingParams object contains filters, sorters, and other binding-related information for the
-				 *        chart
-				 * @param {boolean} [bindingParams.preventChartBind] If set to <code>true</code> by the listener, binding is prevented
-				 * @param {object} [bindingParams.filters] The combined filter array containing a set of sap.ui.model.Filter instances of the
-				 *        SmartChart and SmartFilter controls; can be modified by users to influence filtering
-				 * @param {object} [bindingParams.sorter] An array containing a set of sap.ui.model.Sorter instances of the SmartChart control
-				 *        (personalization); can be modified by users to influence sorting
+				 * This event is fired right before the <code>SmartChart</code> control triggers the binding / rebinding of the inner chart.<br>
+				 * <b>Note:</b> In certain cases the inner chart triggers a rebinding by itself. In these cases, the event is not fired.
+				 *
+				 * @name sap.ui.comp.smartchart.SmartChart#beforeRebindChart
+				 * @event
+				 * @param {sap.ui.base.Event} oControlEvent
+				 * @param {sap.ui.base.EventProvider} oControlEvent.getSource
+				 * @param {object} oControlEvent.getParameters
+				 * @param {JSON} oControlEvent.getParameters.bindingParams The bindingParams object contains filters, sorters, and other
+				 *        binding-related information for the chart
+				 * @param {boolean} oControlEvent.getParameters.bindingParams.preventChartBind If set to <code>true</code> by the listener, binding
+				 *        is prevented
+				 * @param {sap.ui.model.Filter[]} oControlEvent.getParameters.bindingParams.filters The combined filter array containing a set of
+				 *        sap.ui.model.Filter instances of the SmartChart and SmartFilter controls; can be modified by users to influence filtering
+				 * @param {sap.ui.model.Sorter[]} oControlEvent.getParameters.bindingParams.sorter An array containing a set of sap.ui.model.Sorter
+				 *        instances of the SmartChart control (personalization); can be modified by users to influence sorting
+				 * @param {Number} oControlEvent.getParameters.bindingParams.length The maximal number of items that is displayed for the
+				 *        <code>SmartChart</code> control
+				 * @public
 				 */
-				beforeRebindChart: {},
+				beforeRebindChart: {
+
+				},
 
 				/**
 				 * This event is fired when data is received after binding. This event is fired if the binding for the chart is done by the SmartChart
@@ -385,25 +506,108 @@ sap.ui.define([
 
 				/**
 				 * This event is fired after a variant has been saved. This event can be used to retrieve the ID of the saved variant.
-				 * 
-				 * @param {string} [currentVariantId] ID of the currently selected variant
 				 */
-				afterVariantSave: {},
+				afterVariantSave: {
+					parameters: {
+						/**
+						 * ID of the currently selected variant
+						 */
+						currentVariantId: {
+							type: "string"
+						}
+					}
+				},
 
 				/**
 				 * This event is fired after a variant has been applied.
-				 * 
-				 * @param {string} [currentVariantId] ID of the currently selected variant
 				 */
-				afterVariantApply: {},
+				afterVariantApply: {
+					parameters: {
+						/**
+						 * ID of the currently selected variant
+						 */
+						currentVariantId: {
+							type: "string"
+						}
+					}
+				},
 
 				/**
 				 * This event is fired right before the overlay is shown.
-				 * 
-				 * @param {object} [overlay] Overlay object that contains information related to the overlay of the chart
-				 * @param {boolean} [overlay.show] If set to code>false</code> by the listener, overlay is not shown
+				 *
+				 * @event
+				 * @param {sap.ui.base.Event} oControlEvent
+				 * @param {sap.ui.base.EventProvider} oControlEvent.getSource
+				 * @param {object} oControlEvent.getParameters
+				 * @param {object} oControlEvent.getParameters.overlay Overlay object that contains information related to the overlay of the chart
+				 * @param {boolean} oControlEvent.getParameters.overlay.show If set to code>false</code> by the listener, overlay is not shown
+				 * @public
 				 */
-				showOverlay: {}
+				showOverlay: {},
+
+				/**
+				 * This event is fired right after the full screen mode of the SmartChart control has been changed.
+				 *
+				 * @since 1.46
+				 */
+				fullScreenToggled: {
+					parameters: {
+						/**
+						 * If <code>true</code> the control is in full screen mode
+						 */
+						fullScreen: {
+							type: "boolean"
+						}
+					}
+				},
+				/**
+				 * This event is fired when any action in the selection details popover is pressed.
+				 *
+				 * @experimental Since 1.48
+				 * @since 1.48
+				 */
+				selectionDetailsActionPress: {
+					parameters: {
+
+						/**
+						 * The action that has to be processed once the action has been pressed
+						 */
+						action: {
+							type: "sap.ui.core.Item"
+						},
+						/**
+						 * If the action is pressed on one of the {@link sap.m.SelectionDetailsItem items}, the parameter contains the
+						 * {@link sap.ui.model.Context context} of the pressed {@link sap.m.SelectionDetailsItem item}. If a custom action or action
+						 * group of the SelectionDetails popover is pressed, this parameter contains all {@link sap.ui.model.Context contexts} of the
+						 * {@link sap.m.SelectionDetailsItem items}.
+						 */
+						itemContexts: {
+							type: "sap.ui.model.Context"
+						},
+						/**
+						 * The action level of action buttons. The available levels are Item, List and Group
+						 */
+						level: {
+							type: "sap.m.SelectionDetailsActionLevel"
+						}
+					}
+				},
+				/**
+				 * This event is fired when <code>SmartChart</code> control data changes, due to changes in the personalization dialog or drill
+				 * operations.<br>
+				 * The data can be changed via sorters, filters or drill-ups/drill-downs.
+				 */
+				chartDataChanged: {
+					parameters: {
+						/**
+						 * Object which contains a boolean flag for dimeasure, filter, sort. If set to <code>true</code>, it has been changed.
+						 */
+						changeTypes: {
+							type: "object"
+						}
+					}
+
+				}
 			}
 		},
 
@@ -426,14 +630,15 @@ sap.ui.define([
 
 		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp");
 
-		this.sResizeListenerId = null;
-		if (Device.system.desktop) {
-			this.sResizeListenerId = sap.ui.core.ResizeHandler.register(this, jQuery.proxy(this._adjustHeight, this));
-		} else {
-			Device.orientation.attachHandler(this._adjustHeight, this);
-			Device.resize.attachHandler(this._adjustHeight, this);
-		}
+		// currently handels _adjustHeight
+		this._processResizeHandler(true);
 
+		if (!this.getLayoutData()) {
+			this.setLayoutData(new sap.m.FlexItemData({
+				growFactor: 1,
+				baseSize: "auto"
+			}));
+		}
 	};
 
 	SmartChart.prototype._getVariantManagementControl = function(oSmartVariantId) {
@@ -447,8 +652,6 @@ sap.ui.define([
 
 			if (oSmartVariantControl) {
 				if (!(oSmartVariantControl instanceof SmartVariantManagement)) {
-					// jQuery.sap.log.error("Control with the id=" + oSmartVariantId.getId ? oSmartVariantId.getId() : oSmartVariantId + " not of
-					// expected type");
 					jQuery.sap.log.error("Control with the id=" + typeof oSmartVariantId.getId == "function" ? oSmartVariantId.getId() : oSmartVariantId + " not of expected type");
 					return null;
 				}
@@ -460,7 +663,7 @@ sap.ui.define([
 
 	/**
 	 * instantiates the SmartVariantManagementControl
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._createVariantManagementControl = function() {
@@ -496,7 +699,7 @@ sap.ui.define([
 
 		if (this._oVariantManagement) {
 
-			if (this._oVariantManagement.isPageVariant()) {
+			if (!this._oVariantManagement.isPageVariant()) {
 				this._oVariantManagement.setVisible(this.getShowVariantManagement());
 			}
 
@@ -504,7 +707,6 @@ sap.ui.define([
 
 			// Current variant could have been set already (before initialise) by the SmartVariant, in case of GLO/Industry specific variant
 			// handling
-			// this._oVariantManagement.attachInitialise(this._variantInitialised, this);
 			this._oVariantManagement.attachSave(this._variantSaved, this);
 			this._oVariantManagement.attachAfterSave(this._variantAfterSave, this);
 
@@ -514,7 +716,7 @@ sap.ui.define([
 
 	/**
 	 * event handler for variantmanagement save event
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._variantInitialised = function() {
@@ -522,6 +724,12 @@ sap.ui.define([
 			this._oCurrentVariant = "STANDARD";
 		}
 		this.fireAfterVariantInitialise();
+		/*
+		 * If VariantManagement is disabled (no LRep connectivity) trigger the binding
+		 */
+		if (this._oVariantManagement && !this._oVariantManagement.getEnabled()) {
+			this._checkAndTriggerBinding();
+		}
 	};
 
 	SmartChart.prototype._variantSaved = function() {
@@ -541,33 +749,30 @@ sap.ui.define([
 		this._bUpdateToolbar = true;
 	};
 
-	SmartChart.prototype._createPopover = function() {
-		if (!this._oPopover && this._oChart) {
-			// assign Popover to chart
-			jQuery.sap.require("sap.viz.ui5.controls.Popover");
-			this._oPopover = new sap.viz.ui5.controls.Popover({});
-			this._oPopover.connect(this._oChart.getVizUid());
-		}
-	};
-
-	SmartChart.prototype._createTooltip = function() {
-		if (this._oChart) {
-			this._oChart.setVizProperties({
-				"interaction": {
-					"behaviorType": null
-				},
-				"tooltip": {
-					"visible": true
-				}
-			});
-		}
+	SmartChart.prototype.setUseTooltip = function(bUseTooltip) {
+		this.setProperty("useTooltip", bUseTooltip, true);
+		this._createTooltipOrPopover();
 	};
 
 	SmartChart.prototype._createTooltipOrPopover = function() {
-		if (this.getUseTooltip()) {
-			this._createTooltip();
+		// only show tooltip, when enabled via showChartTooltip
+		if (this.getUseTooltip() && this.getShowChartTooltip()) {
+			// this._createTooltip();
+			this._toggleChartTooltipVisibility(true);
 		} else {
 			this._createPopover();
+		}
+	};
+
+	SmartChart.prototype._createPopover = function() {
+		if (this._oChart) {
+			if (!this._oPopover) {
+				// assign Popover to chart
+				jQuery.sap.require("sap.viz.ui5.controls.Popover");
+				this._oPopover = new sap.viz.ui5.controls.Popover({});
+			}
+			// Make this dynamic for the setter call
+			this._oPopover.connect(this._oChart.getVizUid());
 		}
 	};
 
@@ -592,6 +797,9 @@ sap.ui.define([
 		}
 		this._oToolbar = oToolbar;
 		this._bUpdateToolbar = true;
+		//adapt toolbar visibility
+		this._oToolbar.setVisible(this.getShowToolbar());
+		this._oToolbar.setStyle(this.getToolbarStyle());
 	};
 
 	SmartChart.prototype.getToolbar = function() {
@@ -605,7 +813,7 @@ sap.ui.define([
 
 	/**
 	 * sets the header text
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._refreshHeaderText = function() {
@@ -619,14 +827,15 @@ sap.ui.define([
 
 	/**
 	 * creates the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._createToolbar = function() {
 		// If no toolbar exists --> create one
 		if (!this._oToolbar) {
 			this._oToolbar = new OverflowToolbar({
-				design: ToolbarDesign.Transparent
+				design: ToolbarDesign.Transparent,
+				height: "auto"
 			});
 			this._oToolbar.addStyleClass("sapUiCompSmartChartToolbar");
 		}
@@ -634,11 +843,13 @@ sap.ui.define([
 			shrinkFactor: 0
 		}));
 		this.insertItem(this._oToolbar, 0);
+		this._oToolbar.setVisible(this.getShowToolbar());
+		this._oToolbar.setStyle(this.getToolbarStyle());
 	};
 
 	/**
 	 * creates the toolbar content
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._createToolbarContent = function() {
@@ -647,7 +858,7 @@ sap.ui.define([
 		this._addSeparatorToToolbar();
 		this._addHeaderToToolbar();
 
-		this._addDrillBreadcrumbs();
+		// this._addDrillBreadcrumbs();
 
 		// add spacer to toolbar
 		this._addSpacerToToolbar();
@@ -665,11 +876,15 @@ sap.ui.define([
 		// Add Zoom buttons
 		this._addZoomInOutButtons();
 
+		// this._addPrintButton();
+
+		this._addDownloadButton();
+
 		// Add Personalisation Icon
 		this._addPersonalisationToToolbar();
 
 		// Add Fullscreen Button
-		this._addFullScrrenButton();
+		this._addFullScreenButton();
 
 		// Add Chart Type Button
 		this._addChartTypeToToolbar();
@@ -695,15 +910,35 @@ sap.ui.define([
 		this.setProperty("showDetailsButton", bFlag);
 
 		// Handle visibility of details button and chart tooltips
-		if (this._oDetailsButton) {
-			this._oDetailsButton.setVisible(bFlag);
-			// this._toggleChartTooltipVisibility(!bFlag);
+		if (this._oSelectionDetails) {
+			this._oSelectionDetails.setVisible(bFlag);
+			// Btn only exists together with selectionDetails control
+			if (this._oDrillDownTextButton) {
+				this._oDrillDownTextButton.setVisible(bFlag);
+			}
+			this._setBehaviorTypeForDataSelection();
 		}
-
 		// Handle visibility of drill up button
 		if (this._oDrillDownButton) {
 			this._oDrillDownButton.setVisible(!bFlag);
 		}
+	};
+
+	SmartChart.prototype.setShowChartTypeSelectionButton = function(bFlag) {
+		this.setProperty("showChartTypeSelectionButton", bFlag);
+
+		if (this._oChartTypeButton) {
+			this._oChartTypeButton.setVisible(bFlag);
+		}
+	};
+
+	SmartChart.prototype.setShowDownloadButton = function(bFlag) {
+		this.setProperty("showDownloadButton", bFlag);
+		// Handle the visibility of the download button
+		if (this._oDownloadButton) {
+			this._oDownloadButton.setVisible(bFlag);
+		}
+
 	};
 
 	SmartChart.prototype.setShowDrillBreadcrumbs = function(bFlag) {
@@ -714,22 +949,9 @@ sap.ui.define([
 		if (this._oDrillBreadcrumbs) {
 			this._oDrillBreadcrumbs.setVisible(bFlag);
 		}
-
-		// Handle visibility of header text
-		if (this._headerText) {
-			this._headerText.setVisible(!bFlag);
-		} else {
-			this._addHeaderToToolbar();
-		}
-
 		// Handle visibility of drill up button
 		if (this._oDrillUpButton) {
 			this._oDrillUpButton.setVisible(!bFlag);
-		}
-
-		// Handle visibility of separator
-		if (this._oSeparator) {
-			this._oSeparator.setVisible(!bFlag);
 		}
 	};
 
@@ -738,507 +960,443 @@ sap.ui.define([
 		this._toggleChartTooltipVisibility(bFlag);
 	};
 
+	SmartChart.prototype._setBehaviorTypeForDataSelection = function() {
+		// Currently this property can only be set once during init time and is not dynamic.
+		if (this.getShowDetailsButton()) {
+			// If we use details button, noHoverBehavior has to be set in order to enable details event
+			this._oChart.setVizProperties({
+				"interaction": {
+					"behaviorType": "noHoverBehavior"
+				}
+			});
+		} else {
+			// If we don't use details button, behaviorType has to be deleted again
+			if (this._oChart.getVizProperties().interaction.behaviorType) {
+				// Get current interaction vizProperties and delete behaviorType
+				var oInteractionProps = this._oChart.getVizProperties().interaction;
+				delete oInteractionProps.behaviorType;
+				// Set modified interaction props on inner chart
+				this._oChart.setVizProperties({
+					"interaction": oInteractionProps
+				});
+			}
+		}
+	};
+
 	/**
 	 * adds breadcrumbs to the toolbar for drilling up in the selected dimensions
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addDrillBreadcrumbs = function() {
 
-		if (!this._oDrillBreadcrumbs /* && this.getShowDrillBreadcrumbs() */) {
+		if (!this._oDrillBreadcrumbs) {
 			jQuery.sap.require("sap.m.Breadcrumbs");
 			jQuery.sap.require("sap.m.Link");
 
 			this._oDrillBreadcrumbs = new sap.m.Breadcrumbs(this.getId() + "-drillBreadcrumbs", {
 				visible: this.getShowDrillBreadcrumbs()
 			}).addStyleClass("sapUiCompSmartChartBreadcrumbs");
-			this._oToolbar.addContent(this._oDrillBreadcrumbs);
+
+			this.insertItem(this._oDrillBreadcrumbs, 1);
 			this._updateDrillBreadcrumbs();
 
 			// Attach to the drill events in order to update the breadcrumbs
 			this._oChart.attachDrilledUp(function(oEvent) {
 				this._updateDrillBreadcrumbs();
+				// Drill-Stack filters are not part of filter panel any more
+				// this._updatePersFilters();
 			}.bind(this));
 
 			this._oChart.attachDrilledDown(function(oEvent) {
 				this._updateDrillBreadcrumbs();
+				// Drill-Stack filters are not part of filter panel any more
+				// this._updatePersFilters();
 			}.bind(this));
 		}
 	};
 	/**
+	 * updates selection filters for usage within filter panel of settings dialog
+	 *
+	 * @private
+	 */
+	/*
+	 * SmartChart.prototype._updatePersFilters = function() { if (this._oPersController) { // Set filters extracted from drill-stack on ChartWrapper
+	 * this._oPersController.getTable().setExternalFilters(this._extractDrillStackFilters()); } };
+	 */
+	/**
+	 * extracts all selection filters from current drill-stack and processes them for personalization controller.
+	 *
+	 * @returns {Array} An array of P13nFilterItems
+	 * @private
+	 */
+	/*
+	 * SmartChart.prototype._extractDrillStackFilters = function() { var aDrillStack = this.getChart().getDrillStack(); var aStackFilters = []; var
+	 * fTakeFilters = function(oFilter) { if (!oFilter) { return; } if (oFilter && oFilter.sPath && oFilter.sOperator) { var oFilterItem = new
+	 * P13nFilterItem({ operation: oFilter.sOperator, value1: oFilter.oValue1, value2: oFilter.oValue2, columnKey: oFilter.sPath });
+	 * aStackFilters.push(oFilterItem); } // check for nested filters if (oFilter.aFilters) { oFilter.aFilters.forEach(function(oFilter_) {
+	 * fTakeFilters(oFilter_); }); } }; // Create a sap.m.P13nFilterItem for each filter inside the drillstack;
+	 * aDrillStack.forEach(function(oStackEntry, index, aDrillStack) { fTakeFilters(oStackEntry.filter); }); return aStackFilters; };
+	 */
+
+	/**
+	 * returns all selection filters of current drill-stack
+	 *
+	 * @returns {sap.ui.model.Filter[]} An array of drill-stack filters
+	 */
+	SmartChart.prototype.getDrillStackFilters = function() {
+
+		var aDrillStack = this.getChart().getDrillStack();
+		var aStackFilters = [];
+
+		var fTakeFilters = function(oFilter) {
+			if (!oFilter) {
+				return;
+			}
+			if (oFilter && oFilter.sPath && oFilter.sOperator) {
+
+				aStackFilters.push(oFilter);
+			}
+			// check for nested filters
+			if (oFilter.aFilters) {
+				oFilter.aFilters.forEach(function(oFilter_) {
+					fTakeFilters(oFilter_);
+				});
+			}
+		};
+
+		aDrillStack.forEach(function(oStackEntry) {
+			fTakeFilters(oStackEntry.filter);
+		});
+
+		return aStackFilters;
+	};
+	/**
+	 * returns all currently applied dimensions which are part of the chart's stack.
+	 *
+	 * @returns {String[]} array of drill-stack dimensions
+	 * @private
+	 */
+	SmartChart.prototype._getDrillStackDimensions = function() {
+		var aDrillStack = this.getChart().getDrillStack();
+		var aStackDimensions = [];
+
+		aDrillStack.forEach(function(oStackEntry) {
+			// loop over nested dimension arrays
+			oStackEntry.dimension.forEach(function(sDimension) {
+				if (sDimension != null && sDimension != "" && aStackDimensions.indexOf(sDimension) == -1) {
+					aStackDimensions.push(sDimension);
+				}
+			});
+		});
+
+		return aStackDimensions;
+	};
+	/**
 	 * updates the breadcrumbs control when drilled up or down within the dimensions
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._updateDrillBreadcrumbs = function() {
 
-		// Get the currenct visible dimensions, copy array reverse it to reflect correct order of chart
-		var aVisibleDimensionsRev = this._oChart.getVisibleDimensions().slice();
+		// Get access to drill history
+		var aVisibleDimensionsRev = this._oChart.getDrillStack();
 
 		// Clear aggregation before we rebuild it
 		if (this._oDrillBreadcrumbs && this._oDrillBreadcrumbs.getLinks()) {
 			this._oDrillBreadcrumbs.removeAllLinks();
 		}
+		// When chart is bound to non-aggregated entity there is no drill-stack existing
+		if (aVisibleDimensionsRev) {
+			// Reverse array to display right order of crumbs
+			aVisibleDimensionsRev.reverse();
+			aVisibleDimensionsRev.forEach(function(dim, index, array) {
 
-		// Reverse array to display right order of crumbs
-		aVisibleDimensionsRev.reverse();
-		aVisibleDimensionsRev.forEach(function(dim, index, array) {
-			// Create the bread crumbs and put the current dimension label as location text
-			var sDimLabel = this._oChart.getDimensionByName(dim).getLabel();
+				// Check if stack entry has dimension names and if a dimension is existing for this name
+				if (dim.dimension.length > 0 && typeof this._oChart.getDimensionByName(dim.dimension[dim.dimension.length - 1]) != 'undefined') {
+					//show breadcrumbs
+					if (this.getShowDrillBreadcrumbs()) {
+						this._oDrillBreadcrumbs.setVisible(true);
+					}
+					// use the last entry of each drill-stack entry to built up the drill-path
+					var sDimLabel = this._oChart.getDimensionByName(dim.dimension[dim.dimension.length - 1]).getLabel();
 
-			if (index == 0) {
+					// Set current drill position in breadcrumb control
+					if (index == 0) {
 
-				this._oDrillBreadcrumbs.setCurrentLocationText(sDimLabel);
+						this._oDrillBreadcrumbs.setCurrentLocationText(sDimLabel);
+					} else {
 
-			} else {
+						var oCrumb = new sap.m.Link({
+							text: sDimLabel,
+							press: function(oEvent) {
+								var iLinkIndex = this._oDrillBreadcrumbs.indexOfLink(oEvent.getSource());
+								this._oChart.drillUp(iLinkIndex + 1); // plus the position before this link regarding the visualization in breadcrumbs
+								// get rid of entries in the details model
+								this._oChart.fireDeselectData(oEvent);
+								// don't forget to update the bread crumbs control itself
+								this._updateDrillBreadcrumbs();
 
-				var oCrumb = new sap.m.Link({
-					text: sDimLabel,
-					press: function(oEvent) {
-						// get the currently visible dimensions
-						var aDrilledDimensions = [];
-						var aVisibleDimensions = this._oChart.getVisibleDimensions();
-						// copy all dimensions which were selected before including the selected one
-						aVisibleDimensions.some(function(elem, index, array) {
-							aDrilledDimensions.push(elem);
-							if (this._oChart.getDimensionByName(elem).getLabel() === oEvent.getSource().getText()) {
-								return true;
-							}
-						}.bind(this));
-						// get rid of the currently visible dimensions and set the new dimensions
-						this._oChart.setVisibleDimensions([]);
-						this._oChart.setVisibleDimensions(aDrilledDimensions);
-						// get rid of details in the model
-						this._oChart.fireDeselectData(oEvent);
-						// don't forget to update the bread crumbs control
-						this._updateDrillBreadcrumbs();
+							}.bind(this)
+						});
 
-					}.bind(this)
-				});
+						this._oDrillBreadcrumbs.insertLink(oCrumb);
+					}
+				} else {
+					//Show no text on breadcrumb if stack contains only one entry with no dimension at all (all dims are shown)
+					if (index == 0) {
+						//hide breadcrumbs
+						this._oDrillBreadcrumbs.setVisible(false);
+					}
+				}
+			}.bind(this));
+		}
 
-				this._oDrillBreadcrumbs.insertLink(oCrumb);
-			}
-		}.bind(this));
 	};
 
 	/**
 	 * adds the details button to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addDetailsButton = function() {
-		var that = this;
 
-		if (!this._oDetailsButton /* && this.getShowDetailsButton() */) {
-			this._oDetailsButton = new Button(this.getId() + "-btnDetails", {
-				type: "Transparent",
-				// text: this._oRb.getText("CHART_DETAILSBTN_LABEL"),
-				tooltip: this._oRb.getText("CHART_DETAILSBTN_TOOLTIP"),
-				visible: this.getShowDetailsButton(),
-				layoutData: new sap.m.OverflowToolbarLayoutData({
-					priority: sap.m.OverflowToolbarPriority.NeverOverflow
-				}),
-				enabled: true,
-				press: function(oEvent) {
-					that._openDetailsPopover(oEvent);
-				}
-			});
+		this._oSelectionDetails = new SelectionDetails(this.getId() + "-selectionDetails", {
+			visible: this.getShowDetailsButton()
+		});
+		this._oSelectionDetails.registerSelectionDetailsItemFactory([
 
-			// Create models to save detail data from selected chart datapoints
-			this._aDetailsEntries = [];
-			this._oDetailsModel = new sap.ui.model.json.JSONModel({
-				items: this._aDetailsEntries
-			});
-
-			if (!this._oSemanticNavHandler) {
-				jQuery.sap.require("sap.ui.comp.navpopover.NavigationPopoverHandler");
-				this._oSemanticNavHandler = new sap.ui.comp.navpopover.NavigationPopoverHandler({});
+		], function(aDisplayData, aData, oContext, oData) {
+			var aLines = [];
+			for (var i = 0; i < aDisplayData.length; i++) {
+				aLines.push(new SelectionDetailsItemLine({
+					label: aDisplayData[i].label,
+					value: aDisplayData[i].value,
+					unit: aDisplayData[i].unit
+				}));
 			}
-
-			// Change buttons label counter on data selection of chart
-			this._oChart.attachSelectData(function(oEvent) {
-				that._updateDetailsText(oEvent);
-				that._updateDetailsModel(oEvent);
-			});
-
-			this._oChart.attachDeselectData(function(oEvent) {
-				that._updateDetailsText(oEvent);
-				that._updateDetailsModel(oEvent);
-			});
-
-			// Remember: Colums get deselected after drill up or down happened!
-			this._oChart.attachDrilledUp(function(oEvent) {
-				that._oChart.fireDeselectData(oEvent);
-			});
-
-			this._oChart.attachDrilledDown(function(oEvent) {
-				that._oChart.fireDeselectData(oEvent);
-			});
-			// selectedRowCount is updated after renderer is finished
-			this._oChart.attachRenderComplete(function(oEvent) {
-				that._updateDetailsText(oEvent);
-			});
-
-			// this._updateDetailsText();
-			this._oToolbar.addContent(this._oDetailsButton);
-		}
-	};
-
-	/**
-	 * opens the details popover when clicked on details button
-	 * 
-	 * @param {object} oEvent The event arguments
-	 * @private
-	 */
-	SmartChart.prototype._openDetailsPopover = function(oEvent) {
-
-		if (!this._oDetailsPopover) {
-
-			jQuery.sap.require("sap.m.ResponsivePopover");
-			jQuery.sap.require("sap.m.NavContainer");
-			jQuery.sap.require("sap.m.VBox");
-			jQuery.sap.require("sap.m.Page");
-			jQuery.sap.require("sap.m.List");
-			jQuery.sap.require("sap.m.StandardListItem");
-			jQuery.sap.require("sap.m.ObjectListItem");
-			jQuery.sap.require("sap.m.ObjectStatus");
-			jQuery.sap.require("sap.m.ObjectAttribute");
-			jQuery.sap.require("sap.m.ScrollContainer");
-
-			this._oDetailsPopover = new sap.m.ResponsivePopover(this.getId() + "-popoverDetails", {
-				showHeader: false,
-				placement: "Bottom",
-				contentWidth: "25rem",
-				contentHeight: "20rem",
-				verticalScrolling: false
-
-			}).addStyleClass("sapUiCompSmartChartDetailsPopover");
-
-			this._oDetailsPopover.addContent(this._createDetailsPopoverStructure());
-
-			// Navigate back to DetailsMasterPage if nothing is selected
-			// But stay on current details page if a datapoint is selected
-			this._oDetailsPopover.attachAfterClose(function(oEvent) {
-				// Nothing selected?
-				if (this._oChart.getSelectedDataPoints().count === 0) {
-
-					// Already on detailsMasterPage?
-					if (this._oDetailsNavContainer.getCurrentPage() !== this._oDetailsMasterPage) {
-						this._oDetailsNavContainer.to(this._oDetailsMasterPage);
-						this._oDetailsDrillInPage.setShowNavButton(true);
-						this._oDrillInMasterList.getItems()[0].setVisible(true);
+			return new SelectionDetailsItem({
+				enableNav: (function() {
+					// Check if we have semantic objects before enabling navigation
+					if (this._determineSemanticObjectsforDetailsPopover(aData, oContext).length > 0) {
+						return true;
+					} else {
+						return false;
 					}
-				}
-
-			}.bind(this));
-		}
-
-		// Update content and then open the popover
-		this._bindDetailsListAggregation();
-
-		// On Phone we need a title for the page header
-		if (this._oDetailsMasterPage.getShowHeader()) {
-			this._updateDetailsText();
-		}
-
-		// if no datapoint is selected we navigate to the drill-in page immediately
-		if (this._oChart.getSelectedDataPoints().count === 0) {
-			this._oDetailsDrillInPage.setShowNavButton(false);
-
-			this._oDrillInMasterList.getItems()[0].firePress();
-		} else {
-			// this._oDrillInMasterList.getItems()[0].setVisible(false);
-		}
-		this._oDetailsPopover.openBy(oEvent.getSource());
-	};
-
-	/**
-	 * updates the details button text based on the selected data point count
-	 * 
-	 * @param {object} oEvent The event arguments
-	 * @private
-	 */
-	SmartChart.prototype._updateDetailsText = function(oEvent) {
-		var detailsText, selectedCategories = this._oChart.getSelectedDataPoints().count;
-		if (selectedCategories > 0) {
-			detailsText = this._oRb.getText("CHART_DETAILSBTN_LABEL", [
-				selectedCategories
-			]);
-		} else {
-			detailsText = this._oRb.getText("CHART_DRILLDOWNDETAILSPAGE_TITLE");
-		}
-		this._oDetailsButton.setText(detailsText);
-
-		if (this._oDetailsMasterPage && this._oDetailsMasterPage.getShowHeader()) {
-			this._oDetailsMasterPage.setTitle(detailsText);
-		}
-	};
-
-	/**
-	 * updates the details model based on the selected or deselected data points
-	 * 
-	 * @param {object} oEvent The event arguments
-	 * @private
-	 */
-	SmartChart.prototype._updateDetailsModel = function(oEvent) {
-
-		var aDataPoints = this._oChart.getSelectedDataPoints().dataPoints;
-
-		// Clean the old entries
-		this._aDetailsEntries = [];
-
-		// Create new entries for each data object
-		aDataPoints.forEach(function(dataPoint) {
-			// Read measures and get rid of all but not the one on current index
-			// Place same object with this measure on index again in array!
-			var aMeasures = dataPoint.measures;
-
-			aMeasures.forEach(function(sMeasure) {
-				// Copy object and replace measures array with the correct value
-				// Then push into details array, so that each measure is represented by an own object.
-				var oDataPoint = jQuery.extend(true, {}, dataPoint.context.getObject());
-
-				oDataPoint.measures = [
-					sMeasure
-				];
-				this._aDetailsEntries.push(oDataPoint);
-			}.bind(this));
-
-			// Old implementation didn't handle multiple measures in a right way
-			// this._aDetailsEntries.push(dataPoint.context.getObject());
+				}.bind(this)()),
+				lines: aLines
+			}).setBindingContext(oContext);
 		}.bind(this));
 
-		// Set into model
-		this._oDetailsModel.getData("items").items = this._aDetailsEntries;
-
-		if (this._oDetailsNavContainer && this._oDetailsNavContainer.getCurrentPage() !== this._oDetailsMasterPage) {
-			this._oDetailsNavContainer.back();
-		}
-
-	};
-
-/*
- * SmartChart.prototype._insertDetailsIntoModel = function(aDataPoints) { var that = this; aDataPoints.forEach(function(dataPoint) { // Put it into
- * the Model that._aDetailsEntries.push(dataPoint.data); }); };
- */
-
-/*
- * SmartChart.prototype._removeDetailsFromModel = function(aDataPoints) { var that = this; aDataPoints.forEach(function(dataPoint) { // Remove from
- * the model var index = that._aDetailsEntries.indexOf(dataPoint.data); that._aDetailsEntries.splice(index, 1); }); };
- */
-
-	/**
-	 * binds the items aggregation of the details master list
-	 * 
-	 * @private
-	 */
-	SmartChart.prototype._bindDetailsListAggregation = function() {
-		// If no dataPoints selected, hide the list
-		if (this._aDetailsEntries.length > 0) {
-			this._oDetailsMasterListScrollContainer.setVisible(true);
-		} else {
-			this._oDetailsMasterListScrollContainer.setVisible(false);
-		}
-
-		var aDimensions = this._oChart.getVisibleDimensions();
-		var aMeasures = this._oChart.getVisibleMeasures();
-
-		// Check if dimensions and measurements are in these entries and build dynamic template
-		// Bind the model entries against the list aggregation
-		this._oDetailsMasterList.bindAggregation("items", "/items", function(sId, oContext) {
-
-			var measure;
-			var tecMeasureName;
-			var displayMeasureName;
-			var measureUnit;
-			var dimNames = "";
-
-			// Find the specific measure and its value for this oContext and use it in template
-			aMeasures.some(function(m) {
-				// Old implementation didn't handle multiple measures in a correct way.
-				/*
-				 * if (oContext.getProperty(m)) { measure = oContext.getProperty(m); measureName = m; return true; }
-				 */
-
-				// Check value in measures array of oContet object and if we have a match, copy the value for the list item.
-				if (oContext.getObject().measures[0] == m) {
-					measure = oContext.getProperty(m);
-					tecMeasureName = m;
-					displayMeasureName = this._oChart.getMeasureByName(tecMeasureName).getUnitBinding();
-
-					// Get the measureUnit for the measure
-					if (displayMeasureName) {
-						measureUnit = oContext.getProperty(displayMeasureName);
-
-						// Put the measure unit behind the value
-						if (measureUnit) {
-							measure = measure.concat(" ", measureUnit);
-						}
-					}
-					return true;
-				}
-
-			}.bind(this));
-
-			// Get all dimensions except for the last one as we show this one in the title of the item
-			for (var i = 0; i < aDimensions.length - 1; i++) {
-
-				dimNames += oContext.getProperty(aDimensions[i]);
-				if (i < aDimensions.length - 2) {
-					dimNames += " / ";
-				}
-			}
-
-			// Build an item template with all needed values
-			var oDetailsItemTemplate = new sap.m.ObjectListItem({
-				title: oContext.getProperty(aDimensions[aDimensions.length - 1]),// last and hence deepest currently visible dimension
-				type: "Navigation",
-				number: measure,
-				numberUnit: tecMeasureName,
-				attributes: [
-					new sap.m.ObjectAttribute({
-						text: dimNames
-					})
-				]
-			});
-
-			// Attach the semantic object navigation to each item
-			oDetailsItemTemplate.attachPress(function(oEvent) {
+		// Attach to navigation event of selectionDetails
+		// for semantic object navigation
+		this._oSelectionDetails.attachNavigate(function(oEvent) {
+			// Destroy content on navBack of selectionDetails
+			// This either is the semanticNavContainer or the semanticNavItemList
+			if (oEvent.getParameter("direction") === "back") {
+				oEvent.getParameter("content").destroy();
+			} else {
+				// Forward navigation to semantic objects
 				this._navigateToSemanticObjectDetails(oEvent);
-			}.bind(this));
-
-			return oDetailsItemTemplate;
+			}
 
 		}.bind(this));
+
+		this._oSelectionDetails.attachActionPress(function(oEvent) {
+			// extract binding information of each item
+			var aItemContexts = [];
+			oEvent.getParameter("items").forEach(function(oItem) {
+				aItemContexts.push(oItem.getBindingContext());
+			});
+			// Re-arrange event object and navigate to outer press handler
+			this.fireSelectionDetailsActionPress({
+				id: oEvent.getParameter("id"),
+				action: oEvent.getParameter("action"),
+				itemContexts: aItemContexts,
+				level: oEvent.getParameter("level")
+			});
+		}.bind(this));
+
+		// Attach to sap.chart.Charts private _selectionDetails event
+		this._oSelectionDetails.attachSelectionHandler("_selectionDetails", this._oChart);
+
+		// Update of selectionDetails action aggregations
+		this._oSelectionDetails.attachBeforeOpen(function(oEvent) {
+
+			// Update item actions
+			var aSelectionItems = this._oSelectionDetails.getItems();
+
+			aSelectionItems.forEach(function(oItem) {
+				var oActionClones = this._getDetailsActionsClones();
+				oActionClones.selectionDetailsItemActions.forEach(function(oAction) {
+					oItem.addAction(oAction);
+				});
+			}.bind(this));
+
+			// Update list actions
+			var oActionClones = this._getDetailsActionsClones().selectionDetailsActions;
+			this._oSelectionDetails.removeAllActions();
+			oActionClones.forEach(function(oAction) {
+				this._oSelectionDetails.addAction(oAction);
+			}.bind(this));
+
+			// Update group actions
+			var oGroupActionClones = this._getDetailsActionsClones().selectionDetailsActionGroups;
+			this._oSelectionDetails.removeAllActionGroups();
+			oGroupActionClones.forEach(function(oActionGroup) {
+				this._oSelectionDetails.addActionGroup(oActionGroup);
+			}.bind(this));
+
+		}.bind(this));
+
+		this._oSelectionDetails.attachBeforeClose(function(oEvent) {
+			// Needs to be destroyed to re-navigate later.
+			if (this._oNavigationContainer) {
+				this._oNavigationContainer.destroy();
+			}
+
+		}.bind(this));
+
+		// Add to SmartChart toolbar
+		this._oToolbar.addContent(this._oSelectionDetails);
+
+		// Add drill down text button as well
+		this._addDrillDownTextButton();
+	};
+	/**
+	 * Creates clones of each outer aggregation for selectionDetails control delegation of actions.
+	 *
+	 * @returns {{selectionDetailsItemActions: Array, selectionDetailsActions: Array, selectionDetailsActionGroups: Array}}
+	 * @private
+	 */
+	SmartChart.prototype._getDetailsActionsClones = function() {
+
+		var oDetailsActions = {
+			selectionDetailsItemActions: [],
+			selectionDetailsActions: [],
+			selectionDetailsActionGroups: []
+		};
+
+		// Clone itemActions
+		this.getSelectionDetailsItemActions().forEach(function(oItem) {
+			oDetailsActions.selectionDetailsItemActions.push(oItem.clone());
+		});
+
+		// Clone actions
+		this.getSelectionDetailsActions().forEach(function(oItem) {
+			oDetailsActions.selectionDetailsActions.push(oItem.clone());
+		});
+
+		// Clone itemActions
+		this.getSelectionDetailsActionGroups().forEach(function(oItem) {
+			oDetailsActions.selectionDetailsActionGroups.push(oItem.clone());
+		});
+
+		return oDetailsActions;
+	};
+	/**
+	 * adds a print button to the toolbar
+	 */
+	/*
+	 * SmartChart.prototype._addPrintButton = function() { if (!this._oPrintButton && this.getShowPrintButton()) { this._oPrintButton = new
+	 * Button(this.getId() + "-btnPrint", { type: "Transparent", tooltip: "Print Chart", icon: "sap-icon://print", layoutData: new
+	 * sap.m.OverflowToolbarLayoutData({ priority: sap.m.OverflowToolbarPriority.NeverOverflow }), enabled: true, press: function(oEvent) {
+	 * this._printChart(oEvent); }.bind(this) }); this._oToolbar.addContent(this._oPrintButton); } };
+	 */
+
+	/**
+	 * adds a download button to the toolbar
+	 */
+	SmartChart.prototype._addDownloadButton = function() {
+		if (!this._oDownloadButton) {
+			this._oDownloadButton = new OverflowToolbarButton(this.getId() + "btnDownload", {
+				type: "Transparent",
+				text: this._oRb.getText("CHART_DOWNLOADBTN_TEXT"),
+				tooltip: this._oRb.getText("CHART_DOWNLOADBTN_TOOLTIP"),
+				icon: "sap-icon://download",
+				visible: this.getShowDownloadButton(),
+				press: function(oEvent) {
+					// Check for browser
+					if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+						// Handle IE, User can either open or save the svg
+						// Create a blob object containing the chart svg data
+						var svgBlob = new window.Blob([
+							this._getVizFrame().exportToSVGString()
+						], {
+							'type': "image/svg+xml"
+						});
+						window.navigator.msSaveOrOpenBlob(svgBlob);
+					} else {
+
+						this._downloadChartPNG();
+					}
+				}.bind(this)
+			});
+			this._oToolbar.addContent(this._oDownloadButton);
+		}
 	};
 
 	/**
-	 * returns the currently visible dimensions as string in a comma separated order
-	 * 
-	 * @returns {string} The currently visible dimensions in a comma separated order
-	 * @private
+	 * opens an image of the currently displayed chart in a new tab and show browsers print dialog
 	 */
-/*
- * SmartChart.prototype._getCurrentDimensionsText = function() { var dimText = ""; this._oChart.getVisibleDimensions().forEach(function(dimension,
- * index, array) { dimText += dimension; if (index + 1 != array.length) { dimText += ", "; } }); return dimText; };
- */
+	/*
+	 * SmartChart.prototype._printChart = function() { // Create a blob object containing the chart svg data var svgBlob = new window.Blob([
+	 * this._getVizFrame().exportToSVGString() ], { 'type': "image/svg+xml" }); // Check for browser if (window.navigator &&
+	 * window.navigator.msSaveOrOpenBlob) { // Handle IE, User can either open or save the svg window.navigator.msSaveOrOpenBlob(svgBlob); } else { //
+	 * Firefox, Chrome // Create a local url for the blob in order to have same origin. var url = window.URL.createObjectURL(svgBlob); // Open new
+	 * window showing the svg image var svgWindow = window.open(url, "svg_win"); // We need to use own var as window.onfocus is not working correctly
+	 * after print dialog is closed var tabIsFocused = false; // check if print is finished or cancelled setInterval(function() { if (tabIsFocused ===
+	 * true) { svgWindow.close(); } }, 1); // Do the print svgWindow.onload = function() { // TODO: Should work on all Apple devices, but wee need to
+	 * handle Android separately if (sap.ui.Device.os.name === "Android") { // do something } else { svgWindow.print(); // Print was done or cancelled
+	 * tabIsFocused = true; } }; } };
+	 */
 
 	/**
-	 * updates the master list item for drill in functionality to show currently visible dimensions
-	 * 
-	 * @param {object} oEvent The event arguments
-	 * @private
+	 * downloads a svg file of the currently displayed chart
 	 */
-/*
- * SmartChart.prototype._updateDrillInMasterListItem = function(oEvent) { if (this._oDrillInMasterList) {
- * this._oDrillInMasterList.getItems()[0].setDescription(this._getCurrentDimensionsText()); } };
- */
+	SmartChart.prototype._downloadChartSVG = function() {
+		// Download a file
+		var fileName = this.getHeader();
+		var dl = document.createElement('a');
+		dl.setAttribute('href', 'data:image/svg+xml,' + encodeURIComponent(this._getVizFrame().exportToSVGString()));
+		dl.setAttribute('download', fileName ? fileName : 'Chart' + '.svg');
+		dl.click();
+	};
 
 	/**
-	 * creates the inner nav container structure of the details popover containing all necessary lists and pages to provide new details functionality
-	 * 
-	 * @returns {sap.m.NavContainer} nav container for the details popover
-	 * @private
+	 * downloads the chart as png file
 	 */
-	SmartChart.prototype._createDetailsPopoverStructure = function() {
+	SmartChart.prototype._downloadChartPNG = function() {
+		// Not working for IE, in this case we create a blob and call the IE notification bar for downloading the SVG
+		// Create Image and then download (Chrome)
+		var fileName = this.getHeader();
+		var chartSVG = this._getVizFrame().exportToSVGString();
+		var canvas = document.createElement('canvas'); // Not shown on page
+		var context = canvas.getContext('2d');
+		var loader = new Image(); // Not shown on page
 
-		// NavContainer
-		this._oDetailsNavContainer = new sap.m.NavContainer(this.getId() + "-navContainerDetails");
+		// getId() because vizFrame content changes id when selecting another chart type
+		loader.width = canvas.width = document.getElementById(this._oChart.getId()).offsetWidth;
+		loader.height = canvas.height = document.getElementById(this._oChart.getId()).offsetHeight;
 
-		// ScrollContainer
-		this._oDetailsMasterListScrollContainer = new sap.m.ScrollContainer({
-			vertical: true,
-			horizontal: false
-		}).addStyleClass("sapUiCompSmartChartDetailsScrollContainer");
+		loader.onload = function() {
+			context.drawImage(loader, 0, 0);
 
-		// Layouts
-		this._oDetailsVBox = new sap.m.VBox(this.getId() + "-vBoxDetails", {
-		// height:"20rem"
-		});
-
-		// Pages
-		this._oDetailsMasterPage = new sap.m.Page(this.getId() + "-navMasterPageDetails", {
-			showHeader: jQuery.device.is.phone,
-			enableScrolling: false
-		});
-		// On Phone we need a title for the page header
-		/*
-		 * if (this._oDetailsMasterPage.getShowHeader()) { this._oDetailsMasterPage.setTitle(this._oRb.getText("CHART_DETAILSBTN_LABEL")); }
-		 */
-
-		this._oDetailsDrillInPage = new sap.m.Page(this.getId() + "-navDrillInPageDetails", {
-			title: this._oRb.getText("CHART_DRILLDOWNDETAILSPAGE_TITLE"),
-			showHeader: true,
-			showNavButton: true,
-			navButtonPress: function() {
-				this._oDetailsNavContainer.back();
-			}.bind(this)
-		});
-
-		this._oDetailsSemanticPage = new sap.m.Page(this.getId() + "-navSemanticPageDetails", {
-			showHeader: true,
-			showNavButton: true,
-			navButtonPress: function() {
-				this._oDetailsNavContainer.back();
-			}.bind(this)
-		});
-
-		this._oDetailsSemanticPageMulti = new sap.m.Page(this.getId() + "-navSemanticPageMultiDetails", {
-			showHeader: true,
-			showNavButton: true,
-			navButtonPress: function() {
-				this._oDetailsNavContainer.back();
-			}.bind(this)
-		});
-
-		// Master Lists
-		this._oDetailsMasterList = new sap.m.List(this.getId() + "-navMasterListDetails", {
-
-		});
-
-		this._oDrillInMasterList = new sap.m.List(this.getId() + "-navMasterListDrillIn", {
-			items: [
-				new sap.m.StandardListItem({
-					title: this._oRb.getText("CHART_DRILLDOWNMASTERLIST_ITEM_TITLE"),
-					// description: this._getCurrentDimensionsText(),
-					type: "Navigation",
-					press: function(oEvent) {
-						this._navigateToDrillDetailsList(oEvent);
-					}.bind(this)
-				})
-			]
-		});
-
-		this._oRelatedAppsMasterList = new sap.m.List(this.getId() + "-navMasterListRelatedApps", {
-			items: [
-				new sap.m.StandardListItem({
-					title: this._oRb.getText("CHART_RELATEDAPPSMASTERLIST_ITEM_TITLE"),
-					type: "Navigation"
-				})
-			]
-		});
-
-		// Set Models
-		this._oDetailsMasterList.setModel(this._oDetailsModel);
-
-		// Create semantic Object Handling
-		this._initSemanticNavigationHandling();
-
-		// Put things together
-		this._oDetailsMasterListScrollContainer.addContent(this._oDetailsMasterList);
-		this._oDetailsVBox.addItem(/* this._oDetailsMasterList */this._oDetailsMasterListScrollContainer).addItem(this._oDrillInMasterList);// .addItem(this._oRelatedAppsMasterList);
-		this._oDetailsMasterPage.addContent(this._oDetailsVBox);
-		this._oDetailsNavContainer.addPage(this._oDetailsMasterPage).addPage(this._oDetailsDrillInPage).addPage(this._oDetailsSemanticPage).addPage(this._oDetailsSemanticPageMulti);
-
-		return this._oDetailsNavContainer;
+			var dl = document.createElement('a');
+			dl.setAttribute('href', canvas.toDataURL());
+			dl.setAttribute('download', fileName ? fileName : 'Chart' + '.png');
+			dl.click();
+		};
+		loader.setAttribute('crossOrigin', 'anonymous');
+		loader.src = 'data:image/svg+xml,' + encodeURIComponent(chartSVG);
 	};
 
 	/**
 	 * adds the full-screen button to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
-	SmartChart.prototype._addFullScrrenButton = function() {
+	SmartChart.prototype._addFullScreenButton = function() {
 		var oFullScreenButton;
 		if (this.getShowFullScreenButton()) {
 			oFullScreenButton = new OverflowToolbarButton(this.getId() + "-btnFullScreen", {
@@ -1248,14 +1406,14 @@ sap.ui.define([
 				}.bind(this)
 			});
 			this.oFullScreenButton = oFullScreenButton;
-			this._toggleFullScreen(this.bFullScreen, true);
+			this._renderFullScreenButton();
 			this._oToolbar.addContent(oFullScreenButton);
 		}
 	};
 
 	/**
 	 * adds the zoom-in / zoom-out buttons to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addZoomInOutButtons = function() {
@@ -1271,8 +1429,9 @@ sap.ui.define([
 					that._oChart.zoom({
 						direction: "in"
 					});
+					this._toggleZoomButtonEnablement();
 				}
-			},
+			}.bind(this),
 			visible: this.getShowZoomButtons()
 		});
 
@@ -1286,18 +1445,54 @@ sap.ui.define([
 					that._oChart.zoom({
 						direction: "out"
 					});
+					this._toggleZoomButtonEnablement();
 				}
-			},
+			}.bind(this),
 			visible: this.getShowZoomButtons()
 		});
 
 		this._oToolbar.addContent(this._oZoomInButton);
 		this._oToolbar.addContent(this._oZoomOutButton);
+
+		//Register zoom btn toggling
+		//Will be called on window resize, drill-down, chart type change, etc.
+		this._oChart.attachRenderComplete(this._toggleZoomButtonEnablement, this);
+	};
+
+	SmartChart.prototype._toggleZoomButtonEnablement = function() {
+
+		var iZoomInfo = this._oChart.getZoomInfo().currentZoomLevel;
+
+		// No zoom level available
+		if (iZoomInfo === undefined) {
+			return;
+			// All data points plotted and max width of 96px reached
+			// due to information from sap.chart.Chart team
+		} else if (iZoomInfo === null) {
+			this._oZoomOutButton.setEnabled(false);
+			this._oZoomInButton.setEnabled(false);
+			//Zoomed out all the way
+		} else if (iZoomInfo === 0) {
+			this._oZoomOutButton.setEnabled(false);
+			this._oZoomInButton.setEnabled(true);
+			//Zoomed in all the way
+		} else if (iZoomInfo === 1) {
+			this._oZoomInButton.setEnabled(false);
+			this._oZoomOutButton.setEnabled(true);
+		} else {
+			//If button was disabled due to the above, enable it
+			if (this._oZoomOutButton.getEnabled() == false) {
+				this._oZoomOutButton.setEnabled(true);
+			}
+			if (this._oZoomInButton.getEnabled() == false) {
+				this._oZoomInButton.setEnabled(true);
+			}
+		}
 	};
 
 	/**
 	 * Sets the zoom-in / zoom-out buttons visibility state.
-	 * 
+	 *
 	 * @param {boolean} bFlag true to display the zoom-in / zoom-out buttons
 	 */
 	SmartChart.prototype.setShowZoomButtons = function(bFlag) {
@@ -1313,8 +1508,19 @@ sap.ui.define([
 	};
 
 	/**
+	 * Sets the full screen button visibility state.
+	 *
+	 * @param {boolean} bFlag true to display the fullscreen button
+	 */
+	SmartChart.prototype.setShowFullScreenButton = function(bFlag) {
+		this.setProperty("showFullScreenButton", bFlag);
+		if (this.oFullScreenButton) {
+			this.oFullScreenButton.setVisible(bFlag);
+		}
+	};
+	/**
 	 * Sets the chart legend visibility state.
-	 * 
+	 *
 	 * @param {boolean} bFlag true to display the chart legend
 	 */
 	SmartChart.prototype.setLegendVisible = function(bFlag) {
@@ -1326,7 +1532,7 @@ sap.ui.define([
 
 	/**
 	 * Sets the chart legend visibility state.
-	 * 
+	 *
 	 * @param {boolean} bFlag true to display the chart legend
 	 * @private
 	 */
@@ -1341,7 +1547,7 @@ sap.ui.define([
 
 	/**
 	 * Returns the charts _vizFrame aggregation.
-	 * 
+	 *
 	 * @returns {object} charts _vizFrame aggregation object
 	 * @private
 	 */
@@ -1357,7 +1563,7 @@ sap.ui.define([
 
 	/**
 	 * adds the legend button to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addLegendButton = function() {
@@ -1379,7 +1585,7 @@ sap.ui.define([
 
 	/**
 	 * Sets the legend button visibility state.
-	 * 
+	 *
 	 * @param {boolean} bFlag true to display the legend button
 	 */
 	SmartChart.prototype.setShowLegendButton = function(bFlag) {
@@ -1393,7 +1599,7 @@ sap.ui.define([
 
 	/**
 	 * Sets the semantic navigation button visibility state.
-	 * 
+	 *
 	 * @param {boolean} bFlag true to display the semantic navigation button
 	 */
 	SmartChart.prototype.setShowSemanticNavigationButton = function(bFlag) {
@@ -1413,7 +1619,7 @@ sap.ui.define([
 
 	/**
 	 * adds the semantical navigation button to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addSemanticNavigationButton = function() {
@@ -1428,10 +1634,20 @@ sap.ui.define([
 				enabled: false
 			});
 
-			jQuery.sap.require("sap.ui.comp.navpopover.NavigationPopoverHandler");
-
-			var oNavHandler = new sap.ui.comp.navpopover.NavigationPopoverHandler({
-				control: this._oSemanticalNavButton
+			var oNavHandler = new NavigationPopoverHandler({
+				control: this._oSemanticalNavButton,
+				navigationTargetsObtained: function(oEvent) {
+					var oMainNavigation = oEvent.getParameters().mainNavigation;
+					// 'mainNavigation' might be undefined
+					if (oMainNavigation) {
+						var oData = oEvent.getSource().getBindingContext().getObject();
+						var oField = this._getField(oEvent.getSource().getFieldName());
+						var oTexts = FormatUtil.getTextsFromDisplayBehaviour(oField.displayBehaviour, oData[oField.name], oData[oField.description]);
+						oMainNavigation.setDescription(oTexts.secondText);
+						oEvent.getParameters().show(oTexts.firstText, oMainNavigation, undefined, undefined);
+					}
+					oEvent.getParameters().show();
+				}.bind(this)
 			});
 
 			var oSemanticObjectController = this.getSemanticObjectController();
@@ -1444,10 +1660,13 @@ sap.ui.define([
 				if (aSemanticObjects && (aSemanticObjects.length > 0)) {
 
 					if (aSemanticObjects.length === 1) {
-						oNavHandler.setSemanticObject(aSemanticObjects[0].name);
-						oNavHandler.setSemanticObjectLabel(aSemanticObjects[0].fieldLabel);
-
-						oNavHandler.openPopover();
+						var oSemanticObjects = MetadataAnalyser.getSemanticObjectsFromProperty(aSemanticObjects[0]);
+						if (oSemanticObjects) {
+							oNavHandler.setFieldName(aSemanticObjects[0].name);
+							oNavHandler.setSemanticObject(oSemanticObjects.defaultSemanticObject);
+							oNavHandler.setAdditionalSemanticObjects(oSemanticObjects.additionalSemanticObjects);
+							oNavHandler.openPopover();
+						}
 					} else {
 						that._semanticObjectList(aSemanticObjects, oNavHandler);
 					}
@@ -1455,11 +1674,11 @@ sap.ui.define([
 			});
 			if (this._oChart) {
 
-				this._oChart.attachDeselectData(function(oEvent) {
+				this._oChart.attachDeselectData(function() {
 					aSemanticObjects = that._setSelectionDataPointHandling(oNavHandler);
 				});
 
-				this._oChart.attachSelectData(function(oEvent) {
+				this._oChart.attachSelectData(function() {
 					aSemanticObjects = that._setSelectionDataPointHandling(oNavHandler);
 				});
 			}
@@ -1468,10 +1687,21 @@ sap.ui.define([
 			this._oToolbar.insertContent(this._oSemanticalNavButton, iSpacerIdx + 1);
 		}
 	};
+	/**
+	 * sets the selectionMode for datapoint selection.
+	 *
+	 * @param {sap.chart.SelectionMode} selectionMode SINGLE, MULTI or NONE
+	 */
+	SmartChart.prototype.setSelectionMode = function(selectionMode) {
+		this.setProperty("selectionMode", selectionMode);
+		if (this._oChart) {
+			this._oChart.setSelectionMode(selectionMode);
+		}
+	};
 
 	/**
 	 * Sets the handling of selected data points in order to resolve a semantical object when semantic navigation button is pressed
-	 * 
+	 *
 	 * @param {sap.ui.comp.navpopover.NavigationPopoverHandler} oNavHandler The navigation handler for the semantical object navigation
 	 * @returns {array} The semantic objects for selected data points
 	 * @private
@@ -1489,7 +1719,7 @@ sap.ui.define([
 
 	/**
 	 * Sets the semantical object context for each selected data point when details button is used
-	 * 
+	 *
 	 * @param {object} oEvent The event arguments
 	 * @returns {array} The semantic objects for selected data points
 	 * @private
@@ -1498,17 +1728,15 @@ sap.ui.define([
 		var oDataContext, oData, aSemanticObjects = null;
 
 		// Get binding context
-		oDataContext = oEvent.getSource().getBindingContext();
+		// selectionDetails implementation
+		oDataContext = oEvent.getParameter("item").getBindingContext();
+
 		if (oDataContext) {
 			// Get data object from context
 			oData = oDataContext.getObject();
 			if (oData) {
 				// Retrieve semantical objects
-				aSemanticObjects = this._determineSemanticObjects(oData, oDataContext);
-				if (aSemanticObjects && (aSemanticObjects.length > 0)) {
-					// Set context on navHandler
-					this._oSemanticNavHandler.setBindingContext(oDataContext);
-				}
+				aSemanticObjects = this._determineSemanticObjectsforDetailsPopover(oData, oDataContext);
 			}
 		}
 		return aSemanticObjects;
@@ -1516,7 +1744,7 @@ sap.ui.define([
 
 	/**
 	 * Sets the semantical object context for each selected data point when semantical nav button is used
-	 * 
+	 *
 	 * @param {sap.ui.comp.navpopover.NavigationPopoverHandler} oNavHandler The navigation handler for the semantical object navigation
 	 * @returns {array} The semantic objects for selected data points
 	 * @private
@@ -1570,7 +1798,7 @@ sap.ui.define([
 
 	/**
 	 * Condenses data point contexts which are based on same values.
-	 * 
+	 *
 	 * @param {array} aData The data contexts of selected data points
 	 * @returns {array} The semantic objects for selected data points
 	 * @private
@@ -1595,15 +1823,13 @@ sap.ui.define([
 					aResultSemObj.push(oSemObj);
 				}
 			}
-
 			aSemObj = aResultSemObj;
 		}
-
 		return aSemObj;
 	};
 	/**
 	 * Checks if all values of a data point context are equal.
-	 * 
+	 *
 	 * @param {array} aData The data contexts of selected data points
 	 * @param {string} sFieldName The field name against whose value should be checked
 	 * @returns {boolean} True if all values are equals, false otherwise
@@ -1618,28 +1844,21 @@ sap.ui.define([
 				sValue = oData[sFieldName];
 				continue;
 			}
-
 			if (sValue != oData[sFieldName]) {
 				return false;
 			}
 		}
-
 		return true;
 	};
 
 	/**
 	 * Creates a semantical object list for selected data points which resolve in more than one semantical object when semantical nav button is used.
-	 * 
+	 *
 	 * @param {array} aSemanticObjects The semantical objects for a selected data point
 	 * @param {sap.ui.comp.navpopover.NavigationPopoverHandler} oNavHandler The navigation handler for the semantical object navigation
 	 * @private
 	 */
 	SmartChart.prototype._semanticObjectList = function(aSemanticObjects, oNavHandler) {
-		jQuery.sap.require("sap.m.List");
-		jQuery.sap.require("sap.m.ListType");
-		jQuery.sap.require("sap.m.PlacementType");
-		jQuery.sap.require("sap.m.StandardListItem");
-		jQuery.sap.require("sap.m.ResponsivePopover");
 
 		var oPopover, oList, oListItem, oSemanticObject;
 
@@ -1649,15 +1868,15 @@ sap.ui.define([
 				mode: sap.m.ListMode.SingleSelectMaster,
 				selectionChange: function(oEvent) {
 					if (oEvent && oEvent.mParameters && oEvent.mParameters.listItem) {
-						oSemanticObject = oEvent.mParameters.listItem.data("semObj");
-						if (oSemanticObject) {
-							oNavHandler.setSemanticObject(oSemanticObject.name);
-							oNavHandler.setSemanticObjectLabel(oSemanticObject.fieldLabel);
-
+						var oSemanticObjects = oEvent.mParameters.listItem.data("semObj");
+						if (oSemanticObjects) {
+							oNavHandler.setFieldName(oEvent.mParameters.listItem.data("fieldName"));
+							oNavHandler.setSemanticObject(oSemanticObjects.defaultSemanticObject);
+							oNavHandler.setAdditionalSemanticObjects(oSemanticObjects.additionalSemanticObjects);
+							// control is set to this._oSemanticalNavButton
 							oNavHandler.openPopover();
 						}
 					}
-
 					oPopover.close();
 				}
 			});
@@ -1669,7 +1888,8 @@ sap.ui.define([
 					type: sap.m.ListType.Active
 				});
 
-				oListItem.data("semObj", oSemanticObject);
+				oListItem.data("semObj", MetadataAnalyser.getSemanticObjectsFromProperty(oSemanticObject));
+				oListItem.data("fieldName", oSemanticObject.name);
 				oList.addItem(oListItem);
 			}
 
@@ -1681,82 +1901,117 @@ sap.ui.define([
 			});
 
 			oPopover.addContent(oList);
-
 			oPopover.openBy(this._oSemanticalNavButton);
 		}
 	};
 
 	/**
-	 * Creates a semantical object list for selected data points which resolve in more than one semantical object when details button is used
-	 * 
+	 * Creates a semantical object list for selected data points which resolve in more than one semantical object when details button is used.
+	 *
 	 * @param {array} aSemanticObjects The semantical objects for a selected data point
-	 * @param {sap.ui.comp.navpopover.NavigationPopoverHandler} oNavHandler The navigation handler for the semantical object navigation
+	 * @param {object} oContext The binding context of the pressed list item
 	 * @returns {sap.m.List} list containing items for the semantical objects for a selected data point
 	 * @private
 	 */
-	SmartChart.prototype._semanticObjectListForDetails = function(aSemanticObjects, oNavHandler) {
-		jQuery.sap.require("sap.m.List");
-		jQuery.sap.require("sap.m.ListType");
-		jQuery.sap.require("sap.m.PlacementType");
-		jQuery.sap.require("sap.m.StandardListItem");
-		jQuery.sap.require("sap.m.ResponsivePopover");
-
+	SmartChart.prototype._semanticObjectListForDetails = function(aSemanticObjects, oContext) {
 		var oList, oListItem, oSemanticObject;
-		var that = this;
+		if (!this._oChart) {
+			return undefined;
+		}
+		oList = new sap.m.List({
+			mode: sap.m.ListMode.SingleSelectMaster,
+			rememberSelections: false,
+			itemPress: function(oEvent) {
+				if (oEvent && oEvent.mParameters && oEvent.mParameters.listItem) {
+					var oSemanticObjects = oEvent.mParameters.listItem.data("semObj");
+					if (oSemanticObjects) {
+						// TODO: Provide own function for this and also use it in _navigateToSemanticObjectDetails
+						var oNavigationHandler = new NavigationPopoverHandler({
+							fieldName: oEvent.mParameters.listItem.data("fieldName"),
+							control: oEvent.mParameters.listItem,
+							semanticObject: oSemanticObjects.defaultSemanticObject,
+							additionalSemanticObjects: oSemanticObjects.additionalSemanticObjects,
+							navigationTargetsObtained: function(oEvent) {
+								var oMainNavigation = oEvent.getParameters().mainNavigation;
+								// 'mainNavigation' might be undefined
+								if (oMainNavigation) {
+									var oData = oContext.getObject();
+									var oField = this._getField(oEvent.getSource().getFieldName());
+									var oTexts = FormatUtil.getTextsFromDisplayBehaviour(oField.displayBehaviour, oData[oField.name], oData[oField.description]);
+									oMainNavigation.setDescription(oTexts.secondText);
+									oEvent.getParameters().show(oTexts.firstText, oMainNavigation, undefined, undefined);
+								}
+								oEvent.getParameters().show();
+							}.bind(this)
+						});
 
-		if (this._oChart) {
+						oNavigationHandler._getNavigationContainer().then(function(oNavigationContainer) {
 
-			oList = new sap.m.List({
-				mode: sap.m.ListMode.SingleSelectMaster,
-				selectionChange: function(oEvent) {
-					if (oEvent && oEvent.mParameters && oEvent.mParameters.listItem) {
-						oSemanticObject = oEvent.mParameters.listItem.data("semObj");
-						if (oSemanticObject) {
-							oNavHandler.setSemanticObject(oSemanticObject.name);
-							oNavHandler.setSemanticObjectLabel(oSemanticObject.fieldLabel);
+							// Popover without content should not be opened.
+							if (!oNavigationContainer.hasContent()) {
+								oNavigationHandler._showErrorDialog(sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("POPOVER_DETAILS_NAV_NOT_POSSIBLE"), sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("POPOVER_MSG_NAV_NOT_POSSIBLE"), oNavigationContainer);
+								// Destroy container with StableID.
+								oNavigationContainer.destroy();
+								return;
+							}
 
-							that._oSemanticNavHandler._getPopover().then(function(oPopover) {
+							// Popover with direct link should not be opened.
+							var oLink = oNavigationContainer.getDirectLink();
+							if (oLink) {
+								// that._fireInnerNavigate({
+								// 	text: oLink.getText(),
+								// 	href: oLink.getHref()
+								// });
+								window.location.href = oLink.getHref();
+								// Destroy container with StableID.
+								oNavigationContainer.destroy();
+								return;
+							}
+							oNavigationContainer.attachAvailableActionsPersonalizationPress(this._onAvailableActionsPersonalizationPress, this);
+							this._oSelectionDetails.navTo("", oNavigationContainer);
 
-								var aSemanticContent = oPopover.getContent();
-								var oLayout = new sap.m.VBox();
-								aSemanticContent.forEach(function(elem) {
-									oLayout.addItem(elem);
-								});
-
-								// Destroy old objects and set fresh content
-								that._oDetailsSemanticPage.destroyContent();
-								that._oDetailsSemanticPage.addContent(oLayout);
-
-								// Navigate to semantic Details Page
-								that._oDetailsNavContainer.to(that._oDetailsSemanticPage);
-								that._oDetailsPopover.focus(); // set focus again as we lost it somehow onPress
-
-							}, function(oError) {
-								window.console.log("NavigationPopover could not be determined");
-							});
-						}
+						}.bind(this), function(oError) {
+							jQuery.sap.log.error("NavigationContainer could not be determined: " + oError);
+						});
 					}
 				}
-			});
+			}.bind(this)
+		});
 
+		// Get semantic objects and only create list item when navigation targets are available.
+		sap.ui.comp.navpopover.SemanticObjectController.getDistinctSemanticObjects().then(function(oSemanticObjects) {
 			for (var i = 0; i < aSemanticObjects.length; i++) {
 				oSemanticObject = aSemanticObjects[i];
-				oListItem = new sap.m.StandardListItem({
-					title: oSemanticObject.fieldLabel,
-					type: sap.m.ListType.Navigation
-				});
+				if (sap.ui.comp.navpopover.SemanticObjectController.hasDistinctSemanticObject(oSemanticObject["com.sap.vocabularies.Common.v1.SemanticObject"].String, oSemanticObjects)) {
 
-				oListItem.data("semObj", oSemanticObject);
-				oList.addItem(oListItem);
+					oListItem = new sap.m.StandardListItem({
+						title: oSemanticObject.fieldLabel,
+						type: sap.m.ListType.Navigation
+					});
+
+					oListItem.setBindingContext(oContext);
+					oListItem.data("semObj", MetadataAnalyser.getSemanticObjectsFromProperty(oSemanticObject));
+					oListItem.data("fieldName", oSemanticObject.name);
+					oList.addItem(oListItem);
+				}
 			}
+		});
+		return oList;
+	};
 
-			return oList;
-		}
+	SmartChart.prototype._onAvailableActionsPersonalizationPress = function(oEvent) {
+		var oNavigationContainer = oEvent.getSource();
+		// set modal to keep selectionDetails popover open during link personalization
+		this._oSelectionDetails.setPopoverModal(true);
+
+		oNavigationContainer.openSelectionDialog(false, true, undefined, true, undefined).then(function() {
+			this._oSelectionDetails.setPopoverModal(false);
+		}.bind(this));
 	};
 
 	/**
-	 * Determines the semantical object for a given context of a selected data point
-	 * 
+	 * Determines the semantical object for a given context of a selected data point.
+	 *
 	 * @param{object} mData data of a selected data point object
 	 * @param{object} oDataContext binding context of a selected data point
 	 * @returns {array} semantical objects
@@ -1773,30 +2028,44 @@ sap.ui.define([
 				}
 			}
 		}
-
 		if (aSematicObjects) {
 			aSematicObjects.sort(function(a, b) {
 				return a.fieldLabel.localeCompare(b.fieldLabel);
 			});
 		}
-
 		return aSematicObjects;
 	};
 	/**
-	 * Checks if semantical nav button is existing
-	 * 
-	 * @param {boolean} bFlag true to enable the button, otherwise false
-	 * @private
+	 * Determines the semantical object for a given context of a selected data point.
+	 *
+	 * @param{object} mData data of a selected data point object
+	 * @param{object} oDataContext binding context of a selected data point
+	 * @returns {array} semantical objects
 	 */
-	SmartChart.prototype._checkSemanticNavigationButton = function(bFlag) {
+	SmartChart.prototype._determineSemanticObjectsforDetailsPopover = function(mData, oDataContext) {
 
-		if (this._oSemanticalNavButton) {
-			this._oSemanticalNavButton.setEnabled(bFlag);
+		var n, oField, aSematicObjects = [];
+		if (mData) {
+			for (n in mData) {
+				if (n) {
+					oField = this._getField(n);
+					if (oField && oField.isDimension && oField.isSemanticObject) {
+						aSematicObjects.push(oField);
+					}
+				}
+			}
 		}
+		if (aSematicObjects) {
+			aSematicObjects.sort(function(a, b) {
+				return a.fieldLabel.localeCompare(b.fieldLabel);
+			});
+		}
+		return aSematicObjects;
 	};
+
 	/**
-	 * Add the drill-up and drill-down button to the toolbar
-	 * 
+	 * Adds the drill-up and drill-down button to the toolbar
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addDrillUpDownButtons = function() {
@@ -1808,6 +2077,7 @@ sap.ui.define([
 			this._oDrillUpButton = new OverflowToolbarButton(this.getId() + "-btnDrillUp", {
 				type: "Transparent",
 				tooltip: this._oRb.getText("CHART_DRILLUPBTN_TOOLTIP"),
+				text: this._oRb.getText("CHART_DRILLUPBTN_TEXT"),
 				icon: "sap-icon://drill-up",
 				press: function() {
 					if (that._oChart) {
@@ -1820,6 +2090,7 @@ sap.ui.define([
 			this._oDrillDownButton = new OverflowToolbarButton(this.getId() + "-btnDrillDown", {
 				type: "Transparent",
 				tooltip: this._oRb.getText("CHART_DRILLDOWNBTN_TOOLTIP"),
+				text: this._oRb.getText("CHART_DRILLDOWNBTN_TEXT"),
 				icon: "sap-icon://drill-down",
 				press: function(oEvent) {
 					that._drillDown(oEvent);
@@ -1831,10 +2102,34 @@ sap.ui.define([
 			this._oToolbar.addContent(this._oDrillDownButton);
 		}
 	};
+	/**
+	 * Adds the drill-down text button to the toolbar This button only is visible together with selectionDetails control.
+	 *
+	 * @private
+	 */
+	SmartChart.prototype._addDrillDownTextButton = function() {
+
+		this._oDrillDownTextButton = new Button(this.getId() + "-btnDrillDownText", {
+			type: "Transparent",
+			text: this._oRb.getText("CHART_DRILLDOWNBTN_TEXT"),
+			tooltip: this._oRb.getText("CHART_DRILLDOWNBTN_TOOLTIP"),
+			enabled: true,
+			visible: this.getShowDetailsButton(),// show only when selectionDetails is used
+			//Keep OverflowToolbar open during interaction
+			layoutData: new OverflowToolbarLayoutData({
+				closeOverflowOnInteraction: false
+			}),
+			press: function(oEvent) {
+				this._drillDown(oEvent);
+			}.bind(this)
+		});
+
+		this._oToolbar.addContent(this._oDrillDownTextButton);
+	};
 
 	/**
 	 * Sets the drill-up button and drill-down button visibility state
-	 * 
+	 *
 	 * @param {boolean} bFlag true to display the drill-up and drill-down buttons, false otherwise
 	 */
 	SmartChart.prototype.setShowDrillButtons = function(bFlag) {
@@ -1851,7 +2146,7 @@ sap.ui.define([
 
 	/**
 	 * Triggers a search in the drill-down popover
-	 * 
+	 *
 	 * @param {object} oEvent The event arguments
 	 * @param {sap.m.List} oList The list to search in
 	 * @private
@@ -1889,20 +2184,13 @@ sap.ui.define([
 
 	/**
 	 * Opens the drill-down popover and shows a list of available dimensions for drilling in.
-	 * 
+	 *
 	 * @param {object} oEvent The event arguments
 	 * @private
 	 */
 	SmartChart.prototype._drillDown = function(oEvent) {
-		jQuery.sap.require("sap.m.Bar");
-		jQuery.sap.require("sap.m.List");
-		jQuery.sap.require("sap.m.ListType");
-		jQuery.sap.require("sap.m.SearchField");
-		jQuery.sap.require("sap.m.PlacementType");
-		jQuery.sap.require("sap.m.StandardListItem");
-		jQuery.sap.require("sap.m.ResponsivePopover");
 
-		var that = this, oPopover, aIgnoreDimensions, aDimensions, oDimension, oListItem, oList, oSubHeader, oSearchField, i, sTooltip;
+		var that = this, oPopover, aIgnoreDimensions, aDimensions, oDimension, oListItem, oList, oSubHeader, oSearchField, i, sTooltip, oViewField;
 
 		if (this._oChart) {
 
@@ -1935,16 +2223,29 @@ sap.ui.define([
 			oSubHeader.addContentRight(oSearchField);
 
 			oPopover = new sap.m.ResponsivePopover({
-				title: this._oRb.getText("CHART_DRILLDOWN_TITLE"),
 				contentWidth: "25rem",
 				contentHeight: "20rem",
 				placement: sap.m.PlacementType.Bottom,
 				subHeader: oSubHeader
 			});
 
+			//Show header only in mobile scenarios
+			//still support screen reader while on desktops.
+			if (Device.system.desktop) {
+				var oInvText = new InvisibleText({
+					text: this._oRb.getText("CHART_DRILLDOWN_TITLE")
+				});
+				oPopover.setShowHeader(false);
+				oPopover.addContent(oInvText);
+				oPopover.addAriaLabelledBy(oInvText);
+			} else {
+				oPopover.setTitle(this._oRb.getText("CHART_DRILLDOWN_TITLE"));
+			}
+
 			oPopover.addContent(oList);
 
-			aIgnoreDimensions = this._oChart.getVisibleDimensions();
+			// Get currently applied dimensions from drill-stack
+			aIgnoreDimensions = this._getDrillStackDimensions();
 			aDimensions = this._getSortedDimensions();
 
 			if (aDimensions.length < 7) {
@@ -1953,11 +2254,19 @@ sap.ui.define([
 
 			for (i = 0; i < aDimensions.length; i++) {
 
-				if (aIgnoreDimensions.indexOf(aDimensions[i].getName()) > -1) {
+				oDimension = aDimensions[i];
+
+				if (aIgnoreDimensions.indexOf(oDimension.getName()) > -1) {
 					continue;
 				}
 
-				oDimension = aDimensions[i];
+				oViewField = this._oChartProvider.getViewField(oDimension.getName());
+
+				// If dimension is not filterable and datapoints are selected then skip
+				if (!oViewField.filterable && this._oChart.getSelectedDataPoints().count > 0) {
+					continue;
+				}
+
 				oListItem = new sap.m.StandardListItem({
 					title: oDimension.getLabel(),
 					type: sap.m.ListType.Active
@@ -1970,108 +2279,15 @@ sap.ui.define([
 					oListItem.setTooltip(sTooltip);
 				}
 
-				if (aIgnoreDimensions.indexOf(aDimensions[i].getName()) > -1) {
-					oListItem.setType(sap.m.ListType.Inactive);
-				}
-
 				oList.addItem(oListItem);
 			}
-
 			oPopover.openBy(oEvent.getSource());
 		}
 	};
 
 	/**
-	 * Navigates to the drill-down details page within details popover and shows drill-down list with available dimensions for drilling in.
-	 * 
-	 * @param {object} oEvent The event arguments
-	 * @private
-	 */
-	SmartChart.prototype._navigateToDrillDetailsList = function(oEvent) {
-		jQuery.sap.require("sap.m.Bar");
-		jQuery.sap.require("sap.m.List");
-		jQuery.sap.require("sap.m.ListType");
-		jQuery.sap.require("sap.m.SearchField");
-		jQuery.sap.require("sap.m.PlacementType");
-		jQuery.sap.require("sap.m.StandardListItem");
-		jQuery.sap.require("sap.m.ResponsivePopover");
-
-		var that = this, aIgnoreDimensions, aDimensions, oDimension, oListItem, oList, oSubHeader, oSearchField, i, sTooltip;
-
-		if (this._oChart) {
-
-			oList = new sap.m.List({
-				mode: sap.m.ListMode.SingleSelectMaster,
-				selectionChange: function(oEvent) {
-					if (oEvent && oEvent.mParameters && oEvent.mParameters.listItem) {
-
-						if (oEvent.mParameters.listItem.getType() === sap.m.ListType.Inactive) {
-							return;
-						}
-
-						var oDimension = oEvent.mParameters.listItem.data("dim");
-						if (oDimension) {
-							that._oChart.drillDown(oDimension);
-						}
-					}
-					that._oDetailsNavContainer.back();
-					that._oDetailsPopover.close();
-				}
-			});
-
-			oSubHeader = new sap.m.Bar();
-			oSearchField = new sap.m.SearchField({
-				placeholder: this._oRb.getText("CHART_DRILLDOWN_SEARCH")
-			});
-			oSearchField.attachLiveChange(function(oEvent) {
-				that._triggerSearchInPopover(oEvent, oList);
-			});
-			oSubHeader.addContentRight(oSearchField);
-
-			aIgnoreDimensions = this._oChart.getVisibleDimensions();
-			aDimensions = this._getSortedDimensions();
-
-			if (aDimensions.length < 7) {
-				oSubHeader.setVisible(false);
-			}
-
-			for (i = 0; i < aDimensions.length; i++) {
-
-				if (aIgnoreDimensions.indexOf(aDimensions[i].getName()) > -1) {
-					continue;
-				}
-
-				oDimension = aDimensions[i];
-				oListItem = new sap.m.StandardListItem({
-					title: this._oRb.getText("CHART_DRILLDOWNDETAILSLIST_ITEM_TITLE_DIM", [
-						oDimension.getLabel()
-					]),
-					type: sap.m.ListType.Active
-				});
-
-				oListItem.data("dim", oDimension);
-
-				sTooltip = this._getFieldTooltip(oDimension.name);
-				if (sTooltip) {
-					oListItem.setTooltip(sTooltip);
-				}
-
-				if (aIgnoreDimensions.indexOf(aDimensions[i].getName()) > -1) {
-					oListItem.setType(sap.m.ListType.Inactive);
-				}
-				oList.addItem(oListItem);
-			}
-
-			this._oDetailsDrillInPage.setSubHeader(oSubHeader);
-			this._oDetailsDrillInPage.removeAllContent();// Clear the page content before we set the list again.
-			this._oDetailsDrillInPage.addContent(oList);
-			this._oDetailsNavContainer.to(this._oDetailsDrillInPage);
-		}
-	};
-
-	/**
 	 * Navigates to the semantic object directly or to a list of available semantic objects of one details entry within the details popover
-	 * 
+	 *
 	 * @param {object} oEvent The event arguments
 	 * @private
 	 */
@@ -2083,79 +2299,61 @@ sap.ui.define([
 		if (aSemanticObjects && (aSemanticObjects.length > 0)) {
 
 			if (aSemanticObjects.length === 1) {
-				this._oSemanticNavHandler.setSemanticObject(aSemanticObjects[0].name);
-				this._oSemanticNavHandler.setSemanticObjectLabel(aSemanticObjects[0].fieldLabel);
-
-				this._oSemanticNavHandler._getPopover().then(function(oPopover) {
-
-					var aSemanticContent = oPopover.getContent();
-					var oLayout = new sap.m.VBox();
-					aSemanticContent.forEach(function(elem) {
-						oLayout.addItem(elem);
+				var oSemanticObjects = MetadataAnalyser.getSemanticObjectsFromProperty(aSemanticObjects[0]);
+				if (oSemanticObjects) {
+					var oControl = oEvent.getParameter("item");
+					var oNavigationHandler = new NavigationPopoverHandler({
+						fieldName: aSemanticObjects[0].name,
+						control: oControl, // Pass pressed item to use its binding context
+						semanticObject: oSemanticObjects.defaultSemanticObject,
+						additionalSemanticObjects: oSemanticObjects.additionalSemanticObjects,
+						navigationTargetsObtained: function(oEvent_) {
+							var oMainNavigation = oEvent_.getParameters().mainNavigation;
+							// 'mainNavigation' might be undefined
+							if (oMainNavigation) {
+								var oData = oControl.getBindingContext().getObject();
+								var oField = this._getField(oEvent_.getSource().getFieldName());
+								var oTexts = FormatUtil.getTextsFromDisplayBehaviour(oField.displayBehaviour, oData[oField.name], oData[oField.description]);
+								oMainNavigation.setDescription(oTexts.secondText);
+								oEvent_.getParameters().show(oTexts.firstText, oMainNavigation, undefined, undefined);
+							}
+							oEvent_.getParameters().show();
+						}.bind(this)
 					});
 
-					// Destroy old objects and set fresh content
-					this._oDetailsSemanticPage.destroyContent();
-					this._oDetailsSemanticPage.addContent(oLayout);
+					oNavigationHandler._getNavigationContainer().then(function(oNavigationContainer) {
+						this._oNavigationContainer = oNavigationContainer;
 
-					// Navigate to semantic Details Page
-					this._oDetailsPopover.focus();
-					this._oDetailsNavContainer.to(this._oDetailsSemanticPage);
+						// Attach link personalization handling
+						oNavigationContainer.attachAvailableActionsPersonalizationPress(this._onAvailableActionsPersonalizationPress, this);
 
-					// this._oDetailsPopover.focus(); // set focus again as we lost it somehow onPress
+						// Navigate to semantic details page
+						this._oSelectionDetails.navTo("", oNavigationContainer);
 
-				}.bind(this), function(oError) {
-					window.console.log("NavigationPopover could not be determined");
-				});
-
+					}.bind(this), function(oError) {
+						jQuery.sap.log.error("NavigationContainer could not be determined");
+					});
+				}
 			} else {
+				var oContext = oEvent.getParameter("item").getBindingContext();
 				// Call this function if we use the details section instead of the button for semantic navigation
-				var oList = this._semanticObjectListForDetails(aSemanticObjects, this._oSemanticNavHandler);
-
-				this._oDetailsSemanticPageMulti.destroyContent();
-				this._oDetailsSemanticPageMulti.addContent(oList);
-				this._oDetailsSemanticPageMulti.setTitle(this._oRb.getText("CHART_SEMNAVBTN"));
-				this._oDetailsNavContainer.to(this._oDetailsSemanticPageMulti);
+				var oList = this._semanticObjectListForDetails(aSemanticObjects, oContext);
+				this._oSelectionDetails.navTo(this._oRb.getText("CHART_SEMNAVBTN"), oList);
 			}
 		}
-	};
 
-	/**
-	 * Initializes the semantical object navigation handling
-	 * 
-	 * @private
-	 */
-	SmartChart.prototype._initSemanticNavigationHandling = function() {
-
-		var oSemanticObjectController = this.getSemanticObjectController();
-		if (oSemanticObjectController) {
-			this._oSemanticNavHandler.setSemanticObjectController(oSemanticObjectController);
-		}
-	};
-
-	/**
-	 * Sets the semantic objects based on the selected data points
-	 * 
-	 * @private
-	 */
-	SmartChart.prototype._setSemanticObjects = function() {
-
-		this._aSemanticObjects = this._setSelectionDataPoint(this._oSemanticNavHandler);
 	};
 
 	/**
 	 * adds the header line to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addHeaderToToolbar = function() {
 
 		if (this.getHeader() && this._oToolbar) {
 			if (!this._headerText) {
-				this._headerText = new Text({
-					// Only show header when breadcrumbs are disabled
-					visible: !this.getShowDrillBreadcrumbs()
-				});
+				this._headerText = new Title({});
 				this._headerText.addStyleClass("sapMH4Style");
 				this._headerText.addStyleClass("sapUiCompSmartChartHeader");
 			}
@@ -2168,32 +2366,26 @@ sap.ui.define([
 
 	/**
 	 * adds a separator between header and variantmanagement to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addSeparatorToToolbar = function() {
-		// Only show seperator when breadcrumbs are disabled
-		// if (!this.getShowDrillBreadcrumbs()) {
+
 		if (this.getHeader() && this.getUseVariantManagement() && this._oVariantManagement && !this._oVariantManagement.isPageVariant()) {
-			this._oSeparator = new ToolbarSeparator({
-				// Only show seperator when breadcrumbs are disabled
-				visible: !this.getShowDrillBreadcrumbs()
-			});
+			this._oSeparator = new ToolbarSeparator();
 			this._oToolbar.insertContent(this._oSeparator, 0);
 			// Also set the height to 3rem when no height is explicitly specified
 			if (!this._oToolbar.getHeight()) {
-				this._oToolbar.setHeight("3rem");
+				this._oToolbar.setHeight("auto");
 			}
 		} else if (this._oSeparator) {
 			this._oToolbar.removeContent(this._oSeparator);
 		}
-		// }
-
 	};
 
 	/**
 	 * adds the VarientManagement to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addVariantManagementToToolbar = function() {
@@ -2210,7 +2402,7 @@ sap.ui.define([
 
 	/**
 	 * adds a spacer to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addSpacerToToolbar = function() {
@@ -2230,13 +2422,12 @@ sap.ui.define([
 				}
 			}
 		}
-
 		return -1;
 	};
 
 	/**
 	 * adds the Personalisation button to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addPersonalisationToToolbar = function() {
@@ -2247,7 +2438,7 @@ sap.ui.define([
 					icon: "sap-icon://action-settings",
 					text: this._oRb.getText("CHART_PERSOBTN_TEXT"),
 					tooltip: this._oRb.getText("CHART_PERSOBTN_TOOLTIP"),
-					press: jQuery.proxy(function(oEvent) {
+					press: function(oEvent) {
 						this._oPersController.openDialog({
 							dimeasure: {
 								visible: true,
@@ -2262,7 +2453,7 @@ sap.ui.define([
 								visible: true
 							}
 						});
-					}, this)
+					}.bind(this)
 				});
 			}
 			this._oToolbar.addContent(this._oChartPersonalisationButton);
@@ -2273,190 +2464,48 @@ sap.ui.define([
 
 	/**
 	 * Adds the chart type button to the toolbar
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._addChartTypeToToolbar = function() {
-
-		this._oSegmentedButton = this._createChartTypeSegmentedButton();
-		this._oToolbar.addContent(this._oSegmentedButton);
+		// Use a OverflowToolbarButton regarding new UX re-design
+		this._oChartTypeButton = this._createChartTypeButton();
+		this._oToolbar.addContent(this._oChartTypeButton);
 	};
 
 	/**
-	 * Creates a segmented button for selecting a specific chart type.
-	 * 
+	 * Creates a OverflowToolbarButton for selecting a specific chart type.
+	 *
 	 * @returns {sap.m.SegementedButton} The segmented button for chart type selection
 	 * @private
 	 */
-	SmartChart.prototype._createChartTypeSegmentedButton = function() {
-		var that = this;
-
-		var oSegmentedButton = new SegmentedButton(this.getId() + "-btnSegmentedChartType", {
-			select: function(oEvent) {
-				/*
-				 * var oButton; if (oEvent && oEvent.mParameters && oEvent.mParameters.button) { oButton = oEvent.mParameters.button; //Not used
-				 * anymore //Event handling is moved directly into button instances if ((oButton === that._oButtonChart1) || (oButton ===
-				 * that._oButtonChart2) || (oButton === that._oButtonChart3)) { that._chartButtonPressed(oButton); } else if (oButton ===
-				 * that._oButtonChart5) { that._displayChartTypes(oEvent); } }
-				 */
-			},
-			// Keep this always in tool bar as we need to change popover into something else, like menu.
-			layoutData: new sap.m.OverflowToolbarLayoutData({
-				priority: sap.m.OverflowToolbarPriority.NeverOverflow
-			})
-		});
-		oSegmentedButton.addStyleClass("sapUiCompChartSegmented");
-
-		this._oButtonChart1 = new OverflowToolbarButton(this.getId() + "-btnChartType1", {
+	SmartChart.prototype._createChartTypeButton = function() {
+		// Create a button for selecting chart types
+		var oChartTypeButton = new OverflowToolbarButton(this.getId() + "-btnChartType", {
+			visible: this.getShowChartTypeSelectionButton(),
 			type: "Transparent",
-			icon: "sap-icon://to-be-reviewed",
+			text: this._oRb.getText("CHART_TYPEBTN_TEXT"),
+			//Keep OverflowToolbar open during interaction
+			layoutData: new OverflowToolbarLayoutData({
+				closeOverflowOnInteraction: false
+			}),
 			press: function(oEvent) {
-				that._chartButtonPressed(oEvent.getSource());
-			}
+				this._displayChartTypes(oEvent);
+			}.bind(this)
 		});
-		this._oButtonChart1.addStyleClass("sapMBtnTransparent");
+		// Initial enrichment of button
+		this._enrichPassedButton(oChartTypeButton, this._oChart.getChartType());
 
-		this._oButtonChart2 = new OverflowToolbarButton(this.getId() + "-btnChartType2", {
-			type: "Transparent",
-			icon: "sap-icon://to-be-reviewed",
-			press: function(oEvent) {
-				that._chartButtonPressed(oEvent.getSource());
-			}
-		});
-		this._oButtonChart2.addStyleClass("sapMBtnTransparent");
-		// oSegmentedButton.addButton(this._oButtonChart2);
-
-		this._oButtonChart3 = new OverflowToolbarButton(this.getId() + "-btnChartType3", {
-			type: "Transparent",
-			icon: "sap-icon://to-be-reviewed",
-			press: function(oEvent) {
-				that._chartButtonPressed(oEvent.getSource());
-			}
-		});
-		this._oButtonChart3.addStyleClass("sapMBtnTransparent");
-
-		this._oButtonChart4 = new OverflowToolbarButton(this.getId() + "-btnChartTypeSelection", {
-			type: "Transparent",
-			icon: "sap-icon://to-be-reviewed",
-			// When this button is displayed open chartSelection onPress
-			press: function(oEvent) {
-				that._displayChartTypes(oEvent);
-			}
-		});
-		this._oButtonChart4.addStyleClass("sapMBtnTransparent");
-
-		this._oButtonChart5 = new OverflowToolbarButton(this.getId() + "-btnChartTypeDropDown", {
-			type: "Transparent",
-			icon: "sap-icon://slim-arrow-down",
-			tooltip: this._oRb.getText("CHART_TYPE_SEL_BTN_TOOLTIP"),
-			visible: false
-		// disable the visibility of this button
-		});
-		this._oButtonChart5.addStyleClass("sapUiCompChartArrowDwn");
-		this._oButtonChart5.addStyleClass("sapMBtnTransparent");
-
-		this._updateVisibilityOfChartTypes(oSegmentedButton);
-
-		return oSegmentedButton;
-	};
-
-	/**
-	 * Handles the press event of the chart type button
-	 * 
-	 * @param {sap.m.Button} oButton The chart type button
-	 * @private
-	 */
-	SmartChart.prototype._chartButtonPressed = function(oButton) {
-		if (oButton) {
-			if (oButton && oButton.data("chartType") && this._oChart) {
-				this._oButtonChart1.setTooltip("");
-				this._oButtonChart2.setTooltip("");
-				this._oButtonChart3.setTooltip("");
-
-				this._oChart.setChartType(oButton.data("chartType"));
-			}
-		}
-	};
-
-	/**
-	 * Updates the visibility of the chart type button.
-	 * 
-	 * @param {sap.m.SegmentedButton} oSegmentedButton The segmented button which shall be updated
-	 */
-	SmartChart.prototype._updateVisibilityOfChartTypes = function(oSegmentedButton) {
-		var aAvailableChartTypes;
-		if (this._oChart && oSegmentedButton) {
-
-			oSegmentedButton.removeAllButtons();
-
-			if (this.getUseListForChartTypeSelection()) {
-				this._prepareChartTypeButton(oSegmentedButton, this._oButtonChart4, this._oChart.getChartType());
-				oSegmentedButton.addButton(this._oButtonChart5);
-
-			} else {
-
-				aAvailableChartTypes = this._getAvailableChartTypes();
-				if (aAvailableChartTypes && aAvailableChartTypes.length > 0) {
-					if (aAvailableChartTypes && aAvailableChartTypes.length > 3) {
-						this._prepareChartTypeButton(oSegmentedButton, this._oButtonChart4, this._oChart.getChartType());
-						oSegmentedButton.addButton(this._oButtonChart5);
-					} else {
-
-						/* eslint-disable no-fallthrough */
-						switch (aAvailableChartTypes.length) {
-							case 3:
-								this._prepareChartTypeButton(oSegmentedButton, this._oButtonChart3, aAvailableChartTypes[2].key, aAvailableChartTypes[2].text);
-							case 2:
-								this._prepareChartTypeButton(oSegmentedButton, this._oButtonChart2, aAvailableChartTypes[1].key, aAvailableChartTypes[1].text);
-							case 1:
-								this._prepareChartTypeButton(oSegmentedButton, this._oButtonChart1, aAvailableChartTypes[0].key, aAvailableChartTypes[0].text);
-						}
-						/* eslint-enable no-fallthrough */
-					}
-				}
-			}
-		}
-	};
-	// new implementation for a single oChartTypeButton
-/*
- * SmartChart.prototype._updateVisibilityOfChartTypes = function(oButton) { var aAvailableChartTypes; if (this._oChart && oButton) {
- * aAvailableChartTypes = this._getAvailableChartTypes(); if (aAvailableChartTypes && aAvailableChartTypes.length > 0) {
- * this._enreachPassedButton(oButton, this._oChart.getChartType()); } } };
- */
-	/**
-	 * Prepares the chart type button for getting updated
-	 * 
-	 * @param {sap.m.SegmentedButton} oSegmentedButton The segmented button which shall be updated
-	 * @param {sap.m.OverflowToolbarButton} oButton The button which shall be placed inside the segmented button
-	 * @param {string} key The key of an available chart type
-	 * @param {string} text The text of an available chart type
-	 * @private
-	 */
-	SmartChart.prototype._prepareChartTypeButton = function(oSegmentedButton, oButton, key, text) {
-		if (oSegmentedButton && oButton) {
-			oSegmentedButton.addButton(oButton);
-			this._enreachPassedButton(oButton, key, text);
-			if (this._oSegmentedButton && this._oChart && this._oChart.getChartType() === key) {
-				this._oSegmentedButton.setSelectedButton(oButton);
-			}
-		}
+		return oChartTypeButton;
 	};
 
 	/**
 	 * Displays a popover which shows all available chart types
-	 * 
+	 *
 	 * @param {object} oEvent The event arguments
 	 * @private
 	 */
 	SmartChart.prototype._displayChartTypes = function(oEvent) {
-		jQuery.sap.require("sap.m.Bar");
-		jQuery.sap.require("sap.m.List");
-		jQuery.sap.require("sap.m.ListType");
-		jQuery.sap.require("sap.ui.core.ListItem");
-		jQuery.sap.require("sap.m.SearchField");
-		jQuery.sap.require("sap.m.PlacementType");
-		jQuery.sap.require("sap.m.StandardListItem");
-		jQuery.sap.require("sap.m.ResponsivePopover");
 
 		var that = this, oPopover, oList, oSubHeader, oSearchField, bDoNotUpdate = false;
 
@@ -2487,15 +2536,17 @@ sap.ui.define([
 							if (oCtx) {
 								var oObj = oCtx.getObject();
 								if (oObj && oObj.key) {
+									// Set the chart type on the inner chart
 									that._setChartType(oObj.key);
+									// update the chart type buttons icon and tooltip
+									that._enrichPassedButton(that._oChartTypeButton, that._oChart.getChartType());
 								}
 							}
 						}
 					}
-
-					that._updateVisibilityOfChartTypes(that._oSegmentedButton);
-					that._oSegmentedButton.rerender();
 					bDoNotUpdate = true;
+					//Trigger baseSize change and rerender when type was changed.
+					that._rerenderControlInFullscreen();
 					oPopover.close();
 				}
 			});
@@ -2510,21 +2561,32 @@ sap.ui.define([
 			oSubHeader.addContentRight(oSearchField);
 
 			oPopover = new sap.m.ResponsivePopover({
-				// title: this._oRb.getText("CHART_TYPE_TITLE"),
 				placement: sap.m.PlacementType.Bottom,
 				subHeader: oSubHeader,
-				showHeader: false,// true
 				contentWidth: "25rem"
 			});
 
 			oPopover.attachAfterClose(function(oEvent) {
 				if (!bDoNotUpdate) {
-					that._updateVisibilityOfChartTypes(that._oSegmentedButton);
+					// that._updateVisibilityOfChartTypes(that._oChartTypeButton);
 				}
 				that._bAvailableChartListIsOpen = false;
 			});
 
 			oPopover.setModel(this.getModel("$smartChartTypes"), "$smartChartTypes");
+
+			//Show header only in mobile scenarios
+			//still support screen reader while on desktops.
+			if (Device.system.desktop) {
+				var oInvText = new InvisibleText({
+					text: this._oRb.getText("CHART_TYPELIST_TEXT")
+				});
+				oPopover.setShowHeader(false);
+				oPopover.addContent(oInvText);
+				oPopover.addAriaLabelledBy(oInvText);
+			} else {
+				oPopover.setTitle(this._oRb.getText("CHART_TYPELIST_TEXT"));
+			}
 
 			oPopover.addContent(oList);
 
@@ -2546,6 +2608,8 @@ sap.ui.define([
 		"dual_bar": "sap-icon://horizontal-bar-chart",
 		"dual_column": "sap-icon://vertical-bar-chart",
 		"dual_combination": "sap-icon://business-objects-experience",
+		"dual_horizontal_combination": "sap-icon://business-objects-experience",
+		"dual_horizontal_stacked_combination": "sap-icon://business-objects-experience",
 		"dual_line": "sap-icon://line-chart",
 		"dual_stacked_bar": "sap-icon://full-stacked-chart",
 		"dual_stacked_column": "sap-icon://vertical-stacked-chart",
@@ -2564,12 +2628,25 @@ sap.ui.define([
 		"100_dual_stacked_bar": "sap-icon://full-stacked-chart",
 		"100_dual_stacked_column": "sap-icon://vertical-stacked-chart",
 		"100_stacked_bar": "sap-icon://full-stacked-chart",
-		"100_stacked_column": "sap-icon://full-stacked-column-chart"
+		"100_stacked_column": "sap-icon://full-stacked-column-chart",
+		"waterfall": "sap-icon://vertical-waterfall-chart",
+		"horizontal_waterfall": "sap-icon://horizontal-waterfall-chart"
+	};
+
+	SmartChart.prototype._rerenderControlInFullscreen = function() {
+		if (this.bFullScreen && this._oFullScreenUtil) {
+			this.getChart().setLayoutData(new sap.m.FlexItemData({
+				baseSize: "100%"
+			}));
+			//Invalidate inner chart to rerender UI
+			//Seems to be needed in order to reflect changes
+			this.invalidate(this.getChart());
+		}
 	};
 
 	/**
 	 * Returns a matching icon for a specific chart type
-	 * 
+	 *
 	 * @param {string} sCharType The chart type
 	 * @returns{string} sIcon The icon url
 	 * @private
@@ -2585,13 +2662,13 @@ sap.ui.define([
 
 	/**
 	 * Enriches a passed button with the needed information of the selcted chart type
-	 * 
+	 *
 	 * @param {sap.m.OverflowToolbarButton} oButton The button which shall be enriched
 	 * @param {string} sKey The key of an available chart type
 	 * @param {string} sText The text of an available chart type
 	 * @private
 	 */
-	SmartChart.prototype._enreachPassedButton = function(oButton, sKey, sText) {
+	SmartChart.prototype._enrichPassedButton = function(oButton, sKey, sText) {
 
 		if (!oButton) {
 			return;
@@ -2619,7 +2696,7 @@ sap.ui.define([
 
 	/**
 	 * Updates the available chart types model
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._updateAvailableChartType = function() {
@@ -2635,7 +2712,7 @@ sap.ui.define([
 		};
 
 		var sSelectedChartType = this._oChart.getChartType();
-// var sSelectedChartTypeDescription = "";
+
 		this._getAvailableChartTypes().forEach(function(chartType) {
 
 			var oItem = {
@@ -2644,12 +2721,7 @@ sap.ui.define([
 				icon: that._getMatchingIcon(chartType.key),
 				selected: sSelectedChartType === chartType.key
 			};
-
 			aItems.push(oItem);
-
-// if (oItem.selected) {
-// sSelectedChartTypeDescription = oItem.text;
-// }
 		});
 
 		oModel.setData(mData);
@@ -2661,11 +2733,11 @@ sap.ui.define([
 
 	/**
 	 * creates the personalization controller if not yet done
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._createPersonalizationController = function() {
-		if (this._oPersController || !this.getUseChartPersonalisation()) {
+		if (this._oPersController) {
 			return;
 		}
 
@@ -2684,7 +2756,8 @@ sap.ui.define([
 		oSettings = oSettings || {};
 
 		jQuery.sap.require("sap.ui.comp.personalization.Controller");
-		var oChartWrapper = PersoUtil.createChartWrapper(this._oChart, this._oChart.data("p13nData"));
+		jQuery.sap.require("sap.ui.comp.personalization.ChartWrapper");
+		var oChartWrapper = sap.ui.comp.personalization.ChartWrapper.createChartWrapper(this._oChart, this._oChart.data("p13nData"), this._aColumnKeysOrdered);
 		if (this.$() && this.$().closest(".sapUiSizeCompact").length > 0) {
 			this._oChart.addStyleClass("sapUiSizeCompact");
 		}
@@ -2693,13 +2766,24 @@ sap.ui.define([
 			table: oChartWrapper,
 			setting: oSettings,
 			resetToInitialTableState: !this.getUseVariantManagement(),
-			afterP13nModelDataChange: jQuery.proxy(this._personalisationModelDataChange, this)
+			afterP13nModelDataChange: this._personalisationModelDataChange.bind(this)
 		});
+
+		this._oPersController.attachDialogConfirmedReset(function() {
+			if (this._oDrillBreadcrumbs) {
+				this._updateDrillBreadcrumbs();
+			}
+			// Update the chartTypeButton
+			var oChartTypeButton = sap.ui.getCore().byId(this.getId() + "-btnChartType");
+			if (oChartTypeButton) {
+				this._enrichPassedButton(oChartTypeButton, this._oChart.getChartType());
+			}
+		}.bind(this));
 	};
 
 	/**
 	 * adds the ignoreFromPersonalisation fields to the given setting
-	 * 
+	 *
 	 * @param {object} oSettings the former settings object
 	 * @private
 	 * @returns {object} the changed settings object
@@ -2727,18 +2811,21 @@ sap.ui.define([
 
 	/**
 	 * eventhandler for personalisation changed
-	 * 
+	 *
 	 * @param {object} oEvent The event arguments
 	 * @private
 	 */
 	SmartChart.prototype._personalisationModelDataChange = function(oEvent) {
 		this._oCurrentVariant = oEvent.getParameter("persistentData");
-		var oChangeInfo = oEvent.getParameter("changeType");
+		var oChangeInfo = oEvent.getParameter("runtimeDeltaDataChangeType");
 		var changeStatus = this._getChangeStatus(oChangeInfo);
 
 		if (changeStatus === sap.ui.comp.personalization.ChangeType.Unchanged) {
 			return;
 		}
+
+		// Only fire chartDataChanged when type as not Unchanged
+		this._fireChartDataChanged(oChangeInfo);
 
 		if (!this._bApplyingVariant) {
 			if (!this.getUseVariantManagement()) {
@@ -2751,29 +2838,51 @@ sap.ui.define([
 		if (changeStatus === sap.ui.comp.personalization.ChangeType.TableChanged) {
 			if (this._oCurrentVariant.dimeasure && this._oCurrentVariant.dimeasure.chartTypeKey) {
 				this._updateAvailableChartType();
+				// Update chartType button when type was changed in P13n
+				if (this._oChartTypeButton) {
+					this._enrichPassedButton(this._oChartTypeButton, this._oChart.getChartType());
+				}
 			}
 			if (this._oSemanticalNavButton) {
 				this._oSemanticalNavButton.setEnabled(false);
 			}
-		} else if (changeStatus === sap.ui.comp.personalization.ChangeType.ModelChanged) {
-			// Check if chart was bound already
-			if (this._bIsChartBound) {
-				if (this._oSmartFilter) {
-					// If a SmartFilter is associated with SmartChart - trigger search on the SmartFilter
-					this._oSmartFilter.triggerSearch();
-				} else {
-					// Rebind Chart only if data was set on it once or no smartFilter is attached!
-					this._reBindChart();
-				}
+		} else if (changeStatus === sap.ui.comp.personalization.ChangeType.ModelChanged && this._bIsChartBound) {
+			// Check if chart was bound already &&:
+			// If a SmartFilter is associated with SmartChart - trigger search on the SmartFilter
+			if (this._oSmartFilter) {
+				this._oSmartFilter.search();
 			} else {
-				this._showOverlay(true);
+				// Rebind Chart only if data was set on it once or no smartFilter is attached!
+				this._reBindChart();
 			}
 		}
+		// Reflect changes from the Personalization Controller to the Breadcrumbs control
+		if (this._oDrillBreadcrumbs) {
+			this._updateDrillBreadcrumbs();
+		}
+	};
+
+	SmartChart.prototype._fireChartDataChanged = function(oChangeStatus) {
+		var oChangeTypes = {
+			dimeasure: false,
+			filter: false,
+			sort: false
+		};
+		// Map changeStatus to change types and then fire public event
+		for ( var sChangeType in oChangeStatus) {
+			if (oChangeStatus[sChangeType] !== "Unchanged") {
+				oChangeTypes[sChangeType] = true;
+			}
+		}
+
+		this.fireChartDataChanged({
+			changeTypes: oChangeTypes
+		});
 	};
 
 	/**
 	 * returns the current filter and sorting options from the table personalisation/variants
-	 * 
+	 *
 	 * @private
 	 * @param {object} oChangeInfo The change info given by the personalization controller
 	 * @returns {sap.ui.comp.personalization.ChangeType} the merged change status
@@ -2799,7 +2908,7 @@ sap.ui.define([
 
 	/**
 	 * The entity set name in the OData metadata against which the chart must be bound.
-	 * 
+	 *
 	 * @param {string} sEntitySetName The entity set
 	 * @public
 	 */
@@ -2811,7 +2920,7 @@ sap.ui.define([
 	/**
 	 * It could happen that the entity type information is set already in the view, but there is no model attached yet. This method is called once the
 	 * model is set on the parent and can be used to initialise the metadata, from the model, and finally create the chart controls.
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype.propagateProperties = function() {
@@ -2821,7 +2930,7 @@ sap.ui.define([
 
 	/**
 	 * Initialises the OData metadata necessary to create the chart
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._initialiseMetadata = function() {
@@ -2832,7 +2941,7 @@ sap.ui.define([
 
 	/**
 	 * Called once the necessary Model metadata is available
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._onMetadataInitialised = function() {
@@ -2858,12 +2967,9 @@ sap.ui.define([
 					this._createPersonalizationController();
 
 					this.fireInitialise();
-					if (this.getEnableAutoBinding()) {
-						if (this._oSmartFilter && this._oSmartFilter.isPending()) {
-							this._oSmartFilter.triggerSearch();
-						} else {
-							this._reBindChart();
-						}
+					// Trigger initial binding if no Variant exists -or- if it is already initialised
+					if (!this._oVariantManagement || (this._oVariantManagement && this._bVariantInitialised)) {
+						this._checkAndTriggerBinding();
 					}
 				}
 			}
@@ -2871,8 +2977,26 @@ sap.ui.define([
 	};
 
 	/**
+	 * Check if control needs to be bound and trigger binding accordingly.
+	 *
+	 * @private
+	 */
+	SmartChart.prototype._checkAndTriggerBinding = function() {
+		if (!this._bAutoBindingTriggered) {
+			this._bAutoBindingTriggered = true;
+			if (this.getEnableAutoBinding()) {
+				if (this._oSmartFilter) {
+					this._oSmartFilter.search();
+				} else {
+					this._reBindChart();
+				}
+			}
+		}
+	};
+
+	/**
 	 * Creates an instance of the chart provider
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._createChartProvider = function() {
@@ -2884,8 +3008,10 @@ sap.ui.define([
 		// of ODataModel.
 		if (oModel && !this._bChartCreated) {
 			this._aAlwaysSelect = [];
+			this._aInitialSorters = [];
 			this._createToolbar();
 			this._createChart();
+			this._addDrillBreadcrumbs();
 			this._bChartCreated = true;
 		}
 		if (oModel && sEntitySetName) {
@@ -2893,18 +3019,19 @@ sap.ui.define([
 				entitySet: sEntitySetName,
 				ignoredFields: this.getIgnoredFields(),
 				dateFormatSettings: this.data("dateFormatSettings"),
-				currencyFormatSettings: this.data("currencyFormatSettings"),
 				defaultDropDownDisplayBehaviour: this.data("defaultDimensionDisplayBehaviour"),
-				useSmartField: this.data("useSmartField"),
 				skipAnnotationParse: this.data("skipAnnotationParse"),
-				model: oModel
+				chartQualifier: this.data("chartQualifier"),
+				presentationVariantQualifier: this.data("presentationVariantQualifier"),
+				model: oModel,
+				chartLibrary: ChartLibrary
 			});
 		}
 	};
 
 	/**
 	 * Listen to changes on the corresponding SmartFilter (if any)
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._listenToSmartFilter = function() {
@@ -2917,16 +3044,49 @@ sap.ui.define([
 		if (this._oSmartFilter) {
 			this._oSmartFilter.attachSearch(this._reBindChart, this);
 			this._oSmartFilter.attachFilterChange(this._filterChangeEvent, this);
-			this._oSmartFilter.attachCancel(this._cancelEvent, this);
+			// Set initial empty text only if a valid SmartFilter is found
+			this.setNoData(this._oRb.getText("CHART_NO_RESULTS"));
+		} else {
+			// Set initial empty text for the case when no SmartFilter is attached to SmartTable
+			this.setNoData(this._oRb.getText("CHART_NO_DATA_WITHOUT_FILTERBAR"));
+		}
+
+		if (this._oChart) {
+			this._oChart.setCustomMessages({
+				'NO_DATA': this.getNoData()
+			});
 		}
 	};
 
-	SmartChart.prototype._filterChangeEvent = function() {
-		this._showOverlay(true);
+	SmartChart.prototype.getNoData = function() {
+		var sNoData = this.getProperty("noData");
+
+		if (!sNoData) {
+			this._fetchSmartFilter();
+			// Initial text
+			if (this._oSmartFilter) {
+				sNoData = this._oRb.getText("CHART_NO_DATA");
+			} else {
+				sNoData = this._oRb.getText("CHART_NO_DATA_WITHOUT_FILTERBAR");
+			}
+			this.setNoData(sNoData,true);
+		}
+
+		return sNoData;
 	};
 
-	SmartChart.prototype._cancelEvent = function() {
-		this._showOverlay(false);
+	SmartChart.prototype._fetchSmartFilter = function() {
+		var sSmartFilterId = null;
+		// Register for SmartFilter Search
+		sSmartFilterId = this.getSmartFilterId();
+
+		this._oSmartFilter = this._findControl(sSmartFilterId);
+	};
+
+	SmartChart.prototype._filterChangeEvent = function() {
+		if (this._bIsChartBound && this._oSmartFilter && !this._oSmartFilter.getLiveMode() && !this._oSmartFilter.isDialogOpen()) {
+			this._showOverlay(true);
+		}
 	};
 
 	SmartChart.prototype._renderOverlay = function(bShow) {
@@ -2942,10 +3102,18 @@ sap.ui.define([
 			}
 		}
 	};
+	/**
+	 * sets the ShowOverlay property on the inner chart, fires the ShowOverlay event
+	 *
+	 * @param {boolean} bShow true to display the overlay, otherwise false
+	 */
+	SmartChart.prototype.showOverlay = function(bShow) {
+		this._showOverlay(bShow);
+	};
 
 	/**
 	 * sets the ShowOverlay property on the inner chart, fires the ShowOverlay event
-	 * 
+	 *
 	 * @param {boolean} bShow true to display the overlay, otherwise false
 	 * @private
 	 */
@@ -2959,13 +3127,14 @@ sap.ui.define([
 			});
 			bShow = oOverlay.show;
 		}
-
+		// Flag is used in adjustHeight because setHeight call on inner chart lets overlay disappear.
+		this._hasOverlay = bShow;
 		this._renderOverlay(bShow);
 	};
 
 	/**
 	 * searches for a certain control by its ID
-	 * 
+	 *
 	 * @param {string} sId the control's ID
 	 * @returns {sap.ui.core.Control} The control found by the given Id
 	 * @private
@@ -2991,7 +3160,7 @@ sap.ui.define([
 
 	/**
 	 * searches for the controls view
-	 * 
+	 *
 	 * @returns {sap.ui.core.mvc.View} The found parental View
 	 * @private
 	 */
@@ -3008,10 +3177,43 @@ sap.ui.define([
 		}
 		return this._oView;
 	};
+	/**
+	 * updates the inResultDimension property on inner sap.chart.Chart. A concatenation of inResultDimension, requestAtLeast and PresentationVariant
+	 * is created. called via _rebindChart and setRequestAtLeastFields.
+	 *
+	 * @private
+	 */
+	SmartChart.prototype._updateInResultDimensions = function() {
+		var aUniqueInResultDimensions = this._getInResultDimensionTotal();
+
+		// make sure that we only set inResultDims when they have changed to previous setting
+		var fnCompareWithCurrentInResult = function(aNewInResult) {
+			var aCurrentInResult = this.getChart().getInResultDimensions();
+
+			// compare length first to save up some time
+			if (aCurrentInResult.length != aNewInResult.length) {
+				return false;
+			}
+			for (var i = 0, l = aCurrentInResult.length; i < l; i++) {
+
+				if (aCurrentInResult[i] != aNewInResult[i]) {
+					// Only comparing strings here, not working for objects
+					return false;
+				}
+			}
+			//True when both arrays contain the same strings
+			return true;
+		}.bind(this);
+
+		// if the new InResult array has values and is different then the one already set
+		if (aUniqueInResultDimensions.length > 0 && !fnCompareWithCurrentInResult(aUniqueInResultDimensions)) {
+			this.getChart().setInResultDimensions(aUniqueInResultDimensions);
+		}
+	};
 
 	/**
 	 * This can be used to trigger binding on the chart used in the SmartChart
-	 * 
+	 *
 	 * @protected
 	 */
 	SmartChart.prototype.rebindChart = function() {
@@ -3020,11 +3222,11 @@ sap.ui.define([
 
 	/**
 	 * Re-binds the chart
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._reBindChart = function() {
-		var sRequestAtLeastFields, aAlwaysSelect, aSelect, mChartPersonalisationData, aSmartFilters, aProcessedFilters = [], aFilters, oExcludeFilters, aSorters, mParameters = {}, mBindingParams = {
+		var mChartPersonalisationData, aSmartFilters, aProcessedFilters = [], aFilters, oExcludeFilters, aSorters, mParameters = {}, mBindingParams = {
 			preventChartBind: false
 		};
 
@@ -3064,54 +3266,8 @@ sap.ui.define([
 			aFilters = aProcessedFilters;
 		}
 
-		sRequestAtLeastFields = this.getRequestAtLeastFields();
-		if (sRequestAtLeastFields) {
-			aAlwaysSelect = sRequestAtLeastFields.split(",");
-		} else {
-			aAlwaysSelect = [];
-		}
-		aAlwaysSelect = aAlwaysSelect.concat(this._aAlwaysSelect);
-
-		// provide all dimensions set during instantiation or provided by service for inResultDimensions property of chart control
-		// remove duplicate entries before we re-set the property
-		function arrayUnique(array) {
-			var a = array.concat();
-			for (var i = 0; i < a.length; ++i) {
-				for (var j = i + 1; j < a.length; ++j) {
-					if (a[i] === a[j]) {
-						a.splice(j--, 1);
-					}
-				}
-			}
-			return a;
-		}
-
-		// Check if we have visible dimensions and remove them from inResult dimensions
-		var aVisibleDim = this._oChart.getVisibleDimensions();
-		var aInResultDim = aAlwaysSelect.slice();
-
-		aInResultDim = aInResultDim.filter(function(el) {
-			return aVisibleDim.indexOf(el) < 0;
-		});
-		// Enrich inResultDimensions of inner chart control
-		var aChartInResultDimenions = arrayUnique(this._oChart.getInResultDimensions().concat(aInResultDim));
-
-		this._oChart.setInResultDimensions(aChartInResultDimenions);
-
-		// aSelect = this._oChart.getVisibleDimensions().concat(this._oChart.getVisibleMeasures());
-		// handle fields that shall always be selected
-		if (!aSelect || !aSelect.length) {
-			aSelect = aAlwaysSelect;
-		} else {
-			for (var i = 0; i < aAlwaysSelect.length; i++) {
-				if (aSelect.indexOf(aAlwaysSelect[i]) < 0) {
-					aSelect.push(aAlwaysSelect[i]);
-				}
-			}
-		}
-		if (aSelect && aSelect.length) {
-			mParameters["select"] = aSelect.toString();
-		}
+		// updateInResultDimensions before re-binding the chart
+		this._updateInResultDimensions();
 
 		// Enable some default parameters
 		mParameters["entitySet"] = this.getEntitySet();
@@ -3131,11 +3287,12 @@ sap.ui.define([
 		if (!mBindingParams.preventChartBind) {
 			aSorters = mBindingParams.sorter;
 			aFilters = mBindingParams.filters;
-
+			mParameters = mBindingParams.parameters;
 			this._oChart.setBusy(true);
 
 			this._bDataLoadPending = true;
-			this._oChart.bindData({
+
+			var oData = {
 				path: this.getChartBindingPath() || ("/" + this.getEntitySet()),
 				parameters: mParameters,
 				filters: aFilters,
@@ -3154,7 +3311,19 @@ sap.ui.define([
 					}.bind(this),
 					change: this._onDataLoadComplete.bind(this)
 				}
-			});
+			};
+
+			if (mBindingParams.length) {
+				oData.length = Math.min(mBindingParams.length, 100);
+			} else {
+				var iMaxItems = this._oChartProvider.getMaxItems();
+
+				if (iMaxItems > 0) {
+					oData.length = iMaxItems;
+				}
+			}
+
+			this._oChart.bindData(oData);
 
 			this._showOverlay(false);
 
@@ -3190,14 +3359,21 @@ sap.ui.define([
 			if (!this.getChartType() && this._oChartViewMetadata.chartType) {
 				this._setChartType(this._oChartViewMetadata.chartType);
 			}
-
-			if (this._oChartViewMetadata.semantics === "aggregate") {
-				this._oChart.setIsAnalytical(true);
-			}
 		}
 	};
 
 	SmartChart.prototype._createP13nObject = function(oField) {
+
+		// add to initial sorters
+		if (oField.sortable && oField.sorted) {
+			var oSortItem = {
+				columnKey: oField.name,
+				operation: oField.sortOrder
+			};
+
+			// rebind to apply initial sorting
+			this._aInitialSorters.push(oSortItem);
+		}
 
 		return {
 			columnKey: oField.name,
@@ -3211,23 +3387,31 @@ sap.ui.define([
 			scale: oField.scale,
 			isMeasure: oField.isMeasure,
 			isDimension: oField.isDimension,
+			isHierarchyDimension: oField.isHierarchyDimension,
+			hierarchyLevel: oField.hierarchyLevel,
 			aggregationRole: oField.aggregationRole,
-			label: oField.fieldLabel,
-			tooltip: oField.quickInfo
+			label: oField.label,
+			tooltip: oField.quickInfo,
+			sorted: oField.sorted,
+			sortOrder: oField.sortOrder
 		};
 
 	};
 
 	/**
 	 * Creates the content based on the metadata/configuration
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._createContent = function() {
 
-		jQuery.sap.require("sap.ui.comp.util.FormatUtil");
-
 		var i, iLen = 0, oField, oChartObject, mProperties, aSortFilterableItems = [], oP13nDataObj, that = this;
+		var aDataPoints = [];
+		this._aColumnKeysOrdered = [];
+
+		//chart annotation overrules the entity type ordering
+		jQuery.extend(this._aColumnKeysOrdered, this._oChartViewMetadata.dimensionFields);
+		this._aColumnKeysOrdered = this._aColumnKeysOrdered.concat(this._oChartViewMetadata.measureFields);
 
 		iLen = this._oChartViewMetadata.fields.length;
 		for (i = 0; i < iLen; i++) {
@@ -3236,39 +3420,87 @@ sap.ui.define([
 
 			oField = this._oChartViewMetadata.fields[i];
 
-			oP13nDataObj = this._createP13nObject(oField);
+			//TODO: Evaluate if ControlProvider._createFieldMetadata would work for SmartChart as well
+			//Quickfix for mapping technical name to label property
+			oField.label = oField.fieldLabel || oField.name;
 
-			mProperties = {
-				name: oField.name,
-				label: oField.fieldLabel
-			};
+			if (this._aColumnKeysOrdered.indexOf(oField.name) === -1) {
+				this._aColumnKeysOrdered.push(oField.name);
+			}
+
+			// Only create P13n data when there is no dimension/measure existing for this field
+			// Custom dimensions/measures have to provide their own P13n data as JSON
+			if (this.getChart().getDimensionByName(oField.name) === undefined && this.getChart().getMeasureByName(oField.name) === undefined) {
+				oP13nDataObj = this._createP13nObject(oField);
+
+				mProperties = {
+					name: oField.name,
+					label: oField.label
+				};
+			}
+			// Check if should always be in Result of query
 			if (oField.inResult) {
 				this._aAlwaysSelect.push(oField.name);
 			}
 
-			if (oField.isDimension) {
-				oChartObject = new Dimension(mProperties);
-				this._oChart.addDimension(oChartObject);
+			if (oField.isDimension || oField.isHierarchyDimension) {
+				// Check if dimension was already set from outside
+				if (this.getChart().getDimensionByName(oField.name) === undefined) {
+					if (oField.isDimension) {
+						oChartObject = new Dimension(mProperties);
+					} else {
+						mProperties.level = oField.hierarchyLevel;
+						oChartObject = new HierarchyDimension(mProperties);
+					}
+					this._oChart.addDimension(oChartObject);
 
-				if (oField.description) {
-					oChartObject.setTextProperty(oField.description);
+					if (oField.description) {
+						oChartObject.setTextProperty(oField.description);
 
-					/* eslint-disable no-loop-func */
-					oChartObject.setTextFormatter(function(sKey, sText) {
-						var sName = this.getIdentity();
-						var sDisplayBehaviour = that._getDisplayBehaviour(sName);
-						return sap.ui.comp.util.FormatUtil.getFormattedExpressionFromDisplayBehaviour(sDisplayBehaviour, sKey, sText);
-					});
-					/* eslint-enable no-loop-func */
+						/* eslint-disable no-loop-func */
+						oChartObject.setTextFormatter(function(sKey, sText) {
+							var sName = this.getIdentity();
+							var sDisplayBehaviour = that._getDisplayBehaviour(sName);
+							return FormatUtil.getFormattedExpressionFromDisplayBehaviour(sDisplayBehaviour, sKey, sText);
+						});
+						/* eslint-enable no-loop-func */
+					} else if (oField.dateFormatter) {
+						oChartObject.setTextFormatter(oField.dateFormatter);
+					}
+				} else {
+					// If dimension was existing already, then parse the p13n JSON to object.
+					var oP13nData = this.getChart().getDimensionByName(oField.name).data("p13nData");
+					if (oP13nData) {
+						// Check if p13nData is a String (defined in XML view ) or already an object (defined in JavaScript)
+						this.getChart().getDimensionByName(oField.name).data("p13nData", typeof oP13nData === "string" ? JSON.parse(oP13nData) : oP13nData);
+					}
 				}
-
 			} else if (oField.isMeasure) {
-				oChartObject = new Measure(mProperties);
-				this._oChart.addMeasure(oChartObject);
+				// Check if measure was already set from outside
+				if (this.getChart().getMeasureByName(oField.name) === undefined) {
+					oChartObject = new Measure(mProperties);
+					this._oChart.addMeasure(oChartObject);
 
-				if (oField.unit) {
-					oChartObject.setUnitBinding(oField.unit);
+					if (oField.dataPoint) {
+						// remember data point to for semantics
+						aDataPoints.push({
+							dataPoint: oField.dataPoint,
+							measure: oChartObject
+						});
+					}
+
+					if (oField.unit) {
+						oChartObject.setUnitBinding(oField.unit);
+					}
+				} else {
+					// If measure was existing already, then parse the p13n JSON to object.
+					var oP13nData = this.getChart().getMeasureByName(oField.name).data("p13nData");
+					if (oP13nData) {
+						// Check if p13nData is a String (defined in XML view ) or already an object (defined in JavaScript)
+						this.getChart().getMeasureByName(oField.name).data("p13nData", typeof oP13nData === "string" ? JSON.parse(oP13nData) : oP13nData);
+					}
 				}
+
 			} else if (oField.sortable || oField.filterable) {
 				aSortFilterableItems.push(oP13nDataObj);
 			}
@@ -3283,6 +3515,11 @@ sap.ui.define([
 
 		if (this._oChart) {
 			this._oChart.data("p13nData", aSortFilterableItems);
+		}
+
+		// enrich from data points when all measures are there
+		if (aDataPoints.length > 0) {
+			this._enrichFromDataPoints(aDataPoints);
 		}
 	};
 
@@ -3313,11 +3550,11 @@ sap.ui.define([
 	};
 	/**
 	 * Creates a Chart based on the configuration, if necessary. This also prepares the methods to be used based on the chart type.
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._createChart = function() {
-		var aContent = this.getItems(), iLen = aContent ? aContent.length : 0, oChart;
+		var aContent = this.getItems(), iLen = aContent ? aContent.length : 0, oChart, that = this;
 		// Check if a Chart already exists in the content (Ex: from view.xml)
 		while (iLen--) {
 			oChart = aContent[iLen];
@@ -3334,89 +3571,127 @@ sap.ui.define([
 				uiConfig: {
 					applicationSet: 'fiori'
 				},
+				// Needs to be set in order to visualize busy indicator when binding happens very fast
+				busyIndicatorDelay: 0,
 				vizProperties: {
 					title: {
 						text: ''
+					},
+					plotArea: {
+						dataLabel: {
+							// visible: true,
+							hideWhenOverlap: false
+						}
+					},
+					general: {
+						groupData: false
+					},
+					valueAxis: {
+						title: {
+							visible: that.getShowMeasuresTitle()
+						}
+					},
+					categoryAxis: {
+						title: {
+							visible: that.getShowDimensionsTitle()
+						},
+						layout: {
+							autoHeight: true,
+							autoWidth: true
+						}
 					}
 				},
 				selectionMode: this.getSelectionMode(),
 				width: "100%"
 			});
-			// Override the standard tooltip handling in order to prevent the tooltip from getting visible
-			// Only when detail button is activated, normal tooltip otherwise
-			// if (this.getShowDetailsButton()) {
-			/*
-			 * this._oChart.setVizProperties({ interaction: { decorations: [ { name: 'showDetail', fn: this._showDetailTooltip }, { name:
-			 * 'hideDetail', fn: this._hideDetailTooltip } ] } });
-			 */
-			// this._toggleChartTooltipVisibility(false);
+
 			this._toggleChartTooltipVisibility(this.getShowChartTooltip());
-			// }
+			this._setBehaviorTypeForDataSelection();
 			this.insertItem(this._oChart, 2);
 		}
+		//Check for legend visibility, once vizFrame is created.
+		this.setLegendVisible(this.getLegendVisible());
+
 
 		if (!this._oChart.getLayoutData()) {
-			this._oChart.setLayoutData(new sap.m.FlexItemData({
-				growFactor: 1,
-				baseSize: "0%"
-			}));
-		}
+			var oFlexItemData = {
+				growFactor: 1
+			};
 
-		this._setChartType(this.getChartType());
+			var oLayoutData = this.getLayoutData();
+
+			if (oLayoutData && oLayoutData.getBaseSize) {
+				oFlexItemData.baseSize = oLayoutData.getBaseSize();
+			} else {
+				//Default set the baseSize to 100%
+				//BCP: 1770489819
+				oFlexItemData.baseSize = "100%";
+			}
+
+			this._oChart.setLayoutData(new sap.m.FlexItemData(oFlexItemData));
+		}
+		if (this.getChartType()) {
+			this._setChartType(this.getChartType());
+		}
+		// Attach in order to re-set overlay when framework fires rerender events (like VariantManagement when saving a variant)
+		this._oChart.attachRenderComplete(function() {
+			// If overlay is active, it need to be set again because of setHeight on oChart
+			if (this._hasOverlay) {
+				setTimeout(function() {
+					this._showOverlay(true);
+				}.bind(this), 0);
+			}
+		}.bind(this));
+
+		this._oChart.setCustomMessages({
+			'NO_DATA': this.getNoData()
+		});
 
 		this._createTooltipOrPopover();
 	};
 
 	SmartChart.prototype._toggleChartTooltipVisibility = function(bFlag) {
-		var oInteraction = {
-			interaction: {
-				decorations: []
-			}
-		};
-		// If we want to hide the tooltip we have to overwrite the standard viz decoration for it
-		if (!bFlag) {
 
-			var oShowDetail = {
-				name: 'showDetail',
-				fn: this._showDetailTooltip
-			};
-
-			var oHideDetail = {
-				name: 'hideDetail',
-				fn: this._hideDetailTooltip
-			};
-			oInteraction.interaction.decorations.push(oShowDetail);
-			oInteraction.interaction.decorations.push(oHideDetail);
-		}
 		if (this._oChart) {
-			this._oChart.setVizProperties(oInteraction);
+			if (bFlag) {
+				if (!this._vizTooltip) {
+					this._vizTooltip = new VizTooltip();
+				}
+				// Make this dynamic for setter calls
+				this._vizTooltip.connect(this.getChart().getVizUid());
+			} else {
+				if (this._vizTooltip) {
+					this._vizTooltip.destroy();
+				}
+			}
 		}
 	};
 
 	/**
-	 * Handles the details information of a hovered datapoint on mouseover
-	 * 
-	 * @param {object} oDetails The tooltip params
+	 * updates the formatter of vizPopover / vizTooltip based on current chartType PERCENT formatter for all 100% chartTypes STANDARDFLOAT formatter
+	 * otherwise.
+	 *
 	 * @private
 	 */
-	SmartChart.prototype._showDetailTooltip = function(oDetails) {
-		// currently we don't need the tooltip information
-	};
-	/**
-	 * Handles the details information of a hovered datapoint
-	 * 
-	 * @param {object} oDetails The tooltip params
-	 * @private
-	 */
-	SmartChart.prototype._hideDetailTooltip = function(oDetails) {
-		// currently we don't need the tooltip information
+	SmartChart.prototype._updateVizTooltipFormatter = function() {
+		// Needs to be called when tooltip gets enabled and when chartType changes!
+		if (this._vizTooltip) {
+			if (this.getChart().getChartType().match(/100/) !== null) {
+				this._vizTooltip.setFormatString(sap.viz.ui5.format.ChartFormatter.DefaultPattern.PERCENT);
+			} else {
+				this._vizTooltip.setFormatString(sap.viz.ui5.format.ChartFormatter.DefaultPattern.STANDARDFLOAT);
+			}
+		}
 	};
 
 	/**
-	 * Returns the chart object used internally.
-	 * 
+	 * Returns the chart object used internally.<br>
+	 * <b>Note:</b> Direct changes made to the inner {@link sap.chart.Chart chart} object or its {@link sap.viz.ui5.controls.VizFrame vizFrame} might
+	 * lead to inconsistencies and side effects during runtime, as the <code>SmartChart</code> control doesn't listen to all changes made to the
+	 * inner {@link sap.chart.Chart chart} instance. To avoid this, please use the API provided by the <code>SmartChart</code> control itself.
+	 *
+	 * @returns {object} The inner chart object
 	 * @public
-	 * @returns {object} The chart
 	 */
 	SmartChart.prototype.getChart = function() {
 		return this._oChart;
@@ -3425,7 +3700,7 @@ sap.ui.define([
 	SmartChart.prototype._getChartTypes = function() {
 		var mChartTypes;
 		try {
-			mChartTypes = sap.chart.api.getChartTypes(); // Chart.getChartTypes();
+			mChartTypes = sap.chart.api.getChartTypes();
 		} catch (ex) {
 			mChartTypes = {};
 			jQuery.sap.log.error("sap.chart.api..getChartTypes throws an exception.\n" + ex.toString());
@@ -3491,7 +3766,48 @@ sap.ui.define([
 	SmartChart.prototype._setChartType = function(sChartType) {
 
 		if (this._oChart) {
+			var sHeight = this._oChart.getHeight();
 			this._oChart.setChartType(sChartType);
+
+			// clear selected detail entries
+			this._aDetailsEntries = [];
+			this._updateVizTooltipFormatter();
+
+			// toggle the unit bindings of each measure based on chart type
+			this._toggleMeasureUnitBinding(sChartType, this._oChart.getMeasures());
+			// to be save set the Height again as it sometimes shrinked
+			this._oChart.setHeight(sHeight);
+		}
+	};
+
+	SmartChart.prototype._toggleMeasureUnitBinding = function(sChartType, aMeasures) {
+
+		if (typeof aMeasures != 'undefined' && aMeasures instanceof Array) {
+
+			if (sChartType.substring(0, 4) === "100_") {
+				// Delete all unit bindings when chartType is percentage type
+				aMeasures.forEach(function(oMeasure) {
+					oMeasure.setUnitBinding();
+				});
+			} else {
+
+				if (this._oChartProvider) {
+					// Bring back the unit bindings for each measure from the metadata fields.
+					var aFieldMetadata = this._oChartProvider._aODataFieldMetadata;
+
+					aMeasures.forEach(function(oMeasure) {
+						// Run until we found the correct field
+						for (var i = aFieldMetadata.length - 1; i >= 0; i--) {
+							if (aFieldMetadata[i].name == oMeasure.getName()) {
+								if (aFieldMetadata[i]["Org.OData.Measures.V1.ISOCurrency"] && aFieldMetadata[i]["Org.OData.Measures.V1.ISOCurrency"].Path) {
+									oMeasure.setUnitBinding(aFieldMetadata[i]["Org.OData.Measures.V1.ISOCurrency"].Path);
+								}
+								break;
+							}
+						}
+					});
+				}
+			}
 		}
 	};
 
@@ -3544,17 +3860,15 @@ sap.ui.define([
 					if (a.getLabel() && b.getLabel()) {
 						return a.getLabel().localeCompare(b.getLabel());
 					}
-					// return a.getLabel().localeCompare(b.getLabel());
 				});
 			}
 		}
-
 		return aDimensions;
 	};
 
 	/**
 	 * Interface function for the SmartVariantManagement control that returns the currently used variant data.
-	 * 
+	 *
 	 * @public
 	 * @returns {json} The currently used variant
 	 */
@@ -3568,7 +3882,7 @@ sap.ui.define([
 
 	/**
 	 * Interface function for SmartVariantManagement control that applies the current variant.
-	 * 
+	 *
 	 * @param {Object} oVariantJSON The variant JSON
 	 * @param {string} sContext Describes the context in which the variant has been applied
 	 * @public
@@ -3577,18 +3891,6 @@ sap.ui.define([
 		this._oCurrentVariant = oVariantJSON;
 		if (this._oCurrentVariant === "STANDARD") {
 			this._oCurrentVariant = null;
-		}
-
-		// Context STANDARD here specifies that this is a custom application variant for Globalisation/Industry!
-		// This would be called just once in the beginning!
-		if (sContext === "STANDARD") {
-			this._oApplicationDefaultVariant = this._oCurrentVariant;
-		}
-		// if an application default variant exists --> extend all the other variants based on this!
-		// Changes to the industry should be taken over --> but first we only take over non conflicting changes
-		// if the user already has some changes --> just use those
-		if (this._oApplicationDefaultVariant && !sContext) {
-			this._oCurrentVariant = jQuery.extend(true, {}, this._oApplicationDefaultVariant, oVariantJSON);
 		}
 
 		// Set instance flag to indicate that we are currently in the process of applying the changes
@@ -3607,6 +3909,100 @@ sap.ui.define([
 
 		this.fireAfterVariantApply({
 			currentVariantId: this.getCurrentVariantId()
+		});
+	};
+
+	/**
+	 * Interface function for SmartVariantManagment control. It indicates, that the variant management is fully initialized.
+	 *
+	 * @internal
+	 */
+	SmartChart.prototype.variantsInitialized = function() {
+		this._bVariantInitialised = true;
+		this._checkAndTriggerBinding();
+	};
+
+	/**
+	 * The method returns the current UI state of SmartChart control.
+	 *
+	 * @returns {sap.ui.comp.state.UIState} Current UI state
+	 * @public
+	 */
+	SmartChart.prototype.getUiState = function() {
+		var oDataSuiteFormat = this._oPersController ? this._oPersController.getDataSuiteFormatSnapshot() : null;
+		return new UIState({
+			presentationVariant: {
+				// PresentationVariantID: jQuery.sap.uid(),
+				ContextUrl: "", // TODO
+				MaxItems: this._oChartProvider ? this._oChartProvider.getMaxItems() : undefined,
+				SortOrder: oDataSuiteFormat ? oDataSuiteFormat.SortOrder : [],
+				GroupBy: oDataSuiteFormat ? oDataSuiteFormat.GroupBy : [],
+				Total: oDataSuiteFormat ? oDataSuiteFormat.Total : [],
+				RequestAtLeast: this._getInResultDimensionTotal(),
+				Visualizations: oDataSuiteFormat ? oDataSuiteFormat.Visualizations : []
+			},
+			selectionVariant: {
+				SelectOptions: oDataSuiteFormat ? oDataSuiteFormat.SelectOptions : []
+			},
+			variantName: this.getCurrentVariantId()
+		});
+	};
+
+	/**
+	 * The method replaces the current UI state of SmartChart control with
+	 * the data represented in <code>uiState</code>.
+	 *
+	 * @param {sap.ui.comp.state.UIState} oUiState the new representation of UI state
+	 * @public
+	 */
+	SmartChart.prototype.setUiState = function(oUiState) {
+		if (this._oPersController) {
+			var oPersistentDataVariant = (this._oVariantManagement && oUiState.getVariantName()) ? this._oVariantManagement.getVariantContent(this, oUiState.getVariantName()) : {};
+			this._oPersController.setDataSuiteFormatSnapshot(jQuery.extend(true, {}, oUiState.getPresentationVariant(), oUiState.getSelectionVariant()), oPersistentDataVariant);
+		}
+
+		// TODO what is about MaxItems? How should it be set into oChart? Do we need a rebind for it?
+		// TODO Do we need a rebind after 'InResult' is set?
+		if (oUiState.getPresentationVariant()) {
+			this._oChart.setInResultDimensions(oUiState.getPresentationVariant().RequestAtLeast);
+		}
+	};
+
+	SmartChart.prototype.setUiStateAsVariant = function (oUiState) {
+		if (this._oPersController) {
+			this._oPersController.setPersonalizationDataAsDataSuiteFormat(jQuery.extend(true, {}, oUiState.getPresentationVariant(), oUiState.getSelectionVariant()));
+		}
+
+		// TODO what is about MaxItems? How should it be set into oChart? Do we need a rebind for it?
+		// TODO Do we need a rebind after 'InResult' is set?
+		if (oUiState.getPresentationVariant()) {
+			this._oChart.setInResultDimensions(oUiState.getPresentationVariant().RequestAtLeast);
+		}
+	};
+
+	SmartChart.prototype.setRequestAtLeastFields = function(sRequestAtLeastFields) {
+		this.setProperty("requestAtLeastFields", sRequestAtLeastFields);
+		if (this._oChart) {
+			this._updateInResultDimensions();
+		}
+	};
+
+	SmartChart.prototype._getInResultDimensionTotal = function() {
+		var aInResultDimensions = [];
+
+		// From requestAtLeast property
+		if (this.getRequestAtLeastFields()) {
+			aInResultDimensions = this.getRequestAtLeastFields().split(",");
+		}
+		// From presentationVariant
+		aInResultDimensions = aInResultDimensions.concat(this._aAlwaysSelect);
+		// From inner chart inResultDimension property
+		if (this.getChart()) {
+			aInResultDimensions = aInResultDimensions.concat(this.getChart().getInResultDimensions());
+		}
+		// Get rid of double entries
+		return aInResultDimensions.filter(function(elem, index, self) {
+			return index == self.indexOf(elem);
 		});
 	};
 
@@ -3637,7 +4033,7 @@ sap.ui.define([
 
 	/**
 	 * Returns the column for the given column key
-	 * 
+	 *
 	 * @param {array} aArray list of chart objects
 	 * @param {string} sKey - the column key for the required column
 	 * @returns {object} The found column or null
@@ -3687,7 +4083,7 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the path for the specified property and column key from the array of table columns
-	 * 
+	 *
 	 * @param {string} sColumnKey - the column key specified on the table
 	 * @param {string} sProperty - the property path that needs to be retrieved from the column
 	 * @returns {string} The path that can be used by sorters, filters etc.
@@ -3710,7 +4106,7 @@ sap.ui.define([
 
 	/**
 	 * returns the current filter and sorting options from the table personalisation/variants
-	 * 
+	 *
 	 * @private
 	 * @returns {object} current variant's filter and sorting options
 	 */
@@ -3729,8 +4125,8 @@ sap.ui.define([
 
 		if (aSortData) {
 			aSortData.forEach(function(oModelItem) {
-				var bDescending = oModelItem.operation === "Descending"; // sap.m.P13nConditionOperation.Descending;
-				sPath = oModelItem.columnKey; // this._getPathFromColumnKeyAndProperty(oModelItem.columnKey, "sortProperty");
+				var bDescending = oModelItem.operation === "Descending";
+				sPath = oModelItem.columnKey;
 				aSorters.push(new sap.ui.model.Sorter(sPath, bDescending));
 
 			}, this);
@@ -3741,7 +4137,7 @@ sap.ui.define([
 			this._oCurrentVariant.filter.filterItems.forEach(function(oModelItem) {
 				var oValue1 = oModelItem.value1, oValue2 = oModelItem.value2;
 				// Filter path has be re-calculated below
-				sPath = oModelItem.columnKey; // this._getPathFromColumnKeyAndProperty(oModelItem.columnKey, "filterProperty");
+				sPath = oModelItem.columnKey;
 
 				if (oValue1 instanceof Date && this._oChartProvider && this._oChartProvider.getIsUTCDateHandlingEnabled()) {
 					oValue1 = FilterProvider.getDateInUTCOffset(oValue1);
@@ -3768,7 +4164,7 @@ sap.ui.define([
 
 	/**
 	 * triggers (hidden) VariantManagementControl to persist personalisation this function is called in case no VariantManagementControl is used
-	 * 
+	 *
 	 * @private
 	 */
 	SmartChart.prototype._persistPersonalisation = function() {
@@ -3796,7 +4192,7 @@ sap.ui.define([
 
 	/**
 	 * Returns the ID of the currently selected variant.
-	 * 
+	 *
 	 * @public
 	 * @returns {string} ID of the currently selected variant
 	 */
@@ -3814,22 +4210,25 @@ sap.ui.define([
 	 * Applies the current variant based on the sVariantId parameter. If an empty string or null or undefined have been passed, the standard variant
 	 * will be used. The standard variant will also be used if the passed sVariantId cannot be found. If the flexibility variant, the content for the
 	 * standard variant, or the personalizable control cannot be obtained, no changes will be made.
-	 * 
+	 *
 	 * @public
 	 * @param {string} sVariantId ID of the currently selected variant
 	 */
 	SmartChart.prototype.setCurrentVariantId = function(sVariantId) {
-		if (this._oVariantManagement) {
+		if (this._oVariantManagement && !this._oVariantManagement.isPageVariant()) {
 			this._oVariantManagement.setCurrentVariantId(sVariantId);
 		} else {
-			jQuery.sap.log.error("sap.ui.comp.smartchart.SmartChart.prototype.setCurrentVariantId: VariantManagement does not exist");
+			jQuery.sap.log.error("sap.ui.comp.smartchart.SmartChart.prototype.setCurrentVariantId: VariantManagement does not exist or is a page variant");
 		}
 	};
 
 	SmartChart.prototype._adjustHeight = function() {
-
+		// only if chart is not in full screen
 		if (this._oChart) {
-			var iToolbarHeight = 0, iHeight = this.getDomRef().offsetHeight;
+			var iToolbarHeight = 0, iBreadCrumbsHeight = 0;
+			// Only save height when not in full-screen mode
+			var iHeight = this.getDomRef() ? this.getDomRef().offsetHeight : 0;
+
 			if (iHeight === 0) {
 				return;
 			}
@@ -3838,12 +4237,23 @@ sap.ui.define([
 				iToolbarHeight = this._oToolbar.getDomRef().offsetHeight;
 			}
 
-			// CORRECTION VALUE FOR CHART
-			var iCorrection = 0;
-// if (Device.system.desktop) {
-// iCorrection = this.bFullScreen ? 0 : 30;
-// }
-			this._oChart.setHeight((iHeight - iToolbarHeight - iCorrection) + "px");
+			if (this._oDrillBreadcrumbs && this._oDrillBreadcrumbs.getDomRef()) {
+				// breadcrumbs are rendered inside a div and have margins
+				var oBreadcrumbsNode = this._oDrillBreadcrumbs.getDomRef().parentNode ? this._oDrillBreadcrumbs.getDomRef().parentNode : this._oDrillBreadcrumbs.getDomRef();
+				iBreadCrumbsHeight = oBreadcrumbsNode.offsetHeight;
+			}
+
+			var iChartHeight = iHeight - iToolbarHeight - iBreadCrumbsHeight;
+			this._oChart.setHeight(iChartHeight + "px");
+			// update breadcrumbs in order to react on size changes of the window
+			// TODO: Evaluate for a more lightweight solution in the future.
+			this._updateDrillBreadcrumbs();
+			// If overlay is active, it need to be set again because of setHeight on oChart
+			if (this._hasOverlay) {
+				setTimeout(function() {
+					this._showOverlay(true);
+				}.bind(this), 0);
+			}
 		}
 	};
 
@@ -3851,21 +4261,171 @@ sap.ui.define([
 		if (!this.oFullScreenButton || (bValue === this.bFullScreen && !bForced)) {
 			return;
 		}
+
+		if (bValue == true && this._oChart) {
+			// store old chart Height
+			this._sChartHeight = this._oChart.getHeight();
+		}
+
 		this.bFullScreen = bValue;
 		if (!this._oFullScreenUtil) {
 			this._oFullScreenUtil = sap.ui.requireSync("sap/ui/comp/util/FullScreenUtil");
 		}
-		this._oFullScreenUtil.toggleFullScreen(this, this.bFullScreen);
+		this._oFullScreenUtil.toggleFullScreen(this, this.bFullScreen, this.oFullScreenButton, this._toggleFullScreen.bind(this, false));
 
+		this._renderFullScreenButton();
+		// Fire the fullScreen Event
+		this.fireFullScreenToggled({
+			fullScreen: bValue
+		});
+
+		if (bValue == false && this._oChart) {
+			this._oChart.setHeight(this._sChartHeight);
+		}
+	};
+
+	/**
+	 * Renders the look and feel of the full screen button
+	 */
+	SmartChart.prototype._renderFullScreenButton = function() {
 		this.oFullScreenButton.setTooltip(this.bFullScreen ? this._oRb.getText("CHART_MINIMIZEBTN_TOOLTIP") : this._oRb.getText("CHART_MAXIMIZEBTN_TOOLTIP"));
 		this.oFullScreenButton.setText(this.bFullScreen ? this._oRb.getText("CHART_MINIMIZEBTN_TEXT") : this._oRb.getText("CHART_MAXIMIZEBTN_TEXT"));
 		this.oFullScreenButton.setIcon(this.bFullScreen ? "sap-icon://exit-full-screen" : "sap-icon://full-screen");
 	};
 
 	/**
+	 * Enriches the chart with data point information.
+	 *
+	 * @param {array} aDataPoints collection of data points and measures
+	 * @private
+	 */
+	SmartChart.prototype._enrichFromDataPoints = function(aDataPoints) {
+		var iLen = aDataPoints.length;
+
+		var aColoringMeasures = [];
+
+		var oMeasureValues = {};
+
+		for (var i = 0; i < iLen; i++) {
+			this._interpretDataPoint(aDataPoints[i].dataPoint, aDataPoints[i].measure, oMeasureValues, aColoringMeasures);
+		}
+
+		// switch the coloring
+		if (aColoringMeasures.length > 0) {
+			this._oChart.setActiveColoring({
+				coloring: sap.chart.ColoringType.Criticality,
+				parameters: {
+					measure: aColoringMeasures
+				}
+			});
+
+			this._oChart.setColorings({
+				Criticality: {
+					MeasureValues: oMeasureValues
+				}
+			});
+		}
+	};
+
+	/**
+	 * Interprets the data point information to patterns, boundaries and coloring.
+	 *
+	 * @param {object} oDataPoint UI.DataPoint annotation
+	 * @param {object} oMeasure current measure
+	 * @param {object} oMeasureValues current criticality measure values to enhance
+	 * @param {array} aColoringMeasures array containing all measures for which coloring should be updated
+	 * @returns {boolean} <code>true</code> if coloring for the current measure is set
+	 * @private
+	 */
+	SmartChart.prototype._interpretDataPoint = function(oDataPoint, oMeasure, oMeasureValues, aColoringMeasures) {
+		this._setSemanticPatterns(oDataPoint, oMeasure);
+
+		if (oMeasure.setBoundaryValues) {
+			this._setBoundaryValues(oDataPoint, oMeasure);
+		}
+
+		// semantic coloring
+		if (oDataPoint.Criticality || oDataPoint.CriticalityCalculation) {
+			oMeasureValues[oDataPoint.Value.Path] = this._oChartProvider.provideSemanticColoring(oDataPoint);
+			aColoringMeasures.push(oDataPoint.Value.Path);
+		}
+
+	};
+
+	/**
+	 * Sets the semantic patterns for the UI.DataPoint annotation
+	 *
+	 * @param {object} oDataPoint UI.DataPoint annotation
+	 * @Param {object} oMeasure current measure
+	 * @private
+	 */
+	SmartChart.prototype._setSemanticPatterns = function(oDataPoint, oMeasure) {
+		// semantic patterns
+		var sReferenceMeasureName = oDataPoint.TargetValue ? oDataPoint.TargetValue.Path : null;
+		var sProjectedMeasureName = oDataPoint.ForecastValue ? oDataPoint.ForecastValue.Path : null;
+
+		oMeasure.setSemantics(sap.chart.data.MeasureSemantics.Actual);
+
+		if (sReferenceMeasureName != null) {
+			var oReferenceMeasure = this._oChart.getMeasureByName(sReferenceMeasureName);
+			if (oReferenceMeasure) {
+				oReferenceMeasure.setSemantics(sap.chart.data.MeasureSemantics.Reference);
+			} else {
+				jQuery.sap.log.error("sap.ui.comp.SmartChart: " + oDataPoint.TargetValue.Path + " is not a valid measure");
+			}
+		}
+		if (sProjectedMeasureName) {
+			var oProjectionMeasure = this._oChart.getMeasureByName(sProjectedMeasureName);
+			if (oProjectionMeasure) {
+				oProjectionMeasure.setSemantics(sap.chart.data.MeasureSemantics.Projected);
+			} else {
+				jQuery.sap.log.error("sap.ui.comp.SmartChart: " + oDataPoint.ForecastValue.Path + " is not a valid measure");
+			}
+		}
+
+		oMeasure.setSemanticallyRelatedMeasures({
+			referenceValueMeasure: sReferenceMeasureName,
+			projectedValueMeasure: sProjectedMeasureName
+		});
+
+	};
+
+	/**
+	 * Sets the boundary values for the UI.DataPoint annotation.
+	 *
+	 * @param {object} oDataPoint UI.DataPoint annotation
+	 * @Param {object} oMeasure current measure
+	 * @private
+	 */
+	SmartChart.prototype._setBoundaryValues = function(oDataPoint, oMeasure) {
+		var oBoundaryValues = {};
+
+		if (oDataPoint.MinimumValue) {
+			oBoundaryValues.minimum = oDataPoint.MinimumValue;
+		}
+		if (oDataPoint.MaximumValue) {
+			oBoundaryValues.maximum = oDataPoint.MaximumValue;
+		}
+
+		if (oBoundaryValues.minimum || oBoundaryValues.maximum) {
+			oMeasure.setBoundaryValues(oBoundaryValues);
+		}
+	};
+
+	/**
+	 * Checks whether the control is initialized.
+	 *
+	 * @returns {boolean} returns whether the control is already initialized
+	 * @protected
+	 */
+	SmartChart.prototype.isInitialised = function() {
+		return !!this.bIsInitialised;
+	};
+
+	/**
 	 * Cleans up the control.
-	 * 
-	 * @public
+	 *
+	 * @protected
 	 */
 	SmartChart.prototype.exit = function() {
 
@@ -3874,7 +4434,6 @@ sap.ui.define([
 		if (this._oSmartFilter) {
 			this._oSmartFilter.detachSearch(this._reBindChart, this);
 			this._oSmartFilter.detachFilterChange(this._filterChangeEvent, this);
-			this._oSmartFilter.detachCancel(this._cancelEvent, this);
 		}
 
 		if (this._oChartProvider && this._oChartProvider.destroy) {
@@ -3920,23 +4479,122 @@ sap.ui.define([
 			this._oFullScreenUtil = null;
 		}
 
-		if (Device.system.desktop && this.sResizeListenerId) {
-			sap.ui.core.ResizeHandler.deregister(this.sResizeListenerId);
-			this.sResizeListenerId = null;
-		} else {
-			Device.orientation.detachHandler(this._adjustHeight, this);
-			Device.resize.detachHandler(this._adjustHeight, this);
+		if (this._oDetailsPopover) {
+			this._oDetailsPopover.destroy();
+			// This is not part of the popover until we have several semantic objects resolved for
+			// a selected data point
+			if (this._oRelatedAppsMasterList) {
+				this._oRelatedAppsMasterList.destroy();
+			}
 		}
 
+		this._processResizeHandler(false);
+
 		this._oCurrentVariant = null;
-		this._oApplicationDefaultVariant = null;
 		this._oChartViewMetadata = null;
 		this._aAlwaysSelect = null;
+		this._aInitialSorters = null;
 		this._oSmartFilter = null;
 		this._oToolbar = null;
 		this._oChartPersonalisationButton = null;
 		this._oView = null;
 		this._oChart = null;
+	};
+
+	/**
+	 * Process the attaching of the resize handler to the smart chart
+	 *
+	 * @param {boolen} bAttach If set to <code>true</code> the resize handler is attached, if set to <code>false</code> if is detached
+	 * @private
+	 */
+	SmartChart.prototype._processResizeHandler = function(bAttach) {
+		if (bAttach) {
+			this.sResizeListenerId = null;
+			if (Device.system.desktop) {
+				this.sResizeListenerId = sap.ui.core.ResizeHandler.register(this, this._adjustHeight.bind(this));
+			} else {
+				Device.orientation.attachHandler(this._adjustHeight, this);
+				Device.resize.attachHandler(this._adjustHeight, this);
+			}
+		} else {
+			if (Device.system.desktop && this.sResizeListenerId) {
+				sap.ui.core.ResizeHandler.deregister(this.sResizeListenerId);
+				this.sResizeListenerId = null;
+			} else {
+				Device.orientation.detachHandler(this._adjustHeight, this);
+				Device.resize.detachHandler(this._adjustHeight, this);
+			}
+		}
+	};
+
+	/**
+	 * Change the visibility of the toolbar
+	 *
+	 * @param {boolean} bShowToolbar If set to <code>true</code> the toolbar is shown, if set to <code>false</code> it is not visible
+	 * @public
+	 * @since 1.54
+	 */
+	SmartChart.prototype.setShowToolbar = function(bShowToolbar) {
+		if (this._oToolbar) {
+			this._oToolbar.setVisible(bShowToolbar);
+		}
+
+		return this.setProperty("showToolbar", bShowToolbar, true);
+	};
+	
+	/**
+	 * Change the style of the toolbar
+	 *
+	 * @param {sap.m.ToolbarStyle} sStyle The style of the toolbar.
+	 * @public
+	 * @since 1.54
+	 */
+	SmartChart.prototype.setToolbarStyle = function(sStyle) {
+		if (this._oToolbar) {
+			this._oToolbar.setStyle(sStyle);
+		}
+
+		return this.setProperty("toolbarStyle", sStyle, true);
+	};
+
+	/**
+	 * Change the visibility of the title in the dimensions area of the chart
+	 *
+	 * @param {boolean} bShowDimensionsTitle If set to <code>true</code> then the title of the dimensions is visible, if set to <code>false</code> not
+	 * @since 1.54
+	 */
+	SmartChart.prototype.setShowDimensionsTitle = function(bShowDimensionsTitle) {
+		if (this._oChart) {
+			this._oChart.setVizProperties({
+				"categoryAxis": {
+					"title": {
+						"visible": bShowDimensionsTitle
+					}
+				}
+			});
+		}
+
+		return this.setProperty("showDimensionsTitle", bShowDimensionsTitle, true);
+	};
+
+	/**
+	 * Change the visibility of the title in the measures area of the chart
+	 *
+	 * @param {boolean} bShowMeasuresTitle If set to <code>true</code> then the title of the measures is visible, if set to <code>false</code> not
+	 * @since 1.54
+	 */
+	SmartChart.prototype.setShowMeasuresTitle = function(bShowMeasuresTitle) {
+		if (this._oChart) {
+			this._oChart.setVizProperties({
+				"valueAxis": {
+					"title": {
+						"visible": bShowMeasuresTitle
+					}
+				}
+			});
+		}
+
+		return this.setProperty("showMeasuresTitle", bShowMeasuresTitle, true);
 	};
 
 	return SmartChart;

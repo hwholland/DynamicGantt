@@ -1,18 +1,18 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.filterbar.FilterItem.
 sap.ui.define([
-	'jquery.sap.global', 'sap/m/Label', 'sap/ui/comp/library', 'sap/ui/core/Element', 'sap/ui/core/TooltipBase', 'sap/ui/base/DataType'
-], function(jQuery, Label, library, Element, TooltipBase, DataType) {
+	'jquery.sap.global', 'sap/m/Label', 'sap/ui/comp/library', 'sap/ui/core/Element', 'sap/ui/core/TooltipBase', 'sap/ui/comp/util/IdentifierUtil'
+], function(jQuery, Label, library, Element, TooltipBase, IdentifierUtil) {
 	"use strict";
 
 	/**
-	 * Constructor for a new filterbar/FilterItem.
-	 * 
+	 * Constructor for a new FilterBar/FilterItem.
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
 	 * @class Represents a filter belonging to the basic group.
@@ -75,9 +75,9 @@ sap.ui.define([
 				},
 
 				/**
-				 * Determines if a filter is part of the currently selected variant. This property is ONLY used internally and must not be used by the
-				 * filter bar consumers.
-				 * 
+				 * Determines if a filter is part of the currently selected variant. <br>
+				 * <b>Note:</b> This property can also be changed using the <code>visibleInFilterBar</code> property and by user interaction in the
+				 * Select Filters dialog or the variant handling.
 				 * @since 1.26.1
 				 */
 				partOfCurrentVariant: {
@@ -88,13 +88,22 @@ sap.ui.define([
 
 				/**
 				 * Controls the visibility of a filter item in the filter bar.
-				 * 
 				 * @since 1.26.1
 				 */
 				visibleInFilterBar: {
 					type: "boolean",
 					group: "Misc",
 					defaultValue: true
+				},
+
+				/**
+				 * A hidden filter will never be visible in the filter bar control
+				 * @since 1.44.0
+				 */
+				hiddenFilter: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
 				}
 			},
 			aggregations: {
@@ -129,16 +138,54 @@ sap.ui.define([
 
 	/**
 	 * Initializes the filter item.
-	 * 
 	 * @public
 	 */
 	FilterItem.prototype.init = function() {
 		this._oLabel = null;
+		this._bIsParameter = false;
+		this._sControlId = null;
+	};
+
+	/**
+	 * Sets the corresponding control. The control may not be overwritten by the application, once the filter item is assigned to the FilterBar.
+	 * @public
+	 * @param {sap.ui.core.Control} oControl associated with the filter.
+	 */
+	FilterItem.prototype.setControl = function(oControl) {
+		if (oControl && oControl.getId) {
+			this._sControlId = oControl.getId();
+		}
+
+		this.setAggregation("control", oControl);
+	};
+
+	/**
+	 * Always returns the initially added control.
+	 * @public
+	 */
+	FilterItem.prototype.getControl = function() {
+		var oControl = this.getAggregation("control");
+		if (oControl) {
+			return oControl;
+		}
+
+		if (this._sControlId === null) {
+			return null;
+		}
+
+		return sap.ui.getCore().byId(this._sControlId);
+	};
+
+	/**
+	 * @private
+	 * @returns {boolean} indicates if this is a parameter.
+	 */
+	FilterItem.prototype._isParameter = function() {
+		return this._bIsParameter;
 	};
 
 	/**
 	 * Setter for visible property.
-	 * 
 	 * @public
 	 * @param {boolean} bVisible State of visibility
 	 */
@@ -151,7 +198,6 @@ sap.ui.define([
 
 	/**
 	 * Setter for visible in filter bar.
-	 * 
 	 * @public
 	 * @since 1.26.1
 	 * @param {boolean} bVisible State of visibility in filter bar
@@ -164,30 +210,31 @@ sap.ui.define([
 		});
 	};
 
-	FilterItem.prototype._replace = function(sName) {
-		var t = DataType.getType("sap.ui.core.ID");
-		if (!t.isValid(sName)) {
-			sName = sName.replace(/[^A-Za-z0-9_.:]+/g, "_");
-			if (!t.isValid(sName)) {
-				sName = "A_" + sName;
-			}
-		}
+	/**
+	 * Setter for partOfCurrentVariant in filter bar.
+	 * @public
+	 * @param {boolean} bVisible State of visibility in filter bar
+	 */
+	FilterItem.prototype.setPartOfCurrentVariant = function(bVisible) {
+		this.setProperty("partOfCurrentVariant", bVisible);
 
-		return sName;
+		this.fireChange({
+			propertyName: "partOfCurrentVariant"
+		});
 	};
 
 	FilterItem.prototype._getGroupName = function() {
 
 		var sName = "";
 		if (this.getGroupName) {
-			sName = this._replace(this.getGroupName());
+			sName = IdentifierUtil.replace(this.getGroupName());
 		}
 
 		return sName;
 	};
 
 	FilterItem.prototype._getName = function() {
-		var sName = this._replace(this.getName());
+		var sName = IdentifierUtil.replace(this.getName());
 		var sGroupName = this._getGroupName();
 
 		if (sGroupName) {
@@ -220,7 +267,6 @@ sap.ui.define([
 
 	/**
 	 * Setter for mandatory flag.
-	 * 
 	 * @public
 	 * @param {string} bValue Mandatory state
 	 */
@@ -238,7 +284,6 @@ sap.ui.define([
 
 	/**
 	 * Setter for label.
-	 * 
 	 * @public
 	 * @param {string} sValue Label text
 	 */
@@ -260,7 +305,6 @@ sap.ui.define([
 
 	/**
 	 * Setter for tooltip.
-	 * 
 	 * @public
 	 * @param {string} sText Tooltip text
 	 */
@@ -270,11 +314,14 @@ sap.ui.define([
 		if (this._oLabel) {
 			this._oLabel.setTooltip(sText);
 		}
+
+		this.fireChange({
+			propertyName: "labelTooltip"
+		});
 	};
 
 	/**
 	 * Returns the label control.
-	 * 
 	 * @param {string} sFilterBarId The ID of the filter bar
 	 * @returns {sap.m.Label} Label control
 	 */
@@ -289,7 +336,6 @@ sap.ui.define([
 
 	/**
 	 * Destroys this element.
-	 * 
 	 * @public
 	 */
 	FilterItem.prototype.destroy = function() {

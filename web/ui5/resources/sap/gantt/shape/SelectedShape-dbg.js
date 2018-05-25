@@ -24,7 +24,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @extends sap.gantt.shape.Path
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -75,7 +75,7 @@ sap.ui.define([
 	 * 
 	 * @param {object} oData Shape data.
 	 * @param {object} oRowInfo Information about the row and the row data.
-	 * @return {string} Value of property <code>d</code>.
+	 * @return {string} Value of property <code>d</code> or null if the generated d is invalid according to the given data.
 	 * @public
 	 */
 	SelectedShape.prototype.getD = function (oData, oRowInfo) {
@@ -154,7 +154,7 @@ sap.ui.define([
 				var startTime = this.getParent().getTime(oData, oRowInfo);
 				var endTime = this.getParent().getEndTime(oData, oRowInfo);
 				var oAxisTime = this.getParent().getAxisTime();
-				var iHeight = this.getHeight(oData) + iParentStrokeWidth;
+				var iHeight = this.getHeight(oData);
 
 				if (Core.getConfiguration().getRTL()) {
 					x1 = oAxisTime.timeToView(Format.abapTimestampToDate(endTime));
@@ -166,15 +166,15 @@ sap.ui.define([
 				if (this.getParent().mShapeConfig.hasShapeProperty("y")) {
 					y1 = this.getParent()._configFirst("y", oData) - iStrokeWidth / 2;
 				}else {
-					y1 = this.getParent().getRowYCenter(oData, oRowInfo) - iHeight / 2 - iStrokeWidth / 2;
+					y1 = this.getParent().getRowYCenter(oData, oRowInfo) - iHeight / 2;
 				}
-				
+
 				if (this.getParent().mShapeConfig.hasShapeProperty("width")) {
 					iWidth = this.getParent()._configFirst("width", oData) + iStrokeWidth;
 				}else {
 					iWidth = x2 - x1 - iParentStrokeWidth - 1 + iStrokeWidth;
 				}
-				
+
 				if (iWidth === 0 || iWidth < 0 || !iWidth) {
 					iWidth = 2;
 				}
@@ -186,7 +186,12 @@ sap.ui.define([
 					" L " + x1 + " " + y2 + " z";
 				break;
 		}
-		return sPath;
+		if(this.isValid(sPath)) {
+			return sPath;
+		} else {
+			jQuery.sap.log.warning("SelectedShape generated invalid d: " + sPath + " from the given data: " + oData);
+			return null;
+		}
 	};
 
 	/**

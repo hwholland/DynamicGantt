@@ -1,8 +1,7 @@
-(function () {
-    "use strict";
-    /*global jQuery, sap, hasher */
-    jQuery.sap.declare("sap.ushell.components.flp.FLPAnalytics");
+sap.ui.define(function() {
+	"use strict";
 
+    /*global jQuery, sap, hasher */
     /**
      * Manage UsageAnalytics event logging as a result of FLP user flows
      */
@@ -75,7 +74,6 @@
             sap.ushell.Container.getService("UsageAnalytics").logCustomEvent("FLP: Application Launch point", "Homepage", []);
             break;
         case 'dashboardTileLinkClick':
-            window.swa.custom1 = {ref: oData.targetHash.substr(1)};
             sap.ushell.Container.getService("UsageAnalytics").logCustomEvent("FLP: Application Launch point", "Tile Group Link", []);
             break;
         default:
@@ -130,4 +128,6 @@
     aObservedLaunchpadActions.forEach(function (item, i, arr) {
         oEventBus.subscribe("launchpad", item, handleAction, that);
     });
-})();
+
+
+}, /* bExport= */ false);

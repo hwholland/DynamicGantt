@@ -7,17 +7,9 @@
 
 // Provides the ViewStateManager class.
 sap.ui.define([
-	"jquery.sap.global", "./library", "sap/ui/base/ManagedObject"
-], function(jQuery, library, ManagedObject) {
+	"jquery.sap.global", "sap/ui/core/Element", "./ContentConnector", "./Scene", "./ViewStateManagerBase", "./Core"
+], function(jQuery, Element, ContentConnector, Scene, ViewStateManagerBase, VkCore) {
 	"use strict";
-
-	var NodeSet;
-	var log = jQuery.sap.log;
-
-	// NB: Implementation details:
-	// ViewStateManager should have its own set of visible and selected nodes.
-	// At the moment only one viewport per scene is supported and hence we can delegate
-	// visibility and selection handling to the scene.
 
 	/**
 	 * Constructor for a new ViewStateManager.
@@ -25,118 +17,158 @@ sap.ui.define([
 	 * @class
 	 * Manages the visibility and selection states of nodes in the scene.
 	 *
-	 * The objects of this class should not be created directly.
-	 * They should be created with the {@link sap.ui.vk.GraphicsCore#createViewStateManager sap.ui.vk.GraphicsCore.createViewStateManager} method,
-	 * and destroyed with the {@link sap.ui.vk.GraphicsCore#destroyViewStateManager sap.ui.vk.GraphicsCore.destroyViewStateManager} method.
-	 *
-	 * @param {sap.ui.vk.NodeHierarchy} nodeHierarchy The NodeHierarchy object.
+	 * @param {string} [sId] ID for the new ViewStateManager object. Generated automatically if no ID is given.
+	 * @param {object} [mSettings] Initial settings for the new ViewStateManager object.
 	 * @public
 	 * @author SAP SE
-	 * @version 1.38.15
-	 * @extends sap.ui.base.ManagedObject
+	 * @version 1.54.4
+	 * @extends sap.ui.vk.ViewStateManagerBase
 	 * @alias sap.ui.vk.ViewStateManager
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
 	 */
-	var ViewStateManager = ManagedObject.extend("sap.ui.vk.ViewStateManager", /** @lends sap.ui.vk.ViewStateManager.prototype */ {
+	var ViewStateManager = ViewStateManagerBase.extend("sap.ui.vk.ViewStateManager", /** @lends sap.ui.vk.ViewStateManager.prototype */ {
 		metadata: {
 			publicMethods: [
 				"enumerateSelection",
 				"getNodeHierarchy",
+				"getOpacity",
 				"getSelectionState",
+				"getTintColor",
+				"getVisibilityChanges",
 				"getVisibilityState",
+				"setOpacity",
 				"setSelectionState",
-				"setVisibilityState"
-			],
-
-			events: {
-				/**
-				 * This event is fired when the visibility of the node changes.
-				 */
-				visibilityChanged: {
-					parameters: {
-						/**
-						 * IDs of newly shown nodes.
-						 */
-						visible: {
-							type: "string[]"
-						},
-						/**
-						 * IDs of newly hidden nodes.
-						 */
-						hidden: {
-							type: "string[]"
-						}
-					},
-					enableEventBubbling: true
-				},
-
-				/**
-				 * This event is fired when the nodes are selected/unselected.
-				 */
-				selectionChanged: {
-					parameters: {
-						/**
-						 * IDs of newly selected nodes.
-						 */
-						selected: {
-							type: "string[]"
-						},
-						/**
-						 * IDs of newly unselected nodes.
-						 */
-						unselected: {
-							type: "string[]"
-						}
-					},
-					enableEventBubbling: true
-				}
-			}
-		},
-		constructor: function(nodeHierarchy) {
-			log.debug("sap.ui.vk.ViewStateManager.constructor() called.");
-
-			ManagedObject.apply(this);
-
-			var scene = nodeHierarchy.getScene();
-			this._nodeHierarchy = nodeHierarchy;
-			this._dvlSceneId = scene._getDvlSceneId();
-			this._dvl = scene.getGraphicsCore()._getDvl();
-			this._dvlClientId = scene.getGraphicsCore()._getDvlClientId();
-			this._dvl.Client.attachNodeVisibilityChanged(this._handleNodeVisibilityChanged, this);
-			this._dvl.Client.attachNodeSelectionChanged(this._handleNodeSelectionChanged, this);
-			this._selectedNodes = new NodeSet();
-			this._newlyVisibleNodes = [];
-			this._newlyHiddenNodes = [];
-			this._visibilityTimerId = null;
-			this._selectionTimerId = null;
+				"setTintColor",
+				"setVisibilityState",
+				"setShowSelectionBoundingBox",
+				"getShowSelectionBoundingBox"
+			]
 		}
 	});
 
-	ViewStateManager.prototype.destroy = function() {
-		log.debug("sap.ui.vk.ViewStateManager.destroy() called.");
+	var basePrototype = ViewStateManager.getMetadata().getParent().getClass().prototype;
 
-		if (this._selectionTimerId) {
-			jQuery.sap.clearDelayedCall(this._selectionTimerId);
-			this._selectionTimerId = null;
+	ViewStateManager.prototype.init = function() {
+		if (basePrototype.init) {
+			basePrototype.init.call(this);
 		}
-		if (this._visibilityTimerId) {
-			jQuery.sap.clearDelayedCall(this._visibilityTimerId);
-			this._visibilityTimerId = null;
-		}
-		this._newlyHiddenNodes = null;
-		this._newlyVisibleNodes = null;
-		this._selectedNodes = null;
-		if (this._dvl) {
-			this._dvl.Client.detachNodeSelectionChanged(this._handleNodeSelectionChanged, this);
-			this._dvl.Client.detachNodeVisibilityChanged(this._handleNodeVisibilityChanged, this);
-		}
-		this._dvlClientId = null;
-		this._dvlSceneId = null;
-		this._dvl = null;
-		this._scene = null;
 
-		ManagedObject.prototype.destroy.apply(this);
+		this._implementation = null;
 	};
+
+	ViewStateManager.prototype.exit = function() {
+		this._destroyImplementation();
+
+		if (basePrototype.exit) {
+			basePrototype.exit.call(this);
+		}
+	};
+
+	ViewStateManager.prototype._destroyImplementation = function() {
+		if (this._implementation) {
+			this._implementation.destroy();
+			this._implementation = null;
+		}
+		return this;
+	};
+
+	ViewStateManager.prototype.getImplementation = function() {
+		return this._implementation;
+	};
+
+	////////////////////////////////////////////////////////////////////////
+	// Content connector handling begins.
+	ViewStateManager.prototype._setContent = function(content) {
+		var scene = null;
+		if (content && content instanceof sap.ui.vk.Scene) {
+			scene = content;
+		}
+		this._setScene(scene);
+	};
+
+	ViewStateManager.prototype._onAfterUpdateContentConnector = function() {
+		this._setContent(this._contentConnector.getContent());
+	};
+
+	ViewStateManager.prototype._onBeforeClearContentConnector = function() {
+		this._setScene(null);
+	};
+
+	// Content connector handling ends.
+	////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////
+	// Node hierarchy handling begins.
+
+	ViewStateManager.prototype._handleContentReplaced = function(event) {
+		this._setContent(event.getParameter("newContent"));
+	};
+
+	ViewStateManager.prototype._setScene = function(scene) {
+		if (scene && scene instanceof Scene) {
+			var sceneType = scene.getMetadata().getName(),
+				implementationType = this._implementation && this._implementation.getMetadata().getName(),
+				reuseImplemenation = sceneType === "sap.ui.vk.dvl.Scene" && implementationType === "sap.ui.vk.dvl.ViewStateManager" ||
+					sceneType === "sap.ui.vk.threejs.Scene" && implementationType === "sap.ui.vk.threejs.ViewStateManager";
+
+			if (!reuseImplemenation) {
+				this._destroyImplementation();
+				var newImplementationType;
+				if (sceneType === "sap.ui.vk.dvl.Scene") {
+					newImplementationType = "sap.ui.vk.dvl.ViewStateManager";
+				} else if (sceneType === "sap.ui.vk.threejs.Scene") {
+					newImplementationType = "sap.ui.vk.threejs.ViewStateManager";
+				}
+
+				if (newImplementationType) {
+					var that = this;
+					jQuery.sap.require(newImplementationType);
+					this._implementation = new (jQuery.sap.getObject(newImplementationType))({
+						shouldTrackVisibilityChanges: this.getShouldTrackVisibilityChanges(),
+						contentConnector: this.getContentConnector(),
+						visibilityChanged: function(event) {
+							that.fireVisibilityChanged({
+								visible: event.getParameter("visible"),
+								hidden: event.getParameter("hidden")
+							});
+						},
+						selectionChanged: function(event) {
+							that.fireSelectionChanged({
+								selected: event.getParameter("selected"),
+								unselected: event.getParameter("unselected")
+							});
+						},
+						opacityChanged: function(event) {
+							that.fireOpacityChanged({
+								changed: event.getParameter("changed"),
+								opacity: event.getParameter("opacity")
+							});
+						},
+						tintColorChanged: function(event) {
+							that.fireTintColorChanged({
+								changed: event.getParameter("changed"),
+								tintColor: event.getParameter("tintColor"),
+								tintColorABGR: event.getParameter("tintColorABGR")
+							});
+						},
+						nodeHierarchyReplaced: function(event) {
+							that.fireNodeHierarchyReplaced({
+								oldNodeHierarchy: event.getParameter("oldNodeHierarchy"),
+								newNodeHierarchy: event.getParameter("newNodeHierarchy")
+							});
+						}
+					});
+				}
+			}
+		} else {
+			this._destroyImplementation();
+		}
+
+		return this;
+	};
+
+	// Node hierarchy handling ends.
+	////////////////////////////////////////////////////////////////////////
 
 	/**
 	 * Gets the NodeHierarchy object associated with this ViewStateManager object.
@@ -144,76 +176,61 @@ sap.ui.define([
 	 * @public
 	 */
 	ViewStateManager.prototype.getNodeHierarchy = function() {
-		return this._nodeHierarchy;
+		return this._implementation && this._implementation.getNodeHierarchy();
+	};
+
+	/**
+	 * Gets the visibility changes in the current ViewStateManager object.
+	 * @returns {string[]} The visibility changes are in the form of an array. The array is a list of node VE ids which suffered a visibility changed relative to the default state.
+	 * @public
+	 */
+	ViewStateManager.prototype.getVisibilityChanges = function() {
+		return this._implementation && this._implementation.getVisibilityChanges();
+	};
+
+	/**
+	 * Gets the visibility state of all nodes.
+	 * @function
+	 * @name sap.ui.vk.ViewStateManager#getVisibilityComplete
+	 * @returns {object} An object with following structure.
+	 * <pre>
+	 * {
+	 *     visible: [string, ...] - an array of VE IDs of visible nodes
+	 *     hidden:  [string, ...] - an array of VE IDs of hidden nodes
+	 * }
+	 * </pre>
+	 */
+	ViewStateManager.prototype.getVisibilityComplete = function() {
+		return this._implementation && this._implementation.getVisibilityComplete();
 	};
 
 	/**
 	 * Gets the visibility state of nodes.
 	 *
-	 * If a single node ID is passed to the method then a single visibility state is returned.<br/>
-	 * If an array of node IDs is passed to the method then an array of visibility states is returned.
+	 * If a single node reference is passed to the method then a single visibility state is returned.<br/>
+	 * If an array of node references is passed to the method then an array of visibility states is returned.
 	 *
-	 * @param {string|string[]} nodeIds The node ID or the array of node IDs.
-	 * @return {boolean|boolean[]} A single value or an array of values where the value is <code>true</code> if the node is visible, <code>false</code> otherwise.
+	 * @param {any|any[]} nodeRefs The node reference or the array of node references.
+	 * @returns {boolean|boolean[]} A single value or an array of values where the value is <code>true</code> if the node is visible, <code>false</code> otherwise.
 	 * @public
 	 */
-	ViewStateManager.prototype.getVisibilityState = function(nodeIds) {
-		if (Array.isArray(nodeIds)) {
-			return nodeIds.map(function(nodeId) {
-				return (this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_FLAGS).Flags & sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_VISIBLE) !== 0;
-			}.bind(this));
-		} else {
-			var nodeId = nodeIds; // The nodeIds argument is a single nodeId.
-			return (this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_FLAGS).Flags & sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_VISIBLE) !== 0;
-		}
+	ViewStateManager.prototype.getVisibilityState = function(nodeRefs) {
+		return this._implementation && this._implementation.getVisibilityState(nodeRefs);
 	};
 
 	/**
 	 * Sets the visibility state of the nodes.
-	 * @param {string|string[]} nodeIds The node ID or the array of node IDs.
+	 * @param {any|any[]} nodeRefs The node reference or the array of node references.
 	 * @param {boolean} visible The new visibility state of the nodes.
 	 * @param {boolean} recursive The flags indicates if the change needs to propagate recursively to child nodes.
-	 * @return {sap.ui.vk.ViewStateManager} <code>this</code> to allow method chaining.
+	 * @returns {sap.ui.vk.ViewStateManager} <code>this</code> to allow method chaining.
 	 * @public
 	 */
-	ViewStateManager.prototype.setVisibilityState = function(nodeIds, visible, recursive) {
-		if (!Array.isArray(nodeIds)) {
-			nodeIds = [nodeIds];
+	ViewStateManager.prototype.setVisibilityState = function(nodeRefs, visible, recursive) {
+		if (this._implementation) {
+			this._implementation.setVisibilityState(nodeRefs, visible, recursive);
 		}
-
-		var changed = jQuery.sap.unique((recursive ? this._collectNodesRecursively(nodeIds) : nodeIds)).filter(function(nodeId) {
-			var isCurrentlyVisible = (sap.ui.vk.dvl.getJSONObject(this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_FLAGS)).Flags & sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_VISIBLE) !== 0;
-			return isCurrentlyVisible !== visible;
-		}.bind(this));
-
-		if (changed.length > 0) {
-			changed.forEach(function(nodeId) {
-				this._dvl.Scene.ChangeNodeFlags(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_VISIBLE,
-					visible ? sap.ve.dvl.DVLFLAGOPERATION.DVLFLAGOP_SET : sap.ve.dvl.DVLFLAGOPERATION.DVLFLAGOP_CLEAR);
-			}.bind(this));
-
-			this.fireVisibilityChanged({
-				visible: visible ? changed : [],
-				hidden: visible ? [] : changed
-			});
-		}
-
 		return this;
-	};
-
-	ViewStateManager.prototype._handleNodeVisibilityChanged = function(parameters) {
-		if (parameters.clientId === this._dvlClientId && parameters.sceneId === this._dvlSceneId) {
-			this[parameters.visible ? "_newlyVisibleNodes" : "_newlyHiddenNodes"].push(parameters.nodeId);
-			if (!this._visibilityTimerId) {
-				this._visibilityTimerId = jQuery.sap.delayedCall(0, this, function() {
-					this._visibilityTimerId = null;
-					this.fireVisibilityChanged({
-						visible: this._newlyVisibleNodes.splice(0, this._newlyVisibleNodes.length),
-						hidden: this._newlyHiddenNodes.splice(0, this._newlyHiddenNodes.length)
-					});
-				}.bind(this));
-			}
-		}
 	};
 
 	/**
@@ -224,171 +241,285 @@ sap.ui.define([
 	 * @public
 	 */
 	ViewStateManager.prototype.enumerateSelection = function(callback) {
-		this._selectedNodes.forEach(callback);
+		if (this._implementation) {
+			this._implementation.enumerateSelection(callback);
+		}
 		return this;
+	};
+
+	/**
+	 * Sets if showing the bounding box when nodes are selected
+	 *
+	 * @param {boolean} val <code>true</code> if bounding boxes of selected nodes are shown, <code>false</code> otherwise.
+	 * @public
+	 */
+	ViewStateManager.prototype.setShowSelectionBoundingBox = function(val){
+		if (this._implementation) {
+			this._implementation.setShowSelectionBoundingBox(val);
+		}
+	};
+
+	/**
+	 * Gets if showing the bounding box when nodes are selected
+	 *
+	 * @returns {boolean} <code>true</code> if bounding boxes of selected nodes are shown, <code>false</code> otherwise.
+	 * @public
+	 */
+	ViewStateManager.prototype.getShowSelectionBoundingBox = function(){
+		if (this._implementation) {
+			return this._implementation.getShowSelectionBoundingBox();
+		}
 	};
 
 	/**
 	 * Gets the selection state of the node.
 	 *
-	 * If a single node ID is passed to the method then a single selection state is returned.<br/>
-	 * If an array of node IDs is passed to the method then an array of selection states is returned.
+	 * If a single node reference is passed to the method then a single selection state is returned.<br/>
+	 * If an array of node references is passed to the method then an array of selection states is returned.
 	 *
-	 * @param {string|string[]} nodeIds The node ID or the array of node IDs.
-	 * @return {boolean|boolean[]} A single value or an array of values where the value is <code>true</code> if the node is selected, <code>false</code> otherwise.
+	 * @param {any|any[]} nodeRefs The node reference or the array of node references.
+	 * @returns {boolean|boolean[]} A single value or an array of values where the value is <code>true</code> if the node is selected, <code>false</code> otherwise.
 	 * @public
 	 */
-	ViewStateManager.prototype.getSelectionState = function(nodeIds) {
-		if (Array.isArray(nodeIds)) {
-			return nodeIds.map(function(nodeId) {
-				return (this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_FLAGS).Flags & sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_SELECTED) !== 0;
-			}.bind(this));
-		} else {
-			var nodeId = nodeIds; // The nodeIds argument is a single nodeId.
-			return (this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_FLAGS).Flags & sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_SELECTED) !== 0;
-		}
+	ViewStateManager.prototype.getSelectionState = function(nodeRefs) {
+		return this._implementation && this._implementation.getSelectionState(nodeRefs);
 	};
 
 	/**
 	 * Sets the selection state of the nodes.
-	 * @param {string|string[]} nodeIds The node ID or the array of node IDs.
+	 * @param {any|any[]} nodeRefs The node reference or the array of node references.
 	 * @param {boolean} selected The new selection state of the nodes.
 	 * @param {boolean} recursive The flags indicates if the change needs to propagate recursively to child nodes.
-	 * @return {sap.ui.vk.ViewStateManager} <code>this</code> to allow method chaining.
+	 * @returns {sap.ui.vk.ViewStateManager} <code>this</code> to allow method chaining.
 	 * @public
 	 */
-	ViewStateManager.prototype.setSelectionState = function(nodeIds, selected, recursive) {
-		if (!Array.isArray(nodeIds)) {
-			nodeIds = [nodeIds];
+	ViewStateManager.prototype.setSelectionState = function(nodeRefs, selected, recursive) {
+		if (this._implementation) {
+			this._implementation.setSelectionState(nodeRefs, selected, recursive);
 		}
-
-		var changed = jQuery.sap.unique((recursive ? this._collectNodesRecursively(nodeIds) : nodeIds)).filter(function(nodeId) {
-			var isCurrentlySelected = (sap.ui.vk.dvl.getJSONObject(this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_FLAGS)).Flags & sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_SELECTED) !== 0;
-			return isCurrentlySelected !== selected;
-		}.bind(this));
-
-		if (changed.length > 0) {
-			var change = this._selectedNodes[selected ? "add" : "delete"].bind(this._selectedNodes);
-			changed.forEach(function(nodeId) {
-				this._dvl.Scene.ChangeNodeFlags(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_SELECTED,
-					selected ? sap.ve.dvl.DVLFLAGOPERATION.DVLFLAGOP_SET : sap.ve.dvl.DVLFLAGOPERATION.DVLFLAGOP_CLEAR);
-				change(nodeId);
-			}.bind(this));
-
-			this.fireSelectionChanged({
-				selected: selected ? changed : [],
-				unselected: selected ? [] : changed
-			});
-		}
-
 		return this;
 	};
 
-	ViewStateManager.prototype._handleNodeSelectionChanged = function(parameters) {
-		if (parameters.clientId === this._dvlClientId && parameters.sceneId === this._dvlSceneId) {
-			if (!this._selectionTimerId) {
-				this._selectionTimerId = jQuery.sap.delayedCall(0, this, function() {
-					this._selectionTimerId = null;
-					var currentlySelectedNodes = new NodeSet(this._dvl.Scene.RetrieveSceneInfo(this._dvlSceneId, sap.ve.dvl.DVLSCENEINFO.DVLSCENEINFO_SELECTED).SelectedNodes);
-					var newlyUnselectedNodes = [];
-					this._selectedNodes.forEach(function(nodeId) {
-						if (!currentlySelectedNodes.has(nodeId)) {
-							newlyUnselectedNodes.push(nodeId);
-						}
-					});
-					var newlySelectedNodes = [];
-					currentlySelectedNodes.forEach(function(nodeId) {
-						if (!this._selectedNodes.has(nodeId)) {
-							newlySelectedNodes.push(nodeId);
-						}
-					}.bind(this));
+	/**
+	 * Gets the opacity of the node.
+	 *
+	 * If a single node reference is passed to the method then a single value is returned.<br/>
+	 * If an array of node references is passed to the method then an array of values is returned.
+	 *
+	 * @param {any|any[]} nodeRefs The node reference or the array of node references.
+	 * @returns {float|float[]} A single value or an array of values. Value <code>null</code> means that the node's own opacity should be used.
+	 * @public
+	 */
+	ViewStateManager.prototype.getOpacity = function(nodeRefs) {
+		return this._implementation && this._implementation.getOpacity(nodeRefs);
+	};
 
-					this._selectedNodes = currentlySelectedNodes;
+	/**
+	 * Sets the opacity of the nodes.
+	 *
+	 * @param {any|any[]}       nodeRefs          The node reference or the array of node references.
+	 * @param {float|null}      opacity           The new opacity of the nodes. If <code>null</code> is passed then the opacity is reset
+	 *                                            and the node's own opacity should be used.
+	 * @param {boolean}         [recursive=false] The flags indicates if the change needs to propagate recursively to child nodes.
+	 * @returns {sap.ui.vk.ViewStateManager} <code>this</code> to allow method chaining.
+	 * @public
+	 */
+	ViewStateManager.prototype.setOpacity = function(nodeRefs, opacity, recursive) {
+		if (this._implementation) {
+			this._implementation.setOpacity(nodeRefs, opacity, recursive);
+		}
+		return this;
+	};
 
-					this.fireSelectionChanged({
-						selected: newlySelectedNodes,
-						unselected: newlyUnselectedNodes
-					});
-				});
-			}
+	/**
+	 * Gets the tint color of the node.
+	 *
+	 * If a single node reference is passed to the method then a single value is returned.<br/>
+	 * If an array of node references is passed to the method then an array of values is returned.
+	 *
+	 * @param {any|any[]}       nodeRefs             The node reference or the array of node references.
+	 * @param {boolean}         [inABGRFormat=false] This flag indicates to return the tint color in the ABGR format,
+	 *                                               if it equals <code>false</code> then the color is returned in the CSS color format.
+	 * @returns {sap.ui.core.CSSColor|sap.ui.core.CSSColor[]|int|int[]}
+	 *                                               A single value or an array of values. Value <code>null</code> means that
+	 *                                               the node's own tint color should be used.
+	 * @public
+	 */
+	ViewStateManager.prototype.getTintColor = function(nodeRefs, inABGRFormat) {
+		return this._implementation && this._implementation.getTintColor(nodeRefs, inABGRFormat);
+	};
+
+	/**
+	 * Sets the tint color of the nodes.
+	 * @param {any|any[]}                   nodeRefs          The node reference or the array of node references.
+	 * @param {sap.ui.vk.CSSColor|int|null} tintColor         The new tint color of the nodes. The value can be defined as a string
+	 *                                                        in the CSS color format or as an integer in the ABGR format. If <code>null</code>
+	 *                                                        is passed then the tint color is reset and the node's own tint color should be used.
+	 * @param {boolean}                     [recursive=false] This flag indicates if the change needs to propagate recursively to child nodes.
+	 * @returns {sap.ui.vk.ViewStateManager} <code>this</code> to allow method chaining.
+	 * @public
+	 */
+	ViewStateManager.prototype.setTintColor = function(nodeRefs, tintColor, recursive) {
+		if (this._implementation) {
+			this._implementation.setTintColor(nodeRefs, tintColor, recursive);
+		}
+		return this;
+	};
+
+	/**
+	 * Sets the default highlighting color
+	 * @param {sap.ui.vk.CSSColor|string|int} color           The new default highlighting color. The value can be defined as a string
+	 *                                                        in the CSS color format or as an integer in the ABGR format. If <code>null</code>
+	 *                                                        is passed then the tint color is reset and the node's own tint color should be used.
+	 * @returns {sap.ui.vk.ViewStateManager} <code>this</code> to allow method chaining.
+	 * @public
+	 */
+	ViewStateManager.prototype.setHighlightColor = function(color) {
+		if (this._implementation && this._implementation.setHighlightColor) {
+			this._implementation.setHighlightColor(color);
+		}
+		return this;
+	};
+
+
+	/**
+	 * Gets the default highlighting color
+	 *
+	 * @param {boolean}         [inABGRFormat=false] This flag indicates to return the default highlighting color in the ABGR format,
+	 *                                               if it equals <code>false</code> then the color is returned in the CSS color format.
+	 * @returns {sap.ui.core.CSSColor|string|int}
+	 *                                               A single value or an array of values. Value <code>null</code> means that
+	 *                                               the node's own tint color should be used.
+	 * @public
+	 */
+	ViewStateManager.prototype.getHighlightColor = function(inABGRFormat) {
+		if (this._implementation && this._implementation.getHighlightColor) {
+			return this._implementation.getHighlightColor(inABGRFormat);
 		}
 	};
 
-	ViewStateManager.prototype._collectNodesRecursively = function(nodeIds) {
-		var result = [];
-		var collectChildNodes = function(node) {
-			var nodeId = typeof node === "string" ? node : node.getNodeId();
-			result.push(nodeId);
-			if ((sap.ui.vk.dvl.getJSONObject(this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, nodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_FLAGS)).Flags & sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_CLOSED) === 0) {
-				this._nodeHierarchy.enumerateChildren(nodeId, collectChildNodes);
-			}
-		}.bind(this);
-		nodeIds.forEach(collectChildNodes);
-		return result;
-	};
+	var fullClassName = ViewStateManager.getMetadata().getName();
 
-	NodeSet = function(array) {
-		array = array || [];
-		if (this._builtin) {
-			if (sap.ui.Device.browser.msie) {
-				this._set = new Set();
-				array.forEach(this._set.add.bind(this._set));
-			} else {
-				this._set = new Set(array);
-			}
-		} else {
-			this._set = array.slice();
-		}
-	};
+	var mixin = {
+		init: function() {
+			this._viewStateManager = null;
+			sap.ui.vk.getCore()
+				.attachEvent(fullClassName + "-created", this._handleViewStateManagerCreated, this)
+				.attachEvent(fullClassName + "-destroying", this._handleViewStateManagerDestroying, this);
+		},
 
-	NodeSet.prototype = {
-		constructor: NodeSet,
+		exit: function() {
+			this.setViewStateManager(null);
+			sap.ui.vk.getCore()
+				.detachEvent(fullClassName + "-destroying", this._handleViewStateManagerDestroying, this)
+				.detachEvent(fullClassName + "-created", this._handleViewStateManagerCreated, this);
+		},
 
-		_builtin: !!Set,
+		setViewStateManager: function(viewStateManager) {
+			this.setAssociation("viewStateManager", viewStateManager, true);
+			this._updateViewStateManager();
+			return this;
+		},
 
-		add: function(value) {
-			if (this._builtin) {
-				this._set.add(value);
-			} else if (this._set.indexOf() < 0) {
-				this._set.push(value);
+		_updateViewStateManager: function() {
+			var newViewStateManagerId = this.getViewStateManager(),
+				// sap.ui.getCore() returns 'undefined' if cannot find an element,
+				// getViewStateManager() returns 'null' if there is no connector.
+				newViewStateManager = newViewStateManagerId && sap.ui.getCore().byId(newViewStateManagerId) || null;
+
+			if (this._viewStateManager !== newViewStateManager) {
+				this._clearViewStateManager();
+				if (newViewStateManager) {
+					if (this._handleNodeHierarchyReplaced) {
+						newViewStateManager.attachNodeHierarchyReplaced(this._handleNodeHierarchyReplaced, this);
+					}
+					if (this._handleVisibilityChanged) {
+						newViewStateManager.attachVisibilityChanged(this._handleVisibilityChanged, this);
+					}
+					if (this._handleSelectionChanged) {
+						newViewStateManager.attachSelectionChanged(this._handleSelectionChanged, this);
+					}
+					if (this._handleOpacityChanged) {
+						newViewStateManager.attachOpacityChanged(this._handleOpacityChanged, this);
+					}
+					if (this._handleTintColorChanged) {
+						newViewStateManager.attachTintColorChanged(this._handleTintColorChanged, this);
+					}
+					this._viewStateManager = newViewStateManager;
+					if (this._onAfterUpdateViewStateManager) {
+						this._onAfterUpdateViewStateManager();
+					}
+				}
 			}
 			return this;
 		},
 
-		delete: function(value) {
-			if (this._builtin) {
-				return this._set.delete(value);
-			} else {
-				var index = this._set.indexOf(value);
-				if (index >= 0) {
-					this.splice(index, 1);
-					return true;
-				} else {
-					return false;
+		_clearViewStateManager: function() {
+			if (this._viewStateManager) {
+				if (this._onBeforeClearViewStateManager) {
+					this._onBeforeClearViewStateManager();
 				}
+				if (this._handleTintColorChanged) {
+					this._viewStateManager.detachTintColorChanged(this._handleTintColorChanged, this);
+				}
+				if (this._handleOpacityChanged) {
+					this._viewStateManager.detachOpacityChanged(this._handleOpacityChanged, this);
+				}
+				if (this._handleSelectionChanged) {
+					this._viewStateManager.detachSelectionChanged(this._handleSelectionChanged, this);
+				}
+				if (this._handleVisibilityChanged) {
+					this._viewStateManager.detachVisibilityChanged(this._handleVisibilityChanged, this);
+				}
+				if (this._handleNodeHierarchyReplaced) {
+					this._viewStateManager.detachNodeHierarchyReplaced(this._handleNodeHierarchyReplaced, this);
+				}
+				this._viewStateManager = null;
+			}
+			return this;
+		},
+
+		_handleViewStateManagerCreated: function(event) {
+			if (this.getViewStateManager() === event.getParameter("object").getId()) {
+				this._updateViewStateManager();
 			}
 		},
 
-		clear: function() {
-			if (this._builtin) {
-				this._set.clear();
-			} else {
-				this._set.splice(0, this._set.length);
+		_handleViewStateManagerDestroying: function(event) {
+			if (this.getViewStateManager() === event.getParameter("object").getId()) {
+				this._clearViewStateManager();
 			}
-		},
-
-		has: function(value) {
-			if (this._builtin) {
-				return this._set.has(value);
-			} else {
-				return this._set.indexOf(value) >= 0;
-			}
-		},
-
-		forEach: function(callback, thisArg) {
-			this._set.forEach(callback, thisArg);
 		}
 	};
+
+	ViewStateManager.injectMethodsIntoClass = function(classObject) {
+		var prototype = classObject.prototype,
+			init = prototype.init,
+			exit = prototype.exit;
+
+		prototype.init = function() {
+			if (init) {
+				init.call(this);
+			}
+			mixin.init.call(this);
+		};
+
+		prototype.exit = function() {
+			mixin.exit.call(this);
+			if (exit) {
+				exit.call(this);
+			}
+		};
+
+		prototype.setViewStateManager = mixin.setViewStateManager;
+		prototype._updateViewStateManager = mixin._updateViewStateManager;
+		prototype._clearViewStateManager = mixin._clearViewStateManager;
+		prototype._handleViewStateManagerCreated = mixin._handleViewStateManagerCreated;
+		prototype._handleViewStateManagerDestroying = mixin._handleViewStateManagerDestroying;
+	};
+
+	sap.ui.vk.getCore().registerClass(ViewStateManager);
+	ContentConnector.injectMethodsIntoClass(ViewStateManager);
 
 	return ViewStateManager;
 });

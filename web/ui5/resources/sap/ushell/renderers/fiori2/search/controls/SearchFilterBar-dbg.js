@@ -1,10 +1,10 @@
 /* global jQuery, sap, window, console */
-(function() {
+sap.ui.define([
+    'sap/m/Toolbar'
+], function() {
     "use strict";
 
-    jQuery.sap.require('sap.m.Toolbar');
-
-    sap.m.Toolbar.extend("sap.ushell.renderers.fiori2.search.controls.SearchFilterBar", {
+    return sap.m.Toolbar.extend("sap.ushell.renderers.fiori2.search.controls.SearchFilterBar", {
 
         constructor: function(options) {
             var that = this;
@@ -23,7 +23,7 @@
             that.filterText = new sap.m.Text({
                 text: {
                     parts: [{
-                        path: "/uiFilter/defaultConditionGroup/conditions"
+                        path: "/uiFilter/rootCondition"
                     }, {
                         path: "/facets"
                     }],
@@ -31,7 +31,7 @@
                 },
                 tooltip: {
                     parts: [{
-                        path: "/uiFilter/defaultConditionGroup/conditions"
+                        path: "/uiFilter/rootCondition"
                     }, {
                         path: "/facets"
                     }],
@@ -53,70 +53,73 @@
             that.addContent(that.resetButton);
         },
 
-        filterFormatter: function(conditions, facets) {
-            var getLabel = function(condition) {
-                return condition.label;
-            };
-            if (conditions.length === 0) {
-                return "";
+        filterFormatter: function(rootCondition, facets) {
+            if (!rootCondition || !rootCondition.hasFilters()) {
+                return '';
             }
-            conditions = this.sortConditions(conditions, facets);
+            // sort filter values, use same order as in facets
+            rootCondition = this.sortConditions(rootCondition, facets);
+            // collect all filter values
             var labels = [];
-            /*eslint-disable no-loop-func*/
-            for (var i = 0; i < conditions.length; i++) {
-                var subLabels = jQuery.map(conditions[i].conditions, getLabel);
-                labels = labels.concat(subLabels);
+            for (var i = 0; i < rootCondition.conditions.length; ++i) {
+                var complexCondition = rootCondition.conditions[i];
+                for (var j = 0; j < complexCondition.conditions.length; ++j) {
+                    var filterCondition = complexCondition.conditions[j];
+                    labels.push(filterCondition.valueLabel);
+                }
             }
-            return sap.ushell.resources.i18n.getText("filtered_by") + ": " + labels.join(', ');
+            return sap.ushell.resources.i18n.getText("filtered_by", labels.join(', '));
         },
 
-        sortConditions: function(conditions, facets) {
-            var i;
-
-            // helper for getting index
-            var getIndex = function(attribute, value, list) {
+        sortConditions: function(rootCondition, facets) {
+            // cannot sort without facets
+            if (facets.length === 0) {
+                return rootCondition;
+            }
+            // helper: get attribute from a complex condition
+            var getAttribute = function(complexCondition) {
+                var firstFilter = complexCondition.conditions[0];
+                if (firstFilter.attribute) {
+                    return firstFilter.attribute;
+                } else {
+                    return firstFilter.conditions[0].attribute;
+                }
+            };
+            // helper get list index
+            var getIndex = function(list, attribute, value) {
                 for (var i = 0; i < list.length; ++i) {
-                    if (list[i][attribute] === value) {
+                    var element = list[i];
+                    if (element[attribute] === value) {
                         return i;
                     }
                 }
-                return -1;
             };
-
-            // helper for getting facet
-            var getFacet = function(title, facets) {
-                for (var i = 0; i < facets.length; ++i) {
-                    if (facets[i].title === title) {
-                        return facets[i];
-                    }
-                }
-                return null;
-            };
-
-            // deep copy of conditions, we don't want to modify the original array
-            var newConditions = [];
-            for (i = 0; i < conditions.length; ++i) {
-                newConditions.push(conditions[i].clone());
-            }
-            conditions = newConditions;
-
-            // sort conditions
-            conditions.sort(function(condition1, condition2) {
-                return getIndex('title', condition1.label, facets) - getIndex('title', condition2.label, facets);
+            // clone: we don't want to modify the original filter
+            rootCondition = rootCondition.clone();
+            // 1) sort complexConditons (each complexCondition holds the filters for a certain attribute)
+            rootCondition.conditions.sort(function(complexCondition1, complexCondition2) {
+                var attribute1 = getAttribute(complexCondition1);
+                var index1 = getIndex(facets, 'dimension', attribute1);
+                var attribute2 = getAttribute(complexCondition2);
+                var index2 = getIndex(facets, 'dimension', attribute2);
+                return index1 - index2;
             });
-
-            // sort subconditions (facet values) within conditions
-            for (i = 0; i < conditions.length; ++i) {
-                var condition = conditions[i];
-                var facet = getFacet(condition.label, facets);
-                if (!facet) {
-                    continue;
-                }
-                condition.conditions.sort(function(condition1, condition2) {
-                    return getIndex('label', condition1.label, facet.items) - getIndex('label', condition2.label, facet.items);
-                }); // jshint ignore:line
+            // 2) sort filters within a complexConditon
+            var sortValues = function(complexCondition) {
+                var attribute = getAttribute(complexCondition);
+                var index = getIndex(facets, 'dimension', attribute);
+                if (!index) return;
+                var facet = facets[index];
+                var valueSortFunction = function(filter1, filter2) {
+                    return getIndex(facet.items, 'label', filter1.valueLabel) - getIndex(facet.items, 'label', filter2.valueLabel);
+                };
+                complexCondition.conditions.sort(valueSortFunction);
+            };
+            for (var i = 0; i < rootCondition.conditions.length; ++i) {
+                var complexCondition = rootCondition.conditions[i];
+                sortValues(complexCondition);
             }
-            return conditions;
+            return rootCondition;
         },
 
         renderer: 'sap.m.ToolbarRenderer',
@@ -125,16 +128,14 @@
             var that = this;
 
             // don't have model until after rendering
-            // attach press action 
+            // attach press action
             that.resetButton.attachPress(function() {
                 that.getModel().resetFilterConditions(true);
             });
 
             // add aria label
             var $filterText = jQuery('.sapUshellSearchFilterText');
-            $filterText.attr('aria-label', sap.ushell.resources.i18n.getText("filtered_by"));
+            $filterText.attr('aria-label', sap.ushell.resources.i18n.getText("filtered_by_aria_label"));
         }
-
     });
-
-}());
+});

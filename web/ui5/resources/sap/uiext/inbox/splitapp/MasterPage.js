@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.splitapp.MasterPage");jQuery.sap.require("sap.uiext.inbox.InboxUtils");sap.ui.base.Object.extend("sap.uiext.inbox.splitapp.MasterPage",{constructor:function(I){sap.ui.base.Object.apply(this);this.oCore=sap.ui.getCore();this.Id=I;this.utils=sap.uiext.inbox.InboxUtils;this._oBundle=this.oCore.getLibraryResourceBundle("sap.uiext.inbox");this.bPhoneDevice=jQuery.device.is.phone;this.masterPage=this._create();}});
 sap.uiext.inbox.splitapp.MasterPage.prototype.getPage=function(){return this.masterPage;};

@@ -49,7 +49,7 @@ sap.ui.define([
 	 * @extends sap.gantt.legend.LegendBase
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -61,7 +61,7 @@ sap.ui.define([
 				/**
 				 * Shapes for legend items. These shapes are used in the Gantt chart.
 				 */
-				shapes: {type: "array"}
+				shapes: {type: "sap.gantt.config.Shape[]"}
 			},
 			events: {
 				/**

@@ -59,7 +59,7 @@ sap.ui.model.SimpleType.extend("sap.ca.ui.model.type.Number", /** @lends sap.ca.
  * @see sap.ui.model.SimpleType.prototype.formatValue
  */
 sap.ca.ui.model.type.Number.prototype.formatValue = function(fValue, sInternalType) {
-    if (fValue == undefined || fValue == null) {
+    if (fValue === undefined || fValue === null) {
         return null;
     }
     switch(sInternalType) {

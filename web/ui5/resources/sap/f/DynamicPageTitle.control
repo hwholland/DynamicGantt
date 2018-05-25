@@ -35,7 +35,7 @@ content that is displayed.</documentation>
     <since>1.42</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="primaryArea" type="sap.f/DynamicPageTitleArea" defaultValue="Begin" group="Appearance" since="1.50">
+        <property since="1.50" group="Appearance" defaultValue="Begin" type="sap.f/DynamicPageTitleArea" name="primaryArea">
             <documentation>Determines which of the &lt;code&gt;DynamicPageTitle&lt;/code&gt; areas (Begin, Middle) is primary.
 
 &lt;b&gt;Note:&lt;/b&gt; The primary area is shrinking at lower rate, remaining visible as much as it can.</documentation>
@@ -50,7 +50,7 @@ section has the faster it shrinks when the screen size is being reduced.
 &lt;code&gt;primaryArea=Middle&lt;/code&gt; can be achieved by setting a low number for the Content area to
 &lt;code&gt;areaShrinkRatio&lt;/code&gt;, for example &lt;code&gt;1.6:1:1.6&lt;/code&gt;.</deprecation>
         </property>
-        <property name="areaShrinkRatio" type="sap.f/DynamicPageTitleShrinkRatio" defaultValue="1:1.6:1.6" group="Appearance" since="1.54">
+        <property since="1.54" group="Appearance" defaultValue="1:1.6:1.6" type="sap.f/DynamicPageTitleShrinkRatio" name="areaShrinkRatio">
             <documentation>Assigns shrinking ratio to the &lt;code&gt;DynamicPageTitle&lt;/code&gt; areas (Heading, Content, Actions).
 The greater value a section has the faster it shrinks when the screen size is being reduced.
 
@@ -68,21 +68,21 @@ is equal to 1. For example, value of &lt;code&gt;2:4:8&lt;/code&gt; is equal to 
         </property>
     </properties>
     <events>
-        <event name="stateChange" since="1.54" allowPreventDefault="false">
+        <event allowPreventDefault="false" since="1.54" name="stateChange">
             <documentation>Fired when the title state (expanded/collapsed) is toggled by user interaction.
 For example, scrolling, title clicking/tapping, using expand/collapse button.
 
 Also fired when the developer toggles the title state by programmatically
 changing the scroll position of the scrollbar of &lt;code&gt;DynamicPage&lt;/code&gt;.</documentation>
             <parameters>
-                <parameter name="isExpanded" type="sap.ui.core/boolean">
+                <parameter type="sap.ui.core/boolean" name="isExpanded">
                     <documentation>Whether the title was expanded (true) or collapsed (false).</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations>
-        <aggregation name="heading" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="heading">
             <documentation>The &lt;code&gt;heading&lt;/code&gt; is positioned in the &lt;code&gt;DynamicPageTitle&lt;/code&gt; left area
 and is displayed in both expanded and collapsed (snapped) states of the header.
 Use this aggregation to display a title (or any other UI5 control that serves
@@ -94,7 +94,7 @@ and &lt;code&gt;expandedHeading&lt;/code&gt;. If &lt;code&gt;heading&lt;/code&gt
 &lt;code&gt;heading&lt;/code&gt; is useful when the content of &lt;code&gt;snappedHeading&lt;/code&gt; and
 &lt;code&gt;expandedHeading&lt;/code&gt; needs to be the same as it replaces them both.</documentation>
         </aggregation>
-        <aggregation name="snappedHeading" type="sap.ui.core/Control" since="1.52" cardinality="0..1">
+        <aggregation cardinality="0..1" since="1.52" type="sap.ui.core/Control" name="snappedHeading">
             <documentation>The &lt;code&gt;snappedHeading&lt;/code&gt; is positioned in the &lt;code&gt;DynamicPageTitle&lt;/code&gt; left area
 and is displayed when the header is in collapsed (snapped) state only.
 Use this aggregation to display a title (or any other UI5 control that serves
@@ -104,7 +104,7 @@ as a heading) that has to be present in collapsed state only.
 &lt;code&gt;heading&lt;/code&gt; has to be empty. Combine &lt;code&gt;snappedHeading&lt;/code&gt; with
 &lt;code&gt;expandedHeading&lt;/code&gt; to switch content when the header switches state.</documentation>
         </aggregation>
-        <aggregation name="expandedHeading" type="sap.ui.core/Control" since="1.52" cardinality="0..1">
+        <aggregation cardinality="0..1" since="1.52" type="sap.ui.core/Control" name="expandedHeading">
             <documentation>The &lt;code&gt;expandedHeading&lt;/code&gt; is positioned in the &lt;code&gt;DynamicPageTitle&lt;/code&gt; left area
 and is displayed when the header is in expanded state only.
 Use this aggregation to display a title (or any other UI5 control that serves
@@ -114,12 +114,12 @@ as a heading) that has to be present in expanded state only.
 &lt;code&gt;heading&lt;/code&gt; has to be empty. Combine &lt;code&gt;expandedHeading&lt;/code&gt; with
 &lt;code&gt;snappedHeading&lt;/code&gt; to switch content when the header switches state.</documentation>
         </aggregation>
-        <aggregation name="actions" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="actions">
             <documentation>The &lt;code&gt;DynamicPageTitle&lt;/code&gt; actions.
 &lt;br&gt;&lt;b&gt;Note:&lt;/b&gt; The &lt;code&gt;actions&lt;/code&gt; aggregation accepts any UI5 control, but it`s recommended to use controls,
 suitable for {@link sap.m.Toolbar} and {@link sap.m.OverflowToolbar}.</documentation>
         </aggregation>
-        <aggregation name="navigationActions" type="sap.m/Button" since="1.52" cardinality="0..n">
+        <aggregation cardinality="0..n" since="1.52" type="sap.m/Button" name="navigationActions">
             <documentation>The &lt;code&gt;DynamicPageTitle&lt;/code&gt; navigation actions.
 
 &lt;b&gt;Note:&lt;/b&gt; The &lt;code&gt;navigationActions&lt;/code&gt; position depends on the control size.
@@ -128,29 +128,29 @@ Otherwise, they are rendered in the top-right area, above the &lt;code&gt;action
 If a large number of elements(buttons) are used, there could be visual degradations
 as the space for the &lt;code&gt;navigationActions&lt;/code&gt; is limited.</documentation>
         </aggregation>
-        <aggregation name="content" type="sap.ui.core/Control" since="1.50" cardinality="0..n">
+        <aggregation cardinality="0..n" since="1.50" type="sap.ui.core/Control" name="content">
             <documentation>The content is positioned in the &lt;code&gt;DynamicPageTitle&lt;/code&gt; middle area
 and displayed in both expanded and collapsed (snapped) states.</documentation>
         </aggregation>
-        <aggregation name="snappedContent" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="snappedContent">
             <documentation>The content that is displayed in the &lt;code&gt;DynamicPageTitle&lt;/code&gt; in collapsed (snapped) state.</documentation>
         </aggregation>
-        <aggregation name="expandedContent" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="expandedContent">
             <documentation>The content that is displayed in the &lt;code&gt;DynamicPageTitle&lt;/code&gt; in expanded state.</documentation>
         </aggregation>
-        <aggregation name="breadcrumbs" type="sap.m/IBreadcrumbs" since="1.52" cardinality="0..1">
+        <aggregation cardinality="0..1" since="1.52" type="sap.m/IBreadcrumbs" name="breadcrumbs">
             <documentation>The breadcrumbs displayed in the &lt;code&gt;DynamicPageTitle&lt;/code&gt; top-left area.</documentation>
         </aggregation>
-        <aggregation name="_actionsToolbar" type="sap.m/OverflowToolbar" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/OverflowToolbar" name="_actionsToolbar">
             <documentation>Internal &lt;code&gt;OverflowToolbar&lt;/code&gt; for the &lt;code&gt;DynamicPageTitle&lt;/code&gt; actions.</documentation>
         </aggregation>
-        <aggregation name="_navActionsToolbar" type="sap.m/Toolbar" since="1.52" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" since="1.52" type="sap.m/Toolbar" name="_navActionsToolbar">
             <documentation>Internal &lt;code&gt;Toolbar&lt;/code&gt; for the &lt;code&gt;DynamicPageTitle&lt;/code&gt; navigation actions.</documentation>
         </aggregation>
-        <aggregation name="_navActionsToolbarSeparator" type="sap.m/ToolbarSeparator" since="1.52" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" since="1.52" type="sap.m/ToolbarSeparator" name="_navActionsToolbarSeparator">
             <documentation>Internal &lt;code&gt;ToolbarSeparator&lt;/code&gt; to separate the &lt;code&gt;actions&lt;/code&gt; and &lt;code&gt;navigationActions&lt;/code&gt;.</documentation>
         </aggregation>
-        <aggregation name="_expandButton" type="sap.m/Button" since="1.52" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" since="1.52" type="sap.m/Button" name="_expandButton">
             <documentation>Visual indication for expanding.</documentation>
         </aggregation>
     </aggregations>

@@ -2,13 +2,18 @@
 /* global alert */
 /* global jQuery */
 /* global $, d3, navigator */
-(function() {
+
+sap.ui.define([
+    'sap/ui/thirdparty/d3'
+], function() {
     "use strict";
-    jQuery.sap.require("sap.ui.thirdparty.d3");
+
     sap.ui.core.Control.extend('sap.ushell.renderers.fiori2.search.controls.SearchFacetPieChart', {
         setEshRole: function(role) {},
         metadata: {
-            properties: {},
+            properties: {
+                oSearchFacetDialog: {}
+            },
             aggregations: {
                 items: {
                     type: "sap.ushell.renderers.fiori2.search.FacetItem",
@@ -628,7 +633,7 @@
                 //                 console.debug(t);
             };
             PieChart.prototype = {
-                // pie chart constructor  
+                // pie chart constructor
                 //======================================================================
                 init: function(parentSelector, options, application, model) {
                     this.application = application;
@@ -699,7 +704,11 @@
                     // create global svg elements: parent.append
                     var xOrigin = Math.round(this.options.width / 2);
                     var yOrigin = Math.round(this.options.height / 2);
-                    this.svg = parent.append("svg:svg").attr("width", svgWidth).attr("height", svgHeight)
+                    this.svg = parent.append("svg:svg")
+                        .attr("width", svgWidth)
+                        .attr("height", svgHeight)
+                        //.attr("tabindex", "0")
+                        .attr("id", parentSelector.id + "_svg")
                         .append("svg:g")
                         .attr("transform", "translate(" + xOrigin + "," + yOrigin + ")");
                     this.svgArcs = this.svg.append("svg:g");
@@ -863,6 +872,7 @@
                             return translateStr;
                         })
                         .attr("shape-rendering", "geometricPrecision")
+                        .attr("tabindex", "0")
                         .style("stroke", function(d) {
                             var strokeColor;
                             if (d.data.stroke === "none") {
@@ -898,6 +908,14 @@
                             return d.data.fill;
                         })
                         //              .attr("title",function(d,i){return d.data.tooltip;})
+                        .on("keydown", function(d, i) {
+                            var e = d3.event;
+                            var code = e.keyCode || e.which;
+                            if (code == 32) {
+                                e.target.__onclick();
+                            }
+
+                        })
                         .on("click", function(d, i) {
                             var oEvent;
                             var selected = d.data.selected;
@@ -929,22 +947,18 @@
                                     delete that.clickedSegment[d.data.id];
                                 }
                                 //back to old origin
-                                d.data.selected = false; //avr hack for large bar chart
                                 translateStr = "translate(0,0)";
                                 if (labelElem) {
                                     translateStrLabel = "translate(" + labelposition.x + "," + labelposition.y + ")";
                                 }
                                 //################################################### remove filter
-                                //avr - remove filter 
-                                //################################################### 
+                                //avr - remove filter
+                                //###################################################
+                                d.data.selected = false; //avr hack for large pie chart
                                 if (that.options.oSearchFacetDialog) {
-                                    oEvent = {};
+                                    oEvent = {}; //build object to pass to external fn
                                     oEvent.cnt = that.getNumberOfClickedSegments();
                                     oEvent.dataObject = d.data;
-                                    oEvent.model = that.model;
-                                    //oModel2 = that.options.oSearchFacetDialog.getModel();
-                                    //oModel2.removeFilterCondition(d.data.filterCondition, false);
-                                    //oModel2.removeFilter(d.data);
                                     that.options.oSearchFacetDialog.onDetailPageSelectionChangeCharts(oEvent);
                                 } else {
                                     that.model.removeFilterCondition(d.data.filterCondition, true);
@@ -972,22 +986,20 @@
                                         that.clickedSegment[d.data.id] = (this);
                                     }
                                 }
-                                d.data.selected = true; //avr hack for large bar chart
+
                                 translateStr = PieChart.translateStr4Padding(d.startAngle, d.endAngle, that.options.padding4click, 0, 0);
                                 if (labelElem) {
                                     translateStrLabel = PieChart.translateStr4Padding(d.startAngle, d.endAngle, that.options.padding4click, labelposition.x, labelposition.y);
                                 }
                                 //################################################### add filter
-                                //avr - add new filter 
-                                //################################################### 
+                                //avr - add new filter
+                                //###################################################
+                                d.data.selected = true; //avr hack for large pie chart
                                 if (d.data.filterCondition) {
                                     if (that.options.oSearchFacetDialog) {
-                                        oEvent = {};
+                                        oEvent = {}; //build object to pass to external fn
                                         oEvent.cnt = that.getNumberOfClickedSegments();
                                         oEvent.dataObject = d.data;
-                                        oEvent.model = that.model;
-                                        //oModel2 = that.options.oSearchFacetDialog.getModel();
-                                        //oModel2.addFilter(d.data);
                                         that.options.oSearchFacetDialog.onDetailPageSelectionChangeCharts(oEvent);
                                     } else {
                                         that.model.addFilterCondition(d.data.filterCondition, true);
@@ -1053,8 +1065,12 @@
                                     return;
                                 }
                             }
+
                         })
                         .on("mouseout", function(d, i) {
+                            if (d.data.selected) {
+                                d3.select(this).style("opacity", 1);
+                            }
                             //no hover event for single selection mode when any segment already has been clicked
                             if ((!that.options.multipleselectable) && (Object.keys(that.clickedSegment).length > 0)) {
                                 return;
@@ -1630,19 +1646,22 @@
             }
             return integerValue;
         },
-        getDataForPieChart: function(data, model) {
+        getDataForPieChart: function(data, model, facetIndex) {
             var res = [];
             var group = [];
             var item = {};
             var itemValue = 0;
+            var currentFacetIndex = -1;
             var itemValueText = "";
             var searchResultTotal = model.oData.count;
             var overallTotal = searchResultTotal; //temporary equation with search result total
             var pieChartTotal = 0;
+            this.iMissingCnt = 0;
             //var sumSelected = this.getSumSelected(data);
             for (var i = 0; i < data.length; i++) {
                 //var facetType = data[i].facetType;
                 if (data[i].facetType === "attribute") {
+                    currentFacetIndex++;
                     if (data[i].totalCount) {
                         overallTotal = data[i].totalCount;
                     }
@@ -1654,14 +1673,14 @@
                         if (itemValue) {
                             itemValueText = "" + itemValue;
                             /*
-                        if (!itemValue) {
-                            itemValue = searchResultTotal - sumSelected; //KLUDGE: since missing value if only 1 item due to filter, but calc untrue if facet has more than 1 filter
-                            if (itemValue < 1) { //zero or negative values!
-                                itemValue = 0.05 * searchResultTotal;
-                                itemValueText = "";
+                            if (!itemValue) {
+                                itemValue = searchResultTotal - sumSelected; //KLUDGE: since missing value if only 1 item due to filter, but calc untrue if facet has more than 1 filter
+                                if (itemValue < 1) { //zero or negative values!
+                                    itemValue = 0.05 * searchResultTotal;
+                                    itemValueText = "";
+                                }
                             }
-                        }
-						*/
+*/
                             pieChartTotal += itemValue;
                             item.filterCondition = data[i].items[j].filterCondition;
                             item.dimension = data[i].items[j].facetTitle;
@@ -1672,7 +1691,7 @@
                             item.value = itemValue;
                             item.valueLabel = data[i].items[j].valueLabel;
                             if (itemValueText) {
-                                item.tooltip = data[i].items[j].label + "\t: " + itemValue;
+                                item.tooltip = data[i].items[j].label + ": " + itemValue;
                             } else {
                                 item.tooltip = data[i].items[j].label;
                             }
@@ -1683,6 +1702,8 @@
                             //TO DO consider if only show top 5 how will user see there is a filter in place? on list view of facet the filter condition is listed sso leave it here too for now
                             //if (data[i].items[j].serverSideItem) { //if added via show more filter and not in top 5 please ignore
                             group.push(item);
+                        } else if (currentFacetIndex === facetIndex) {
+                            this.iMissingCnt++;
                         }
                     }
                     // ############# add a new pie segment that just reflects the data NOT in the pie
@@ -1702,7 +1723,7 @@
                         item.id = "perc_missing";
                         item.value = sizeOfWedge;
                         item.valueLabel = label;
-                        item.tooltip = label + sap.ushell.resources.i18n.getText("facetPieChartOverflowText");
+                        item.tooltip = sap.ushell.resources.i18n.getText("facetPieChartOverflowText", [label]);
                         item.filtered = false;
                         item.removed = false;
                         item.fill = "transparent";
@@ -1760,8 +1781,7 @@
             options.height = options.relevantContainerHeight;
             options.labelHideThreshold = 0.000001;
             $(piechartParent).parent().parent().height(options.height);
-            //options.width = $(piechartParent).parent().parent().width();
-            options.width = $(piechartParent).parent().width();
+            options.width = $(piechartParent).parent().parent().width();
             this.chartElements = this.getDataForPieChartLarge(data, model);
             chart = new this.PieChart(piechartParent, options, application, model1);
             for (var i = 0; i < maxItemsToShow; i++) {
@@ -1770,27 +1790,30 @@
                 }
             }
             chart.update(fewerData);
-            /*
-            if (this.options.oSearchFacetDialog) {
-                $(piechartParent).resize([], function() {
-                    alert("h");
-                });
-            }
-			*/
         },
         onAfterRendering: function() {
+            var that = this;
             var data, chartElements, chart, model, application, piechartParent, facetIndex;
             var options = {};
             //options.height = "160";
             //options.width = "278";
             application = null;
+
+
+
+
+
+
+
             model = this.getModel();
             if (!model) {
                 model = this.oParent.oModels.facets;
             }
             if (model) {
                 piechartParent = $("#" + this.sId)[0];
-                //ensure that we are in the 'small bar chart' 
+                //add tabindex="0"
+                //$(piechartParent).attr("tabindex", "0")
+                //ensure that we are in the 'small bar chart'
                 if ($(piechartParent).parent()[0].className === "sapMLIBContent") {
                     options.pieChartParentClass = "sapUshellSearchFacetPieChart";
                     facetIndex = this.getFacetIndexById(this.sId);
@@ -1798,13 +1821,27 @@
                     piechartParent.className = options.pieChartParentClass;
                     //piechartIndex = this.getPieChartIndexByFacetIndex(facetIndex);
                     //piechartParent = $(".sapUshellSearchFacetPieChart")[piechartIndex];
-                    data = this.getDataForPieChart(model.oData.facets, model);
+                    data = this.getDataForPieChart(model.oData.facets, model, facetIndex);
                     chartElements = data[facetIndex];
                     chart = new this.PieChart(piechartParent, options, application, model);
                     chart.update(chartElements);
+
+                    //update infozeile
+                    var infoZeile = $(this.getDomRef()).closest(".sapUshellSearchFacetIconTabBar").find(".sapUshellSearchFacetInfoZeile")[0];
+                    var oInfoZeile = sap.ui.getCore().byId(infoZeile.id);
+                    if (that.iMissingCnt > 0) {
+                        oInfoZeile.setVisible(true);
+                        var message = sap.ushell.resources.i18n.getText("infoZeileNumberMoreSelected", [that.iMissingCnt]);
+                        oInfoZeile.setText(message);
+                    } else {
+                        oInfoZeile.setVisible(false);
+                    }
+                } else if ($(piechartParent)[0].className === "largeChart2piechart") {
+                    // large pie
+                    $(piechartParent).attr("tabindex", "0");
                 }
             }
 
         }
     });
-})();
+});

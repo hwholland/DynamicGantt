@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// @copyright@
 
 (function () {
     "use strict";
@@ -8,8 +8,9 @@
     jQuery.sap.require("sap.ushell.components.tiles.indicatorTileUtils.smartBusinessUtil");
     jQuery.sap.require("sap.ui.model.analytics.odata4analytics");
     sap.ui.getCore().loadLibrary("sap.suite.ui.commons");
-
+    
     sap.ui.jsview("sap.ushell.components.tiles.indicatorArea.AreaChartTile", {
+
         getControllerName: function () {
             return "sap.ushell.components.tiles.indicatorArea.AreaChartTile";
         },
@@ -170,6 +171,13 @@
             var oGenericTileModel = new sap.ui.model.json.JSONModel();
             oGenericTileModel.setData(oGenericTileData);
             this.oGenericTile.setModel(oGenericTileModel);
+            /* new tiles.indicatorArea.areaChartTileService({
+                tile : oNVConfContS,
+                kpiCode :'sap.hba.ecc.mm.pur.NonManagedSpend',// 'com.sap.PS.KPI10',
+
+                variantId : 'sap.hba.ecc.mm.pur.NonManagedSpendLast7Days',
+            });
+             */
 
             return this.oGenericTile;
         }

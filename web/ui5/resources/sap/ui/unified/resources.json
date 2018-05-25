@@ -1751,30 +1751,7 @@
 		{
 			"name": "designtime/messagebundle.properties",
 			"module": "sap/ui/unified/designtime/messagebundle.properties",
-			"designtime": true,
-			"locale": "",
-			"raw": "designtime/messagebundle.properties"
-		},
-		{
-			"name": "designtime/messagebundle_en.properties",
-			"module": "sap/ui/unified/designtime/messagebundle_en.properties",
-			"designtime": true,
-			"locale": "en",
-			"raw": "designtime/messagebundle.properties"
-		},
-		{
-			"name": "designtime/messagebundle_en_US_sappsd.properties",
-			"module": "sap/ui/unified/designtime/messagebundle_en_US_sappsd.properties",
-			"designtime": true,
-			"locale": "en_US_sappsd",
-			"raw": "designtime/messagebundle.properties"
-		},
-		{
-			"name": "designtime/messagebundle_en_US_saptrc.properties",
-			"module": "sap/ui/unified/designtime/messagebundle_en_US_saptrc.properties",
-			"designtime": true,
-			"locale": "en_US_saptrc",
-			"raw": "designtime/messagebundle.properties"
+			"designtime": true
 		},
 		{
 			"name": "img/ColorPicker/Alphaslider_BG.png"

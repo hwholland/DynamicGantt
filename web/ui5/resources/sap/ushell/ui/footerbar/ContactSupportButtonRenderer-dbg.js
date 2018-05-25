@@ -1,18 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(['sap/ui/core/Renderer','sap/ushell/ui/launchpad/ActionItemRenderer'],
+	function(Renderer, ActionItemRenderer) {
+	"use strict";
+
     /*global jQuery, sap*/
 
-    jQuery.sap.declare("sap.ushell.ui.footerbar.ContactSupportButtonRenderer");
-    jQuery.sap.require("sap.ui.core.Renderer");
-    jQuery.sap.require("sap.ushell.ui.launchpad.ActionItemRenderer");
     /**
      * @name sap.ushell.ui.footerbar.ContactSupportButtonRenderer
      * @static
      * @private
      */
-    sap.ushell.ui.footerbar.ContactSupportButtonRenderer = sap.ui.core.Renderer.extend(sap.ushell.ui.launchpad.ActionItemRenderer);
+    var ContactSupportButtonRenderer = Renderer.extend(ActionItemRenderer);
 
     /**
      * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
@@ -20,4 +19,8 @@
      * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
      */
     //sap.ushell.ui.footerbar.CreateTicketButtonRenderer.render = ;
-}());
+
+
+	return ContactSupportButtonRenderer;
+
+}, /* bExport= */ true);

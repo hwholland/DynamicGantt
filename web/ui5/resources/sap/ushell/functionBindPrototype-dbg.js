@@ -1,16 +1,15 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview This file adds the missing Function.bind function for Webkit browsers.
  */
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap */
     /*eslint no-extend-native: 0*/
 
     // ensure that sap.ushell exists
-    jQuery.sap.declare("sap.ushell.functionBindPrototype");
-
     if (!Function.prototype.bind) {
         Function.prototype.bind = function(oThis) {
             if (typeof this !== "function") {
@@ -32,4 +31,6 @@
             return fBound;
         };
     }
-}());
+
+
+}, /* bExport= */ false);

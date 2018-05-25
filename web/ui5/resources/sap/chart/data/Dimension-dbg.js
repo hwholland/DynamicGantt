@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define([
@@ -39,6 +39,8 @@ sap.ui.define([
 				name : {type : "string"},
 				/**
 				 * Label for the Dimension, either as a string literal or by a pointer using the binding syntax to some property containing the label.
+				 *
+				 * NOTE: This property was bound internally if automatically created via metadata of oData service and please call "unbindProperty" before setting.
 				 */
 				label: {type: "string"},
 				/**
@@ -48,6 +50,8 @@ sap.ui.define([
 				textFormatter: {type: "function"},
 				/**
 				 * Text for a Dimension key value, typically by a pointer using the binding syntax to some property containing the text.
+				 *
+				 * NOTE: This property was bound internally if automatically created via metadata of oData service and please call "unbindProperty" before setting.
 				 */
 				textProperty: {type: "string"},
 				/**
@@ -66,7 +70,10 @@ sap.ui.define([
 	
 	Dimension.prototype.setLabel = ChartUtils.makeNotifyParentProperty("label");	
 	Dimension.prototype.setTextFormatter = ChartUtils.makeNotifyParentProperty("textFormatter");	
-	Dimension.prototype.setTextProperty = ChartUtils.makeNotifyParentProperty("textProperty");	
+	var textPropertySetter = ChartUtils.makeNotifyParentProperty("textProperty");
+	Dimension.prototype.setTextProperty = function(sValue, bSuppressInvalidate) {
+		return textPropertySetter.apply(this, arguments);
+	};
 	Dimension.prototype.setDisplayText = ChartUtils.makeNotifyParentProperty("displayText");
 	var roleSetter = ChartUtils.makeNotifyParentProperty("role");
 	Dimension.prototype.setRole = function(sValue, bSuppressInvalidate) {
@@ -75,6 +82,8 @@ sap.ui.define([
 		}
 		return roleSetter.apply(this, arguments);
 	};
-
+	Dimension.prototype._getFixedRole = function() {
+		return this._sFixedRole || this.getRole();
+	};
 	return Dimension;
 });

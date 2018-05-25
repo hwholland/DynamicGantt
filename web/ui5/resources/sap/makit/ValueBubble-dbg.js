@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ jQuery.sap.require("sap.ui.core.Element");
  * @extends sap.ui.core.Element
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -79,14 +79,50 @@ sap.ui.core.Element.extend("sap.makit.ValueBubble", { metadata : {
 	deprecated : true,
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * Whether to display category's text on the Value Bubble
+		 */
 		"showCategoryText" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * Whether to display category's display name on the Value Bubble
+		 */
 		"showCategoryDisplayName" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * Whether to display value's display name on the Value Bubble
+		 */
 		"showValueDisplayName" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * Whether to display value on Pie or Donut chart
+		 */
 		"showValueOnPieChart" : {type : "boolean", group : "Misc", defaultValue : false},
+
+		/**
+		 * Whether to display legend's label (Pie or Donut chart only)
+		 */
 		"showLegendLabel" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * Whether to render null item on the Value Bubble
+		 */
 		"showNullValue" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * The position of the Value Bubble (Pie or Donut chart only)
+		 */
 		"position" : {type : "sap.makit.ValueBubblePosition", group : "Misc", defaultValue : sap.makit.ValueBubblePosition.Top},
+
+		/**
+		 * Value Bubble positioning style (All the chart types except: Pie/Donut/HBar chart)
+		 */
 		"style" : {type : "sap.makit.ValueBubbleStyle", group : "Misc", defaultValue : sap.makit.ValueBubbleStyle.Top},
+
+		/**
+		 * Whether the Value Bubble is visible
+		 */
 		"visible" : {type : "boolean", group : "Appearance", defaultValue : true}
 	}
 }});

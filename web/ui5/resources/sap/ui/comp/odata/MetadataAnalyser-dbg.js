@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 // -----------------------------------------------------------------------------
 // Analyses the OData service metadata doc ($metadata), having SAP-Annotations,
@@ -9,19 +10,41 @@
 // -----------------------------------------------------------------------------
 /* global Promise */
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/model/odata/ODataModel', 'sap/ui/model/odata/ODataAnnotations'
-], function(jQuery, ODataModel, ODataAnnotations) {
+	'jquery.sap.global', 'sap/ui/model/odata/ODataModel', 'sap/ui/model/odata/ODataAnnotations', './ODataType'
+], function(jQuery, ODataModel, ODataAnnotations, ODataType) {
 	"use strict";
+
+	// map OData v4 FilterExpressionType enum member to corresponding filter-restriction value
+	var mFilterRestrictions = {
+		"com.sap.vocabularies.Common.v1.FilterExpressionType/SingleInterval": "interval",
+		"com.sap.vocabularies.Common.v1.FilterExpressionType/MultiValue": "multi-value",
+		"com.sap.vocabularies.Common.v1.FilterExpressionType/SingleValue": "single-value"
+	};
+	var mSelectionRangeOptionType = {
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/EQ": "EQ",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/BT": "BT",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/CP": "CP",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/LE": "LE",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/GE": "GE",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/NE": "NE",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/NB": "NB",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/NP": "NP",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/GT": "GT",
+		"com.sap.vocabularies.UI.v1.SelectionRangeOptionType/LT": "LT"
+	};
+	var mSelectionRangeSignType = {
+		"com.sap.vocabularies.UI.v1.SelectionRangeSignType/I": "I",
+		"com.sap.vocabularies.UI.v1.SelectionRangeSignType/E": "E"
+	};
 
 	/**
 	 * Constructs a utility class to analyse the OData metadata document ($metadata), to resolve SAP-Annotations. \n<b>Note:</b> Please ensure that
 	 * the promise returned by {@link sap.ui.model.odata.ODataMetaModel#loaded loaded} is resolved before using this class!
-	 * 
 	 * @constructor
 	 * @experimental This module is only for internal/experimental use!
 	 * @public
 	 * @param {String} oResourceRootUri - The URL of the resource or ODataModel
-	 * @author Pavan Nayak
+	 * @author SAP SE
 	 */
 	var MetadataAnalyser = function(oResourceRootUri) {
 		if (typeof oResourceRootUri === "object") {
@@ -46,12 +69,20 @@ sap.ui.define([
 		}
 	};
 
+	MetadataAnalyser.hierarchyType = {
+		nodeFor: 1,
+		nodeExternalKeyFor: 2,
+		parentNodeFor: 3,
+		levelFor: 4,
+		drillStateFor: 5,
+		nodeDescendantCountFor: 6
+	};
+
 	// TODO: should we cache all these entity fields for future access?
 	// this.mFilterFields[sEntityTypeName] = aFinalFilterableFields;
 
 	/**
 	 * Returns the namespace from the Schema
-	 * 
 	 * @returns {string} the namespace
 	 * @public
 	 * @deprecated Since 1.29.
@@ -73,7 +104,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the specified attribute (sap:annotation) value from the default entity container
-	 * 
 	 * @param {String} sAttribute - The name of the attribute (sap:annotation) on the entity container
 	 * @returns {String} The value of the specified attribute (if found)|null
 	 * @public
@@ -92,7 +122,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the specified label for an Entity with non annotation
-	 * 
 	 * @param {string} sEntityType - name of the entity set
 	 * @returns {string} - value of the label (if found)|empty
 	 * @public
@@ -111,7 +140,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the entity definition for the specified entity type
-	 * 
 	 * @param {String} sEntityTypeName - The entity type name as specified in the metadata document (with or without namespace)
 	 * @returns {Object} entity definition
 	 * @private
@@ -126,7 +154,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the complex type definition for the specified type
-	 * 
 	 * @param {String} sComplexTypeName - The complex type name as specified in the metadata document (with or without namespace)
 	 * @returns {Object} entity definition
 	 * @private
@@ -141,7 +168,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the property name of a complextype in a given entityType
-	 * 
 	 * @param {String} sEntityType - EntityType to search for the property
 	 * @param {String} sComplexTypeEntityName - Type-Name of the complextype to resolve it.
 	 * @returns {String} Returns the propertyname of the complextype as used in the given entityType
@@ -172,7 +198,6 @@ sap.ui.define([
 	 * Removes the namespace from the specified string <br>
 	 * returns string content that appears after the last "." separator <br>
 	 * E.g.: if input is "com.sap.foo.EntityType", returns "EntityType" as the result
-	 * 
 	 * @param {string} sString String
 	 * @returns {string} String without name space. If no name space was found, the original string will be returned.
 	 * @public
@@ -191,7 +216,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the entity type from the Entity name (EntitySet name)
-	 * 
 	 * @param {string} sEntitySetName - The entity name
 	 * @returns {string} The entity type
 	 * @private
@@ -210,7 +234,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the first matching entity set from the Entity Type name (EntityType name)
-	 * 
 	 * @param {string} sEntityTypeName - The entity name
 	 * @returns {string} The entitySet name
 	 * @private
@@ -244,7 +267,6 @@ sap.ui.define([
 
 	/**
 	 * Gets a collection of keys (field names) for the specified entity name
-	 * 
 	 * @param {String} sEntitySetName - The entity name as specified in the metadata document
 	 * @returns {Array} Array of key names
 	 * @public
@@ -263,7 +285,6 @@ sap.ui.define([
 
 	/**
 	 * Gets a collection keys (field names) for the specified entity type
-	 * 
 	 * @param {String} sEntityTypeName - The entity type name as specified in the metadata document
 	 * @returns {Array} Array of key names
 	 * @public
@@ -291,7 +312,6 @@ sap.ui.define([
 
 	/**
 	 * Gets a collection of fields for the specified entity name
-	 * 
 	 * @param {String} sEntitySetName - The entity name as specified in the metadata document
 	 * @returns {Array} Array of fields
 	 * @public
@@ -308,52 +328,179 @@ sap.ui.define([
 
 		if (sEntityTypeName) {
 			aFields = this.getFieldsByEntityTypeName(sEntityTypeName);
-			this._updateSortableOnFields(aFields, oEntitySet);
+			this._enrichEntitySetMetadata(aFields, oEntitySet);
 		}
 
 		return aFields;
 	};
 
 	/**
-	 * Updates/sets sortable property on fields based on the entitySet annotation (Org.OData.Capabilities.V1.SortRestrictions)
-	 * 
+	 * Enriches the fields with entitySet relevant metadata
 	 * @param {Array} aFields - Array of field metadata derived from OData properties
 	 * @param {Object} oEntitySet - The entity set instance from ODataMetaModel
-	 * @public
+	 * @private
 	 */
-	MetadataAnalyser.prototype._updateSortableOnFields = function(aFields, oEntitySet) {
-		var oSortRestrictions, aNonSortableProperties, aNonSortablePaths = [], iLen, sPath, oField;
-		if (!oEntitySet || !aFields) {
-			return;
-		}
-		oSortRestrictions = oEntitySet["Org.OData.Capabilities.V1.SortRestrictions"];
-		if (oSortRestrictions) {
-			aNonSortableProperties = oSortRestrictions.NonSortableProperties;
-		}
-		if (aNonSortableProperties) {
-			iLen = aNonSortableProperties.length;
-			while (iLen--) {
-				sPath = aNonSortableProperties[iLen].PropertyPath;
-				if (sPath) {
-					aNonSortablePaths.push(sPath);
-				}
-			}
-		}
+	MetadataAnalyser.prototype._enrichEntitySetMetadata = function(aFields, oEntitySet) {
+		var iLen, oField, aNonSortablePaths, aNonFilterablePaths, aRequiredFilterFields, mFilterExpressionRestriction;
+
+		aNonSortablePaths = this._getNonSortableFields(oEntitySet);
+		aNonFilterablePaths = this._getNonFilterableFields(oEntitySet);
+		aRequiredFilterFields = this._getRequiredFilterFields(oEntitySet);
+		mFilterExpressionRestriction = this._getFilterExpressionRestriction(oEntitySet);
 		// Loop over the fields
 		iLen = aFields.length;
 		while (iLen--) {
 			oField = aFields[iLen];
-			if (aNonSortablePaths.indexOf(oField.name) > -1) {
-				oField.sortable = false;
-			} else {
-				oField.sortable = true;
-			}
+			// Update sortable on fields
+			oField.sortable = !(aNonSortablePaths.indexOf(oField.name) > -1);
+			// Update Filterable on fields
+			oField.filterable = !(aNonFilterablePaths.indexOf(oField.name) > -1);
+			// Update required filters
+			oField.requiredFilterField = (aRequiredFilterFields.indexOf(oField.name) > -1);
+			// Update FilterRestriction
+			oField.filterRestriction = mFilterExpressionRestriction[oField.name];
 		}
 	};
 
 	/**
+	 * Extracts list of field names from the provided annotation and property (Org.OData.Capabilities.V1.SortRestrictions and NonSortableProperties)
+	 * @param {Object} oAnnotation - The annotation that from which PropertyPaths needs to be extracted
+	 * @param {string} sAnnotationProperty - the property on the annotation that contains the array of PropertyPaths
+	 * @returns {Array} Array of field names or []
+	 * @private
+	 */
+	MetadataAnalyser.prototype._extractPropertyPathsFromAnnotation = function(oAnnotation, sAnnotationProperty) {
+		var aPaths = [], aAnnotationProperties, iLen, sPath;
+		if (oAnnotation && sAnnotationProperty) {
+			aAnnotationProperties = oAnnotation[sAnnotationProperty];
+		}
+		if (aAnnotationProperties) {
+			iLen = aAnnotationProperties.length;
+			while (iLen--) {
+				sPath = aAnnotationProperties[iLen].PropertyPath;
+				if (sPath) {
+					aPaths.push(sPath);
+				}
+			}
+		}
+		return aPaths;
+	};
+
+	/**
+	 * Retrieves list of non sortable fields from the entitySet annotation (Org.OData.Capabilities.V1.SortRestrictions)
+	 * @param {Object} oEntitySet - The entity set instance from ODataMetaModel
+	 * @returns {Array} Array of field names
+	 * @private
+	 */
+	MetadataAnalyser.prototype._getNonSortableFields = function(oEntitySet) {
+		var oSortRestrictions;
+		if (oEntitySet) {
+			oSortRestrictions = oEntitySet["Org.OData.Capabilities.V1.SortRestrictions"];
+		}
+		return this._extractPropertyPathsFromAnnotation(oSortRestrictions, "NonSortableProperties");
+	};
+
+	/**
+	 * Retrieves list of non sortable fields from the entitySet annotation (Org.OData.Capabilities.V1.SortRestrictions)
+	 * @param {Object} oEntitySet - The entity set instance from ODataMetaModel
+	 * @returns {Array} Array of field names
+	 * @private
+	 */
+	MetadataAnalyser.prototype._getNonFilterableFields = function(oEntitySet) {
+		var oFilterRestrictions;
+		if (oEntitySet) {
+			oFilterRestrictions = oEntitySet["Org.OData.Capabilities.V1.FilterRestrictions"];
+		}
+		return this._extractPropertyPathsFromAnnotation(oFilterRestrictions, "NonFilterableProperties");
+	};
+
+	/**
+	 * Retrieves list of required fields based on the entitySet annotation (Org.OData.Capabilities.V1.FilterRestrictions/RequiredProperties)
+	 * @param {Object} oEntitySet - The entity set instance from ODataMetaModel
+	 * @returns {Array} Array of field names
+	 * @private
+	 */
+	MetadataAnalyser.prototype._getRequiredFilterFields = function(oEntitySet) {
+		var oFilterRestrictions;
+		if (oEntitySet) {
+			oFilterRestrictions = oEntitySet["Org.OData.Capabilities.V1.FilterRestrictions"];
+		}
+		return this._extractPropertyPathsFromAnnotation(oFilterRestrictions, "RequiredProperties");
+	};
+
+	/**
+	 * Retrieves map of fields with filter restriction the entitySet annotation (com.sap.vocabularies.Common.v1.FilterExpressionRestrictions)
+	 * @param {Object} oEntitySet - The entity set instance from ODataMetaModel
+	 * @returns {Object} JSON map of field names with filter restriction
+	 * @private
+	 */
+	MetadataAnalyser.prototype._getFilterExpressionRestriction = function(oEntitySet) {
+		var mFilterExpressionRestriction = {}, aFilterExpressionRestrictions, iLen, oFilterExpressionRestriction, oProperty, oAllowedExpression;
+		if (oEntitySet) {
+			aFilterExpressionRestrictions = oEntitySet["com.sap.vocabularies.Common.v1.FilterExpressionRestrictions"];
+			if (aFilterExpressionRestrictions) {
+				iLen = aFilterExpressionRestrictions.length;
+				while (iLen--) {
+					oFilterExpressionRestriction = aFilterExpressionRestrictions[iLen];
+					if (oFilterExpressionRestriction) {
+						oProperty = oFilterExpressionRestriction.Property;
+						oAllowedExpression = oFilterExpressionRestriction.AllowedExpressions;
+						if (oProperty && oAllowedExpression && oProperty.PropertyPath && oAllowedExpression.EnumMember) {
+							// convert to v2 format expected in several Smart controls
+							mFilterExpressionRestriction[oProperty.PropertyPath] = mFilterRestrictions[oAllowedExpression.EnumMember];
+						}
+					}
+				}
+			}
+		}
+		return mFilterExpressionRestriction;
+	};
+
+	/**
+	 * Checks if a property/navigation property is filterable (Org.OData.Capabilities.V1.FilterRestrictions/NonFilterableProperties)
+	 * @param {Object} oProperty - The property instance from ODataMetaModel
+	 * @param {Object} oEntitySet - The entity set from the metadata document
+	 * @returns {Boolean} whether the specified property is filterable
+	 * @private
+	 */
+	MetadataAnalyser.prototype._isFilterable = function(oProperty, oEntitySet) {
+		var aNonFilterablePaths, bFilterable = true;
+
+		if (oEntitySet) {
+			aNonFilterablePaths = this._getNonFilterableFields(oEntitySet);
+			bFilterable = !(aNonFilterablePaths.indexOf(oProperty.name) > -1);
+		}
+
+		// fallback even if v2->v4 lift is not finished
+		if (bFilterable) {
+			bFilterable = !(oProperty["sap:filterable"] === "false");
+		}
+		return bFilterable;
+	};
+
+	/**
+	 * Checks if <code>oProperty</code> is annotated as <code>com.sap.vocabularies.UI.v1.HiddenFilter</code>.
+	 * @param {Object} oProperty The property instance from ODataMetaModel
+	 * @returns {Boolean} whether the specified property is marked as hidden filter
+	 * @protected
+	 */
+	MetadataAnalyser.isHiddenFilter = function(oProperty) {
+		return !!oProperty["com.sap.vocabularies.UI.v1.HiddenFilter"] && MetadataAnalyser.isTermDefaultTrue(oProperty["com.sap.vocabularies.UI.v1.HiddenFilter"]);
+	};
+
+	/**
+	 * Checks if <code>oProperty</code> is annotated as <code>com.sap.vocabularies.UI.v1.Hidden</code>. The semantic of hidden is: the data is
+	 * available on the UI, but no control is rendered for the data.
+	 * @param {Object} oProperty The property instance from ODataMetaModel
+	 * @returns {Boolean} whether the specified property is marked as hidden
+	 * @protected
+	 */
+	MetadataAnalyser.isHidden = function(oProperty) {
+		return !!oProperty["com.sap.vocabularies.UI.v1.Hidden"] && MetadataAnalyser.isTermDefaultTrue(oProperty["com.sap.vocabularies.UI.v1.Hidden"]);
+	};
+
+	/**
 	 * Gets a collection of fields for the specified entity type
-	 * 
 	 * @param {String} sEntityTypeName - The entity type name as specified in the metadata document
 	 * @returns {Array} Array of fields
 	 * @public
@@ -369,7 +516,6 @@ sap.ui.define([
 
 	/**
 	 * Gets a collection of fields for the specified complex type
-	 * 
 	 * @param {String} sComplexTypeName - The complex type name as specified in the metadata document
 	 * @param {string} sParentPropertyName - The name of the parent property (complex type property)
 	 * @returns {Array} Array of fields
@@ -386,7 +532,6 @@ sap.ui.define([
 
 	/**
 	 * Get an array of all entity type names
-	 * 
 	 * @returns {Array} Returns an array of entity type names
 	 * @public
 	 */
@@ -408,15 +553,16 @@ sap.ui.define([
 
 	/**
 	 * Gets a map with fields and their related semantic objects
-	 * 
 	 * @param {String} sEntitySetName - The entity set for which the map should be returned
 	 * @returns {object} map between fields and semantic objects
 	 * @public
 	 */
 	MetadataAnalyser.prototype.getFieldSemanticObjectMap = function(sEntitySetName) {
-		var oMap = {};
 		var aODataFieldMetadata = this.getFieldsByEntitySetName(sEntitySetName);
-		var i, iLen = aODataFieldMetadata.length;
+		if (!aODataFieldMetadata) {
+			return null;
+		}
+		var oMap = {}, i, iLen = aODataFieldMetadata.length;
 		for (i = 0; i < iLen; i++) {
 			var oField = aODataFieldMetadata[i];
 			var mAnnotation = this.getSemanticObjectAnnotation(oField.fullName);
@@ -430,7 +576,6 @@ sap.ui.define([
 
 	/**
 	 * Gets a collection fields for the specified entity definition
-	 * 
 	 * @param {Object} oEntityDef - The entity definition as specified in the metadata document
 	 * @param {string} sParentPropertyName - The name of the parent property (navigationProperty/complex type)
 	 * @returns {Array} Array of fields
@@ -440,6 +585,7 @@ sap.ui.define([
 		if (oEntityDef) {
 			aProperty = oEntityDef.property;
 		}
+
 		// Enrich the fields with necessary information as an attribute (easy access)
 		if (aProperty) {
 			aFields = [];
@@ -447,25 +593,250 @@ sap.ui.define([
 			for (i = 0; i < iLen; i++) {
 				oProperty = aProperty[i];
 				if (oProperty) {
-					oField = this._parseProperty(oProperty, oEntityDef, sParentPropertyName);
+					oField = this._parseV4PropertyAnnotations(oProperty, oEntityDef, sParentPropertyName);
+					this._determineHierarchyInformation(oField, oProperty);
+					this._determineFilterAndSortInformation(oField, oProperty, null);// no entity set
 					aFields.push(oField);
 				}
 			}
 		}
+
 		return aFields;
 	};
 
 	/**
+	 * DO NOT USE: This method is mainly only needed to support sap:display-format="Date" which is not automatically converted to V4.<br>
+	 * Gets the display format for a field.
+	 * @param {Object} oProperty The property whose details need to be extracted
+	 * @returns {string|undefined} The display format if exists, otherwise <code>undefined</code>
+	 * @deprecated
+	 */
+	MetadataAnalyser.getDisplayFormat = function(oProperty) {
+		var sDisplayFormat = oProperty["sap:display-format"];
+
+		if (sDisplayFormat) {
+			return sDisplayFormat;
+		}
+	};
+
+	/**
+	 * This method is used to check whether a property is a calendar date
+	 * @param {Object} oProperty The property whose details need to be extracted
+	 * @returns {boolean} <code>true</code> if the property has "com.sap.vocabularies.Common.v1.IsCalendarDate" annotation, <code>false</code>
+	 *          else.
+	 * @since 1.54
+	 */
+	MetadataAnalyser.isCalendarDate = function(oProperty) {
+		return MetadataAnalyser.isPropertyStringType(oProperty) && MetadataAnalyser.isTermDefaultTrue(oProperty["com.sap.vocabularies.Common.v1.IsCalendarDate"]);
+	};
+
+	/**
+	 * Retrieve the aggregation role of the current property
+	 * @param {Object} oProperty The property whose details need to be extracted
+	 * @returns {string|undefined} The 'measure' or 'dimension' if the aggregation role exists, otherwise <code>undefined</code>
+	 */
+	MetadataAnalyser.getAggregationRole = function(oProperty) {
+		if (oProperty["com.sap.vocabularies.Analytics.v1.Dimension"]) {
+			return "dimension";
+		}
+
+		if (oProperty["com.sap.vocabularies.Analytics.v1.Measure"]) {
+			return "measure";
+		}
+
+		return undefined;
+	};
+
+	/**
+	 * Gets the display format for a link field.
+	 * @param {Object} oProperty The property whose details need to be extracted
+	 * @returns {string} The display format if exists, otherwise an empty string
+	 */
+	MetadataAnalyser.getLinkDisplayFormat = function(oProperty) {
+
+		if (MetadataAnalyser.isEmailAddress(oProperty)) {
+			return "EmailAddress";
+		}
+
+		if (MetadataAnalyser.isPhoneNumber(oProperty)) {
+			return "PhoneNumber";
+		}
+
+		if (MetadataAnalyser.isURL(oProperty)) {
+			return "URL";
+		}
+
+		return "";
+	};
+
+	MetadataAnalyser.getValueListMode = function(oProperty) {
+		var sValueList = oProperty["sap:value-list"];
+
+		if (sValueList) {
+			return sValueList;
+		}
+
+		if (MetadataAnalyser.isValueListWithFixedValues(oProperty)) {
+			return "fixed-values";
+		}
+
+		return "";
+	};
+
+	/**
+	 * Returns true if the annotation marked as true
+	 * @param {object} oTerm The Term annotation object
+	 * @returns {boolean} <code>true</code>, if the annotation exists and is set to true
+	 */
+	MetadataAnalyser.isTermTrue = function(oTerm) {
+		return !!oTerm && (oTerm.Bool === "true");
+	};
+
+	MetadataAnalyser.isPropertyStringType = function(oProperty) {
+		return !!oProperty && (oProperty.type === "Edm.String");
+	};
+
+	/**
+	 * Returns true if the annotation is not explicitly marked as false or if it is simply present
+	 * @param {object} oTerm The Term annotation object
+	 * @returns {boolean} <code>true</code>, if the annotation exists -or- is not false
+	 */
+	MetadataAnalyser.isTermDefaultTrue = function(oTerm) {
+		if (oTerm) {
+			return oTerm.Bool ? oTerm.Bool !== "false" : true;
+		}
+		return false;
+	};
+
+	/**
+	 * Checks whether a value is required for <code>oProperty</code>.
+	 * @param {object} oProperty The OData property from the meta model
+	 * @returns {boolean} <code>false</code>, if <code>oProperty</code> is defined and the <code>nullable</code> attribute/constrain is set to
+	 *          <code>false</code>, otherwise <code>true</code>
+	 * @protected
+	 * @since 1.50
+	 */
+	MetadataAnalyser.isNullable = function(oProperty) {
+		return !(oProperty && (oProperty.nullable === "false"));
+	};
+
+	/**
+	 * Checks whether <code>oProperty</code> is annotated as a digit sequence. Intended for <code>Edm.String</code> fields that are internally
+	 * stored as <code>NUMC</code> (numeric text) data type.
+	 * @param {object} oProperty The OData property from the meta model
+	 * @returns {boolean} <code>true</code>, if the OData property is annotated with the following
+	 *          <code>"com.sap.vocabularies.Common.v1.IsDigitSequence": { "Bool" : "true" }</code> annotation.
+	 * @protected
+	 * @since 1.46
+	 */
+	MetadataAnalyser.isDigitSequence = function(oProperty) {
+		return MetadataAnalyser.isPropertyStringType(oProperty) && MetadataAnalyser.isTermDefaultTrue(oProperty["com.sap.vocabularies.Common.v1.IsDigitSequence"]);
+	};
+
+	/**
+	 * Checks whether <code>oProperty</code> is annotated as upper case..
+	 * @param {object} oProperty The OData property from the meta model
+	 * @returns {boolean} <code>true</code>, if the OData property is annotated with the following
+	 *          <code>"com.sap.vocabularies.Common.v1.IsUpperCase": { "Bool" : "true" }</code> annotation.
+	 * @protected
+	 * @since 1.52
+	 */
+	MetadataAnalyser.isUpperCase = function(oProperty) {
+		return MetadataAnalyser.isPropertyStringType(oProperty) && MetadataAnalyser.isTermDefaultTrue(oProperty["com.sap.vocabularies.Common.v1.IsUpperCase"]);
+	};
+
+	/**
+	 * Checks whether <code>oProperty</code> is annotated as an e-mail address.
+	 * @param {object} oProperty The OData property from the meta model
+	 * @returns {boolean} <code>true</code>, if the OData property is annotated with the following
+	 *          <code>"com.sap.vocabularies.Common.v1.IsDigitSequence": { "Bool" : "true" }</code> annotation.
+	 * @protected
+	 * @since 1.46
+	 */
+	MetadataAnalyser.isEmailAddress = function(oProperty) {
+		return MetadataAnalyser.isPropertyStringType(oProperty) && MetadataAnalyser.isTermDefaultTrue(oProperty["com.sap.vocabularies.Communication.v1.IsEmailAddress"]);
+	};
+
+	/**
+	 * Checks whether <code>oProperty</code> is annotated as a phone number.
+	 * @param {object} oProperty The OData property from the meta model
+	 * @returns {boolean} <code>true</code>, if the OData property is annotated with the following
+	 *          <code>"com.sap.vocabularies.Common.v1.IsPhoneNumber": { "Bool" : "true" }</code> annotation.
+	 * @protected
+	 * @since 1.46
+	 */
+	MetadataAnalyser.isPhoneNumber = function(oProperty) {
+		return MetadataAnalyser.isPropertyStringType(oProperty) && MetadataAnalyser.isTermDefaultTrue(oProperty["com.sap.vocabularies.Communication.v1.IsPhoneNumber"]);
+	};
+
+	/**
+	 * Checks whether <code>oProperty</code> is annotated as a URL.
+	 * @param {object} oProperty The OData property from the meta model
+	 * @returns {boolean} <code>true</code>, if the OData property is annotated with the following
+	 *          <code>"Org.OData.Core.V1.IsURL": { "Bool" : "true" }</code> annotation.
+	 * @protected
+	 * @since 1.46
+	 */
+	MetadataAnalyser.isURL = function(oProperty) {
+		return MetadataAnalyser.isPropertyStringType(oProperty) && (MetadataAnalyser.isTermDefaultTrue(oProperty["Org.OData.Core.V1.IsURL"]) || MetadataAnalyser.isTermDefaultTrue(oProperty["Org.OData.Core.V1.IsUrl"]));
+	};
+
+	/**
+	 * Checks whether <code>oProperty</code> is annotated as value list.
+	 * @param {object} oProperty The OData property from the meta model
+	 * @returns {boolean} <code>true</code>, if the OData property is annotated with the following
+	 *          <code>com.sap.vocabularies.Common.v1.ValueList</code> annotation.
+	 * @protected
+	 * @since 1.46
+	 */
+	MetadataAnalyser.isValueList = function(oProperty) {
+		var sTerm = "com.sap.vocabularies.Common.v1.ValueList";// still not lifted
+		return !!(oProperty && (oProperty["sap:value-list"] || oProperty[sTerm]));
+	};
+
+	/**
+	 * Checks whether <code>oProperty</code> is annotated as value list with fixed values.
+	 * @param {object} oProperty The OData property from the meta model
+	 * @returns {boolean} <code>true</code>, if the OData property is annotated with the following
+	 *          <code>"com.sap.vocabularies.Common.v1.ValueListWithFixedValues": { "Bool" : "true" }</code> annotation.
+	 * @protected
+	 * @since 1.46
+	 */
+	MetadataAnalyser.isValueListWithFixedValues = function(oProperty) {
+		var sTerm = "com.sap.vocabularies.Common.v1.ValueListWithFixedValues";
+		return MetadataAnalyser.isTermTrue(oProperty[sTerm]);
+	};
+
+	/**
 	 * Parses a property and extracts the relevant information for easy consumption
-	 * 
 	 * @param {Object} oProperty - The property whose details need to be extracted
 	 * @param {Object} oEntityDef - The entity definition as specified in the metadata document
 	 * @param {string} sParentPropertyName - The name of the parent property (navigationProperty/complex type)
-	 * @returns {Array} Array of fields
+	 * @returns {Object} field
+	 * @private
+	 * @deprecated
 	 */
 	MetadataAnalyser.prototype._parseProperty = function(oProperty, oEntityDef, sParentPropertyName) {
-		var oField = jQuery.extend({}, oProperty), oResult;
-		oResult = oProperty["com.sap.vocabularies.Common.v1.Label"];
+		var oField = this._parseV4PropertyAnnotations(oProperty, oEntityDef, sParentPropertyName);
+		this._determineHierarchyInformation(oField, oProperty);
+		this._determineFilterAndSortInformation(oField, oProperty, null);
+
+		return oField;
+	};
+
+	/**
+	 * Parse the V4 part of the property annotations
+	 * @param {Object} oProperty - The property whose details need to be extracted
+	 * @param {Object} oEntityDef - The entity definition as specified in the metadata document
+	 * @param {string} sParentPropertyName - The name of the parent property (navigationProperty/complex type)
+	 * @returns {Object} field
+	 * @private
+	 * @since 1.52
+	 */
+	MetadataAnalyser.prototype._parseV4PropertyAnnotations = function(oProperty, oEntityDef, sParentPropertyName) {
+		var oField = jQuery.extend({}, oProperty);
+
+		var oResult = oProperty["com.sap.vocabularies.Common.v1.Label"];
 		if (oResult) {
 			oField.fieldLabel = oResult.String;
 		}
@@ -474,9 +845,16 @@ sap.ui.define([
 		if (oResult) {
 			oField.quickInfo = oResult.String;
 		}
+		// display terms
+		oField.displayFormat = MetadataAnalyser.getDisplayFormat(oProperty);
+		oField.isDigitSequence = MetadataAnalyser.isDigitSequence(oProperty);
+		oField.isURL = MetadataAnalyser.isURL(oProperty);
+		oField.isEmailAddress = MetadataAnalyser.isEmailAddress(oProperty);
+		oField.isPhoneNumber = MetadataAnalyser.isPhoneNumber(oProperty);
+		oField.isUpperCase = MetadataAnalyser.isUpperCase(oProperty);
+		oField.isCalendarDate = MetadataAnalyser.isCalendarDate(oProperty);
 
-		oField.displayFormat = oProperty["sap:display-format"];
-		oField.aggregationRole = oProperty["sap:aggregation-role"];
+		oField.aggregationRole = MetadataAnalyser.getAggregationRole(oProperty);
 
 		oResult = oProperty["Org.OData.Measures.V1.ISOCurrency"];
 		if (oResult) {
@@ -492,25 +870,14 @@ sap.ui.define([
 		oResult = oProperty["com.sap.vocabularies.Common.v1.Text"];
 		if (oResult) {
 			oField.description = oResult.Path;
+			oField.displayBehaviour = this.getTextArrangementValue(oResult);
 		}
-		oField.displayBehaviour = this.getTextArrangementValue(oProperty);
-		oField.filterRestriction = oProperty["sap:filter-restriction"];
-		// Set filter attributes on the field
-		oResult = oProperty["sap:filterable"];
-		oField.filterable = oResult !== "false";
-		oResult = oProperty["sap:required-in-filter"];
-		oField.requiredField = oResult === "true";
-
-		// Set sort attributes on the field
-		oResult = oProperty["sap:sortable"];
-		oField.sortable = oResult !== "false";
 
 		// Set whether field is an Image URL (twice - capital wording and CamelCase)
 		// com.sap.vocabularies.UI.v1.IsImageURL is the expected one
 		oResult = oProperty["com.sap.vocabularies.UI.v1.IsImageURL"] || oProperty["com.sap.vocabularies.UI.v1.IsImageUrl"];
-		if (oResult) {
-			oField.isImageURL = oResult.Bool ? oResult.Bool !== "false" : true;
-		}
+		oField.isImageURL = MetadataAnalyser.isTermDefaultTrue(oResult);
+
 		// Set the visible attribute on the field
 		oResult = oProperty["com.sap.vocabularies.Common.v1.FieldControl"];
 		oField.visible = !(oResult && oResult.EnumMember === "com.sap.vocabularies.Common.v1.FieldControlType/Hidden");
@@ -518,12 +885,120 @@ sap.ui.define([
 		oField.parentPropertyName = sParentPropertyName;
 		oField.fullName = this._getFullyQualifiedNameForField(oProperty.name, oEntityDef);
 
+		// hidden...
+		// ...at all
+		oField.hidden = MetadataAnalyser.isHidden(oProperty);
+		// ...as filter
+		oField.hiddenFilter = MetadataAnalyser.isHiddenFilter(oProperty) || oField.hidden;
+
+		// defaultValue for parameters (and create scenarios -not yet relevant)
+		if (oProperty["defaultValue"] !== undefined) {
+			oField.defaultPropertyValue = oProperty["defaultValue"];
+		}
+
+		// defaultValue for filters
+		oResult = oProperty["com.sap.vocabularies.Common.v1.FilterDefaultValue"];
+		if (oResult) {
+			oField.defaultFilterValue = this._getDefaultValues(oProperty.type, oResult, oProperty); // oResult.String;
+		}
+
 		return oField;
 	};
 
 	/**
+	 * Determines the hierarchy information for the corresponding field
+	 * @param {object} oField - The field to add information
+	 * @param {Object} oProperty - The property instance from ODataMetaModel
+	 * @private
+	 */
+	MetadataAnalyser.prototype._determineHierarchyInformation = function(oField, oProperty) {
+		var oHierarchy = {
+			field: null,
+			type: null
+		};
+
+		if (oProperty["sap:hierarchy-node-for"] != null) {
+			oHierarchy.field = oProperty["sap:hierarchy-node-for"];
+			oHierarchy.type = MetadataAnalyser.hierarchyType.nodeFor;
+		}
+
+		if (oProperty["sap:hierarchy-node-external-key-for"] != null) {
+			oHierarchy.field = oProperty["sap:hierarchy-node-external-key-for"];
+			oHierarchy.type = MetadataAnalyser.hierarchyType.nodeExternalKeyFor;
+		}
+
+		if (oProperty["sap:hierarchy-parent-node-for"] != null) {
+			oHierarchy.field = oProperty["sap:hierarchy-parent-node-for"];
+			oHierarchy.type = MetadataAnalyser.hierarchyType.parentNodeFor;
+		}
+
+		if (oProperty["sap:hierarchy-level-for"] != null) {
+			oHierarchy.field = oProperty["sap:hierarchy-level-for"];
+			oHierarchy.type = MetadataAnalyser.hierarchyType.levelFor;
+		}
+
+		if (oProperty["sap:hierarchy-drill-state-for"] != null) {
+			oHierarchy.field = oProperty["sap:hierarchy-drill-state-for"];
+			oHierarchy.type = MetadataAnalyser.hierarchyType.drillStateFor;
+		}
+
+		if (oProperty["sap:hierarchy-node-descendant-count-for"] != null) {
+			oHierarchy.field = oProperty["sap:hierarchy-node-descendant-count-for"];
+			oHierarchy.type = MetadataAnalyser.hierarchyType.nodeDescendantCountFor;
+		}
+
+		if (oHierarchy.type != null) {
+			oField.hierarchy = oHierarchy;
+		}
+	};
+
+	/*************************************************************************************************************************************************
+	 * Determine the filter and sort information for the property
+	 * @param {object} oField - The field to add information
+	 * @param {Object} oProperty - The property instance from ODataMetaModel
+	 * @param {Object} oEntitySet - The entity set from the metadata document
+	 * @private
+	 */
+	MetadataAnalyser.prototype._determineFilterAndSortInformation = function(oField, oProperty, oEntitySet) {
+		if (oEntitySet) {
+			this._enrichEntitySetMetadata([
+				oField
+			], oEntitySet);
+		}
+
+		// Fallback to V2 annotations for the default values
+		if (oField.filterable == undefined || oField.filterable) {
+			oField.filterable = oProperty["sap:filterable"] !== "false";
+		}
+
+		if (!oField.filterRestriction && oProperty["sap:filter-restriction"]) {
+			oField.filterRestriction = oProperty["sap:filter-restriction"];
+		}
+
+		if (!oField.requiredFilterField) {
+			oField.requiredFilterField = oProperty["sap:required-in-filter"] === "true";
+		}
+
+		if (oField.sortable == undefined || oField.sortable) {
+			oField.sortable = oProperty["sap:sortable"] !== "false";
+		}
+	};
+
+	MetadataAnalyser.prototype._getDefaultValues = function(sType, oResult, oProperty) {
+		var vValue = null, sDefaultValueType = ODataType.getDefaultValueTypeName(sType);
+
+		if (oResult[sDefaultValueType]) {
+			vValue = oResult[sDefaultValueType];
+		} else {
+			jQuery.sap.log.error("default value for " + oProperty.name + " expected through the property " + sDefaultValueType);
+		}
+
+		return vValue;
+
+	};
+
+	/**
 	 * Extract the property at the specified navigationProperty path and entitySet name
-	 * 
 	 * @param {String} sPropertyPath - The property path (via a navigation property) E.g. toProduct/ProductText
 	 * @param {String} sEntitySetName - The entity name as specified in the metadata document
 	 * @returns {Object} The extracted and parsed field (ODataProperty)
@@ -546,37 +1021,23 @@ sap.ui.define([
 				oODataProperty = this._oMetaModel.getODataProperty(oEntityDef, sPropertyName);
 			}
 			if (oODataProperty) {
-				oField = this._parseProperty(oODataProperty, oEntityDef, sNavigationProperty);
+				oField = this._parseV4PropertyAnnotations(oODataProperty, oEntityDef, sNavigationProperty);
+
+				oField.name = sPropertyPath;
+				var oEntitySet = this._oMetaModel.getODataEntitySet(sEntitySetName);
+				this._determineFilterAndSortInformation(oField, oODataProperty, oEntitySet);
+				oField.name = oODataProperty.name;
 			}
 		}
 		return oField;
 	};
 
 	/**
-	 * Gets a collection of all possible filterable fields for the specified entity name
-	 * 
-	 * @param {String} sEntitySetName - The entity name as specified in the metadata document
-	 * @returns {Array} Array of overall filterable fields
-	 * @public
-	 */
-	MetadataAnalyser.prototype.getAllFilterableFieldsByEntitySetName = function(sEntitySetName) {
-		var aFilterGroups = [], sEntityTypeName = null;
-		if (!this._oMetaModel) {
-			return undefined;
-		}
-		sEntityTypeName = this.getEntityTypeNameFromEntitySetName(sEntitySetName);
-		if (sEntityTypeName) {
-			aFilterGroups = this.getAllFilterableFieldsByEntityTypeName(sEntityTypeName);
-		}
-		return aFilterGroups;
-	};
-
-	/**
 	 * Gets a an Array of the names of all possible filterable fields for the specified entity type
-	 * 
 	 * @param {String} sEntityTypeName - The entity type name as specified in the metadata document
 	 * @returns {Array} Array of names of overall filterable fields
-	 * @public
+	 * @internal
+	 * @deprecated Since 1.40.
 	 */
 	MetadataAnalyser.prototype.getAllFilterableFieldNamesByEntityTypeName = function(sEntityTypeName) {
 		var aGroup, i, groupLength, j, fieldLength, aResult, oGroup;
@@ -599,30 +1060,56 @@ sap.ui.define([
 	};
 
 	/**
-	 * Gets a collection of all possible filterable fields for the specified entity type
-	 * 
-	 * @param {String} sEntityTypeName - The entity type name as specified in the metadata document
+	 * Gets a collection of all possible filterable fields for the specified entity type or entity set
+	 * @param {String} sEntity - The entity type name or entity set name as specified in the metadata document
+	 * @param {Boolean} bIsEntitySet - true when entity set name is passed
+	 * @param {Boolean} bIgnoreAnalyticalParameters if true the entity types with <code>sap:semantic = 'parameter'</code> will be ignored
+	 * @param {Array} aConsiderNavProperties List of allowed property names. If <code>null</code> all properties are taken into account
 	 * @returns {Array} Array of overall filterable fields
-	 * @public
+	 * @private
 	 */
-	MetadataAnalyser.prototype.getAllFilterableFieldsByEntityTypeName = function(sEntityTypeName) {
-		var aFilterGroups = [], oEntityDef = null, mAssociations = null, sNavigationProperty = null, sSubEntityType = null;
-		if (!this._oMetaModel) {
+	MetadataAnalyser.prototype._getAllFilterableFieldsByEntity = function(sEntity, bIsEntitySet, bIgnoreAnalyticalParameters, aConsiderNavProperties) {
+		var aFilterGroups = [], oEntityDef, oEntitySet, mAssociations, sNavigationProperty, oResult, oSubEntityDef, oSubEntitySet, sSubEntityType;
+		if (!this._oMetaModel || !sEntity) {
 			return undefined;
 		}
-		oEntityDef = this._getEntityDefinition(sEntityTypeName);
+
+		if (bIsEntitySet) {
+			oEntitySet = this._oMetaModel.getODataEntitySet(sEntity);
+			if (oEntitySet) {
+				oEntityDef = this._getEntityDefinition(oEntitySet.entityType);
+			}
+		} else {
+			oEntityDef = this._getEntityDefinition(sEntity);
+		}
+
 		if (oEntityDef) {
 			// filterable fields from the main entity
-			aFilterGroups.push(this._getFilterableFieldsFromEntityDefinition(oEntityDef));
+			aFilterGroups.push(this._getFilterableFieldsFromEntityDefinition(oEntityDef, undefined, oEntitySet));
 
 			// filterable fields from associations which have 0..1 or 1 cardinality
-			mAssociations = this._getFilterableAssociations(oEntityDef);
+			mAssociations = this._getFilterableAssociations(oEntityDef, oEntitySet);
 			for (sNavigationProperty in mAssociations) {
-				sSubEntityType = mAssociations[sNavigationProperty];
-				oEntityDef = this._getEntityDefinition(sSubEntityType);
-				// Entity definition can be null when entities are loaded lazily in the metadata (e.g. ValueList)
-				if (oEntityDef) {
-					aFilterGroups.push(this._getFilterableFieldsFromEntityDefinition(oEntityDef, sNavigationProperty));
+
+				if (!aConsiderNavProperties || (aConsiderNavProperties.indexOf(sNavigationProperty) > -1)) {
+
+					sSubEntityType = mAssociations[sNavigationProperty];
+					if (bIsEntitySet) {
+						oResult = this._oMetaModel.getODataAssociationSetEnd(oEntityDef, sNavigationProperty);
+						if (oResult.entitySet) {
+							oSubEntitySet = this._oMetaModel.getODataEntitySet(oResult.entitySet);
+						}
+					}
+					oSubEntityDef = this._getEntityDefinition(sSubEntityType);
+					// Entity definition can be null when entities are loaded lazily in the metadata (e.g. ValueList)
+					if (oSubEntityDef) {
+						// analogon??
+						if (bIgnoreAnalyticalParameters && (oSubEntityDef["sap:semantics"] === "parameters")) {
+							continue;
+						}
+
+						aFilterGroups.push(this._getFilterableFieldsFromEntityDefinition(oSubEntityDef, sNavigationProperty, oSubEntitySet));
+					}
 				}
 			}
 		}
@@ -630,14 +1117,45 @@ sap.ui.define([
 	};
 
 	/**
+	 * Gets a collection of all possible filterable fields for the specified entity name
+	 * @param {String} sEntitySetName - The entity name as specified in the metadata document
+	 * @param {Boolean} bIgnoreAnalyticalParameters if <code>true</code> the entity types, referenced by the navigation properties with
+	 *        <code>sap:semantic = 'parameter'</code> will be ignored
+	 * @param {Array} aConsiderNavProperties List of allowed property names. If <code>null</code> all properties are taken into account
+	 * @returns {Array} Array of overall filterable fields
+	 * @public
+	 */
+	MetadataAnalyser.prototype.getAllFilterableFieldsByEntitySetName = function(sEntitySetName, bIgnoreAnalyticalParameters, aConsiderNavProperties) {
+		if (!this._oMetaModel) {
+			return undefined;
+		}
+
+		return this._getAllFilterableFieldsByEntity(sEntitySetName, true, bIgnoreAnalyticalParameters, aConsiderNavProperties);
+	};
+
+	/**
+	 * Gets a collection of all possible filterable fields for the specified entity type
+	 * @param {String} sEntityTypeName - The entity type name as specified in the metadata document
+	 * @returns {Array} Array of overall filterable fields
+	 * @public
+	 */
+	MetadataAnalyser.prototype.getAllFilterableFieldsByEntityTypeName = function(sEntityTypeName) {
+		if (!this._oMetaModel) {
+			return undefined;
+		}
+
+		return this._getAllFilterableFieldsByEntity(sEntityTypeName);
+	};
+
+	/**
 	 * Gets an Object containing collection of filterable fields that are directly under the specified entity type
-	 * 
 	 * @param {Object} oEntityDef - The entity type definition from the metadata document
 	 * @param {string} sParentPropertyName - The name of the parent property (navigationProperty/complex type)
+	 * @param {Object} oEntitySet - The relevant entity set from which metadata should be enriched on the entity fields
 	 * @returns {Object} Object containing array of filterable fields
 	 * @private
 	 */
-	MetadataAnalyser.prototype._getFilterableFieldsFromEntityDefinition = function(oEntityDef, sParentPropertyName) {
+	MetadataAnalyser.prototype._getFilterableFieldsFromEntityDefinition = function(oEntityDef, sParentPropertyName, oEntitySet) {
 		var oFilterData = {}, aFields = [], aProperties = null, oProp, i, iLen, oProperty = null;
 		if (!this._oMetaModel || !oEntityDef) {
 			return undefined;
@@ -651,6 +1169,10 @@ sap.ui.define([
 		oFilterData.groupName = sParentPropertyName;
 
 		aProperties = this._getFieldsByEntityDefinition(oEntityDef, sParentPropertyName);
+		// If a relevant entitySet is provided - enrich the field metadata
+		if (oEntitySet) {
+			this._enrichEntitySetMetadata(aProperties, oEntitySet);
+		}
 		iLen = aProperties.length;
 		// Extract only visible and filterable fields from all fields!
 		for (i = 0; i < iLen; i++) {
@@ -666,7 +1188,6 @@ sap.ui.define([
 	/**
 	 * Returns the fully qualified name of a field which is e.g. "com.sap.GL.ZAF.GL_ACCOUNT/CompanyCode". Schema namespace, entity type name and field
 	 * name.
-	 * 
 	 * @param {string} sFieldName - the name of the field/property
 	 * @param {Object} oEntityType - the entity Type under which the field/property is present
 	 * @returns {string} - the fully qualified name
@@ -700,12 +1221,25 @@ sap.ui.define([
 
 	/**
 	 * Gets a collection of filterable associations under the specified entity type
-	 * 
 	 * @param {Object} oEntityDef - The entity type definition from the metadata document
+	 * @param {Object} oEntitySet - The relevant entity set for which filterable associations have to be determined
 	 * @returns {Object} Map of filterable associations
 	 * @private
 	 */
-	MetadataAnalyser.prototype._getFilterableAssociations = function(oEntityDef) {
+	MetadataAnalyser.prototype._getFilterableAssociations = function(oEntityDef, oEntitySet) {
+		return this._getAssociations(oEntityDef, oEntitySet, true, false);
+	};
+
+	/**
+	 * Gets a collection of filterable associations under the specified entity type
+	 * @param {Object} oEntityDef - The entity type definition from the metadata document
+	 * @param {Object} oEntitySet - The relevant entity set for which filterable associations have to be determined
+	 * @param {boolean} bCheckOnlyFilterable - if set to <code>true</code> only filterable non-hidden navigation properties will be considered
+	 * @param {boolean} bAllCardinality - if set to <code>true</code> all end points will be considered, otherwise only with cardinality 1 or 0..1
+	 * @returns {Object} Map of associations
+	 * @private
+	 */
+	MetadataAnalyser.prototype._getAssociations = function(oEntityDef, oEntitySet, bCheckOnlyFilterable, bAllCardinality) {
 		var mFilterableAssociations = {}, aNavigationProperties = null, oNavigationProperty = null, i, iLen = 0, oEndRole = null;
 		if (!this._oMetaModel || !oEntityDef) {
 			return undefined;
@@ -716,8 +1250,11 @@ sap.ui.define([
 			for (i = 0; i < iLen; i++) {
 				oNavigationProperty = aNavigationProperties[i];
 				// if the navigation property is explicitly marked as not filterable; skip it
-				if (oNavigationProperty["sap:filterable"] === "false") {
-					continue;
+				// also skip it, if it is marked as HiddenFilter
+				if (bCheckOnlyFilterable) {
+					if (!this._isFilterable(oNavigationProperty, oEntitySet) || MetadataAnalyser.isHiddenFilter(oNavigationProperty)) {
+						continue;
+					}
 				}
 				// Get the End role of the navigation property
 				oEndRole = this._oMetaModel.getODataAssociationEnd(oEntityDef, oNavigationProperty.name);
@@ -725,7 +1262,7 @@ sap.ui.define([
 					continue;
 				}
 				// check if the end role has cardinality 0..1 or 1
-				if (oEndRole.multiplicity === "1" || oEndRole.multiplicity === "0..1") {
+				if (bAllCardinality || oEndRole.multiplicity === "1" || oEndRole.multiplicity === "0..1") {
 					// Only add filterable entities, if they were not already added
 					if (mFilterableAssociations[oNavigationProperty.name] === undefined) {
 						mFilterableAssociations[oNavigationProperty.name] = oEndRole.type;
@@ -736,9 +1273,52 @@ sap.ui.define([
 		return mFilterableAssociations;
 	};
 
+	MetadataAnalyser.prototype.getParametersByEntitySetName = function(sEntitySet) {
+		var oResult, mAssociations, mSubAssociations, sNavigationProperty, sSubNavigationProperty, sSubEntityType, sSubSubEntityType, oAssocEnd, oEntityDef, oSubEntityDef, oEntitySet;
+
+		oEntitySet = this._oMetaModel.getODataEntitySet(sEntitySet);
+		if (oEntitySet) {
+			oEntityDef = this._getEntityDefinition(oEntitySet.entityType);
+		}
+
+		mAssociations = this._getAssociations(oEntityDef, null, false, false);
+		for (sNavigationProperty in mAssociations) {
+			sSubEntityType = mAssociations[sNavigationProperty];
+
+			oAssocEnd = this._oMetaModel.getODataAssociationSetEnd(oEntityDef, sNavigationProperty);
+			if (oAssocEnd.entitySet) {
+				oSubEntityDef = this._getEntityDefinition(sSubEntityType);
+				if (oSubEntityDef) {
+					if ((oSubEntityDef["sap:semantics"] === "parameters") && oSubEntityDef.key) {
+						oResult = {
+							entitySetName: oAssocEnd.entitySet,
+							parameters: [],
+							navPropertyName: ""
+						};
+						for (var i = 0; i < oSubEntityDef.key.propertyRef.length; i++) {
+							oResult.parameters.push(oSubEntityDef.key.propertyRef[i].name);
+						}
+
+						mSubAssociations = this._getAssociations(oSubEntityDef, null, false, true);
+						for (sSubNavigationProperty in mSubAssociations) {
+							sSubSubEntityType = mSubAssociations[sSubNavigationProperty];
+							if (sSubSubEntityType === oEntitySet.entityType) {
+								oResult.navPropertyName = sSubNavigationProperty;
+								break;
+							}
+						}
+
+						return oResult;
+					}
+				}
+			}
+		}
+
+		return null;
+	};
+
 	/**
 	 * Retrieves the ValueList Annotation lazily for the specified property/target
-	 * 
 	 * @param {String} sPath the full path of the property/target (including the namespace)
 	 * @returns {Promise} a Promise that would be resolved once the ValueList annotation is loaded -or- rejected if specified property path is
 	 *          incorrect or value list could not be resolved
@@ -766,7 +1346,8 @@ sap.ui.define([
 							oResolvedAnnotation = {
 								annotation: mValueList[sQualifier]
 							};
-							if (oResolvedAnnotation.annotation) {
+							// TODO: to be removed in the next release! - Ignore ValueList with PresentationVariantQualifier
+							if (oResolvedAnnotation.annotation && !oResolvedAnnotation.annotation["PresentationVariantQualifier"]) {
 								this._enrichValueHelpAnnotation(oResolvedAnnotation, sParentFieldName);
 								// Check if there is no qualifier --> the default/primaryValueListAnnotation
 								if (!sQualifier) {
@@ -790,18 +1371,17 @@ sap.ui.define([
 
 	/**
 	 * Formats a ValueList Annotation object in the format which is used by BaseValueListProvider
-	 *
 	 * @param {Map} mValueListData A data object which contains the value help info in a format used by the ODataModel
 	 * @param {String} sParentFieldName The name of the field for which the Value Help is made
-	 *
+	 * @returns {Map} the formatted annotation
 	 * @public
 	 * @experimental
 	 * @since 1.38
 	 */
-	MetadataAnalyser.prototype.getValueListAnnotationForFunctionImport = function(mValueListData, sParentFieldName){
+	MetadataAnalyser.prototype.getValueListAnnotationForFunctionImport = function(mValueListData, sParentFieldName) {
 		var mAnnotation = {
-				additionalAnnotations: []
-			}, oResolvedAnnotation, sQualifier;
+			additionalAnnotations: []
+		}, oResolvedAnnotation, sQualifier;
 		for (sQualifier in mValueListData) {
 			oResolvedAnnotation = {
 				annotation: mValueListData[sQualifier]
@@ -823,7 +1403,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the ValueList Annotation for the specified property/target
-	 * 
 	 * @param {String} sPath the full path of the property/target (including the namespace)
 	 * @returns {Object} a Map of resolved ValueHelpList (if any) annotations
 	 * @deprecated Since 1.29 - use #getValueListAnnotationLazy instead!
@@ -843,7 +1422,7 @@ sap.ui.define([
 			if (oProperty) {
 				sParentFieldName = oProperty.name;
 				for ( var sProp in oProperty) {
-					if (sProp.indexOf("com.sap.vocabularies.Common.v1.ValueList") > -1) {
+					if (sProp === "com.sap.vocabularies.Common.v1.ValueList" || sProp.indexOf("com.sap.vocabularies.Common.v1.ValueList#") > -1) {
 						sQualifier = null;
 						oResolvedAnnotation = {
 							annotation: oProperty[sProp]
@@ -872,7 +1451,6 @@ sap.ui.define([
 
 	/**
 	 * Enriches the provided Value Help annotation with key and other relevant information
-	 * 
 	 * @param {object} oAnnotation Annotation object
 	 * @param {string} sParentFieldName - the parent field name
 	 * @private
@@ -893,9 +1471,9 @@ sap.ui.define([
 					}
 					if (oEntitySet) {
 						oAnnotation.valueListEntityName = oEntitySet.entityType;
-						oAnnotation.semantics = oEntitySet["sap:semantics"];
-						aKeys = this.getKeysByEntityTypeName(oAnnotation.valueListEntityName);
-						aFields = this.getFieldsByEntityTypeName(oAnnotation.valueListEntityName);
+						oAnnotation.semantics = oEntitySet["sap:semantics"];// translation?
+						aKeys = this.getKeysByEntitySetName(oEntitySet.name);
+						aFields = this.getFieldsByEntitySetName(oEntitySet.name);
 					}
 				}
 
@@ -975,7 +1553,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the human readable text/description field's name from the specified Key field's name and entity name
-	 * 
 	 * @param {string|object} sKeyField - the name of the key field / oField - the field as present in the OData metadata
 	 * @param {string} sEntityName - the name of the entity (required if the name of the field is passed as the 1st param)
 	 * @returns {string} the description field name, if any
@@ -1007,7 +1584,6 @@ sap.ui.define([
 
 	/**
 	 * Returns whether Search query is supported for this value help annotation
-	 * 
 	 * @param {object} oAnnotation - ValueHelpAnnotation
 	 * @returns {boolean} whether search query is supported
 	 * @public
@@ -1027,7 +1603,6 @@ sap.ui.define([
 
 	/**
 	 * Gets the valuelist entity sets semantics from the specified ValueList annotation
-	 * 
 	 * @param {Object} oAnnotation - the value list annotation
 	 * @returns {string} - the semantics of the value list entity set (if any)
 	 * @protected
@@ -1048,17 +1623,21 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the LineItem Annotation for the specified target entity type
-	 * 
 	 * @param {String} sPath the full path of the entity type (including the namespace)
+	 * @param {String} sQualifier the qualifier for retrieving the UI.LineItem annotation (optional)
 	 * @returns {Object} the resolved LineItem annotation object (if any)
 	 * @public
 	 */
-	MetadataAnalyser.prototype.getLineItemAnnotation = function(sPath) {
-		var oEntityType, aAnnotationData, oResolvedAnnotation;
+	MetadataAnalyser.prototype.getLineItemAnnotation = function(sPath, sQualifier) {
+		var oEntityType, sTerm, aAnnotationData, oResolvedAnnotation;
 		if (sPath && this._oMetaModel) {
 			oEntityType = this._oMetaModel.getODataEntityType(sPath);
 			if (oEntityType) {
-				aAnnotationData = oEntityType["com.sap.vocabularies.UI.v1.LineItem"];
+				sTerm = "com.sap.vocabularies.UI.v1.LineItem";
+				if (sQualifier) {
+					sTerm += "#" + sQualifier;
+				}
+				aAnnotationData = oEntityType[sTerm];
 				// Resolve the annotation data into easily accessible properties
 				if (aAnnotationData) {
 					oResolvedAnnotation = {
@@ -1072,29 +1651,53 @@ sap.ui.define([
 	};
 
 	/**
-	 * Retrieves the PresentationVariant Annotation for the specified target entity type
-	 * 
+	 * Determines if the semantics annotation <code>sap:semantics</code> is set to 'aggregate'
 	 * @param {String} sPath the full path of the entity type (including the namespace)
-	 * @returns {Object} the resolved PresentationVariant annotation object (if any)
+	 * @returns {boolean} the semantics=aggregate state
 	 * @public
 	 */
-	MetadataAnalyser.prototype.getPresentationVariantAnnotation = function(sPath) {
-		var oEntityType, aAnnotationData, iLen, i, oResolvedAnnotation, oLineItemAnnotation, oChartAnnotation, sItemPath;
+	MetadataAnalyser.prototype.isSemanticAggregation = function(sPath) {
+		var oEntityType;
 		if (sPath && this._oMetaModel) {
 			oEntityType = this._oMetaModel.getODataEntityType(sPath);
 			if (oEntityType) {
-				aAnnotationData = oEntityType["com.sap.vocabularies.UI.v1.PresentationVariant"];
+				return oEntityType["sap:semantics"] === "aggregate";
+			}
+		}
+
+		return false;
+	};
+
+	/**
+	 * Retrieves the PresentationVariant Annotation for the specified target entity type
+	 * @param {String} sPath the full path of the entity type (including the namespace)
+	 * @param {String} sQualifier the qualifier for retrieving the UI.PresentationVariant annotation (optional)
+	 * @returns {Object} the resolved PresentationVariant annotation object (if any)
+	 * @public
+	 */
+	MetadataAnalyser.prototype.getPresentationVariantAnnotation = function(sPath, sQualifier) {
+		var oEntityType, sTerm, aAnnotationData, iLen, i, oResolvedAnnotation, oLineItemAnnotation, oChartAnnotation, sItemPath;
+		if (sPath && this._oMetaModel) {
+			oEntityType = this._oMetaModel.getODataEntityType(sPath);
+			if (oEntityType) {
+				sTerm = "com.sap.vocabularies.UI.v1.PresentationVariant";
+				if (sQualifier) {
+					sTerm += "#" + sQualifier;
+				}
+				aAnnotationData = oEntityType[sTerm];
 				if (aAnnotationData) {
 					oResolvedAnnotation = {
 						annotation: aAnnotationData,
 						requestAtLeastFields: [],
-						sortOrderFields: []
+						sortOrderFields: [],
+						groupByFields: [],
+						maxItems: undefined
 					};
 					if (aAnnotationData.Visualizations) {
 						iLen = aAnnotationData.Visualizations.length;
 						for (i = 0; i < iLen; i++) {
 							sItemPath = aAnnotationData.Visualizations[i].AnnotationPath;
-							if (sItemPath.indexOf("com.sap.vocabularies.UI.v1.LineItem") > -1) {
+							if (!oLineItemAnnotation && (sItemPath === "@com.sap.vocabularies.UI.v1.LineItem" || sItemPath.indexOf("@com.sap.vocabularies.UI.v1.LineItem#") > -1)) {
 								// get the lineitem annotation from entityType, ignoring the @
 								oLineItemAnnotation = oEntityType[sItemPath.substring(1)];
 								// process and set the line item annotation on the resolved result
@@ -1102,9 +1705,7 @@ sap.ui.define([
 									annotation: oLineItemAnnotation
 								};
 								this._enrichAnnotationWithUIDataField(oResolvedAnnotation.lineItemAnnotation, oLineItemAnnotation);
-
-								break;
-							} else if (sItemPath.indexOf("com.sap.vocabularies.UI.v1.Chart") > -1) {
+							} else if (!oChartAnnotation && (sItemPath === "@com.sap.vocabularies.UI.v1.Chart" || sItemPath.indexOf("@com.sap.vocabularies.UI.v1.Chart#") > -1)) {
 								// get the chart annotation from entityType, ignoring the @
 								oChartAnnotation = oEntityType[sItemPath.substring(1)];
 								// process and set the line item annotation on the resolved result
@@ -1113,7 +1714,10 @@ sap.ui.define([
 									semantics: oEntityType["sap:semantics"]
 								};
 								this._enrichChartAnnotation(oResolvedAnnotation.chartAnnotation, oChartAnnotation);
+							}
 
+							// break only if both LineItem and Chart annotations have been found!
+							if (oLineItemAnnotation && oChartAnnotation) {
 								break;
 							}
 						}
@@ -1133,6 +1737,17 @@ sap.ui.define([
 							});
 						}
 					}
+
+					if (aAnnotationData.GroupBy) {
+						iLen = aAnnotationData.GroupBy.length;
+						for (i = 0; i < iLen; i++) {
+							oResolvedAnnotation.groupByFields.push(aAnnotationData.GroupBy[i].PropertyPath);
+						}
+					}
+
+					if (aAnnotationData.MaxItems) {
+						oResolvedAnnotation.maxItems = aAnnotationData.MaxItems.Int;
+					}
 				}
 			}
 		}
@@ -1141,7 +1756,6 @@ sap.ui.define([
 
 	/**
 	 * Enriches the provided FieldGroup/LineItem annotation with UI.DataField attributes
-	 * 
 	 * @param {object} oAnnotation - the annotation that would be enriched
 	 * @param {object} oAnnotationData - array of params having UI.DataField
 	 * @private
@@ -1170,7 +1784,13 @@ sap.ui.define([
 				iLen = oAnnotationData.MeasureAttributes.length;
 				for (i = 0; i < iLen; i++) {
 					oObj = oAnnotationData.MeasureAttributes[i];
-					oAnnotation.measureAttributes[oObj.Measure.PropertyPath] = oObj.Role.EnumMember;
+					if (oObj.Measure) {
+						// enrich measure attributes
+						oAnnotation.measureAttributes[oObj.Measure.PropertyPath] = {
+							role: oObj.Role ? oObj.Role.EnumMember : null,
+							dataPoint: oObj.DataPoint ? oObj.DataPoint.AnnotationPath : null
+						};
+					}
 				}
 			}
 
@@ -1185,7 +1805,13 @@ sap.ui.define([
 				iLen = oAnnotationData.DimensionAttributes.length;
 				for (i = 0; i < iLen; i++) {
 					oObj = oAnnotationData.DimensionAttributes[i];
-					oAnnotation.dimensionAttributes[oObj.Dimension.PropertyPath] = oObj.Role.EnumMember;
+					if (oObj.Dimension) {
+						// enrich dimension attributes
+						oAnnotation.dimensionAttributes[oObj.Dimension.PropertyPath] = {
+							role: oObj.Role ? oObj.Role.EnumMember : null,
+							hierarchyLevel: oObj.HierarchyLevel ? oObj.HierarchyLevel.Int : 0
+						};
+					}
 				}
 			}
 		}
@@ -1194,17 +1820,21 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the Chart Annotation for the specified target entity type
-	 * 
 	 * @param {String} sPath the full path of the entity type (including the namespace)
+	 * @param {String} sQualifier the qualifier for retrieving the Chart annotation (optional)
 	 * @returns {Object} the resolved Chart annotation object (if any)
 	 * @public
 	 */
-	MetadataAnalyser.prototype.getChartAnnotation = function(sPath) {
-		var oEntityType, aAnnotationData, oResolvedAnnotation;
+	MetadataAnalyser.prototype.getChartAnnotation = function(sPath, sQualifier) {
+		var oEntityType, aAnnotationData, oResolvedAnnotation, sTerm;
 		if (sPath && this._oMetaModel) {
 			oEntityType = this._oMetaModel.getODataEntityType(sPath);
 			if (oEntityType) {
-				aAnnotationData = oEntityType["com.sap.vocabularies.UI.v1.Chart"];
+				sTerm = "com.sap.vocabularies.UI.v1.Chart";
+				if (sQualifier) {
+					sTerm += "#" + sQualifier;
+				}
+				aAnnotationData = oEntityType[sTerm];
 				// Resolve the annotation data into easily accessible properties
 				if (aAnnotationData) {
 					oResolvedAnnotation = {
@@ -1220,7 +1850,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the DataPoint Annotation for the specified target entity type
-	 * 
 	 * @param {String} sPath the full path of the entity type (including the namespace)
 	 * @returns {Object} oResolvedAnnotation - object of the resolved DataPoint annotations (if any)
 	 * @public
@@ -1231,7 +1860,7 @@ sap.ui.define([
 			oEntityType = this._oMetaModel.getODataEntityType(sPath);
 			if (oEntityType) {
 				for (sProp in oEntityType) {
-					if (sProp.indexOf("com.sap.vocabularies.UI.v1.DataPoint") > -1) {
+					if (sProp === "com.sap.vocabularies.UI.v1.DataPoint" || sProp.indexOf("com.sap.vocabularies.UI.v1.DataPoint#") > -1) {
 						sQualifier = null;
 						oDataPointAnnotationData = oEntityType[sProp];
 						aPath = sProp.split("#");
@@ -1258,7 +1887,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves an array of FieldGroup Annotation for the specified target entity type
-	 * 
 	 * @param {String} sPath the entity type name -or- the full path of the entity type (including the namespace)
 	 * @returns {Object} the resolved array of FieldGroup annotations (if any)
 	 * @public
@@ -1270,7 +1898,7 @@ sap.ui.define([
 			oEntityType = this._oMetaModel.getODataEntityType(this._getFullyQualifiedNameForEntity(sPath));
 			if (oEntityType) {
 				for ( var sProp in oEntityType) {
-					if (sProp.indexOf("com.sap.vocabularies.UI.v1.FieldGroup") > -1) {
+					if (sProp === "com.sap.vocabularies.UI.v1.FieldGroup" || sProp.indexOf("com.sap.vocabularies.UI.v1.FieldGroup#") > -1) {
 						sQualifier = null;
 						oAnnotation = oEntityType[sProp];
 						aPath = sProp.split("#");
@@ -1307,8 +1935,61 @@ sap.ui.define([
 	};
 
 	/**
+	 * Retrieves an array of FieldGroup annotation as specified by the FilterFacets annotation for a target entity type. If no FilterFacet annotation
+	 * is provided, all the FieldGroups are returned (same behaviour as getFieldGroupAnnotation method).
+	 * @param {String} sPath the entity type name -or- the full path of the entity type (including the namespace)
+	 * @returns {Object} the resolved array of FieldGroup annotations (if any)
+	 * @public
+	 */
+	MetadataAnalyser.prototype.getFieldGroupsByFilterFacetsAnnotation = function(sPath) {
+		var oEntityType, aPath, sQualifier, aRecords, aResolvedAnnotation, aFieldGroupsAnnotation = this.getFieldGroupAnnotation(sPath);
+
+		aResolvedAnnotation = aFieldGroupsAnnotation;
+
+		if (sPath && this._oMetaModel) {
+			// Field groups annotations are used also by SmartFilter, which can be used without a fully qualified path --> add support for that
+			oEntityType = this._oMetaModel.getODataEntityType(this._getFullyQualifiedNameForEntity(sPath));
+			if (oEntityType) {
+				for ( var sProp in oEntityType) {
+					if (sProp === "com.sap.vocabularies.UI.v1.FilterFacets" || sProp.indexOf("com.sap.vocabularies.UI.v1.FilterFacets#") > -1) {
+
+						aResolvedAnnotation = [];
+
+						aRecords = oEntityType[sProp];
+						if (aRecords) {
+							for (var i = 0; i < aRecords.length; i++) {
+								aPath = aRecords[i].Target.AnnotationPath.split("#");
+								if (aPath.length === 2) {
+									sQualifier = aPath[1];
+								}
+
+								if (sQualifier) {
+									/* eslint-disable no-loop-func */
+									aFieldGroupsAnnotation.some(function(oFieldGroupAnnotation) {
+										if (oFieldGroupAnnotation.groupName === sQualifier) {
+											if (aRecords[i].Label) {
+												oFieldGroupAnnotation.groupLabel = aRecords[i].Label.String;
+											}
+											aResolvedAnnotation.push(oFieldGroupAnnotation);
+											return true;
+										}
+										return false;
+
+									});
+									/* eslint-enable no-loop-func */
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return aResolvedAnnotation;
+	};
+
+	/**
 	 * Enriches the provided FieldGroup/LineItem annotation with UI.DataField attributes
-	 * 
 	 * @param {object} oAnnotation - the annotation that would be enriched
 	 * @param {Array} aRecords - array of params having UI.DataField
 	 * @private
@@ -1363,7 +2044,6 @@ sap.ui.define([
 
 	/**
 	 * Extracts the Criticality meta object and fields
-	 * 
 	 * @param {Object} oCriticality - the Criticality parameter
 	 * @param {Object} oRecord - the record containing the Criticality parameter
 	 * @returns {Object} oCriticality - the parsed Criticality metadata
@@ -1377,44 +2057,11 @@ sap.ui.define([
 			oResult["path"] = oCriticality.Path;
 			oResult["criticalityType"] = oCriticality.EnumMember;
 			oCriticalityRepresentation = oRecord["CriticalityRepresentation"];
-			if (oCriticalityRepresentation && oCriticalityRepresentation.EnumMember) {
-				oResult["criticalityRepresentationType"] = oCriticalityRepresentation.EnumMember;
-			}
-		}
-		return oResult;
-	};
-
-	/**
-	 * Extracts the Apply "odata.fillUriTemplate" meta object and fields
-	 * 
-	 * @param {Object} oParameter - the Apply "odata.fillUriTemplate" meta object
-	 * @returns {Object} oUrlInfo - the parsed "odata.fillUriTemplate" metadata
-	 * @private
-	 */
-	MetadataAnalyser.prototype._extractURLInfo = function(oParameter) {
-		var oResult, aParameters, iLength, oParam;
-		if (oParameter && oParameter.Apply && oParameter.Apply.Name === "odata.fillUriTemplate") {
-			oResult = {
-				urlBinding: undefined,
-				parameters: []
-			};
-			// Create a dummy annotation helper context at the instance level
-			if (!this._oDummyAnnotationHelperContext) {
-				this._oDummyAnnotationHelperContext = this._oMetaModel.createBindingContext("/");
-				// require the AnnotationHelper instance once
-				jQuery.sap.require("sap.ui.model.odata.AnnotationHelper");
-			}
-			if (this._oDummyAnnotationHelperContext) {
-				// extract binding expression from fillUriTemplate
-				oResult.urlBinding = sap.ui.model.odata.AnnotationHelper.format(this._oDummyAnnotationHelperContext, oParameter);
-			}
-			// extract LabeledElement --> Path from Parameters (these should be added to $select)
-			aParameters = oParameter.Apply.Parameters;
-			iLength = aParameters && aParameters.length ? aParameters.length : 0;
-			while (iLength--) {
-				oParam = aParameters[iLength];
-				if (oParam && oParam.Type === "LabeledElement" && oParam.Value && oParam.Value.Path) {
-					oResult.parameters.push(oParam.Value.Path);
+			if (oCriticalityRepresentation) {
+				if (oCriticalityRepresentation.Path) {
+					oResult["criticalityRepresentationPath"] = oCriticalityRepresentation.Path;
+				} else if (oCriticalityRepresentation.EnumMember) {
+					oResult["criticalityRepresentationType"] = oCriticalityRepresentation.EnumMember;
 				}
 			}
 		}
@@ -1422,8 +2069,206 @@ sap.ui.define([
 	};
 
 	/**
+	 * Extracts the Apply "odata.fillUriTemplate" meta object and fields
+	 * @param {Object} oParameter - the Apply "odata.fillUriTemplate" meta object
+	 * @returns {Object} oUrlInfo - the parsed "odata.fillUriTemplate" metadata
+	 * @private
+	 */
+	MetadataAnalyser.prototype._extractURLInfo = function(oParameter) {
+		var oResult, aParameters, iLength, oParam;
+		if (oParameter) {
+			if (oParameter.Apply && oParameter.Apply.Name === "odata.fillUriTemplate") {
+				oResult = {
+					urlTarget: undefined,
+					parameters: []
+				};
+				// Create a dummy annotation helper context at the instance level
+				if (!this._oDummyAnnotationHelperContext) {
+					this._oDummyAnnotationHelperContext = this._oMetaModel.createBindingContext("/");
+					// require the AnnotationHelper instance once
+					jQuery.sap.require("sap.ui.model.odata.AnnotationHelper");
+				}
+				if (this._oDummyAnnotationHelperContext) {
+					// extract target URL from fillUriTemplate
+					oResult.urlTarget = sap.ui.model.odata.AnnotationHelper.format(this._oDummyAnnotationHelperContext, oParameter);
+				}
+				// extract LabeledElement --> Path from Parameters (these should be added to $select)
+				aParameters = oParameter.Apply.Parameters;
+				iLength = aParameters && aParameters.length ? aParameters.length : 0;
+				while (iLength--) {
+					oParam = aParameters[iLength];
+					if (oParam && oParam.Type === "LabeledElement" && oParam.Value && oParam.Value.Path) {
+						oResult.parameters.push(oParam.Value.Path);
+					}
+				}
+			} else if (oParameter.Path) {
+				oResult = {
+					urlPath: oParameter.Path
+				};
+			}
+		}
+		return oResult;
+	};
+
+	/**
+	 * Retrieves the SelectionVariant annotation for a specified entity
+	 * @param {String} sPath the entity type name -or- the full path of the entity type (including the namespace)
+	 * @returns {array} the resolved array of SelectionVariant annotations (if any).
+	 * @public
+	 */
+	MetadataAnalyser.prototype.getSelectionVariantAnnotationList = function(sPath) {
+		var oEntityType, oAnnotation, sQualifier, aResolvedAnnotation = [], aPath;
+		if (sPath && this._oMetaModel) {
+			// SelectionFields annotations is used also by SmartFilter, which can be used without a fully qualified path --> add support for that
+			oEntityType = this._oMetaModel.getODataEntityType(this._getFullyQualifiedNameForEntity(sPath));
+			if (oEntityType) {
+				for ( var sProp in oEntityType) {
+					if (sProp === "com.sap.vocabularies.UI.v1.SelectionVariant" || sProp.indexOf("com.sap.vocabularies.UI.v1.SelectionVariant#") > -1) {
+						sQualifier = "";
+						oAnnotation = oEntityType[sProp];
+						aPath = sProp.split("#");
+						if (aPath.length === 2) {
+							sQualifier = aPath[1];
+						}
+						if (oAnnotation) {
+							aResolvedAnnotation.push({
+								qualifier: sQualifier,
+								annotation: oAnnotation
+							});
+						}
+					}
+				}
+			}
+		}
+		return aResolvedAnnotation;
+	};
+
+	/**
+	 * Retrieves the SelectionPresentationVariant annotation for a specified entity
+	 * @param {String} sEntitySetName the entity set name
+	 * @returns {array} the resolved array of SelectionPresentationVariant annotations (if any).
+	 * @public
+	 */
+	MetadataAnalyser.prototype.getSelectionPresentationVariantAnnotationList = function(sEntitySetName) {
+		var aEntitiesToCheck, oEntitySet, oEntityType, oAnnotation, sQualifier, sVariantQualifier, sAnnoPath, sText = null, oSelectionVariant = null, oPresentationVariant = null, aResolvedAnnotation = [], aPath;
+		if (sEntitySetName && this._oMetaModel) {
+
+			oEntitySet = this._oMetaModel.getODataEntitySet(sEntitySetName);
+			if (oEntitySet) {
+				oEntityType = this._oMetaModel.getODataEntityType(oEntitySet.entityType);
+			}
+
+			aEntitiesToCheck = [
+				oEntitySet, oEntityType
+			];
+			var fnGetSelectionVariantForQualifier = function(sQualifier, aSelectionVariants) {
+				// returns {object | undefined}
+				return aSelectionVariants.filter(function(oSelectionVariant) {
+					return oSelectionVariant.qualifier === sQualifier;
+				})[0];
+			};
+			var sFullyQualifiedEntityTypeName = this.getEntityTypeNameFromEntitySetName(sEntitySetName);
+			var that = this;
+			aEntitiesToCheck.forEach(function(oEntity) {
+
+				if (oEntity) {
+
+					for ( var sProp in oEntity) {
+						if (sProp === "com.sap.vocabularies.UI.v1.SelectionPresentationVariant" || sProp.indexOf("com.sap.vocabularies.UI.v1.SelectionPresentationVariant#") > -1) {
+							sQualifier = "";
+							oAnnotation = oEntity[sProp];
+							aPath = sProp.split("#");
+							if (aPath.length === 2) {
+								sQualifier = aPath[1];
+							}
+							if (oAnnotation) {
+								sText = null;
+
+								if (oAnnotation.Text && oAnnotation.Text.String) {
+									sText = oAnnotation.Text.String;
+								}
+
+								if (oAnnotation.SelectionVariant && oAnnotation.SelectionVariant.Path) {
+									sAnnoPath = oAnnotation.SelectionVariant.Path;
+									sVariantQualifier = "";
+									aPath = sAnnoPath.split("#");
+									if (aPath.length === 2) {
+										sVariantQualifier = aPath[1];
+									}
+
+									if (oEntityType[sAnnoPath.substring(1)]) {
+										var oSelectionVariantAnnotation = fnGetSelectionVariantForQualifier(sVariantQualifier, that.getSelectionVariantAnnotationList(sFullyQualifiedEntityTypeName));
+										oSelectionVariant = {
+											qualifier: sVariantQualifier,
+											annotation: oSelectionVariantAnnotation ? oSelectionVariantAnnotation.annotation : undefined
+										};
+									}
+								}
+
+								if (oAnnotation.PresentationVariant && oAnnotation.PresentationVariant.Path) {
+									sAnnoPath = oAnnotation.PresentationVariant.Path;
+
+									sVariantQualifier = "";
+									aPath = sAnnoPath.split("#");
+									if (aPath.length === 2) {
+										sVariantQualifier = aPath[1];
+									}
+
+									if (oEntityType[sAnnoPath.substring(1)]) {
+										oPresentationVariant = {
+											qualifier: sVariantQualifier,
+											annotation: that.getPresentationVariantAnnotation(sFullyQualifiedEntityTypeName, sVariantQualifier)
+										};
+									}
+								}
+
+								aResolvedAnnotation.push({
+									qualifier: sQualifier,
+									text: sText,
+									annotation: oAnnotation,
+									selectionVariant: oSelectionVariant,
+									presentationVariant: oPresentationVariant
+								});
+
+							}
+						}
+					}
+				}
+			});
+		}
+		return aResolvedAnnotation;
+	};
+
+	/**
+	 * Retrieves the SelectionFields annotation for a specified entity
+	 * @param {String} sPath the entity type name -or- the full path of the entity type (including the namespace)
+	 * @returns {Object} the resolved array of FieldGroup annotations (if any)
+	 * @public
+	 */
+	MetadataAnalyser.prototype.getSelectionFieldsAnnotation = function(sPath) {
+		var oEntityType, aAnnotationData, iLen, i, oResolvedAnnotation;
+		if (sPath && this._oMetaModel) {
+			// SelectionFields annotations is used also by SmartFilter, which can be used without a fully qualified path --> add support for that
+			oEntityType = this._oMetaModel.getODataEntityType(this._getFullyQualifiedNameForEntity(sPath));
+			if (oEntityType) {
+				aAnnotationData = oEntityType["com.sap.vocabularies.UI.v1.SelectionFields"];
+				if (aAnnotationData) {
+					oResolvedAnnotation = {
+						annotation: aAnnotationData,
+						selectionFields: []
+					};
+					iLen = aAnnotationData.length;
+					for (i = 0; i < iLen; i++) {
+						oResolvedAnnotation.selectionFields.push(aAnnotationData[i].PropertyPath);
+					}
+				}
+			}
+		}
+		return oResolvedAnnotation;
+	};
+
+	/**
 	 * Retrieves the SemanticKey Annotation for the specified entity
-	 * 
 	 * @param {String} sPath the full path of the entity/target (including the namespace)
 	 * @returns {Object} the resolved SemanticKey annotation object (if any)
 	 * @public
@@ -1451,7 +2296,6 @@ sap.ui.define([
 
 	/**
 	 * Returns the importance annotation if available
-	 * 
 	 * @param {Object} oParam - the parameter containing the importance annotation
 	 * @returns {string} the found importance value or null
 	 * @private
@@ -1478,7 +2322,6 @@ sap.ui.define([
 
 	/**
 	 * Resolves and returns the displayBehaviour from TextArrangement Annotation for the specified property/target
-	 * 
 	 * @param {String} sPath the full path of the property/target (including the namespace) or the property itself
 	 * @returns {string} the resolved displayBehaviour from TextArrangement enumeration (if any)
 	 * @public
@@ -1530,7 +2373,6 @@ sap.ui.define([
 
 	/**
 	 * Retrieves the SemanticObject Annotation for the specified property/target
-	 * 
 	 * @param {String} sPath the full path of the property/target (including the namespace)
 	 * @returns {Object} the resolved semanticObject annotation object (if any)
 	 * @public
@@ -1554,8 +2396,46 @@ sap.ui.define([
 	};
 
 	/**
+	 * Retrieves the default SemanticObject and additional SemanticObjects from Annotation for the specified property/target.
+	 * @param {String} sPath the full path of the property/target (including the namespace)
+	 * @returns {object | undefined} the resolved semanticObject annotation object (if any)
+	 * @private
+	 */
+	MetadataAnalyser.prototype.getSemanticObjectsFromAnnotation = function(sPath) {
+		if (!sPath || !this._oMetaModel) {
+			return null;
+		}
+		// Note: slash inside of namespace is not allowed due to OData specification:
+		// http://docs.oasis-open.org/odata/odata/v4.0/errata03/os/complete/part3-csdl/odata-v4.0-errata03-os-part3-csdl-complete.html#_Namespace
+		var aPath = sPath.split("/");
+		// The type could either be an entity type or a complex type
+		var oType = this._oMetaModel.getODataEntityType(aPath[0]) || this._oMetaModel.getODataComplexType(aPath[0]);
+		return MetadataAnalyser.getSemanticObjectsFromProperty(this._oMetaModel.getODataProperty(oType, aPath[1]));
+	};
+
+	/**
+	 * Retrieves the default SemanticObject and other SemanticObjects for the specified annotations.
+	 * @param {object} oProperty the given OData property
+	 * @returns {object | undefined} the resolved semanticObject annotation object (if any)
+	 * @private
+	 */
+	MetadataAnalyser.getSemanticObjectsFromProperty = function(oProperty) {
+		var oSemanticObjects = {
+			defaultSemanticObject: undefined,
+			additionalSemanticObjects: []
+		};
+		for ( var sAttr in oProperty) {
+			if (sAttr === "com.sap.vocabularies.Common.v1.SemanticObject") {
+				oSemanticObjects.defaultSemanticObject = oProperty[sAttr]["String"];
+			} else if (jQuery.sap.startsWith(sAttr, "com.sap.vocabularies.Common.v1.SemanticObject#")) {
+				oSemanticObjects.additionalSemanticObjects.push(oProperty[sAttr]["String"]);
+			}
+		}
+		return (oSemanticObjects.defaultSemanticObject || oSemanticObjects.additionalSemanticObjects.length > 0) ? oSemanticObjects : undefined;
+	};
+
+	/**
 	 * Retrieves the SemanticObject Annotation for the specified property/target
-	 * 
 	 * @param {object} oProperty the given OData property
 	 * @returns {Object} the resolved semanticObject annotation object (if any)
 	 * @public
@@ -1573,7 +2453,6 @@ sap.ui.define([
 
 	/**
 	 * Prepares the semantic object annotation.
-	 * 
 	 * @param {object} oAnnotation the original annotation
 	 * @returns {object} the preparation result
 	 * @private
@@ -1594,9 +2473,14 @@ sap.ui.define([
 		return oResolvedAnnotation;
 	};
 
+	MetadataAnalyser.prototype.getContactAnnotation = function(sBindingPath) {
+		var oMetaContext = this._oMetaModel.getMetaContext(sBindingPath);
+		var oProperty = oMetaContext.getProperty(oMetaContext.getPath());
+		return oProperty["com.sap.vocabularies.Communication.v1.Contact"];
+	};
+
 	/**
 	 * Returns the fully qualified name of an entity which is e.g. "com.sap.GL.ZAF.GL_ACCOUNT" from the specified type name.
-	 * 
 	 * @param {string} sEntityTypeName - the entity Type name which needs to be converted
 	 * @returns {string} - the fully qualified name for this entity
 	 * @private
@@ -1620,8 +2504,28 @@ sap.ui.define([
 	};
 
 	/**
+	 * Gets the UI5 selection range option type based on Annotation type.
+	 *
+	 * @public
+	 * @param {string} sType The Annotation type
+	 * @returns {string} The UI5 type (if found)
+	 */
+	MetadataAnalyser.getSelectionRangeOptionType = function(sType) {
+		return mSelectionRangeOptionType[sType];
+	};
+	/**
+	 * Gets the UI5 selection range sign type based on Annotation type.
+	 *
+	 * @public
+	 * @param {string} sType The Annotation type
+	 * @returns {string} The UI5 type (if found)
+	 */
+	MetadataAnalyser.getSelectionRangeSignType = function(sType) {
+		return mSelectionRangeSignType[sType];
+	};
+
+	/**
 	 * Destroys the object
-	 * 
 	 * @public
 	 */
 	MetadataAnalyser.prototype.destroy = function() {

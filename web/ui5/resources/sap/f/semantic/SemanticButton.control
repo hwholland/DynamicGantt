@@ -9,12 +9,12 @@
     <abstract/>
     <baseType>sap.f/semantic/SemanticControl</baseType>
     <properties>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>Determines whether the &lt;code&gt;SemanticButton&lt;/code&gt; is enabled.</documentation>
         </property>
     </properties>
     <events>
-        <event name="press" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="press">
             <documentation>Fired when the user selects the &lt;code&gt;SemanticButton&lt;/code&gt;.</documentation>
         </event>
     </events>

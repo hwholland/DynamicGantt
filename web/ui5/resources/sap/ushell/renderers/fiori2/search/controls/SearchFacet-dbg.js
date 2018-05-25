@@ -1,9 +1,10 @@
 /* global jQuery, sap, window */
-(function() {
-    "use strict";
 
-    jQuery.sap.require('sap.m.List');
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.controls.SearchFacetItem");
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/controls/SearchFacetItem',
+    'sap/m/List'
+], function() {
+    "use strict";
 
     sap.m.List.extend('sap.ushell.renderers.fiori2.search.controls.SearchFacet', {
 
@@ -22,7 +23,6 @@
         },
 
         constructor: function(sId, options) {
-            var that = this;
             options = jQuery.extend({}, {
                 mode: sap.m.ListMode.SingleSelectMaster,
                 showSeparators: sap.m.ListSeparators.None,
@@ -40,25 +40,6 @@
             }, options);
             sap.m.List.prototype.constructor.apply(this, [sId, options]);
             this.addStyleClass('sapUshellSearchFacet');
-            this.addEventDelegate({
-                onAfterRendering: function(e) {
-                    if (that.getEshRole() === "datasource") {
-                        jQuery(that.getDomRef()).append("<hr>");
-                    }
-
-                    //correct 'top' of the showMoreLinks since this is changed by barchart
-                    /*
-                    var facetIndex = e.srcControl.sId.match(/\d+$/); //like "__filter0-2"
-                    facetIndex = parseInt(facetIndex, 10);
-                    if (facetIndex > 0) {
-                        var showMoreLinks = $(".searchFacetShowMoreLink")[facetIndex - 1];
-                        if (showMoreLinks) {
-                            showMoreLinks.style.marginTop = "10px";
-                        }
-                    }
-					*/
-                }
-            });
         },
 
         handleItemPress: function(event) {
@@ -72,28 +53,16 @@
         },
 
         renderer: 'sap.m.ListRenderer',
+        onAfterRendering: function() {
+            var infoZeile = jQuery(this.getDomRef()).closest(".sapUshellSearchFacetIconTabBar").find(".sapUshellSearchFacetInfoZeile")[0];
+            if (infoZeile) {
+                var oInfoZeile = sap.ui.getCore().byId(infoZeile.id);
+                oInfoZeile.setVisible(false);
+            }
+        },
 
         setEshRole: function(role) {
             var that = this;
-            /*
-            var fGroup = function(v) {
-                return v < sSM ? "S" : v < sML ? "M" : "L";
-            };
-            var fGrouper = function(oContext) {
-                var v = oContext.getProperty("value");
-                var t = oContext.getProperty("facetTitle");
-                var group = fGroup(v);
-                return {
-                    key: group,
-                    text: mGroupInfo[group].text
-                };
-            };
-            var fnCompare = function(a, b) {
-                if (a < b) return -1;
-                if (a == b) return 0;
-                if (a > b) return 1;
-            };
-			*/
             var items = {
                 path: "items",
                 template: new sap.ushell.renderers.fiori2.search.controls.SearchFacetItem(),
@@ -118,10 +87,6 @@
                 case "attribute":
                         this.setMode(sap.m.ListMode.MultiSelect);
                     this.setHeaderText("");
-                    //new sap.ui.model.Sorter(sPath, bDescending?, vGroup?, fnComparator?)
-                    items.sorter = new sap.ui.model.Sorter("facetTitle", false, false);
-                    //items.sorter = new sap.ui.model.Sorter("value", false, false);
-                    //items.sorter = new sap.ui.model.Sorter("facetTitle", null, fGrouper, fnCompare);
                     break;
             }
             this.bindAggregation("items", items);
@@ -134,4 +99,4 @@
         }
     });
 
-})();
+});

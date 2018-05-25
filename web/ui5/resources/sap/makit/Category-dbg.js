@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ jQuery.sap.require("sap.ui.core.Element");
  * @extends sap.ui.core.Element
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -73,8 +73,24 @@ sap.ui.core.Element.extend("sap.makit.Category", { metadata : {
 	deprecated : true,
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * Specify the name of the column to be mapped to the Category Axis's value.
+		 */
 		"column" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * The text label representing this Category(on value bubble or table's header)
+		 */
 		"displayName" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * Number formatting for the value. Accepted values:
+		 * number
+		 * currency
+		 * percent
+		 * roundedN - where N represents number of decimal places e.g. rounded4
+		 */
 		"format" : {type : "string", group : "Misc", defaultValue : null}
 	}
 }});

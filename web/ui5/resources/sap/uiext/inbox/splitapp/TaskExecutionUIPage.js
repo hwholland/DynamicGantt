@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.splitapp.TaskExecutionUIPage");jQuery.sap.require("sap.m.MessageToast");sap.ui.base.Object.extend("sap.uiext.inbox.splitapp.TaskExecutionUIPage",{constructor:function(I){sap.ui.base.Object.apply(this);this.Id=I;this._oCore=sap.ui.getCore();this._oBundle=this._oCore.getLibraryResourceBundle("sap.uiext.inbox");this.oTaskExecutionUIPage=this._createTaskExecutionUIPage();}});
 sap.uiext.inbox.splitapp.TaskExecutionUIPage.prototype._createTaskExecutionUIPage=function(){var t=this;var T=t._oCore.byId(this.Id+"-taskExecUIPage");if(!T){T=new sap.m.Page(this.Id+"-taskExecUIPage",{showNavButton:true,navButtonPress:function(){t.handleNavButtonPress();},});}return T;};

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.InboxSplitApp");jQuery.sap.require("sap.uiext.inbox.library");jQuery.sap.require("sap.ui.core.Control");sap.ui.core.Control.extend("sap.uiext.inbox.InboxSplitApp",{metadata:{deprecated:true,publicMethods:["bindTasks","resetSearchCriteria"],library:"sap.uiext.inbox",properties:{"showMasterPageNavBtn":{type:"boolean",group:"Appearance",defaultValue:null},"tcmServiceURL":{type:"string",group:"",defaultValue:null},"filters":{type:"object[]",group:"Misc",defaultValue:null},"tcmConfiguration":{type:"object",group:"Misc",defaultValue:null}},aggregations:{"splitAppl":{type:"sap.m.SplitApp",multiple:false}},events:{"navButtonPressed":{}}}});sap.uiext.inbox.InboxSplitApp.M_EVENTS={'navButtonPressed':'navButtonPressed'};
 /*!

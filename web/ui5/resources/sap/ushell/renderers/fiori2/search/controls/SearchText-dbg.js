@@ -1,13 +1,11 @@
-/* global sap */
-/* global alert */
-/* global jQuery */
+/* global sap, alert, jQuery */
 
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper'
+], function(SearchHelper) {
     "use strict";
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    var searchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
 
-    sap.m.Text.extend('sap.ushell.renderers.fiori2.search.controls.SearchText', {
+    return sap.m.Text.extend('sap.ushell.renderers.fiori2.search.controls.SearchText', {
 
         renderer: 'sap.m.TextRenderer',
         onAfterRendering: function() {
@@ -15,16 +13,13 @@
             var d = this.getDomRef();
 
             // recover bold tag with the help of text() in a safe way
-            searchHelper.boldTagUnescaperByText(d);
+            SearchHelper.boldTagUnescaper(d);
 
             // emphasize whyfound in case of ellipsis
-            // the problem 
-            // Logic is moved to SearchResultListItem OnAfterrendering() 
+            // the problem
+            // Logic is moved to SearchResultListItem OnAfterrendering()
             // because both offsetWidth and scrollWidth are 0 when parent .searchResultListItemDetails2 display:none
             //searchHelper.forwardEllipsis4Whyfound(d);
-
         }
-
     });
-
-})();
+});

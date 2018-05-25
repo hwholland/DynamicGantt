@@ -1,5 +1,7 @@
-(function () {
-    "use strict";
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, console, window*/
     /*jslint plusplus: true, nomen: true*/
 
@@ -123,4 +125,6 @@
             }
         }
     });
-}());
+
+
+}, /* bExport= */ true);

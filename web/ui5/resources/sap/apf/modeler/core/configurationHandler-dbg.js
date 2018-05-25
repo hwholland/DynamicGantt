@@ -7,6 +7,7 @@
 jQuery.sap.declare("sap.apf.modeler.core.configurationHandler");
 jQuery.sap.require('sap.apf.modeler.core.configurationEditor');
 jQuery.sap.require("sap.apf.utils.hashtable");
+jQuery.sap.require("sap.apf.utils.utils");
 jQuery.sap.require("sap.apf.modeler.core.configurationObjects");
 (function() {
 	'use strict';
@@ -47,8 +48,9 @@ jQuery.sap.require("sap.apf.modeler.core.configurationObjects");
 		 * @private
 		 * @see sap.apf.modeler.core.TextPool#exportTexts
 		 */
-		this.exportTexts = function() {
-			return textPool.exportTexts();
+		this.exportTexts = function(configurationId) {
+			var analyticalConfigurationName = this.getConfiguration(configurationId).AnalyticalConfigurationName;
+			return textPool.exportTexts(analyticalConfigurationName);
 		};
 		this.getTextPool = function() {
 			return textPool;
@@ -158,6 +160,7 @@ jQuery.sap.require("sap.apf.modeler.core.configurationObjects");
 					constructors : {
 						Hashtable : Hashtable,
 						Step : inject.constructors.Step,
+						HierarchicalStep : inject.constructors.HierarchicalStep,
 						SmartFilterBar: inject.constructors.SmartFilterBar,
 						FacetFilter : inject.constructors.FacetFilter,
 						NavigationTarget : inject.constructors.NavigationTarget,
@@ -189,6 +192,15 @@ jQuery.sap.require("sap.apf.modeler.core.configurationObjects");
 				lazyLoadersForConfigEditor.removeItem(configurationId);
 				return configurationId;
 			}
+		};
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.ConfigurationHandler#updateConfigurationName
+		 * @description Adjust of the configuration name
+		 */
+		this.updateConfigurationName = function(configurationId, configurationName) {
+			initialConfigList.setItem(configurationId, configurationName);
 		};
 		/**
 		 * @private
@@ -265,13 +277,14 @@ jQuery.sap.require("sap.apf.modeler.core.configurationObjects");
 					callback(null);
 				} else {
 					var appInformation = inject.functions.getApplication(applicationId);
+					var configName = that.getConfiguration(configId).AnalyticalConfigurationName;
 					objectForExport = configEditor.serialize();
 					objectForExport.configHeader = {
 						Application : applicationId,
 						ApplicationName : appInformation.ApplicationName,
 						SemanticObject : appInformation.SemanticObject,
 						AnalyticalConfiguration : configId,
-						AnalyticalConfigurationName : that.getConfiguration(configId).AnalyticalConfigurationName,
+						AnalyticalConfigurationName : configName,
 						UI5Version : sap.ui.version
 					};
 					persistenceProxy.readEntity("configuration", function(result, metadata, messageObject) {
@@ -284,12 +297,13 @@ jQuery.sap.require("sap.apf.modeler.core.configurationObjects");
 						} else {
 							objectForExport.configHeader.CreationUTCDateTime = result.CreationUTCDateTime;
 							objectForExport.configHeader.LastChangeUTCDateTime = result.LastChangeUTCDateTime;
-							callback(JSON.stringify(objectForExport));
+							objectForExport = JSON.stringify(objectForExport, null, '\t');
+							callback(objectForExport, configName);
 						}
 					}, [ {
 						name : "AnalyticalConfiguration",
 						value : configId
-					} ], [ "CreationUTCDateTime", "LastChangeUTCDateTime" ], true, applicationId);
+					} ], [ "CreationUTCDateTime", "LastChangeUTCDateTime" ], applicationId);
 				}
 			}
 		};
@@ -375,7 +389,7 @@ jQuery.sap.require("sap.apf.modeler.core.configurationObjects");
 			configList = new Hashtable(messageHandler);
 		};
 		function getTempId() {
-			return "apf1972-" + (Math.random() * new Date().getTime());
+			return "apf1972-" + (sap.apf.utils.createPseudoGuid(32));
 		}
 	};
 }());

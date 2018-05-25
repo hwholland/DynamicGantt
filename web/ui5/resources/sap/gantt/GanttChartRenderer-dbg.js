@@ -30,7 +30,7 @@ sap.ui.define([], function () {
 		jQuery.sap.measure.start("GanttChartRenderer renderPaintServer","GanttPerf:GanttChartRenderer renderPaintServer part");
 		this.renderSvgDefs(oRenderManager, oGanttChart);
 		jQuery.sap.measure.end("GanttChartRenderer renderPaintServer");
-		
+
 		jQuery.sap.measure.start("GanttChartRenderer renderChartHeader","GanttPerf:GanttChartRenderer renderChartHeader part");
 		this.renderChartHeader(oRenderManager, oGanttChart);
 		jQuery.sap.measure.end("GanttChartRenderer renderChartHeader");
@@ -40,7 +40,7 @@ sap.ui.define([], function () {
 		jQuery.sap.measure.end("GanttChartRenderer renderChartBody");
 
 		oRenderManager.write("</div>");
-		
+
 		jQuery.sap.measure.end("GanttChartRenderer render");
 	};
 
@@ -57,7 +57,7 @@ sap.ui.define([], function () {
 			oRenderManager.write("</svg>");
 		}
 	};
-	
+
 	GanttChartRenderer.renderChartHeader = function (oRenderManager, oGanttChart) {
 		oRenderManager.write("<div id='" + oGanttChart.getId() + "-header'");
 		oRenderManager.addClass("sapGanttChartHeader");
@@ -67,18 +67,18 @@ sap.ui.define([], function () {
 		oRenderManager.write("<svg id='" + oGanttChart.getId() + "-header-svg'");
 		oRenderManager.addClass("sapGanttChartHeaderSvg");
 		oRenderManager.writeClasses();
-		oRenderManager.write("></svg>");
 
+		oRenderManager.write("></svg>");
 		oRenderManager.write("</div>");
 	};
 
 	GanttChartRenderer.renderChartBody = function (oRenderManager, oGanttChart) {
 		oRenderManager.write("<div id='" + oGanttChart.getId() + "-tt'");
-		oRenderManager.addClass("sapUiTableHScr");  // force horizontal scroll bar to show
+		//oRenderManager.addClass("sapUiTableHScr");  // force horizontal scroll bar to show
 		oRenderManager.addClass("sapGanttChartTT");
 		oRenderManager.writeClasses();
 		oRenderManager.addStyle("width", oGanttChart.getWidth());
-		oRenderManager.addStyle("height", oGanttChart.getHeight());
+		oRenderManager.addStyle("flex", "1 1 auto");
 		oRenderManager.writeStyles();
 		oRenderManager.write(">");
 

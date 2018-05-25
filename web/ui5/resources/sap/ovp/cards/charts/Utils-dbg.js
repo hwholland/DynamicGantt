@@ -131,6 +131,12 @@
 		jQuery.each(rawCategoryAxisTitles, function(i, d){
 			categoryAxisTitles.push(d);
 		});
+		var bDatapointNavigation = true;
+		var dNav = iContext.getSetting("ovpCardProperties").getProperty("/navigation");
+		if (dNav == "chartNav") {
+			bDatapointNavigation = false;
+		}
+		var bDatapointNavigation = bDatapointNavigation ? false : true;
 		/*
 		 //Readable version for debugging
 		 //eslint can't multiline strings
@@ -171,7 +177,7 @@
 				}\
 			}";
 		*/
-		return "{ valueAxis:{  title:{   visible:true,   text: '" + valueAxisTitles.join(",") + "'  },  label:{   formatString:'axisFormatter'  } }, categoryAxis:{  title:{   visible:true,   text: '" + categoryAxisTitles.join(",") + "'  },  label:{   formatString:'axisFormatter'  } }, legend: {  isScrollable: false }, title: {  visible: false }, interaction:{  noninteractiveMode: false,  selectability: {   legendSelection: false,   axisLabelSelection: false,   mode: 'EXCLUSIVE',   plotLassoSelection: false,   plotStdSelection: true  },  zoom:{   enablement: 'disabled'} } }";
+		return "{ valueAxis:{  layout: { maxWidth : 0.4 }, title:{   visible:false,   text: '" + valueAxisTitles.join(",") + "'  },  label:{   formatString:'axisFormatter'  } }, categoryAxis:{  title:{   visible:false,   text: '" + categoryAxisTitles.join(",") + "'  },  label:{   formatString:'axisFormatter'  } }, legend: {  isScrollable: false }, title: {  visible: false }, general: { groupData: false }, interaction:{  noninteractiveMode: " + bDatapointNavigation + ",  selectability: {   legendSelection: false,   axisLabelSelection: false,   mode: 'EXCLUSIVE',   plotLassoSelection: false,   plotStdSelection: true  }, zoom:{   enablement: 'disabled'} } }";
 	};
 	sap.ovp.cards.charts.Utils.LineChart.getVizProperties.requiresIContext = true;
 
@@ -276,6 +282,12 @@
 		jQuery.each(rawValueAxis2Titles, function(i, m){
 			valueAxis2Titles.push(m);
 		});
+		var bDatapointNavigation = true;
+		var dNav = iContext.getSetting("ovpCardProperties").getProperty("/navigation");
+		if (dNav == "chartNav") {
+			bDatapointNavigation = false;
+		}
+		var bDatapointNavigation = bDatapointNavigation ? false : true;
 		/*
 		 //Readable version for debugging
 		 //eslint can't multiline strings
@@ -313,7 +325,7 @@
 					visible: false\
 				},\
 				interaction:{\
-					noninteractiveMode: false,\
+					noninteractiveMode: bDatapointNavigation ? false : true,\
 					selectability: {\
 						legendSelection: false,\
 						axisLabelSelection: false,\
@@ -324,7 +336,7 @@
 				}\
 			}";
 		*/
-		return "{ valueAxis:{  title:{ visible:true, text: '" + valueAxisTitles.join(",") + "'  },  label:{ formatString:'axisFormatter'  } }, valueAxis2:{  title:{ visible:true, text: '" + valueAxis2Titles.join(",") + "'  },  label:{ formatString:'axisFormatter'  } }, categoryAxis:{  title:{ visible:true  },  label:{ formatString:'axisFormatter'  } }, legend: {  isScrollable: false }, title: {  visible: false }, interaction:{  noninteractiveMode: false,  selectability: { legendSelection: false, axisLabelSelection: false, mode: 'EXCLUSIVE', plotLassoSelection: false, plotStdSelection: true  },  zoom:{   enablement: 'disabled'} } }";
+		return "{ valueAxis:{  layout: { maxWidth : 0.4 }, title:{ visible:true, text: '" + valueAxisTitles.join(",") + "'  },  label:{ formatString:'axisFormatter'  } }, valueAxis2:{  title:{ visible:true, text: '" + valueAxis2Titles.join(",") + "'  },  label:{ formatString:'axisFormatter'  } }, categoryAxis:{  title:{ visible:true  },  label:{ formatString:'axisFormatter'  } }, legend: {  isScrollable: false }, title: {  visible: false }, interaction:{  noninteractiveMode: " + bDatapointNavigation + ",  selectability: { legendSelection: false, axisLabelSelection: false, mode: 'EXCLUSIVE', plotLassoSelection: false, plotStdSelection: true  }, zoom:{   enablement: 'disabled'} } }";
 	};
 	sap.ovp.cards.charts.Utils.BubbleChart.getVizProperties.requiresIContext = true;
 
@@ -485,4 +497,13 @@
 		}
 		return true;
 	};
+	sap.ovp.cards.charts.Utils.getSortAnnotationCollection = function(dataModel,presentationVariant,entitySet){
+		if (presentationVariant && presentationVariant.SortOrder && presentationVariant.SortOrder.Path && presentationVariant.SortOrder.Path.indexOf('@') >= 0){
+			 var sSortOrderPath = presentationVariant.SortOrder.Path.split('@')[1]; 
+		        var oAnnotationData = dataModel.getServiceAnnotations()[entitySet.entityType];
+		        return oAnnotationData[sSortOrderPath];
+		}
+       return presentationVariant.SortOrder;
+};
+
 }());

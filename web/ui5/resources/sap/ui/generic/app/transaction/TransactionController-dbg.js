@@ -1,8 +1,7 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftController", "sap/ui/generic/app/util/ModelUtil" ], function(jQuery, BaseController, DraftController, ModelUtil) {
@@ -21,7 +20,7 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftController", "s
 	 *        The class gives access to runtime draft handling for applications. Additionally error handling capabilities are provided to notify client 
 	 *        implementations of error situations. The event <code>fatalError</code> is thrown, if fatal errors occur during execution of OData requests.
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.30.0
 	 * @alias sap.ui.generic.app.transaction.TransactionController
 	 * @param {sap.ui.model.odata.ODataModel} oModel The OData model currently used
@@ -176,24 +175,16 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftController", "s
 	 *
 	 * @param {array} aEntities Binding contexts or paths (strings) which identify the entities
 	 * @param {map} mParameters Parameters that control the behavior of the request
-	 * @returns {Promise} A <code>Promise</code> that receives an array with the responses of the delete requests
+	 * @returns {Promise} A <code>Promise</code> that receives an array with the responses of the delete requests.
+	 *          The <code>Promise</code> resolves when at least one request was successful and rejects when all 
+	 *          delete requests have been rejected/aborted.
 	 *
 	 * @since 1.38
 	 * @experimental
 	 * @public
 	 */
 	TransactionController.prototype.deleteEntities = function(aEntities, mParameters) {
-		var oPromise, that = this, sPath, oContext, mInstanceParameters; 
-		var aDeleteResults = [];
-
-		var fnSuccess = function(oResponse) {
-			aDeleteResults.push(that._normalizeResponse(oResponse, true));
-		};
-
-		var fnError = function(oResponse) {
-			var oResponseOut = that._normalizeError(oResponse);
-			throw oResponseOut;
-		};
+		var oPromise, aPromises = [], that = this, sPath, oContext; 
 
 		mParameters = mParameters || {};
 		jQuery.extend(mParameters, {
@@ -201,26 +192,40 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftController", "s
 			changeSetId: "Changes",
 			successMsg: "Changes were discarded",
 			failedMsg: "Discarding of changes failed",
-			forceSubmit: true,
-			context: oContext
+			forceSubmit: true
 		});
 
-		for (var i = 0; i < aEntities.length; i++){
-			mInstanceParameters = mParameters;
+		var fnResolve = function(oResponse) {
+			return that._normalizeResponse(oResponse, true);
+		};
+
+		var fnReject = function(oResponse) {
+			var oResponseOut = that._normalizeError(oResponse);
+			throw oResponseOut;
+		};
+
+		for (var i = 0; i < aEntities.length; i++) {
 			if (typeof aEntities[i] == "string") {
 				sPath = aEntities[i];
-			} else if (typeof aEntities[i] == "object" && aEntities[i] instanceof sap.ui.model.Context){
+			} else if (typeof aEntities[i] == "object" && aEntities[i] instanceof sap.ui.model.Context) {
 				oContext = aEntities[i];
 				sPath = oContext.getPath();
 			}
-			this._syncRemove(sPath, mInstanceParameters, fnSuccess, fnError);
+
+			if (that._oModel.getObject(sPath) && !that._oDraftUtil.isActiveEntity(that._oModel.getObject(sPath))) {
+				mParameters.changeSetId = "Changes";
+			} else {
+				mParameters.changeSetId = "ActiveChanges";
+			}
+
+			oPromise = this._remove(sPath, mParameters).then(fnResolve,fnReject);
+			aPromises.push(oPromise);
 		}
+
 		oPromise = this.triggerSubmitChanges(mParameters);
+		aPromises.push(oPromise);
 
-		return oPromise.then(function(result){
-				return aDeleteResults;
-		});
-
+		return this._atLeastOnePromiseResolved(aPromises, true);
 	};
 
 

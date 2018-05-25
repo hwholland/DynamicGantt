@@ -87,7 +87,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * - Minimum bar / dot / blip ... size
  * - Integration with ChartToolbar and ChartPopover
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

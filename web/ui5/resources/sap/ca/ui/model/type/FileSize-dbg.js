@@ -58,7 +58,7 @@ sap.ui.model.SimpleType.extend("sap.ca.ui.model.type.FileSize", /** @lends sap.c
  * @see sap.ui.model.SimpleType.prototype.formatValue
  */
 sap.ca.ui.model.type.FileSize.prototype.formatValue = function(fValue, sInternalType) {
-    if (fValue == undefined || fValue == null) {
+    if (fValue === undefined || fValue === null) {
         return null;
     }
     switch(sInternalType) {

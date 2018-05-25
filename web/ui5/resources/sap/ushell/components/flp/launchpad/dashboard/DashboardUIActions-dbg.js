@@ -1,25 +1,26 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview A module that is responsible for initializing the dashboard UIActions (i.e. drag and drop) of groups and tiles.<br>
  * Extends <code>sap.ui.base.Object</code><br>
  * Exposes the public function <code>initializeUIActions</code>
- * @version 1.38.26
+ * @version 1.54.3
  * @name sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions
  *
  * @since 1.35.0
  * @private
  */
-(function () {
-    "use strict";
+sap.ui.define(["sap/ui/base/Object"], function(baseObject) {
+	"use strict";
 
     /*global jQuery, sap, window */
     /*jslint nomen: true */
-    jQuery.sap.declare("sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions");
-    sap.ui.base.Object.extend("sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions", {
+    var DashboardUIActions = baseObject.extend("sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions", {
         metadata: {
             publicMethods: ["initializeUIActions"]
         },
         constructor: function (sId, mSettings) {
+        	this.aTabBarItemsLocation = [];
+
             // Make this class only available once
             if (sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions && sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions()) {
                 return sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions();
@@ -27,6 +28,7 @@
             sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions = jQuery.sap.getter(this.getInterface());
 
             this.oTileUIActions = undefined;
+            this.oLinkUIActions = undefined;
             this.oGroupUIActions = undefined;
             this.oController = undefined;
             this.UIActionsInitialized = false;
@@ -41,6 +43,7 @@
             sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions = undefined;
             this.oGroupUIActions = null;
             this.oTileUIActions = null;
+            this.oLinkUIActions = null;
         },
         /**
          * Creating UIAction objects for tiles and groups in order to allow dashboard drag and drop actions
@@ -53,6 +56,12 @@
          */
         initializeUIActions : function (oController) {
             this.oController = oController;
+            // If TabBar mode active - calculate TabBar items position
+            if(oController.getView().getModel().getProperty("/homePageGroupDisplay") === "tabs") {
+            	this._fillTabBarItemsArray();
+            }
+
+            var isLinkPersonalizationSupported = sap.ushell.Container ? sap.ushell.Container.getService("LaunchPage").isLinkPersonalizationSupported() : null;
 
             var sDashboardGroupsWrapperId = oController.getView().sDashboardGroupsWrapperId,
                 bActionModeActive,
@@ -62,15 +71,33 @@
                 oCommonUIActionsDataForWin8 = {
                     containerSelector: '#dashboardGroups',
                     wrapperSelector: sDashboardGroupsWrapperId ? "#" + sDashboardGroupsWrapperId : undefined, // The id of the <section> that wraps dashboardGroups div: #__page0-cont
-                    rootSelector : "#dashboardGroups"
+                    rootSelector : "#shell"
                 },
-                // Object that contains the common attributed required of the creation of oTileUIActions and oGroupUIActions, including Win8 attributes 
+                // Object that contains the common attributed required of the creation of oTileUIActions and oGroupUIActions, including Win8 attributes
                 oCommonUIActionsData = jQuery.extend(true, {}, oCommonUIActionsDataForWin8, {
                     switchModeDelay: 1000,
                     isTouch: oController.getView().isTouch,
                     isCombi: oController.getView().isCombi,
                     debug: false
                 }),
+                oLinkUIActionsData = {
+                    draggableSelector: ".sapUshellLinkTile",
+                    placeHolderClass: "sapUshellLinkTile-placeholder",
+                    cloneClass: "sapUshellLinkTile-clone",
+                    startCallback: this._handleTileUIStart.bind(this),
+                    endCallback: this._handleLinkDrop.bind(this),
+                    dragCallback: this._handleStartDragTile.bind(this),
+                    onBeforeCreateClone: this._onBeforeCreateLinkClone.bind(this),
+                    dragAndScrollCallback: this._handleTileDragMove.bind(this),
+                    endDragAndScrollCallback: this._handleTileDragAndScrollContinuation.bind(this),
+                    moveTolerance: oController.getView().isTouch || oController.getView().isCombi ? 10 : 3,
+                    isLayoutEngine: true,
+                    disabledDraggableSelector: 'sapUshellLockedTile',//check licked links
+                    onDragStartUIHandler: this._markDisableGroups.bind(this),
+                    onDragEndUIHandler: this._endUIHandler.bind(this),
+                    offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width(),
+                    defaultMouseMoveHandler: function(){}
+                },
                 oTileUIActionsData = {
                     draggableSelector: ".sapUshellTile",
                     draggableSelectorExclude: ".sapUshellPlusTile",
@@ -82,12 +109,14 @@
                     endCallback: this._handleTileDrop.bind(this),
                     dragCallback: this._handleStartDragTile.bind(this),
                     dragAndScrollCallback: this._handleTileDragMove.bind(this),
+                    endDragAndScrollCallback: this._handleTileDragAndScrollContinuation.bind(this),
                     moveTolerance: oController.getView().isTouch || oController.getView().isCombi ? 10 : 3,
                     isLayoutEngine: true,
                     disabledDraggableSelector: 'sapUshellLockedTile',
                     onDragStartUIHandler: this._markDisableGroups.bind(this),
-                    onDragEndUIHandler: this._unmarkDisableGroups.bind(this),
-                    offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width()
+                    onDragEndUIHandler: this._endUIHandler.bind(this),
+                    offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width(),
+                    defaultMouseMoveHandler: function(){}
                 },
                 oGroupUIActionsData = {
                     draggableSelector: ".sapUshellDashboardGroupsContainerItem:not(.sapUshellDisableDragAndDrop)",
@@ -104,18 +133,33 @@
                     draggableElement: ".sapUshellTileContainerHeader"
                 },
                 oWin8TileUIActionsData = {
+                    type: "tiles",
                     draggableSelector: ".sapUshellTile",
                     placeHolderClass : "sapUshellTile-placeholder",
+                    cloneClass: "sapUshellTile-clone",
                     startCallback : this._handleTileUIStart.bind(this),
                     endCallback : this._handleTileDrop.bind(this),
                     dragCallback : this._handleStartDragTile.bind(this),
                     dragAndScrollCallback : this._handleTileDragMove.bind(this),
                     onDragStartUIHandler : this._markDisableGroups.bind(this),
-                    onDragEndUIHandler : this._unmarkDisableGroups.bind(this),
+                    onDragEndUIHandler : this._endUIHandler.bind(this),
+                    offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width()
+                },
+                oWin8LinkUIActionsData = {
+                    type: "links",
+                    draggableSelector: ".sapUshellLinkTile",
+                    placeHolderClass: "sapUshellLinkTile-placeholder",
+                    startCallback: this._handleTileUIStart.bind(this),
+                    endCallback: this._handleLinkDrop.bind(this),
+                    dragCallback: this._handleStartDragTile.bind(this),
+                    dragAndScrollCallback: this._handleTileDragMove.bind(this),
+                    onBeforeCreateClone: this._onBeforeCreateLinkClone.bind(this),
+                    onDragStartUIHandler: this._markDisableGroups.bind(this),
+                    onDragEndUIHandler: this._endUIHandler.bind(this),
                     offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width()
                 },
                 oWin8GroupUIActionsData = {
-                    forGroups: true,
+                    type: "groups",
                     draggableSelector: ".sapUshellTileContainerHeader",
                     placeHolderClass : "sapUshellDashboardGroupsContainerItem-placeholder",
                     _publishAsync: oController._publishAsync
@@ -124,27 +168,41 @@
             // Creating the sap.ushell.UIActions objects for tiles and groups
             if (oController.getView().oDashboardGroupsBox.getGroups().length) {
                 if (oController.getView().getModel().getProperty("/personalization")) {
-                    if (!oController.getView().ieHtml5DnD) {
-                        jQuery.sap.require('sap.ushell.UIActions');
-                        // Disable the previous instances of UIActions
-                        this._disableTileUIActions();
-                        this._disableGroupUIActions();
 
-                        // Create and enable tiles UIActions
-                        this.oTileUIActions = new sap.ushell.UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oTileUIActionsData)).enable();
-                        // Create groups UIActions, enabling happens according to ActionMode
-                        this.oGroupUIActions = new sap.ushell.UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oGroupUIActionsData));
-                        bActionModeActive = oController.getView().getModel().getProperty("/tileActionModeActive");
-                        if (bActionModeActive) {
-                            this.oGroupUIActions.enable();
-                        }
+
+                    if (!oController.getView().ieHtml5DnD) {
+                        sap.ui.require(['sap/ushell/UIActions'], function (UIActions) {
+                            // Disable the previous instances of UIActions
+                            this._disableTileUIActions();
+                            this._disableGroupUIActions();
+                            this._disableLinkUIActions();
+
+                            // Create and enable tiles UIActions
+                            this.oTileUIActions = new UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oTileUIActionsData)).enable();
+                            // Create groups UIActions, enabling happens according to ActionMode
+                            this.oGroupUIActions = new UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oGroupUIActionsData));
+
+                            if(isLinkPersonalizationSupported) {
+                                this.oLinkUIActions = new UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oLinkUIActionsData)).enable();
+                            }
+
+                            bActionModeActive = oController.getView().getModel().getProperty("/tileActionModeActive");
+                            if (bActionModeActive) {
+                                this.oGroupUIActions.enable();
+                            }
+                        }.bind(this));
+
                     } else {
-                        jQuery.sap.require('sap.ushell.UIActionsWin8');
-                        this._disableTileUIActions();
-                        this._disableGroupUIActions();
-                        // Create and enable tiles and groups UIActions
-                        this.oTileUIActions = sap.ushell.UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8TileUIActionsData)).enable();
-                        this.oGroupUIActions = sap.ushell.UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8GroupUIActionsData)).enable();
+                        sap.ui.require(['sap/ushell/UIActionsWin8'], function (UIActionsWin8) {
+                            this._disableTileUIActions();
+                            this._disableGroupUIActions();
+                            this._disableLinkUIActions();
+                            // Create and enable tiles and groups UIActions
+                            this.oTileUIActions = UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8TileUIActionsData)).enable();
+                            this.oLinkUIActions = UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8LinkUIActionsData)).enable();
+                            this.oGroupUIActions = UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8GroupUIActionsData)).enable();
+                        }.bind(this));
+
                     }
                 }
             }
@@ -154,11 +212,22 @@
                 this.oGroupUIActions.enable();
             }
         },
+
+        disableAllDashboardUiAction: function () {
+            this._disableTileUIActions();
+            this._disableLinkUIActions();
+            this._disableGroupUIActions();
+
+        },
         _disableTileUIActions : function () {
             if (this.oTileUIActions) {
                 this.oTileUIActions.disable();
-                //this.oTileUIActions = null;
             }
+        },
+        _disableLinkUIActions : function () {
+          if (this.oLinkUIActions) {
+              this.oLinkUIActions.disable();
+          }
         },
         _disableGroupUIActions : function () {
             if (this.oGroupUIActions) {
@@ -170,18 +239,64 @@
        // ****************************************************************************************
        // *************************** Tile UIActions functions - Begin ***************************
 
-        _handleTileDragMove : function (cfg) {
-            if (!cfg.isScrolling) {
-                sap.ushell.Layout.getLayoutEngine().moveDraggable(cfg.moveX, cfg.moveY);
-            }
+        _handleTileDragMove : function (cfg) {
+            if (!cfg.isScrolling) {
+                sap.ushell.Layout.getLayoutEngine().moveDraggable(cfg.moveX, cfg.moveY, this.aTabBarItemsLocation);
+            }
         },
+
+        _handleTileDragAndScrollContinuation : function (moveY) {
+            var iAnchorBarHeight = jQuery("#anchorNavigationBar").height(),
+                oAnchorBarOffset = jQuery("#anchorNavigationBar").offset(),
+                iAnchorBarOffsetTop = oAnchorBarOffset.top;
+
+            if (moveY < iAnchorBarOffsetTop) {
+                sap.ushell.Layout.getLayoutEngine()._cancelLongDropTimmer();
+            }
+            return sap.ushell.Layout.getLayoutEngine()._isTabBarCollision(moveY);
+        },
+
+        _fillTabBarItemsArray: function () {
+            var aItems = jQuery(".sapUshellAnchorItem"),
+                iLength = aItems.length,
+                index,
+                iBasicWidthUnit = 10,
+                iTempIndex = 0,
+                aTabBarItemsBasic = [],
+                oItem,
+                oItemMeasures,
+                oItemWidth,
+                iNumOfBasicUnits;
+
+            for (index = 0; index < iLength; index++) {
+                oItem = aItems[index];
+                oItemMeasures = oItem.getBoundingClientRect();
+
+                aTabBarItemsBasic[index] = oItemMeasures.width;
+            }
+            for (index = 0; index < iLength; index++) {
+                oItemWidth = aTabBarItemsBasic[index];
+                if (oItemWidth === 0) {
+                    continue;
+                }
+                iNumOfBasicUnits = Math.round(oItemWidth / iBasicWidthUnit);
+                for (var iTempIndex_ = iTempIndex; iTempIndex_ < iTempIndex + iNumOfBasicUnits; iTempIndex_++) {
+            		this.aTabBarItemsLocation[iTempIndex_] = index;
+				}
+            	iTempIndex = iTempIndex_;
+        	}
+        },
+
         _handleTileUIStart : function (evt, ui) {
             if ((sap.ui.Device.browser.msie) &&
                     ((navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints > 0))) {
                 //Remove title so tooltip will not be displayed while dragging tile (IE10 and above)
                 this.titleElement = ui.querySelector("[title]");
-                this.titleElement.setAttribute("data-title", this.titleElement.getAttribute("title"));
-                this.titleElement.removeAttribute("title");
+                if (this.titleElement) {
+                    //it solves issue with IE and android, when browsers automatically show tooltip
+                    this.titleElement.setAttribute("data-title", this.titleElement.getAttribute("title"));
+                    this.titleElement.removeAttribute("title");
+                }
             }
         },
         _changeTileDragAndDropAnimate : function (evt, ui) {
@@ -222,12 +337,8 @@
                 oClonedTile.stop(true, false).animate({left: tileLeftOffset, top: iTileTopOffset}, {duration: 250}, {easing: "swing"});
             }
         },
-       /**
-        *
-        * @param ui : tile DOM reference
-        * @private
-        */
-        _handleStartDragTile : function (evt, tileElement) {
+
+        _preventTextSelection: function () {
             //Prevent selection of text on tiles and groups
             if (window.getSelection) {
                 var selection = window.getSelection();
@@ -238,24 +349,158 @@
                     // continue regardless of error
                 }
             }
+        },
+
+       /**
+        *
+        * @param ui : tile DOM reference
+        * @private
+        */
+        _handleStartDragTile : function (evt, tileElement) {
+        	var selection,
+                oTabBarDraggedTile;
+
+           this._preventTextSelection();
+
             sap.ushell.Layout.getLayoutEngine().layoutStartCallback(tileElement);
+            if (sap.ushell.Layout.isAnimationsEnabled()) {
+                sap.ushell.Layout.initDragMode();
+            }
             //Prevent the tile to be launched after drop
             jQuery(tileElement).find("a").removeAttr('href');
-            this.placeHolderElement = jQuery(".sapUshellTile-placeholder");
+            this.oController._handleDrag.call(this.oController, evt, tileElement);
             sap.ui.getCore().getEventBus().publish("launchpad", "sortableStart");
+        },
+        _onBeforeCreateLinkClone: function (evt, LinkElement) {
+            //we need to save the link bounding rects before uiactions.js create a clone because after it oLink.getBoundingRects will return zero offsets
+            sap.ushell.Layout.getLayoutEngine().saveLinkBoundingRects(LinkElement);
+        },
+        _handleLinkDrop : function (evt, tileElement, oAdditionalParams) {
+          var deferred = jQuery.Deferred(),
+              oPromise;
+
+          if (sap.ushell.Layout.isTabBarActive()) {
+              sap.ushell.Layout.tabBarTileDropped();
+          }
+          if (sap.ushell.Layout.isAnimationsEnabled() && oAdditionalParams && oAdditionalParams.clone) {
+              jQuery(oAdditionalParams.clone).animate({
+                  opacity: 0
+              }, 100, function() {
+                // Animation complete.
+              });
+          }
+          if ((sap.ui.Device.browser.msie) &&
+              ((navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints > 0)) && this.titleElement) {
+              //it solves issue with IE and android, when browsers automatically show tooltip
+              this.titleElement.setAttribute("title", this.titleElement.getAttribute("data-title"));//check if we need this
+          }
+          if (sap.ui.Device.desktop) {
+              jQuery('body').removeClass("sapUshellDisableUserSelect");//check if we need this
+          }
+          if (sap.ushell.Layout.getLayoutEngine().isLinkIntersected() || sap.ushell.Layout.getLayoutEngine().isOriginalAreaChanged()) {
+            oPromise = this.oController._handleDrop.call(this.oController, evt, tileElement);
+          }
+
+          if (oPromise) {
+              oPromise.then(function () {
+                  jQuery('#dashboardGroups .sapUshellHidePlusTile').removeClass('sapUshellHidePlusTile');
+                  setTimeout(function () {
+                      deferred.resolve();
+                  }.bind(this), 300);
+              });
+          } else {
+              setTimeout(function () {
+                  deferred.resolve();
+              }.bind(this), 0);
+          }
+
+          return deferred.promise();
         },
         /**
         *
         * @param ui : tile DOM reference
         * @private
         */
-        _handleTileDrop : function (evt, tileElement) {
-            jQuery('#dashboardGroups .sapUshellHidePlusTile').removeClass('sapUshellHidePlusTile');
-            if ((sap.ui.Device.browser.msie) &&
-                    ((navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints > 0))) {
-                this.titleElement.setAttribute("title", this.titleElement.getAttribute("data-title"));
+        _handleTileDrop : function (evt, tileElement, oAdditionalParams) {
+            if (sap.ushell.Layout.getLayoutEngine().isOriginalAreaChanged()) {
+              return this._handleTileToLinkDrop(evt, tileElement, oAdditionalParams);
+            } else {
+              return this._handleTileToTileDrop(evt, tileElement, oAdditionalParams);
             }
-            this.oController._handleDrop.call(this.oController, evt, tileElement);
+        },
+        _handleTileToLinkDrop : function (evt, tileElement, oAdditionalParams) {
+          return this._handleLinkDrop(evt, tileElement, oAdditionalParams);
+        },
+        _handleTileToTileDrop : function (evt, tileElement, oAdditionalParams) {
+            var jqClone,
+                oHoveredTabBarItem,
+                oTabBarDraggedTile,
+                handleTileDropInternal = function (evt, tileElement) {
+                    if (sap.ushell.Layout.isAnimationsEnabled()) {
+                        sap.ushell.Layout.endDragMode();
+                    }
+                    jQuery('#dashboardGroups .sapUshellHidePlusTile').removeClass('sapUshellHidePlusTile');
+                    if ((sap.ui.Device.browser.msie) &&
+                        ((navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints > 0)) && this.titleElement) {
+                        //it solves issue with IE and android, when browsers automatically show tooltip
+                        this.titleElement.setAttribute("title", this.titleElement.getAttribute("data-title"));
+                    }
+                    this.oController._handleDrop.call(this.oController, evt, tileElement);
+                    if (sap.ui.Device.desktop) {
+                        jQuery('body').removeClass("sapUshellDisableUserSelect");
+                    }
+                },
+
+                oHoveredTabBarItem = jQuery(".sapUshellTabBarHoverOn");
+            oHoveredTabBarItem.removeClass("sapUshellTabBarHoverOn");
+
+            oTabBarDraggedTile = jQuery(".sapUshellTileDragOpacity");
+            oTabBarDraggedTile.removeClass("sapUshellTileDragOpacity");
+
+            if (sap.ushell.Layout.isTabBarActive()) {
+                sap.ushell.Layout.tabBarTileDropped();
+            }
+
+            // In tab bar mode, when the tile is dropped on an anchor tab bar item.
+            // In this case the tile should not flow back to the source group
+            if (sap.ushell.Layout.isTabBarActive() &&  sap.ushell.Layout.isOnTabBarElement()) {
+
+                if (oAdditionalParams && oAdditionalParams.clone) {
+                    var oDeferred = jQuery.Deferred();
+                    jqClone = jQuery(oAdditionalParams.clone);
+                    jqClone.css("display","none");
+                    setTimeout(function () {
+                        oDeferred.resolve();
+                        handleTileDropInternal.call(this, evt, tileElement);
+                    }.bind(this), 300);
+                    return oDeferred.promise();
+                } else {
+                    handleTileDropInternal.apply(this, arguments);
+                }
+            }
+
+            if (sap.ushell.Layout.isAnimationsEnabled() && oAdditionalParams && oAdditionalParams.clone) {
+                var deferred = jQuery.Deferred();
+                jqClone = jQuery(oAdditionalParams.clone);
+                var cloneRect = oAdditionalParams.clone.getBoundingClientRect();
+                var placeholderRect = tileElement.getBoundingClientRect();
+                var splittedTransform = jqClone.css("transform").split(",");
+                var diffY = placeholderRect.top - cloneRect.top;
+                var diffX = placeholderRect.left - cloneRect.left;
+                var translateX = parseInt(splittedTransform[4], 10) + diffX;
+                var translateY = parseInt(splittedTransform[5], 10) + diffY;
+                jqClone.css({
+                    "transform": "translate3d(" + translateX + "px, " + translateY + "px, 0px)",
+                    "transition": "transform 0.3s cubic-bezier(0.46, 0, 0.44, 1)"
+                });
+                setTimeout(function () {
+                    deferred.resolve();
+                    handleTileDropInternal.call(this, evt, tileElement);
+                }.bind(this), 300);
+                return deferred.promise();
+            } else {
+                handleTileDropInternal.apply(this, arguments);
+            }
         },
         _getTileTopOffset : function (oTile, position, dashboardScrollTop) {
             var i = 0,
@@ -272,7 +517,10 @@
             }
         },
         //once d&d ends, restore locked groups appearance and remove locked icons and grayscale
-        _unmarkDisableGroups : function () {
+        _endUIHandler : function () {
+            if (sap.ushell.Layout.isAnimationsEnabled()) {
+                sap.ushell.Layout.endDragMode();
+            }
             if (this.oController.getView().getModel()) {
                 this.oController.getView().getModel().setProperty('/isInDrag', false);
             }
@@ -283,6 +531,9 @@
 
         _handleGroupStartDrag : function (evt, ui) {
             this.oTileUIActions.disable();
+            if(this.oLinkUIActions) {
+              this.oLinkUIActions.disable();
+            }
             var groupContainerClone = jQuery(".sapUshellDashboardGroupsContainerItem-clone"),
                 groupContainerCloneTitle = groupContainerClone.find(".sapUshellContainerTitle"),
                 titleHeight = groupContainerCloneTitle.height(),
@@ -302,7 +553,7 @@
                 jQuery(".sapUshellTileContainerBeforeContent").addClass("sapUshellTileContainerHidden");
             } else {
                 jQuery(".sapUshellTilesContainer-sortable").addClass("sapUshellTileContainerRemoveContent");
-                jQuery(".sapUshellLinksContainer").addClass("sapUshellTileContainerRemoveContent");
+                jQuery(".sapUshellLineModeContainer, .sapUshellLinksContainer").addClass("sapUshellTileContainerRemoveContent");
                 jQuery(".sapUshellTileContainerBeforeContent").addClass("sapUshellTileContainerRemoveContent");
                 jQuery(".sapUshellContainerHeaderActions").addClass("sapUshellTileContainerHidden");
             }
@@ -354,11 +605,14 @@
                 jQuery(".sapUshellTileContainerBeforeContent").removeClass("sapUshellTileContainerRemoveContent");
                 jQuery(".sapUshellTileContainerAfterContent").removeClass("sapUshellTileContainerRemoveContent");
                 jQuery(".sapUshellTilesContainer-sortable").removeClass("sapUshellTileContainerRemoveContent");
-                jQuery(".sapUshellLinksContainer").removeClass("sapUshellTileContainerRemoveContent");
+                jQuery(".sapUshellLineModeContainer, .sapUshellLinksContainer").removeClass("sapUshellTileContainerRemoveContent");
             }, 0);
 
             window.setTimeout(jQuery.proxy(oBus.publish, oBus, "launchpad", "scrollToGroup", oData), 1);
             this.oTileUIActions.enable();
+            if (this.oLinkUIActions) {
+              this.oLinkUIActions.enable();
+            }
         },
         _handleGroupMoved : function (evt, ui) {
             var fromIndex = ui.item.startPos,
@@ -382,4 +636,8 @@
             this.oController = oController;
         }
     });
-}());
+
+
+	return DashboardUIActions;
+
+});

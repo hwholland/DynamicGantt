@@ -1,90 +1,75 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 sap.ui.define([
-	'sap/ui/fl/Utils', 'jquery.sap.global', 'sap/ui/fl/changeHandler/Base'
-], function(Utils, jQuery, Base) {
+	'jquery.sap.global', 'sap/ui/fl/changeHandler/BaseRename', "sap/ui/fl/Utils"
+], function(jQuery, BaseRename, Utils) {
 	"use strict";
+
+	var PROPERTY_NAME = "label";
+	var CHANGE_PROPERTY_NAME = "fieldLabel";
+	var TT_TYPE = "XFLD";
 
 	/**
 	 * Change handler for renaming a smart form group element.
 	 * @constructor
 	 * @alias sap.ui.fl.changeHandler.RenameField
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @experimental Since 1.27.0
 	 */
-	var RenameField = { };
+	var RenameField = BaseRename.createRenameChangeHandler({
+		changePropertyName : CHANGE_PROPERTY_NAME,
+		translationTextType : TT_TYPE
+	});
 
 	/**
-	 * Renames a smart form group element.
+	 * Renames a SmartField.
 	 *
-	 * @param {sap.ui.fl.Change} oChangeWrapper change wrapper object with instructions to be applied on the control map
-	 * @param {sap.ui.core.Control} oControl control that matches the change selector for applying the change
-	 * @param {object} mPropertyBag
-	 * @param {object} mPropertyBag.modifier - modifier for the controlsR
+	 * @param {sap.ui.fl.Change} oChange change wrapper object with instructions to be applied on the control map
+	 * @param {sap.ui.core.Control|Element} oControl Control that matches the change selector for applying the change
+	 * @param {object} mPropertyBag property bag
+	 * @param {sap.ui.fl.changeHandler.BaseTreeModifier} mPropertyBag.modifier - modifier for the controls
+	 * @param {sap.ui.core.UIComponent} mPropertyBag.appComponent - component in which the change should be applied
+	 * @param {object} mPropertyBag.view - view object or xml element representing an ui5 view
+	 * @returns {boolean} true if successful
 	 * @public
 	 */
-	RenameField.applyChange = function(oChangeWrapper, oControl, mPropertyBag) {
-		var oChange = oChangeWrapper.getDefinition();
+	RenameField.applyChange = function(oChange, oControl, mPropertyBag) {
 		var oModifier = mPropertyBag.modifier;
-		var sPropertyName = oChange.content.labelProperty;
-		if (!sPropertyName && oModifier.targets === "xmlTree"){
-			//ducktyping not possible in xml tree
-			return false;
-		}
+		var oChangeDefinition = oChange.getDefinition();
+		var sText = oChangeDefinition.texts[CHANGE_PROPERTY_NAME];
+		var sValue = sText.value;
 
-		if (oChange.texts && oChange.texts.fieldLabel && this._isProvided(oChange.texts.fieldLabel.value)) {
-			if (!oControl) {
-				throw new Error("no Control provided for renaming");
-			}
-			var sFieldLabel = oChange.texts.fieldLabel.value;
-			if (!sPropertyName){
-				if (typeof oControl.setLabel === 'function') {
-					sPropertyName = "label";
-				} else if (typeof oControl.setTitle === 'function') {
-					sPropertyName = "title";
+		if (oChangeDefinition.texts && sText && typeof (sValue) === "string") {
+
+			// The value can be a binding - e.g. for translatable values in WebIde
+			// In order to properly save the undo, the label "text" property also needs to be set
+			var vLabel = oModifier.getProperty(oControl, "label");
+			if (Utils.isBinding(sValue)) {
+				if (vLabel && (typeof vLabel !== "string")){
+					oModifier.setPropertyBinding(vLabel, "text", sValue);
 				} else {
-					throw new Error('Control does not support "renameField" change');
+					oModifier.setPropertyBinding(oControl, PROPERTY_NAME, sValue);
+				}
+			} else {
+				if (vLabel && (typeof vLabel !== "string")){
+					oModifier.setProperty(vLabel, "text", sValue);
+				} else {
+					oModifier.setProperty(oControl, PROPERTY_NAME, sValue);
 				}
 			}
-			oModifier.setProperty(oControl, sPropertyName, sFieldLabel);
 
 			return true;
+
 		} else {
-			Utils.log.error("Change does not contain sufficient information to be applied: [" + oChange.layer + "]" + oChange.namespace + "/" + oChange.fileName + "." + oChange.fileType);
+			Utils.log.error("Change does not contain sufficient information to be applied: [" + oChangeDefinition.layer + "]" + oChangeDefinition.namespace + "/" + oChangeDefinition.fileName + "." + oChangeDefinition.fileType);
 			//however subsequent changes should be applied
 		}
-	};
-
-	/**
-	 * Completes the change by adding change handler specific content
-	 *
-	 * @param {sap.ui.fl.Change} oChangeWrapper change wrapper object to be completed
-	 * @param {object} oSpecificChangeInfo with attribute fieldLabel, the new field label to be included in the change
-	 * @public
-	 */
-	RenameField.completeChangeContent = function(oChangeWrapper, oSpecificChangeInfo) {
-		var oChange = oChangeWrapper.getDefinition();
-		if (this._isProvided(oSpecificChangeInfo.fieldLabel)) {
-			Base.setTextInChange(oChange, "fieldLabel", oSpecificChangeInfo.fieldLabel, "XFLD");
-		} else {
-			throw new Error("oSpecificChangeInfo.fieldLabel attribute required");
-		}
-
-		if (oSpecificChangeInfo.labelProperty) {
-			oChange.content.labelProperty = oSpecificChangeInfo.labelProperty;
-		}
-	};
-
-	/**
-	 * Checks if a string is provided as also empty strings are allowed for the fields
-	 */
-	RenameField._isProvided = function(sString){
-		return typeof (sString) === "string";
 	};
 
 	return RenameField;

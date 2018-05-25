@@ -1,26 +1,26 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, window, hasher */
     /*jslint nomen: true */
 
     sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.HierarchyApps", {
         onInit: function () {
+            var easyAccessSystemsModel = this.getView().getViewData().easyAccessSystemsModel;
+            if (easyAccessSystemsModel) {
+                this.getView().setModel(easyAccessSystemsModel,"easyAccessSystems");
+            }
         },
 
-        oPopoverView: undefined,
-
         getCrumbsData: function (path, mainModel) {
-            var pathChunks = path.split("/"),
-                newCrumbs = [],
-                sPath = pathChunks.join("/"),
-                text;
-
+            var pathChunks = path.split("/");
             pathChunks.splice(pathChunks.length - 2, 2);
+            var newCrumbs = [];
             while (pathChunks.length) {
-                sPath = pathChunks.join("/");
-                text = mainModel.getProperty(sPath + "/text");
+                var sPath = pathChunks.join("/");
+                var text = mainModel.getProperty(sPath + "/text");
                 newCrumbs.unshift({text: text, path: sPath});
                 pathChunks.splice(pathChunks.length - 2, 2);
             }
@@ -32,15 +32,15 @@
             if (!path) {
                 path = oView.layout.getBinding("items").getPath();
             }
-            var easyAccessModel = oView.getModel("easyAccess"),
-                appsData = easyAccessModel.getProperty(path),
-                bookmarkService = sap.ushell.Container.getService("Bookmark"),
-                countPromiseList = appsData.map(function (appData) {
-                    return bookmarkService.countBookmarks(appData.url).then(function (count) {
-                        appData.bookmarkCount = count;
-                        return appData;
-                    });
+            var easyAccessModel = oView.getModel("easyAccess");
+            var appsData = easyAccessModel.getProperty(path) ? easyAccessModel.getProperty(path) : [];
+            var bookmarkService = sap.ushell.Container.getService("Bookmark");
+            var countPromiseList = appsData.map(function (appData) {
+                return bookmarkService.countBookmarks(appData.url).then(function (count) {
+                    appData.bookmarkCount = count;
+                    return appData;
                 });
+            });
             jQuery.when.apply(jQuery, countPromiseList).then(function () {
                 var appsData = Array.prototype.slice.call(arguments);
                 easyAccessModel.setProperty(path, appsData);
@@ -53,6 +53,14 @@
             this.getView().breadcrumbs.bindProperty("currentLocationText", "easyAccess>" + path + "/text");
             var crumbsData = this.getCrumbsData(path, this.getView().getModel("easyAccess"));
             this.getView().crumbsModel.setProperty("/crumbs", crumbsData);
+
+            // when navigation in hierarchy folders had occureed and model had been updated
+            // in case no results found we hide the app-boxes layout and display a message page
+            // with relevant message
+            var aNewItems = this.getView().getModel("easyAccess").getProperty( path + '/apps');
+
+            // call to update message with length of the items, and false indicating this is not searcg results
+            this.getView().updateResultSetMessage(aNewItems.length, false);
         },
 
         onAppBoxPressed: function (oEvent) {
@@ -69,11 +77,11 @@
             var message;
             var numberOfExistingGroups = popoverResponse.addToGroups ? popoverResponse.addToGroups.length : 0;
             var numberOfNewGroups =      popoverResponse.newGroups   ? popoverResponse.newGroups.length   : 0;
-            var totalNumberOfGroups = numberOfExistingGroups + numberOfNewGroups,
-                groupName;
+            var totalNumberOfGroups = numberOfExistingGroups + numberOfNewGroups;
 
             if (totalNumberOfGroups === 1) {
                 // determine the group's title
+                var groupName;
                 if (numberOfExistingGroups === 1) {
                     // for an existing group we have an object in the array items
                     groupName = popoverResponse.addToGroups[0].title;
@@ -87,15 +95,17 @@
                 message = sap.ushell.resources.i18n.getText("appAddedToSeveralGroups", [app.text, totalNumberOfGroups]);
             }
 
-            sap.m.MessageToast.show(message, {
-                duration: 3000,// default
-                width: "15em",
-                my: "center bottom",
-                at: "center bottom",
-                of: window,
-                offset: "0 -50",
-                collision: "fit fit"
-            });
+            if (totalNumberOfGroups > 0) {
+                sap.m.MessageToast.show(message, {
+                    duration: 3000,// default
+                    width: "15em",
+                    my: "center bottom",
+                    at: "center bottom",
+                    of: window,
+                    offset: "0 -50",
+                    collision: "fit fit"
+                });
+            }
             return message;
         },
 
@@ -105,10 +115,9 @@
                 sFirstErroneousAddGroup,
                 iNumberOfFailAddActions = 0,
                 bCreateNewGroupFailed = false,
-                message,
-                index;
+                message;
 
-            for (index in aErroneousActions) {
+            for (var index in aErroneousActions) {
 
                 // Get the data of the error (i.e. action name and group object).
                 // the group's value -
@@ -120,13 +129,13 @@
                 if (sAction == 'addBookmark_ToExistingGroup') {
                     // add bookmark to EXISTING group failed
                     iNumberOfFailAddActions++;
-                    if (iNumberOfFailAddActions === 1) {
+                    if (iNumberOfFailAddActions == 1) {
                         sFirstErroneousAddGroup = group.title;
                     }
                 } else if (sAction == 'addBookmark_ToNewGroup') {
                     // add bookmark to a NEW group failed
                     iNumberOfFailAddActions++;
-                    if (iNumberOfFailAddActions === 1) {
+                    if (iNumberOfFailAddActions == 1) {
 
                         //in case of a new group we have the title and not an object
                         sFirstErroneousAddGroup = group;
@@ -216,7 +225,9 @@
             var deferred = jQuery.Deferred(), oResponseData = {};
             var addBookmarkPromise = bookmarkService.addBookmark({
                 url: app.url,
-                title: app.text
+                title: app.text,
+                subtitle: app.subtitle,
+                icon: app.icon
             }, group.object);
 
             var action = isNewGroup ? "addBookmark_ToNewGroup" : "addBookmark_ToExistingGroup";
@@ -233,10 +244,8 @@
         },
 
         showSaveAppPopover: function (event) {
-            var oModel = this.getView().getModel(),
-                app = event.oSource.getParent().getBinding("title").getContext().getObject(),
-                popoverPromise,
-                oGroupData;
+            var oModel = this.getView().getModel();
+            var app = event.oSource.getParent().getBinding("title").getContext().getObject();
 
             //if we in context of some dashboard group, no need to open popup
             if (!!oModel.getProperty("/groupContext").path) {
@@ -250,7 +259,7 @@
                 return;
             }
 
-            oGroupData = oModel.getProperty("/groups").map(function (group) {
+            var groupData = oModel.getProperty("/groups").map(function (group) {
                 return {
                     selected: false,
                     initiallySelected: false,
@@ -258,24 +267,51 @@
                 };
             });
 
-            if (this.oPopoverView === undefined) {
-                this.oPopoverView = sap.ui.getCore().byId("groupListPopoverView");
-                if (this.oPopoverView === undefined) {
-                    this.oPopoverView = new sap.ui.view({
-                        id: "groupListPopoverView",
-                        type: sap.ui.core.mvc.ViewType.JS,
-                        viewName: "sap.ushell.components.flp.launchpad.appfinder.GroupListPopover",
-                        viewData: {
-                            enableHideGroups: oModel.getProperty("/enableHideGroups"),
-                            enableHelp: oModel.getProperty("/enableHelp")
-                        }
-                    });
+            var popoverView = new sap.ui.view({
+                type: sap.ui.core.mvc.ViewType.JS,
+                viewName: "sap.ushell.components.flp.launchpad.appfinder.GroupListPopover",
+                viewData: {
+                    groupData: groupData,
+                    enableHideGroups: oModel.getProperty("/enableHideGroups"),
+                    enableHelp: oModel.getProperty("/enableHelp"),
+                    singleGroupSelection: true
                 }
-            }
-            this.oPopoverView.setGroupListSingleSelection(sap.m.ListMode.SingleSelectMaster);
-            this.oPopoverView.setGroupsData(oGroupData);
-            popoverPromise = this.oPopoverView.open(event.oSource);
+            });
+
+            var popoverPromise = popoverView.open(event.oSource);
             popoverPromise.then(this._handleBookmarkAppPopoverResponse.bind(this, app));
+        },
+
+        resultTextFormatter: function (oSystemSelected, iTotal) {
+            var oResourceBundle = sap.ushell.resources.i18n;
+            if (oSystemSelected) {
+                var sSystem = oSystemSelected.systemName ? oSystemSelected.systemName : oSystemSelected.systemId;
+                var sResultText = "";
+                if (iTotal) {
+                    sResultText = oResourceBundle.getText('search_easy_access_results', [iTotal, sSystem]);
+                }
+
+                return sResultText;
+            }
+            return "";
+        },
+
+        showMoreResultsVisibilityFormatter: function (apps, total) {
+            if (apps && apps.length < total) {
+                return true;
+            }
+            return false;
+        },
+
+        showMoreResultsTextFormatter: function (apps, total) {
+            if (!apps || !total) {
+                return "";
+            }
+            var currentlyNumOfApps = apps.length;
+            return  sap.ushell.resources.i18n.getText('EasyAccessSearchResults_ShowMoreResults',[currentlyNumOfApps,total]);
         }
+
     });
-}());
+
+
+}, /* bExport= */ true);

@@ -10,7 +10,7 @@ sap.ui.define([
 
 	/**
 	 * Constructor for a new Containers.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Type specific Visual Object aggregation for <i>Container</i> instances.
@@ -159,13 +159,13 @@ sap.ui.define([
 			var oDomRef = event.getParameter("contentarea");
 			oDomRef.addEventListener("click", this, false);
 			oDomRef.addEventListener("contextmenu", this, false);
-			
+
 			var oParent;
 			if ((oParent = this.getParent())) {
 				// determine the id of the div to place the item in
 				var id = oDomRef.id;
 				oParent.addRenderItem( oItem, id );
-			} 
+			}
 		}
 	};
 
@@ -181,17 +181,17 @@ sap.ui.define([
 		if (!aVO) {
 			return false;
 		}
-		
+
 		for (var nJ = 0, len = this.aUniqueIdx.length; nJ < len; ++nJ) {
 			// get the control.....................................................//
 			if (this.aUniqueIdx[nJ] === key) {
 				return aVO[nJ];
 			}
 		}
-		
+
 		return null;
 	};
-	
+
 	/**
 	 * Generic event handler for DOM events from container divs
 	 * Note: This is not a redefinition of handleEvent from base class VOAggregation!
@@ -200,17 +200,17 @@ sap.ui.define([
 	Containers.prototype.handleEvent = function(oEvent) {
 		var sContainerId = oEvent.currentTarget.m_Key;
 		var oContainer = this.findInstance(sContainerId);
-		
+
 		switch (oEvent.type) {
 			case "click":
 				oContainer.fireClick();
 				this.fireClick( {instance: oContainer } );
 				break;
-			case "contextmenu":		
+			case "contextmenu":
 				var eventContext = {};
-				var oMapDiv = this.oParent.getDomRef();
+				var oMapDivRect = this.oParent.getDomRef().getBoundingClientRect();
 				oContainer.mClickPos = [
-					oEvent.clientX - oMapDiv.offsetLeft, oEvent.clientY - oMapDiv.offsetTop
+					oEvent.clientX - oMapDivRect.left, oEvent.clientY - oMapDivRect.top
 				];
 				// lazy load sap.ui.unified library for using the Menu
 				sap.ui.getCore().loadLibrary("sap.ui.unified");
@@ -227,15 +227,17 @@ sap.ui.define([
 
 					eventContext.menu = oMenuObject;
 					oEvent.preventDefault();
-					
+
 					oContainer.fireContextMenu(eventContext);
-					
+
 					eventContext.instance = oContainer;
 					this.fireContextMenu(eventContext);
-				} catch(e) {}				
+				} catch (e) {
+					// TODO: handle error?
+				}
 				break;
 		}
-	};		
+	};
 
 	return Containers;
 

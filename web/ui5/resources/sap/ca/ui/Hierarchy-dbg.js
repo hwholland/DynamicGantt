@@ -52,7 +52,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * hierarchical data. The emphasized item shows the one item to display. Optional item can be hidden using the
  * hideOptionalLevels property. Hidden items will stay accessible with an expand button.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

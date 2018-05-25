@@ -11,7 +11,8 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 
 (function() {
 	'use strict';
-	/** 
+
+	/**
 	 * @class The binding manages the different representations, that are assigned to a step.
 	 * @param {Object} oInject injection object
 	 * @param {sap.apf.core.Instance} oInject.instances.coreApi provides the core api.
@@ -21,7 +22,7 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 	 * @param oBindingConfig.oLongTitle long title of binding
 	 * @param oBindingConfig.representations Configuration of the representations
 	 * @param oBindingConfig.requiredFilters {string[]} required filters - Array with properties, that define the filter properties, that shall be returned.
-	 * @param {sap.apf.core.ConfigurationFactory} oFactory reference 
+	 * @param {sap.apf.core.ConfigurationFactory} oFactory reference
 	 * @param {string} [sRepresentationId] the selected representation
 	 */
 	sap.apf.core.Binding = function(oInject, oBindingConfig, oFactory, sRepresentationId) {
@@ -32,10 +33,10 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 		var aRepresentationInfo = [];
 		var aCachedData = [];
 		var oCachedMetadata;
-		var oStartFilter;
 		this.oTitle = oBindingConfig.oTitle;
 		this.oLongTitle = oBindingConfig.oLongTitle;
 		var aRequiredFilters = oBindingConfig.requiredFilters;
+		var oRequiredFilterOptions = oBindingConfig.requiredFilterOptions;
 		this.destroy = function() {
 			aRepresentationInstances.forEach(function(oRepresentation) {
 				if (oRepresentation && oRepresentation.destroy) {
@@ -46,15 +47,14 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 			aRepresentationInfo = [];
 			aCachedData = [];
 			oCachedMetadata = undefined;
-			oStartFilter = undefined;
 		};
 		/*
 		 * Wrapper of the exit. If exit function is not injected it is the identity function.
 		 * Otherwise the exit is applied and its result returned.
 		 */
-		function afterGetFilter(oFilter) {
+		function afterGetFilter(oFilter, oContextInfo) {
 			if ( oInject.exits && oInject.exits.binding && oInject.exits.binding.afterGetFilter){
-				return oInject.exits.binding.afterGetFilter(oFilter, that.getSelectedRepresentation(), oInject.instances.coreApi, oBindingConfig);
+				return oInject.exits.binding.afterGetFilter(oFilter, that.getSelectedRepresentation(), oInject.instances.coreApi, oBindingConfig, oContextInfo);
 			}
 			return oFilter;
 		}
@@ -65,22 +65,19 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 		 * If an exit is not set then the filter is returned unaltered (the wrapper is the identity function).
 		 * The exit afterGetFilter can be set by injection, by oInject.exits.binding.afterGetFilter.
 		 */
-		this.getFilter = function() {
+		this.getFilter = function(oContextInfo) {
 			var oSelectedRepresentation = this.getSelectedRepresentation();
 			var methodTypes = sap.apf.core.constants.filterMethodTypes;
 			var aIndices = [];
 			var result;
 			if (oSelectedRepresentation.getFilterMethodType() === methodTypes.filter) {
 				var oFilterFromRepresentation = oSelectedRepresentation.getFilter().getInternalFilter();
-				if (oStartFilter) {
-					return afterGetFilter(oStartFilter.getInternalFilter().overwriteWith(oFilterFromRepresentation));
-				}
-				return afterGetFilter(oFilterFromRepresentation);
+				return afterGetFilter(oFilterFromRepresentation, oContextInfo);
 			}
 			if (oSelectedRepresentation.getSelectionAsArray) {
 				aIndices = oSelectedRepresentation.getSelectionAsArray();
 			} else {
-				return afterGetFilter(new sap.apf.core.utils.Filter(oInject.instances.messageHandler));
+				return afterGetFilter(new sap.apf.core.utils.Filter(oInject.instances.messageHandler), oContextInfo);
 			}
 			/* The following code handles rectangle selections in a scatter plot.
 			*  Selections a re expressed by an array of indexes.
@@ -91,13 +88,27 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 			*/
 			if (aIndices === undefined) {
 				result = sap.apf.core.utils.Filter.createEmptyFilter(oInject.instances.messageHandler, aRequiredFilters);
-				return afterGetFilter(result);
+				return afterGetFilter(result, oContextInfo);
 			}
 			if (aIndices.length === aCachedData.length || aIndices.length === 0) {
-				return afterGetFilter(new sap.apf.core.utils.Filter(oInject.instances.messageHandler));
+				return afterGetFilter(new sap.apf.core.utils.Filter(oInject.instances.messageHandler), oContextInfo);
 			}
 			result = sap.apf.core.utils.Filter.createFromArray(oInject.instances.messageHandler, aRequiredFilters, aCachedData, aIndices);
-			return afterGetFilter(result);
+			return afterGetFilter(result, oContextInfo);
+		};
+		/**
+		 * @description Returns the requiredFilters
+		 * @returns {Array} Array of strings, each representing a required filter/selectable property
+		 */
+		this.getRequiredFilters = function(){
+			return aRequiredFilters;
+		};
+		/**
+		 * @description Returns the requiredFilterOptions
+		 * @returns {Object} contains display options and label text of required filter/selectable property
+		 */
+		this.getRequiredFilterOptions = function(){
+			return oRequiredFilterOptions;
 		};
 		/**
 		 * @description Request option like $top, $skip and $orderby are returned by the actual representation. This
@@ -110,18 +121,13 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 			}
 			return {};
 		};
-		function isRepresentationForInitialStep(oRepresentation) {
-			return oRepresentation.getFilterMethodType() === sap.apf.core.constants.filterMethodTypes.startFilter;
-		}
 		/**
-		 * @see sap.apf.core.Step#setFilter
+		 * @description Sets filter values to the current Representation
+		 * @param {String []} Array of filterValues
 		 */
-		this.setFilter = function(oFilter) {
+		this.setFilterValues = function(aValues) {
 			var oRepresentation = this.getSelectedRepresentation();
-			oStartFilter = oFilter;
-			if (isRepresentationForInitialStep(oRepresentation)) {
-				oRepresentation.setFilter(oStartFilter);
-			}
+			oRepresentation.setFilterValues(aValues);
 		};
 		/**
 		 * @see sap.apf.core.Step#setData
@@ -130,7 +136,19 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 			oInject.instances.messageHandler.check(oDataResponse !== undefined, "aDataResponse is undefined (binding function setData)");
 			aCachedData = oDataResponse.data;
 			oCachedMetadata = oDataResponse.metadata;
-			this.getSelectedRepresentation().setData(oDataResponse.data, oDataResponse.metadata);
+			this.getSelectedRepresentation().setData(oDataResponse.data, oDataResponse.metadata, oDataResponse.count, oDataResponse.selectionValidation);
+		};
+		/**
+		 * @see sap.apf.ui.representations.representationInterface#updateTreetable
+		 */
+		this.updateTreetable = function(controlObject, oModel, entityTypeMetadata, bFilterChanged) {
+			this.getSelectedRepresentation().updateTreetable(controlObject, oModel, entityTypeMetadata, bFilterChanged);
+		};
+		/**
+		 * @see sap.apf.ui.representations.BaseUI5ChartRepresentation#getSortedSelections
+		 */
+		this.getSortedSelections = function() {
+			return this.getSelectedRepresentation().getSortedSelections();
 		};
 		/**
 		 * @see sap.apf.core.Step#getRepresentationInfo
@@ -178,6 +196,9 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 			if (oNewInstance.adoptSelection) {
 				oNewInstance.adoptSelection(oCurrentInstance);
 			}
+			if (oCurrentInstance && oCurrentInstance.onChartSwitch) {
+				oCurrentInstance.onChartSwitch();
+			}
 			function determineSwitchParameters(sRepresentationId, aRepresentationConfig) {
 				for(var i = 0; i < aRepresentationConfig.length; i++) {
 					if (sRepresentationId === aRepresentationConfig[i].id) {
@@ -197,6 +218,7 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 						oSwitchParam.config.parameter.alternateRepresentationType = oFactory.getConfigurationById(oSwitchParam.config.parameter.alternateRepresentationTypeId);
 					}
 					oSwitchParam.config.parameter.requiredFilters = oBindingConfig.requiredFilters;
+					oSwitchParam.config.parameter.requiredFilterOptions = oBindingConfig.requiredFilterOptions;
 					oConvertedParameter = that.convertSortToOrderBy(oSwitchParam.config.parameter);
 					aRepresentationInstances[oSwitchParam.index] = oInject.instances.coreApi.createRepresentation(oSwitchParam.constructor, oConvertedParameter);
 					return aRepresentationInstances[oSwitchParam.index];
@@ -247,6 +269,7 @@ jQuery.sap.require("sap.apf.core.utils.filterTerm");
 			result = oParameter;
 			return result;
 		};
+
 		aRepresentationInstances[0] = undefined;
 		var representationIdFound = false;
 		oBindingConfig.representations.forEach(function(representation, index) {

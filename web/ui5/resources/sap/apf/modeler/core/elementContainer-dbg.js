@@ -55,10 +55,10 @@ jQuery.sap.declare("sap.apf.modeler.core.elementContainer");
 		 * @param {Object} [element] - Optional object whose members are merged into the created element.
 		 * @returns {{getId:string}}
 		 */
-		this.createElement = function(element) {
+		this.createElement = function(element, SpecifiedConstructor) {
 			var elementId;
 			elementId = that.generateId();
-			return createElementWithId(element, elementId);
+			return createElementWithId(element, elementId, SpecifiedConstructor);
 		};
 		/**
 		 * @private
@@ -68,7 +68,7 @@ jQuery.sap.declare("sap.apf.modeler.core.elementContainer");
 		 * @param {Object} [element] - Optional object whose members are merged into the created element.
 		 * @param {String} proposedId Id, that should be used, if not already another object has this id
 		 */
-		this.createElementWithProposedId = function(element, proposedId) {
+		this.createElementWithProposedId = function(element, proposedId, SpecifiedConstructor) {
 			function adaptElementCounter(newId) {
 				/*
 				 * If the newId obeys to the naming conventions for internal IDs, we might need
@@ -87,9 +87,9 @@ jQuery.sap.declare("sap.apf.modeler.core.elementContainer");
 			var created;
 			var existingElementWithSameId = elements.getItem(proposedId);
 			if (existingElementWithSameId) {
-				return that.createElement(element);
+				return that.createElement(element, SpecifiedConstructor);
 			}
-			created = createElementWithId(element, proposedId);
+			created = createElementWithId(element, proposedId, SpecifiedConstructor);
 			adaptElementCounter(proposedId);
 			return created;
 		};
@@ -273,10 +273,12 @@ jQuery.sap.declare("sap.apf.modeler.core.elementContainer");
 		/**
 		 * private functions
 		 */
-		function createElementWithId(element, elementId) {
+		function createElementWithId(element, elementId, SpecifiedConstructor) {
 			var created;
 			inject.instances.messageHandler.check(elementId !== undefined, "ElementContainer: Element has been created with undefined id");
-			if (typeof ElementConstructor === 'function') {
+			if(typeof SpecifiedConstructor === 'function'){
+				created = new SpecifiedConstructor(elementId, inject);
+			} else if (typeof ElementConstructor === 'function') {
 				if (ElementConstructor !== sap.apf.modeler.core.ElementContainer) {
 					created = new ElementConstructor(elementId, inject);
 				} else {

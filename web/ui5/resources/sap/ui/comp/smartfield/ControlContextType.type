@@ -4,19 +4,19 @@
     <derived/>
     <documentation>Enumeration of the different contexts supported by the SmartField, if it is using an OData model.</documentation>
     <enumeration>
-        <value name="None" value="">
+        <value value="" name="None">
             <documentation>No special context is selected. The Smart Field applies its internal defaults.</documentation>
         </value>
-        <value name="ResponsiveTable" value="responsiveTable">
+        <value value="responsiveTable" name="ResponsiveTable">
             <documentation>Also the UoM layout is influenced.</documentation>
         </value>
-        <value name="Form" value="form">
+        <value value="form" name="Form">
             <documentation>Behaves currently exactly like &lt;code&gt;sap.ui.comp.smartfield.ControlContextType.None&lt;/code&gt;.</documentation>
         </value>
-        <value name="Table" value="table">
+        <value value="table" name="Table">
             <documentation>If this is selected the UoM layout is influenced.</documentation>
         </value>
-        <value name="SmartFormGrid" value="smartFormGrid">
+        <value value="smartFormGrid" name="SmartFormGrid">
             <documentation>If this is selected the UoM layout is influenced.</documentation>
         </value>
     </enumeration>

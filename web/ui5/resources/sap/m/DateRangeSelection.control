@@ -60,9 +60,9 @@ the input field, it must fit to the used date format and locale.
 Supported format options are pattern-based on Unicode LDML Date Format notation.
 See {@link http://unicode.org/reports/tr35/#Date_Field_Symbol_Table}
 
-For example, if the &lt;code&gt;displayFormat&lt;/code&gt; is "MMM d, y", delimiter is "-",
-and the used locale is English, a valid value string is "Jul 29, 2015 - Jul 31,
-2015" and it is displayed in the same way in the input field.
+For example, if the &lt;code&gt;displayFormat&lt;/code&gt; is &quot;MMM d, y&quot;, delimiter is &quot;-&quot;,
+and the used locale is English, a valid value string is &quot;Jul 29, 2015 - Jul 31,
+2015&quot; and it is displayed in the same way in the input field.
 
 If no placeholder is set to the &lt;code&gt;DateRangeSelection&lt;/code&gt;, the used
 &lt;code&gt;displayFormat&lt;/code&gt; is displayed as a placeholder. If another placeholder
@@ -81,20 +81,20 @@ compact mode and provides a touch-friendly size in cozy mode.</documentation>
     <since>1.22.0</since>
     <baseType>sap.m/DatePicker</baseType>
     <properties>
-        <property name="delimiter" type="sap.ui.core/string" defaultValue="-" group="Misc">
-            <documentation>Delimiter between start and end date. Default value is "-".
+        <property group="Misc" defaultValue="-" type="sap.ui.core/string" name="delimiter">
+            <documentation>Delimiter between start and end date. Default value is &quot;-&quot;.
 If no delimiter is given, the one defined for the used locale is used.</documentation>
         </property>
-        <property name="secondDateValue" type="sap.ui.core/object" group="Data">
+        <property group="Data" type="sap.ui.core/object" name="secondDateValue">
             <documentation>The end date of the range as JavaScript Date object. This is independent from any formatter.
 
 &lt;b&gt;Note:&lt;/b&gt; If this property is used, the &lt;code&gt;value&lt;/code&gt; property should not be changed from the caller.</documentation>
         </property>
-        <property name="from" type="sap.ui.core/object" group="Misc">
+        <property group="Misc" type="sap.ui.core/object" name="from">
             <documentation>Start date of the range.</documentation>
             <deprecation since="1.22.0">replaced by &lt;code&gt;dateValue&lt;/code&gt; property of the {@link sap.m.DateTimeField}</deprecation>
         </property>
-        <property name="to" type="sap.ui.core/object" group="Misc">
+        <property group="Misc" type="sap.ui.core/object" name="to">
             <documentation>End date of the range.</documentation>
             <deprecation since="1.22.0">replaced by &lt;code&gt;secondDateValue&lt;/code&gt; property</deprecation>
         </property>

@@ -1,27 +1,17 @@
-sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler", "sap/m/MessageBox", "./AnnotationHelper"], function (TemplateAssembler, MessageBox, AnnotationHelper) {
+sap.ui.define(["sap/ui/core/mvc/Controller", "sap/m/MessageBox", "./AnnotationHelper"], function (MVCController, MessageBox, AnnotationHelper) {
     "use strict";
 
-    function getMethods(oTemplateUtils, oController) {
-        return {
-            onInit: function () {
-                oController.oTemplateUtils = oTemplateUtils;
-                oController._initialize();
-            }
-        };
-    }
+    var BaseController = MVCController.extend("sap.suite.ui.generic.template.js.QuickTemplates.QuickActionBaseController", {
 
-    var BaseController = TemplateAssembler.getTemplateController(getMethods,
-        "sap.suite.ui.generic.template.js.QuickTemplates.QuickActionBaseController", {
-
-            _initialize: function() {
+            onInit: function() {
                 if (!this._bIsInitialized) {
                     this._bIsInitialized = true;
-                    var oComponent = this.getOwnerComponent();
+                    this.oComponent = this.getOwnerComponent() || this.getView().getViewData().component;
                     var oView = this.getView();
-                    oView.setModel(oComponent.getModel());
-                    this.sEntitySet = oComponent.getEntitySet();
+                    oView.setModel(this.oComponent.getModel());
+                    this.sEntitySet = this.oComponent.getEntitySet();
 
-                    this.oDraftController = this.oTemplateUtils.oServices.oDraftController;
+                    this.oDraftController = this.oComponent.getTransactionController().getDraftController();
                     this.bDraftEnabled = this.oDraftController.getDraftContext().isDraftEnabled(this.sEntitySet);
 
                     var oMetaModel = this.getView().getModel().getMetaModel();
@@ -83,7 +73,7 @@ sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler", "sap/m/Mes
                 } else if (oError.response) {
                     this._showErrorMessage(oError.response);
                 } else {
-                    this._showErrorMessage({message: this.oTemplateUtils.oCommonUtils.getText("QuickAction_Generic_Error")});
+                    this._showErrorMessage({message: this.formatI18NMessage("QuickAction_Generic_Error")});
                 }
             },
 
@@ -141,18 +131,44 @@ sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler", "sap/m/Mes
                 //return details;
                 MessageBox.show(sDetails, {
                         icon: MessageBox.Icon.ERROR,
-                        title: this.oTemplateUtils.oCommonUtils.getText("QuickAction_Error_Popover"),
+                        title: this.formatI18NMessage("QuickAction_Error_Popover"),
                         actions: [MessageBox.Action.OK]
                     }
                 );
             },
+
+            _displaySeverity : function(errorSeverity) {
+                var errorSeverityI18N;
+               switch (errorSeverity) {
+                   case "error":
+                       errorSeverityI18N = "Error_Severity_Error";
+                       break;
+                   case "abort":
+                       errorSeverityI18N = "Error_Severity_Abort";
+                       break;
+                   case "warning":
+                       errorSeverityI18N = "Error_Severity_Warning";
+                       break;
+                   case "info":
+                       errorSeverityI18N = "Error_Severity_Info";
+                       break;
+                   case "termination":
+                       errorSeverityI18N = "Error_Severity_Termination";
+                       break;
+                   case "success":
+                       errorSeverityI18N = "Error_Severity_Success";
+                       break;
+                   }
+                   return errorSeverityI18N;
+               },
 
             _getErrorDetail: function (oErrObj) {
                 var sDetails = "";
                 if (oErrObj && oErrObj.error && oErrObj.error.message) {
                     if (oErrObj.error.innererror && oErrObj.error.innererror.errordetails && oErrObj.error.innererror.errordetails.length > 0) {
                         jQuery.each(oErrObj.error.innererror.errordetails, jQuery.proxy(function (i, errorDetail) {
-                            sDetails += errorDetail.severity + ": " + errorDetail.message + "\n\n";
+                            var errorSeverityI18N = this._displaySeverity(errorDetail.severity);
+                            sDetails += this.formatI18NMessage(errorSeverityI18N, [errorDetail.message]);
                         }, this));
                     } else if (oErrObj.error.message.value) {
                         sDetails = oErrObj.error.message.value;

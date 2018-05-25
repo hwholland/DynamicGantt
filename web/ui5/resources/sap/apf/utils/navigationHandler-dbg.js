@@ -8,7 +8,8 @@
 	'use strict';
 	jQuery.sap.declare("sap.apf.utils.navigationHandler");
 	jQuery.sap.require("sap.apf.core.utils.filterSimplify");
-	jQuery.sap.require("sap.ui.core.routing.HashChanger"); //FIXME Necessary due to lazy loading bug in UI5 library.js in 1.28.0. Can be deleted after 1.28.1 fix is tested
+	jQuery.sap.require("sap.apf.utils.utils");
+	jQuery.sap.require("sap.ui.core.routing.HashChanger");
 	/**
 	 * @class This class manages the navigation to a target and the navigation from another target into this class;
 	 * @param {Object} oInject Injection of required APF objects
@@ -19,10 +20,6 @@
 	 * @param {Function} oInject.functions.getCumulativeFilterUpToActiveStep 
 	 * @param {Function} oInject.functions.getNavigationTargets
 	 * @param {Function} oInject.functions.getActiveStep 
-	 * @param {Function} oInject.functions.serialize 
-	 * @param {Function} oInject.functions.serializeFilterIds 
-	 * @param {Function} oInject.functions.deserialize 
-	 * @param {Function} oInject.functions.deserializeFilterIds 
 	 * @param {Function} oInject.functions.createRequest 
 	 * @param {Function} oInject.functions.getXappStateId 
 	 * @param {Function} oInject.functions.isFilterReductionActive
@@ -30,9 +27,12 @@
 	sap.apf.utils.NavigationHandler = function(oInject) {
 		var configuredNavigationTargets;
 		var enrichedNavigationTargets;
+		var lastUsedCumulativeFilter;
 		var messageHandler = oInject.instances.messageHandler;
 		var navigationHandler = this;
+		var FilterReduction = oInject.constructors && oInject.constructors.FilterReduction || sap.apf.core.utils.FilterReduction;
 		var filterSimplify;
+		var error5074HasBeenReported = false;
 		/**
 		 * Returns all possible navigation targets with text (from intent)
 		 * @returns Promise with [object] Object containing properties global and stepSpecific. Each containing an array of navigation targets with properties id, semanticObject, action and text. The id is
@@ -41,68 +41,85 @@
 		 * If there is no active step set or the active step has no navigation targets assigned in its configuration an empty array will be assigned to property stepSpecific of the result object. 
 		 */
 		this.getNavigationTargets = function() {
-			var deferred;
+			var deferred, messageObject;
 			var navigationService = sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("CrossApplicationNavigation");
-			var semanticObjects = [];
-			if (enrichedNavigationTargets) {
-				deferred = jQuery.Deferred();
-				deferred.resolve(convertToResultObject(enrichedNavigationTargets));
-				return deferred.promise();
-			}
-			if (!configuredNavigationTargets) {
-				initNavigationTargets();
-			}
-			configuredNavigationTargets.forEach(function(navTarget) {
-				if (jQuery.inArray(navTarget.semanticObject, semanticObjects) === -1) {
-					semanticObjects.push(navTarget.semanticObject);
+			if (!navigationService) {
+				if (!error5074HasBeenReported) {
+					messageObject = messageHandler.createMessageObject({ code : 5074});
+					messageHandler.putMessage(messageObject);
+					error5074HasBeenReported = true;
 				}
-			});
-			enrichedNavigationTargets = jQuery.extend(true, [], configuredNavigationTargets);
-			enrichedNavigationTargets.forEach(function(navTarget) {
-				navTarget.text = "";
-			});
-			deferred = jQuery.Deferred();
-			collectIntentTexts(0).done(function() {
-				deferred.resolve(convertToResultObject(enrichedNavigationTargets));
-			}).fail(function() {
-				deferred.resolve(convertToResultObject(enrichedNavigationTargets));
-			});
-			return deferred.promise();
-			function addText(semanticObject, action, text) {
-				enrichedNavigationTargets.forEach(function(navTarget) {
-					if (semanticObject === navTarget.semanticObject && action === navTarget.action) {
-						navTarget.text = text;
-					}
-				});
+				enrichedNavigationTargets = { global : [], stepSpecific : []};
+				return sap.apf.utils.createPromise(enrichedNavigationTargets);
 			}
-			function collectIntentTexts(semanticObjectCounter) {
+			deferred = jQuery.Deferred();
+			oInject.functions.getCumulativeFilterUpToActiveStep().done(function(oCumulativeFilter){
+
+
+				if (enrichedNavigationTargets && oCumulativeFilter.isEqual(lastUsedCumulativeFilter)) {		
+					deferred.resolve(convertToResultObject(enrichedNavigationTargets));
+					return deferred.promise();
+				}		
+				lastUsedCumulativeFilter = oCumulativeFilter;
+				if (!configuredNavigationTargets) {
+					initNavigationTargets();
+				}
+				enrichedNavigationTargets = jQuery.extend(true, [], configuredNavigationTargets);
+				enrichedNavigationTargets.forEach(function(navTarget) {
+					navTarget.text = "";
+				});
+				
+				collectIntentTexts(oCumulativeFilter).done(function(finalNavTargets) {
+					enrichedNavigationTargets = finalNavTargets;
+					deferred.resolve(convertToResultObject(enrichedNavigationTargets));
+				});
+
+			});
+
+			return deferred.promise();
+
+
+			function collectIntentTexts(cumulativeFilter) {
 				var deferred = jQuery.Deferred();
 				var finalNavTargets = [];
-				if (semanticObjectCounter === semanticObjects.length) {
-					deferred = jQuery.Deferred();
-					enrichedNavigationTargets.forEach(function(navTargetWithText) {
-						if (navTargetWithText.text !== "") {
-							finalNavTargets.push(navTargetWithText);
-						}
+				var aDeferreds = [];
+				var terms;
+			
+				enrichedNavigationTargets.forEach(function(navTarget) {
+					var deferredForEach;
+								
+					if (navTarget.useDynamicParameters) {
+						//initialize terms on demand
+						terms = terms || determineSingleValueTermsFromCumulativeFilter(cumulativeFilter);
+						navTarget.parameters = addParametersFromCumulativeFilter(navTarget.parameters, terms);
+					}
+					deferredForEach = jQuery.Deferred();
+					aDeferreds.push(deferredForEach);
+					navigationService.getLinks({
+						semanticObject : navTarget.semanticObject,
+						action : navTarget.action,
+						params: getNavigationParams(navTarget.parameters),
+						ignoreFormFactor : false,
+						ui5Component : oInject.instances.component
+					}).then(function(aIntents) {
+						aIntents.forEach(function(intentDefinition) {
+							var actionWithParameters = intentDefinition.intent.split("-");
+							var action = actionWithParameters[1].split("?");
+							action = action[0].split("~");
+							if (intentDefinition.text !== "" && action[0] === navTarget.action) {
+								navTarget.text = intentDefinition.text;
+								finalNavTargets.push(navTarget);
+							}
+						});
+						deferredForEach.resolve();
+					}, function() {
+						deferredForEach.resolve();
 					});
-					enrichedNavigationTargets = finalNavTargets;
-					deferred.resolve(enrichedNavigationTargets);
-					return deferred.promise();
-				}
-				var semanticObject = semanticObjects[semanticObjectCounter];
-				navigationService.getSemanticObjectLinks(semanticObject, undefined, false, oInject.instances.component, undefined).done(function(aIntents) {
-					aIntents.forEach(function(intentDefinition) {
-						var actionWithParameters = intentDefinition.intent.split("-");
-						var action = actionWithParameters[1].split("?");
-						action = action[0].split("~");
-						addText(semanticObject, action[0], intentDefinition.text);
-					});
-					collectIntentTexts(semanticObjectCounter + 1).done(function() {
-						deferred.resolve(enrichedNavigationTargets);
-					});
-				}).fail(function() {
-					return collectIntentTexts(semanticObjectCounter + 1);
 				});
+				jQuery.when.apply(jQuery, aDeferreds).done(function() {
+					deferred.resolve(finalNavTargets);
+				});
+
 				return deferred.promise();
 			}
 		};
@@ -122,8 +139,13 @@
 			var hashChanger = sap.ui.core.routing.HashChanger && sap.ui.core.routing.HashChanger.getInstance();
 			oInject.functions.getCumulativeFilterUpToActiveStep().done(function(oCumulativeFilter) {
 				if (oInject.functions.isFilterReductionActive && oInject.functions.isFilterReductionActive()) {
-					filterSimplify = new sap.apf.core.utils.FilterReduction();
-					oCumulativeFilter = filterSimplify.filterReduction(messageHandler, oCumulativeFilter);
+					filterSimplify = filterSimplify || new FilterReduction();
+					var oFilter = filterSimplify.filterReduction(messageHandler, oCumulativeFilter);
+					if (oFilter === null) {
+						messageHandler.putMessage(messageHandler.createMessageObject({ code : 5235 }));
+					} else {
+						oCumulativeFilter = oFilter;
+					}
 				}
 				if (!oNavigationTarget.filterMapping || !oNavigationTarget.filterMapping.requestForMappedFilter) {
 					callbackForFilterMapping(null, null);
@@ -141,30 +163,36 @@
 					}
 					var oCrossAppNavigator = sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("CrossApplicationNavigation");
 					if (oCrossAppNavigator) {
-						var serializableState = {
-							sapApfState : oInject.functions.serialize()
-						};
-						oInject.instances.startFilterHandler.serialize(true).done(function(serializedStartFilterHandler) {
+						oInject.instances.serializationMediator.serialize(true).done(function(serializableApfState) {
 							navigationHandler.generateSelectionVariant(oCumulativeFilter).done(function(selectionVariant){
-								serializableState.sapApfState.filterIdHandler = oInject.functions.serializeFilterIds();
-								serializableState.sapApfState.startFilterHandler = serializedStartFilterHandler;
-								serializableState.sapApfCumulativeFilter = oCumulativeFilter.mapToSapUI5FilterExpression();
-								serializableState.sapApfState.dirtyState = oInject.functions.isDirty();
-								serializableState.sapApfState.pathName = oInject.functions.getPathName();
-								serializableState.selectionVariant = selectionVariant;
+
+								var terms;
+								var containerData = {};
+								if (oNavigationTarget.useDynamicParameters) {
+									terms = determineSingleValueTermsFromCumulativeFilter(oCumulativeFilter);
+								}
+								
+								containerData.sapApfState = serializableApfState;
+								containerData.sapApfCumulativeFilter = oCumulativeFilter.mapToSapUI5FilterExpression();
+								containerData.selectionVariant = selectionVariant;
 								appState = oCrossAppNavigator.createEmptyAppState(oInject.instances.component);
-								appState.setData(serializableState);
+								appState.setData(containerData);
 								appState.save();
 								if (hashChanger) {
 									hashChanger.replaceHash("sap-iapp-state=" + appState.getKey());
+								}
+								var parameters = oNavigationTarget.parameters;
+								if (oNavigationTarget.useDynamicParameters) {
+									parameters = addParametersFromCumulativeFilter(parameters, terms);
 								}
 								oCrossAppNavigator.toExternal({
 									target : {
 										semanticObject : oNavigationTarget.semanticObject,
 										action : oNavigationTarget.action
 									},
-									appStateKey : appState.getKey()
-								});
+									appStateKey : appState.getKey(),
+									params : getNavigationParams(parameters)
+								}, oInject.instances.component);
 							});
 						});
 					}
@@ -187,12 +215,7 @@
 				sap.ushell.Container.getService("CrossApplicationNavigation").getAppState(oInject.instances.component, innerAppStateKey).done(function(appContainer) {
 					containerData = appContainer.getData();
 					if (containerData.sapApfState) {
-						oInject.functions.deserializeFilterIds(containerData.sapApfState.filterIdHandler);
-						oInject.functions.deserialize(containerData.sapApfState);
-						oInject.functions.setDirtyState(containerData.sapApfState.dirtyState);
-						oInject.functions.setPathName(containerData.sapApfState.pathName);
-						oInject.instances.startFilterHandler.getStartFilters().done(function() {
-							oInject.instances.startFilterHandler.deserialize(containerData.sapApfState.startFilterHandler);
+						oInject.instances.serializationMediator.deserialize(containerData.sapApfState).done(function() {
 							deferred.resolve({
 								navigationMode : "backward"
 							});
@@ -227,7 +250,7 @@
 		this.generateSelectionVariant = function (filter) {
 			var deferred = jQuery.Deferred();
 			if (!oInject.functions.isFilterReductionActive || !oInject.functions.isFilterReductionActive()) {
-				filterSimplify = new sap.apf.core.utils.FilterReduction();
+				filterSimplify = filterSimplify || new FilterReduction();
 				filter = filterSimplify.filterReduction(messageHandler, filter);
 			}
 			if(!filterSimplify || !filterSimplify.isContradicted()){
@@ -239,8 +262,8 @@
 			} else {
 				var selectionVariant = {};
 				selectionVariant = {
-					SelectionVariantID: jQuery.sap.uid(),
-					Text: 'Filter could not be converted to a selectionVariant'
+						SelectionVariantID: jQuery.sap.uid(),
+						Text: 'Filter could not be converted to a selectionVariant'
 				};
 				deferred.resolve(selectionVariant);
 			}
@@ -256,11 +279,22 @@
 				}
 			}
 		}
+		function getNavigationParams(parameters){
+			var parameterObject;
+
+			if(parameters && parameters.length > 0){
+				parameterObject = {};
+				parameters.forEach(function(parameter){
+					parameterObject[parameter.key] = parameter.value;
+				});
+			}	
+			return parameterObject;
+		}
 		function convertToResultObject(targets) {
 			var copyOfTargets = jQuery.extend(true, [], targets);
 			var resultObject = {
-				global : [],
-				stepSpecific : []
+					global : [],
+					stepSpecific : []
 			};
 			copyOfTargets.forEach(function(target) {
 				if (target.isStepSpecific && isAssignedToActiveStep(target.id)) {
@@ -288,6 +322,22 @@
 				}
 				return result;
 			}
+		}
+
+		function determineSingleValueTermsFromCumulativeFilter(cumulativeFilter) {
+			filterSimplify = filterSimplify || new FilterReduction();
+			var filter = filterSimplify.filterReduction(messageHandler, cumulativeFilter) || cumulativeFilter;
+
+			return filter.getSingleValueTerms();
+		}
+
+		function addParametersFromCumulativeFilter(parameters, terms){
+
+			terms.forEach(function(term){
+				parameters = parameters || [];
+				parameters.push( { 'key' : term.property, 'value' : term.value});
+			}); 
+			return parameters;
 		}
 	};
 }());

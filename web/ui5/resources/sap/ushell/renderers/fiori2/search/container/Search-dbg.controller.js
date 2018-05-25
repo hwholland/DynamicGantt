@@ -1,14 +1,13 @@
 // iteration 0: ok
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /* global jQuery, sap, console */
 
-(function() {
+sap.ui.define([
+    "sap/ushell/renderers/fiori2/search/SearchModel"
+], function(SearchModel) {
     "use strict";
 
-
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.SearchModel");
-
-    sap.ui.controller("sap.ushell.renderers.fiori2.search.container.Search", {
+    return sap.ui.controller("sap.ushell.renderers.fiori2.search.container.Search", {
 
         onInit: function() {
             var that = this;
@@ -23,4 +22,4 @@
         }
 
     });
-}());
+});

@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
 	 */
 	var TransformationMatrix = DataType.createType("sap.ui.vk.TransformationMatrix", {
-			isValid : function(value) {
+			isValid: function(value) {
 				return TransformationMatrix.getBaseType().isValid(value) && value.length === 12;
 			}
 		},
@@ -47,7 +47,7 @@ sap.ui.define([
 	 */
 	TransformationMatrix.convertTo4x4 = function(matrix4x3) {
 		var m = matrix4x3;
-		return [m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, m[9], m[10], m[11], 1];
+		return [ m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, m[9], m[10], m[11], 1 ];
 	};
 
 	/**
@@ -60,7 +60,7 @@ sap.ui.define([
 	TransformationMatrix.convertTo4x3 = function(matrix4x4) {
 		var m = matrix4x4;
 		jQuery.sap.assert(m[3] === 0 && m[7] === 0 && m[11] === 0 && m[15] === 1, "The transformation matrix is invalid. The last column must be [0, 0, 0, 1].");
-		return [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12], m[13], m[14]];
+		return [ m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12], m[13], m[14] ];
 	};
 
 	jQuery.sap.setObject("sap.ui.vk.TransformationMatrix", TransformationMatrix);

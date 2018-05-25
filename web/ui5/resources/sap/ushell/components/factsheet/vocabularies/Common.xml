@@ -9,7 +9,7 @@
         <String>Common terms for all SAP vocabularies</String>
       </Annotation>
       <Annotation Term="Core.Description" Qualifier="Published">
-        <String>Copyright (c) 2009-2014 SAP SE, All Rights Reserved</String>
+        <String>Copyright (c) 2009-2017 SAP SE, All Rights Reserved</String>
       </Annotation>
 
       <!-- Section: General semantics -->

@@ -1,20 +1,19 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Personalization adapter for the local platform.
  *
  *
  * The local personalization adapter can be configured to store data either in
  * the local storage (default) or in memory.
- * @version 1.38.26
+ * @version 1.54.3
  */
 
-(function () {
-    "use strict";
+sap.ui.define(['sap/ushell/utils'],
+	function(utils) {
+	"use strict";
+
     /*jslint nomen: true*/
     /*global jQuery, sap, setTimeout */
-
-    jQuery.sap.declare("sap.ushell.adapters.local.PersonalizationAdapter");
-    jQuery.sap.require("sap.ushell.utils");
 
     var oMemoryPersData;
 
@@ -33,23 +32,23 @@
      * @constructor
      * @since 1.15.0
      */
-    sap.ushell.adapters.local.PersonalizationAdapter = function (oUnused, sParameter, oAdapterConfiguration) {
+    var PersonalizationAdapter = function (oUnused, sParameter, oAdapterConfiguration) {
         this._sStorageType = jQuery.sap.getObject("config.storageType", undefined, oAdapterConfiguration) ||
-                sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE; // default = local storage
+                PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE; // default = local storage
         switch (this._sStorageType) {
-        case sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE:
-            jQuery.sap.require("jquery.sap.storage");
+        case PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE:
+            sap.ui.require(['jquery.sap.storage']);
             break;
-        case sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.MEMORY:
+        case PersonalizationAdapter.prototype.constants.storage.MEMORY:
             oMemoryPersData = jQuery.sap.getObject("config.personalizationData", undefined, oAdapterConfiguration) || {};
                 // initialization data is only supported for MEMORY storage
             break;
         default:
-            throw new sap.ushell.utils.Error("Personalization Adapter Local Platform: unsupported storage type '" + this._sStorageType + "'");
+            throw new utils.Error("Personalization Adapter Local Platform: unsupported storage type '" + this._sStorageType + "'");
         }
     };
 
-    sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants = {
+    PersonalizationAdapter.prototype.constants = {
         "storage": {
             "MEMORY": "MEMORY",
             "LOCAL_STORAGE": "LOCAL_STORAGE"
@@ -61,7 +60,7 @@
      * Note that deletion does not invalidate handed out containers
      */
 
-    sap.ushell.adapters.local.PersonalizationAdapter.prototype.getAdapterContainer = function (sContainerKey) {
+    PersonalizationAdapter.prototype.getAdapterContainer = function (sContainerKey) {
         return new sap.ushell.adapters.local.AdapterContainer(sContainerKey, this._sStorageType);
     };
 
@@ -72,7 +71,7 @@
      * Note: a previously obtained AdaterContainer for the instance is not invalidated
      * @returns a promise (though technically this is a synchronous op)
      */
-    sap.ushell.adapters.local.PersonalizationAdapter.prototype.delAdapterContainer = function (sContainerKey) {
+    PersonalizationAdapter.prototype.delAdapterContainer = function (sContainerKey) {
         return this.getAdapterContainer(sContainerKey).del();
     };
 
@@ -80,7 +79,7 @@
     sap.ushell.adapters.local.AdapterContainer = function (sContainerKey, sStorageType) {
         this._sContainerKey = sContainerKey;
         this._sStorageType = sStorageType;
-        this._oItemMap = new sap.ushell.utils.Map();
+        this._oItemMap = new utils.Map();
     };
 
     function getLocalStorage() {
@@ -117,7 +116,7 @@
             that = this;
 
         switch (this._sStorageType) {
-        case sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE:
+        case PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE:
             oLocalStorage = getLocalStorage();
             setTimeout(function () {
                 sItems = oLocalStorage.get(that._sContainerKey);
@@ -125,7 +124,7 @@
                 oDeferred.resolve(that);
             }, 0);
             break;
-        case sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.MEMORY:
+        case PersonalizationAdapter.prototype.constants.storage.MEMORY:
             setTimeout(function () {
                 that._oItemMap.entries = clone(oMemoryPersData[that._sContainerKey]) || {};
                 oDeferred.resolve(that);
@@ -146,7 +145,7 @@
             that = this;
 
         switch (this._sStorageType) {
-        case sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE:
+        case PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE:
             oLocalStorage = getLocalStorage();
             setTimeout(function () {
                 sItems = stringify(that._oItemMap.entries);
@@ -154,7 +153,7 @@
                 oDeferred.resolve();
             }, 0);
             break;
-        case sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.MEMORY:
+        case PersonalizationAdapter.prototype.constants.storage.MEMORY:
             setTimeout(function () {
                 oMemoryPersData[that._sContainerKey] = clone(that._oItemMap.entries);
                 oDeferred.resolve();
@@ -174,7 +173,7 @@
             that = this;
 
         switch (this._sStorageType) {
-        case sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE:
+        case PersonalizationAdapter.prototype.constants.storage.LOCAL_STORAGE:
             oLocalStorage = getLocalStorage();
             setTimeout(function () {
                 oLocalStorage.remove(that._sContainerKey); // delete in storage
@@ -182,7 +181,7 @@
                 oDeferred.resolve();
             }, 0);
             break;
-        case sap.ushell.adapters.local.PersonalizationAdapter.prototype.constants.storage.MEMORY:
+        case PersonalizationAdapter.prototype.constants.storage.MEMORY:
             setTimeout(function () {
                 if (oMemoryPersData && oMemoryPersData[that._sContainerKey]) {
                     delete oMemoryPersData[that._sContainerKey]; // delete in storage
@@ -219,5 +218,8 @@
         this._oItemMap.remove(sItemKey);
     };
 
-}());
 
+
+	return PersonalizationAdapter;
+
+}, /* bExport= */ true);

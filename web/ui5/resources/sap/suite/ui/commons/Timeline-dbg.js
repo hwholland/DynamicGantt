@@ -1,4712 +1,2880 @@
 /*!
  * 
- * 		SAP UI development toolkit for HTML5 (SAPUI5)
- * 		(c) Copyright 2009-2015 SAP SE. All rights reserved
- * 	
- */
-
-/* ----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying 
- * source files only (*.control, *.js) or they will be lost after the next generation.
- * ---------------------------------------------------------------------------------- */
-
-// Provides control sap.suite.ui.commons.Timeline.
-jQuery.sap.declare("sap.suite.ui.commons.Timeline");
-jQuery.sap.require("sap.suite.ui.commons.library");
-jQuery.sap.require("sap.ui.core.Control");
-
-
-/**
- * Constructor for a new Timeline.
- * 
- * Accepts an object literal <code>mSettings</code> that defines initial 
- * property values, aggregated and associated objects as well as event handlers. 
- * 
- * If the name of a setting is ambiguous (e.g. a property has the same name as an event), 
- * then the framework assumes property, aggregation, association, event in that order. 
- * To override this automatic resolution, one of the prefixes "aggregation:", "association:" 
- * or "event:" can be added to the name of the setting (such a prefixed name must be
- * enclosed in single or double quotes).
- *
- * The supported settings are:
- * <ul>
- * <li>Properties
- * <ul>
- * <li>{@link #getData data} : object</li>
- * <li>{@link #getSortOldestFirst sortOldestFirst} : boolean (default: false)</li>
- * <li>{@link #getAxisOrientation axisOrientation} : sap.suite.ui.commons.TimelineAxisOrientation (default: sap.suite.ui.commons.TimelineAxisOrientation.Vertical)</li>
- * <li>{@link #getAlignment alignment} : sap.suite.ui.commons.TimelineAlignment (default: sap.suite.ui.commons.TimelineAlignment.Right)</li>
- * <li>{@link #getShowIcons showIcons} : boolean (default: true)</li>
- * <li>{@link #getNoDataText noDataText} : string</li>
- * <li>{@link #getWidth width} : sap.ui.core.CSSSize (default: '100%')</li>
- * <li>{@link #getEnableBusyIndicator enableBusyIndicator} : boolean (default: true)</li>
- * <li>{@link #getShowHeaderBar showHeaderBar} : boolean (default: true)</li>
- * <li>{@link #getGrowing growing} : boolean (default: true)</li>
- * <li>{@link #getGrowingThreshold growingThreshold} : int (default: 5)</li>
- * <li>{@link #getVisible visible} : boolean (default: true)</li>
- * <li>{@link #getEnableBackendFilter enableBackendFilter} : boolean (default: false)</li>
- * <li>{@link #getEnableAllInFilterItem enableAllInFilterItem} : boolean (default: true)</li>
- * <li>{@link #getEnableSocial enableSocial} : boolean (default: false)</li>
- * <li>{@link #getShowSuggestion showSuggestion} : boolean (default: true)</li>
- * <li>{@link #getEnableScroll enableScroll} : boolean (default: true)</li>
- * <li>{@link #getForceGrowing forceGrowing} : boolean (default: false)</li>
- * <li>{@link #getSort sort} : boolean (default: true)</li>
- * <li>{@link #getShowFilterBar showFilterBar} : boolean (default: true)</li>
- * <li>{@link #getShowSearch showSearch} : boolean (default: true)</li>
- * <li>{@link #getEnableDoubleSided enableDoubleSided} : boolean (default: false)</li></ul>
- * </li>
- * <li>Aggregations
- * <ul>
- * <li>{@link #getContent content} : sap.suite.ui.commons.TimelineItem[]</li>
- * <li>{@link #getFilterList filterList} : sap.suite.ui.commons.TimelineFilterListItem[]</li>
- * <li>{@link #getSuggestionItems suggestionItems} : sap.m.StandardListItem[]</li>
- * <li>{@link #getCustomFilter customFilter} : sap.ui.core.Control</li></ul>
- * </li>
- * <li>Associations
- * <ul></ul>
- * </li>
- * <li>Events
- * <ul>
- * <li>{@link sap.suite.ui.commons.Timeline#event:filterSelectionChange filterSelectionChange} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
- * <li>{@link sap.suite.ui.commons.Timeline#event:select select} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
- * <li>{@link sap.suite.ui.commons.Timeline#event:addPost addPost} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
- * <li>{@link sap.suite.ui.commons.Timeline#event:suggest suggest} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
- * <li>{@link sap.suite.ui.commons.Timeline#event:suggestionItemSelected suggestionItemSelected} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
- * <li>{@link sap.suite.ui.commons.Timeline#event:grow grow} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li>
- * <li>{@link sap.suite.ui.commons.Timeline#event:filterOpen filterOpen} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li></ul>
- * </li>
- * </ul> 
-
- *
- * @param {string} [sId] id for the new control, generated automatically if no id is given 
- * @param {object} [mSettings] initial settings for the new control
- *
- * @class
- * Timeline Control for sFin.
- * @extends sap.ui.core.Control
- * @version 1.38.21
- *
- * @constructor
- * @public
- * @name sap.suite.ui.commons.Timeline
- * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
- */
-sap.ui.core.Control.extend("sap.suite.ui.commons.Timeline", { metadata : {
-
-	publicMethods : [
-		// methods
-		"getCurrentFilter", "setCurrentFilter", "setSuspendSocialFeature", "getSuspendSocailFeature", "setCustomMessage", "getHeaderBar", "getMessageStrip", "adjustUI"
-	],
-	library : "sap.suite.ui.commons",
-	properties : {
-
-		/**
-		 * Data for Timeline Control..
-		 */
-		"data" : {type : "object", group : "Misc", defaultValue : null},
-
-		/**
-		 * Whether the oldest item will be displayed first.
-		 */
-		"sortOldestFirst" : {type : "boolean", group : "Misc", defaultValue : false},
-
-		/**
-		 * Timeline axis orientation.
-		 */
-		"axisOrientation" : {type : "sap.suite.ui.commons.TimelineAxisOrientation", group : "Misc", defaultValue : sap.suite.ui.commons.TimelineAxisOrientation.Vertical},
-
-		/**
-		 * Timeline item alignment.
-		 */
-		"alignment" : {type : "sap.suite.ui.commons.TimelineAlignment", group : "Misc", defaultValue : sap.suite.ui.commons.TimelineAlignment.Right},
-
-		/**
-		 * Show icon on each Timeline item.
-		 */
-		"showIcons" : {type : "boolean", group : "Misc", defaultValue : true},
-
-		/**
-		 * This text is displayed when the control has no data.
-		 */
-		"noDataText" : {type : "string", group : "Misc", defaultValue : null},
-
-		/**
-		 * Sets the width of the Timeline.
-		 */
-		"width" : {type : "sap.ui.core.CSSSize", group : "Dimension", defaultValue : '100%'},
-
-		/**
-		 * When this property is set to "true", Timeline will display a busy indicator when data is being loaded.This BusyIndicator blocks the interaction with the items until data loading is finished.
-		 */
-		"enableBusyIndicator" : {type : "boolean", group : "Misc", defaultValue : true},
-
-		/**
-		 * Show header tool bar
-		 */
-		"showHeaderBar" : {type : "boolean", group : "Misc", defaultValue : true},
-
-		/**
-		 * Sets the growing(paging) feature of control. This feature only works with model binding for aggregation "content".
-		 */
-		"growing" : {type : "boolean", group : "Misc", defaultValue : true},
-
-		/**
-		 * Number of items requested from the server. To activate this you should set "growing" property to "true".
-		 */
-		"growingThreshold" : {type : "int", group : "Misc", defaultValue : 5},
-
-		/**
-		 * Set Timeline control visibility
-		 */
-		"visible" : {type : "boolean", group : "Appearance", defaultValue : true},
-
-		/**
-		 * This flag enables to get data from backend instead of deriving filter values from front-end values(displayed list).
-		 */
-		"enableBackendFilter" : {type : "boolean", group : "", defaultValue : false},
-
-		/**
-		 * This flag enables to add 'All' in the begining of filter list
-		 */
-		"enableAllInFilterItem" : {type : "boolean", group : "Behavior", defaultValue : true},
-
-		/**
-		 * enable Jam Integration
-		 */
-		"enableSocial" : {type : "boolean", group : "Misc", defaultValue : false},
-
-		/**
-		 * If this is set to true, suggest event is fired when user types in the input. Changing the suggestItems aggregation in suggest event listener will show suggestions within a popup.
-		 * @since 1.26.1
-		 */
-		"showSuggestion" : {type : "boolean", group : "Behavior", defaultValue : true},
-
-		/**
-		 * Enable scroll bar display
-		 */
-		"enableScroll" : {type : "boolean", group : "Misc", defaultValue : true},
-
-		/**
-		 * If set to true, the "More" button will always show.
-		 */
-		"forceGrowing" : {type : "boolean", group : "Misc", defaultValue : false},
-
-		/**
-		 * Allow only latest first sort when Sort is checked, otherwise display order in which data is received.
-		 */
-		"sort" : {type : "boolean", group : "Misc", defaultValue : true},
-
-		/**
-		 * Set timeline filterbar visibility
-		 */
-		"showFilterBar" : {type : "boolean", group : "Misc", defaultValue : true},
-
-		/**
-		 * Set timeline search field visibility
-		 */
-		"showSearch" : {type : "boolean", group : "Misc", defaultValue : true},
-
-		/**
-		 * If set to true, timeline items will render on both sides
-		 */
-		"enableDoubleSided" : {type : "boolean", group : "Misc", defaultValue : false}
-	},
-	aggregations : {
-
-		/**
-		 * List of Timeline Items.
-		 */
-		"content" : {type : "sap.suite.ui.commons.TimelineItem", multiple : true, singularName : "content"}, 
-
-		/**
-		 * sap.suite.ui.commons/TimelineFilterListItem
-		 */
-		"filterList" : {type : "sap.suite.ui.commons.TimelineFilterListItem", multiple : true, singularName : "filterList"}, 
-
-		/**
-		 * Items for suggestions
-		 */
-		"suggestionItems" : {type : "sap.m.StandardListItem", multiple : true, singularName : "suggestionItem"}, 
-
-		/**
-		 * Provide Custom Filter here
-		 */
-		"customFilter" : {type : "sap.ui.core.Control", multiple : false}
-	},
-	events : {
-
-		/**
-		 * This event is getting triggered after selecting an item from filter list.
-		 */
-		"filterSelectionChange" : {
-			parameters : {
-
-				/**
-				 * filterClose event returns selected key value from filterList
-				 */
-				"selectedItem" : {type : "sap.suite.ui.commons.TimelineFilterListItem"}
-			}
-		}, 
-
-		/**
-		 * Select Timeline Item
-		 */
-		"select" : {
-			parameters : {
-
-				/**
-				 * Selected TimelineItem
-				 */
-				"selectedItem" : {type : "sap.suite.ui.commons.TimelineItem"}
-			}
-		}, 
-
-		/**
-		 * Event fire when user add a new post
-		 */
-		"addPost" : {
-			parameters : {
-
-				/**
-				 * post message
-				 */
-				"value" : {type : "string"}
-			}
-		}, 
-
-		/**
-		 * This event is fired when user types in the input and showSuggestion is set to true. Changing the suggestItems aggregation will show the suggestions within a popup.
-		 * @since 1.26.1
-		 */
-		"suggest" : {
-			parameters : {
-
-				/**
-				 * The current value which has been typed in the input.
-				 */
-				"suggestValue" : {type : "string"}
-			}
-		}, 
-
-		/**
-		 * This event is fired when suggestionItem shown in suggestion popup are selected. This event is only fired when showSuggestion is set to true and there are suggestionItems shown in the suggestion popup.
-		 * @since 1.26.1
-		 */
-		"suggestionItemSelected" : {
-			parameters : {
-
-				/**
-				 * This is the item selected in the suggestion popup.
-				 */
-				"selectedItem" : {type : "sap.ui.core.Item"}
-			}
-		}, 
-
-		/**
-		 * this event is fired when "More" button is clicked.
-		 */
-		"grow" : {}, 
-
-		/**
-		 * event is fired when filter icon is clicked and filter open
-		 */
-		"filterOpen" : {}
-	}
-}});
-
-
-/**
- * Creates a new subclass of class sap.suite.ui.commons.Timeline with name <code>sClassName</code> 
- * and enriches it with the information contained in <code>oClassInfo</code>.
- * 
- * <code>oClassInfo</code> might contain the same kind of informations as described in {@link sap.ui.core.Element.extend Element.extend}.
- *   
- * @param {string} sClassName name of the class to be created
- * @param {object} [oClassInfo] object literal with informations about the class  
- * @param {function} [FNMetaImpl] constructor function for the metadata object. If not given, it defaults to sap.ui.core.ElementMetadata.
- * @return {function} the created class / constructor function
- * @public
- * @static
- * @name sap.suite.ui.commons.Timeline.extend
- * @function
- */
-
-sap.suite.ui.commons.Timeline.M_EVENTS = {'filterSelectionChange':'filterSelectionChange','select':'select','addPost':'addPost','suggest':'suggest','suggestionItemSelected':'suggestionItemSelected','grow':'grow','filterOpen':'filterOpen'};
-
-
-/**
- * Getter for property <code>data</code>.
- * Data for Timeline Control..
- *
- * Default value is empty/<code>undefined</code>
- *
- * @return {object} the value of property <code>data</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getData
- * @function
- */
-
-/**
- * Setter for property <code>data</code>.
- *
- * Default value is empty/<code>undefined</code> 
- *
- * @param {object} oData  new value for property <code>data</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setData
- * @function
- */
-
-
-/**
- * Getter for property <code>sortOldestFirst</code>.
- * Whether the oldest item will be displayed first.
- *
- * Default value is <code>false</code>
- *
- * @return {boolean} the value of property <code>sortOldestFirst</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getSortOldestFirst
- * @function
- */
-
-/**
- * Setter for property <code>sortOldestFirst</code>.
- *
- * Default value is <code>false</code> 
- *
- * @param {boolean} bSortOldestFirst  new value for property <code>sortOldestFirst</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setSortOldestFirst
- * @function
- */
-
-
-/**
- * Getter for property <code>axisOrientation</code>.
- * Timeline axis orientation.
- *
- * Default value is <code>Vertical</code>
- *
- * @return {sap.suite.ui.commons.TimelineAxisOrientation} the value of property <code>axisOrientation</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getAxisOrientation
- * @function
- */
-
-/**
- * Setter for property <code>axisOrientation</code>.
- *
- * Default value is <code>Vertical</code> 
- *
- * @param {sap.suite.ui.commons.TimelineAxisOrientation} oAxisOrientation  new value for property <code>axisOrientation</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setAxisOrientation
- * @function
- */
-
-
-/**
- * Getter for property <code>alignment</code>.
- * Timeline item alignment.
- *
- * Default value is <code>Right</code>
- *
- * @return {sap.suite.ui.commons.TimelineAlignment} the value of property <code>alignment</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getAlignment
- * @function
- */
-
-/**
- * Setter for property <code>alignment</code>.
- *
- * Default value is <code>Right</code> 
- *
- * @param {sap.suite.ui.commons.TimelineAlignment} oAlignment  new value for property <code>alignment</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setAlignment
- * @function
- */
-
-
-/**
- * Getter for property <code>showIcons</code>.
- * Show icon on each Timeline item.
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>showIcons</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getShowIcons
- * @function
- */
-
-/**
- * Setter for property <code>showIcons</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bShowIcons  new value for property <code>showIcons</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setShowIcons
- * @function
- */
-
-
-/**
- * Getter for property <code>noDataText</code>.
- * This text is displayed when the control has no data.
- *
- * Default value is empty/<code>undefined</code>
- *
- * @return {string} the value of property <code>noDataText</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getNoDataText
- * @function
- */
-
-/**
- * Setter for property <code>noDataText</code>.
- *
- * Default value is empty/<code>undefined</code> 
- *
- * @param {string} sNoDataText  new value for property <code>noDataText</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setNoDataText
- * @function
- */
-
-
-/**
- * Getter for property <code>width</code>.
- * Sets the width of the Timeline.
- *
- * Default value is <code>100%</code>
- *
- * @return {sap.ui.core.CSSSize} the value of property <code>width</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getWidth
- * @function
- */
-
-/**
- * Setter for property <code>width</code>.
- *
- * Default value is <code>100%</code> 
- *
- * @param {sap.ui.core.CSSSize} sWidth  new value for property <code>width</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setWidth
- * @function
- */
-
-
-/**
- * Getter for property <code>enableBusyIndicator</code>.
- * When this property is set to "true", Timeline will display a busy indicator when data is being loaded.This BusyIndicator blocks the interaction with the items until data loading is finished.
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>enableBusyIndicator</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getEnableBusyIndicator
- * @function
- */
-
-/**
- * Setter for property <code>enableBusyIndicator</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bEnableBusyIndicator  new value for property <code>enableBusyIndicator</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setEnableBusyIndicator
- * @function
- */
-
-
-/**
- * Getter for property <code>showHeaderBar</code>.
- * Show header tool bar
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>showHeaderBar</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getShowHeaderBar
- * @function
- */
-
-/**
- * Setter for property <code>showHeaderBar</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bShowHeaderBar  new value for property <code>showHeaderBar</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setShowHeaderBar
- * @function
- */
-
-
-/**
- * Getter for property <code>growing</code>.
- * Sets the growing(paging) feature of control. This feature only works with model binding for aggregation "content".
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>growing</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getGrowing
- * @function
- */
-
-/**
- * Setter for property <code>growing</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bGrowing  new value for property <code>growing</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setGrowing
- * @function
- */
-
-
-/**
- * Getter for property <code>growingThreshold</code>.
- * Number of items requested from the server. To activate this you should set "growing" property to "true".
- *
- * Default value is <code>5</code>
- *
- * @return {int} the value of property <code>growingThreshold</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getGrowingThreshold
- * @function
- */
-
-/**
- * Setter for property <code>growingThreshold</code>.
- *
- * Default value is <code>5</code> 
- *
- * @param {int} iGrowingThreshold  new value for property <code>growingThreshold</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setGrowingThreshold
- * @function
- */
-
-
-/**
- * Getter for property <code>visible</code>.
- * Set Timeline control visibility
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>visible</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getVisible
- * @function
- */
-
-/**
- * Setter for property <code>visible</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bVisible  new value for property <code>visible</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setVisible
- * @function
- */
-
-
-/**
- * Getter for property <code>enableBackendFilter</code>.
- * This flag enables to get data from backend instead of deriving filter values from front-end values(displayed list).
- *
- * Default value is <code>false</code>
- *
- * @return {boolean} the value of property <code>enableBackendFilter</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getEnableBackendFilter
- * @function
- */
-
-/**
- * Setter for property <code>enableBackendFilter</code>.
- *
- * Default value is <code>false</code> 
- *
- * @param {boolean} bEnableBackendFilter  new value for property <code>enableBackendFilter</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setEnableBackendFilter
- * @function
- */
-
-
-/**
- * Getter for property <code>enableAllInFilterItem</code>.
- * This flag enables to add 'All' in the begining of filter list
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>enableAllInFilterItem</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getEnableAllInFilterItem
- * @function
- */
-
-/**
- * Setter for property <code>enableAllInFilterItem</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bEnableAllInFilterItem  new value for property <code>enableAllInFilterItem</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setEnableAllInFilterItem
- * @function
- */
-
-
-/**
- * Getter for property <code>enableSocial</code>.
- * enable Jam Integration
- *
- * Default value is <code>false</code>
- *
- * @return {boolean} the value of property <code>enableSocial</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getEnableSocial
- * @function
- */
-
-/**
- * Setter for property <code>enableSocial</code>.
- *
- * Default value is <code>false</code> 
- *
- * @param {boolean} bEnableSocial  new value for property <code>enableSocial</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setEnableSocial
- * @function
- */
-
-
-/**
- * Getter for property <code>showSuggestion</code>.
- * If this is set to true, suggest event is fired when user types in the input. Changing the suggestItems aggregation in suggest event listener will show suggestions within a popup.
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>showSuggestion</code>
- * @public
- * @since 1.26.1
- * @name sap.suite.ui.commons.Timeline#getShowSuggestion
- * @function
- */
-
-/**
- * Setter for property <code>showSuggestion</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bShowSuggestion  new value for property <code>showSuggestion</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @since 1.26.1
- * @name sap.suite.ui.commons.Timeline#setShowSuggestion
- * @function
- */
-
-
-/**
- * Getter for property <code>enableScroll</code>.
- * Enable scroll bar display
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>enableScroll</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getEnableScroll
- * @function
- */
-
-/**
- * Setter for property <code>enableScroll</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bEnableScroll  new value for property <code>enableScroll</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setEnableScroll
- * @function
- */
-
-
-/**
- * Getter for property <code>forceGrowing</code>.
- * If set to true, the "More" button will always show.
- *
- * Default value is <code>false</code>
- *
- * @return {boolean} the value of property <code>forceGrowing</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getForceGrowing
- * @function
- */
-
-/**
- * Setter for property <code>forceGrowing</code>.
- *
- * Default value is <code>false</code> 
- *
- * @param {boolean} bForceGrowing  new value for property <code>forceGrowing</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setForceGrowing
- * @function
- */
-
-
-/**
- * Getter for property <code>sort</code>.
- * Allow only latest first sort when Sort is checked, otherwise display order in which data is received.
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>sort</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getSort
- * @function
- */
-
-/**
- * Setter for property <code>sort</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bSort  new value for property <code>sort</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setSort
- * @function
- */
-
-
-/**
- * Getter for property <code>showFilterBar</code>.
- * Set timeline filterbar visibility
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>showFilterBar</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getShowFilterBar
- * @function
- */
-
-/**
- * Setter for property <code>showFilterBar</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bShowFilterBar  new value for property <code>showFilterBar</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setShowFilterBar
- * @function
- */
-
-
-/**
- * Getter for property <code>showSearch</code>.
- * Set timeline search field visibility
- *
- * Default value is <code>true</code>
- *
- * @return {boolean} the value of property <code>showSearch</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getShowSearch
- * @function
- */
-
-/**
- * Setter for property <code>showSearch</code>.
- *
- * Default value is <code>true</code> 
- *
- * @param {boolean} bShowSearch  new value for property <code>showSearch</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setShowSearch
- * @function
- */
-
-
-/**
- * Getter for property <code>enableDoubleSided</code>.
- * If set to true, timeline items will render on both sides
- *
- * Default value is <code>false</code>
- *
- * @return {boolean} the value of property <code>enableDoubleSided</code>
- * @public
- * @name sap.suite.ui.commons.Timeline#getEnableDoubleSided
- * @function
- */
-
-/**
- * Setter for property <code>enableDoubleSided</code>.
- *
- * Default value is <code>false</code> 
- *
- * @param {boolean} bEnableDoubleSided  new value for property <code>enableDoubleSided</code>
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setEnableDoubleSided
- * @function
- */
-
-
-/**
- * Getter for aggregation <code>content</code>.<br/>
- * List of Timeline Items.
- * 
- * @return {sap.suite.ui.commons.TimelineItem[]}
- * @public
- * @name sap.suite.ui.commons.Timeline#getContent
- * @function
- */
-
-
-/**
- * Inserts a content into the aggregation named <code>content</code>.
- *
- * @param {sap.suite.ui.commons.TimelineItem}
- *          oContent the content to insert; if empty, nothing is inserted
- * @param {int}
- *             iIndex the <code>0</code>-based index the content should be inserted at; for 
- *             a negative value of <code>iIndex</code>, the content is inserted at position 0; for a value 
- *             greater than the current size of the aggregation, the content is inserted at 
- *             the last position        
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#insertContent
- * @function
- */
-
-/**
- * Adds some content <code>oContent</code> 
- * to the aggregation named <code>content</code>.
- *
- * @param {sap.suite.ui.commons.TimelineItem}
- *            oContent the content to add; if empty, nothing is inserted
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#addContent
- * @function
- */
-
-/**
- * Removes an content from the aggregation named <code>content</code>.
- *
- * @param {int | string | sap.suite.ui.commons.TimelineItem} vContent the content to remove or its index or id
- * @return {sap.suite.ui.commons.TimelineItem} the removed content or null
- * @public
- * @name sap.suite.ui.commons.Timeline#removeContent
- * @function
- */
-
-/**
- * Removes all the controls in the aggregation named <code>content</code>.<br/>
- * Additionally unregisters them from the hosting UIArea.
- * @return {sap.suite.ui.commons.TimelineItem[]} an array of the removed elements (might be empty)
- * @public
- * @name sap.suite.ui.commons.Timeline#removeAllContent
- * @function
- */
-
-/**
- * Checks for the provided <code>sap.suite.ui.commons.TimelineItem</code> in the aggregation named <code>content</code> 
- * and returns its index if found or -1 otherwise.
- *
- * @param {sap.suite.ui.commons.TimelineItem}
- *            oContent the content whose index is looked for.
- * @return {int} the index of the provided control in the aggregation if found, or -1 otherwise
- * @public
- * @name sap.suite.ui.commons.Timeline#indexOfContent
- * @function
- */
+		SAP UI development toolkit for HTML5 (SAPUI5)
+		(c) Copyright 2009-2015 SAP SE. All rights reserved
 	
-
-/**
- * Destroys all the content in the aggregation 
- * named <code>content</code>.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#destroyContent
- * @function
  */
 
-
-/**
- * Getter for aggregation <code>filterList</code>.<br/>
- * sap.suite.ui.commons/TimelineFilterListItem
- * 
- * @return {sap.suite.ui.commons.TimelineFilterListItem[]}
- * @public
- * @name sap.suite.ui.commons.Timeline#getFilterList
- * @function
- */
-
-
-/**
- * Inserts a filterList into the aggregation named <code>filterList</code>.
- *
- * @param {sap.suite.ui.commons.TimelineFilterListItem}
- *          oFilterList the filterList to insert; if empty, nothing is inserted
- * @param {int}
- *             iIndex the <code>0</code>-based index the filterList should be inserted at; for 
- *             a negative value of <code>iIndex</code>, the filterList is inserted at position 0; for a value 
- *             greater than the current size of the aggregation, the filterList is inserted at 
- *             the last position        
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#insertFilterList
- * @function
- */
-
-/**
- * Adds some filterList <code>oFilterList</code> 
- * to the aggregation named <code>filterList</code>.
- *
- * @param {sap.suite.ui.commons.TimelineFilterListItem}
- *            oFilterList the filterList to add; if empty, nothing is inserted
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#addFilterList
- * @function
- */
-
-/**
- * Removes an filterList from the aggregation named <code>filterList</code>.
- *
- * @param {int | string | sap.suite.ui.commons.TimelineFilterListItem} vFilterList the filterList to remove or its index or id
- * @return {sap.suite.ui.commons.TimelineFilterListItem} the removed filterList or null
- * @public
- * @name sap.suite.ui.commons.Timeline#removeFilterList
- * @function
- */
-
-/**
- * Removes all the controls in the aggregation named <code>filterList</code>.<br/>
- * Additionally unregisters them from the hosting UIArea.
- * @return {sap.suite.ui.commons.TimelineFilterListItem[]} an array of the removed elements (might be empty)
- * @public
- * @name sap.suite.ui.commons.Timeline#removeAllFilterList
- * @function
- */
-
-/**
- * Checks for the provided <code>sap.suite.ui.commons.TimelineFilterListItem</code> in the aggregation named <code>filterList</code> 
- * and returns its index if found or -1 otherwise.
- *
- * @param {sap.suite.ui.commons.TimelineFilterListItem}
- *            oFilterList the filterList whose index is looked for.
- * @return {int} the index of the provided control in the aggregation if found, or -1 otherwise
- * @public
- * @name sap.suite.ui.commons.Timeline#indexOfFilterList
- * @function
- */
-	
-
-/**
- * Destroys all the filterList in the aggregation 
- * named <code>filterList</code>.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#destroyFilterList
- * @function
- */
-
-
-/**
- * Getter for aggregation <code>suggestionItems</code>.<br/>
- * Items for suggestions
- * 
- * @return {sap.m.StandardListItem[]}
- * @public
- * @name sap.suite.ui.commons.Timeline#getSuggestionItems
- * @function
- */
-
-
-/**
- * Inserts a suggestionItem into the aggregation named <code>suggestionItems</code>.
- *
- * @param {sap.m.StandardListItem}
- *          oSuggestionItem the suggestionItem to insert; if empty, nothing is inserted
- * @param {int}
- *             iIndex the <code>0</code>-based index the suggestionItem should be inserted at; for 
- *             a negative value of <code>iIndex</code>, the suggestionItem is inserted at position 0; for a value 
- *             greater than the current size of the aggregation, the suggestionItem is inserted at 
- *             the last position        
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#insertSuggestionItem
- * @function
- */
-
-/**
- * Adds some suggestionItem <code>oSuggestionItem</code> 
- * to the aggregation named <code>suggestionItems</code>.
- *
- * @param {sap.m.StandardListItem}
- *            oSuggestionItem the suggestionItem to add; if empty, nothing is inserted
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#addSuggestionItem
- * @function
- */
-
-/**
- * Removes an suggestionItem from the aggregation named <code>suggestionItems</code>.
- *
- * @param {int | string | sap.m.StandardListItem} vSuggestionItem the suggestionItem to remove or its index or id
- * @return {sap.m.StandardListItem} the removed suggestionItem or null
- * @public
- * @name sap.suite.ui.commons.Timeline#removeSuggestionItem
- * @function
- */
-
-/**
- * Removes all the controls in the aggregation named <code>suggestionItems</code>.<br/>
- * Additionally unregisters them from the hosting UIArea.
- * @return {sap.m.StandardListItem[]} an array of the removed elements (might be empty)
- * @public
- * @name sap.suite.ui.commons.Timeline#removeAllSuggestionItems
- * @function
- */
-
-/**
- * Checks for the provided <code>sap.m.StandardListItem</code> in the aggregation named <code>suggestionItems</code> 
- * and returns its index if found or -1 otherwise.
- *
- * @param {sap.m.StandardListItem}
- *            oSuggestionItem the suggestionItem whose index is looked for.
- * @return {int} the index of the provided control in the aggregation if found, or -1 otherwise
- * @public
- * @name sap.suite.ui.commons.Timeline#indexOfSuggestionItem
- * @function
- */
-	
-
-/**
- * Destroys all the suggestionItems in the aggregation 
- * named <code>suggestionItems</code>.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#destroySuggestionItems
- * @function
- */
-
-
-/**
- * Getter for aggregation <code>customFilter</code>.<br/>
- * Provide Custom Filter here
- * 
- * @return {sap.ui.core.Control}
- * @public
- * @name sap.suite.ui.commons.Timeline#getCustomFilter
- * @function
- */
-
-
-/**
- * Setter for the aggregated <code>customFilter</code>.
- * @param {sap.ui.core.Control} oCustomFilter
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#setCustomFilter
- * @function
- */
-	
-
-/**
- * Destroys the customFilter in the aggregation 
- * named <code>customFilter</code>.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#destroyCustomFilter
- * @function
- */
-
-
-/**
- * This event is getting triggered after selecting an item from filter list.
- *
- * @name sap.suite.ui.commons.Timeline#filterSelectionChange
- * @event
- * @param {sap.ui.base.Event} oControlEvent
- * @param {sap.ui.base.EventProvider} oControlEvent.getSource
- * @param {object} oControlEvent.getParameters
- * @param {sap.suite.ui.commons.TimelineFilterListItem} oControlEvent.getParameters.selectedItem filterClose event returns selected key value from filterList
- * @public
- */
- 
-/**
- * Attach event handler <code>fnFunction</code> to the 'filterSelectionChange' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>.
- * When called, the context of the event handler (its <code>this</code>) will be bound to <code>oListener<code> if specified
- * otherwise to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself. 
- *  
- * This event is getting triggered after selecting an item from filter list.
- *
- * @param {object}
- *            [oData] An application specific payload object, that will be passed to the event handler along with the event object when firing the event.
- * @param {function}
- *            fnFunction The function to call, when the event occurs.  
- * @param {object}
- *            [oListener] Context object to call the event handler with. Defaults to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself.
- *
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#attachFilterSelectionChange
- * @function
- */
-
-/**
- * Detach event handler <code>fnFunction</code> from the 'filterSelectionChange' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>
- *
- * The passed function and listener object must match the ones used for event registration.
- *
- * @param {function}
- *            fnFunction The function to call, when the event occurs.
- * @param {object}
- *            oListener Context object on which the given function had to be called.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#detachFilterSelectionChange
- * @function
- */
-
-/**
- * Fire event filterSelectionChange to attached listeners.
- * 
- * Expects following event parameters:
- * <ul>
- * <li>'selectedItem' of type <code>sap.suite.ui.commons.TimelineFilterListItem</code> filterClose event returns selected key value from filterList</li>
- * </ul>
- *
- * @param {Map} [mArguments] the arguments to pass along with the event.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @protected
- * @name sap.suite.ui.commons.Timeline#fireFilterSelectionChange
- * @function
- */
-
-
-/**
- * Select Timeline Item
- *
- * @name sap.suite.ui.commons.Timeline#select
- * @event
- * @param {sap.ui.base.Event} oControlEvent
- * @param {sap.ui.base.EventProvider} oControlEvent.getSource
- * @param {object} oControlEvent.getParameters
- * @param {sap.suite.ui.commons.TimelineItem} oControlEvent.getParameters.selectedItem Selected TimelineItem
- * @public
- */
- 
-/**
- * Attach event handler <code>fnFunction</code> to the 'select' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>.
- * When called, the context of the event handler (its <code>this</code>) will be bound to <code>oListener<code> if specified
- * otherwise to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself. 
- *  
- * Select Timeline Item
- *
- * @param {object}
- *            [oData] An application specific payload object, that will be passed to the event handler along with the event object when firing the event.
- * @param {function}
- *            fnFunction The function to call, when the event occurs.  
- * @param {object}
- *            [oListener] Context object to call the event handler with. Defaults to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself.
- *
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#attachSelect
- * @function
- */
-
-/**
- * Detach event handler <code>fnFunction</code> from the 'select' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>
- *
- * The passed function and listener object must match the ones used for event registration.
- *
- * @param {function}
- *            fnFunction The function to call, when the event occurs.
- * @param {object}
- *            oListener Context object on which the given function had to be called.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#detachSelect
- * @function
- */
-
-/**
- * Fire event select to attached listeners.
- * 
- * Expects following event parameters:
- * <ul>
- * <li>'selectedItem' of type <code>sap.suite.ui.commons.TimelineItem</code> Selected TimelineItem</li>
- * </ul>
- *
- * @param {Map} [mArguments] the arguments to pass along with the event.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @protected
- * @name sap.suite.ui.commons.Timeline#fireSelect
- * @function
- */
-
-
-/**
- * Event fire when user add a new post
- *
- * @name sap.suite.ui.commons.Timeline#addPost
- * @event
- * @param {sap.ui.base.Event} oControlEvent
- * @param {sap.ui.base.EventProvider} oControlEvent.getSource
- * @param {object} oControlEvent.getParameters
- * @param {string} oControlEvent.getParameters.value post message
- * @public
- */
- 
-/**
- * Attach event handler <code>fnFunction</code> to the 'addPost' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>.
- * When called, the context of the event handler (its <code>this</code>) will be bound to <code>oListener<code> if specified
- * otherwise to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself. 
- *  
- * Event fire when user add a new post
- *
- * @param {object}
- *            [oData] An application specific payload object, that will be passed to the event handler along with the event object when firing the event.
- * @param {function}
- *            fnFunction The function to call, when the event occurs.  
- * @param {object}
- *            [oListener] Context object to call the event handler with. Defaults to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself.
- *
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#attachAddPost
- * @function
- */
-
-/**
- * Detach event handler <code>fnFunction</code> from the 'addPost' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>
- *
- * The passed function and listener object must match the ones used for event registration.
- *
- * @param {function}
- *            fnFunction The function to call, when the event occurs.
- * @param {object}
- *            oListener Context object on which the given function had to be called.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#detachAddPost
- * @function
- */
-
-/**
- * Fire event addPost to attached listeners.
- * 
- * Expects following event parameters:
- * <ul>
- * <li>'value' of type <code>string</code> post message</li>
- * </ul>
- *
- * @param {Map} [mArguments] the arguments to pass along with the event.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @protected
- * @name sap.suite.ui.commons.Timeline#fireAddPost
- * @function
- */
-
-
-/**
- * This event is fired when user types in the input and showSuggestion is set to true. Changing the suggestItems aggregation will show the suggestions within a popup.
- *
- * @name sap.suite.ui.commons.Timeline#suggest
- * @event
- * @since 1.26.1
- * @param {sap.ui.base.Event} oControlEvent
- * @param {sap.ui.base.EventProvider} oControlEvent.getSource
- * @param {object} oControlEvent.getParameters
- * @param {string} oControlEvent.getParameters.suggestValue The current value which has been typed in the input.
- * @public
- */
- 
-/**
- * Attach event handler <code>fnFunction</code> to the 'suggest' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>.
- * When called, the context of the event handler (its <code>this</code>) will be bound to <code>oListener<code> if specified
- * otherwise to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself. 
- *  
- * This event is fired when user types in the input and showSuggestion is set to true. Changing the suggestItems aggregation will show the suggestions within a popup.
- *
- * @param {object}
- *            [oData] An application specific payload object, that will be passed to the event handler along with the event object when firing the event.
- * @param {function}
- *            fnFunction The function to call, when the event occurs.  
- * @param {object}
- *            [oListener] Context object to call the event handler with. Defaults to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself.
- *
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @since 1.26.1
- * @name sap.suite.ui.commons.Timeline#attachSuggest
- * @function
- */
-
-/**
- * Detach event handler <code>fnFunction</code> from the 'suggest' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>
- *
- * The passed function and listener object must match the ones used for event registration.
- *
- * @param {function}
- *            fnFunction The function to call, when the event occurs.
- * @param {object}
- *            oListener Context object on which the given function had to be called.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @since 1.26.1
- * @name sap.suite.ui.commons.Timeline#detachSuggest
- * @function
- */
-
-/**
- * Fire event suggest to attached listeners.
- * 
- * Expects following event parameters:
- * <ul>
- * <li>'suggestValue' of type <code>string</code> The current value which has been typed in the input.</li>
- * </ul>
- *
- * @param {Map} [mArguments] the arguments to pass along with the event.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @protected
- * @since 1.26.1
- * @name sap.suite.ui.commons.Timeline#fireSuggest
- * @function
- */
-
-
-/**
- * This event is fired when suggestionItem shown in suggestion popup are selected. This event is only fired when showSuggestion is set to true and there are suggestionItems shown in the suggestion popup.
- *
- * @name sap.suite.ui.commons.Timeline#suggestionItemSelected
- * @event
- * @since 1.26.1
- * @param {sap.ui.base.Event} oControlEvent
- * @param {sap.ui.base.EventProvider} oControlEvent.getSource
- * @param {object} oControlEvent.getParameters
- * @param {sap.ui.core.Item} oControlEvent.getParameters.selectedItem This is the item selected in the suggestion popup.
- * @public
- */
- 
-/**
- * Attach event handler <code>fnFunction</code> to the 'suggestionItemSelected' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>.
- * When called, the context of the event handler (its <code>this</code>) will be bound to <code>oListener<code> if specified
- * otherwise to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself. 
- *  
- * This event is fired when suggestionItem shown in suggestion popup are selected. This event is only fired when showSuggestion is set to true and there are suggestionItems shown in the suggestion popup.
- *
- * @param {object}
- *            [oData] An application specific payload object, that will be passed to the event handler along with the event object when firing the event.
- * @param {function}
- *            fnFunction The function to call, when the event occurs.  
- * @param {object}
- *            [oListener] Context object to call the event handler with. Defaults to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself.
- *
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @since 1.26.1
- * @name sap.suite.ui.commons.Timeline#attachSuggestionItemSelected
- * @function
- */
-
-/**
- * Detach event handler <code>fnFunction</code> from the 'suggestionItemSelected' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>
- *
- * The passed function and listener object must match the ones used for event registration.
- *
- * @param {function}
- *            fnFunction The function to call, when the event occurs.
- * @param {object}
- *            oListener Context object on which the given function had to be called.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @since 1.26.1
- * @name sap.suite.ui.commons.Timeline#detachSuggestionItemSelected
- * @function
- */
-
-/**
- * Fire event suggestionItemSelected to attached listeners.
- * 
- * Expects following event parameters:
- * <ul>
- * <li>'selectedItem' of type <code>sap.ui.core.Item</code> This is the item selected in the suggestion popup.</li>
- * </ul>
- *
- * @param {Map} [mArguments] the arguments to pass along with the event.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @protected
- * @since 1.26.1
- * @name sap.suite.ui.commons.Timeline#fireSuggestionItemSelected
- * @function
- */
-
-
-/**
- * this event is fired when "More" button is clicked.
- *
- * @name sap.suite.ui.commons.Timeline#grow
- * @event
- * @param {sap.ui.base.Event} oControlEvent
- * @param {sap.ui.base.EventProvider} oControlEvent.getSource
- * @param {object} oControlEvent.getParameters
- * @public
- */
- 
-/**
- * Attach event handler <code>fnFunction</code> to the 'grow' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>.
- * When called, the context of the event handler (its <code>this</code>) will be bound to <code>oListener<code> if specified
- * otherwise to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself. 
- *  
- * this event is fired when "More" button is clicked.
- *
- * @param {object}
- *            [oData] An application specific payload object, that will be passed to the event handler along with the event object when firing the event.
- * @param {function}
- *            fnFunction The function to call, when the event occurs.  
- * @param {object}
- *            [oListener] Context object to call the event handler with. Defaults to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself.
- *
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#attachGrow
- * @function
- */
-
-/**
- * Detach event handler <code>fnFunction</code> from the 'grow' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>
- *
- * The passed function and listener object must match the ones used for event registration.
- *
- * @param {function}
- *            fnFunction The function to call, when the event occurs.
- * @param {object}
- *            oListener Context object on which the given function had to be called.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#detachGrow
- * @function
- */
-
-/**
- * Fire event grow to attached listeners.
- *
- * @param {Map} [mArguments] the arguments to pass along with the event.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @protected
- * @name sap.suite.ui.commons.Timeline#fireGrow
- * @function
- */
-
-
-/**
- * event is fired when filter icon is clicked and filter open
- *
- * @name sap.suite.ui.commons.Timeline#filterOpen
- * @event
- * @param {sap.ui.base.Event} oControlEvent
- * @param {sap.ui.base.EventProvider} oControlEvent.getSource
- * @param {object} oControlEvent.getParameters
- * @public
- */
- 
-/**
- * Attach event handler <code>fnFunction</code> to the 'filterOpen' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>.
- * When called, the context of the event handler (its <code>this</code>) will be bound to <code>oListener<code> if specified
- * otherwise to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself. 
- *  
- * event is fired when filter icon is clicked and filter open
- *
- * @param {object}
- *            [oData] An application specific payload object, that will be passed to the event handler along with the event object when firing the event.
- * @param {function}
- *            fnFunction The function to call, when the event occurs.  
- * @param {object}
- *            [oListener] Context object to call the event handler with. Defaults to this <code>sap.suite.ui.commons.Timeline</code>.<br/> itself.
- *
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#attachFilterOpen
- * @function
- */
-
-/**
- * Detach event handler <code>fnFunction</code> from the 'filterOpen' event of this <code>sap.suite.ui.commons.Timeline</code>.<br/>
- *
- * The passed function and listener object must match the ones used for event registration.
- *
- * @param {function}
- *            fnFunction The function to call, when the event occurs.
- * @param {object}
- *            oListener Context object on which the given function had to be called.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.Timeline#detachFilterOpen
- * @function
- */
-
-/**
- * Fire event filterOpen to attached listeners.
- *
- * @param {Map} [mArguments] the arguments to pass along with the event.
- * @return {sap.suite.ui.commons.Timeline} <code>this</code> to allow method chaining
- * @protected
- * @name sap.suite.ui.commons.Timeline#fireFilterOpen
- * @function
- */
-
-
-/**
- * Get the current selected filter key
- *
- * @name sap.suite.ui.commons.Timeline#getCurrentFilter
- * @function
- * @type string
- * @public
- * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
- */
-
-
-/**
- * Set the current selected filter key
- *
- * @name sap.suite.ui.commons.Timeline#setCurrentFilter
- * @function
- * @param {string} sSelectedItemKey
- *         Returns the TinelineFilterListItem
- * @type void
- * @public
- * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
- */
-
-
-/**
- * when set to true, the Add Post and Reply feature will be grayed out .
- *
- * @name sap.suite.ui.commons.Timeline#setSuspendSocialFeature
- * @function
- * @param {boolean} bBSuspend
- *         boolean value for suspend or not.
- * @type void
- * @public
- * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
- */
-
-
-/**
- * get the suspend social feature status
- *
- * @name sap.suite.ui.commons.Timeline#getSuspendSocailFeature
- * @function
- * @type boolean
- * @public
- * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
- */
-
-
-/**
- * set custom message
- *
- * @name sap.suite.ui.commons.Timeline#setCustomMessage
- * @function
- * @param {string} sMsg
- *         Message to be set
- * @type void
- * @public
- * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
- */
-
-
-/**
- * get the header bar control to customerize
- *
- * @name sap.suite.ui.commons.Timeline#getHeaderBar
- * @function
- * @type sap.m.Toolbar
- * @public
- * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
- */
-
-
-/**
- * Get messagestrip
- *
- * @name sap.suite.ui.commons.Timeline#getMessageStrip
- * @function
- * @type sap.m.MessageStrip
- * @public
- * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
- */
-
-
-/**
- * to allow for UI layout change (public)
- *
- * @name sap.suite.ui.commons.Timeline#adjustUI
- * @function
- * @type void
- * @public
- * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
- */
-
-// Start of sap/suite/ui/commons/Timeline.js
-///**
-// * This file defines behavior for the control,
-// */
-jQuery.sap.require("sap.m.library");
-jQuery.sap.require("sap.ui.core.IconPool");
-jQuery.sap.require("sap.ui.core.Icon");
-jQuery.sap.require("sap.ui.core.delegate.ItemNavigation");
-jQuery.sap.require("sap.suite.ui.commons.TimelineFilterListItem");
-jQuery.sap.require("sap.ui.core.ResizeHandler");
-jQuery.sap.require("sap.ui.Device");
-
-sap.suite.ui.commons.Timeline.INTERNAL_MODEL_NAME = "sapsuiteuicommonsTimelineInternalModel";
-
-sap.suite.ui.commons.Timeline.prototype.init = function() {
-	this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
-	this._previousTarget = null;
-	this._previousTabPreviousTarget = null;
-	this._filterTarget = null;
-	this._addTarget = null;
-	this._shell = null;
-	this._aRows = null;
-	this._aDomRefs = null; 
-	this._messageStrip = null;
-	
-	this._sapTabbable = null;
-	this._moreButtonFound = false;
-	this._pageSize = 10;
-	this._addButtonFound = false;
-	this._dummy = false;
-	this._tabprevious = false;
-	this._tabnext = false;
-	this._moreTarget = null;
-	this._saveTarget = null;
-	this._previousShellTarget = null;
-	this._previousLineItemsHeight = 0;
-	this._showMorescrollLocation = 0;
-	this._skipOnFocusIn = false; 
-	this._previousShiftF6Target = null;
-	this._outFocusTarget = null;
-	this._outFocusTargetClassName = null;
-	this._firstTimeSetFocus = true;
-	this._headerBarFieldLength = 0;
-	this._renderDblSided = false;
-	this._maxTimeLineWidth = 685;
-	
-	sap.m.DisplayListItem.extend("sap.suite.ui.commons.DisplayListItemWithKey", {
-		metadata : {
-			properties : {
-				"key" : {
-					type : "string",
-					defaultValue : ""
+sap.ui.define([
+		"jquery.sap.global",
+		"./library",
+		"sap/ui/core/Control",
+		"sap/ui/core/ResizeHandler",
+		"sap/ui/core/format/DateFormat",
+		"sap/ui/model/ClientListBinding",
+		"sap/ui/model/FilterType",
+		"sap/suite/ui/commons/TimelineNavigator",
+		"sap/suite/ui/commons/util/DateUtils",
+		"sap/suite/ui/commons/util/ManagedObjectRegister",
+		"sap/ui/model/json/JSONModel",
+		"sap/ui/model/Sorter",
+		"sap/ui/model/Filter",
+		"sap/ui/model/FilterOperator",
+		"sap/ui/base/ManagedObject",
+		"sap/suite/ui/commons/TimelineItem",
+		"sap/suite/ui/commons/TimelineRenderManager",
+		"sap/ui/core/delegate/ScrollEnablement"
+	], function (jQuery, library, Control, ResizeHandler, DateFormat, ClientListBinding, FilterType,
+				 TimelineNavigator, DateUtils, ManagedObjectRegister, JSONModel, Sorter, Filter, FilterOperator,
+				 ManagedObject, TimelineItem, TimelineRenderManager, ScrollEnablement) {
+		"use strict";
+
+		var ScrollingFadeout = library.TimelineScrollingFadeout,
+			TimelineAlignment = library.TimelineAlignment,
+			TimelineGroupType = library.TimelineGroupType,
+			TimelineFilterType = library.TimelineFilterType,
+			TimelineAxisOrientation = library.TimelineAxisOrientation;
+
+		/**
+		 * Constructor for a new Timeline.
+		 *
+		 * @param {string} [sId] ID for the new control, generated automatically if no id is given
+		 * @param {object} [mSettings] Initial settings for the new control
+		 *
+		 * @class
+		 * The timeline control shows entries (such as objects, events, or posts) in chronological order.
+		 * <br>A common use case is to provide information about changes to an object, or events related to an
+		 * object.
+		 * These entries can be generated by the system (for example, value XY changed from A to B), or added manually.
+		 * <br>There are two distinct variants of the timeline: basic and social. The basic timeline is read-only,
+		 * while the social timeline offers a high level of interaction and collaboration, and is integrated within SAP
+		 * Jam.
+		 * @extends sap.ui.core.Control
+		 *
+		 * @constructor
+		 * @public
+		 * @alias sap.suite.ui.commons.Timeline
+		 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+		 */
+		var Timeline = Control.extend("sap.suite.ui.commons.Timeline", /** @lends sap.suite.ui.commons.Timeline.prototype */ {
+			metadata: {
+				library: "sap.suite.ui.commons",
+				properties: {
+
+					/**
+					 * Defines the alignment of timeline posts relative to the timeline axis. This option can be used for single-sided timelines only. If the axisOrientation property is set to <code> Horizontal</code>, the <code>Right</code> value is interpreted as bottom alignment and the <code>Left</code> value as top alignment.
+					 */
+					alignment: {type: "sap.suite.ui.commons.TimelineAlignment", group: "Misc", defaultValue: "Right"},
+
+					/**
+					 * Defines the orientation of the timeline. Can be set to <code>Vertical</code> or <code>Horizontal</code>.
+					 */
+					axisOrientation: {
+						type: "sap.suite.ui.commons.TimelineAxisOrientation",
+						group: "Misc",
+						defaultValue: "Vertical"
+					},
+
+					/**
+					 * Data for the Timeline control.
+					 * @deprecated Since version 1.46.0.
+					 * As of version 1.46, this property was replaced by JSONModel context binding.
+					 */
+					data: {type: "object", group: "Misc", defaultValue: null, deprecated: true},
+
+					/**
+					 * Enables to add 'All' at the beginning of the filter list.
+					 * @deprecated Since version 1.46.0.
+					 * The filter list now includes a Select All check box, so the All radio button is
+					 * no longer required. This property is ignored.
+					 */
+					enableAllInFilterItem: {type: "boolean", group: "Behavior", defaultValue: true, deprecated: true},
+
+					/**
+					 * Enables fetching data from backend instead of deriving filter values from the frontend values (displayed list).
+					 * As of version 1.46, replaced by {@link sap.suite.ui.commons.Timeline#getEnableModelFilter}.
+					 * @deprecated Since version 1.46.0.
+					 * Use the enableModelFilter property instead.
+					 */
+					enableBackendFilter: {type: "boolean", group: "Misc", defaultValue: true, deprecated: true},
+
+					/**
+					 * When this property is set to <code>true</code>, the timeline displays a busy indicator when loading data. This busy indicator blocks the interaction with the items until the data loading is complete. It is strongly recommended to use this option. Loading data without a busy indicator may confuse the users.
+					 */
+					enableBusyIndicator: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * If set to <code>true</code>, timeline posts are displayed on both sides of the timeline axis.
+					 */
+					enableDoubleSided: {type: "boolean", group: "Misc", defaultValue: false},
+
+					/**
+					 * Enables filtering directly on the binding level.
+					 * If set to <code>true</code>, all filters are translated into the filters in the model binding. When the OData model is used, the filtering is performed on the backend side. This option is strongly recommended.
+					 * If set to <code>false</code>, all entries from the model need to be fetched before they can be filtered on the frontend side. Please be aware that the <code>growingThreshold</code> property determines how many entries can be rendered. Timeline requests all entries from the model before it performs the filtering. Some models may have internal limits for the number of entries that can be used in bindings. Such limits can be set using {@link sap.ui.model.Model#setSizeLimit}.
+					 * @since 1.46.0
+					 */
+					enableModelFilter: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * If set to <code>true</code>, the Timeline control has its own scroll bar, with the scrolling taking place within the Timeline control itself. Scrolling is required if you want to enable the lazyLoading property.
+					 */
+					enableScroll: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * Adds a <i>Reply</i> link to the posts on a social timeline that allows users to reply to posts. When a user adds a reply, an event is fired. This event should be handled by external code.
+					 */
+					enableSocial: {type: "boolean", group: "Misc", defaultValue: false},
+
+					/**
+					 * Title for the data filter. When a filter is applied, this title is displayed in the message strip along with the filter name.
+					 */
+					filterTitle: {type: "string", group: "Misc", defaultValue: null},
+
+					/**
+					 * If set to <code>true</code>, the <i>Show More</i> button is displayed when the user scrolls along the timeline axis.
+					 */
+					forceGrowing: {type: "boolean", group: "Misc", defaultValue: false},
+
+					/**
+					 * Groups the timeline posts by year.
+					 * As of version 1.46, replaced by {@link sap.suite.ui.commons.Timeline#getGroupByType}.
+					 * @deprecated Since version 1.46.0.
+					 * Use the groupByType property instead.
+					 */
+					group: {type: "boolean", group: "Misc", defaultValue: false, deprecated: true},
+
+					/**
+					 * Groups the timeline posts by a field. Only fields that contain date values are supported.
+					 */
+					groupBy: {type: "string", group: "Misc", defaultValue: null},
+
+					/**
+					 * Groups the timeline posts by a time period, including year, quarter, month, week, and day. If set to <code>None</code>, no grouping is applied.
+					 * If you specify a custom grouping function using the {@link sap.suite.ui.commons.Timeline#setCustomGrouping} method, this function overrides the groupByType property settings.
+					 */
+					groupByType: {type: "sap.suite.ui.commons.TimelineGroupType", group: "Misc", defaultValue: "None"},
+
+					/**
+					 * If set to <code>true</code>, the timeline displays a limited number of posts with a button to show more. The displayed posts limit can be set using the growingThreshold property.
+					 * As of version 1.46, replaced by {@link sap.suite.ui.commons.Timeline#getGrowingThreshold}.
+					 * @deprecated Since version 1.46.0.
+					 * Use the growingThreshold property instead, setting it to 0 to disable growing.
+					 */
+					growing: {type: "boolean", group: "Misc", defaultValue: true, deprecated: true},
+
+					/**
+					 * Number of posts requested from the server at a time. Each time when the timeline needs to load more posts, it will request exactly this amount. The number of posts displayed in the timeline is increased by this number. If set to <code>0</code>, all posts are fetched and displayed on the initial load.
+					 */
+					growingThreshold: {type: "int", group: "Misc", defaultValue: 5},
+
+					/**
+					 * Sets the height of the Timeline.
+					 * @since 1.46.0
+					 */
+					height: {type: "sap.ui.core.CSSSize", group: "Misc", defaultValue: ''},
+
+					/**
+					 * Enables the Lazy Loading feature that automatically loads more posts as the user scrolls along the timeline axis. This feature works only when the enableScroll property is set to <code>true</code>. See also {@link sap.suite.ui.commons.Timeline#getEnableScroll}.
+					 * @since 1.46.0
+					 */
+					lazyLoading: {type: "boolean", group: "Dimension", defaultValue: false},
+
+					/**
+					 * This text is displayed when the control has no data. The default value is loaded from the component resource bundle.
+					 */
+					noDataText: {type: "string", group: "Misc", defaultValue: null},
+
+					/**
+					 * If set to <code>Area</code>, the timeline fades into the visible area margin.
+					 * If set to <code>AreaWithButtons</code>, the timeline fades into the visible area margin and scroll buttons are displayed.
+					 * If set to <code>None</code>, the fading effect is not applied.
+					 * This feature works only when the enableScroll property is set to <code>true</code>. See also {@link sap.suite.ui.commons.Timeline#getEnableScroll}.
+					 * @since 1.46.0
+					 * @deprecated Since version 1.54.0. Not Fiori.
+					 */
+					scrollingFadeout: {
+						type: "sap.suite.ui.commons.TimelineScrollingFadeout",
+						group: "Misc",
+						defaultValue: "None"
+					},
+
+					/**
+					 * Sets the visibility of the filter in the timeline toolbar.<br>
+					 * As of version 1.46, replaced by {@link sap.suite.ui.commons.Timeline#getShowHeaderBar}.
+					 * @deprecated Since version 1.46.0.
+					 * Use the showHeaderBar property instead.
+					 */
+					showFilterBar: {type: "boolean", group: "Misc", defaultValue: true, deprecated: true},
+
+					/**
+					 * Shows the timeline toolbar with search and filter options.
+					 */
+					showHeaderBar: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * Shows an icon on the timeline axis as an anchor for each entry node. If set to <code>false</code>, all icons are replaced by dots.
+					 */
+					showIcons: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * Show item filter in filter area.
+					 */
+					showItemFilter: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * Sets the search field visibility on the timeline toolbar.
+					 */
+					showSearch: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * Show sort icon in the header bar. For displaying this icon, sorting have to be allowed.
+					 */
+					showSort: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * If set to <code>true</code>, a suggest event is fired when the user enters text into the search field. Changing the suggestionItems aggregation in the suggest event listener will display suggestions inside a popup.
+					 * As of version 1.46, replaced by {@link sap.collaboration.components.feed.Component}.
+					 * @since 1.26.1
+					 * @deprecated Since version 1.46.0.
+					 * Use the Group Feed Component instead.
+					 */
+					showSuggestion: {type: "boolean", group: "Behavior", defaultValue: true, deprecated: true},
+
+					/**
+					 * Shows the time range filter in the filter menu.
+					 */
+					showTimeFilter: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * Indicates whether the data should be sorted. If set to <code>false</code> the data model's default sorting is applied.
+					 */
+					sort: {type: "boolean", group: "Misc", defaultValue: true},
+
+					/**
+					 * Whether the oldest item will be displayed first.
+					 */
+					sortOldestFirst: {type: "boolean", group: "Misc", defaultValue: false},
+
+					/**
+					 * Height of the timeline posts. It can be set to either of the following types of values:
+					 * <ul>
+					 * <li> Automatic &ndash; If set to <code>automatic</code>, the optimal post height is calculated automatically to fit the timeline height specified by the height parameter. This option works only in horizontal timelines and only when the timeline height is defined. In vertical timelines, this setting is ignored. </li>
+					 * <li> Number &ndash; If set to a number, a corresponding number of text lines is displayed in every post.</li>
+					 * <li> Pixels &ndash; If set to a number followed by <code>px</code>, such as <code>50px</code>, the closest number in lines is calculated and applied to the timeline posts, so that the post height corresponds to the specified number of pixels and the text lines are not cut off in the middle of a line.</li>
+					 * <li> Any other valid {@link sap.ui.core.CSSSize CSSSize} value that is inserted into the text wrapper without being changed. </li>
+					 * </ul>
+					 */
+					textHeight: {type: "string", group: "Misc", defaultValue: ''},
+
+					/**
+					 * Sets the width of the Timeline.
+					 */
+					width: {type: "sap.ui.core.CSSSize", group: "Dimension", defaultValue: '100%'}
 				},
-			}
-		},
-		renderer : 'sap.m.DisplayListItemRenderer'
-	});
-	var that = this;
-	// create an internal model.
-	this._prevTargetId = "";
-	this._internalModel = new sap.ui.model.json.JSONModel();
-	this._finishLoading = true; //false;  change for cs 1570523249
-	this.setModel(this._internalModel, sap.suite.ui.commons.Timeline.INTERNAL_MODEL_NAME);
-	var oLocale = sap.ui.getCore().getConfiguration().getLanguage();
-	this.resBundle = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.commons", oLocale);
-	this._emptyList = new sap.m.List();
-	this._emptyList.setNoDataText(this.resBundle.getText('TIMELINE_NO_DATA'));
-	this._filterIcon = new sap.m.Button(this.getId() + "-filter", {
-		type : sap.m.ButtonType.Transparent,
-		icon : "sap-icon://filter",
-		tooltip : this.resBundle.getText("TIMELINE_FILTER_BY"),
-		press : function(oEvent) {
-			that._openFilterDialog();
-		}
-	});
-	/*  per Social component, they will handle addIcon themselves
-	this._addIcon = new sap.m.Button(this.getId() + "-add", {
-    	type:sap.m.ButtonType.Transparent,
-    	icon:"sap-icon://add",
-    	tooltip : this.resBundle.getText("TIMELINE_ADD"),
-    	press : function(oEvent) {			
-			that._openAddDialog();
-		}
-    });
-    */
-	var oToolbarSpacer = new sap.m.ToolbarSpacer();
+				defaultAggregation: "content",
+				aggregations: {
+					/**
+					 * List of timeline posts.
+					 */
+					content: {type: "sap.suite.ui.commons.TimelineItem", multiple: true, singularName: "content"},
 
-	this._headerBar = new sap.m.Toolbar({
-		id : this.getId() + "-filterToolBar",
-		content : [oToolbarSpacer, this._filterIcon]
-		});
-		
-	//if (this.getEnableBackendFilter())
-	
-	
-		this._headerBar.setVisible(this.getShowFilterBar());
-	//search feature
-	{
-	 this._searchField = new sap.m.SearchField(this.getId() + "-timelineSearch", {
-		search: function(oEvent){
-		var searchValue = oEvent.getSource().getValue();
-		var oBindingInfo = that.getBindingInfo("content");
-	
-			var contains = sap.ui.model.FilterOperator.Contains;
-			var modalEntities = that.getBinding('content').oEntityType.property;
-			
-		
-			
-			var columns = [];
-					
-			columns.push(that.getBindingInfo('content').template.mBindingInfos.text.parts[0].path);
-			columns.push(that.getBindingInfo('content').template.mBindingInfos.title.parts[0].path);
-			columns.push(that.getBindingInfo('content').template.mBindingInfos.userName.parts[0].path);
-			
-			
-			var filters = new sap.ui.model.Filter(columns.map(function(colName) {
-						return new sap.ui.model.Filter(colName, contains, searchValue); }),
-						false);
-				that.getBinding("content").filter([filters]);
-		
-		}
-	});
-	
-	//this._headerBar.insertContent(this._searchField,0);
-	
-	}
-	
-	
-	
-	this._headerBar.insertContent(oToolbarSpacer,1);
-	this._headerBar.insertContent(this._filterIcon,2);
-	
-	
+					/**
+					 * A custom filter to be used instead of the default item filter. This control must have an <code>openBy</code> function that is used by the timeline to open the control.
+					 */
+					customFilter: {type: "sap.ui.core.Control", multiple: false},
 
-	var that = this; 
+					/**
+					 * Custom filter criteria for the items filter.
+					 */
+					filterList: {
+						type: "sap.suite.ui.commons.TimelineFilterListItem",
+						multiple: true,
+						singularName: "filterList"
+					},
 
+					/**
+					 * Items for suggestions.
+					 * As of version 1.46, replaced by {@link sap.collaboration.components.feed.Component}.
+					 * @deprecated Since version 1.46.0.
+					 * Use the Group Feed Component instead.
+					 */
+					suggestionItems: {
+						type: "sap.m.StandardListItem",
+						multiple: true,
+						singularName: "suggestionItem",
+						deprecated: true
+					}
+				},
+				events: {
+					/**
+					 * This event is fired when a new post is added.
+					 * As of version 1.46, replaced by {@link sap.collaboration.components.feed.Component}.
+					 * @deprecated Since version 1.46.0.
+					 * Use the Group Feed Component instead.
+					 */
+					addPost: {
+						deprecated: true,
+						parameters: {
 
-	this._messageStrip =  new sap.m.MessageStrip({
-		close: function(oEvent) {
-			this.setText("");
-			if (that._lastHeaderBaRTabField !== null) {
-				jQuery(that._lastHeaderBaRTabField).focus();
-				oEvent.preventDefault();				
-			}
-		}
-		});
-	
-
-	this._filterInfoText = new sap.m.Text({
-		maxLines : 1,
-		width : "100%"
-	});
-	this._headerInfoBar = new sap.m.Toolbar({
-		id : this.getId() + "-filterInfoBar",
-		content : [this._filterInfoText],
-		design : sap.m.ToolbarDesign.Info,
-		visible : false
-	});
-	
-	this._customFilter = false;
-	this._filterChange = false;
-	this._contentChange = true;
-	this._filterDialog = new sap.m.ResponsivePopover(this.getId() + "-popover_filter", {
-		title : this.resBundle.getText("TIMELINE_FILTER_BY"),
-		placement : sap.m.PlacementType.Auto,
-		contentHeight : "15rem",
-		contentWidth : "25rem"
-	});
-
-	var oDisplayListItemWithKey = new sap.suite.ui.commons.DisplayListItemWithKey({  
-		key : "{key}",
-		label : "{text}"
-	});
-
-	this._filterList = new sap.m.List(this.getId() + "-filterlist", {
-		mode : sap.m.ListMode.SingleSelectMaster,
-		items : {
-			path : "/items",
-			template : oDisplayListItemWithKey
-		},
-		selectionChange : function(oEvent) {
-			that._searchField.setValue("");
-		var oFilterText = that._filterList.getSelectedItem().getLabel();
-		that._setFilterInfoText(oFilterText);
-		if (that._filterList.getSelectedItem() && !that.getEnableBackendFilter()) {
-				that._filterChange = true;
-				that._filterText = oFilterText;
-				that._resetDisplayItems(oFilterText);
-			}
-			that.fireFilterSelectionChange({selectedItem : that._filterList.getSelectedItem()}); // jul/17/2014
-			that._currentFilterKey = that._filterList.getSelectedItem().getKey();
-			that._filterDialog.close();
-		}
-	});
-
-	this._filterText = this.resBundle.getText("TIMELINE_ALL");
-	this._growing = false;
-	if (this.getGrowing()) {
-	
-		this._growDisplayCount = this.getGrowingThreshold();  //max current display item count
-		this._iItemCount = this.getGrowingThreshold();
-		this._getMoreButton = new sap.m.Button(this.getId() + "-getmore", {
-			text : this.resBundle.getText("TIMELINE_SHOW_MORE"),
-			width : "100%",
-			press : function() {
-			
-			if (document.getElementById(that.getId() + '-contentH'))	{
-				that._showMorescrollLocation = document.getElementById(that.getId() + '-contentH').scrollLeft;
-			} else {
-				that._showMorescrollLocation = document.getElementById(that.getId() + '-content').scrollTop;
-			}
-				// fire the event
-				that.fireGrow();
-				that._iItemCount += that.getGrowingThreshold();
-				var oldDisplayCount = that._growDisplayCount;
-				that._growDisplayCount += that.getGrowingThreshold();
-				if (that.oItemNavigation) {
-					that.removeDelegate(that.oItemNavigation);
-					that.oItemNavigation.destroy();
-				}
-				that._startItemNavigation();
-				if (that._iItemCount > that.getMaxItemsCount()) {
-					that._iItemCount = that.getMaxItemsCount();
-				}
-				var oBindingInfo = that.getBindingInfo("content");
-				if (that._growing) {
-					oBindingInfo.startIndex = 0;
-					oBindingInfo.length = that._iItemCount;
-					that.getBinding("content").getContexts(0, that._iItemCount);
-					//that.updateAggregation("content");
-				} else {
-					that.rerender();
-				}
-			
-				//focus on the last item preceding more button before growing was fired.
-				jQuery.sap.delayedCall(300, that, function() {
-					if (document.getElementById(that.getId() + '-contentH'))	{
-						document.getElementById(that.getId() + '-contentH').scrollLeft =  that._showMorescrollLocation;
-					} else {
-						document.getElementById(that.getId() + '-content').scrollTop =	that._showMorescrollLocation ;
+							/**
+							 * Post message text.
+							 */
+							value: {type: "string"}
 						}
-		      });
+					},
 
+					/**
+					 * This event is fired when the user clicks the Close button on a message strip.
+					 */
+					customMessageClosed: {},
+
+					/**
+					 * This event is fired when the user clicks the filter icon in the timeline toolbar and opens the filter.
+					 */
+					filterOpen: {},
+
+					/**
+					 * This event is fired when filtering is applied to timeline posts or when a search term is entered into the search field. This event can be fired only if the enableModelFilter property is set to <code>true</code>.
+					 */
+					filterSelectionChange: {
+						parameters: {
+
+							/**
+							 * Type of filter that has changed, can be an item filter or a time range filter.
+							 */
+							type: {type: "sap.suite.ui.commons.TimelineFilterType"},
+
+							/**
+							 * Search term entered into the search field.
+							 */
+							searchTerm: {type: "string"},
+
+							/**
+							 * The first criteria selected in the filter criteria list (required for backward compatibility).
+							 */
+							selectedItem: {type: "string"},
+
+							/**
+							 * An array with all selected filter criteria.
+							 */
+							selectedItems: {type: "object"},
+
+							/**
+							 * An object specifying the start date (<code>from</code>) and the end date (<code>to</code>) of the time range.
+							 */
+							timeKeys: {type: "object"},
+
+							/**
+							 * Is set to <code>true</code> when this event is fired by clearing the filter.
+							 */
+							clear: {type: "boolean"}
+						}
+					},
+
+					/**
+					 * This event is fired when the "More" button is clicked.
+					 */
+					grow: {},
+
+					/**
+					 * This event is fired for every timeline post when data filtering is being applied. It indicates whether this post is included in the filtering and why. Can be used only when the enableModelFilter property is set to <code>false</code>.
+					 */
+					itemFiltering: {
+						parameters: {
+
+							/**
+							 * Timeline post that is currently being filtered.
+							 */
+							item: {type: "sap.suite.ui.commons.TimelineItem"},
+
+							/**
+							 * Reasons why the post is being filtered. Empty if the post is not being filtered. There are three properties available in the object: <code>Search</code>, <code>Time</code>, and <code>Data</code>. You can call preventDefault to the event object to prevent the result.
+							 */
+							reasons: {type: "object"},
+
+							/**
+							 * Array with keys used for data filtering.
+							 */
+							dataKeys: {type: "object"},
+
+							/**
+							 * An object specifying the start date (<code>from</code>) and the end date (<code>to</code>) of the time range.
+							 */
+							timeKeys: {type: "object"},
+
+							/**
+							 * The text string that has been typed into the search field.
+							 */
+							searchTerm: {type: "string"}
+						}
+					},
+
+					/**
+					 * This event is fired when a timeline post is selected.
+					 */
+					select: {
+						parameters: {
+
+							/**
+							 * The timeline post that is selected.
+							 */
+							selectedItem: {type: "sap.suite.ui.commons.TimelineItem"}
+						}
+					},
+
+					/**
+					 * This event is fired when the user enters text into the search field, in cases when the showSuggestion property is set to <code>true</code>. Changing the suggestionItems aggregation will show the suggestions inside a popup.
+					 * @since 1.26.1
+					 * @deprecated Since version 1.46.0.
+					 * Replaced by {@link sap.collaboration.components.feed.Component}.
+					 */
+					suggest: {
+						deprecated: true,
+						parameters: {
+
+							/**
+							 * The text string that has been typed into the search field.
+							 */
+							suggestValue: {type: "string"}
+						}
+					},
+
+					/**
+					 * This event is fired when a suggested post is selected in the suggestions popup list. This event is only fired when the showSuggestion property is set to <code>true</code> and there is at least one post in the suggestions popup list. See also the suggestionItems aggregation.
+					 * @since 1.26.1
+					 * @deprecated Since version 1.46.0.
+					 * Replaced by {@link sap.collaboration.components.feed.Component}.
+					 */
+					suggestionItemSelected: {
+						deprecated: true,
+						parameters: {
+
+							/**
+							 * The item selected in the suggestions popup.
+							 */
+							selectedItem: {type: "sap.ui.core.Item"}
+						}
+					}
+				},
+				designTime: true
 			}
 		});
-	}
-	
-	// scrolling stuff
-//	jQuery.sap.require("sap.ui.core.delegate.ScrollEnablement");
-//	this._oScroller = new sap.ui.core.delegate.ScrollEnablement(this, this.getId() + "-scroll", {
-//		horizontal : false,
-//		vertical : true,
-//		zynga : false,
-//		preventDefault : false,
-//		nonTouchScrolling : "scrollbar"
-//	});
-//	this._scHeight = 0; //scroller container height
-  this._scHeight = 400; //scroller container default height 400px
-	this._height = 0;
-	this._aFilterList = [];
 
-// resize handler
-/*	this.sResizeListenerId = null;
-	if (jQuery.device.is.desktop) {
-		this.sResizeListenerId = sap.ui.core.ResizeHandler.register(this, jQuery.proxy(this._performScrollChanges, this));
-	} else {
-		sap.ui.Device.orientation.attachHandler(this._performScrollChanges, this);
-		sap.ui.Device.resize.attachHandler(this._performScrollChanges, this);
-	}*/
-}; // init
-
-	
-sap.suite.ui.commons.Timeline.prototype._createAddDialog = function(){
-// add dialog
-	var that = this;
-	this._addDialog = new sap.m.Popover(this.getId() + "-popover_add", {
-		title: this.resBundle.getText("TIMELINE_ADD_POST"),   
-		placement: sap.m.PlacementType.Vertical,
-		footer:  new sap.m.Bar({
-         contentMiddle : [
-				new sap.m.Button({
-					text: this.resBundle.getText("TIMELINE_OK"),
-				    //icon: "sap-icon://ok",
-				    press: function () {
-				      that._addDialog.close();
-				      that._addPost();
-				     
-				    }
-				  }),
-				  new sap.m.Button({
-				      text: this.resBundle.getText("TIMELINE_FILTER_CANCEL"),
-				      //icon: "sap-icon://cancel",
-				      press: function () {
-				        that._addDialog.close();
-				       
-				      }
-				    })
-               ]
-       }),
-       contentHeight : "15rem",
-	   contentWidth  : "15rem"
-	});
-    
-   	this._addInput = new sap.m.TextArea({
-		height: "15rem",
-		width: "100%",
-		liveChange: function (oEvent) {
-			that._liveChange(oEvent);
-		}
-
-	}); 
-};
-
-sap.suite.ui.commons.Timeline.prototype._createSuggestionPopup = function(oInput) {
-	var that = this;
-	this._suggestionPopup = new sap.m.Popover(oInput.getId() + "-suggestion_popup", {
-				showHeader : false,
-				placement : sap.m.PlacementType.Bottom,
-				contentWidth: "15rem",
-				initialFocus : oInput
-			}).attachAfterClose(function() {
-
-			});
-	this._overwritePopover(this._suggestionPopup, oInput);		
-	this._suggestList = new sap.m.List(this.getId() + "-suggestlist", {
-		showNoData: false,
-		mode : sap.m.ListMode.SingleSelectMaster,
-
-		selectionChange : function(oEvent) {
-			var oItem = oEvent.getSource().getSelectedItem();
-			that._suggestionPopup.close();
-			var strInput = that._addInput.getValue();
-			var insertVal = '';
-			var desc = oItem.getDescription();
-			if (desc.match(/\S+@\S+\.\S+/)) {  // if its an email address, get the first part of it
-				insertVal =  "@" + desc.split('@')[0] + " ";
-			} else {
-				insertVal = "@" + desc + " ";
-			}
-			
-			var newVal = that._getNewString(strInput, that._inputDiff.val, insertVal);
-			that._addInput.setValue(newVal);
-			that._oldAddInput = newVal;
-			that.fireSuggestionItemSelected({
-					//selectedItem: new sap.ui.core.Item({"text": oItem.getLabel(), "key": oItem.getValue()})
-					selectedItem: oItem
-			});
-		}
-	});	
-	this._suggestionPopup.addContent(this._suggestList);	
-};
-
-sap.suite.ui.commons.Timeline.prototype._overwritePopover = function (oPopover, oInput) {
-		// overwrite the internal properties to not to show the arrow in popover.
-		oPopover._marginTop = 0;
-		oPopover._marginLeft = 0;
-		oPopover._marginRight = 0;
-		oPopover._marginBottom = 0;
-		oPopover._arrowOffset = 0;
-		oPopover._offsets = [ "0 0", "0 0", "0 0", "0 0" ];
-		oPopover._myPositions = [ "begin bottom", "begin center", "begin top", "end center" ];
-		oPopover._atPositions = [ "begin top", "end center", "begin bottom", "begin center" ];
-
-		oPopover.open = function() {
-			this.openBy(oInput, false, true);
-		};
-
-		// remove animation from popover
-		oPopover.oPopup.setAnimations(function($Ref, iRealDuration, fnOpened) {
-			fnOpened();
-		}, function($Ref, iRealDuration, fnClosed) {
-			fnClosed();
-		});
-	};
-
-sap.suite.ui.commons.Timeline.prototype._liveChange = function(oEvent) {
-// only fire event when change is ^@ or \s@
-	//should close popover if it is open
-	if (this._suggestionPopup && this._suggestionPopup.isOpen()) {
-		this._suggestionPopup.close();
-	}
-	
-	var strInput = oEvent.getParameters().value;
-	
-	if (!this.getShowSuggestion()) {
-		this._oldAddInput = strInput; 
-		return;
-	}
-	
-	//this._getCursorPosition(strInput, this._oldAddInput);
-	var oInput = oEvent.getSource();
-	this._inputDiff = this._getDiffWord(strInput, this._oldAddInput);
-	this._lastInputOp = this._inputDiff.op;
-//	if (this._lastInputOp == "A" || this._lastInputOp == "D") {
-	if (this._inputDiff.val.match(/^@|\s@/g) && this._inputDiff.val.length > 1) {
-			if (this._lastInputOp === "A") {
-			var that = this;
-			if (!this._suggestionPopup) {
-				this._createSuggestionPopup(oInput);
-			}
-			this.fireSuggest({
-					suggestValue: this._inputDiff.val
-			});
-	
-	
-			this._suggestList.destroyItems();
-			var items = this.getSuggestionItems();
-			
-			for (var i=0; i<items.length; i++) {
-				this._suggestList.addItem(new sap.m.StandardListItem({
-					icon: items[i].getIcon(),
-					title: items[i].getTitle(),
-					description: items[i].getDescription()
-				}));
-			}
-	
-			
-			this._suggestionPopup.openBy(oInput);			
-		} else if (this._lastInputOp === "D") {
-			//delete the whole words
-			var newVal = this._getNewString(strInput, this._inputDiff.val, '');
-			this._addInput.setValue(newVal);
-			
-		}
-
-	} else if (this._suggestionPopup && this._inputDiff.val.length == 0) { // adding a space. should close the suggestion
-		this._suggestionPopup.close();			
-	}
-
-	
-
-	this._oldAddInput = strInput; 
-};
-
-
-sap.suite.ui.commons.Timeline.prototype._getCursorPosition = function(newStr, oldStr) {
-	// not really accurate as in "aaaaa" situation. however, it may not matter. 
-	// do we need a function to get a real position?
-
-	if (newStr.length > oldStr.length) {
-		//add
-		this._lastInputOp = "A";
-		for (var i=0; i<oldStr.length; i++) {
-			if (newStr[i] != oldStr[i]){
-				return i + 1;
-			}
-		}
-		return newStr.length;
-	} else {
-		this._lastInputOp = "D";
-		for (var i=0; i<newStr.length;  i++) {
-			if (newStr[i] != oldStr[i]){
-				return i;  
-			}
-		}
-		return oldStr.length -1;
-	}
-
-};
-
-sap.suite.ui.commons.Timeline.prototype._getDiffWord = function(newStr, oldStr) {
-// compares the old string and new string, return the new string's diff words. If nstr words 
-	var nwords = [];
-	var owords = [];
-	var op = "";
-	if (newStr) {
-		nwords = newStr.split(/\s|\r\n|\r|\n/g);
-	}
-	if (oldStr) {
-		owords = oldStr.split(/\s|\r\n|\r|\n/g);
-	}
-	if (newStr.length < oldStr.length) {   // this is a delete
-		op = "D";
-		//this._lastInputOp = "D";
-		for (var i=0; i<nwords.length; i++) {
-			if (nwords[i] != owords[i]) {
-				if (nwords[i] == owords[i+1]) {
-					//deleting one word charactor, shouldn't matter
-					return {val: "d", op: op};
-				}
-				else {
-					return {val: nwords[i], op:op};
-				}
-			}
-		}
-		return {val: "d", op: op}; // delete the last one character, shouldn't matter
-	} else {   // this is add
-		op = "A";
-		//this._lastInputOp = "A";
-		if (nwords.length > owords.length) {
-			return {val: nwords[nwords.length-1], op: op};
-		}
-		for (var i=0; i < owords.length; i++) {
-			if (owords[i] != nwords[i]) {  // insert into existing words
-				return {val: nwords[i], op: op};
-			} 
-		}
-		return {val: " ", op: op}; // only space difference...
-	}
-}; 
-
-sap.suite.ui.commons.Timeline.prototype._getNewString = function (oldStr, diff, insertStr) {
-	var regi = new RegExp(diff + '$');
-	return oldStr.replace(regi, insertStr);
-};
-
-//sap.suite.ui.commons.Timeline.prototype.getScrollDelegate = function() {
-//	return this._oScroller;
-//};
-//
-//sap.suite.ui.commons.Timeline.prototype.scrollTo = function(x, y, time) {
-//	if (this._oScroller) {
-//		if (this.getDomRef()) { // only if rendered
-//			this._oScroller.scrollTo(x, y, time);
-//		} else {
-//			this._oScroller._scrollX = x; // remember for later rendering
-//			this._oScroller._scrollY = y;
-//		}
-//	}
-//	return this;
-//};
-
-//add post
-sap.suite.ui.commons.Timeline.prototype._addPost = function(){
-	
-	var inputText = this._addInput.getValue();
-    this.fireAddPost({
-    		value: inputText,
-    		mentions: this._mentions
-    		});
-	
-};
-
-/* requested by social component, they will handle add button and dialog
-sap.suite.ui.commons.Timeline.prototype._openAddDialog = function() {
-	if (!this._addDialog) {
-		this._createAddDialog();
-	}
-	this._addInput.setValue('');
-	this._oldAddInput = '';
-	this._mentions = [];
-	//this._addDialog.destroyContent();
-	this._addDialog.addContent(this._addInput);
-	this._addDialog.openBy(this._addIcon);
-
-};
-*/
-
-sap.suite.ui.commons.Timeline.prototype._setSuggestionList = function() {
-	//this._suggestList.updateAggregation("items", this.getSuggestionItems());
-	this._suggestList.destroyItems();
-	var items = this.getSuggestionItems();
-	
-	for (var i=0; i<items.length; i++) {
-		this._suggestList.addItem(new sap.m.StandardListItem({
-			icon: items[i].getIcon(),
-			title: items[i].getTitle(),
-			description: items[i].getDescription()
-		}));
-	}
-};
-
-sap.suite.ui.commons.Timeline.prototype._setFilterInfoText = function(oFilter) {
-	var oFilterInfoText = this.resBundle.getText("TIMELINE_FILTER_INFO_BY", [oFilter]);
-	this._filterInfoText.setText(oFilterInfoText);
-	this._filterInfoText.setTooltip(oFilterInfoText);
-	if (oFilter === this.resBundle.getText("TIMELINE_ALL")) {
-		this._headerInfoBar.setVisible(false);
-	} else {
-		this._headerInfoBar.setVisible(true);
-	}
-	this._filterText = oFilter;
-};
-
-sap.suite.ui.commons.Timeline.prototype._setFilterList = function() {
-	this._aFilterList = [];
-	this._filteredItems = {};
-	if (this.getEnableBackendFilter()) {
-		this._headerBar.insertContent(this._searchField,0);
-		
-		var oFilterList = this.getFilterList();
-		var oFL = [];
-		oFilterList.forEach(function(oItem) {
-			oFL.push({
-				key : oItem.getKey(),
-				text : oItem.getText()
-			});
-		});
-		this._aFilterList = oFL;
-		//this._backendFilterDataFetched = true;
-	} else {
-		var oItems = this.getContent();
-		for (var i = 0; i < oItems.length; i++) {
-			var key = oItems[i].getFilterValue();
-			if (!key) {
-				continue;
-			}
-			if (key in this._filteredItems) {
-				this._filteredItems[key].push(oItems[i]);
-			} else {
-				var alist = [];
-				alist.push(oItems[i]);
-				this._filteredItems[key] = alist;
-				this._aFilterList.push({
-				    key : key,
-					text : key
-				});
-			}
-		};
-	}; // if (this.getEnableBackendFilter()) { //} else {
-	// sort the list
-  if (!this.getEnableBackendFilter()){
-	  this._aFilterList.sort(function(a, b) {
-		  return a.text.toLowerCase().localeCompare(b.text.toLowerCase());
-	  });
-	}
-	// put in the all items first
-	var emptyKey = "";
-	if (this.getEnableAllInFilterItem() && !(this._aFilterList[0] && this._aFilterList[0].key == "")) {  
-		this._aFilterList.unshift({
-			key  : "",
-			text : this.resBundle.getText("TIMELINE_ALL")
-		});
-	};
-
-	var jsonModel = new sap.ui.model.json.JSONModel({
-		items : this._aFilterList
-	});
-	this._filterList.setModel(jsonModel);
-
-	// set the default selection - All
-	if (this._currentFilterKey){
-		this.setCurrentFilter(this._currentFilterKey);
-	} else if (this.getEnableAllInFilterItem()) {	
-	  	this._filterList.setSelectedItem(this._filterList.getItems()[0]);
-	}
-	
-};  //_setFilterList
-
-sap.suite.ui.commons.Timeline.prototype._resetFilter = function() {
-//	if (this._aFilterList) {
-	if (this._aFilterList.length !== 0 && !this.getEnableBackendFilter()) {	
-		// set the default selection - All
-		this._filterList.setSelectedItem(this._filterList.getItems()[0]);
-		this._headerInfoBar.setVisible(false);
-
-	};
-};
-
-sap.suite.ui.commons.Timeline.prototype._openFilterDialog = function() {
-
-//	if (!this._aFilterList || ( this._contentChange && !this.getEnableBackendFilter())) { 	
-	if (this._customFilter){
-		this.getCustomFilter().openBy(this._filterIcon);
-		this.fireFilterOpen();
-		return;
-	}
-	this._setFilterList(); //reset filterList always in case of content change....
-	if ((this.getEnableBackendFilter() && (this._aFilterList.length === 0)) || ( this._contentChange && !this.getEnableBackendFilter())) {
-		//this._setFilterList();
-		this._contentChange = false; // reset the flag
-	}
-	
-	this._filterDialog.addContent(this._filterList);
-	this._filterDialog.openBy(this._filterIcon);
-	this.fireFilterOpen();
-};
-
-sap.suite.ui.commons.Timeline.prototype._resetDisplayItems = function(filter) {
-	this.invalidate();
-	var oItems = this.getContent();
-	var dItems = [];
-	if (filter === this.resBundle.getText("TIMELINE_ALL")) {
-		dItems = oItems;
-	} else {
-		dItems = this._filteredItems[filter];
-	}
-	this._displayItems = dItems;
-
-};
-
-sap.suite.ui.commons.Timeline.prototype.setEnableSocial = function(flag){
-	/* per request socail component, add icon will handle by social component
-	if (flag) {
-		this._headerBar.insertContent(this._addIcon, 0);
-	} else {
-		this._headerBar.removeContent(this._addIcon);
-	}
-	*/
-	this.setProperty("enableSocial", flag);
-	
-};
-
-//to fix for ipad/iphone scrolling issue
-sap.suite.ui.commons.Timeline.prototype.setEnableScroll = function(scroll){
-	 if (sap.ui.Device.system.desktop) {
-	    this.setProperty("enableScroll", scroll);
-	 } else {
-	    this.setProperty("enableScroll", false);
-	 }           
-};
-
-sap.suite.ui.commons.Timeline.prototype.setData = function(oData) {
-	// return if no data is passed
-	if (oData == undefined) {
-		return;
-	}
-	var sPath = this._buildPath("/", sap.suite.ui.commons.Timeline.INTERNAL_MODEL_NAME);
-	this._internalModel.setData(oData);
-	this.setProperty("data", oData, true);
-	this.bindAggregation("content", {
-		path : sPath,
-		sorter : this._getDefaultSorter('dateTime', this.getSortOldestFirst()),
-		factory : jQuery.proxy(this._defaultItemsFactory, this)
-		});
-	this._displayItems = this.getContent();
-	this._finishLoading = true;
-	this._contentChange = true;
-	this._iItemCount = this.getMaxItemsCount();
-	return this;
-};
-
-sap.suite.ui.commons.Timeline.prototype._buildPath = function(sPath, sModelName) {
-	var sCompletePath = sPath;
-	if (sModelName)
-		sCompletePath = sModelName + ">" + sPath;
-	return sCompletePath;
-};
-
-sap.suite.ui.commons.Timeline.prototype._getDefaultSorter = function(property, order) {
-	var descending = true;
-	if (order) {
-		descending = false;
-	} else {
-		descending = true;
-	}
-	
-	if (this.getSort()) {
-		return new sap.ui.model.Sorter(property, descending, false);
-	} else {
-		return null;
-	}
-};
-
-sap.suite.ui.commons.Timeline.prototype._defaultItemsFactory = function(sId, oContext) {
-	var oOptions = {};
-	oOptions.dateTime = oContext.getProperty("dateTime");
-	oOptions.icon = oContext.getProperty("icon");
-	oOptions.userName = oContext.getProperty("userName");
-	oOptions.title = oContext.getProperty("title");
-	oOptions.text = oContext.getProperty("text");
-	oOptions.filterValue = oContext.getProperty("filterValue");
-	var oTimelineItem = new sap.suite.ui.commons.TimelineItem(oOptions);
-	if (oContext.getProperty("content")) {
-		oTimelineItem.setEmbeddedControl(oContext.getProperty("content"));
-	}
-	return oTimelineItem;
-};
-
-sap.suite.ui.commons.Timeline.prototype.onBeforeRendering = function() {
-	
-	
-	//Hide/show Filterbar
-	if (!this.getShowFilterBar())
-	{
-		this._headerBar.setVisible(false);
-	}
-	
-	//hide/show search field
-	if (!this.getShowSearch())
-	{
-		this._searchField.setVisible(false);
-	}
-	
-	var oItems = this.getContent();
-	if (this._filterChange) {
-		oItems = this._displayItems;
-	}
-	this._filterChange = false; // reset the flag
-	this._showMore = false;
-	var oBindingInfo = this.getBindingInfo("content");
-//	if ((this.getGrowing() && (oBindingInfo) && (oBindingInfo.model !== sap.suite.ui.commons.Timeline.INTERNAL_MODEL_NAME) && (this.getMaxItemsCount() > this._iItemCount))) {
-	if ((this.getGrowing() && (oBindingInfo) && (oBindingInfo.model !== sap.suite.ui.commons.Timeline.INTERNAL_MODEL_NAME) && (this.getMaxItemsCount() > this._growDisplayCount))) {
-		if ((this._filterText === this.resBundle.getText("TIMELINE_ALL")) || (this.getEnableBackendFilter())) {
-			this._showMore = true;
-		}
-	} else if (this.getMaxItemsCount() > 0) {
-		this._iItemCount = this.getMaxItemsCount();
-	}
-	if (this._iItemCount == 0) {
-		this._iItemCount = this.getMaxItemsCount();
-		this._showMore = false;
-	}
-	if (this.getForceGrowing()) {  //always show more button when social enable
-		this._showMore = true;
-	}
-	this.setOutput(oItems);
-	
-	
-};
-
-sap.suite.ui.commons.Timeline.prototype.setShowFilterBar = function(flag){
-	
-	this.setProperty("showFilterBar", flag);
-	
-	if (flag)
-	{
-	
-		this._headerBar.setVisible(true);
-	}
-	else
-	{
-	
-		this._headerBar.setVisible(false);
-	}
-	
-};
-
-sap.suite.ui.commons.Timeline.prototype.setShowSearch = function(flag){
-	/* per request socail component, add icon will handle by social component
-	if (flag) {
-		this._headerBar.insertContent(this._addIcon, 0);
-	} else {
-		this._headerBar.removeContent(this._addIcon);
-	}
-	*/
-	this.setProperty("showSearch", flag);
-	
-	if (flag)
-	{
-	
-		this._searchField.setVisible(true);
-	}
-	else
-	{
-	
-		this._searchField.setVisible(false);
-	}
-	
-};
-
-sap.suite.ui.commons.Timeline.prototype.setContent = function(oContents) {
-	this.removeAllContent();
-	for ( var i = 0; i < oContents.length; i++) {
-		var oItem = oContents[i];
-		if (oItem._isOfTypeTimelineItem && oItem._isOfTypeTimelineItem() == true) {
-			if ((oItem.getEmbeddedControl() === null) && (oItem.getText() !== null)) {
-				oItem.setEmbeddedControl(new sap.ui.commons.FormattedTextView({
-					text : oItem.getText(),
-					maxLines : 0
-				}));
-			}
-			sap.suite.ui.commons.Timeline.prototype.addContent.apply(this, [oItem]);
-		}
-	}
-	this._displayItems = this.getContent();
-	this._finishLoading = true;
-	this._contentChange = true;
-	this._resetFilter();
-	this._iItemCount = this.getMaxItemsCount();
-};
-
-sap.suite.ui.commons.Timeline.prototype.sortBy = function(property, ascending) {
-	if (ascending) {
-		return function(a, b) {
-			if (a.getProperty(property) > b.getProperty(property)) {
-				return 1;
-			} else if (a.getProperty(property) < b.getProperty(property)) {
-				return -1;
-			}
-			return 0;
-		};
-	} else {
-		return function(a, b) {
-			if (a.getProperty(property) < b.getProperty(property)) {
-				return 1;
-			} else if (a.getProperty(property) > b.getProperty(property)) {
-				return -1;
-			}
-			return 0;
-		};
-	}
-};
-
-sap.suite.ui.commons.Timeline.prototype.onAfterRendering = function() {
-	var that = this;
-	if ((that.sResizeListenerId == null) && (jQuery.device.is.desktop)) {
-					that.sResizeListenerId = sap.ui.core.ResizeHandler.register(that, jQuery.proxy(that._performResizeChanges, that));
-	}
-/*	if ((this.sResizeListenerId == null) && (jQuery.device.is.desktop)) {
-		this.sResizeListenerId = sap.ui.core.ResizeHandler.register(this, jQuery.proxy(this._performScrollChanges, this));
-	}*/
-	if (this.getAxisOrientation() === sap.suite.ui.commons.TimelineAxisOrientation.Vertical && this.getEnableScroll()) {
-		this.$().css("height", this._height);
-		if (this.getEnableScroll()) { // only set height when we want scrolling
-			this.$().find("#" + this.getId() + "-scroll").css("height", this._scHeight);
-//			console.log(this._scHeight);
-		}
-	} 
-
-//*to fix event grow binding issue - when click on more, scroll back to the top
-	jQuery.sap.delayedCall(150, this, function() {
-// 	jQuery.sap.delayedCall(500, this, function() {
-		that._performUiChanges();
-		
-	     /* var p = this.$().find("#" + this.getId() + "-showmore");
-          var position = p.position();
-//          console.log(p);
-//          console.log(this.$().find("#" + this.getId() + "-scroll-ul").height());
-		  p.css({ "top": this.$().find("#" + this.getId() + "-scroll-ul").height(), position:'relative'});
-//		  console.log(position);
-*/	});
-	this._startItemNavigation();
-	
-	//scroll event
-//	this.$().find("#" + this.getId() + "-content").bind("scroll", jQuery.proxy(this.onScroll, this));
-};
-
-/*  in case we want end of scroll event
-sap.suite.ui.commons.Timeline.prototype.onScroll = function(oEvent) {
-	//alert("scrolling");
-	var oDiv = this.$().find("#" + this.getId() + "-content")[0];  //todo no need to search everytime
-	if (oDiv.clientHeight + oDiv.scrollTop >= oDiv.scrollHeight) {
-//		alert("scroll end");
-	}
-};
-*/
-
-
-/* Keyboard Handling */
-sap.suite.ui.commons.Timeline.prototype._startItemNavigation = function(oEvent) {
-	// Collect the dom references of the items
-	var oFocusRef = this.getDomRef(),
-	aRows = oFocusRef.getElementsByClassName("sapSuiteUiCommonsTimelineItemShell"),
-	aDomRefs = [];
-
-	for (var i = 0; i < oFocusRef.childNodes.length; i++) {
-	//remove timeline1-filterInfoBar if timeline1-filterInfoBar display on ui
-		if (oFocusRef.childNodes[i].id.indexOf("filterInfoBar") < 0) {
-					aDomRefs.push(oFocusRef.childNodes[i]);
-		}
-	}
-			
-	// initialize the delegate add apply it to the control (only once)
-	if (!this.oItemNavigation) {
-		this.oItemNavigation = new sap.ui.core.delegate.ItemNavigation();
-		this.addDelegate(this.oItemNavigation);
-	}
-
-	// After each rendering the delegate needs to be initialized as well.
-	this.oItemNavigation.setRootDomRef(aRows);
-	this._aRows = aRows; //save item level div
-	this._aDomRefs = aDomRefs;
-	this._sapTabbable = this.$().find(":sapTabbable");
-
-    this._moreButtonFound = false;
- 	this._addButtonFound = false;
- 	this._addTarget = null;
- 	this._filterTarget = null;
-  	this._moreTarget = null;
-  	this._lastMessageStripTabElem = null;
-  	this._messageStripTabFields = [];  
-  	this._messageStripIsAvailable = false;  
-  	this._messageStripCloseButtonTarget = null;  
-  	this._firstShell = null;
-  	this._lastShell = null;
-  	this._lastTab = null;
-  	this._lastHeaderBaRTabField = null;
-  	this._firstHeaderBaRTabField = null;  	
-  	this._headerBarFieldLength = this.getHeaderBar().getContent().length;
-
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (this._headerBarFieldLength >= 2) {
-			if (this._sapTabbable[i].id == this.getHeaderBar().getContent()[this._headerBarFieldLength - 1].sId) {
-				this._lastHeaderBaRTabField = this._sapTabbable[i];
-				if (this._firstHeaderBaRTabField === null) {
-					this._firstHeaderBaRTabField = this._sapTabbable[i];
-				}
-			}			
-		}
-		if (this._headerBarFieldLength >= 2) {
-			if (this._sapTabbable[i].id == this.getHeaderBar().getContent()[1].sId) {
-				if (this._firstHeaderBaRTabField === null) {
-					this._firstHeaderBaRTabField = this._sapTabbable[i];
-				}
-			} 			
-		}
-
-		if (this._sapTabbable[i].id.indexOf("shell") >= 0 && this._firstShell == null) {
-			this._firstShell = this._sapTabbable[i];
-		}
-		if (this._sapTabbable[i].id.indexOf("shell") >= 0) {
-			this._lastShell = this._sapTabbable[i];
-		}
-		if (this._sapTabbable[i].id.indexOf("more") < 0) {
-			this._lastTab = this._sapTabbable[i];
-		}
-		if (this._sapTabbable[i].id.indexOf("more") >= 0) {
-			this._moreButtonFound = true;
-			this._moreTarget = this._sapTabbable[i];
-		}
-		if (this._sapTabbable[i].id.indexOf("add") >= 0) { 
-			this._addButtonFound = true;
-			this._addTarget = this._sapTabbable[i];
-		}
-		if (this._sapTabbable[i].id.indexOf("filter") >= 0) {
-			this._filterTarget = this._sapTabbable[i];
-		}
-		if (this._sapTabbable[i].className === "sapMMsgStripCloseButton") {
-			this._messageStripCloseButtonTarget = this._sapTabbable[i];
-		}
-	}		
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (this._lastMessageStripTabElem == null && this.getMessageStrip().getText() != '') { 	
-			if (this._sapTabbable[i].id.indexOf("add") >= 0) {
-				continue;
-			}
-			if (this._sapTabbable[i].className === "sapMMsgStripCloseButton") {
-				this._messageStripIsAvailable = true;
-				this._lastMessageStripTabElem = this._sapTabbable[i];
-				break;
-			}
-			if (this._sapTabbable[i].id.indexOf("shell") < 0 && this._sapTabbable[i].id.indexOf("filter") < 0) {
-				this._messageStripTabFields.push(this._sapTabbable[i]);
-			}	
-			if (this._lastMessageStripTabElem == null && this._sapTabbable[i].className == "sapSuiteUiCommonsTimelineItemShell" && this._sapTabbable[i - 1]) {
-				this._lastMessageStripTabElem = this._sapTabbable[i - 1];	
-				break;
-			}
-		}
-	}
-	
-	// set the array of dom nodes representing the items.
-	this.oItemNavigation.setItemDomRefs(aDomRefs);
-	// turn off the cycling
-	this.oItemNavigation.setCycling(false);
-	// set the page size - default with 10 items
-	this._pageSize = this.getGrowingThreshold();
-	if (this._pageSize == 0) {
-		this._pageSize = 10;
-	}
-//	this._pageSize = 2; 
-	this.oItemNavigation.setPageSize(this._pageSize);
-};
-
-sap.suite.ui.commons.Timeline.prototype._targetIdIsMessageStripTab = function(oEvent) {
-	for (var i=0; i < this._messageStripTabFields.length; i++) {
-		if (this._messageStripTabFields[i].id === oEvent.target.id ) {
-			return true;
-		}
-	}
-	return false;
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsaphome = function(oEvent) {
-	this._skipOnFocusIn = true; 
-	this._setFocus(oEvent, this._aRows[0]);
-	this._previousTarget = this._aRows[0];
-	this._previousShellTarget = this._aRows[0]; //when shift+f6 from outside, we need use this value
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsapend = function(oEvent) {
-	this._skipOnFocusIn = true;
-	this._setFocus(oEvent, this._aRows[this._aRows.length - 1]);
-	this._previousTarget = this._aRows[this._aRows.length - 1];
-	this._previousShellTarget = this._aRows[this._aRows.length - 1]; //when shift+f6 from outside, we need use this value
-};
-
-sap.suite.ui.commons.Timeline.prototype._setFocus = function(oEvent, id) {
-	jQuery(id).focus();
-	oEvent.preventDefault();
-	oEvent.setMarked();	
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsappagedown = function(oEvent) {
-//page down on item level only	
-	this._skipOnFocusIn = true;
-	this._setPageDownUpFocus(oEvent, true);
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsappageup = function(oEvent) {
-//page up item level only
-	this._skipOnFocusIn = true;
-	this._setPageDownUpFocus(oEvent, false);
-};
-
-sap.suite.ui.commons.Timeline.prototype._setPageDownUpFocus = function(oEvent, down) {
-	var focusInItemLevelFound = false;
-	for (var i=0; i < this._aRows.length; i++) {
-			if (this._aRows[i].id == oEvent.target.id ) {
-				focusInItemLevelFound = true;
-				break;
-			}
-	}
-	if (focusInItemLevelFound == false) {
-		this._setFocus(oEvent, oEvent.target);
-		return;
-	}
-	
-	var nextFocusIndex = 0;
-	
-	if (down) {
-		nextFocusIndex = i + this._pageSize;
-		if (nextFocusIndex >= this._aRows.length) {
-			nextFocusIndex = this._aRows.length - 1;
-		}
-	} else {
-		nextFocusIndex = i - this._pageSize;
-		if (nextFocusIndex < 0) {
-			nextFocusIndex = 0;
-		}		
-	}
-
-	this._setFocus(oEvent, this._aRows[nextFocusIndex]);
-	this._previousTarget = this._aRows[nextFocusIndex];
-	this._previousShellTarget = this._aRows[nextFocusIndex]; //when shift+f6 from outside, we need use this value
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsapup = function(oEvent) {
-//arrow down only on item level
-	this._skipOnFocusIn = true;
-	this._setArrowUpLeftFocus(oEvent);
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsapleft = function(oEvent) {
-//arrow down only on item level
-	this._skipOnFocusIn = true;
-	this._setArrowUpLeftFocus(oEvent);
-};
-
-sap.suite.ui.commons.Timeline.prototype._setArrowUpLeftFocus = function(oEvent) {
-	var j = 0;
-	
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-			if (this._sapTabbable[i].id == oEvent.target.id ) {
-				j = i;
-				break;
-			}
-	}	
-
-	for (var i = j-1; i >= 0; i--) {
-		if (this._sapTabbable[i].id.indexOf("shell") >= 0 && this._sapTabbable[i].id != oEvent.target.id && this._shell != this._sapTabbable[i].id  && i < j) {
-            this._shell = this._sapTabbable[i].id;
-			this._previousTarget = this._sapTabbable[i];
-			this._previousShellTarget = this._sapTabbable[i];
-			this._setFocus(oEvent, this._sapTabbable[i]);
-			break;
-		}
-	}	
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsapdown = function(oEvent) {
-//arrow down only on item level
-	this._skipOnFocusIn = true;
-	this._setArrowDownRightFocus(oEvent);
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsapright = function(oEvent) {
-//arrow down only on item level
-	this._skipOnFocusIn = true;
-	this._setArrowDownRightFocus(oEvent);
-};
-
-sap.suite.ui.commons.Timeline.prototype._setArrowDownRightFocus = function(oEvent) {
-	if (oEvent.target.id.indexOf("shell") < 0) {
-		this._setFocus(oEvent, this.$().find(oEvent.target));
-		return;
-	}					
-
-	var j = 0;
-	
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (this._sapTabbable[i].id == oEvent.target.id ) {
-			j = i;
-			break;
-		}
-	}	
-
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (this._sapTabbable[i].id.indexOf("shell") >= 0 && this._sapTabbable[i].id != oEvent.target.id && this._shell != this._sapTabbable[i].id  && i > j) {
-	        this._shell = this._sapTabbable[i].id;
-			this._previousTarget = this._sapTabbable[i];
-			this._previousShellTarget = this._sapTabbable[i];
-			this._setFocus(oEvent, this._sapTabbable[i]);
-			return;
-		}
-	}	
-};
-
-
-sap.suite.ui.commons.Timeline.prototype.onsaptabprevious = function(oEvent) {
-	var lastInteractiveElement = null;
-	this._tabprevious = true;
-	if (!this._targetIdInHeaderBar(oEvent) && oEvent.target.id.indexOf("more") < 0 && oEvent.target.className !== "sapMMsgStripCloseButton") {
-		if (!this._targetIdIsMessageStripTab(oEvent)) { 
-			this._previousTabPreviousTarget = oEvent.target;			
-		}
-	}
-	if (this.oItemNavigation) {
-		this.removeDelegate(this.oItemNavigation);
-		this.oItemNavigation.destroy();
-	}
-	this._startItemNavigation(); 
-	var $Tabbables = this._sapTabbable;
-
-	
-	var prevFocusShellTarget = null;
-	if (oEvent.target.id.indexOf("getmore") >= 0) {
-		//to fix tabprevious focus issue when no timeline item data exist - no data 
-		if (this._getFirstShellTarget() == null) {
-			return;
-		}
-		if (this._previousTarget == null) {
-			lastInteractiveElement = this._getLastInteractiveElementInItem(this._getFirstShellTarget());
-			jQuery(lastInteractiveElement).focus();
-		}
-		else {
-		    var shellTargetFound = false;
-		    if (this._previousShellTarget != null) {
-				for (var i = 0; i < this._sapTabbable.length; i++) {
-					if (this._previousShellTarget.id ==  this._sapTabbable[i].id) {		
-						lastInteractiveElement = this._getLastInteractiveElementInItem(this._sapTabbable[i]);
-						this._previousTarget = lastInteractiveElement;
-						this._setFocus(oEvent, lastInteractiveElement);
-						shellTargetFound = true;
-						return;
-					}
-				}
-			}
-			//focus on 1st shell if previous shell not found
-			var lastInteractiveElement = null;
-			if (!shellTargetFound) {
-				for (var i = 0; i < this._sapTabbable.length; i++) {
-					if (this._sapTabbable[i].id.indexOf("shell") >= 0) {
-						prevFocusShellTarget = this._sapTabbable[i];
-						lastInteractiveElement = this._getLastInteractiveElementInItem(this._getFirstShellTarget());
-						this._previousTarget = lastInteractiveElement;
-						this._previousShellTarget = this._sapTabbable[i];
-						this._setFocus(oEvent, lastInteractiveElement);
-						return;
-					}
-				}
-			}
-		}
-		oEvent.preventDefault();
-		oEvent.setMarked();
-		return;
-	}
-	
-	if (oEvent.target.id.indexOf("shell") >= 0) {
-		if (this._messageStripIsAvailable) {  
-			this._setFocus(oEvent, this._messageStripCloseButtonTarget);
-			return;
-		}
-		if (this._lastHeaderBaRTabField !== null) {
-			this._setFocus(oEvent, this._lastHeaderBaRTabField);
-			return;			
-		}
-		//headerbar without button
-		jQuery(this._firstShell).focus(); 
-
-	}	
-	if (oEvent.target.id == this._firstHeaderBaRTabField.id) {
-		this._dummy = true; //assume will tab through dummy...
-	}
-};
-
-sap.suite.ui.commons.Timeline.prototype._getLastInteractiveElementInItem = function(target) {
-
-	if (target == null) {
-		return;
-	}
-	
-	var LastItemInteractiveElement = target;
-	
-	var j = 0; 
-	
-	//find the item using shell target
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (this._sapTabbable[i].id == target.id ) {
-			j = i;
-			break;
-		}
-	}	
-
-	var nextShellTargetFound = false;
-	var lastInteractiveElementIndex = 0;
-	for (var i = 0; i <this._sapTabbable.length; i++) {
-		if (this._sapTabbable[i].id.indexOf("shell") >= 0 && this._sapTabbable[i] != target  && i > j) {
-			nextShellTargetFound = true;
-			break;
-		} else {
-			LastItemInteractiveElement = this._sapTabbable[i];
-			lastInteractiveElementIndex = i;
-		}
-	}
-	//if only two item and focus on the 2nd item last interactive element and come back from 'more' button then we need to focus on 
-	//the interactive element before more button
-	if (LastItemInteractiveElement.id.indexOf("more") >= 0 && lastInteractiveElementIndex > 0) {
-		LastItemInteractiveElement = this._sapTabbable[lastInteractiveElementIndex - 1];
-	}
-	
-	return LastItemInteractiveElement;
-
-};
-
-sap.suite.ui.commons.Timeline.prototype._getFirstShellTarget = function() {
-
-	var FirstShellTarget = null;
-
-	//find the 1st item using shell target
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (this._sapTabbable[i].id.indexOf("shell") >= 0 ) {
-			FirstShellTarget = this._sapTabbable[i];
-			break;
-		}
-	}
-	return FirstShellTarget;
-};
-
-sap.suite.ui.commons.Timeline.prototype._getItemShellTarget = function(target) {
-	var itemsShellTarget = null;
-	var contentLength = 0;
-
-	if (target == null) {
-		return itemsShellTarget;
-	}
-	if (target.id.indexOf("shell") >= 0) {
-		return target;
-	}
-	var position = -1;
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (target.id ==  this._sapTabbable[i].id) {
-			position = i;
-			break;
-		}
-	}
-	if (position >= 0) {
-		for (var j = position - 1; j >= 0; j--) {
-			if (this._sapTabbable[j].id.indexOf("shell") >= 0) {
-				itemsShellTarget = this._sapTabbable[j];
-				break;
-			}
-		}
-	}
-	return itemsShellTarget;
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsaptabnext = function(oEvent) {
-
-	this._tabnext = true;
-	this._dummy = false;
-	
-	if (this.oItemNavigation) {
-		this.removeDelegate(this.oItemNavigation);
-		this.oItemNavigation.destroy();
-	}
-	this._startItemNavigation();
-//headerbar
-//oEvent.target.id point to current position
-	for (var i = 0; i < this._headerBarFieldLength; i++) { //currently already focused on the last headerbar button. If the prev focus not in 1st shell
-		if (oEvent.target.id === this.getHeaderBar().getContent()[i].sId && oEvent.target.id === this._lastHeaderBaRTabField.id) {
-			if (!this._messageStripIsAvailable && this._previousShellTarget != null) {			
-				for (var i = 0; i < this._sapTabbable.length; i++) { 
-					if (this._previousShellTarget.id ==  this._sapTabbable[i].id) {
-						this._setFocus(oEvent, this._sapTabbable[i]);
-						return;
-					}
-				}
-			}
-		}
-		if (oEvent.target.id === this.getHeaderBar().getContent()[i].sId) { //button in headerbar, let central handle the focus
-			return;
-		}
-	}
-	
-	var oTargetPosition = -1;
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (oEvent.target.id ==  this._sapTabbable[i].id) {
-			oTargetPosition = i;
-			break;
-		}
-	}
-	
-	if (dataInMessageStrip && this._targetIdInHeaderBar(oEvent)) {
-		return;
-	}
-	
-	if (oEvent.target.className === "sapMMsgStripCloseButton" && this._previousShellTarget != null) {
-		for (var i = 0; i < this._sapTabbable.length; i++) { //when click more, we need to find the new generated tab item
-			if (this._previousShellTarget.id ==  this._sapTabbable[i].id) {
-				this._setFocus(oEvent, this._sapTabbable[i]);
-				return;
-			}
-		}
-	}
-		
-	if (oEvent.target.id.indexOf("more") < 0 && !this._targetIdInHeaderBar(oEvent) && oEvent.target.id != "") {
-		if (oTargetPosition == this._sapTabbable.length - 1) {
-			this._setFocusOnMoreOrOutOfFocusArea(oEvent);
-		}
-		if (oTargetPosition < this._sapTabbable.length - 1 && this._sapTabbable[oTargetPosition + 1].id.indexOf("shell") >= 0) {
-			this._setFocusOnMoreOrOutOfFocusArea(oEvent);
-		}
-	}
-	
-	var prevFocusShellTarget = null;
-	if (this._targetIdIsLastHeaderBarBtn(oEvent) && this._previousTarget != null && oEvent.target != this._previousTarget) {
-		if (this._messageStripIsAvailable) { 
-			return;
-		}
-		if (this._previousTarget.id.indexOf("shell") >= 0) {
-			var shellTargetFound = false;
-			for (var i = 0; i < this._sapTabbable.length; i++) {
-				if (this._previousTarget.id ==  this._sapTabbable[i].id) {
-					this._setFocus(oEvent, this._sapTabbable[i]);
-					return;
-				}
-			}
-			if (!shellTargetFound) {
-				for (var i = 0; i < this._sapTabbable.length; i++) {
-					if (this._sapTabbable[i].id.indexOf("shell") >= 0) {
-						prevFocusShellTarget = this._sapTabbable[i];
-						break;
-					}
-				}
-			} 
-		} else {
-			var shellTargetFound = false;
-			if (this._previousShellTarget != null) {
-				for (var i = 0; i < this._sapTabbable.length; i++) {
-					if (this._previousShellTarget.id ==  this._sapTabbable[i].id) {
-						this._setFocus(oEvent, this._sapTabbable[i]);
-						shellTargetFound = true;
-						return;
-					}
-				}
-			}
-			//focus on 1st shell if previous shell not found
-			if (!shellTargetFound) {
-				for (var i = 0; i < this._sapTabbable.length; i++) {
-					if (this._sapTabbable[i].id.indexOf("shell") >= 0) {
-						prevFocusShellTarget = this._sapTabbable[i];
-						this._previousTarget = this._sapTabbable[i];
-						this._previousShellTarget = this._sapTabbable[i];
-						break;
-					}
-				}
-			}
-		}
-		if (prevFocusShellTarget == null) {
-			for (var i = 0; i < this._sapTabbable.length; i++) {
-				if (this._sapTabbable[i].id.indexOf("shell") >= 0) {
-					break;
-				}
-			}	
-		}
-		this._setFocus(oEvent, prevFocusShellTarget);
-		return;
-	}
-		
-	if (oEvent.target.id.indexOf("getmore") < 0 && !this._targetIdInHeaderBar(oEvent) && oEvent.target.className !== "sapMMsgStripCloseButton") {
-		var dataInMessageStrip = false;
-		//do not save messagestrip element in previous target
-		for (var i = 0; i < this._messageStripTabFields.length; i++) {
-			if (this._messageStripTabFields[i].id == oEvent.target.id) {
-				dataInMessageStrip = true;
-				break;
-			}
-		}
-		if (!dataInMessageStrip) {
-			this._previousTarget = oEvent.target;
-			this._previousShellTarget = this._getItemShellTarget(oEvent.target);
-		}
-	}
- 
-};
-
-sap.suite.ui.commons.Timeline.prototype._setFocusOnMoreOrOutOfFocusArea = function(oEvent) {
-	if (!this._moreButtonFound) {
-		jQuery(this._sapTabbable[this._sapTabbable.length - 1]).focus();
-		this._dummy = true; //out of focus area flag
-		this._previousTarget = oEvent.target;  
-		this._previousShellTarget = this._getItemShellTarget(oEvent.target);
-		return;
-	}
-	
-	if (this._moreButtonFound) {
-		this._previousTarget = oEvent.target;
-		this._previousShellTarget = this._getItemShellTarget(oEvent.target);  
-		this._setFocus(oEvent, this._moreTarget);
-		return;
-	}
-};
-
-sap.suite.ui.commons.Timeline.prototype._switchFocus = function(oEvent) {
-	var itemShellTarget = this._getItemShellTarget(oEvent.target);
-	var controlShellTarget = this._getItemShellTarget(this._saveTarget);
-	//only control and item sit in the same item shell, then can toggle
-	if (this._saveTarget != null && oEvent.target != null && itemShellTarget != controlShellTarget) {
-	//save control target
-		if (oEvent.target.id.indexOf("item") < 0 && oEvent.target.id.indexOf("shell") < 0) {
-			this._saveTarget = oEvent.target;
-		}
-		return;
-	}
-	//at item level, toggle back to control
-	if (oEvent.target.id.indexOf("item") >= 0 && oEvent.target.id.indexOf("shell") >= 0) {
-		jQuery(oEvent.target).blur();
-		jQuery(this._saveTarget).focus();
-	}
-	else {
-	//at control level, toggle back to item
-		if (itemShellTarget != null) {
-			this._saveTarget = oEvent.target;
-			jQuery(oEvent.target).blur();
-			jQuery(itemShellTarget).focus();
-		}
-	}
-};
-sap.suite.ui.commons.Timeline.prototype.onkeydown = function(oEvent) {
-		// toggle between control and item with F7
-	
-	this._skipOnFocusIn = false;
-	this._firstTimeSetFocus = true;
-	
-	if (oEvent.which == jQuery.sap.KeyCodes.F7 && !oEvent.isMarked()) {
-//		this._dummy = false;
-		this._skipOnFocusIn = true;
-		this._switchFocus(oEvent);
-		oEvent.preventDefault();
-		oEvent.setMarked();
-		return;
-	}
-	
-};
-
-sap.suite.ui.commons.Timeline.prototype.onsapspace = function(oEvent) {
-	// if non 'getmore' button entered, then prevent scrolling when focus
-/*	if (oEvent.target.id.indexOf("getmore") < 0) {
-		oEvent.preventDefault();
-		oEvent.setMarked();
-		this.focus(); 
-	}*/
-};
-
-sap.suite.ui.commons.Timeline.prototype.onfocusout = function(oEvent) {
-	this._outFocusTarget = oEvent.target;
-	this._outFocusTargetClassName = oEvent.target.className;
-
-};
-
-sap.suite.ui.commons.Timeline.prototype.onfocusin = function(oEvent) {
-	//to prevent dump, when directlu click KPI timeline and no tabble fields
-	if (!this._sapTabbable || this._sapTabbable.length < 1) {
-		return;
-	}
-	//*headerbar without tabble buttons
-	if (this._firstHeaderBaRTabField == null) { 
-		if (!this._dummy && this._previousTarget == null && !this._moreButtonFound && this._tabnext == false && oEvent.target.id == this._sapTabbable[this._sapTabbable.length - 1].id) {
-			this._setFocusOnMoreAddFilterButton(oEvent);
-			return;
-		}
-		return;
-	}
-	//***********************************************************************************************************************************************
-	//for shift+f6, when enableSocial = "true", without more button, and only one tabble field in social toolbar (embedded control), since the social 
-	//toolbar set fastgroup as true ("sap-ui-fastnavgroup"), so when shift+f6 entered will 
-	//focus on the social toolbar first tab field i.e. 'Reply' buttton and then focus on item shell level when shift+f6 againl 	
-	//For shift+tab, the focus will be on the first social tabble field and then focus on the next (up one) tabble timeline control field and then 
-	//keep going up...	
-	//when enableSocial="false", the focus will be on timeline control shell level when the shift+f6 entered 	
-	//***********************************************************************************************************************************************
-
-	if (this._skipOnFocusIn) {
-		return;
-	}
-
-	//***********************************************************************************************************************************************	
-	// with more button, this block of codes will be executed when,
-	// tab and then shift+tab back from 'out of focus area'
-	// f6 and then shift+f6 back from 'out of focus area'
-	//***********************************************************************************************************************************************
-	
-	if (this._dummy && !this._targetIdInHeaderBar(oEvent) && this._previousTarget != null) {
-		this._dummy = false;
-		if (this._moreButtonFound) {
-			this._setFocus(oEvent, this._moreTarget);
-			return;
-		}
-		
-	//***********************************************************************************************************************************************
-	// when shift+f6 without social enable (no embedded control with F6 fast group), then shell oEvent.target == this._previousShellTarget
-	// this block of codes will be executed when,
-	// f6 out and shift f6 back
-	// f6 to shell level and shift+f6
-	//***********************************************************************************************************************************************
-		if (oEvent.target.id.indexOf("shell") >= 0 && this._previousShellTarget !== null) { //tab next out of control area and come back with f6, should focus on shell level
-			if (oEvent.target == this._firstShell) { //*this condition for shift+f6 and the last tab is shell
-				this._setFocus(oEvent, this._previousShellTarget);
-				this._tabprevious = false;
-				return;					
-			}
-			
-	//***********************************************************************************************************************************************
-	// tab and arrow down and out timeline control focus area and shift tab back 
-	// this block of codes will be executed when,
-	// tab and tab out timeline ontrol focus area  and shift+tab
-	//***********************************************************************************************************************************************
-			if (oEvent.target == this._lastShell) { //for shift+tab
-				var lastInteractiveElement = this._getLastInteractiveElementInItem(this._previousShellTarget);  //*tab out and shift+tab back
-				this._setFocus(oEvent, lastInteractiveElement);
-				this._tabprevious = false; 
-				return;				
-			}
-
-		}
-	
-	//***********************************************************************************************************************************************		
-	// tab out and shift+tab back. the last tab field is link instead of shell
-	// f6 to first shell and shift+tab back...
-	//***********************************************************************************************************************************************
-		var lastInteractiveElement = this._getLastInteractiveElementInItem(this._previousTarget);
-		this._setFocus(oEvent, lastInteractiveElement);
-		return;
-	}
-		
-	//without tab next, click on item, and then shift+tab back from 'out of focus area'
-	if (this._dummy && !this._targetIdInHeaderBar(oEvent) && this._previousTarget == null) {
-	//f6 to first shell and come back with shift+tab
-		this._tabprevious = false;
-		this._dummy = false;
-		
-	//***********************************************************************************************************************************************	
-	// if focus back and the current position is not at more button
-	// with more button, shift+f6 directly and then shift+f6 again, focus on more - required this block (continue 2nd back)
-	//***********************************************************************************************************************************************	
-		if (this._moreButtonFound && oEvent.target.id.indexOf("more") < 0) {
-			this._setFocus(oEvent, this._moreTarget);
-			return; 
-		}
-	}
-
-	//***********************************************************************************************************************************************		
-	// directly shift+f6 back
-	//***********************************************************************************************************************************************	
-	if (!this._dummy && this._previousTarget == null && this._moreButtonFound && this._tabnext == false && oEvent.target == this._firstShell) {
-		if (this._moreButtonFound && oEvent.target.id.indexOf("more") < 0) {
-			var outFocusShellTarget = null;
-			//when directly shift+tab back
-			if (this._outFocusTarget != null && oEvent.target.id.indexOf("shell") >= 0) {
-				outFocusShellTarget = this._getItemShellTarget(this._outFocusTarget);	
-				if (oEvent.target == outFocusShellTarget) { //shidt_tab
-					return; 
-				}
-			}
-			
-			//skip this block of codes, when tab back and current focus field is 'more' button
-			//with more button and shift+f6 directly from other control will stop here
-/*			if (this._outFocusTarget !== this._moreTarget && this._outFocusTarget !== null) { //directly tab back - no tab field available in item shell
-				this._setFocus(oEvent, this._moreTarget);
-				alert(sap.ui.getCore().getCurrentFocusedControlId());
-				alert("a9");
-				return;				
-			}*/
-
-		}
-	}
-	//***********************************************************************************************************************************************	
-	// tab out and shift+f6
-	//***********************************************************************************************************************************************	
-	if (!this._dummy && this._previousTarget !== null && this._moreButtonFound && oEvent.target == this._firstShell) {
-		//*only shift+f6 from outside control to execute this block
-		//*when repeat tab through 2nd time, do not execute this block, otherwise the focus woll be on 'more' button after messagestrip close button clicked
-		if (this._outFocusTargetClassName !== "sapMMsgStripCloseButton" && this._outFocusTarget !== this._filterTarget) { //*only shift+f6 execute this bloack
-			if (this._moreButtonFound && oEvent.target.id.indexOf("more") < 0) {
-				var outFocusShellTarget = null;
-				//when directly shift+tab back
-				if (this._outFocusTarget != null && oEvent.target.id.indexOf("shell") >= 0) {
-					outFocusShellTarget = this._getItemShellTarget(this._outFocusTarget);	
-					if (oEvent.target == outFocusShellTarget) { //shidt_tab
-						return; 
-				 	}
-				}
-				//tab to more and tab back, when focus on 'more' skip this block
-				if (this._outFocusTarget !== this._moreTarget) {
-					this._setFocus(oEvent, this._moreTarget);
-					return;					
-				}
-			}			
-		}
-	}
-	
-	//***********************************************************************************************************************************************	
-	// directly shift+tab back
-	//***********************************************************************************************************************************************	
-/*	if (!this._dummy && this._previousTarget == null && this._moreButtonFound && this._tabnext == false && oEvent.target == this._lastShell) {
-		if (this._moreButtonFound && oEvent.target.id.indexOf("more") < 0) {
-			this._setFocus(oEvent, this._moreTarget);
-			alert("a12");
-			return;
-		}
-	}*/	
-
-	//***********************************************************************************************************************************************
-	//this block will be used when the enable social
-	//directly shift+tab or shift+tab from 'out of focus' area; the last tab social toolbar and is "sap-ui-fastnavgroup"
-	//***********************************************************************************************************************************************	
-	//comment out - scroll back to top when click on the last button
-/*	if (!this._dummy && this._previousTarget == null && !this._moreButtonFound && this._tabnext == false && oEvent.target.id == this._sapTabbable[this._sapTabbable.length - 1].id) {
-		this._setFocusOnMoreAddFilterButton(oEvent);
-		return;
-	}*/
-
-	//***********************************************************************************************************************************************
-	//when directly shift+f6 from other control,
-	//social is enable and there is no 'more' button and there are more than one tabble fields in social toolbar.
-	//this block of codes will force the focus on shell level instead tabble field of item shell
-	//**********************************************************************************************************************************************
-	if (!this._dummy && this._previousTarget == null && !this._moreButtonFound && this._tabnext == false && this._firstTimeSetFocus == true &&  
-//		oEvent.target.id.indexOf("filter") < 0) { //directl tab next and target id is filter, then skip this block
-		!this._targetIdInHeaderBar(oEvent)) { //directl tab next and target id is filter, then skip this block
-		var oTargetPosition = null;
-		for (var i = 0; i < this._sapTabbable.length; i++) {
-			if (oEvent.target.id ==  this._sapTabbable[i].id) {
-				oTargetPosition = i;
-				break; 
-			}
-		}
-/*		var lastTabPosition = this._sapTabbable.length - 1;
-		//to fixed scrolling issue when first time click on link or button
-		if (oTargetPosition !== null && oTargetPosition < lastTabPosition) {
-			this._firstTimeSetFocus = false;
-			this._setFocus(oEvent, this._firstShell);
-			return;
-		}*/
-
-	} 
-};
-
-sap.suite.ui.commons.Timeline.prototype._targetIdInHeaderBar = function(oEvent) {
-	for (var i = 0; i < this._headerBarFieldLength; i++) { //currently already focused on the last headerbar button. If the prev focus not in 1st shell
-		if (oEvent.target.id === this.getHeaderBar().getContent()[i].sId) { //button in headerbar, let central handle the focus
-			return true;
-		}
-	}
-	return false;
-};
-
-sap.suite.ui.commons.Timeline.prototype._targetIdIsLastHeaderBarBtn = function(oEvent) {
-	if (oEvent.target.id === this._lastHeaderBaRTabField.id) {
-		return true;
-	}
-	return false;
-};
-
-sap.suite.ui.commons.Timeline.prototype._targetIdIsFirstHeaderBarBtn = function(oEvent) {
-	if (oEvent.target.id === this._firstHeaderBaRTabField.id) {
-		return true;
-	}
-	return false;
-};
-
-sap.suite.ui.commons.Timeline.prototype._setFocusOnMoreAddFilterButton = function(oEvent) {
-	this._tabprevious = false;
-//focus on the 1st item last interactive element 
-	var firstShellTarget = this._getFirstShellTarget();
-	var lastInteractiveElement = this._getLastInteractiveElementInItem(firstShellTarget);
-	this._previousTarget = lastInteractiveElement;
-	this._previousShellTarget = firstShellTarget;
-	this._setFocus(oEvent, lastInteractiveElement);
-};
-
-//Handle F6
-sap.suite.ui.commons.Timeline.prototype.onsapskipforward = function(oEvent) {
-	this._skipOnFocusIn = true;
-	this._tabnext = false;
-	this._dummy = true;
-	if (this.oItemNavigation) {
-		this.removeDelegate(this.oItemNavigation);
-		this.oItemNavigation.destroy();
-	}
-	this._startItemNavigation();
-
-//	if (oEvent.target.id.indexOf("add") < 0 && oEvent.target.id.indexOf("filter") < 0 && oEvent.target.id.indexOf("more") < 0 && oEvent.target.className !== "sapMMsgStripCloseButton") {
-	if (!this._targetIdInHeaderBar(oEvent) && oEvent.target.id.indexOf("more") < 0 && oEvent.target.className !== "sapMMsgStripCloseButton") {
-		if (!this._targetIdIsMessageStripTab(oEvent)) { 
-			this._previousTabPreviousTarget = oEvent.target;	
-		}	
-	}
-	
-	if (oEvent.target.id.indexOf("more") >= 0) { //when hit more, then out of timeline control
-		return;
-	}
-
-	
-	if (oEvent.target.id.indexOf("shell") >= 0) {
-		if (this._moreButtonFound) {
-			this._setFocus(oEvent, this._moreTarget);
-			return;
-		}
-		jQuery(this._sapTabbable[this._sapTabbable.length - 1]).focus();
-		return;
-	}
-
-	if (oEvent.target.className === "sapMMsgStripCloseButton") {
-		this._findNextF6ShellTarget(oEvent);
-		return;
-	}
-	
-//	if (oEvent.target.id.indexOf("shell") < 0 && oEvent.target.id.indexOf("add") < 0 && oEvent.target.id.indexOf("filter") < 0 && oEvent.target.id.indexOf("more") < 0) {
-	if (oEvent.target.id.indexOf("shell") < 0 && !this._targetIdInHeaderBar(oEvent) && oEvent.target.id.indexOf("more") < 0) {
-		var shellTarget = null;
-		shellTarget = this._getItemShellTarget(oEvent.target);
-		if (this._moreButtonFound) {
-			this._setFocus(oEvent, this._moreTarget);
-			return;
-		}
-		jQuery(this._sapTabbable[this._sapTabbable.length - 1]).focus();
-		return;		
-	}
-		
-/*	if (this._previousTarget == null && oEvent.target.id.indexOf("add") < 0 && oEvent.target.id.indexOf("filter") < 0) {
-		if (this._addButtonFound) {
-			this._setFocus(oEvent, this._addTarget);
-			return;
-		}
-		if (this._filterTarget != null) {
-			this._setFocus(oEvent, this._filterTarget);
-			return;
-		}
-	}*/
-	
-	if (this._previousTarget == null && !this._targetIdInHeaderBar(oEvent)) { 
-		this._setFocus(oEvent, this._firstHeaderBaRTabField);
-		return;
-	}	
-	
-//	if (oEvent.target.id.indexOf("add") >= 0 || oEvent.target.id.indexOf("filter") >= 0) {
-	if (this._targetIdIsLastHeaderBarBtn(oEvent)) {
-		if (this._messageStripIsAvailable) { 
-			var nextTarget = null;
-			for (var i=0; i < this._sapTabbable.length; i++) {
-				if (this._sapTabbable[i].className == "sapMMsgStripCloseButton" ) {
-					nextTarget = this._sapTabbable[i];
-					break;
-				}
-			}
-			if (nextTarget !== null) {
-				this._setFocus(oEvent, this._sapTabbable[2]);
-				return;			
-			}
-		}
-		if (this._previousTarget == null) {
-			var firstTarget = this._getFirstShellTarget();
-			this._previousTarget = firstTarget;
-			this._previousShellTarget = firstTarget; 
-			this._setFocus(oEvent, firstTarget);
-			return;
-		}
-	}
-	
-	var prevFocusShellTarget = null;
-//	if ((oEvent.target.id.indexOf("filter") >= 0 || oEvent.target.id.indexOf("add") >= 0) && this._previousTarget != null && oEvent.target != this._previousTarget) {
-	if (this._targetIdIsLastHeaderBarBtn(oEvent) && this._previousTarget != null && oEvent.target != this._previousTarget) {
-		this._findNextF6ShellTarget(oEvent);
-		return;		
-	}	
-
-};
-
-sap.suite.ui.commons.Timeline.prototype._findNextF6ShellTarget = function(oEvent) {
-	
-	if (this._previousShellTarget != null) {
-		for (var i = 0; i < this._sapTabbable.length; i++) {
-			if (this._previousShellTarget.id ==  this._sapTabbable[i].id) {
-				this._setFocus(oEvent, this._sapTabbable[i]);
-				return;
-			}
-		}
-	}
-
-	//focus on 1st shell if previous shell not found
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (this._sapTabbable[i].id.indexOf("shell") >= 0) {
-			this._previousShellTarget = this._sapTabbable[i];
-			this._setFocus(oEvent, this._sapTabbable[i]);  
-			break;
-		}
-	}
-	
-	if (this._previousTarget.id.indexOf("shell") >= 0) {
-		for (var i = 0; i < this._sapTabbable.length; i++) {
-			if (this._previousTarget.id ==  this._sapTabbable[i].id) {
-				this._setFocus(oEvent, this._sapTabbable[i]);
-				return;
-			}
-		}
-	}			
-	
-	for (var i = 0; i < this._sapTabbable.length; i++) {
-		if (this._sapTabbable[i].id.indexOf("shell") >= 0) {
-			this._previousShellTarget = this._sapTabbable[i];  
-			this._setFocus(oEvent, this._sapTabbable[i]);
-			break;
-		}
-	}
-
-};
-
-sap.suite.ui.commons.Timeline.prototype._shiftf6NoDataFocus = function(oEvent) {
-	//to fix focus issue when no timeline item data exist - no data 
-	if (this._messageStripCloseButtonTarget !== null) {
-		this._setFocus(oEvent, this._messageStripCloseButtonTarget);
-		return;
-	}
-		
-	if (this._firstHeaderBaRTabField != null) {
-		this._setFocus(oEvent, this._firstHeaderBaRTabField);
-		return;			
-	}	
-};
-
-//Handle SHIFT+F6
-sap.suite.ui.commons.Timeline.prototype.onsapskipback = function(oEvent) {
-	this._skipOnFocusIn = true;
-	this._dummy = true;
-	if (this.oItemNavigation) {
-		this.removeDelegate(this.oItemNavigation);
-		this.oItemNavigation.destroy();
-	}
-	this._startItemNavigation(); 
-
-	if (oEvent.target.id.indexOf("shell") >= 0) {
-		this._previousShiftF6Target = oEvent.target; //save for shift back without more button and no focus before - for 2nd run
-	}
-
-	
-	if (this._messageStripIsAvailable && oEvent.target.id.indexOf("shell") >= 0) {
-		this._setFocus(oEvent, this._messageStripCloseButtonTarget);
-		return;
-	}
-	if (oEvent.target.id.indexOf("shell") >= 0) { 
-		if (this._messageStripCloseButtonTarget !== null) {
-			this._setFocus(oEvent, this._messageStripCloseButtonTarget);
-			return;
-		}
-			
-		if (this._firstHeaderBaRTabField != null) {
-			this._setFocus(oEvent, this._firstHeaderBaRTabField);
-			return;			
-		}
-		jQuery(this._firstShell).focus(); 
-		return;
-
-	}
-	
-	if (oEvent.target.className === "sapMMsgStripCloseButton") {
-		return;
-	}
-	
-	if (oEvent.target.id.indexOf("shell") >= 0 && !this._targetIdInHeaderBar(oEvent)) {
-		this._setFocus(oEvent, this._lastHeaderBaRTabField);
-		return;
-	};
-
-	//to fix focus issue when no timeline item data exist - no data
-	if (oEvent.target.classList.length >= 1) {
-		var nofound = false;
-		for (var i = 0; i < oEvent.target.classList.length - 1; i++) {
-			if (oEvent.target.classList[i] === "sapMListNoData") {
-				nofound = true;
-				break;			
-			}
-		}
-		if (nofound) {
-			this._shiftf6NoDataFocus(oEvent);
-			return;			
-		}
-	}
-	//to fix focus issue when no timeline item data exist - no data
-	if (oEvent.target.id.indexOf("nodata") >= 0) {
-		if (this._getFirstShellTarget() === null) {
-			this._shiftf6NoDataFocus(oEvent);
-			return;
-		}		
-	}
-	
-	if (oEvent.target.id.indexOf("more") >= 0) {
-		if (this._getFirstShellTarget() == null) {
-			return;
-		}
-		
-	};
-	//*dcins-e
-	if (oEvent.target.id.indexOf("more") >= 0 && this._previousTarget === null) {
-		this._setFocus(oEvent, this._getFirstShellTarget());	
-		return;
-	};
-	
-	if (oEvent.target.id.indexOf("more") >= 0 && this._previousTarget !== null) {
-		if (this._previousTarget.id.indexOf("shell") >= 0) {
-			for (var i = 0; i < this._sapTabbable.length; i++) {
-				if (this._previousTarget.id ==  this._sapTabbable[i].id) {
-					this._setFocus(oEvent, this._sapTabbable[i]);
-					return;
-				}
-			}
-		}
-		else {
-			for (var i = 0; i < this._sapTabbable.length; i++) {
-				if (this._previousTarget.id ==  this._sapTabbable[i].id) { 
-					break;
-				}
-			}
-			this._setFocus(oEvent, this._getItemShellTarget(this._sapTabbable[i]));
-			return;
-		}
-	};
-	
-	if (oEvent.target.id.indexOf("shell") < 0 && !this._targetIdInHeaderBar(oEvent) && oEvent.target.id.indexOf("more") < 0) {
-		if (this._previousTarget == null) {
-			if (this._moreButtonFound) { 
-				this._setFocus(oEvent, this._moreTarget);
-				return;
-			}
-			lastInteractiveElement = this._getLastInteractiveElementInItem(this._getFirstShellTarget());
-			jQuery(lastInteractiveElement).focus();
-			return;
-		}
-	}
-	
-	var lastInteractiveElement = null;
-	var prevFocusShellTarget = null;
-	var ShellTarget = null;
-
-	if (!this._targetIdInHeaderBar(oEvent) && oEvent.target.id.indexOf("more") < 0) {
-		if (this._previousTarget == null) {
-			lastInteractiveElement = this._getLastInteractiveElementInItem(this._getFirstShellTarget());
-			jQuery(lastInteractiveElement).focus();
-		}
-		else {
-			//always focus on shell level
-		    var shellTargetFound = false;   	
-		   	ShellTarget = this._getItemShellTarget(this._previousShellTarget);
-		   	shellTargetFound = true;	   	
-		   	if (shellTargetFound) { 
-				prevFocusShellTarget = ShellTarget;
-				jQuery(ShellTarget).focus();
-				oEvent.preventDefault();
-				oEvent.setMarked();
-				return;						
-		   	}
-
-		}
-		oEvent.preventDefault();
-		oEvent.setMarked();
-		return;	
-	}
-};
-
-//sap.suite.ui.commons.Timeline.prototype.setAxisOrientation = function(axis) {
-//	this.setProperty("axisOrientation", axis, true);
-//};
-
-//sap.suite.ui.commons.Timeline.prototype.setAxisOrientation = function(axis) {
-//	this.setProperty("axisOrientation", axis, true);
-//};
-
-//Public method to adjust UI changes - for access
-sap.suite.ui.commons.Timeline.prototype.adjustUI = function() {
-	this._performUiChanges();
-}
-
-sap.suite.ui.commons.Timeline.prototype._performUiChanges = function() {
-	if (this.getAxisOrientation() === sap.suite.ui.commons.TimelineAxisOrientation.Vertical) {
-		this._performUiChangesV();
-	} else {
-		this._performUiChangesH();
-	}
-};
-
-sap.suite.ui.commons.Timeline.prototype._performUiChangesH = function() {
-//	var showIcons = this.getShowIcons();
-	var jThis = this.$();
-//	var liItems = jThis.find('.sapSuiteUiCommonsTimelineItemBox');
-//	var contentMaxHeight = 0;
-//	for (var i = 0; i < liItems.length; i++) {
-//		var contentHeight = liItems[i].clientHeight;
-//		if (contentMaxHeight < contentHeight){
-//			contentMaxHeight = contentHeight;
-//		}
-//	}
-//	contentMaxHeight = contentMaxHeight+50 // buffer for icon and bar space.  
-	
-	// escape dot as special char in the Fiori view IDs.
-	var myId = this.getId();
-	if (myId.indexOf("\.") != -1) { // there is a dot in the id.
-	    myId = myId.replace( /(:|\.|\[|\])/g, "\\$1" ); // escape the ". and :" with "\\."
-	}
-	
-	var _toolbarHeight = jThis.find("#" + myId + "-filterToolBar").outerHeight();
-	var _infoBarHeight = jThis.find("#" + myId + "-filterInfoBar").outerHeight();
-	
-	var contentBox = jThis.find('.sapSuiteUiCommonsTimelineContentsH');
-	
-	var selfHeight = jThis.height();
-	contentBox.css({
-		'height' : selfHeight - (_toolbarHeight + _infoBarHeight)
-	});
-};
-
-
-sap.suite.ui.commons.Timeline.prototype._performDobuleSidedChanges = function() {
-var jThis = this.$();
-var liItems = jThis.find('li');
-var showIcons = this.getShowIcons();
-		//add margin to first even timelineitem
-			
-			var firstEvenLi =  jThis.find('li:nth-child(2)');
-			if (firstEvenLi[0])
-			{			
-				
-						firstEvenLi.css({
-										'margin-top' : '40px'
-									});
-			
-			}
-			
-			for (var i = 0; i < liItems.length; i++) { //loop through timeline items LI
-			var lineInd = i + 1;
-			
-				var liElem = jThis.find('li:nth-child(' + lineInd + ')'); //find first LI
-				
-				if (liElem[0].className == 'sapSuiteUiCommonsTimelineItem') //check if it is regular timeline item
-				{
-					liElem.removeClass('sapSuiteUiCommonsTimelineItem'); // remove regular timelineitem class
-					if (lineInd % 2 === 0) //if timelineitem is "even"
-					{
-					
-							liElem.addClass('sapSuiteUiCommonsTimelineItemEven');//add timelineitemeven class
-							
-						
-					} 
-					else   // if timeline item is "odd"
-					{
-					
-							liElem.addClass('sapSuiteUiCommonsTimelineItemOdd'); //add timelineitemodd class
-							
-							var liArrow = liElem.find('.sapSuiteUiCommonsTimelineItemArrow');
-							liArrow.removeClass('sapSuiteUiCommonsTimelineItemArrow')
-							liArrow.addClass('sapSuiteUiCommonsTimelineItemArrowOdd'); //add timelineitemodd class
-						    
-						 if (showIcons)
-						 {	
-							var liIcon = liElem.find('.sapSuiteUiCommonsTimelineItemIcon'); // find the timelineitemicon of the the timelineitem
-								liIcon.removeClass('sapSuiteUiCommonsTimelineItemIcon')
-								liIcon.addClass('sapSuiteUiCommonsTimelineItemIconOdd'); //add timelineitemodd class
-						 }
-						 else
-						 {
-						 
-							 	var liIcon = liElem.find('.sapSuiteUiCommonsTimelineItemNoIcon'); // find the timelineitemicon of the the timelineitem
-								liIcon.removeClass('sapSuiteUiCommonsTimelineItemNoIcon')
-								liIcon.addClass('sapSuiteUiCommonsTimelineItemNoIconOdd'); //add timelineitemodd class
-						 
-						 }
-								var liBar = liElem.find('.sapSuiteUiCommonsTimelineItemBar');
-								liBar.removeClass('sapSuiteUiCommonsTimelineItemBar')
-								liBar.addClass('sapSuiteUiCommonsTimelineItemBarOdd'); //add timelineitemodd class
-							
-						
-						} //end odd timelineitem odd
-					
-				
-				} //end check timelineitem class
-			
-			}//end timelineitems loop
-			
-	
-			
-}
-sap.suite.ui.commons.Timeline.prototype._performSingleSidedChanges = function() {
-	var jThis = this.$();
-	var liItems = jThis.find('li');
-	var showIcons = this.getShowIcons();
-	for (var i = 0; i < liItems.length; i++) {     //loop through timeline items
-			var lineInd = i + 1;
-			var liElem = jThis.find('li:nth-child(' + lineInd + ')');     //get timelineitem
-				if (liElem[0].className == 'sapSuiteUiCommonsTimelineItemOdd') //check if it is timelineitemodd class
-				{
-				
-					liElem.removeClass('sapSuiteUiCommonsTimelineItemOdd'); //remove odd class
-					liElem.addClass('sapSuiteUiCommonsTimelineItem'); // add regular timelineclass
-					
-					
-						var liArrow = liElem.find('.sapSuiteUiCommonsTimelineItemArrowOdd');
-							liArrow.removeClass('sapSuiteUiCommonsTimelineItemArrowOdd')
-							liArrow.addClass('sapSuiteUiCommonsTimelineItemArrow'); //add timelineitemodd class
-						    
-						 if (showIcons)
-						 {	
-							var liIcon = liElem.find('.sapSuiteUiCommonsTimelineItemIconOdd'); // find the timelineitemicon of the the timelineitem
-								liIcon.removeClass('sapSuiteUiCommonsTimelineItemIconOdd')
-								liIcon.addClass('sapSuiteUiCommonsTimelineItemIcon'); //add timelineitemodd class
-						 }
-						 else
-						 {
-						 
-							 	var liIcon = liElem.find('.sapSuiteUiCommonsTimelineItemNoIconOdd'); // find the timelineitemicon of the the timelineitem
-								liIcon.removeClass('sapSuiteUiCommonsTimelineItemNoIconOdd')
-								liIcon.addClass('sapSuiteUiCommonsTimelineItemNoIcon'); //add timelineitemodd class
-						 
-						 }
-								var liBar = liElem.find('.sapSuiteUiCommonsTimelineItemBarOdd');
-								liBar.removeClass('sapSuiteUiCommonsTimelineItemBarOdd')
-								liBar.addClass('sapSuiteUiCommonsTimelineItemBar'); //add timelineitemodd class
-					
-					
-				} //end check if timelineitem is odd
-				else if ( liElem[0].className ==  'sapSuiteUiCommonsTimelineItemEven') //if timelineitem is even
-				{
-				
-						liElem.removeClass('sapSuiteUiCommonsTimelineItemEven');  //remove even timelineitem class
-						liElem.addClass('sapSuiteUiCommonsTimelineItem'); //add regular timelineitemc lass
-					
-				
-						
-							
-							
-				}//end chheck if timelineitem is even
-			
-			}//end timelineitem looop
-	if (this._showMore)
-    {
-           document.getElementById(this.getId() + '-showmore').style.top = 'auto';
-           document.getElementById(this.getId() + '-showmore').style.position = 'relative';
-           
-           jThis.find('.sapSuiteUiCommonsTimelineGetMoreBar').show();
-    }
-
-}
-
-
-sap.suite.ui.commons.Timeline.prototype._performUiChangesV = function() {
-	var showIcons = this.getShowIcons();
-	var jThis = this.$();
-	
-	var _outerHeight = jThis.outerWidth() + 50; //find parent width
-	var _innerHeight = jThis.width(); // css height excluding buffer etc.
-	//check if width can handle to display dobulesided timeline
-	if (_outerHeight >= this._maxTimeLineWidth && this.getEnableDoubleSided())
-	{
-		this._renderDblSided = true;
-		this._performDobuleSidedChanges();
-	}
-	else
-	{
-		if (jThis.find('li.sapSuiteUiCommonsTimelineItemOdd').length > 0)
-		{
-			this._performSingleSidedChanges();
-		}
-		this._renderDblSided = false;
-	}
-	
-	
-	
-	var liItems = jThis.find('li');
-	
-	//loop through items
-	for (var i = 0; i < liItems.length; i++) {
-		var lineInd = i + 1;
-		var contentHeight = jThis.find('li:nth-child(' + lineInd + ')').find('.sapSuiteUiCommonsTimelineItemBox').css('height');
-		
-		var offsetTop1 = 0;
-		var offsetTop2 = 0;
-		
-		if (contentHeight !== undefined) {
-			offsetTop1 = jThis.find('li:nth-child(' + lineInd + ')').find('.sapSuiteUiCommonsTimelineItemBox').offset().top;
-			var liHeight = parseInt(contentHeight.replace("px", "")) + 23;// 10;
-			if (i === (liItems.length - 1)) {
-				liHeight += 28;// 15;
-			}
-			
-			var liElem = jThis.find('li:nth-child(' + lineInd + ')');
-			
-			
-			// set the item div height
-			jThis.find('li:nth-child(' + lineInd + ')').css({
-				'height' : liHeight + 'px'
-			});
-
-			// set the bar/line height..
-			var liBar = liBar;
-			
-			if (!this._renderDblSided) //if doublesided
-			{
-
-			if (liElem[0].className == 'sapSuiteUiCommonsTimelineItem')
-				{
-					liBar = jThis.find('li:nth-child(' + lineInd + ')').find('.sapSuiteUiCommonsTimelineItemBar'); //get the line bar
-				}
-				if (!showIcons) { //if showIcons is false
-					if (liBar)
-					{
-					
-						//set bar styles
-						liBar.css({
-							'height' : (liHeight - 17) + 'px'
-						});
-						liBar.css({
-							'top' : 30 + 'px'
-						});
-					}
-				} else { // if showIcons is true
-
-
-					if (liElem[0].className == 'sapSuiteUiCommonsTimelineItem')
-					{
-						liBar.css({
-							'height' : (liHeight - 34) + 'px'
-						});
-					}
-				}
-			
-			
-
-		}
-	}
-	}
-	this._performHeightChanges();	
-	this._performScrollChanges();
- if (this._renderDblSided)
- {
-	this._performBarChanges();
- }
-	// Fix of incorrect height for Timeline with scroll
-	// FlexBox will take care of correct height calculations.
-	if (!this.getEnableDoubleSided() && this.getEnableScroll()) {
-		jThis.addClass("sapSuiteUiCommonsTimelineWithScroller");
-		jThis.css("height", "");
-		this.$("scroll").css("height", "");
-		this.$("content").css("height", "");
-	}
-};
-
-//This function is used to setup bar hight
-sap.suite.ui.commons.Timeline.prototype._performBarChanges = function(currentTop,icons)
-{
- var showIcons = this.getShowIcons();
- var jThis = this.$();
- /*if (showIcons) //if show icons is true
- {*/
-	var icons =[];
-	
-	
-	var liItems = jThis.find('li');
-	
-	//loop through items
-	for (var i = 0; i < liItems.length; i++) {
-		var lineInd = i + 1;
-		var liElem = jThis.find('li:nth-child(' + lineInd + ')');
-		
-		  if (showIcons)
-		 {
-				if (liElem.find('.sapSuiteUiCommonsTimelineItemIconOdd').length > 0)
-					icons.push(liElem.find('.sapSuiteUiCommonsTimelineItemIconOdd')); //get all the icons
-					
-				if (liElem.find('.sapSuiteUiCommonsTimelineItemIcon').length > 0)	
-					icons.push(liElem.find('.sapSuiteUiCommonsTimelineItemIcon')); //get all the icons
-		}
-		else
-		{
-				if (liElem.find('.sapSuiteUiCommonsTimelineItemNoIconOdd').length > 0)
-					icons.push(liElem.find('.sapSuiteUiCommonsTimelineItemNoIconOdd')); //get all the icons
-					
-				if (liElem.find('.sapSuiteUiCommonsTimelineItemNoIcon').length > 0)	
-					icons.push(liElem.find('.sapSuiteUiCommonsTimelineItemNoIcon')); //get all the icons
-		}
-	}
-	
-	var sortedIcons =[];
-	
-	
-	
-//this group is used to sort the icons based on their position in the dom structure
-	for (var icon=0; icon<icons.length - 1; icon++)
-	{
-	
-			if (this.$().find(icons[icon + 1]).offset().top > this.$().find(icons[icon]).offset().top)
-			{
-				sortedIcons.push(icons[icon]);
-			}
-			else
-			{
-				sortedIcons.push(icons[icon+1]);
-			}
-	
-	}
-	
-	
-	//sortedIcons = sortedIcons[0];
-	
-		//loop through all the sorted icons and calculate bar hight
-		for (var icon=0; icon<sortedIcons.length; icon++)
-		{
-	
-	
-			var libar = this.$().find(sortedIcons[icon]).prev(); //get the bar
-			var currIconTop = this.$().find(sortedIcons[icon]).offset().top; //calculate icon offset top
-	
-			var nextIconTop = this.findNextIconTop(currIconTop,sortedIcons); //get the next icon in the sequnce
-			if (libar[0].className == 'sapSuiteUiCommonsTimelineItemBar' || libar[0].className == 'sapSuiteUiCommonsTimelineItemBarOdd')
-			{
-	
-	
-	
-				if ((nextIconTop - currIconTop) - 30 > 0)
-				{
-					libar.css({
-						'height' : (nextIconTop - currIconTop) - 30  + 'px'
-					});
-				}
-				else
-				{
-	
-					libar.css({
-						'height' :  10  + 'px'
-					});
-	
-				}
-	
-	
-			}
-	
-		}
-	
-	
-}
-sap.suite.ui.commons.Timeline.prototype.findNextIconTop = function(currentTop,icons)
-{
-	for (var icon=0; icon<icons.length; icon++)
-	{
-	
-		var elemTop = this.$().find(icons[icon]).offset().top;
-		
-		if (elemTop > currentTop)
-		{
-			return elemTop;
-			break;
-		}
-	}
-};
-//this function is to adjust timelineitem margins in dobule sided moded
-sap.suite.ui.commons.Timeline.prototype._performHeightChanges = function() {
-                  var jThis = this.$();
-                  var oddMargins = 0;     
-                  var evenMargins = 0;    
-                  var liItems = jThis.find('li');
-                  for (var i = 0; i < liItems.length; i++) {
-                  
-                  
-                        var lineInd = i + 1;
-                        var liElem = jThis.find('li:nth-child(' + lineInd + ')');
-                        if (liElem[0].className == 'sapSuiteUiCommonsTimelineItemEven') {
-                              var PrevliElem = jThis.find('li:nth-child(' + (lineInd - 2 ) + ')');
-                                    if (PrevliElem.offset() !== undefined) {
-                                                var PrevliElemTop = PrevliElem.offset().top;      
-                                                var PrevliElemHeight = PrevliElem.css('height');
-                                                evenMargins = evenMargins +        parseInt(PrevliElemHeight.replace("px", "")) ;
-                                                liElem.css({
-                                                      'margin-left' : 0 + 'px',
-                                                      'margin-top' : evenMargins + 40
-                                                });
-                                }
-                        } else if (liElem[0].className == 'sapSuiteUiCommonsTimelineItemOdd') {
-                                    var PrevliElem = jThis.find('li:nth-child(' + (lineInd - 2 ) + ')');
-                                    if (PrevliElem.offset() !== undefined) {
-                                                var PrevliElemTop = PrevliElem.offset().top;      
-                                                var PrevliElemHeight = PrevliElem.css('height');
-                                                oddMargins = oddMargins +       parseInt(PrevliElemHeight.replace("px", "")) ;
-                                                liElem.css({
-                                                      'margin-left' : 0 + 'px',
-                                                      'margin-top' : oddMargins
-                                                });
-                              }
-                        } else {
-                                          liElem.css({
-                                          'margin-left' : 0 + 'px',
-                                          'margin-top' : 0 + 'px'
-                                    });
-                        
-                        }
-                  }
-                  
-                  
-                  //showmore button position.
-                  if (this._renderDblSided) {         
-                        if (this._showMore) {
-                           if (jThis.find('ul')[0].lastChild) {
-                                    var elemntTop = 0;
-                                    var liItems = jThis.find('li');
-                   var ElemHeight = 0;
-                   for (var i = 0; i < liItems.length; i++) {
-                              var lineInd = i + 1;
-                      var liElem = jThis.find('li:nth-child(' + lineInd + ')');
-                      
-                      if (elemntTop < parseInt(liElem.css('margin-top').replace('px','')) + parseInt(liElem.css('height').replace('px',''))) {
-                        elemntTop = parseInt(liElem.css('margin-top').replace('px','')) + parseInt(liElem.css('height').replace('px',''));
-                      } 
-                    }
-                           
-                           
-                                    document.getElementById(this.getId() + '-showmore').style.top = (elemntTop + 20) + 'px' ;
-                                    document.getElementById(this.getId() + '-showmore').style.position = 'absolute';
-                                    jThis.find('.sapSuiteUiCommonsTimelineGetMoreBar').hide();
-                              }
-                        }
-                  }
-      
-};
-
-
-//this function is added to handle timeline double sided respoviness
-sap.suite.ui.commons.Timeline.prototype._performResizeChanges = function() {
-	this._performUiChangesV();
-	
-};
-
-sap.suite.ui.commons.Timeline.prototype._performScrollChanges = function () {
-	if (this.getAxisOrientation() === sap.suite.ui.commons.TimelineAxisOrientation.Vertical) {
-		if (!this.getEnableScroll() && !this.getEnableDoubleSided()) {
-			return;
-		}
-		// fix the height for scrolling.
-		var jThis = this.$();
-		var _outerHeight = jThis.parent().outerHeight();
-		var _innerHeight = jThis.parent().height(); // css height excluding buffer etc.
-		// get height of all the members elements other than timeline.
-		var _elementsHeight = 0;
-		var _elements = jThis.parent().children();
-		for (var i = 0; i < _elements.length; i++) {
-			var _elem = _elements[i];
-			if (_elem.className != "sapSuiteUiCommonsTimeline") {
-				_elementsHeight += _elem.clientHeight;
-			}
-		}
-		var ElemHeight = 0;
-		var liItems = jThis.find('li');
-		var ElemHeight = 0;
-		for (var i = 0; i < liItems.length; i++) {
-			var lineInd = i + 1;
-			var liElem = jThis.find('li:nth-child(' + lineInd + ')');
-			ElemHeight = ElemHeight + liElem.height();
-		}
-
-		_outerHeight = _outerHeight - _elementsHeight;
-		var _badSize = false;
-		if (_innerHeight <= 50 || (_innerHeight - _elementsHeight) <= 50) { // at least 50px
-			_badSize = true;
-		}
-		this._height = _outerHeight - 28;  // todo. when to really calculate?
-
-		/*
-		 * if (this._renderDblSided) { jThis.css({ 'height' : this._height }); }
+		var resourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.commons"),
+			SortOrder = Object.freeze({
+				ASCENDING: "ASCENDING",
+				DESCENDING: "DESCENDING"
+			}),
+			DateRoundType = Object.freeze({
+				UP: "UP",
+				DOWN: "DOWN",
+				NONE: "NONE"
+			}),
+			// used for displaying formatted date in group header text
+			DateFormats = {
+				Year: DateFormat.getDateInstance({
+					pattern: "YYYY"
+				}),
+				Quarter: DateFormat.getDateInstance({
+					pattern: "QQQQ YYYY"
+				}),
+				Month: DateFormat.getDateInstance({
+					pattern: "MMMM YYYY"
+				}),
+				Week: DateFormat.getDateInstance({
+					pattern: "w"
+				}),
+				Day: DateFormat.getDateInstance({
+					style: "long"
+				}),
+				MonthDay: DateFormat.getDateInstance({
+					style: "medium"
+				})
+			};
+
+		/**
+		 * Compatibility wrapper around javascript Array.findIndex function. findIndex is not supported by IE.
+		 *
+		 * @param {number} aArray Array to find index in.
+		 * @param {function} fnCallback Function to execute on each value in the array.
+		 * @returns {int} An index in the array if an element passes the test; otherwise, -1.
+		 * @private
 		 */
+		function findIndex(aArray, fnCallback) {
+			var i;
 
-		// escape dot as special char in the Fiori view IDs.
-		var myId = this.getId();
-		if (myId.indexOf("\.") != -1) { // there is a dot in the id.
-			myId = myId.replace(/(:|\.|\[|\])/g, "\\$1"); // escape the ". and :" with "\\."
-		}
+			jQuery.sap.assert(jQuery.isArray(aArray), "aArray must be an array.");
 
-		var _toolbarHeight = jThis.find("#" + myId + "-filterToolBar").outerHeight() + 28;
-		var _infoBarHeight = jThis.find("#" + myId + "-filterInfoBar").outerHeight();
-		if (_badSize) {
-			this._scHeight = ElemHeight;
-			jThis.find("#" + myId + "-content").css({
-				'height': this._scHeight + 20
-			});
-			if (this._showMore) {
-
-				jThis.css({
-					'height': this._scHeight + 40
-				});
-			} else {
-				jThis.css({
-					'height': this._scHeight + 20
-				});
+			if (typeof aArray.findIndex === "function") {
+				return aArray.findIndex(fnCallback);
 			}
-			jThis.find("#" + myId + "-scroll").css({
-				'height': this._scHeight
-			});
-		} else {
-			this._scHeight = _outerHeight;// - (_toolbarHeight + _infoBarHeight);
-			if (this.getEnableScroll()) {
 
-				if (this._showMore) {
-
-					if (jThis.find(document.getElementById(this.getId() + '-showmore')).css('top')) {
-						jThis.find("#" + myId + "-content").css({
-							'height': parseInt(jThis.find(document.getElementById(this.getId() + '-showmore')).css('top').replace("px", "")) // + 40
-						});
-						jThis.find("#" + myId + "-scroll").css({
-							'height': parseInt(jThis.find(document.getElementById(this.getId() + '-showmore')).css('top').replace("px", ""))// +  _toolbarHeight + _infoBarHeight
-						});
-					} else {
-
-						jThis.find("#" + myId + "-content").css({
-							'height': parseInt(jThis.find(liItems[liItems.length - 1]).offset().top) // + 20
-						});
-						jThis.find("#" + myId + "-scroll").css({
-							'height': parseInt(jThis.find(liItems[liItems.length - 1]).offset().top) // + 20
-						});
-					}
-
-				} else {
-					jThis.find("#" + myId + "-content").css({
-						'height': parseInt(jThis.find(liItems[liItems.length - 1]).offset().top) // + 20
-					});
-					jThis.find("#" + myId + "-scroll").css({
-						'height': parseInt(jThis.find(liItems[liItems.length - 1]).offset().top) // + 20
-					});
-				}
-
-
-			} else {
-				if (!this._renderDblSided) {
-
-					jThis.find("#" + myId + "-content").css({
-						'height': jThis.find("#" + myId + "-scroll").height() + 20
-					});
-					if (this._showMore) {
-
-						jThis.css({
-							'height': this._scHeight //+ 40
-						});
-					} else {
-						jThis.css({
-							'height': this._scHeight + 20
-						});
-					}
-
-
-					jThis.css({
-						'height': jThis.find("#" + myId + "-content").height() + 20
-					});
-				} else {
-					var oddMargins = 0;
-					var evenMargins = 0;
-					var liItems = jThis.find('li');
-					var ElemHeight = 0;
-					for (var i = 0; i < liItems.length; i++) {
-						var lineInd = i + 1;
-						var liElem = jThis.find('li:nth-child(' + lineInd + ')');
-						ElemHeight = ElemHeight + liElem.height();
-					}
-
-
-					if (jThis.find(document.getElementById(this.getId() + '-showmore')).css('top')) {
-
-						if (this.getGroup() && this.getGroupBy() != '') {
-							jThis.find("#" + myId + "-content").css({
-								'height': parseInt(jThis.find(document.getElementById(this.getId() + '-showmore')).css('height').replace("px", "")) +
-								jThis.find(document.getElementById(this.getId() + '-showmore')).offset().top
-							});
-						} else {
-							jThis.find("#" + myId + "-content").css({
-								'height': parseInt(jThis.find(document.getElementById(this.getId() + '-showmore')).css('height').replace("px", "")) +
-								parseInt(jThis.find(document.getElementById(this.getId() + '-showmore')).css('top').replace("px", ""))
-							});
-						}
-
-					} else {
-						var liElem = jThis.find(liItems[lineInd - 1]);
-						if (liElem != undefined) {
-
-							jThis.find("#" + myId + "-content").css({
-								'height': parseInt(liElem.css('height').replace("px", "")) +
-								parseInt(liElem.css("margin-top")) + 40
-							});
-
-							jThis.css({
-								'height': jThis.find("#" + myId + "-content").height() + 20 + _toolbarHeight + _infoBarHeight
-							});
-
-						}
-					}
+			for (i = 0; i < aArray.length; i++) {
+				if (fnCallback(aArray[i], i, aArray)) {
+					return i;
 				}
 			}
+			return -1;
 		}
-	}
-};
 
+		Timeline.prototype.init = function () {
+			// array of selected filter items. { key; text }
+			this._aFilterList = [];
 
+			// associative array of groups which are collapsed (are in array with true value)
+			this._collapsedGroups = {};
 
+			// collection for all items (icons, buttons) which are not directly rendered but library stuff are used (like sap.m.buttons)
+			// we use this collection for destroying all items by one function call when it is necessary
+			this._objects = new ManagedObjectRegister();
 
-sap.suite.ui.commons.Timeline.prototype.setOutput = function(oItems) {
-	this._outputItem = [];
-	var showIcons = this.getShowIcons();// if no icons property set... set _showIcons prop
-	if (oItems.length > 1) {
-	    if (this.getSort()) {
-	    	oItems.sort(this.sortBy('dateTime', this.getSortOldestFirst()));
-		}
-	}
-	var displayItemCount = oItems.length;
-	if (this._showMore && displayItemCount > this._growDisplayCount){
-		displayItemCount = this._growDisplayCount; //this._iItemCount;
-	}
-	/*
-	var displayItemCount = this._iItemCount;
-	if (oItems.length < this._iItemCount) {
-		displayItemCount = oItems.length;
-	} else {
-		displayItemCount = this._iItemCount;
-	}
-	*/
-	for (var i = 0; i < displayItemCount; i++) {
-		var _item = oItems[i];
-		var _position;
-		if (!showIcons) {
-			_item._showIcons = false;
-		}else {
-			_item._showIcons = true;
-		}
-		if (i == (oItems.length - 1)) {
-			if (this._showMore) {
-				_position = sap.suite.ui.commons.TimelineItemPosition.Middle;
-			} else {
-				_position = sap.suite.ui.commons.TimelineItemPosition.Bottom;
+			// indicator whether timeline is rendered as double sided. It is working only for vertical mode. The flag 'enableDoubleSided' must be true,
+			// but also there have to be enough width
+			this._renderDblSided = null;
+
+			// internal counter of groups. The group iteration goes through '_createGroupHeader'
+			this._groupId = 0;
+
+			// store last scroll position. 'x' and 'y' are for scrolling buttons, 'more' is used when new load of data is loaded to scroll back to focused item
+			this._lastScrollPosition = {
+				x: 0,
+				y: 0,
+				more: 0
+			};
+
+			// indicator that scrolling buttons are already set and there is no need to recalculate them again (performance)
+			this._scrollersSet = false;
+
+			// array of objects {key; text} with data filter selected items
+			this._currentFilterKeys = [];
+
+			// storage for custom filter
+			this._customFilter = false;
+
+			// indicates whether timeline is rendered or not
+			this._bRendered = false;
+
+			this._noAnimation = true;
+
+			// controls init
+			this._initControls();
+
+			this.setBusyIndicatorDelay(0);
+		};
+
+		/* =========================================================== */
+		/* API methods */
+		/* =========================================================== */
+		/**
+		 * Adds a custom filter in addition to the default filters: items filter, time range filter, and search.
+		 * @param {string} sFilterId A unique filter ID that the caller can use to manipulate the filter after it has been
+		 * created, for example, to remove it.
+		 * @param {sap.ui.model.Filter} oFilter Filter object.
+		 * @public
+		 */
+		Timeline.prototype.setCustomModelFilter = function (sFilterId, oFilter) {
+			var oBinding = this.getBinding("content");
+
+			if (oBinding) {
+				var filters = oBinding.aFilters || [];
+
+				// remove filter id from collection
+				var filterIndex = findIndex(filters, function (oFilter) {
+					return oFilter._customTimelineId === sFilterId;
+				});
+
+				if (filterIndex !== -1) {
+					filters.splice(filterIndex, 1);
+				}
+
+				if (oFilter !== null) {
+					oFilter._customTimelineId = sFilterId;
+					filters.push(oFilter);
+				}
+
+				oBinding.filter(filters, FilterType.Control);
 			}
-		} else if (i == 0) {
-			_position = sap.suite.ui.commons.TimelineItemPosition.Top;
-		} else {
-			_position = sap.suite.ui.commons.TimelineItemPosition.Middle;
-		}
-		_item.setLayout(_position, "Right");
-		this._outputItem.push(_item);
-	}
-
-};
-
-
-/* only get called when oData model... */
-sap.suite.ui.commons.Timeline.prototype.refreshContent = function(sReason) {
-	this._finishLoading = false;
-	if (this.getEnableBusyIndicator()) {
-		this.setBusy(true);
-	}
-	var oBindingInfo = this.getBindingInfo("content");
-	var oBinding = this.getBinding("content");
-	if (this.getGrowing() && (oBindingInfo) && (oBindingInfo.model !== sap.suite.ui.commons.Timeline.INTERNAL_MODEL_NAME) && (oBinding) && (oBinding.getModel())
-			&& (oBinding.getModel().getDefaultCountMode() !== sap.ui.model.odata.CountMode.None)) {
-		this._growing = true;
-		this._iItemCount = this.getGrowingThreshold();
-		this._growDisplayCount = this.getGrowingThreshold();
-		oBinding.getContexts(0, this._iItemCount);
-		oBindingInfo.length = this._iItemCount;
-	} else {
-		this.updateAggregation("content");
-	}
-	this._filterText = this.resBundle.getText("TIMELINE_ALL");
-};
-
-sap.suite.ui.commons.Timeline.prototype.updateContent = function(sReason) {
-	if (this.getEnableBusyIndicator() && this.getBusy()) {
-		this.setBusy(false);
-	}
-	var oBinding = this.getBinding("content");
-	if (this._growing) {
-		oBinding.getContexts(0, this._iItemCount);
-	}
-	this.updateAggregation("content");
-	this._finishLoading = true;
-	this._contentChange = true;
-	if (!this.getEnableBackendFilter()) {
-	  this._resetFilter();
-	}
-};
-
-
-
-sap.suite.ui.commons.Timeline.prototype.updateFilterList = function() { // July/22/2014
-	this.updateAggregation("filterList");
-	this._setFilterList();
-};
-
-
-sap.suite.ui.commons.Timeline.prototype.refreshSuggestionItems = function(sReason) {
-	this._suggestList.setBusy(true);
-	this.updateAggregation("suggestionItems");  //this will call the update method
-};
-
-sap.suite.ui.commons.Timeline.prototype.updateSuggestionItems = function() {
-	this.updateAggregation("suggestionItems");
-	this._setSuggestionList(); 
-	this._suggestList.setBusy(false);
-
-	
-};
-
-sap.suite.ui.commons.Timeline.prototype.setSuspendSocialFeature = function(bSuspense){
-	this._suspenseSocial = bSuspense;
-	if (!this.getEnableSocial()) {
-		// do nothing
-		return;
-	}
-	if (bSuspense){
-	//	this._addIcon.setEnabled(false);   /* change requested by social component
-		var oItems = this.getContent();
-		for (var i = 0; i < oItems.length; i++) {
-			oItems[i]._replyLink.setEnabled(false);
 		};
-	} else {
-	//	this._addIcon.setEnabled(true);   /* change requested by social component
-		var oItems = this.getContent();
-		for (var i = 0; i < oItems.length; i++) {
-			oItems[i]._replyLink.setEnabled(true);
+
+		/**
+		 * Sets custom grouping function. This function must have one parameter that is a date object. This date object
+		 * is used for grouping timeline posts. The function should return an object that has three properties:
+		 * <ul>
+		 * <li>
+		 * <code>key</code> &ndash; The key of the related group.
+		 * </li>
+		 * <li>
+		 * <code>title</code> &ndash;  The title of the related group.
+		 * </li>
+		 * <li>
+		 * <code>date</code> &ndash; The same value as the one entered in the input parameter.
+		 * </li>
+		 * </ul>
+		 *
+		 * @param {function} fnGroupBy Grouping function.
+		 * @public
+		 */
+		Timeline.prototype.setCustomGrouping = function (fnGroupBy) {
+			var oBindingInfo = this.getBindingInfo("content");
+			this._fnCustomGroupBy = fnGroupBy;
+
+			if (oBindingInfo) {
+				this._bindGroupingAndSorting(oBindingInfo);
+				this.updateAggregation("content");
+			}
 		};
-	}
-	this.invalidate();
-};
-
-sap.suite.ui.commons.Timeline.prototype.getSuspendSocialFeature = function(){
-	return this._suspenseSocial;
-};
-
-sap.suite.ui.commons.Timeline.prototype.setCustomFilter = function(oFilter){
-	if (oFilter){
-		this._customFilter = true;
-		this.setAggregation("customFilter", oFilter, true);
-
-	} else {
-		this._customFilter = false;
-	}
-};
 
 
-sap.suite.ui.commons.Timeline.prototype.setCustomMessage = function(msg){
-	this._filterInfoText.setText(msg);
-	if (msg && msg.length > 0) {
-		this._headerInfoBar.setVisible(true);
-	} else {
-		this._headerInfoBar.setVisible(false);
-	}
-	this.invalidate();   //otherwise, it doesn't re-render
-};
+		/**
+		 * Sets values for the time range filter.
+		 * @param {object} [mArguments] Time filter arguments
+		 * @param {Date} [mArguments.from] Start date of the time range filter.
+		 * @param {Date} [mArguments.to] End date of the time range filter.
+		 * @param {sap.suite.ui.commons.TimelineGroupType} [mArguments.type] The step of the time range filter scale. Can be set to day, month, quarter, or year.
+		 * Week is currently not supported.
+		 * @public
+		 */
+		Timeline.prototype.setCurrentTimeFilter = function (mArguments) {
+			this._startDate = mArguments.from;
+			this._endDate = mArguments.to;
+			this._rangeFilterType = mArguments.type;
+		};
 
-sap.suite.ui.commons.Timeline.prototype.getHeaderBar = function() {
-	return this._headerBar;
-};
+		/**
+		 * Sets values for the search field.
+		 * @param {string} sSearchTerm Search term value.
+		 * @public
+		 */
+		Timeline.prototype.setCurrentSearch = function (sSearchTerm) {
+			this._objects.getSearchField().setValue(sSearchTerm);
+		};
 
-sap.suite.ui.commons.Timeline.prototype.getMessageStrip = function() {
-	return this._messageStrip;
-};
+		/**
+		 * Sets filter criteria keys.
+		 * @param {string[]} aSelectedItemKeys Filter criteria keys to select. Can be also used as a single value.
+		 * @public
+		 */
+		Timeline.prototype.setCurrentFilter = function (aSelectedItemKeys) {
+			var that = this, //eslint-disable-line
+				fnHasKey = function (sValue) {
+					for (var i = 0; i < aSelectedItemKeys.length; i++) {
+						if (aSelectedItemKeys[i] === sValue) {
+							return true;
+						}
+					}
+					return false;
+				};
 
-sap.suite.ui.commons.Timeline.prototype.exit = function() {
-	if (this._emptyList) {
-		this._emptyList.destroy();
-		this._emptyList = undefined;
-	}
-	if (this._filterIcon) {
-		this._filterIcon.destroy();
-		this._filterIcon = undefined;
-	}
-	if (this._filterDialog) {
-		this._filterDialog.destroy();
-		this._filterDialog = undefined;
-	}
-	if (this._filterList) {
-		this._filterList.destroy();
-		this._filterList = undefined;
-	}
-	if (this._headerBar) {
-		this._headerBar.destroy();
-		this._headerBar = undefined;
-	}
-	if (this._filterInfoText) {
-		this._filterInfoText.destroy();
-		this._filterInfoText = undefined;
-	}
-	/*
-	if (this._addIcon) {
-		this._addIcon.destroy();
-		this._addIcon = undefined;
-	}
-	*/
-	if (this._addInput) {
-		this._addInput.destroy();
-		this._addInput = undefined;
-	}	
-	if (this._addDialog) {
-		this._addDialog.destroy();
-		this._addDialog = undefined;
-	}	
-	if (this._headerInfoBar) {
-		this._headerInfoBar.destroy();
-		this._headerInfoBar = undefined;
-	}
-	if (this._getMoreButton) {
-		this._getMoreButton.destroy();
-		this._getMoreButton = undefined;
-	}
-//	if (this._oScroller) {
-//		this._oScroller.destroy();
-//		this._oScroller = null;
-//	}
-	if (this.oItemNavigation) {
-		this.removeDelegate(this.oItemNavigation);
-		this.oItemNavigation.destroy();
-	}
-	if (this._suggestList) {
-		this._suggestList.destroy();
-		this._suggestList = undefined;
-	}
-	if (this._suggestionPopup) {
-		this._suggestionPopup.destroy();
-		this._suggestionPopup = undefined;
-	}
-	if(this._messageStrip){
-		this._messageStrip.destroy();
-		this._messageStrip = undefined;  
-	}
-	if(this._searchField){
-		this._searchField.destroy();
-		this._searchField = undefined;  
-	}
-	
-	if (jQuery.device.is.desktop && this.sResizeListenerId) {
-		sap.ui.core.ResizeHandler.deregister(this.sResizeListenerId);
-		this.sResizeListenerId = null;
-	} else {
-		sap.ui.Device.orientation.detachHandler(this._performScrollChanges, this);
-		sap.ui.Device.resize.detachHandler(this._performScrollChanges, this);
-	}
-};
+			if (!aSelectedItemKeys) {
+				return;
+			}
 
-sap.suite.ui.commons.Timeline.prototype.setNoDataText = function(noDataText) {
-	if ((noDataText !== null) && (noDataText !== undefined) && (noDataText !== "")) {
-		this.setProperty("noDataText", noDataText, true);
-		this._emptyList.setNoDataText(noDataText);
-	} else {
-		this._emptyList.setNoDataText(this.resBundle.getText('TIMELINE_NO_DATA'));
-	}
-};
+			if (!Array.isArray(aSelectedItemKeys)) {
+				aSelectedItemKeys = [aSelectedItemKeys];
+			}
 
-sap.suite.ui.commons.Timeline.prototype.setShowHeaderBar = function(oShowHeaderBar) {
-	this.setProperty("showHeaderBar", oShowHeaderBar, true);
-	this._headerBar.setVisible(oShowHeaderBar);
-};
+			if (this._aFilterList.length === 0) {
+				this._setFilterList();
+			}
 
-sap.suite.ui.commons.Timeline.prototype.getMaxItemsCount = function() {
-	
+			that._currentFilterKeys = [];
+			this._aFilterList.forEach(function (oItem) {
+				var sKey = oItem.key;
+				if (fnHasKey(sKey)) {
+					that._currentFilterKeys.push({
+						key: sKey,
+						text: oItem.text ? oItem.text : oItem.key
+					});
+				}
+			});
 
-	var oBinding = this.getBinding("content");
-	var len = this.getContent().length;
-	if (oBinding) {  // todo: checking binding info?
-		if (len < oBinding.getLength()){ //MaxItemCount might change if user use addContent method directly....
-			return oBinding.getLength() || 0;
-		}
-	}
-	return len;
-};
+		};
 
-sap.suite.ui.commons.Timeline.prototype.setGrowing = function(bGrowing) {
-	if (this.getGrowing() != bGrowing) {
-		this.setProperty("growing", bGrowing, !bGrowing);
-	}
-};
+		/**
+		 * Returns all group items.
+		 * @returns {sap.ui.core.Control[]} Timeline groups
+		 * @public
+		 */
+		Timeline.prototype.getGroups = function () {
+			return this._useBinding() ? this.getContent().filter(function (oItem) {
+				return oItem._isGroupHeader;
+			}) : this._aGroups;
+		};
+
+		/**
+		 * Cleans up the element instance before destruction
+		 * @public
+		 */
+		Timeline.prototype.exit = function () {
+			this._objects.destroyAll();
+
+			if (this.oItemNavigation) {
+				this.removeDelegate(this.oItemNavigation);
+				this.oItemNavigation.destroy();
+				this.oItemNavigation = null;
+			}
+			if (this._oScroller) {
+				this._oScroller.destroy();
+				this._oScroller = null;
+			}
+
+			if (this.oResizeListener) {
+				ResizeHandler.deregister(this.oResizeListener);
+				this.oResizeListener = null;
+			}
+		};
+
+		/**
+		 * Refreshes the UI.
+		 * @public
+		 */
+		Timeline.prototype.adjustUI = function () {
+			this._performUiChanges(true);
+		};
+
+		/**
+		 * Sets the message displayed in the filter message strip. This message overwrites the default filter message.
+		 * @param {sap.suite.ui.commons.TimelineFilterType} sType Filter type. Supports only items filter (<code>Data</code>)
+		 * and time range filter (<code>Time</code>).
+		 * @param {string} sMessage The message that should replace the default message.
+		 * @public
+		 */
+		Timeline.prototype.setModelFilterMessage = function (sType, sMessage) {
+			if (sType === TimelineFilterType.Data) {
+				this._dataMessage = sMessage;
+			}
+			if (sType === TimelineFilterType.Time) {
+				this._rangeMessage = sMessage;
+			}
+		};
+
+		/**
+		 * Sets a custom message for the filter message strip. This message is appended to the default
+		 * filter text.
+		 * @param {string} sMessage Message to append.
+		 * @public
+		 */
+		Timeline.prototype.setCustomFilterMessage = function (sMessage) {
+			this._customFilterMessage = sMessage;
+		};
+
+		/**
+		 * Replaces one of the default filters: items filter, time range filter, or search.
+		 * @param {object} mArguments The object containing settings
+		 * @param {sap.suite.ui.commons.TimelineFilterType} mArguments.type Type of the filter to replace.
+		 * @param {sap.ui.model.Filter} mArguments.filter Filter object to specify the filter criteria.
+		 * @param {boolean} mArguments.refresh If set to <code>true</code> (default), filters are automatically recreated,
+		 * and the content is updated.
+		 * @public
+		 */
+		Timeline.prototype.setModelFilter = function (mArguments) {
+			switch (mArguments.type) {
+				case TimelineFilterType.Data:
+					this._dataFilter = mArguments.filter;
+					break;
+
+				case TimelineFilterType.Time:
+					this._rangeDataFilter = mArguments.filter;
+					break;
+
+				case TimelineFilterType.Search:
+					this._searchFilter = mArguments.filter;
+					break;
+				default:
+			}
+
+			if (mArguments.refresh !== false) {
+				this.recreateFilter();
+			}
+		};
+
+		/**
+		 * An override which exposes hidden aggregations. Hidden aggregations are used by Run Time Adaptation.
+		 *
+		 * @param sAggregationName the name of the aggregation
+		 * @returns the aggregation array in case of 0..n-aggregations or the managed object or null in case of 0..1-aggregations
+		 * @protected
+		 */
+		Timeline.prototype.getAggregation = function (sAggregationName) {
+			switch (sAggregationName) {
+				case "headerBar":
+					return this.getHeaderBar();
+				case "searchField":
+					return this._objects.getSearchField();
+				case "sortIcon":
+					return this._objects.getSortIcon();
+				case "filterIcon":
+					return this._objects.getFilterIcon();
+				default:
+					return Control.prototype.getAggregation.apply(this, arguments);
+			}
+		};
 
 
+		/* =========================================================== */
+		/* Private methods */
+		/* =========================================================== */
+		/**
+		 * Returns key and title for oDate object based on format type (Year, Month, ...)
+		 * @param {Date} oDate Item's date by group is determined
+		 * @param {sap.suite.ui.commons.TimelineGroupType} sType Type of grouping
+		 * @returns {object} Group data
+		 * @private
+		 */
+		Timeline.prototype._formatGroupBy = function (oDate, sType) {
+			if (this._fnCustomGroupBy) {
+				return this._fnCustomGroupBy(oDate);
+			}
 
-sap.suite.ui.commons.Timeline.prototype.setGrowingThreshold = function(growingThreshold) {
-	this.setProperty("growingThreshold", growingThreshold, true);
-	this._iItemCount = growingThreshold;
-	this._growDisplayCount = growingThreshold;
-};
+			var sKey = oDate,
+				sTitle = oDate;
+			if (oDate instanceof Date) {
+				switch (sType) {
+					case TimelineGroupType.Year:
+						sKey = oDate.getFullYear();
+						sTitle = DateFormats.Year.format(oDate);
+						break;
 
-sap.suite.ui.commons.Timeline.prototype.getCurrentFilter = function() {
-  var selectedItem = this._filterList.getSelectedItem();
-  if (selectedItem) {
-  	return this._filterList.getSelectedItem().getKey();
-	} else {
-	  return null;
-	}
-};
+					case TimelineGroupType.Quarter:
+						sKey = oDate.getFullYear() + "/" + Math.floor(oDate.getMonth() / 4);
+						sTitle = DateFormats.Quarter.format(oDate);
+						break;
 
-sap.suite.ui.commons.Timeline.prototype.setCurrentFilter = function(selectedItemKey) {
-	this._currentFilterKey = selectedItemKey;
-	var items = this._filterList.getItems();
-	if (this.getEnableBackendFilter() && (items.length === 0)) {
-		this._setFilterList();
-	} else {
-		var selectedItem;
-		for (var i = 0; i < items.length; i++) {
-			if (selectedItemKey === items[i].getKey()) {
-				selectedItem = items[i];
+					case TimelineGroupType.Month:
+						sKey = oDate.getFullYear() + "/" + oDate.getMonth();
+						sTitle = DateFormats.Month.format(oDate);
+						break;
+
+					case TimelineGroupType.Week:
+						var dateFrom = new Date(oDate),
+							dateTo = new Date(oDate),
+							year = oDate.getFullYear(),
+							week = DateFormats.Week.format(oDate),
+							// find first and last day of the week
+							first = oDate.getDate() - oDate.getDay(),
+							last = first + 6,
+							firstDay = new Date(dateFrom.setDate(first)),
+							lastDay = new Date(dateTo.setDate(last));
+
+						sKey = year + "/" + week;
+
+						sTitle = DateFormats.MonthDay.format(firstDay) + " \u2013 " + DateFormats.MonthDay.format(lastDay);
+						break;
+
+					case TimelineGroupType.Day:
+						sKey = oDate.getFullYear() + "/" + oDate.getMonth() + "/" + oDate.getDate();
+						sTitle = DateFormats.Day.format(oDate);
+						break;
+
+					default:
+				}
+			}
+
+			return {
+				key: sKey,
+				title: sTitle,
+				date: oDate
 			};
 		};
-		if (selectedItem) {
-			this._filterList.setSelectedItem(selectedItem);
-			this._setFilterInfoText(selectedItem.getLabel());
-			// this.fireFilterSelectionChange({selectedItem : selectedItem});
-		}
-		// this._currentFilterKey = selectedItemKey;
-	}
-};
 
-sap.suite.ui.commons.Timeline.prototype.onclick = function(oEvent) {
-	if (jQuery(oEvent.target).parents('.sapSuiteUiCommonsTimelineItemShell').length === 1) {
-	  var selectedItemId;
-	  if (this.getAxisOrientation() === sap.suite.ui.commons.TimelineAxisOrientation.Vertical){
-		  selectedItemId = jQuery(oEvent.target).parents('.sapSuiteUiCommonsTimelineItem').attr('id');
-	  }else {
-		  selectedItemId = jQuery(oEvent.target).parents('.sapSuiteUiCommonsTimelineItemLiWrapperV').attr('id');
-	  }
-	  var selectedItem = sap.ui.core.Core().byId(selectedItemId);
-		this.fireSelect({selectedItem : selectedItem});
+		/**
+		 * Calculate difference between two dates based by type (Year, month, ...)
+		 * @param {sap.suite.ui.commons.TimelineGroupType} type Type of return result(Year, month,)
+		 * @param {Date} [dateA] Date A - optional
+		 * @param {Date} [dateB] Date B - optional
+		 * @returns {number} Difference between dates
+		 * @private
+		 */
+		Timeline.prototype._fnDateDiff = function (type, dateA, dateB) {
+			var iMonths,
+				iYearDiff, iDateAQuarter, iDateBQuarter,
+				fResult = 0;
+
+			dateA = dateA || this._minDate;
+			dateB = dateB || this._maxDate;
+
+			switch (type) {
+				case TimelineGroupType.Year:
+					fResult = dateB.getFullYear() - dateA.getFullYear();
+					break;
+				case TimelineGroupType.Month:
+					iMonths = (dateB.getFullYear() - dateA.getFullYear()) * 12;
+					iMonths += dateB.getMonth() - dateA.getMonth();
+					fResult = iMonths <= 0 ? 0 : iMonths;
+					break;
+				case TimelineGroupType.Quarter:
+					iYearDiff = (dateB.getFullYear() - dateA.getFullYear()) * 4;
+					iDateAQuarter = Math.floor(dateA.getMonth() / 3);
+					iDateBQuarter = Math.floor(dateB.getMonth() / 3);
+
+					fResult = iYearDiff + (iDateBQuarter - iDateAQuarter);
+					break;
+				case TimelineGroupType.Day:
+					// hours * minutes * seconds * milliseconds
+					var oneDay = 24 * 60 * 60 * 1000;
+					fResult = Math.round(Math.abs((dateA.getTime() - dateB.getTime()) / (oneDay)));
+					break;
+				default:
+			}
+
+			return fResult;
+		};
+
+		/**
+		 * Add value to '_minDate'  based type (f.e. if type is YEAR and value is 4, we add 4 year)
+		 * sDateRoundType means whether we want START of the 'interval' or its end
+		 * lets say we add two years from 2014 -> we may have 2016/1/1 or 2016/12/31 depending whether we want to display 'from' or 'to'
+		 * @param {number} iValue Number of units to add to minDate (type defined by second parameter)
+		 * @param {sap.suite.ui.commons.TimelineGroupType} sDateRoundType Type of date to add
+		 * @returns {Date} New date created by minDate + iValue
+		 * @private
+		 */
+		Timeline.prototype._fnAddDate = function (iValue, sDateRoundType) {
+			var oNewDate, oRoundedDown, oRoundedUp,
+				fnSetTime = function (iHour, iMinute, iSecond) {
+					this.setHours(iHour);
+					this.setMinutes(iMinute);
+					this.setSeconds(iSecond);
+				},
+				fnReturnCorrectDate = function (oDirect, oRoundedDown, oRoundedUp) {
+					if (sDateRoundType === DateRoundType.UP) {
+						fnSetTime.call(oRoundedUp, 23, 59, 59);
+						return new Date(Math.min.apply(null, [this._maxDate, oRoundedUp]));
+					}
+					if (sDateRoundType === DateRoundType.DOWN) {
+						fnSetTime.call(oRoundedDown, 0, 0, 0);
+						return new Date(Math.max.apply(null, [this._minDate, oRoundedDown]));
+					}
+					return oDirect;
+				};
+
+			switch (this._rangeFilterType) {
+				case TimelineGroupType.Year:
+					oNewDate = new Date(new Date(this._minDate).setFullYear(this._minDate.getFullYear() + iValue));
+					oRoundedDown = new Date(oNewDate.getFullYear(), 0, 1);
+					oRoundedUp = new Date(oNewDate.getFullYear(), 11, 31);
+					break;
+
+				case TimelineGroupType.Month:
+					oNewDate = new Date(new Date(this._minDate).setMonth(this._minDate.getMonth() + iValue));
+					oRoundedDown = new Date(oNewDate.getFullYear(), oNewDate.getMonth(), 1);
+					oRoundedUp = new Date(oNewDate.getFullYear(), oNewDate.getMonth() + 1, 0);
+					break;
+
+				case TimelineGroupType.Quarter:
+					oNewDate = new Date(new Date(this._minDate).setMonth(this._minDate.getMonth() + (iValue * 3)));
+					var iQuarterStart = oNewDate.getMonth() % 3;
+					oRoundedDown = new Date(oNewDate.getFullYear(), oNewDate.getMonth() - iQuarterStart, 1);
+					oRoundedUp = new Date(oNewDate.getFullYear(), oNewDate.getMonth() + (2 - iQuarterStart) + 1, 0);
+					break;
+
+				case TimelineGroupType.Day:
+					// we do this for hour rounding
+					oNewDate = oRoundedDown = oRoundedUp = new Date(new Date(this._minDate).setDate(this._minDate.getDate() + iValue));
+					break;
+
+				default:
+			}
+
+			return fnReturnCorrectDate.call(this, oNewDate, oRoundedDown, oRoundedUp);
+		};
+
+		/**
+		 * Set default value for time range selector based by limit values
+		 * @returns {sap.suite.ui.commons.TimelineGroupType} Selected value
+		 * @private
+		 */
+		Timeline.prototype._calculateRangeTypeFilter = function () {
+			var daysDiff = this._fnDateDiff(TimelineGroupType.Day);
+			if (daysDiff > 500) {
+				return TimelineGroupType.Year;
+			} else if (daysDiff > 200) {
+				return TimelineGroupType.Quarter;
+			} else if (daysDiff > 62) {
+				return TimelineGroupType.Month;
+			}
+
+			return TimelineGroupType.Day;
+		};
+
+		/**
+		 * Setup range filter (min and max)
+		 * @private
+		 */
+		Timeline.prototype._setRangeFilter = function () {
+			var diff = this._fnDateDiff(this._rangeFilterType);
+
+			this._objects.getTimeRangeSlider().setMin(0);
+			this._objects.getTimeRangeSlider().setMax(diff);
+			this._objects.getTimeRangeSlider().setRange([0, diff]);
+			this._objects.getTimeRangeSlider().invalidate();
+		};
+
+		/**
+		 * Action after sort arrow is clicked
+		 * @private
+		 */
+		Timeline.prototype._sortClick = function () {
+			var oBinding, sPath;
+			this._sortOrder = this._sortOrder === SortOrder.ASCENDING ? SortOrder.DESCENDING : SortOrder.ASCENDING;
+			this._objects.getSortIcon().setIcon(this._sortOrder === SortOrder.ASCENDING ?
+				"sap-icon://arrow-bottom" : "sap-icon://arrow-top");
+
+			if (this._useModelFilter()) {
+				oBinding = this.getBinding("content");
+				sPath = this._findBindingPath("dateTime");
+
+				oBinding.sort(this._getDefaultSorter(sPath, this._sortOrder === SortOrder.ASCENDING));
+			} else {
+				this.invalidate();
+			}
+		};
+
+		/**
+		 * Sort items
+		 * @param {Array} aData Data
+		 * @param {string} sortOrder The order of sorting. Can be ASCENDING or DESCENDING.
+		 * @returns {Array} Sorted data
+		 * @private
+		 */
+		Timeline.prototype._sort = function (aData, sortOrder) {
+			var sSortOrder = sortOrder || this._sortOrder;
+			aData.sort(function (itemA, itemB) {
+				var dateA = itemA.getDateTime(),
+					dateB = itemB.getDateTime(),
+					sign = (sSortOrder === SortOrder.ASCENDING) ? -1 : 1;
+
+				return dateA < dateB ? 1 * sign : -1 * sign;
+			});
+
+			return aData;
+		};
+
+		/**
+		 * When user clicks 'more' button or scrolls down (when lazy loading is ON)
+		 * @private
+		 */
+		Timeline.prototype._loadMore = function () {
+			var oBindingInfo, aData,
+				fnSetNewItemCount = function () {
+					var increase = this._displayShowMore() ? this.getGrowingThreshold() : this._calculateItemCountToLoad(this.$());
+					this._iItemCount += increase;
+					// limit maximum items to binding limit
+					this._iItemCount = Math.min(this._getMaxItemsCount(), this._iItemCount);
+				}.bind(this);
+
+			this._lastScrollPosition.more = this._isVertical() ? this._$content.get(0).scrollTop : this._$content.get(0).scrollLeft;
+
+			this._setBusy(true);
+			this.fireGrow();
+
+			if (this._useBinding()) {
+				if (this._isMaxed()) {
+					this._setBusy(false);
+					return;
+				}
+
+				fnSetNewItemCount();
+
+				oBindingInfo = this.getBindingInfo("content");
+				oBindingInfo.startIndex = 0;
+
+				// we already loaded all data so we don't want to overwrite it now
+				if (!this._loadAllData()) {
+					oBindingInfo.length = this._iItemCount;
+				}
+
+				// check whether we use OData binding
+				aData = this.getBinding("content").getContexts(0, oBindingInfo.length);
+
+				// don't update for oData service
+				// TL will be updated when data are loaded
+				if (aData && aData.dataRequested) {
+					return;
+				}
+
+				this.updateAggregation("content");
+			} else {
+				fnSetNewItemCount();
+				this.invalidate();
+			}
+			this.oItemNavigation.refocusOnNextUpdate();
+		};
+
+		/**
+		 * Recreate all default filters (data, time, search) and refresh content.
+		 * @param {boolean} bResetAll Indicates whether to clear all current filters (including custom filters)
+		 */
+		Timeline.prototype.recreateFilter = function (bResetAll) {
+			var oBinding = this.getBinding("content"),
+				that = this, //eslint-disable-line
+				aFilters = [],
+				aCurrentFilters = [];
+			if (oBinding) {
+				if (!bResetAll) {
+					aFilters = oBinding.aFilters || [];
+				}
+
+				if (this._dataFilter) {
+					aCurrentFilters.push(this._dataFilter);
+				}
+
+				if (this._rangeDataFilter) {
+					aCurrentFilters.push(this._rangeDataFilter);
+				}
+
+				if (this._searchFilter) {
+					aCurrentFilters.push(this._searchFilter);
+				}
+				// we don't want to override custom filters in binding, so find our filter and replace it
+				if (this._filter && !bResetAll) {
+					var filterIndex = findIndex(aFilters, function (oFilter) {
+						return oFilter === that._filter;
+					});
+
+					if (filterIndex !== -1) {
+						aFilters.splice(filterIndex, 1);
+					}
+				}
+
+				// if there is any new filter add it as new one, otherwise this method only delete old filter
+				if (aCurrentFilters.length > 0) {
+					this._filter = new Filter(aCurrentFilters, true);
+					aFilters.push(this._filter);
+				}
+
+				oBinding.filter(aFilters, FilterType.Control);
+			} else {
+				// for usecase without binding we just invalidate, because all filtering is done right before render is called
+				this.invalidate();
+			}
+		};
+
+		/**
+		 * Returns either custom range message (set by function call) or create new one based on 'from' and 'to' selection from time filter.
+		 * @returns {string} Message for range info bar.
+		 * @private
+		 */
+		Timeline.prototype._getRangeMessage = function () {
+			var text = this._rangeMessage;
+			if (!text) {
+				var titleStart = this._formatGroupBy(this._startDate, this._rangeFilterType).title,
+					titleEnd = this._formatGroupBy(this._endDate, this._rangeFilterType).title;
+
+				text = resourceBundle.getText("TIMELINE_RANGE_SELECTION") + " (";
+				text += titleStart + " - " + titleEnd + ")";
+			}
+			return text;
+		};
+
+		/**
+		 * Returns either custom data filter message (set by function call) or create new one based on selected filter items.
+		 * @returns {string} Message for filter info bar.
+		 * @private
+		 */
+		Timeline.prototype._getFilterMessage = function () {
+			var sText = "",
+				sMessage = null;
+
+			if (this._dataMessage) {
+				sText = this._dataMessage;
+			} else if (this._currentFilterKeys.length > 0) {
+				sText = this._currentFilterKeys.map(function (oItem) {
+					return oItem.text ? oItem.text : oItem.key;
+				}).join(", ");
+
+				sText = this._getFilterTitle() + " (" + sText + ")";
+			}
+
+			if (this._rangeDataFilter || this._rangeMessage || (this._startDate && this._endDate)) {
+				sText = sText ? sText + ", " : "";
+				sText += this._getRangeMessage();
+			}
+
+			if (this._customFilterMessage) {
+				sText = sText ? sText + ", " + this._customFilterMessage : this._customFilterMessage;
+			}
+
+			if (sText) {
+				sMessage = resourceBundle.getText("TIMELINE_FILTER_INFO_BY", sText);
+			}
+
+			return sMessage;
+		};
+
+		/**
+		 * Proper oData handling. We call 'updateAggregation' not right away but we wait after data are loaded
+		 * @private
+		 */
+		Timeline.prototype.refreshContent = function () {
+			var oBinding = this.getBinding("content"),
+				oBindingInfo = this.getBindingInfo("content");
+
+			this._setBusy(true);
+
+			// this is to prevent refreshing before data are loaded
+			// 'updateAggregation' triggers UI update even if data are not loaded yet
+			if (oBinding && oBindingInfo) {
+				oBinding.getContexts(0, oBindingInfo.length);
+				oBinding.attachEventOnce("dataReceived", jQuery.proxy(function () {
+					this.updateAggregation("content");
+				}, this));
+			} else {
+				this.updateAggregation("content");
+			}
+		};
+
+		/**
+		 * Proper oData handling.
+		 * @private
+		 */
+		Timeline.prototype.updateContent = function () {
+			this._setBusy(false);
+			this.updateAggregation("content");
+
+			// for empty returned dataset in oData updateAggregation doesn't trigger rerender so we call it manually
+			this.invalidate();
+		};
+
+		/**
+		 * Destroy additional objects which are not directly in content aggregation but need to removed when content is destroyed.
+		 * @private
+		 */
+		Timeline.prototype.destroyContent = function () {
+			// if there is request pending, don't invalidate right now
+			var $line = this.$("line"),
+				$showMore = this.$().find(".sapSuiteUiCommonsTimelineItemGetMoreButton");
+
+			if ($line.get(0)) {
+				$line.remove();
+			}
+
+			if ($showMore.get(0)) {
+				$showMore.remove();
+			}
+
+			this.destroyAggregation("content");
+		};
+
+		/**
+		 * Process search
+		 * @param {string} sSearchTerm term to search
+		 * @private
+		 */
+		Timeline.prototype._search = function (sSearchTerm) {
+			var that = this, //eslint-disable-line
+				bExecuteDefault, aTextPaths, aTitlePaths, aUserNamePaths,
+				columns = [];
+
+			this._searchValue = sSearchTerm;
+
+			if (this._useModelFilter()) {
+				bExecuteDefault = this._fireSelectionChange({
+					searchTerm: this._searchValue,
+					type: TimelineFilterType.Search
+				});
+
+				if (bExecuteDefault) {
+					this._searchFilter = null;
+					if (this._searchValue) {
+						// add filter columns - by default we search in text, title and username binding fields
+						aTextPaths = this._findBindingPaths("text");
+						aTitlePaths = this._findBindingPaths("title");
+						aUserNamePaths = this._findBindingPaths("userName");
+
+						if (aTextPaths.length > 0) {
+							columns.push(aTextPaths);
+						}
+						if (aTitlePaths.length > 0) {
+							columns.push(aTitlePaths);
+						}
+						if (aUserNamePaths) {
+							columns.push(aUserNamePaths);
+						}
+						if (columns.length > 0) {
+							//create filters based on the filter columns
+							this._searchFilter = new Filter(columns.map(function (paths) {
+								return new Filter(paths.map(function (onePath) {
+									return new Filter(onePath, FilterOperator.Contains, that._searchValue);
+								}), false);
+							}));
+						}
+					}
+
+					this.recreateFilter();
+				}
+			} else {
+				this.invalidate();
+			}
+		};
+
+		/**
+		 * @param {boolean} bRange Whether or not to use a range
+		 * @private
+		 */
+		Timeline.prototype._filterData = function (bRange) {
+			var bExecuteDefault,
+				sPath;
+			this._dataMessage = "";
+
+			if (this._useModelFilter()) {
+				// filter
+
+				this._dataFilter = null;
+				bExecuteDefault = this._fireSelectionChange({
+					// backward compatibility
+					selectedItem: this._currentFilterKeys[0] ? this._currentFilterKeys[0].key : "",
+					selectedItems: this._currentFilterKeys,
+					type: TimelineFilterType.Data
+				});
+
+				if (bExecuteDefault) {
+					if (this._currentFilterKeys.length > 0) {
+						sPath = this._findBindingPath("filterValue");
+						if (sPath) {
+							this._dataFilter = new Filter(this._currentFilterKeys.map(function (oItem) {
+								return new Filter(sPath, FilterOperator.EQ, oItem.key);
+							}), false);
+						}
+					}
+				}
+
+				this._rangeDataFilter = null;
+				if (bRange) {
+					// range
+					bExecuteDefault = this._fireSelectionChange({
+						type: TimelineFilterType.Time,
+						timeKeys: {
+							from: this._startDate,
+							to: this._endDate
+						}
+					});
+
+					if (bExecuteDefault) {
+						sPath = this._findBindingPath("dateTime");
+						if (sPath) {
+							this._rangeDataFilter = new Filter({
+								path: sPath,
+								operator: FilterOperator.BT,
+								value1: this._startDate,
+								value2: this._endDate
+							});
+						}
+
+					}
+				}
+
+				this._setBusy(true);
+
+				this.recreateFilter();
+			} else {
+				this.invalidate();
+			}
+		};
+
+		/**
+		 * @private
+		 */
+		Timeline.prototype._filterRangeData = function () {
+			var bExecuteDefault, sPath;
+			this._rangeMessage = "";
+
+			if (this._useModelFilter()) {
+				bExecuteDefault = this._fireSelectionChange({
+					from: this._startDate,
+					to: this._endDate,
+					type: TimelineFilterType.Time
+				});
+
+				if (bExecuteDefault) {
+					sPath = this._findBindingPath("dateTime");
+					this._rangeDataFilter = null;
+					if (sPath) {
+						this._rangeDataFilter = new Filter({
+							path: sPath,
+							operator: FilterOperator.BT,
+							value1: this._startDate,
+							value2: this._endDate
+						});
+					}
+
+					this._setBusy(true);
+					this.recreateFilter();
+				}
+			} else {
+				this.invalidate();
+			}
+		};
+
+		/**
+		 * Override apply settings to postpone bind aggregation.
+		 * Bind aggregation may be called before all settings are applied
+		 *
+		 * @param {object} mSettings The settings to apply to this managed object
+		 * @param {object} [oScope] Scope object to resolve types and formatters
+		 * @private
+		 */
+		Timeline.prototype.applySettings = function (mSettings, oScope) {
+			ManagedObject.prototype.applySettings.apply(this, [mSettings, oScope]);
+
+			this._settingsApplied = true;
+
+			// if bind aggregation was already called (which is most likely if we use timeline content binding from XML),
+			// call it now
+			if (this._bindOptions) {
+				this.bindAggregation("content", this._bindOptions);
+				this._bindOptions = null;
+			}
+		};
+
+		/**
+		 * Create filters for filter dialog. If modelfilter is ON, user can set own filter items, otherwise items are
+		 * grabbed from items as distinct value for {filterValue} column in data set.
+		 * @private
+		 */
+		Timeline.prototype._setFilterList = function () {
+			var bSort = false,
+				aData,
+				oItems,
+				sKey,
+				oFilteredItems = {},
+				oBinding,
+				oBindingData;
+
+			this._aFilterList = [];
+
+			if (this._useModelFilter()) {
+				this._aFilterList = this.getFilterList().map(function (oItem) {
+					return {
+						key: oItem.getProperty("key"),
+						text: oItem.getProperty("text")
+					};
+				});
+
+				if (this._aFilterList.length === 0) {
+					// JSON model only, for oData model values have to be set via filter list
+					oBindingData = this._findBindingData("filterValue");
+					oBinding = this.getBinding("content");
+					if (oBindingData && oBinding) {
+						aData = oBinding.getDistinctValues(oBindingData.path);
+						if (Array.isArray(aData)) {
+							this._aFilterList = aData.map(function (sItem) {
+								return {
+									key: sItem,
+									text: oBindingData.formatter ? oBindingData.formatter(sItem) : sItem
+								};
+							});
+							this._aFilterList = this._aFilterList.filter(function (oItem) {
+								return oItem.key;
+							});
+						}
+						bSort = true;
+					}
+				}
+			} else {
+				oItems = this.getContent();
+				bSort = true;
+				// grab all unique values from all items
+				for (var i = 0; i < oItems.length; i++) {
+					sKey = oItems[i].getFilterValue();
+					if (!sKey) {
+						continue;
+					}
+					if (!(sKey in oFilteredItems)) {
+						oFilteredItems[sKey] = 1;
+						this._aFilterList.push({
+							key: sKey,
+							text: sKey
+						});
+					}
+				}
+			}
+
+			if (bSort) {
+				this._aFilterList.sort(function (a, b) {
+					if (a.text.toLowerCase) {
+						return a.text.toLowerCase().localeCompare(b.text.toLowerCase());
+					} else {
+						return a.text > b.text;
+					}
+				});
+			}
+		};
+
+		/**
+		 * Clear data filter. Remove filter from model binding and clear all selected items for filter selection.
+		 * @private
+		 */
+		Timeline.prototype._clearFilter = function () {
+			var fnClearTimeRangeFilter = function () {
+					var bExecuteDefault,
+						oSlider = this._objects.getTimeRangeSlider();
+					this._startDate = null;
+					this._endDate = null;
+					this._rangeMessage = null;
+
+					oSlider.setRange([oSlider.getMin(), oSlider.getMax()]);
+
+					if (this._useModelFilter()) {
+						bExecuteDefault = this._fireSelectionChange({
+							clear: true,
+							timeKeys: {
+								from: null,
+								to: null
+							},
+							type: TimelineFilterType.Range
+						});
+					}
+					return bExecuteDefault;
+				}.bind(this),
+				fnClearDataFilter = function () {
+					var bExecuteDefault;
+
+					this._currentFilterKeys = [];
+					if (this._useModelFilter()) {
+						bExecuteDefault = this._fireSelectionChange({
+							clear: true,
+							selectedItems: [],
+							selectedItem: "",
+							type: TimelineFilterType.Data
+						});
+					}
+					return bExecuteDefault;
+				}.bind(this);
+
+			var bDataDefault = fnClearDataFilter(),
+				bRangeDefault = fnClearTimeRangeFilter();
+
+			// clear custom filter
+			this._customFilterMessage = "";
+			if (bDataDefault || bRangeDefault) {
+				if (bDataDefault) {
+					this._dataFilter = null;
+				}
+
+				if (bRangeDefault) {
+					this._rangeDataFilter = null;
+				}
+				this.recreateFilter(true /*force clear custom filters*/);
+			} else {
+				this.invalidate();
+			}
+
+			//reset filter
+			// this is a bit overkill but we are so far unable to reset filter to it's init state without some filter's internal errors
+			// or nasty private variables manipulation.
+			this._objects.destroyObject("FilterContent");
+			this._setupFilterDialog();
+		};
+
+		/**
+		 * Open time filter dialog. IF max and min not yet set, try to find out.
+		 * @private
+		 * @returns {Promise} A promise for when all requests have been completed
+		 */
+		Timeline.prototype._getTimeFilterData = function () {
+			var that = this, //eslint-disable-line
+				aItems, oMin, oMax, oDate,
+				fnCall = function (sType, sName) {
+					return fnGetLimit(sType, that[sName]).then(function (oData) { //eslint-disable-line
+							if (oData) {
+								// ensure we have valid values
+								var parsedDate = DateUtils.parseDate(oData);
+
+								if (parsedDate instanceof Date) {
+									that[sName] = parsedDate;
+								}
+							}
+						}
+					).catch(function () {
+						// not setting min and max is sufficient. No additional action required
+					});
+				},
+				fnGetLimitValue = function (asc) {
+					var oModel, sDateTimePath, oSorter, oBindingInfo;
+
+					oModel = this.getModel();
+					if (!oModel) {
+						return Promise.reject();
+					}
+
+					sDateTimePath = this._findBindingPath("dateTime");
+					oSorter = new Sorter(sDateTimePath, asc);
+					oBindingInfo = this.getBindingInfo("content");
+
+					if (!oBindingInfo) {
+						return Promise.reject();
+					}
+
+					var oBinding = oModel.bindList(oBindingInfo.path, null, oSorter, null);
+
+					if (typeof oBinding.initialize === "function") {
+						oBinding.initialize();
+					}
+
+					if (oBinding instanceof ClientListBinding) {
+						if (oBinding.getLength() === 0) {
+							return Promise.resolve(null);
+						}
+
+						return Promise.resolve(DateUtils.parseDate(oBinding.oList[oBinding.aIndices[0]][sDateTimePath]));
+					} else if (oBinding && oBinding.attachDataReceived) {
+						that._setBusy(true);
+						return new Promise(function (resolve, reject) {
+							oBinding.attachDataReceived(function (result) {
+								that._setBusy(false);
+								if (typeof result === "undefined") {
+									reject();
+									return;
+								}
+								var oData = result.getParameter("data");
+								resolve(DateUtils.parseDate(oData.results[0][sDateTimePath]));
+							});
+							oBinding.loadData(0, 1);
+						});
+					}
+
+					return Promise.reject();
+				}.bind(this),
+				fnGetLimit = function (sType, oDate) {
+					if (oDate) {
+						return Promise.resolve(oDate);
+					}
+
+					return fnGetLimitValue(sType === "max");
+				},
+				fnGetMinAndMax = function () {
+					aItems = this.getContent();
+					if (aItems.length > 0) {
+						this._minDate = aItems[0].getDateTime();
+						this._maxDate = aItems[0].getDateTime();
+
+						for (var i = 1; i < aItems.length; i++) {
+							oDate = aItems[i].getDateTime();
+							if (oDate < this._minDate) {
+								this._minDate = oDate;
+							}
+							if (oDate > this._maxDate) {
+								this._maxDate = oDate;
+							}
+						}
+					}
+				};
+
+			return new Promise(function (resolve, reject) {
+				// if min or max date not loaded yet
+				if (!that._maxDate || !that._minDate) {
+					if (that._useModelFilter()) {
+						// call separate OData requests for min and max
+						oMin = fnCall("min", "_minDate", oMin);
+						oMax = fnCall("max", "_maxDate", oMax);
+
+						Promise.all([oMin, oMax]).then(function () {
+							// wait till all requests are complete then open window
+							resolve();
+						}).catch(function () {
+							reject();
+						});
+					} else {
+						fnGetMinAndMax.call(that);
+						resolve();
+					}
+				} else {
+					resolve();
+				}
+			});
+		};
+
+		/**
+		 * Opens filter dialog. Can be custom dialog.
+		 * @private
+		 */
+		Timeline.prototype._openFilterDialog = function () {
+			if (this._customFilter) {
+				this.getCustomFilter().openBy(this._objects.getFilterIcon());
+				this.fireFilterOpen();
+				return;
+			}
+
+			this._filterState = {
+				data: false,
+				range: false
+			};
+
+			this._objects.getFilterContent().open();
+			this.fireFilterOpen();
+		};
+
+		/**
+		 * Creates group header item which is classic TimelineItem with slightly different data
+		 * @param {object} oContext oContext group data with {date;key;title}
+		 * @param {boolean} bSkipAppend If true, we don't call addAggregation (for cases when there is no binding)
+		 * @returns {sap.suite.ui.commons.TimelineItem} newly recreated group item
+		 * @private
+		 */
+		Timeline.prototype._createGroupHeader = function (oContext, bSkipAppend) {
+			var sId = this.getId() + "-timelinegroupheader-" + this._groupId,
+				sKey = oContext.key,
+				oGroupItem = new TimelineItem(sId, {
+					text: "GroupHeader",
+					dateTime: oContext.date,
+					userName: sKey,
+					title: oContext.title,
+					icon: "sap-icon://arrow-down"
+				});
+
+			oGroupItem._isGroupHeader = true;
+
+			// for usage without binding we don't add groupitem to content as we recreate it every render cycle
+			if (bSkipAppend) {
+				oGroupItem.setParent(this, "content");
+				this._aGroups.push(oGroupItem);
+			} else {
+				this.addAggregation("content", oGroupItem, false);
+			}
+
+			this._groupId++;
+			return oGroupItem;
+		};
+
+		/**
+		 * Create sorter object
+		 * @param {string} sPropertyName Property name by which sorting is managed
+		 * @param {boolean} sAscending Order of sorting
+		 * @returns {sap.ui.model.Sorter} Sorter object
+		 * @private
+		 */
+		Timeline.prototype._getDefaultSorter = function (sPropertyName, sAscending) {
+			var that = this; //eslint-disable-line
+
+			return new Sorter(sPropertyName, !sAscending, function (oContext) {
+				var sValue = oContext.getProperty(sPropertyName),
+					oDate = DateUtils.parseDate(sValue);
+
+				return oDate instanceof Date ? that._formatGroupBy(oDate, that.getGroupByType()) : {date: oDate};
+			});
+		};
+
+		/**
+		 * Return binding info for given property
+		 * @param {string} sPropertyName Property name we are looking for the model source
+		 * @param {object} oTemplate Binding template
+		 * @returns {object} Binding info
+		 * @private
+		 */
+		Timeline.prototype._findBindingInfoFromTemplate = function (sPropertyName, oTemplate) {
+			// if no template is set try to find from binding info
+			// this function may be called before 'content' aggregation is initialized
+			// so there is a possibility to call it with template object directly
+			if (!oTemplate) {
+				var oBindingInfo = this.getBindingInfo("content");
+
+				if (oBindingInfo) {
+					oTemplate = oBindingInfo.template;
+				}
+			}
+
+			if (oTemplate) {
+				var oInfo = oTemplate.getBindingInfo(sPropertyName);
+				if (oInfo && oInfo.parts && oInfo.parts[0]) {
+					return oInfo;
+				}
+			}
+
+			return null;
+		};
+
+		/**
+		 * Return all binding paths for property name
+		 * @param {string} sPropertyName Property name we are looking for the model source
+		 * @param {object} oTemplate Binding template
+		 * @returns {Array} All property's paths
+		 * @private
+		 */
+		Timeline.prototype._findBindingPaths = function (sPropertyName, oTemplate) {
+			var oInfo = this._findBindingInfoFromTemplate(sPropertyName, oTemplate);
+			if (oInfo && oInfo.parts) {
+				return oInfo.parts.map(function (oItem) {
+					return oItem.path;
+				});
+			}
+
+			return [];
+		};
+
+		/**
+		 * Return binding path for property name
+		 * @param {string} sPropertyName Property name we are looking for the model source
+		 * @param {object} oTemplate Binding template
+		 * @returns {string} First property path (rest are ignored)
+		 * @private
+		 */
+		Timeline.prototype._findBindingPath = function (sPropertyName, oTemplate) {
+			var oInfo = this._findBindingInfoFromTemplate(sPropertyName, oTemplate);
+			if (oInfo) {
+				return oInfo.parts[0].path;
+			}
+
+			return null;
+		};
+
+		/**
+		 * Return information for property (path and formatter)
+		 * @param {string} sPropertyName Property name we are looking for the model source
+		 * @param {object} oTemplate Binding template
+		 * @returns {object} Formatter and path
+		 * @private
+		 */
+		Timeline.prototype._findBindingData = function (sPropertyName, oTemplate) {
+			var oInfo = this._findBindingInfoFromTemplate(sPropertyName, oTemplate);
+			if (oInfo) {
+				return {
+					path: oInfo.parts[0].path,
+					formatter: oInfo.formatter
+				};
+			}
+			return null;
+		};
+
+		/**
+		 * Based on settings apply grouping and sorting to binding info
+		 * @param {object} oBindingInfo Binding information
+		 * @private
+		 */
+		Timeline.prototype._bindGroupingAndSorting = function (oBindingInfo) {
+			// get the sorter and add to bindaggregation options
+			// only if there is date time binding
+			if (!this._isGrouped() && this.getSort()) {
+				var sDateTimeBinding = this._findBindingPath("dateTime", oBindingInfo.template);
+				if (sDateTimeBinding) {
+					oBindingInfo.sorter = this._getDefaultSorter(sDateTimeBinding, this.getSortOldestFirst());
+				}
+			}
+			oBindingInfo.groupHeaderFactory = null;
+			if (this._isGrouped()) {
+				// add sort by for group by field
+				oBindingInfo.sorter = this._getDefaultSorter(this.getGroupBy(), this.getSortOldestFirst());
+
+				//get group header factory and add to bindaggration options
+				oBindingInfo.groupHeaderFactory = jQuery.proxy(this._createGroupHeader, this);
+			}
+		};
+
+		/**
+		 * Overrides ManagedObject bindAggregation function, we add some special features for binding
+		 * @param {string} sName Aggregation name
+		 * @param {object} oOptions Binding options
+		 * @private
+		 * @returns {sap.suite.ui.commons.Timeline} This to allow method chaining
+		 */
+		Timeline.prototype.bindAggregation = function (sName, oOptions) {
+			if (sName === "content") {
+				// this prevents calling bindaggregation before all settings are loaded
+				// when we have context={/...} in XML timeline definition we can't guarantee order of settings applied
+				// so this method could be called before all settings are parsed from XML and setup
+				// we store options parameter and called it after settings are loaded (after applysettings method is called)
+				if (!this._settingsApplied) {
+					this._bindOptions = oOptions;
+					return null;
+				}
+
+				this._bindGroupingAndSorting(oOptions);
+
+				// if we have 'Show More' ON, limit the length to the growing treshold (stored in _itemCount)
+				// otherwise download minimum limit for auto-scrolling
+				if (this._lazyLoading()) {
+					this._iItemCount = this._calculateItemCountToLoad(jQuery(window));
+					if (!this._loadAllData(true)) {
+						oOptions.length = this._iItemCount;
+					}
+				} else if (this._displayShowMore() && !this._loadAllData(oOptions.template)) {
+					this._iItemCount = this.getGrowingThreshold();
+					oOptions.length = this._iItemCount;
+				}
+
+				this._oOptions = oOptions;
+			}
+
+			return ManagedObject.prototype.bindAggregation.apply(this, [sName, oOptions]);
+		};
+
+		/**
+		 * Calculate items to be loaded for lazy loading based on item size and screen size
+		 * @param {object} $parent Parent object where we fit timeline
+		 * @returns {number} Number of items to load
+		 * @private
+		 */
+		Timeline.prototype._calculateItemCountToLoad = function ($parent) {
+			var isVertical = TimelineAxisOrientation.Vertical === this.getAxisOrientation(),
+				size = isVertical ? $parent.height() : $parent.width(),
+				isDblSided = this.getEnableDoubleSided(),
+				// double sided layout stores more items to one screen
+				ratio = isDblSided ? 0.6 : 1,
+				SIZE = isVertical ? 1200 : 2000,
+				// aprox. item size with margin
+				ITEM_SIZE = isVertical ? 120 : 280,
+				MIN_COUNT = (13 * ratio),
+				result;
+
+			if (!size) {
+				// for some reason we are not able to find out parent size -> calculate with 1200 then
+				size = SIZE;
+			}
+
+			// count aprox. number of items available for one screen (multiple by 2 cause we want to be sure, scrollbar is shown)
+			result = (size / (ITEM_SIZE * ratio)) * 1.5;
+			return Math.floor(Math.max(result, MIN_COUNT));
+		};
+
+		/**
+		 * Before render event
+		 * @private
+		 */
+		Timeline.prototype.onBeforeRendering = function () {
+			var iGrowingThreshold = this.getGrowingThreshold(),
+				aContent;
+			this._bRtlMode = sap.ui.getCore().getConfiguration().getRTL();
+
+			this._objects.getSortIcon().setIcon(this._sortOrder === SortOrder.ASCENDING ?
+				"sap-icon://arrow-bottom" : "sap-icon://arrow-top");
+			this._aGroups = [];
+			this._bRendered = false;
+
+			aContent = this.getContent();
+
+			// limit size for non binding lazy loading items
+			if (!this._iItemCount && !this._useBinding() && this._lazyLoading()) {
+				this._iItemCount = this._calculateItemCountToLoad(jQuery(window));
+			}
+
+			// limit size for growing threshold
+			if (!this._iItemCount) {
+				if (iGrowingThreshold !== 0) {
+					this._iItemCount = iGrowingThreshold;
+				}
+			}
+
+			// in case growing is off we want to set itemcount to all downloaded items in case
+			// data was changed meanwhile
+			if (!this._iItemCount || !this._useGrowing()) {
+				// if still not set all data are probably loaded -> itemCount === all content data
+				this._iItemCount = aContent.filter(function (oItem) {
+					return !oItem._isGroupHeader;
+				}).length;
+			}
+
+			this._setOutput(aContent);
+		};
+
+		/**
+		 * Function override for grouping
+		 * @param {object} context Data for grouping
+		 * @private
+		 */
+		Timeline.prototype.addContentGroup = function (context) {
+			//managed object requires this function to be declared to set bGrouped flag true
+		};
+
+		/**
+		 * Action after user clicks scrolling button. Scrolls content to specific direction by set amount.
+		 * @param {number} size Number to determine how many content to scroll
+		 * @private
+		 */
+		Timeline.prototype._performScroll = function (size) {
+			var that = this, //eslint-disable-line
+				newScrollValue = this._isVertical() ? this._$content.get(0).scrollTop + size : this._$content.get(0).scrollLeft + size;
+
+			newScrollValue = Math.max(newScrollValue, 0);
+			if (this._isVertical()) {
+				this._$content.get(0).scrollTop = newScrollValue;
+			} else {
+				this._$content.get(0).scrollLeft = newScrollValue;
+			}
+
+			if (this._manualScrolling) {
+				setTimeout(that._performScroll.bind(that, size), 50);
+			}
+		};
+
+		/**
+		 * For default scrolling we use .more to store last scrolling position when load is pressed
+		 * when some Timeline Item is selected it is focused by 'applyFocusInfo' which scrolls scrollbar to the focused item
+		 * but we want to scroll to last visible (scrolled) position
+		 * we use backup because we still want more to be erased after scrolling for cases when item is not focused so this method is called
+		 * @param {boolean} bUseBackup Indicates whether store value for next use. Value is deleted after it.
+		 * @private
+		 */
+		Timeline.prototype._moveScrollBar = function (bUseBackup) {
+			if (this._lastScrollPosition.more || this._lastScrollPosition.backup) {
+				if (bUseBackup) {
+					this._lastScrollPosition.more = this._lastScrollPosition.backup;
+				}
+
+				if (this._isVertical()) {
+					this._oScroller.scrollTo(0, this._lastScrollPosition.more);
+				} else {
+					this._oScroller.scrollTo(this._lastScrollPosition.more, 0);
+				}
+
+				// store backup
+				if (!bUseBackup) {
+					this._lastScrollPosition.backup = this._lastScrollPosition.more;
+				}
+
+				// reset flag, wait for next data load
+				this._lastScrollPosition.more = 0;
+			}
+		};
+
+		/**
+		 * After render event
+		 * @private
+		 */
+		Timeline.prototype.onAfterRendering = function () {
+			var $this = this.$();
+
+			if (this._isVertical()) {
+				this._$content = this.$("content");
+				this._$scroll = this.$("scroll");
+			} else {
+				this._$content = this.$("contentH");
+				this._$scroll = this.$("scrollH");
+			}
+
+			this.setBusy(false);
+
+			if (!this._oScroller) {
+				this._oScroller = new ScrollEnablement(this, this._$scroll.attr('id'), {});
+			}
+
+			this._oScroller._$Container = this._$scroll.parent();
+
+			this._oScroller.setVertical(this._isVertical());
+			this._oScroller.setHorizontal(!this._isVertical());
+
+			this._startItemNavigation();
+
+			// setup
+			this._scrollersSet = false;
+			this._scrollMoreEvent = true;
+			// after rendering we always want to trigger double sided changes (if the setting is ON)
+			this._lastStateDblSided = null;
+
+			this._showCustomMessage();
+			this._setupScrollEvent();
+			this._performUiChanges();
+
+			this._moveScrollBar();
+			this._bRendered = true;
+
+			$this.css("opacity", 1);
+		};
+
+		/**
+		 * Client data filtering for use cases without binding or for useModelFilter=false
+		 * @param {Array} aItems Data to filter
+		 * @returns {Array} filtered data
+		 * @private
+		 */
+		Timeline.prototype._clientFilter = function (aItems) {
+			var aFilteredItems = [],
+				oItem, bFilter, oReasons, iFindIndex, oDate,
+				sSearchValue, sText, sTitle, sUserName,
+				bReverseDefault;
+
+			function fnCheckKey(oSelectedFilterItem) {
+				return oSelectedFilterItem.key === oItem.getProperty("filterValue");
+			}
+
+			// filtering - for cases without binding (or mixed by calling addContent) - we filter and sort items
+			// even thou in most cases they are already filtered and sorted out.
+			for (var i = 0; i < aItems.length; i++) {
+				oItem = aItems[i];
+				bFilter = false;
+				oReasons = {};
+
+				// data filter
+				if (this._currentFilterKeys.length > 0) {
+					iFindIndex = findIndex(this._currentFilterKeys, fnCheckKey);
+
+					if (iFindIndex === -1) {
+						bFilter = true;
+						oReasons[TimelineFilterType.Data] = 1;
+					}
+				}
+
+				// range filter
+				if (this._startDate && this._endDate) {
+					oDate = oItem.getDateTime();
+					if (oDate < this._startDate || oDate > this._endDate) {
+						bFilter = true;
+						oReasons[TimelineFilterType.Time] = 1;
+					}
+				}
+
+				// search filter
+				if (this._searchValue) {
+					sSearchValue = this._searchValue.toLowerCase();
+					sText = oItem.getProperty("text") || "";
+					sTitle = oItem.getProperty("title") || "";
+					sUserName = oItem.getProperty("userName") || "";
+
+					if (!((sText.toLowerCase().indexOf(sSearchValue) !== -1) ||
+						(sTitle.toLowerCase().indexOf(sSearchValue) !== -1) ||
+						(sUserName.toLowerCase().indexOf(sSearchValue) !== -1))) {
+						bFilter = true;
+						oReasons[TimelineFilterType.Search] = 1;
+					}
+				}
+
+				bReverseDefault = !this.fireEvent("itemFiltering", {
+					item: oItem,
+					reasons: oReasons,
+					dataKeys: this._currentFilterKeys,
+					timeKeys: {
+						from: this._startDate,
+						to: this._endDate
+					},
+					searchTerm: this._searchValue
+				}, true);
+
+				if (bReverseDefault) {
+					bFilter = !bFilter;
+				}
+
+				if (!bFilter) {
+					aFilteredItems.push(oItem);
+				}
+			}
+
+			return aFilteredItems;
+		};
+
+		/**
+		 * Fills _outputItem collection which is used as items collection in renderer.
+		 * @param {Array} aItems Data to process
+		 * @private
+		 */
+		Timeline.prototype._setOutput = function (aItems) {
+			var aFilteredItems;
+			var fnTrimDataAfterItemCount = function () {
+					// for cases when growingthreshold may be changed runtime, we trim additional data
+					var iNonGroupItemCount = 0,
+						aTrimmedItems = [],
+						i = 0;
+					if (this._iItemCount !== aFilteredItems.length) {
+						for (; i < aFilteredItems.length; i++) {
+							if (!aFilteredItems[i]._isGroupHeader) {
+								iNonGroupItemCount++;
+							}
+
+							if (iNonGroupItemCount > this._iItemCount) {
+								break;
+							}
+
+							aTrimmedItems.push(aFilteredItems[i]);
+						}
+
+						aFilteredItems = aTrimmedItems;
+					}
+				},
+				fnAppendGroupHeaderItemsWithoutBinding = function () {
+					var aItemList = [],
+						oItem, oCurrentGroupHeaderData,
+						oGroupHeaderData = {
+							key: ""
+						};
+
+					for (var i = 0; i < aFilteredItems.length; i++) {
+						oItem = aFilteredItems[i];
+						oCurrentGroupHeaderData = this._formatGroupBy(oItem.getDateTime(), this.getGroupByType());
+
+						if (oCurrentGroupHeaderData.key != oGroupHeaderData.key) {
+							// we recreate group header items for every render run
+							// we don't want to add it to content as it is not recreated every render cycle when binding is not in
+							aItemList.push(this._createGroupHeader(oCurrentGroupHeaderData, true));
+							oGroupHeaderData = oCurrentGroupHeaderData;
+						}
+
+						aItemList.push(oItem);
+					}
+
+					return aItemList;
+				},
+				fnGetMinOrMaxFromItems = function () {
+					var oItem;
+					// first time load with no filter and search
+					if (!this._maxDate && !this._minDate) {
+						if (this.getSort() || this._isGrouped()) {
+							// find first non group item value
+							for (var i = 0; i < aItems.length; i++) {
+								oItem = aItems[i];
+								if (!oItem._isGroupHeader) {
+									this._sortOrder === SortOrder.ASCENDING ? this._minDate = oItem.getDateTime() : this._maxDate = oItem.getDateTime(); //eslint-disable-line
+									break;
+								}
+							}
+						}
+					}
+				},
+				oGroup, oConvertedDate, iGroupID, bGroupFirstItem;
+
+			// start
+			fnGetMinOrMaxFromItems.call(this);
+
+			// sort for client filtering or for usage without binding
+			if ((!this._useBinding() || !this._useModelFilter()) && this.getSort()) {
+				aItems = this._sort(aItems);
+			}
+
+			// if we don't use model filter, filter data now
+			aFilteredItems = this._useModelFilter() ? aItems : this._clientFilter(aItems);
+
+			// remove group items -> required for correct computing show more
+			aFilteredItems = aFilteredItems.filter(function (item) {
+				return !item._isGroupHeader;
+			});
+
+			this._showMore = this.getForceGrowing();
+			if (!this._showMore && this._displayShowMore()) {
+				// there are more items to display then we can => show more for both model or client filter
+				this._showMore = aFilteredItems.length > this._iItemCount;
+				// for model filter we need to take care of equality of items to show and items to display
+				// for client model this is already covered by first condition because aFilteredItems should contain
+				// all available items
+				if (!this._showMore && this._useModelFilter()) {
+					this._showMore = aFilteredItems.length === this._iItemCount && this._iItemCount < this._getMaxItemsCount();
+				}
+			}
+
+			// filter for visible items - both cases, model binding or content adding
+			aFilteredItems = aFilteredItems.filter(function (item) {
+				return item.getVisible();
+			});
+
+			fnTrimDataAfterItemCount.call(this);
+
+			this._outputItem = [];
+
+			// if we don't have binding we have to create groups ourself
+			if (this._isGrouped()) {
+				if (!this._useBinding()) {
+					aItems = fnAppendGroupHeaderItemsWithoutBinding.call(this);
+				}
+
+				// get group timeline item values  eg: 2016,2015,2014 etc
+				var aGroupItems = aItems.filter(function (oItem) {
+					return oItem._isGroupHeader;
+				});
+				this._groupCount = aGroupItems.length;
+
+				for (var i = 0; i < aGroupItems.length; i++) {
+					oGroup = aGroupItems[i];
+					//get the year from timelineitem
+					iGroupID = oGroup.getUserName();
+					// for client filtering, we want to add only groups with at least one item.
+					bGroupFirstItem = true;
+
+					oGroup._groupID = iGroupID;
+
+					for (var k = 0; k < aFilteredItems.length; k++) {
+						var item = aFilteredItems[k];
+
+						//check if it is not a group timelineitem
+						oConvertedDate = this._formatGroupBy(item.getDateTime(), this.getGroupByType());
+
+						if (oConvertedDate.key == iGroupID && !item._isGroupHeader) {
+							if (bGroupFirstItem) {
+								//add group timeline item to the outputItem array
+								this._outputItem.push(oGroup);
+								bGroupFirstItem = false;
+							}
+							item._groupID = iGroupID;
+							this._outputItem.push(item);
+						}
+					}
+				}
+
+			} else {
+				this._outputItem = jQuery.extend(true, [], aFilteredItems);
+			}
+		};
+
+		/**
+		 * maximum items either in binding (model) or in content (timeline without binding)
+		 * @returns {Number} Maximum items for timeline
+		 * @private
+		 */
+		Timeline.prototype._getMaxItemsCount = function () {
+			var oBinding = this.getBinding("content"),
+				oModel, iModelSizeLimit, iBindingLength;
+
+			if (oBinding) {
+				iBindingLength = oBinding.getLength() || 0;
+				oModel = this.getModel();
+				iModelSizeLimit = oModel && oModel.iSizeLimit;
+
+				return Math.min(iBindingLength, iModelSizeLimit || iBindingLength);
+			}
+
+			return this.getContent().length;
+		};
+
+		/**
+		 * Display custom message (if there is any)
+		 * @private
+		 */
+		Timeline.prototype._showCustomMessage = function () {
+			var bShow = !!this._customMessage,
+				$obj = this._objects.getMessageStrip().$();
+
+			this._objects.getMessageStrip().setVisible(bShow);
+			this._objects.getMessageStrip().setText(this._customMessage);
+
+			if (bShow) {
+				$obj.show();
+			} else {
+				$obj.hide();
+			}
+		};
+
+		/**
+		 * Performs expand or collapse for group
+		 * @param {string} sGroupID Collapsing (expanding) group ID
+		 * @param {boolean} bExpand Indicates whether we are expanding or collapsing.
+		 * @private
+		 * @returns {Promise} A new promise for when expansion/collapse is done
+		 */
+		Timeline.prototype._performExpandCollapse = function (sGroupID, bExpand) {
+			var that = this, //eslint-disable-line
+				$items,
+				$this = this.$(),
+				sMethod = bExpand ? "slideDown" : "slideUp",
+				ANIMATIONS_SPEED = 250;
+
+			$this.find('li[groupid="' + sGroupID + '"][nodeType="GroupHeaderBar"]').each(function (iIndex, oLi) {
+				var $li = jQuery(oLi);
+				if (!bExpand) {
+					$li.addClass("sapSuiteUiCommonsTimelineItemGroupCollapsedBar");
+				} else {
+					$li.removeClass("sapSuiteUiCommonsTimelineItemGroupCollapsedBar");
+				}
+			});
+
+			$items = $this.find('li[groupid="' + sGroupID + '"][nodeType!="GroupHeader"][nodeType!="GroupHeaderBar"]');
+
+			return new Promise(function (resolve, reject) {
+				if (that._noAnimation) {
+					if (bExpand) {
+						$items.show();
+					} else {
+						$items.hide();
+					}
+					resolve();
+				} else {
+					if (that._isVertical()) {
+						$items[sMethod](ANIMATIONS_SPEED);
+					} else {
+						$items.animate({width: 'toggle'}, 350);
+					}
+
+					$items.promise().done(function () {
+						resolve();
+					});
+				}
+			});
+		};
+
+		/**
+		 * This method is called after rendering of the item is completed
+		 * @private
+		 */
+		Timeline.prototype._itemRendered = function () {
+			// if the whole timeline is already rendered this indicates single item was invalidated
+			// in such case we need to trigger the whole timeline UI calculation
+			// most important case is double sided timeline but there may be other misproprotions
+			if (this._bRendered) {
+				this.adjustUI();
+			}
+		};
+
+		/* =========================================================== */
+		/* Keyboard handling */
+		/* =========================================================== */
+		Timeline.prototype._startItemNavigation = function (oEvent) {
+			var oItemsInfo = this._getItemsForNavigation(),
+				$content = this.$("content").get(0) || this.$("contentH").get(0);
+
+			if (!this.oItemNavigation) {
+				this.oItemNavigation = new TimelineNavigator($content, oItemsInfo.items, false, oItemsInfo.rows);
+				this.oItemNavigation.setPageSize(10);
+				this.oItemNavigation.attachEvent("AfterFocus", function (oEvent) {
+					var oFocusedDomRef = this.oItemNavigation.getItemDomRefs()[oEvent.getParameter("index")],
+						aFocusedItems = this._outputItem.filter(function (oItem) {
+							return oItem.getFocusDomRef() === oFocusedDomRef;
+						});
+					if (aFocusedItems[0]) {
+						this.fireEvent("select", {selectedItem: aFocusedItems[0]});
+					}
+				}, this);
+				this.addDelegate(this.oItemNavigation);
+			} else {
+				this.oItemNavigation.updateReferences($content, oItemsInfo.items, oItemsInfo.rows);
+			}
+			if (oItemsInfo.columns) {
+				this.oItemNavigation.setColumns(oItemsInfo.columns, false);
+			}
+		};
+
+		Timeline.prototype._getItemsForNavigation = function () {
+			var oItemsInfo = {},
+				oShowMore,
+				aTop,
+				aBottom,
+				aCurrentRow,
+				iMaxRowSize;
+			if (this._renderDblSided) {
+				if (this._isVertical()) {
+					oItemsInfo.items = this._outputItem;
+					oItemsInfo.rows = [];
+					aCurrentRow = [];
+					oItemsInfo.items.forEach(function (oItem) {
+						var $item = oItem.$(),
+							bIsLeft = $item.hasClass("sapSuiteUiCommonsTimelineItemWrapperVLeft") || $item.hasClass("sapSuiteUiCommonsTimelineItemOdd");
+						if (bIsLeft && aCurrentRow.length === 1) {
+							aCurrentRow.push(null);
+						} else if (!bIsLeft && aCurrentRow.length === 0) {
+							aCurrentRow.push(null);
+						}
+						if (aCurrentRow.length > 1) {
+							oItemsInfo.rows.push(aCurrentRow);
+							aCurrentRow = [];
+						}
+						aCurrentRow.push(oItem);
+					});
+					if (aCurrentRow.length > 0) {
+						oItemsInfo.rows.push(aCurrentRow);
+					}
+				} else {
+					aTop = [];
+					aBottom = [];
+					this._outputItem.forEach(function (oItem) {
+						if (oItem._placementLine === "top") {
+							aTop.push(oItem);
+						} else {
+							while (aBottom.length + 1 < aTop.length) {
+								aBottom.push(null);
+							}
+							aBottom.push(oItem);
+						}
+					});
+					oItemsInfo.items = this._outputItem;
+					oItemsInfo.rows = [aTop, aBottom];
+				}
+			} else {
+				oItemsInfo.items = this._outputItem;
+			}
+			oItemsInfo.items = oItemsInfo.items.map(function (oItem) {
+				return oItem.getFocusDomRef();
+			});
+			if (oItemsInfo.rows) {
+				iMaxRowSize = 0;
+				oItemsInfo.rows = oItemsInfo.rows.map(function (aRow) {
+					if (aRow.length > iMaxRowSize) {
+						iMaxRowSize = aRow.length;
+					}
+					return aRow.map(function (oItem) {
+						return oItem === null ? null : oItem.getFocusDomRef();
+					});
+				});
+				// Make sure all rows have same length.
+				oItemsInfo.rows.forEach(function (aRow) {
+					while (aRow.length < iMaxRowSize) {
+						aRow.push(null);
+					}
+				});
+			}
+			if (this._showMore) {
+				oShowMore = this._objects.getMoreButton().getFocusDomRef();
+				oItemsInfo.items.push(oShowMore);
+				if (oItemsInfo.rows) {
+					if (this._isVertical()) {
+						if (oItemsInfo.rows.length > 0) {
+							oItemsInfo.rows.push(oItemsInfo.rows[0].map(function (oValue, i, aRow) {
+								if (i === aRow.length - 1) {
+									return oShowMore;
+								} else {
+									return null;
+								}
+							}));
+						} else {
+							oItemsInfo.rows.push([oShowMore]);
+						}
+					} else {
+						oItemsInfo.rows.forEach(function (aRow, i, aArray) {
+							if (i === aArray.length - 1) {
+								aRow.push(oShowMore);
+							} else {
+								aRow.push(null);
+							}
+						});
+					}
+				}
+			}
+			return oItemsInfo;
+		};
+
+		/* =========================================================== */
+		/* Setters & getters */
+		/* =========================================================== */
+		Timeline.prototype.setShowItemFilter = function (bShowItemFilter) {
+			this.setProperty("showItemFilter", bShowItemFilter, true);
+			if (this._objects.isObjectInitialized("FilterContent")) {
+				this._setupFilterFirstPage(this._objects.getFilterContent());
+			}
+			this._objects.getFilterIcon().setVisible(bShowItemFilter || this.getShowTimeFilter());
+		};
+
+		Timeline.prototype.setShowTimeFilter = function (bShowTimeFilter) {
+			this.setProperty("showTimeFilter", bShowTimeFilter, true);
+			if (this._objects.isObjectInitialized("FilterContent")) {
+				this._setupFilterFirstPage(this._objects.getFilterContent());
+			}
+			this._objects.getFilterIcon().setVisible(bShowTimeFilter || this.getShowItemFilter());
+		};
+
+		Timeline.prototype._getFilterTitle = function () {
+			var sValue = this.getFilterTitle();
+			if (!sValue) {
+				sValue = resourceBundle.getText("TIMELINE_FILTER_ITEMS");
+			}
+			return sValue;
+		};
+
+		Timeline.prototype.getNoDataText = function () {
+			var sText = this.getProperty("noDataText");
+			if (!sText) {
+				sText = resourceBundle.getText('TIMELINE_NO_DATA');
+			}
+
+			return sText;
+		};
+
+		Timeline.prototype.setSortOldestFirst = function (bOldestFirst) {
+			this._sortOrder = bOldestFirst ? SortOrder.ASCENDING : SortOrder.DESCENDING;
+			this._objects.getSortIcon().setIcon(this._sortOrder === SortOrder.ASCENDING ?
+				"sap-icon://arrow-bottom" : "sap-icon://arrow-top");
+
+			this.setProperty("sortOldestFirst", bOldestFirst);
+		};
+
+		Timeline.prototype.setGrowingThreshold = function (growingThreshold) {
+			this.setProperty("growingThreshold", growingThreshold, true);
+			this._iItemCount = growingThreshold;
+		};
+
+		Timeline.prototype.setShowHeaderBar = function (oShowHeaderBar) {
+			this.setProperty("showHeaderBar", oShowHeaderBar, true);
+			this._objects.getHeaderBar().setVisible(oShowHeaderBar);
+		};
+
+		Timeline.prototype.setSort = function (bSort) {
+			this.setProperty("sort", bSort);
+			this._objects.getSortIcon().setVisible(bSort && this.getShowSort());
+		};
+
+		Timeline.prototype.setAxisOrientation = function (bAxisOrientation) {
+			this.setProperty("axisOrientation", bAxisOrientation);
+
+			// for axis change in runtime --> scroller ID will change, so we have to recreate scroller
+			if (this._oScroller) {
+				this._oScroller.destroy();
+				this._oScroller = null;
+			}
+		};
+
+		Timeline.prototype.setEnableDoubleSided = function (sEnableDoubleSided) {
+			this.setProperty("enableDoubleSided", sEnableDoubleSided);
+			this._renderDblSided = sEnableDoubleSided;
+		};
+
+		/**
+		 * Returns the keys of the currently applied filter criteria as an array of objects, containing
+		 * filter criteria keys (<code>key</code>) and values (<code>text</code>).
+		 * @returns {Array} List Applied filters
+		 * @public
+		 */
+		Timeline.prototype.getCurrentFilter = function () {
+			return this._currentFilterKeys.map(function (oItem) {
+				return {
+					key: oItem.key,
+					text: oItem.text || oItem.key
+				};
+			});
+		};
+
+		Timeline.prototype.setShowFilterBar = function (flag) {
+			this.setProperty("showFilterBar", flag, true);
+			this.setShowHeaderBar(flag);
+		};
+
+		Timeline.prototype.setShowSearch = function (flag) {
+			this.setProperty("showSearch", flag, true);
+			this._objects.getSearchField().setVisible(!!flag);
+		};
+
+		Timeline.prototype.setShowSort = function (bFlag) {
+			this.setProperty("showSort", bFlag, true);
+			this._objects.getSortIcon().setVisible(this.getSort() && bFlag);
+		};
+
+		/**
+		 * Sets a custom message that is displayed below the timeline's header.
+		 * @param {string} sMsg Message text.
+		 * @public
+		 */
+		Timeline.prototype.setCustomMessage = function (sMsg) {
+			this._customMessage = sMsg;
+			this._showCustomMessage();
+		};
+
+		Timeline.prototype.getHeaderBar = function () {
+			return this._objects.getHeaderBar();
+		};
+
+		Timeline.prototype.getMessageStrip = function () {
+			return this._objects.getMessageStrip();
+		};
+
+		Timeline.prototype.setContent = function (oContents) {
+			this.removeAllContent();
+			var currentGroup = 0;
+			for (var i = 0; i < oContents.length; i++) {
+				var oItem = oContents[i];
+				if (oItem instanceof TimelineItem) {
+					if (this._isGrouped()) {
+						var oGroup = this._formatGroupBy(oItem.getDateTime(), this.getGroupByType());
+						if (oGroup.key !== currentGroup.key) {
+							this._createGroupHeader(oGroup);
+							currentGroup = oGroup;
+						}
+					}
+					this.addContent(oItem);
+				}
+			}
+
+			// reset itemcount and set it again in onbeforeloading
+			this._iItemCount = 0;
+		};
+
+		Timeline.prototype.setData = function (oData) {
+			var INTERNAL_MODEL_NAME = "sapsuiteuicommonsTimelineInternalModel",
+				oInternalModel = new JSONModel(),
+				sPath, oBindOptions,
+				fnDefaultItemsFactory = function (sId, oContext) {
+					var oTimelineItem = new TimelineItem({
+						dateTime: oContext.getProperty("dateTime"),
+						icon: oContext.getProperty("icon"),
+						userName: oContext.getProperty("userName"),
+						title: oContext.getProperty("title"),
+						text: oContext.getProperty("text"),
+						filterValue: oContext.getProperty("filterValue")
+					});
+
+					if (oContext.getProperty("content")) {
+						oTimelineItem.setEmbeddedControl(oContext.getProperty("content"));
+					}
+					return oTimelineItem;
+				},
+				fnBuildPath = function (sPath, sModelName) {
+					var sCompletePath = sPath;
+					if (sModelName) {
+						sCompletePath = sModelName + ">" + sPath;
+					}
+					return sCompletePath;
+				};
+
+			if (typeof oData === "undefined") {
+				return this;
+			}
+
+			sPath = fnBuildPath("/", INTERNAL_MODEL_NAME);
+			oInternalModel.setData(oData);
+
+			this.setModel(oInternalModel, INTERNAL_MODEL_NAME);
+			this.setProperty("data", oData, true);
+
+			oBindOptions = {
+				path: sPath,
+				sorter: this._getDefaultSorter('dateTime', this.getSortOldestFirst()),
+				factory: jQuery.proxy(fnDefaultItemsFactory, this)
+			};
+
+			if (this._isGrouped()) {
+				oBindOptions.groupHeaderFactory = jQuery.proxy(this._getGroupHeader, this);
+			}
+
+			this.bindAggregation("content", oBindOptions);
+			return this;
+		};
+
+		Timeline.prototype.setCustomFilter = function (oFilter) {
+			if (oFilter) {
+				this._customFilter = true;
+				this.setAggregation("customFilter", oFilter, true);
+			} else {
+				this._customFilter = false;
+			}
+		};
+
+		Timeline.prototype.getSuspendSocialFeature = function () {
+			return this._suspenseSocial;
+		};
+
+		Timeline.prototype.setSuspendSocialFeature = function (bSuspense) {
+			this._suspenseSocial = bSuspense;
+			if (!this.getEnableSocial()) {
+				return;
+			}
+
+			var oItems = this.getContent();
+			for (var i = 0; i < oItems.length; i++) {
+				oItems[i]._objects.getReplyLink().setEnabled(!bSuspense);
+			}
+
+			this.invalidate();
+		};
+
+		Timeline.prototype.updateFilterList = function () {
+			this.updateAggregation("filterList");
+			this._setFilterList();
+		};
+
+		Timeline.prototype.setGroupByType = function (sType) {
+			var oBindingInfo = this.getBindingInfo("content");
+			this.setProperty("groupByType", sType);
+
+			if (oBindingInfo) {
+				this._bindGroupingAndSorting(oBindingInfo);
+				this.updateAggregation("content");
+			}
+		};
+
+		/* =========================================================== */
+		/* Backward compatibility */
+		/* =========================================================== */
+		Timeline.prototype.getGroup = function () {
+			return this.getGroupByType() !== "None";
+		};
+
+		Timeline.prototype.setGroup = function (bGroup) {
+			if (bGroup && this.getGroupByType() === TimelineGroupType.None) {
+				this.setGroupByType(TimelineGroupType.Year);
+			}
+
+			if (!bGroup) {
+				this.setGroupByType(TimelineGroupType.None);
+			}
+		};
+
+		Timeline.prototype.setGrowing = function (bGrowing) {
+			if (!bGrowing) {
+				this.setGrowingThreshold(0);
+			}
+		};
+
+		Timeline.prototype.getGrowing = function (bGrowing) {
+			return this.getGrowingThreshold() !== 0;
+		};
+
+		Timeline.prototype.setEnableBackendFilter = function (sBackEndFilter) {
+			this.setProperty("enableModelFilter", sBackEndFilter);
+		};
+
+		Timeline.prototype.getEnableBackendFilter = function () {
+			return this.getProperty("enableModelFilter");
+		};
+
+		/* =========================================================== */
+		/* Helper methods */
+		/* =========================================================== */
+		Timeline.prototype._isGrouped = function () {
+			return (this.getGroupByType() !== TimelineGroupType.None || this._fnCustomGroupBy) &&
+				(this.getGroupBy() !== "");
+		};
+
+		Timeline.prototype._lazyLoading = function () {
+			return this.getEnableScroll() && this.getLazyLoading();
+		};
+
+		Timeline.prototype._loadAllData = function (useBinding) {
+			// we load all possible data when use have modelfilter OFF -> filtering above only client data
+			return !this._useModelFilter(useBinding);
+		};
+
+		Timeline.prototype._isVertical = function () {
+			return TimelineAxisOrientation.Vertical === this.getAxisOrientation();
+		};
+
+		Timeline.prototype._displayShowMore = function () {
+			return this.getForceGrowing() || (this.getGrowingThreshold() !== 0 && !this._lazyLoading());
+		};
+
+		Timeline.prototype._useGrowing = function () {
+			return this.getForceGrowing() || this.getGrowingThreshold() !== 0 || this._lazyLoading();
+		};
+
+		Timeline.prototype._isMaxed = function () {
+			return this._iItemCount >= this._getMaxItemsCount();
+		};
+
+		Timeline.prototype._useModelFilter = function (useBinding) {
+			return this.getEnableModelFilter() && (useBinding || this._useTemplateBinding());
+		};
+
+		Timeline.prototype._scrollingFadeout = function (useBinding) {
+			return this.getScrollingFadeout() !== ScrollingFadeout.None && this.getEnableScroll();
+		};
+
+		Timeline.prototype._setBusy = function (bBusy) {
+			if (this.getEnableBusyIndicator()) {
+				this.setBusy(bBusy);
+			}
+		};
+
+		Timeline.prototype._fireSelectionChange = function (oParams) {
+			return this.fireEvent("filterSelectionChange", oParams, true);
+		};
+
+		Timeline.prototype._isLeftAlignment = function () {
+			return this.getAlignment() === TimelineAlignment.Left || this.getAlignment() === TimelineAlignment.Top;
+		};
+
+		Timeline.prototype._useBinding = function (bTemplateBinding) {
+			return this.getBindingInfo("content") != null;
+		};
+
+		Timeline.prototype._useTemplateBinding = function () {
+			var oContent = this.getBindingInfo("content");
+			return oContent && oContent.template != null;
+		};
+
+		Timeline.prototype._useAutomaticHeight = function () {
+			return this.getTextHeight().toLowerCase() === "automatic" && !this._isVertical();
+		};
+
+		/**
+		 * Returns number of items which are to be rendered.
+		 * @returns {Number} The number of items
+		 * @private
+		 */
+		Timeline.prototype._getItemsCount = function () {
+			return this._outputItem ? this._outputItem.length : 0;
+		};
+
+		TimelineRenderManager.extendTimeline(Timeline);
+
+		return Timeline;
 	}
-};
+);

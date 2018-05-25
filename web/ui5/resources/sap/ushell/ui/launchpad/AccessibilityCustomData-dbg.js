@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 // Provides control sap.ushell.ui.shell.ShellHeadItem.
 sap.ui.define(['jquery.sap.global', 'sap/ui/core/CustomData', 'sap/ushell/library'],

@@ -18,6 +18,7 @@ jQuery.sap.declare("sap.apf.core.metadataProperty");
 		var that = this;
 		var bKey = false;
 		var bParameterEntitySetKeyProperty = false;
+
 		// Public functions
 		/**
 		 * @description If this property is a key, then a boolean true is returned. Otherwise, boolean false is returned. 
@@ -44,6 +45,12 @@ jQuery.sap.declare("sap.apf.core.metadataProperty");
 			}
 		};
 
+		/**
+		 * jQuery extend does not work for deepCopy
+		 */
+		this.clone = function() {
+			return new sap.apf.core.MetadataProperty(oAttributes);
+		};
 		// Private functions
 		/**
 		 * @private

@@ -4,18 +4,19 @@
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
 jQuery.sap.declare("sap.apf.ui.instance");
-//FIXME: Lazy load print only when required
+//Lazy load print only when required-FIXME
 jQuery.sap.require('sap.apf.ui.utils.print');
 jQuery.sap.require('sap.apf.ui.utils.constants');
-//FIXME: Load vizhelper within each representation, where it is used.
+//Load vizhelper within each representation, where it is used.-FIXME
 //jQuery.sap.require('sap.apf.ui.representations.utils.vizHelper');
-//FIXME: Lazy load representations when required
+//Lazy load representations when required-FIXME
 jQuery.sap.require('sap.apf.ui.representations.lineChart');
 jQuery.sap.require('sap.apf.ui.representations.columnChart');
 jQuery.sap.require('sap.apf.ui.representations.scatterPlotChart');
 jQuery.sap.require('sap.apf.ui.representations.stackedColumnChart');
 jQuery.sap.require('sap.apf.ui.representations.table');
 jQuery.sap.require('sap.apf.ui.representations.pieChart');
+jQuery.sap.require('sap.apf.ui.representations.donutChart');
 jQuery.sap.require('sap.apf.ui.representations.percentageStackedColumnChart');
 jQuery.sap.require('sap.apf.ui.representations.bubbleChart');
 jQuery.sap.require('sap.apf.ui.representations.barChart');
@@ -35,12 +36,13 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 	function setHeightForFilterAndFooter(oContext, oFilter, oStyleClassNames) {
 		var oLayoutView = oContext.getLayoutView();
 		var subHeaderInstance = oLayoutView.byId("subHeader");
-		subHeaderInstance.setHeight("");
 		subHeaderInstance.addContent(oFilter);
 		oFilter.addEventDelegate({
 			onAfterRendering : function() {
-				subHeaderInstance.addStyleClass(oStyleClassNames);
+				subHeaderInstance.setBusy(false);
 				if (oFilter instanceof sap.ui.comp.smartfilterbar.SmartFilterBar) {
+					subHeaderInstance.setHeight("");
+					subHeaderInstance.addStyleClass(oStyleClassNames);
 					if (!oFilter.getFilterBarExpanded() || oFilter.getFilters().length === 0) {
 						oFilter.addStyleClass("smartFilterBar"); //style for SFB in case of no visible filters
 					} else {
@@ -49,6 +51,9 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 				}
 			}
 		});
+	}
+	function removeBusyIndicatorFromSubHeader(oContext) {
+		oContext.getLayoutView().byId("subHeader").setBusy(false);
 	}
 	sap.apf.ui.Instance = function(oInject) {
 		oInject.uiApi = this;
@@ -60,10 +65,20 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 		var oFacetFilterView, oSmartFilterBarView;
 		var apfLocation = oCoreApi.getUriGenerator().getApfLocation();
 		this.oEventCallbacks = {};
+		var application;
+		var applicationLayout;
+
 		//sap.ui.getCore().loadLibrary('sap.viz');
 		jQuery.sap.includeStyleSheet(apfLocation + "resources/css/apfUi.css", "apfCss");
 		jQuery.sap.includeStyleSheet(apfLocation + "resources/css/apfPrint.css", "printCss");
 		jQuery("#printCss").attr("media", "print"); // @comment : Doesn't Support adding attribute
+		/**
+		 * @description Get add analysis step button
+		 * @returns {sap.m.Button} Button
+		 */
+		this.getAddAnalysisStepButton = function(){
+			return this.getAnalysisPath().getCarousel().addButton;
+		};
 		/**
 		 *@description Getter for Analysis Path layout
 		 *@see sap.apf.ui.reuse.view.analysisPath
@@ -111,21 +126,31 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 		};
 		/**
 		 *@memberOf sap.apf.Api#addMasterFooterContent
-		 *@description Calls the updatePath with proper callback for UI. 
-		 * 				It also refreshes the steps either from the active step or 
+		 *@description Calls the updatePath with proper callback for UI.
+		 * 				It also refreshes the steps either from the active step or
 		 * 				all the steps depending on the boolean value passed.
-		 *@param {boolean} 
+		 *@param {boolean}
 		 */
 		this.selectionChanged = function(bRefreshAllSteps) {
+			var nActiveStepIndex;
+
+			function updateOpenInButtonWhenNoStepIsActive() {
+				if (nActiveStepIndex === -1 && applicationLayout) {
+					applicationLayout.getController().enableDisableOpenIn();
+				}
+			}
+			
+			nActiveStepIndex = oCoreApi.getSteps().indexOf(oCoreApi.getActiveStep());
 			if (bRefreshAllSteps) {
 				this.getAnalysisPath().getController().refresh(0);
 			} else {
-				var nActiveStepIndex = oCoreApi.getSteps().indexOf(oCoreApi.getActiveStep());
 				this.getAnalysisPath().getController().refresh(nActiveStepIndex + 1);
 			}
 			oCoreApi.updatePath(this.getAnalysisPath().getController().callBackForUpdatePath.bind(this.getAnalysisPath().getController()));
+			updateOpenInButtonWhenNoStepIsActive();
+			
 		};
-		var applicationLayout;
+		
 		/**
 		 *@class view
 		 *@name view
@@ -137,13 +162,13 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 		 *@description returns app
 		 *@return Application
 		 */
-		var application = new sap.m.App().addStyleClass("sapApf");
 		var bIsAppLayoutCreated = false;
-		this.createApplicationLayout = function() {
+		this.createApplicationLayout = function(app) {
 			// Ensure layout page is added only once
 			if (!bIsAppLayoutCreated) {
-				application.addPage(this.getLayoutView());
+				app.addPage(this.getLayoutView());
 				bIsAppLayoutCreated = true;
+				application = app;
 			}
 			return application;
 		};
@@ -197,27 +222,62 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 			return this.oEventCallbacks[sEventType];
 		};
 		/**
+		 * @name sap.apf.ui#get custom format exit object
+		 * @member of sap.apf.ui
+		 * @description get custom format exit object from oInject
+		 */
+		this.getCustomFormatExit = function() {
+			return oInject.exits;
+		};
+		/**
+		 * @name sap.apf.ui#set custom format call back to exit object
+		 * @member of sap.apf.ui
+		 * @param {function} fnCallback that will be added to the exit object	
+		 * @description set function callback to  the exit object
+		 */
+		this.setCustomFormatExit = function(fnCallback) {
+			var oCutsomFormatExits = this.getCustomFormatExit();
+			oCutsomFormatExits.customFormat = fnCallback;
+		};
+		/**
 		 * @name sap.apf.ui#drawSmartFilterBar
 		 * @member of sap.apf.ui
-		 * @param {Object} subHeaderInstance - Pass the sub header instance to add the smart filter bar
+		 * @param {Object} smartFilterBarConfiguration - Configuration object of SmartFilterBar	
 		 * @description draws smart filter bar on layout subHeader.
 		 */
-		this.drawSmartFilterBar = function() {
+		this.drawSmartFilterBar = function(smartFilterBarConfiguration) {
 			var oSelf = this;
-			oCoreApi.getSmartFilterbarDefaultFilterValues().done(function(oControlConfiguration) {
-				oSmartFilterBarView = sap.ui.view({
-					viewName : "sap.apf.ui.reuse.view.smartFilterBar",
-					type : sap.ui.core.mvc.ViewType.JS,
-					viewData : {
-						oCoreApi : oCoreApi,
-						oUiApi : oSelf,
-						oSmartFilterBarConfiguration : oCoreApi.getSmartFilterBarConfiguration(),
-						controlConfiguration : oControlConfiguration,
-						parent : oSelf.getLayoutView()
-					}
+
+			function drawSmartFilterBarWithDefaultValues(sfbConfiguration) {
+				oCoreApi.getSmartFilterbarDefaultFilterValues().done(function(oControlConfiguration) {
+					oSmartFilterBarView = sap.ui.view({
+						viewName : "sap.apf.ui.reuse.view.smartFilterBar",
+						type : sap.ui.core.mvc.ViewType.JS,
+						viewData : {
+							oCoreApi : oCoreApi,
+							oUiApi : oSelf,
+							oSmartFilterBarConfiguration : sfbConfiguration,
+							controlConfiguration : oControlConfiguration,
+							parent : oSelf.getLayoutView()
+						}
+					});
+					setHeightForFilterAndFooter(oSelf, oSmartFilterBarView.byId("idAPFSmartFilterBar"), "smartFilterBarContainer");
 				});
-				setHeightForFilterAndFooter(oSelf, oSmartFilterBarView.byId("idAPFSmartFilterBar"), "smartFilterBarContainer");
-			});
+			}
+
+			if (smartFilterBarConfiguration) {
+				if (smartFilterBarConfiguration.entitySet) {
+					drawSmartFilterBarWithDefaultValues(smartFilterBarConfiguration);
+				} else {
+					oCoreApi.getMetadata(smartFilterBarConfiguration.service).done(function(metadata){
+						smartFilterBarConfiguration.entitySet = metadata.getEntitySetByEntityType(smartFilterBarConfiguration.entityType);
+						delete smartFilterBarConfiguration.entityType;
+						drawSmartFilterBarWithDefaultValues(smartFilterBarConfiguration);
+					});
+				}
+			} else {
+				removeBusyIndicatorFromSubHeader(oSelf);
+			}
 		};
 		/**
 		 * @name sap.apf.ui#drawFacetFilter
@@ -226,7 +286,7 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 		 * @description draws facet filter on layout subHeader.
 		 */
 		this.drawFacetFilter = function(aConfiguredFilters) {
-			if (aConfiguredFilters && aConfiguredFilters.length) {
+			if (aConfiguredFilters.length > 0) {
 				oFacetFilterView = sap.ui.view({
 					viewName : "sap.apf.ui.reuse.view.facetFilter",
 					type : sap.ui.core.mvc.ViewType.JS,
@@ -237,7 +297,9 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 						oStartFilterHandler : oStartFilterHandler
 					}
 				});
-				setHeightForFilterAndFooter(this, oFacetFilterView.byId("idAPFFacetFilter"), "facetFilterHeight");
+				setHeightForFilterAndFooter(this, oFacetFilterView.byId("idAPFFacetFilter"));
+			} else {
+				removeBusyIndicatorFromSubHeader(this);
 			}
 		};
 		/**
@@ -268,6 +330,18 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 		};
 		/**
 		 * @function
+		 * @name sap.apf.ui#getSmartFilterForPrint
+		 * @memberOf sap.apf.ui
+		 * @description Currently used by printHelper to get formatted smart filter values.
+		 * @returns smart filter control from which selected values(formatted) are used for printing
+		 * */
+		this.getSmartFilterForPrint = function() {
+			if (oSmartFilterBarView) {
+				return oSmartFilterBarView.byId("idAPFSmartFilterBar");
+			}
+		};
+		/**
+		 * @function
 		 * @name sap.apf.ui#handleStartup
 		 * @memberOf sap.apf.ui
 		 * @description It is called during start of APF.
@@ -278,30 +352,37 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 		this.handleStartup = function(deferredMode) {
 			var that = this;
 			var promiseStartup = jQuery.Deferred();
-			if (oCoreApi.getSmartFilterBarConfiguration()) {
-				that.drawSmartFilterBar();
-			}
-			deferredMode.done(function(mode) {
-				var promiseStartFilters = oStartFilterHandler.getStartFilters();
-				promiseStartFilters.done(function(aConfiguredFilters) {
-					that.contextChanged();
-					if (!oCoreApi.getSmartFilterBarConfiguration()) {
-						that.drawFacetFilter(aConfiguredFilters);
-					}
-					if (mode.navigationMode === "backward") {
-						that.getAnalysisPath().getController().bIsBackNavigation = true; //FIXME Boolean to set busy indicator to false
-						oCoreApi.updatePath(that.getAnalysisPath().getController().callBackForUpdatePath.bind(that.getAnalysisPath().getController()));
-						that.getAnalysisPath().getController().setPathTitle();
-					}
-					if (mode.navigationMode === "forward") {
-						if (oCoreApi.getStartParameterFacade().getSteps()) {
-							var stepId = oCoreApi.getStartParameterFacade().getSteps()[0].stepId;
-							var repId = oCoreApi.getStartParameterFacade().getSteps()[0].representationId;
-							var callback = that.getAnalysisPath().getController().callBackForUpdatePathAndSetLastStepAsActive.bind(that.getAnalysisPath().getController());
-							oCoreApi.createFirstStep(stepId, repId, callback);
+			oCoreApi.getSmartFilterBarConfigurationAsPromise().done(function(smartFilterBarConfiguration) {
+				if (smartFilterBarConfiguration) {
+					that.drawSmartFilterBar(smartFilterBarConfiguration);
+				}
+				deferredMode.done(function(mode) {
+					var promiseStartFilters = oStartFilterHandler.getStartFilters();
+					promiseStartFilters.done(function(aConfiguredFilters) { //visible filters are returned in the callback
+						that.contextChanged();
+						if (!smartFilterBarConfiguration) {
+							that.drawFacetFilter(aConfiguredFilters);
 						}
-					}
-					promiseStartup.resolve();
+						if (mode.navigationMode === "backward") {
+							that.getAnalysisPath().getController().bIsBackNavigation = true; //Boolean to set busy indicator to false-FIXME
+							oCoreApi.updatePath(that.getAnalysisPath().getController().callBackForUpdatePath.bind(that.getAnalysisPath().getController()));
+							that.getAnalysisPath().getController().setPathTitle();
+						}
+						if (mode.navigationMode === "forward") {
+							if (oCoreApi.getStartParameterFacade().getSteps()) {
+								var stepId = oCoreApi.getStartParameterFacade().getSteps()[0].stepId;
+								var repId = oCoreApi.getStartParameterFacade().getSteps()[0].representationId;
+								var callback = that.getAnalysisPath().getController().callBackForUpdatePathAndSetLastStepAsActive.bind(that.getAnalysisPath().getController());
+								oCoreApi.createFirstStep(stepId, repId, callback);
+							}
+						}
+						//Initialize Message Handler and set callback for message handling
+						var oMessageHandlerView = that.getNotificationBar();
+						that.getLayoutView().byId("applicationPage").addContent(oMessageHandlerView);
+						var fnCallbackMessageHandling = oMessageHandlerView.getController().showMessage;
+						oCoreApi.setCallbackForMessageHandling(fnCallbackMessageHandling.bind(oMessageHandlerView.getController()));
+						promiseStartup.resolve();
+					});
 				});
 			});
 			return promiseStartup.promise();
@@ -314,43 +395,44 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 		this.destroy = function() {
 			oFacetFilterView = undefined;
 			oSmartFilterBarView = undefined;
-			this.getAnalysisPath().getToolbar().getController().oPrintHelper = undefined;
-			this.getAnalysisPath().getCarousel().dndBox = undefined;
-			closeDialogs(this);
+			if (analysisPath) {
+				this.getAnalysisPath().getToolbar().getController().oPrintHelper = undefined;
+				this.getAnalysisPath().getCarousel().dndBox = undefined;
+				// Dialogs from Tool Bar control
+				var toolbarController = this.getAnalysisPath().getToolbar().getController();
+				checkAndCloseDialog(toolbarController.saveDialog);
+				checkAndCloseDialog(toolbarController.newOpenDilog);
+				checkAndCloseDialog(toolbarController.newDialog);
+				checkAndCloseDialog(toolbarController.delConfirmDialog);
+				checkAndCloseDialog(toolbarController.confirmDialog);
+				checkAndCloseDialog(toolbarController.confrimLogoffDialog);
+				checkAndCloseDialog(toolbarController.errorMsgDialog);
+				checkAndCloseDialog(toolbarController.noPathAddedDialog);
+				//Selection Dialogs
+				if (toolbarController.deleteAnalysisPath !== undefined) {
+					checkAndCloseDialog(toolbarController.deleteAnalysisPath.getController().oDialog);
+				}
+				if (toolbarController.pathGallery !== undefined) {
+					checkAndCloseDialog(toolbarController.pathGallery.getController().oDialog);
+				}
+				// Dialogs from Step Gallery control
+				var stepGalleryController = this.getAnalysisPath().getCarousel().getStepGallery().getController();
+				checkAndCloseDialog(stepGalleryController.oHierchicalSelectDialog);
+			}
+			if (stepContainer) {
+				// Dialogs from Step Container control
+				var stepContainerController = this.getStepContainer().getController();
+				checkAndCloseDialog(stepContainerController.selectionDisplayDialog);
+				//Function call for View Settings Dialog
+				viewDialogClose(this);
+			}
 		};
-		function closeDialogs(self) {
-			// Dialogs from Tool Bar control
-			var toolbarController = self.getAnalysisPath().getToolbar().getController();
-			var stepGalleryController = self.getAnalysisPath().getCarousel().getStepGallery().getController();
-			var setpToolbarController = self.getStepContainer().getController().getView().getStepToolbar().getController();
-			checkAndCloseDialog(toolbarController.saveDialog);
-			checkAndCloseDialog(toolbarController.newOpenDilog);
-			checkAndCloseDialog(toolbarController.newDialog);
-			checkAndCloseDialog(toolbarController.delConfirmDialog);
-			checkAndCloseDialog(toolbarController.confirmDialog);
-			checkAndCloseDialog(toolbarController.confrimLogoffDialog);
-			checkAndCloseDialog(toolbarController.errorMsgDialog);
-			checkAndCloseDialog(toolbarController.noPathAddedDialog);
-			checkAndCloseDialog(stepGalleryController.oHierchicalSelectDialog);
-			checkAndCloseDialog(setpToolbarController.selectionDisplayDialog);
-			//Selection Dialogs
-			if (toolbarController.deleteAnalysisPath !== undefined) {
-				checkAndCloseDialog(toolbarController.deleteAnalysisPath.getController().oDialog);
-			}
-			if (toolbarController.pathGallery !== undefined) {
-				checkAndCloseDialog(toolbarController.pathGallery.getController().oDialog);
-			}
-			//Function call for View Settings Dialog
-			viewDialogClose(self);
-		}
 		function checkAndCloseDialog(dialog) {
 			if (dialog !== undefined) {
 				if (dialog instanceof sap.m.ViewSettingsDialog) {
 					dialog.destroy();
-				} else {
-					if (dialog.isOpen()) {
-						dialog.close();
-					}
+				} else if (dialog.isOpen()) {
+					dialog.close();
 				}
 			}
 		}
@@ -358,11 +440,11 @@ jQuery.sap.require('sap.apf.ui.representations.lineChartWithTimeAxis');
 			var bIsActiveStep = false;
 			var bIsSelectedRepresentatioin = false;
 			var selectedRepresentation;
-			if (self.getStepContainer().getController().oCoreApi.getActiveStep() !== undefined) {
+			if (self.getStepContainer().getViewData().oCoreApi.getActiveStep() !== undefined) {
 				bIsActiveStep = true;
 			}
 			if (bIsActiveStep) {
-				selectedRepresentation = self.getStepContainer().getController().oCoreApi.getActiveStep().getSelectedRepresentation();
+				selectedRepresentation = self.getStepContainer().getViewData().oCoreApi.getActiveStep().getSelectedRepresentation();
 				if (selectedRepresentation !== undefined) {
 					bIsSelectedRepresentatioin = true;
 				}

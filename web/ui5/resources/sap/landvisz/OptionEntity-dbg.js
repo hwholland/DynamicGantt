@@ -59,7 +59,7 @@ jQuery.sap.require("sap.landvisz.OptionSource");
  * @class
  * Options for solution entities
  * @extends sap.landvisz.OptionSource
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public

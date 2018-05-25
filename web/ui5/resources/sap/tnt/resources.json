@@ -501,27 +501,7 @@
 		},
 		{
 			"name": "messagebundle.properties",
-			"module": "sap/tnt/messagebundle.properties",
-			"locale": "",
-			"raw": "messagebundle.properties"
-		},
-		{
-			"name": "messagebundle_en.properties",
-			"module": "sap/tnt/messagebundle_en.properties",
-			"locale": "en",
-			"raw": "messagebundle.properties"
-		},
-		{
-			"name": "messagebundle_en_US_sappsd.properties",
-			"module": "sap/tnt/messagebundle_en_US_sappsd.properties",
-			"locale": "en_US_sappsd",
-			"raw": "messagebundle.properties"
-		},
-		{
-			"name": "messagebundle_en_US_saptrc.properties",
-			"module": "sap/tnt/messagebundle_en_US_saptrc.properties",
-			"locale": "en_US_saptrc",
-			"raw": "messagebundle.properties"
+			"module": "sap/tnt/messagebundle.properties"
 		},
 		{
 			"name": "resources.json"

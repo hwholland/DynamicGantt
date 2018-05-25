@@ -1,32 +1,32 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.suite.ui.microchart.Example.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define([
+	"jquery.sap.global", "./library", "sap/ui/core/Control", "sap/m/Size", "sap/ui/Device", "sap/ui/core/ResizeHandler"
+], function(jQuery, library, Control, Size, Device, ResizeHandler) {
 	"use strict";
 
 	/**
 	 * Constructor for a new ColumnMicroChart control.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
 	 * Compares different values which are represented as vertical bars. This control replaces the deprecated sap.suite.ui.commons.ColumnMicroChart.
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
 	 * @alias sap.suite.ui.microchart.ColumnMicroChart
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+	 * @ui5-metamodel This control will also be described in the UI5 (legacy) designtime metamodel
 	 */
 	var ColumnMicroChart = Control.extend("sap.suite.ui.microchart.ColumnMicroChart", /** @lends sap.suite.ui.microchart.ColumnMicroChart.prototype */ {
 		metadata: {
@@ -57,7 +57,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			events : {
 
 				/**
-				 * The event is fired when the user chooses the column chart.
+				 * The event is triggered when the chart is pressed.
 				 */
 				press : {}
 			},
@@ -113,8 +113,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	/**
-	 * Handler for the core's init event. In order for the control to be rendered only if all themes are loaded
-	 * and everything is properly initialized, we attach a theme check in here.
+	 * Handler for the core's init event. The control will only be rendered if all themes are loaded
+	 * and everything is properly initialized. We attach a theme check here.
 	 *
 	 * @private
 	 */
@@ -126,8 +126,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	/**
-	 * The ColumnMicroChart is not being rendered until the theme was applied.
-	 * If the theme is applied, rendering starts by the control itself.
+	 * The chart will only be rendered if the theme is applied.
+	 * If this is the case, the control invalidates itself.
 	 *
 	 * @private
 	 */
@@ -149,10 +149,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 
 	ColumnMicroChart.prototype.onAfterRendering = function() {
 		if (this._sChartResizeHandlerId) {
-			sap.ui.core.ResizeHandler.deregister(this._sChartResizeHandlerId);
+			ResizeHandler.deregister(this._sChartResizeHandlerId);
 		}
 
-		this._sChartResizeHandlerId = sap.ui.core.ResizeHandler.register(jQuery.sap.domById(this.getId()),  jQuery.proxy(this._calcColumns, this));
+		this._sChartResizeHandlerId = ResizeHandler.register(jQuery.sap.domById(this.getId()),  jQuery.proxy(this._calcColumns, this));
 		this._fChartWidth = undefined;
 		this._fChartHeight = undefined;
 		this._aBars = [];
@@ -182,7 +182,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	ColumnMicroChart.prototype.exit = function() {
-		sap.ui.core.ResizeHandler.deregister(this._sChartResizeHandlerId);
+		ResizeHandler.deregister(this._sChartResizeHandlerId);
 	};
 
 	/**
@@ -311,9 +311,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			iMinBarWidth = 1;
 		}
 		var iNumMargins = iNumBars - 1;
+		var bRtl = sap.ui.getCore().getConfiguration().getRTL();
 		if (iNumBars * iMinBarWidth + iNumMargins >= iWidth) {
 			$this.hide();
-		} else if (parseFloat($this.find(".sapSuiteClMCBar:last").css("margin-left")) < 1) {
+		} else if (parseFloat($this.find(".sapSuiteClMCBar:last").css("margin-" + (bRtl ? "right" : "left"))) < 1) {
 			//divide the space equally among the bars
 			$this.find(".sapSuiteClMCBar:not(:first)").css("margin-left", "1px");
 			$this.find(".sapSuiteClMCBar").css("width", (((iWidth - iNumMargins) / iNumBars)));
@@ -401,13 +402,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			if (i < iVisibleColumnsNum) {
 				aBars[i].width = iColumnWidthPercent + "%";
 				if (i > 0) {
-					aBars[i]["margin-left"] = iMarginWidthPercent + "%";
+					var bRtl = sap.ui.getCore().getConfiguration().getRTL();
+					aBars[i]["margin-" + (bRtl ? "right" : "left")] = iMarginWidthPercent + "%";
 				}
 			} else {
 				aBars[i].display = "none";
 			}
 		}
-		
+
 		aBars.overflow = iVisibleColumnsNum != iColumnsNum;
 	};
 
@@ -485,7 +487,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	ColumnMicroChart.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
+		Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
 		if (this.hasListeners("press")) {
 			this.$().attr("tabindex", 0).addClass("sapSuiteUiMicroChartPointer");
 		}
@@ -493,7 +495,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	ColumnMicroChart.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
+		Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
 		if (!this.hasListeners("press")) {
 			this.$().removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer");
 		}
@@ -504,6 +506,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		if (sColor) {
 			return this._oRb.getText(("SEMANTIC_COLOR_" + sColor).toUpperCase());
 		}
+	};
+
+	ColumnMicroChart.prototype.setSize = function(size) {
+		if (this.getSize() !== size) {
+			if (size === Size.Responsive) {
+				this.setProperty("isResponsive", true, true);
+			} else {
+				this.setProperty("isResponsive", false, true);
+			}
+			this.setProperty("size", size, false);
+		}
+		return this;
 	};
 
 	ColumnMicroChart.prototype.getAltText = function() {
@@ -554,7 +568,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return sAltText;
 	};
 
-	ColumnMicroChart.prototype.getTooltip_AsString  = function() {
+	ColumnMicroChart.prototype.getTooltip_AsString  = function() { //eslint-disable-line
 		var oTooltip = this.getTooltip();
 		var sTooltip = this.getAltText();
 
@@ -567,19 +581,29 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return oTooltip ? oTooltip : "";
 	};
 
+	/**
+	 * Returns the translated accessibility control type. It describes the type of the MicroChart control.
+	 *
+	 * @returns {string} The translated accessibility control type
+	 * @private
+	 */
+	ColumnMicroChart.prototype._getAccessibilityControlType = function() {
+		return this._oRb.getText("ACC_CTR_TYPE_COLUMNMICROCHART");
+	};
+
 	ColumnMicroChart.prototype.ontap = function(oEvent) {
-		if (sap.ui.Device.browser.edge) {
+		if (Device.browser.edge) {
 			this.onclick(oEvent);
 		}
 	};
 
 	ColumnMicroChart.prototype.onclick = function(oEvent) {
 		if (!this.fireBarPress(oEvent)) {
-			if (sap.ui.Device.browser.internet_explorer || sap.ui.Device.browser.edge) {
+			if (Device.browser.msie || Device.browser.edge) {
 				this.$().focus();
 			}
 			this.firePress();
-	    }
+		}
 	};
 
 	ColumnMicroChart.prototype.onkeydown = function(oEvent) {
@@ -632,7 +656,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 				oCmcData.firePress();
 				oEvent.preventDefault();
 				oEvent.stopPropagation();
-				if (sap.ui.Device.browser.internet_explorer) {
+				if (Device.browser.msie) {
 					oBar.focus();
 				}
 				return true;
@@ -708,6 +732,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			this.$().removeAttr("title");
 		}
 	};
+
+	library._overrideGetAccessibilityInfo(ColumnMicroChart.prototype);
 
 	return ColumnMicroChart;
 });

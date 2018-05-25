@@ -4,14 +4,16 @@
         (c) Copyright 2009-2015 SAP SE. All rights reserved
     
  */
-/* global File */
 // Provides control sap.ui.vk.Viewer.
 sap.ui.define([
-	"jquery.sap.global", "./library", "sap/ui/core/Control", "./Scene", "./ContentResource", "sap/ui/layout/Splitter", "sap/ui/layout/SplitterLayoutData",
-	"./FlexibleControl", "./FlexibleControlLayoutData", "sap/ui/core/ResizeHandler", "./DvlException", "./Messages", "./ProgressIndicator", "./Notifications"
-], function(jQuery, library, Control, Scene, ContentResource, Splitter, SplitterLayoutData,
-	FlexibleControl, FlexibleControlLayoutData, ResizeHandler, DvlException, Messages, ProgressIndicator, Notifications) {
-
+	"jquery.sap.global", "./library", "sap/ui/core/Control", "./Scene", "./ContentResource",
+	"./FlexibleControl", "sap/ui/layout/VerticalLayout", "sap/ui/core/ResizeHandler", "./DvlException", "./Messages", "./ProgressIndicator", "./Notifications",
+	"./ContentConnector", "./ViewStateManager", "./dvl/ContentManager"
+], function(
+	jQuery, library, Control, Scene, ContentResource,
+	FlexibleControl, VerticalLayout, ResizeHandler, DvlException, Messages, ProgressIndicator, Notifications,
+	ContentConnector, ViewStateManager, DvlContentManager
+) {
 	"use strict";
 
 	var log = jQuery.sap.log;
@@ -24,38 +26,14 @@ sap.ui.define([
 	sap.ui.lazyRequire("sap.ui.vk.Viewport");
 
 	/**
-	 * Constructor for a new Viewer. Besides the settings documented below, Viewer itself supports the following special settings:
-	 * <ul>
-	 *   <li>
-	 *     <code>runtimeSettings</code>: <i><code>object</code></i> Optional Emscripten runtime module settings. A JSON object with the
-	 *     following properties:
-	 *     <ul>
-	 *       <li><code>totalMemory</code>: <i><code>int</code></i> (default: 128 * 1024 * 1024) size of Emscripten module memory in bytes.</li>
-	 *       <li><code>logElementId</code>: <i><code>string</code></i> ID of a textarea DOM element to write the log to.</li>
-	 *       <li><code>statusElementId</code>: <i><code>string</code></i> ID of a DOM element to write the status messages to.</li>
-	 *     </ul>
-	 *   </li>
-	 *   <li>
-	 *     <code>webGLContextAttributes</code>: <i><code>object</code></i> Optional WebGL context attributes. A JSON object with the following
-	 *     boolean properties:
-	 *     <ul>
-	 *       <li><code>antialias</code>: <i><code>boolean</code></i> (default: <code>true</code>) If set to <code>true</code>, the context
-	 *         will attempt to perform antialiased rendering if possible.</li>
-	 *       <li><code>alpha</code>: <i><code>boolean</code></i> (default: <code>true</code>) If set to <code>true</code>, the context will
-	 *         have an alpha (transparency) channel.</li>
-	 *       <li><code>premultipliedAlpha</code>: <i><code>boolean</code></i> (default: <code>false</code>) If set to <code>true</code>, the
-	 *         color channels in the framebuffer will be stored premultiplied by the alpha channel to improve performance.</li>
-	 *     </ul>
-	 *     Other {@link https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2 WebGL context attributes} are also supported.
-	 *   </li>
-	 * </ul>
+	 * Constructor for a new Viewer.
 	 *
 	 * @class Provides simple 3D visualization capability by connecting, configuring and presenting the essential Visualization Toolkit controls a single composite control.
 	 * @param {string} [sId] ID for the new Viewer control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new Viewer control
 	 * @public
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 * @extends sap.ui.core.Control
 	 * @alias sap.ui.vk.Viewer
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
@@ -122,13 +100,6 @@ sap.ui.define([
 					defaultValue: true
 				},
 				/**
-				 * Enable / disable full screen mode
-				 */
-				enableFullScreen: {
-					type: "boolean",
-					defaultValue: false
-				},
-				/**
 				 * Enable / disable progress indicator for downloading and rendering VDS files
 				 */
 				enableProgressIndicator: {
@@ -140,14 +111,14 @@ sap.ui.define([
 				 */
 				width: {
 					type: "sap.ui.core.CSSSize",
-					defaultValue: "auto"
+					defaultValue: null
 				},
 				/**
 				 * Height of the Viewer control
 				 */
 				height: {
 					type: "sap.ui.core.CSSSize",
-					defaultValue: "auto"
+					defaultValue: null
 				},
 				/**
 				 * The toolbar title
@@ -155,15 +126,83 @@ sap.ui.define([
 				toolbarTitle: {
 					type: "string",
 					defaultValue: ""
+				},
+				/**
+				 * Whether or not we want ViewStateManager to keep track of visibility changes.
+				 */
+				shouldTrackVisibilityChanges: {
+					type: "boolean",
+					defaultValue: false
+				},
+				/**
+				 * Optional Emscripten runtime module settings. A JSON object with the following properties:
+				 * <ul>
+				 * <li>totalMemory {int} size of Emscripten module memory in bytes, default value: 128 MB.</li>
+				 * <li>logElementId {string} ID of a textarea DOM element to write the log to.</li>
+				 * <li>statusElementId {string} ID of a DOM element to write the status messages to.</li>
+				 * </ul>
+				 * Emscripten runtime module settings cannot be changed after the control is fully initialized.
+				 */
+				runtimeSettings: {
+					type: "object",
+					defaultValue: {}
+				},
+				/**
+				 * Optional WebGL context attributes. A JSON object with the following boolean properties:
+				 * <ul>
+				 * <li>antialias {boolean} default value <code>true</code>. If set to <code>true</code>, the context will attempt to perform
+				 * antialiased rendering if possible.</li>
+				 * <li>alpha {boolean} default value <code>true</code>. If set to <code>true</code>, the context will have an alpha
+				 * (transparency) channel.</li>
+				 * <li>premultipliedAlpha {boolean} default value <code>false</code>. If set to <code>true</code>, the color channels in the
+				 * framebuffer will be stored premultiplied by the alpha channel to improve performance.</li>
+				 * </ul>
+				 * Other {@link https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2 WebGL context attributes} are also supported. WebGL
+				 * context attributes cannot be changed after the control is fully initialized.
+				 */
+				webGLContextAttributes: {
+					type: "object",
+					defaultValue: {
+						antialias: true,
+						alpha: true,
+						premultipliedAlpha: false
+					}
+				},
+				/**
+				 * Enables or disables showing of all hotspots
+				 */
+				showAllHotspots: {
+					type: "boolean",
+					defaultValue: false
+				},
+				/**
+				 * Color used for highlighting Smart2D hotspots in the ABGR format.
+				 */
+				hotspotColorABGR: {
+					type: "int",
+					defaultValue: 0xc00000ff
+				},
+				/**
+				 * Color used for highlighting Smart2D hotspots in the CSS Color format.
+				 */
+				hotspotColor: {
+					type: "sap.ui.core.CSSColor",
+					defaultValue: "rgba(255, 0, 0, 0.7529411764705882)"
 				}
 			},
 
 			publicMethods: [
+				"activateFullScreenMode",
+				"activateRedlineDesign",
+				"destroyRedlineDesign",
+				"getDecryptionHandler",
 				"getGraphicsCore",
 				"getNativeViewport",
+				"getRedlineDesign",
 				"getScene",
 				"getViewport",
-				"getViewStateManager"
+				"getViewStateManager",
+				"setDecryptionHandler"
 			],
 
 			aggregations: {
@@ -192,7 +231,7 @@ sap.ui.define([
 				},
 
 				viewport: {
-					type: "sap.ui.vk.Viewport",
+					type: "sap.ui.vk.ViewportBase",
 					multiple: false,
 					visibility: "hidden"
 				},
@@ -216,7 +255,13 @@ sap.ui.define([
 				},
 
 				layout: {
-					type: "sap.ui.vk.FlexibleControl",
+					type: "sap.ui.layout.VerticalLayout",
+					multiple: false,
+					visibility: "hidden"
+				},
+
+				contentConnector: {
+					type: "sap.ui.vk.ContentConnector",
 					multiple: false,
 					visibility: "hidden"
 				},
@@ -226,12 +271,15 @@ sap.ui.define([
 					multiple: false,
 					visibility: "hidden"
 				},
+
 				messagePopover: {
 					type: "sap.ui.vk.Notifications",
 					multiple: false,
 					visibility: "hidden"
 				}
 			},
+
+			defaultAggregation: "contentResources",
 
 			events: {
 				/**
@@ -256,7 +304,16 @@ sap.ui.define([
 				/**
 				 * This event will be fired when a critical error occurs during scene / image loading.
 				 */
-				sceneLoadingFailed: {},
+				sceneLoadingFailed: {
+					parameters: {
+						/**
+						 * Returns an optional object describing the reason of the failure.
+						 */
+						reason: {
+							type: "object"
+						}
+					}
+				},
 
 				/**
 				 * This event will be fired when scene / image loaded in Viewer is about to be destroyed.
@@ -268,6 +325,15 @@ sap.ui.define([
 						 */
 						scene: {
 							type: "sap.ui.vk.Scene"
+						},
+
+						/**
+						 * Returns a <code>function(prevent: boolean)</code> with one boolean parameter.
+						 * To prevent garbage collection after the scene is destroyed call this function
+						 * passing <code>true</code> as a parameter.
+						 */
+						preventGarbageCollection: {
+							type: "function"
 						}
 					}
 				},
@@ -278,16 +344,16 @@ sap.ui.define([
 				selectionChanged: {
 					parameters: {
 						/**
-						 * IDs of newly selected nodes.
+						 * Node references to the newly selected nodes.
 						 */
 						selected: {
-							type: "string[]"
+							type: "any[]"
 						},
 						/**
-						 * IDs of newly unselected nodes.
+						 * Node references to the newly unselected nodes.
 						 */
 						unselected: {
-							type: "string[]"
+							type: "any[]"
 						}
 					}
 				},
@@ -304,58 +370,59 @@ sap.ui.define([
 							type: "boolean"
 						}
 					}
-				}
-			},
-
-			specialSettings: {
-				/**
-				 * Optional Emscripten runtime module settings. A JSON object with the following properties:
-				 * <ul>
-				 * <li>totalMemory {int} size of Emscripten module memory in bytes, default value: 128 MB.</li>
-				 * <li>logElementId {string} ID of a textarea DOM element to write the log to.</li>
-				 * <li>statusElementId {string} ID of a DOM element to write the status messages to.</li>
-				 * </ul>
-				 * Emscripten runtime module settings cannot be changed after the control is fully initialized.
-				 */
-				runtimeSettings: {
-					type: "object"
 				},
 
 				/**
-				 * Optional WebGL context attributes. A JSON object with the following boolean properties:
-				 * <ul>
-				 * <li>antialias {boolean} default value <code>true</code>. If set to <code>true</code>, the context will attempt to perform
-				 * antialiased rendering if possible.</li>
-				 * <li>alpha {boolean} default value <code>true</code>. If set to <code>true</code>, the context will have an alpha
-				 * (transparency) channel.</li>
-				 * <li>premultipliedAlpha {boolean} default value <code>false</code>. If set to <code>true</code>, the color channels in the
-				 * framebuffer will be stored premultiplied by the alpha channel to improve performance.</li>
-				 * </ul>
-				 * Other {@link https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.2 WebGL context attributes} are also supported. WebGL
-				 * context attributes cannot be changed after the control is fully initialized.
+				 * This event will be fired when a URL in a note is clicked.
 				 */
-				webGLContextAttributes: {
-					type: "object"
+				urlClicked: {
+					parameters: {
+						/**
+						 * Returns a node reference of the note that contains the URL.
+						 */
+						nodeRef: "any",
+						/**
+						 * Returns a URL that was clicked.
+						 */
+						url: "string"
+					}
+				},
+
+				/**
+				 * This event will be fired when a node is clicked.
+				 */
+				nodeClicked: {
+					parameters: {
+						/**
+						 * Returns a node reference.
+						 */
+						nodeRef: "any",
+						x: "int",
+						y: "int"
+					}
 				}
 			}
 		}
 	});
 
 	Viewer.prototype.applySettings = function(settings) {
-		if (settings) {
-			this._runtimeSettings = settings.runtimeSettings;
-			this._webGLContextAttributes = settings.webGLContextAttributes;
-			delete settings.runtimeSettings;
-			delete settings.webGLContextAttributes;
-		}
+		this._inApplySettings = true;
 		Control.prototype.applySettings.apply(this, arguments);
+		delete this._inApplySettings;
 
-		//_componentsState stores the default state of the scene tree and step navigation.
-		//It also stores the last user interaction such as show/hide.
-		//These settings are used to restore states after switching between 2D and 3D.
+		if (this._viewStateManager) {
+			this._viewStateManager.setShouldTrackVisibilityChanges(this.getShouldTrackVisibilityChanges());
+		}
+
+		// _componentsState stores the default state of the scene tree and step navigation.
+		// It also stores the last user interaction such as show/hide.
+		// These settings are used to restore states after switching between 2D and 3D.
 		this._componentsState = {
 			sceneTree: {
 				defaultEnable: this.getEnableSceneTree(),
+				// shouldBeEnabled refers to certain scenarios when the scene tree should not be displayed (for example Smart2D files)
+				shouldBeEnabled: true,
+				// saving the last state set by user interaction (turn scene tree ON/OFF)
 				userInteractionShow: this.getShowSceneTree()
 			},
 			stepNavigation: {
@@ -369,102 +436,107 @@ sap.ui.define([
 				defaultEnable: this.getEnableNotifications()
 			}
 		};
-		//We initialise the viewer with the both scene tree and step navigation disabled.
+		// We initialise the viewer with the both scene tree and step navigation disabled.
 		this.setEnableSceneTree(false);
 		this.setEnableStepNavigation(false);
 	};
 
 	Viewer.prototype.init = function() {
-		this._messages = new Messages();
-		this._messagePopover = new Notifications();
-		this.setAggregation("messagePopover", this._messagePopover);
-
-		this._messagePopover.attachAllMessagesCleared(function () {
-			this._messagePopover.setVisible(false);
-			this._updateLayout();
-		}, this);
-
-		this._messagePopover.attachMessageAdded(function () {
-			this._messagePopover.setVisible(true);
-			this._updateLayout();
-		}, this);
-
-		log.debug("sap.ui.vk.Viewer.init() called.");
-
 		if (Control.prototype.init) {
 			Control.prototype.init.apply(this);
 		}
 
-		this._scheduleContentResourcesUpdateTimerId = null;
+		this._contentConnector = new ContentConnector(this.getId() + "-contentconnector");
+		this.setAggregation("contentConnector", this._contentConnector);
+		this._contentConnector.attachContentReplaced(this._handleContentReplaced, this);
+		this._contentConnector.attachContentChangesStarted(this._handleContentChangesStarted, this);
+		this._contentConnector.attachContentChangesFinished(this._handleContentChangesFinished, this);
+		this._contentConnector.attachContentChangesProgress(this._handleContentChangesProgress, this);
+
+		this._viewStateManager = new ViewStateManager(this.getId() + "-viewstatemanager", {
+			contentConnector: this._contentConnector
+		});
+		this.setAggregation("viewStateManager", this._viewStateManager);
+
+		log.debug("sap.ui.vk.Viewer.init() called.");
+
+		this._mainScene = null;
 		this._resizeListenerId = null;
 		this._busyIndicatorCounter = 0;
 		this._toolbar = null;
 		this._viewport = null;
 		this._nativeViewport = null;
+		this._redlineDesign = null;
 		this._stepNavigation = null;
-		this._mainScene = null;
 		this._sceneTree = null;
 		this._overlayManager = {
 			initialized: false,
 			changed: false,
 			control: null,
-			delegate: {
-				onAfterRendering: function(oEvent) {
-					// manipulate DOM tree after rendering of stacked viewport
-					var overlayDiv = this._overlayManager.control.getDomRef();
-					if (overlayDiv && this._nativeViewport) {
-						var nativeVPDiv = this._nativeViewport.getDomRef();
-						if (overlayDiv.parentNode !== nativeVPDiv) {
-							// do not display the content div the overlay belongs to -> otherwise it would receive all events we expect on the
-							// overlay
-							overlayDiv.parentNode.style.display = "none";
-						}
-						// make overlay a child of native viewport to get event bubbling right
-						nativeVPDiv.appendChild(overlayDiv);
-						// adapt overlay size to parent node
-						overlayDiv.style.width = "100%";
-						overlayDiv.style.height = "100%";
-					}
-				}.bind(this)
-			},
+			// Event handler for Native Viewport zoom & pan
 			onNativeViewportMove: function(event) {
 				var oPan = event.getParameter("pan");
-				this.control.setPanAndZoom(oPan.x, oPan.y, event.getParameter("zoom"));
+				var zoomFactor = event.getParameter("zoom");
+				this.control.setPanAndZoom(oPan.x, oPan.y, zoomFactor);
+			},
+			// Event handler for Viewport zoom
+			onViewportZoom: function(event) {
+				var zoomFactor = event.getParameter("zoomFactor");
+				this.control.setPanAndZoom(0, 0, zoomFactor);
+			},
+			// Event handler for Viewport pan
+			onViewportPan: function(event) {
+				var dx = event.getParameter("dx");
+				var dy = event.getParameter("dy");
+				this.control.setPanAndZoom(dx, dy, 1);
 			}
+		};
+		this._overlayManager.delegate = {
+			onAfterRendering: this._onAfterRenderingOverlay.bind(this, this._viewport, this._nativeViewport, this._overlayManager)
 		};
 
 		this._updateSizeTimer = 0;
-		this._fullScreenToggle = false;
 
-		this._content = new Splitter(this.getId() + "-splitter", {
+		this._layout = new sap.ui.layout.VerticalLayout(this.getId() + "-verticalLayout").addStyleClass("sapUiVizKitLayout");
+		this.setAggregation("layout", this._layout);
+
+		this._toolbar = new sap.ui.vk.Toolbar({
+			title: this.getToolbarTitle(),
+			visible: this.getEnableToolbar(),
+			viewer: this
+		});
+		this.setAggregation("toolbar", this._toolbar);
+		this._layout.addContent(this._toolbar);
+
+		this._splitter = new sap.ui.layout.Splitter(this.getId() + "-splitter", {
 			orientation: "Horizontal"
 		});
+		this._layout.addContent(this._splitter);
 
-		this._stackedViewport = new FlexibleControl({
+		this._stackedViewport = new FlexibleControl(this.getId() + "-stackedViewport", {
 			width: "100%",
 			height: "100%",
-			layout: "Stacked"
+			layout: "Stacked",
+			layoutData: new sap.ui.layout.SplitterLayoutData({
+				size: "auto",
+				minSize: 200
+			})
 		});
+		this._splitter.addContentArea(this._stackedViewport);
 
-		this._layout = new FlexibleControl(this.getId() + "-flexibleControl", {
-			width: "100%",
-			height: "100%",
-			layout: "Vertical"
-		});
-
-		this._stackedViewport.setLayoutData(new SplitterLayoutData({
-			size: "100%",
-			minSize: 160,
-			resizable: true
-		}));
-
-		this._content.addContentArea(this._stackedViewport);
-		this.setAggregation("layout", this._layout);
+		this._messagePopover = new Notifications({ visible: true });
+		this._messagePopover.attachAllMessagesCleared(this._updateLayout, this);
+		this._messagePopover.attachMessageAdded(this._updateLayout, this);
+		this.setAggregation("messagePopover", this._messagePopover);
+		this._layout.addContent(this._messagePopover);
 
 		this.setTooltip(sap.ui.vk.getResourceBundle().getText("VIEWER_TITLE"));
 
 		if (this.getEnableProgressIndicator()) {
-			this._createProgressIndicator();
+			this._progressIndicator = new ProgressIndicator({
+				visible: false
+			}).addStyleClass("sapUiVizKitProgressIndicator");
+			this.setAggregation("progressIndicator", this._progressIndicator);
 		}
 	};
 
@@ -476,10 +548,8 @@ sap.ui.define([
 	Viewer.prototype.exit = function() {
 		log.debug("sap.ui.vk.Viewer.exit() called.");
 
-		// Cancel the delayed call if any.
-		if (this._scheduleContentResourcesUpdateTimerId) {
-			jQuery.sap.clearDelayedCall(this._scheduleContentResourcesUpdateTimerId);
-			this._scheduleContentResourcesUpdateTimerId = null;
+		if (this._viewport) {
+			this._viewport.detachEvent("viewActivated", this._onViewportViewActivated, this);
 		}
 
 		// All scenes will be destroyed and all viewports will be unregistered by GraphicsCore.destroy.
@@ -491,12 +561,8 @@ sap.ui.define([
 		this._stepNavigation = null;
 		this._viewport = null;
 		this._componentsState = null;
-		this._setViewStateManager(null);
-
-		if (this._graphicsCore) {
-			this._graphicsCore.destroy();
-			this._graphicsCore = null;
-		}
+		this._viewStateManager = null;
+		this._contentConnector = null;
 
 		if (this._resizeListenerId) {
 			ResizeHandler.deregister(this._resizeListenerId);
@@ -513,25 +579,23 @@ sap.ui.define([
 			if (scene !== this._mainScene) {
 				this._mainScene = scene;
 				this._showViewport();
-				this._viewport.setScene(this._mainScene);
-				this._setViewStateManager(this._graphicsCore.createViewStateManager(this._mainScene.getDefaultNodeHierarchy()));
-				this._viewport.setViewStateManager(this.getViewStateManager());
 
-				//Set the scene tree & step navigation state based on default settings and last user interaction (if any).
+				// Set the scene tree & step navigation state based on default settings and last user interaction (if any).
 				if (this._componentsState.sceneTree.defaultEnable) {
 					this._instantiateSceneTree();
-					this._sceneTree.setScene(this._mainScene, this.getViewStateManager());
 					this.setEnableSceneTree(true);
-					if (this._componentsState.sceneTree.userInteractionShow) {
+					if (this._componentsState.sceneTree.userInteractionShow && this._componentsState.sceneTree.shouldBeEnabled) {
 						this.setShowSceneTree(true);
 						this._sceneTree.setVisible(true);
 					} else {
 						this.setShowSceneTree(false);
 					}
+				} else if (this._sceneTree && this._viewStateManager){
+					this._sceneTree.setScene(scene, this._viewStateManager);
 				}
+
 				if (this._componentsState.stepNavigation.defaultEnable) {
 					this._instantiateStepNavigation();
-					this._stepNavigation.setScene(this._mainScene);
 					this.setEnableStepNavigation(true);
 					if (this._componentsState.stepNavigation.userInteractionShow) {
 						this.setShowStepNavigation(true);
@@ -541,6 +605,7 @@ sap.ui.define([
 					}
 				}
 			}
+
 			if (this._sceneTree) {
 				this._sceneTree.refresh();
 			}
@@ -549,54 +614,21 @@ sap.ui.define([
 			}
 		} else {
 			this._mainScene = null;
-			this._setViewStateManager(null);
-			if (this._viewport) {
-				this._viewport.setScene(null);
-			}
-			if (this._sceneTree) {
-				this._sceneTree.setScene(null, null);
-			}
-			if (this._stepNavigation) {
-				this._stepNavigation.setScene(null);
-			}
 			this.setEnableSceneTree(false);
 			this.setEnableStepNavigation(false);
 		}
 		return this;
 	};
 
-	Viewer.prototype._destroyMainScene = function() {
-		if (this._mainScene) {
-			var scene = this._mainScene;
-			this.fireSceneDestroying({
-				scene: scene
-			});
-			this._setMainScene(null);
-			this._graphicsCore.destroyScene(scene);
-		} else if (this._nativeViewport) {
-			this.fireSceneDestroying({
-				scene: null
-			});
-		}
-		return this;
-	};
-
 	/**
-	 * Gets the GraphicsCore object.
+	 * Gets the GraphicsCore object if the currently loaded content is a 3D model.
 	 *
-	 * @returns {sap.ui.vk.GraphicsCore} The GraphicsCore object.
+	 * @returns {sap.ui.vk.dvl.GraphicsCore} The GraphicsCore object. If there is no 3D scene loaded then <code>null</code> is returned.
 	 * @public
+	 * @deprecated Since version 1.50.0.
 	 */
 	Viewer.prototype.getGraphicsCore = function() {
-		if (!this._graphicsCore) {
-			jQuery.sap.require("sap.ui.vk.GraphicsCore");
-			this._graphicsCore = new sap.ui.vk.GraphicsCore(this._getRuntimeSettings(), jQuery.extend({
-				antialias: true,
-				alpha: true,
-				premultipliedAlpha: true
-			}, this._getWebGLContextAttributes()));
-		}
-		return this._graphicsCore;
+		return this._mainScene instanceof sap.ui.vk.dvl.Scene ? this._mainScene.getGraphicsCore() : null;
 	};
 
 	/**
@@ -616,38 +648,17 @@ sap.ui.define([
 	 * @public
 	 */
 	Viewer.prototype.getViewStateManager = function() {
-		return this.getAggregation("viewStateManager");
-	};
-
-	/**
-	 * Sets the view state manager object used for handling visibility and selection of nodes.
-	 *
-	 * @param {sap.ui.vk.ViewStateManager} viewStateManager The ViewStateManager object.
-	 * @returns {sap.ui.vk.Viewer} <code>this</code> to allow method chaining.
-	 * @private
-	 */
-	Viewer.prototype._setViewStateManager = function(viewStateManager) {
-		if (!this._graphicsCore) {
-			return this;
-		}
-		if (viewStateManager === this.getViewStateManager()) {
-			return this;
-		}
-		if (this.getViewStateManager()) {
-			this._graphicsCore.destroyViewStateManager(this.getViewStateManager());
-		}
-		this.setAggregation("viewStateManager", viewStateManager, true);
-		return this;
+		return this._viewStateManager;
 	};
 
 	/**
 	 * Gets the 3D viewport.
 	 *
-	 * @returns {sap.ui.vk.Viewport} The 3D viewport.
+	 * @returns {sap.ui.vk.dvl.Viewport | sap.ui.vk.threejs.Viewport} The 3D viewport.
 	 * @public
 	 */
 	Viewer.prototype.getViewport = function() {
-		return this._viewport;
+		return this._viewport ? this._viewport.getImplementation() : null;
 	};
 
 	/**
@@ -661,23 +672,22 @@ sap.ui.define([
 	};
 
 	/**
-	 * @return {object} The Emscripten runtime settings.
-	 * @private
+	 * Gets the RedlineDesign instance used for creating redlining shapes.
+	 *
+	 * @returns {sap.ui.vk.RedlineDesign} The RedlineDesign instance.
+	 * @public
 	 */
-	Viewer.prototype._getRuntimeSettings = function() {
-		return this._runtimeSettings;
-	};
-
-	/**
-	 * @returns {object} The webGLContextAttributes property.
-	 * @private
-	 */
-	Viewer.prototype._getWebGLContextAttributes = function() {
-		return this._webGLContextAttributes;
+	Viewer.prototype.getRedlineDesign = function() {
+		// Support for dvl viewport, threejs viewport and native viewport
+		if (isDvlViewport(this.getViewport()) || this.getViewport() instanceof sap.ui.vk.threejs.Viewport || this.getNativeViewport() instanceof sap.ui.vk.NativeViewport) {
+			return this._redlineDesign;
+		} else {
+			return null;
+		}
 	};
 
 	Viewer.prototype.getOverlay = function() {
-		// overlay control is not stored in overlay aggregation, since it may be aggregated by the stavked viewport
+		// overlay control is not stored in overlay aggregation, since it may be aggregated by the stacked viewport
 		// therefore we keep an additional reference in the _overlayManager
 		return this._overlayManager.control;
 	};
@@ -733,326 +743,216 @@ sap.ui.define([
 		return this;
 	};
 
-	Viewer.prototype.setEnableFullScreen = function(oProperty) {
-		//It checks if the current document is in full screen mode
+	/**
+	 * It activates or deactivates full screen mode.
+	 * @param {boolean} value Parameter which specifies whether to activate or deactivate full screen mode.
+	 * @returns {sap.ui.vk.Viewer} <code>this</code> to allow method chaining.
+	 * @private
+	 */
+	Viewer.prototype.activateFullScreenMode = function(value) {
+		// It checks if the current document is in full screen mode
 		var isInFullScreenMode = function(document) {
-			return document.fullScreen || document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement;
+			return !!(document.fullScreen || document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement);
 		};
 
-		this.setProperty("enableFullScreen", oProperty, true);
-		this._fullScreenToggle = true;
-
 		// Fullscreen toggle
-		var isFullScreenPropertyEnabled = this.getProperty("enableFullScreen");
-		var bChanged = false;
-
-		if (isFullScreenPropertyEnabled) {
+		if (value) {
 			if (!isInFullScreenMode(document)) {
-
 				if (!this._fullScreenHandler) {
+					var that = this;
 					this._fullScreenHandler = function(event) {
-						if (!isInFullScreenMode(document)) {
-							document.removeEventListener("fullscreenchange", this._fullScreenHandler.bind(this));
-							document.removeEventListener("mozfullscreenchange", this._fullScreenHandler.bind(this));
-							document.removeEventListener("webkitfullscreenchange", this._fullScreenHandler.bind(this));
-							document.removeEventListener("MSFullscreenChange", this._fullScreenHandler.bind(this));
-
-							this.removeStyleClass("sapVizKitViewerFullScreen");
-							this._updateSize();
-							this.fireFullScreen({
-								isFullScreen: false
-							});
+						var isFullScreen = isInFullScreenMode(document);
+						if (!isFullScreen) {
+							document.removeEventListener("fullscreenchange", that._fullScreenHandler);
+							document.removeEventListener("mozfullscreenchange", that._fullScreenHandler);
+							document.removeEventListener("webkitfullscreenchange", that._fullScreenHandler);
+							document.removeEventListener("MSFullscreenChange", that._fullScreenHandler);
 						}
+
+						that.fireFullScreen({
+							isFullScreen: isFullScreen
+						});
 					};
-
-					document.addEventListener("fullscreenchange", this._fullScreenHandler.bind(this));
-					document.addEventListener("mozfullscreenchange", this._fullScreenHandler.bind(this));
-					document.addEventListener("webkitfullscreenchange", this._fullScreenHandler.bind(this));
-					document.addEventListener("MSFullscreenChange", this._fullScreenHandler.bind(this));
 				}
-
-				bChanged = true;
 
 				var bodyElement = document.getElementsByTagName("body")[0];
 				if (bodyElement.requestFullScreen) {
+					document.addEventListener("fullscreenchange", this._fullScreenHandler);
 					bodyElement.requestFullScreen();
 				} else if (bodyElement.webkitRequestFullScreen) {
+					document.addEventListener("webkitfullscreenchange", this._fullScreenHandler);
 					bodyElement.webkitRequestFullScreen();
 				} else if (bodyElement.mozRequestFullScreen) {
+					document.addEventListener("mozfullscreenchange", this._fullScreenHandler);
 					bodyElement.mozRequestFullScreen();
 				} else if (bodyElement.msRequestFullscreen) {
+					document.addEventListener("MSFullscreenChange", this._fullScreenHandler);
 					bodyElement.msRequestFullscreen();
-				} else {
-					bChanged = false;
-				}
-
-				if (bChanged) {
-					this.addStyleClass("sapVizKitViewerFullScreen");
 				}
 			}
-		} else if (isInFullScreenMode(document)) {
-			bChanged = true;
 
-			if (document.cancelFullScreen) {
-				document.cancelFullScreen();
-			} else if (document.webkitCancelFullScreen) {
-				document.webkitCancelFullScreen();
-			} else if (document.mozCancelFullScreen) {
-				document.mozCancelFullScreen();
-			} else if (document.msExitFullscreen) {
-				document.msExitFullscreen();
-			} else {
-				bChanged = false;
+			this.addStyleClass("sapVizKitViewerFullScreen");
+		} else {
+			if (isInFullScreenMode(document)) {
+				if (document.cancelFullScreen) {
+					document.cancelFullScreen();
+				} else if (document.webkitCancelFullScreen) {
+					document.webkitCancelFullScreen();
+				} else if (document.mozCancelFullScreen) {
+					document.mozCancelFullScreen();
+				} else if (document.msExitFullscreen) {
+					document.msExitFullscreen();
+				}
 			}
 
-			if (bChanged) {
-				this.removeStyleClass("sapVizKitViewerFullScreen");
-			}
-		}
-
-		if (bChanged) {
-			this._updateSize();
-			this.fireFullScreen({
-				isFullScreen: isFullScreenPropertyEnabled
-			});
+			this.removeStyleClass("sapVizKitViewerFullScreen");
 		}
 
 		return this;
 	};
 
+	function isDvlViewport(vp) {
+		if (!vp) {
+			return false;
+		}
+		return vp instanceof sap.ui.vk.dvl.Viewport;
+	}
+
+	Viewer.prototype.getShowAllHotspots = function() {
+		return isDvlViewport(this.getViewport()) ? this.getViewport().getShowAllHotspots() : this.getProperty("showAllHotspots");
+	};
+
+	Viewer.prototype.setShowAllHotspots = function(value) {
+		this.setProperty("showAllHotspots", value, true);
+		if (isDvlViewport(this.getViewport())) {
+			this.getViewport().setShowAllHotspots(value);
+		}
+		return this;
+	};
+
+	Viewer.prototype.getHotspotColorABGR = function() {
+		return isDvlViewport(this.getViewport()) ? this.getViewport().getHotspotColorABGR() : this.getProperty("hotspotColorABGR");
+	};
+
+	Viewer.prototype.setHotspotColorABGR = function(value) {
+		this.setProperty("hotspotColorABGR", value, true);
+		this.setProperty("hotspotColor", sap.ui.vk.colorToCSSColor(sap.ui.vk.abgrToColor(value)), true);
+		if (isDvlViewport(this.getViewport())) {
+			this.getViewport().setHotspotColorABGR(value);
+		}
+		return this;
+	};
+
+	Viewer.prototype.getHotspotColor = function() {
+		return isDvlViewport(this.getViewport()) ? this.getViewport().getHotspotColor() : this.getProperty("hotspotColor");
+	};
+
+	Viewer.prototype.setHotspotColor = function(value) {
+		this.setProperty("hotspotColor", value, true);
+		this.setProperty("hotspotColorABGR", sap.ui.vk.colorToABGR(sap.ui.vk.cssColorToColor(value)), true);
+		if (isDvlViewport(this.getViewport())) {
+			this.getViewport().setHotspotColor(value);
+		}
+		return this;
+	};
+
+	Viewer.prototype.setRuntimeSettings = function(settings) {
+		if (this._inApplySettings) {
+			this.setProperty("runtimeSettings", settings, true);
+			DvlContentManager.setRuntimeSettings(settings);
+		} else {
+			// runtimeSettings property should not be changeable in other cases than the constructor
+			log.error(sap.ui.vk.getResourceBundle().getText(Messages.VIT29.summary), Messages.VIT29.code, "sap.ui.vk.Viewer");
+		}
+		return this;
+	};
+
+	Viewer.prototype.setWebGLContextAttributes = function(attributes) {
+		if (this._inApplySettings) {
+			this.setProperty("webGLContextAttributes", attributes, true);
+			DvlContentManager.setWebGLContextAttributes(attributes);
+		} else {
+			// webGLContextAttributes property should not be changeable in other cases than the constructor
+			log.error(sap.ui.vk.getResourceBundle().getText(Messages.VIT30.summary), Messages.VIT30.code, "sap.ui.vk.Viewer");
+		}
+		return this;
+	};
+
+	////////////////////////////////////////////////////////////////////////////
+	// BEGIN: forward access to the contentResources aggregation to the content connector.
+
 	Viewer.prototype.invalidate = function(origin) {
 		if (origin instanceof ContentResource) {
-			this._scheduleContentResourcesUpdate();
+			this._contentConnector.invalidate(origin);
 			return;
 		}
 		Control.prototype.invalidate.apply(this, arguments);
 	};
 
-	Viewer.prototype._queueContentResourcesUpdateIfNeeded = function(aggregationName) {
+	Viewer.prototype.validateAggregation = function(aggregationName, object, multiple) {
 		if (aggregationName === "contentResources") {
-			this._scheduleContentResourcesUpdate();
-			return true;
+			return this._contentConnector.validateAggregation(aggregationName, object, multiple);
 		}
+		return Control.prototype.validateAggregation.call(this, aggregationName, object, multiple);
+	};
+
+	Viewer.prototype.getAggregation = function(aggregationName, defaultForCreation) {
+		if (aggregationName === "contentResources") {
+			return this._contentConnector.getAggregation(aggregationName, defaultForCreation);
+		}
+		return Control.prototype.getAggregation.call(this, aggregationName, defaultForCreation);
+	};
+
+	Viewer.prototype.setAggregation = function(aggregationName, object, suppressInvalidate) {
+		if (aggregationName === "contentResources") {
+			this._contentConnector.setAggregation(aggregationName, object, suppressInvalidate);
+			return this;
+		}
+		return Control.prototype.setAggregation.call(this, aggregationName, object, suppressInvalidate);
 	};
 
 	Viewer.prototype.addAggregation = function(aggregationName, object, suppressInvalidate) {
-		if (this._queueContentResourcesUpdateIfNeeded(aggregationName)) {
-			suppressInvalidate = true;
+		if (aggregationName === "contentResources") {
+			this._contentConnector.addAggregation(aggregationName, object, suppressInvalidate);
+			return this;
 		}
 		return Control.prototype.addAggregation.call(this, aggregationName, object, suppressInvalidate);
 	};
 
 	Viewer.prototype.insertAggregation = function(aggregationName, object, index, suppressInvalidate) {
-		if (this._queueContentResourcesUpdateIfNeeded(aggregationName)) {
-			suppressInvalidate = true;
+		if (aggregationName === "contentResources") {
+			this._contentConnector.insertAggregation(aggregationName, object, index, suppressInvalidate);
+			return this;
 		}
 		return Control.prototype.insertAggregation.call(this, aggregationName, object, index, suppressInvalidate);
 	};
 
 	Viewer.prototype.removeAggregation = function(aggregationName, object, suppressInvalidate) {
 		if (aggregationName === "contentResources") {
-			var result = Control.prototype.removeAggregation.call(this, aggregationName, object, true);
-			if (result) {
-				this._scheduleContentResourcesUpdate();
-			}
-			return result;
-		} else {
-			return Control.prototype.removeAggregation.call(this, aggregationName, object, suppressInvalidate);
+			return this._contentConnector.removeAggregation(aggregationName, object, suppressInvalidate);
 		}
+		return Control.prototype.removeAggregation.call(this, aggregationName, object, suppressInvalidate);
 	};
 
 	Viewer.prototype.removeAllAggregation = function(aggregationName, suppressInvalidate) {
-		if (this._queueContentResourcesUpdateIfNeeded(aggregationName)) {
-			suppressInvalidate = true;
+		if (aggregationName === "contentResources") {
+			return this._contentConnector.removeAllAggregation(aggregationName, suppressInvalidate);
 		}
 		return Control.prototype.removeAllAggregation.call(this, aggregationName, suppressInvalidate);
 	};
 
 	Viewer.prototype.destroyAggregation = function(aggregationName, suppressInvalidate) {
-		if (this._queueContentResourcesUpdateIfNeeded(aggregationName)) {
-			suppressInvalidate = true;
+		if (aggregationName === "contentResources") {
+			this._contentConnector.destroyAggregation(aggregationName, suppressInvalidate);
+			return this;
 		}
 		return Control.prototype.destroyAggregation.call(this, aggregationName, suppressInvalidate);
 	};
 
-	/*
-	 * Schedules an update of the content resource hierarchy.
-	 *
-	 * @returns {sap.ui.vk.Viewer} <code>this</code> to allow method chaining. @private
-	 */
-	Viewer.prototype._scheduleContentResourcesUpdate = function() {
-		if (!this._scheduleContentResourcesUpdateTimerId) {
-			this._scheduleContentResourcesUpdateTimerId = jQuery.sap.delayedCall(0, this, function() {
-				// The delayed call is invoked once. Reset the ID to indicate that there is no pending delayed call.
-				this._scheduleContentResourcesUpdateTimerId = null;
-
-				var that = this;
-
-				function loadContent3D(contentResources) {
-					that.setBusy(true);
-					var graphicsCore = that.getGraphicsCore();
-					var onDownloadProgress;
-					if (that._componentsState.progressIndicator.defaultEnable) {
-						that._progressIndicator.reset();
-						that._progressIndicator.setNumberOfFiles(contentResources.length);
-						that._progressIndicator.setVisible(true);
-
-						graphicsCore._dvl.Client.NotifyFileLoadProgress = function(clientId, currentPercentage) {
-							that._progressIndicator.updateRenderStatus(currentPercentage);
-							return 1;
-						};
-
-						onDownloadProgress = function(data) {
-							var fileName = data.getParameter("source");
-							var downloaded = data.getParameter("loaded");
-							var totalFileSize = data.getParameter("total");
-							that._progressIndicator.updateDownloadStatus(fileName, downloaded, totalFileSize);
-						};
-					}
-
-					graphicsCore.loadContentResourcesAsync(contentResources, function(sourcesFailedToLoad) {
-						try {
-							if (sourcesFailedToLoad) {
-								if (that.getEnableNotifications() === false) {
-									that._destroyMainScene();
-									that._showNativeViewport();
-									var errorLoadingFile = sap.ui.vk.getResourceBundle().getText("VIEWPORT_MESSAGEERRORLOADINGFILE");
-									that._nativeViewport.loadFailed(errorLoadingFile);
-								}
-								log.error(sap.ui.vk.getResourceBundle().getText(that._messages.messages.VIT13.summary), that._messages.messages.VIT13.code, "sap.ui.vk.Viewer");
-								that.fireSceneLoadingFailed();
-							} else {
-								var scene = graphicsCore.updateSceneTree(that.getScene(), contentResources);
-								if (scene !== that._mainScene) {
-									that._destroyMainScene();
-								}
-								that._setMainScene(scene);
-								that.fireSceneLoadingSucceeded({
-									scene: scene
-								});
-							}
-						} catch (e) {
-							var details = sap.ui.vk.getResourceBundle().getText(that._messages.messages.VIT14.summary);
-							if (e instanceof DvlException) {
-								details += "\ncode: " + e.code + ", message: " + e.message;
-							} else if (e instanceof Error) {
-								details += "\nmessage: " + e.message;
-							}
-							log.error(details, that._messages.messages.VIT14.code, "sap.ui.vk.Viewer");
-							that._destroyMainScene();
-							that.fireSceneLoadingFailed();
-						} finally {
-							that.fireContentResourceChangesProcessed();
-							that.setBusy(false);
-							that._progressIndicator.setVisible(false);
-						}
-					}, onDownloadProgress);
-				}
-
-				function loadContent2D(contentResources) {
-					function onImageLoadingSucceeded() {
-						if (that.getEnableOverlay()) {
-							that._overlayManager.changed = true;
-							that._showOverlay();
-						}
-						that.fireSceneLoadingSucceeded({
-							scene: null
-						});
-						that.fireContentResourceChangesProcessed();
-					}
-
-					function onImageLoadingFailed() {
-						that.fireSceneLoadingFailed();
-						that.fireContentResourceChangesProcessed();
-						if (that.getEnableNotifications() === false){
-							var errorLoadingFile = sap.ui.vk.getResourceBundle().getText("VIEWPORT_MESSAGEERRORLOADINGFILE");
-							that._nativeViewport.loadFailed(errorLoadingFile);
-						}
-					}
-
-					that._destroyMainScene();
-
-					if (contentResources.length === 1) {
-						that._showNativeViewport();
-						var resource = contentResources[0];
-						var source = resource.getSource();
-						if (source instanceof File) {
-							var fileReader = new FileReader();
-							fileReader.onload = function(event) {
-								that._nativeViewport.loadUrl(fileReader.result, onImageLoadingSucceeded, onImageLoadingFailed, null, resource.getSourceType());
-							};
-							fileReader.readAsDataURL(source);
-						} else {
-							that._nativeViewport.loadUrl(source, onImageLoadingSucceeded, onImageLoadingFailed, null, resource.getSourceType());
-						}
-					} else {
-						log.error(sap.ui.vk.getResourceBundle().getText(that._messages.messages.VIT15.summary), that._messages.messages.VIT15.code, "sap.ui.vk.Viewer");
-						that.fireContentResourceChangesProcessed();
-					}
-				}
-
-				var needToDestroyScene = true;
-				var category;
-				var categories;
-				var contentResources = this.getContentResources();
-
-				if (contentResources.length > 0) {
-					// Find the category of content resources. Valid ones are 3D and 2D.
-					categories = ContentResource.collectCategories(contentResources);
-					if (categories.length === 0) {
-						// Pure grouping content resources.
-						if (this._viewport && this._viewport.getVisible()) {
-							// All content resources have no sourceType. If the 3D viewport is visible
-							// we assume that the content resources are 3D and we do not hide the 3D viewport;
-							category = sap.ui.vk.ContentResourceSourceCategory["3D"];
-							needToDestroyScene = false;
-						} else if (this._nativeViewport && this._nativeViewport.getVisible()) {
-							// All content resources have no sourceType. If the 2D viewport is visible
-							// we assume that the content resources are 2D and we do not hide the 2D viewport;
-							category = sap.ui.vk.ContentResourceSourceCategory["2D"];
-							needToDestroyScene = false;
-						}
-					} else if (categories.length === 1) {
-						category = categories[0];
-						if (category === "unknown") {
-							log.error(sap.ui.vk.getResourceBundle().getText(this._messages.messages.VIT16.summary), this._messages.messages.VIT16.code, "sap.ui.vk.Viewer");
-							if (this._nativeViewport == null) {
-								this._showNativeViewport();
-							}
-							if (this.getEnableNotifications() === false){
-								this._nativeViewport.loadFailed();
-							}
-							this._showNativeViewport(false);
-						} else {
-							needToDestroyScene = false;
-						}
-					} else if (categories.length > 1) {
-					log.error(sap.ui.vk.getResourceBundle().getText(this._messages.messages.VIT17.summary), this._messages.messages.VIT17.code, "sap.ui.vk.Viewer");
-					}
-				}
-
-				if (needToDestroyScene) {
-					this._destroyMainScene();
-					this.fireContentResourceChangesProcessed();
-					return;
-				}
-
-				if (category === sap.ui.vk.ContentResourceSourceCategory["3D"]) {
-					loadContent3D(contentResources);
-				} else if (category === sap.ui.vk.ContentResourceSourceCategory["2D"]) {
-					loadContent2D(contentResources);
-				}
-			});
-		}
-		return this;
-	};
+	// END: forward access to the contentResources aggregation to the content connector.
+	////////////////////////////////////////////////////////////////////////////
 
 	Viewer.prototype.onBeforeRendering = function() {
-		if (this._fullScreenToggle) {
-			this._fullScreenToggle = false;
-		} else {
-			this._showToolbar();
-		}
 		this._showOverlay();
 
 		if (this._resizeListenerId) {
@@ -1062,14 +962,8 @@ sap.ui.define([
 	};
 
 	Viewer.prototype.onAfterRendering = function() {
-		var domRef = this.getDomRef();
 		this._resizeListenerId = ResizeHandler.register(this, this._handleResize.bind(this));
-		this._handleResize({
-			size: {
-				width: domRef.clientWidth,
-				height: domRef.clientHeight
-			}
-		});
+		this._handleResize();
 	};
 
 	/**
@@ -1082,51 +976,40 @@ sap.ui.define([
 		this._updateSize();
 	};
 
-	Viewer.prototype._updateSize = function() {
-		if (this._updateSizeTimer) {
-			clearTimeout(this._updateSizeTimer);
+	Viewer.prototype._delayedUpdateSize = function() {
+		if (this.getDomRef()) {
+			if (this._updateSizeTimer) {
+				clearTimeout(this._updateSizeTimer);
+			}
+			this._updateSizeTimer = setTimeout(this._updateSize.bind(this), 0);
 		}
-		this._updateSizeTimer = setTimeout(this._doUpdateSize.bind(this), 100);
 	};
 
-	Viewer.prototype._doUpdateSize = function() {
-		var flexId = this.getId() + "-flexibleControl";
-		var layout = document.getElementById(flexId);
-
-		if (!layout) {
+	Viewer.prototype._updateSize = function() {
+		this._updateSizeTimer = 0;
+		if (!this.getDomRef()) {
 			return;
 		}
 
-		layout.style.width = '100%';
-		layout.style.height = '100%';
+		var height = this.getDomRef().clientHeight;
 
-		var height = layout.clientHeight;
-
-		var subheight = [];
-
-		for (var i = 0; i < 4; i++) {
-			subheight[i] = document.getElementById(flexId + "Content_" + i);
+		if (this._toolbar && this._toolbar.getDomRef() && this.getEnableToolbar()) {
+			height -= this._toolbar.getDomRef().clientHeight;
 		}
 
-		height -= subheight[0].clientHeight;
-
-		for (var j = 2; j < 4; j++) {
-			if (subheight[j] != null && subheight[j].style.visibility != 'hidden') {
-				height -= subheight[j].clientHeight;
-			}
+		if (this._stepNavigation && this._stepNavigation.getDomRef() && this.getShowStepNavigation()) {
+			height -= this._stepNavigation.getDomRef().clientHeight;
 		}
 
-		if (subheight[1]) {
-			subheight[1].style.height = height + "px";
+		if (this._messagePopover && this._messagePopover.getDomRef() && this._messagePopover.getVisible()) {
+			height -= this._messagePopover.getDomRef().clientHeight;
 		}
 
-		if (this._stackedViewport) {
-			this._stackedViewport.setLayoutData(new SplitterLayoutData({
-				size: "100%",
-				minSize: 160,
-				resizable: true
-			}));
+		if (this._sceneTree){
+			this._sceneTree.updateHeight(height);
 		}
+
+		this._splitter.setHeight(Math.max(height, 100) + "px"); // set content height
 	};
 
 	Viewer.prototype.isTreeBinding = function(name) {
@@ -1148,119 +1031,53 @@ sap.ui.define([
 		}
 	};
 
-	Viewer.prototype._showToolbar = function() {
-		if (!this._toolbar) {
-			this._toolbar = new sap.ui.vk.Toolbar({
-				title: this.getToolbarTitle()
-			});
-			this._toolbar.setViewer(this);
-			this.setAggregation("toolbar", this._toolbar);
-		}
-		this._toolbar.setVisible(this.getEnableToolbar());
-		this._updateLayout();
-		return this;
-	};
-
-
-	Viewer.prototype._createProgressIndicator = function () {
-		if (!this._progressIndicator) {
-			this._progressIndicator = new ProgressIndicator({
-				visible: false
-			});
-			this.setAggregation("progressIndicator", this._progressIndicator);
-		} else {
-			this._progressIndicator.reset();
-		}
-	};
-
 	Viewer.prototype._updateLayout = function() {
-		this._layout.setWidth(this.getWidth());
-		this._layout.removeAllContent();
-		this._layout.setHeight(this.getHeight());
-
-		var height = this.getHeight();
-		var contentHeight = [
-			0, 0, 0
-		];
-
-		if (height == "auto") {
-			height = 400;
-		} else if (height.substr(height.length - 1) == '%') {
-			height = 400;
-		} else {
-			height = parseInt(height, 10);
+		if (this._bIsBeingDestroyed) {
+			return;
 		}
 
-		if (this._toolbar != null && this.getEnableToolbar()) {
-			contentHeight[0] = 48;
-		}
-		if (this._stepNavigation != null && this.getShowStepNavigation()) {
-			contentHeight[2] = 150;
-		}
-
-		contentHeight[1] = height - contentHeight[0] - contentHeight[2];
-
-		if (this._toolbar != null && this.getEnableToolbar()) {
-			this._toolbar.setVisible(true);
-			this._toolbar.setLayoutData(new FlexibleControlLayoutData({
-				size: contentHeight[0] + "px"
-			}));
-			this._layout.insertContent(this._toolbar, 0);
-		} else if (this._toolbar != null) {
-			this._toolbar.setVisible(false);
-		}
-
-		if (this._sceneTree != null && this.getShowSceneTree() && this.getEnableSceneTree()) {
-			this._sceneTree.setVisible(true);
-			this._sceneTree.setLayoutData(new SplitterLayoutData({
-				size: "320px",
-				minSize: 200,
-				resizable: true
-			}));
-			this._content.insertContentArea(this._sceneTree, 0);
-		} else if (this._sceneTree != null) {
-			this._content.removeContentArea(this._sceneTree);
-			this._sceneTree.setVisible(false);
-		}
-		this._content.setLayoutData(new FlexibleControlLayoutData({
-			size: contentHeight[1] + "px"
-		}));
-		this._layout.addContent(this._content);
-
-		if (this._messagePopover != null) {
-			contentHeight[1] -= contentHeight[0]; //since MsgPopover = height of toolbar (48px)
-		}
-
-		if (this._stepNavigation != null && this.getShowStepNavigation() && this.getEnableStepNavigation()) {
-			if (this._graphicsCore != null && !this._stepNavigation.hasGraphicsCore()) {
-				this._stepNavigation.setGraphicsCore(this._graphicsCore);
+		if (this._sceneTree) {
+			if (this.getShowSceneTree() && this.getEnableSceneTree()) {
+				this._sceneTree.setVisible(true);
+				if (this._splitter.indexOfContentArea(this._sceneTree) < 0) {
+					this._splitter.insertContentArea(this._sceneTree, 0);
+					this._splitter.triggerResize(true);
+				}
+			} else {
+				if (this._splitter.indexOfContentArea(this._sceneTree) >= 0) {
+					this._splitter.removeContentArea(this._sceneTree);
+					this._splitter.triggerResize(true);
+				}
+				this._sceneTree.setVisible(false);
 			}
-			this._stepNavigation.setLayoutData(new FlexibleControlLayoutData({
-				size: contentHeight[2] + "px"
-			}));
-			this._layout.addContent(this._stepNavigation);
 		}
 
-		if (this._messagePopover !== null && this._messagePopover.getAggregation("_messagePopover").getItems().length > 0 && this.getEnableNotifications()) {
-			this._messagePopover.setVisible(true);
-			this._messagePopover.setLayoutData(new FlexibleControlLayoutData({
-				size: contentHeight[0] + "px"
-			}));
-			this._layout.addContent(this._messagePopover);
-		}else {
-			this._content.removeContentArea(this._messagePopover);
-			this._messagePopover.setVisible(false);
+		if (this._stepNavigation) {
+			this._stepNavigation.setVisible(this.getShowStepNavigation() && this.getEnableStepNavigation());
+		}
+
+		if (this._messagePopover) {
+			this._messagePopover.setVisible(this.getEnableNotifications() && this._messagePopover.getAggregation("_messagePopover").getItems().length > 0);
 		}
 
 		if (this._toolbar) {
+			this._toolbar.setVisible(this.getEnableToolbar());
 			this._toolbar.refresh();
 		}
-		this._updateSize();
+
+		this._delayedUpdateSize();
 	};
 
 	Viewer.prototype._instantiateSceneTree = function() {
 		if (!this._sceneTree) {
-			this._sceneTree = new sap.ui.vk.SceneTree();
+			this._sceneTree = new sap.ui.vk.SceneTree({
+				layoutData: new sap.ui.layout.SplitterLayoutData({
+					size: "320px",
+					minSize: 200
+				}),
+				viewStateManager: this._viewStateManager,
+				contentConnector: this._contentConnector
+			});
 			this.setAggregation("sceneTree", this._sceneTree);
 		}
 		return this;
@@ -1269,18 +1086,32 @@ sap.ui.define([
 	Viewer.prototype._instantiateStepNavigation = function() {
 		if (!this._stepNavigation) {
 			this._stepNavigation = new sap.ui.vk.StepNavigation(this.getId() + "-stepNavigation", {
-				showThumbnails: this.getShowStepNavigationThumbnails()
+				showThumbnails: this.getShowStepNavigationThumbnails(),
+				contentConnector: this._contentConnector
 			});
 			this.setAggregation("stepNavigation", this._stepNavigation);
+			this._layout.insertContent(this._stepNavigation, 3);
 		}
 		return this;
 	};
 
 	Viewer.prototype._showViewport = function() {
 		if (!this._viewport) {
-			this._viewport = new sap.ui.vk.Viewport(this.getId() + "-viewport");
+			this._viewport = new sap.ui.vk.Viewport(this.getId() + "-viewport", {
+				viewStateManager: this._viewStateManager,
+				selectionMode: sap.ui.vk.SelectionMode.Exclusive,
+				contentConnector: this._contentConnector // content connector must be the last parameter in the list!
+			});
+
 			this.setAggregation("viewport", this._viewport);
-			this._viewport.setGraphicsCore(this.getGraphicsCore());
+			this._viewport.attachEvent("viewActivated", this._onViewportViewActivated, this);
+
+			var vp = this.getViewport();
+			if (isDvlViewport(vp)) {
+				vp.setHotspotColor(this.getProperty("hotspotColor"));
+				vp.setHotspotColorABGR(this.getProperty("hotspotColorABGR"));
+				vp.setShowAllHotspots(this.getProperty("showAllHotspots"));
+			}
 		}
 
 		if (this._nativeViewport) {
@@ -1295,7 +1126,10 @@ sap.ui.define([
 
 	Viewer.prototype._showNativeViewport = function() {
 		if (!this._nativeViewport) {
-			this._nativeViewport = new sap.ui.vk.NativeViewport(this.getId() + "-nativeViewport");
+			this._nativeViewport = new sap.ui.vk.NativeViewport(this.getId() + "-nativeViewport", {
+				limitZoomOut: true,
+				contentConnector: this._contentConnector
+			});
 			this.setAggregation("nativeViewport", this._nativeViewport);
 		}
 
@@ -1327,17 +1161,27 @@ sap.ui.define([
 					oOverlay = oOverlayManager.control;
 					oOverlay.reset();
 				}
-				if (this._nativeViewport) {
+				// The Overlay needs to be appended to either Viewport or Native Viewport
+				// so we check which one is active.
+				if (this._nativeViewport && this._nativeViewport.getVisible()) {
 					oOverlay.setTarget(this._nativeViewport);
 					// set zoom restriction
 					oOverlayManager.savedLimitZoomOutState = this._nativeViewport.getLimitZoomOut();
 					this._nativeViewport.setLimitZoomOut(true);
 					// register move event of native Viewport to adapt pan and zoom state
 					this._nativeViewport.attachEvent("move", oOverlayManager.onNativeViewportMove, oOverlayManager);
-					// add Overlay to stacked Viewport
-					this._stackedViewport.addContent(oOverlay);
-					this._stackedViewport.addDelegate(oOverlayManager.delegate);
+				} else if (this._viewport && this._viewport.getVisible()) {
+					oOverlay.setTarget(this._viewport);
+					oOverlayManager.savedLimitZoomOutState = false;
+					// Capturing the Viewport zooming and panning events so we can pass them
+					// through to the Overlay so it can zoom and pan the overlay areas (hotspots).
+					this._viewport.attachEvent("zoom", oOverlayManager.onViewportZoom, oOverlayManager);
+					this._viewport.attachEvent("pan", oOverlayManager.onViewportPan, oOverlayManager);
 				}
+
+				// add Overlay to stacked Viewport
+				this._stackedViewport.addContent(oOverlay);
+				this._stackedViewport.addDelegate(oOverlayManager.delegate);
 			} else {
 				// de-register move event of native Viewport to adapt pan and zoom state
 				this._nativeViewport.detachEvent("move", oOverlayManager.onNativeViewportMove, oOverlayManager);
@@ -1349,6 +1193,309 @@ sap.ui.define([
 			}
 			oOverlayManager.changed = false;
 		}
+	};
+
+	Viewer.prototype._onAfterRenderingOverlay = function(oEvent) {
+		// manipulate DOM tree after rendering of stacked viewport
+		var overlayDiv = this._overlayManager.control.getDomRef();
+
+		if (overlayDiv && (this._nativeViewport || this._viewport)) {
+			// viewportToAppend is the domRef to either viewport or nativeViewport
+			var viewportToAppend = this._nativeViewport && this._nativeViewport.getVisible() ? this._nativeViewport.getDomRef() : this._viewport.getDomRef();
+
+			if (overlayDiv.parentNode !== viewportToAppend) {
+				// Do not display the content div the overlay belongs to;
+				// otherwise it would receive all events we expect on the overlay
+				overlayDiv.parentNode.style.display = "none";
+			}
+			// make overlay a child of viewport/nativeViewport to get event bubbling right
+			viewportToAppend.appendChild(overlayDiv);
+			// adapt overlay size to parent node
+			overlayDiv.style.width = "100%";
+			overlayDiv.style.height = "100%";
+		}
+	};
+
+	/**
+	 * Sets an object that decrypts content of encrypted models.
+	 *
+	 * @param {sap.ui.vk.DecryptionHandler} handler An object that decrypts content of encrypted models.
+	 * @return {sap.ui.vk.Viewer} <code>this</code> to allow method chaining.
+	 * @public
+	 */
+	Viewer.prototype.setDecryptionHandler = function(handler) {
+		DvlContentManager.setDecryptionHandler(handler);
+		return this;
+	};
+
+	/**
+	 * Gets an object that decrypts content of encrypted models.
+	 *
+	 * @return {sap.ui.vk.DecryptionHandler} An object that decrypts content of encrypted models.
+	 * @public
+	 */
+	Viewer.prototype.getDecryptionHandler = function() {
+		return DvlContentManager.getDecryptionHandler();
+	};
+
+	/*
+	 * It creates a new instance of {sap.ui.vk.RedlineDesign}.
+	 * @returns {sap.ui.vk.Viewer} <code>this</code> to allow method chaining.
+	 * @private
+	 */
+	Viewer.prototype._instantiateRedlineDesign = function(redlineElements) {
+
+		// if either Viewport/NativeViewport exist and are visible, we instantiate RedlineDesign
+		if ((this.getViewport() && this.getViewport().getVisible()) || (this.getNativeViewport() && this.getNativeViewport().getVisible())) {
+			var activeViewport = this.getViewport() && this.getViewport().getVisible() ? this.getViewport() : this.getNativeViewport();
+			var virtualViewportSize = activeViewport.getOutputSize();
+
+			this._redlineDesign = new sap.ui.vk.RedlineDesign({
+				visible: false,
+				virtualTop: virtualViewportSize.top,
+				virtualLeft: virtualViewportSize.left,
+				virtualSideLength: virtualViewportSize.sideLength,
+				redlineElements: redlineElements
+			});
+
+			this._redlineDesign._setTargetViewport(activeViewport);
+		}
+		return this;
+	};
+
+	/*
+	 * Activates the redline design control.
+	 * @param {sap.ui.vk.RedlineElement | sap.ui.vk.RedlineElement[]} The redline element/elements which will be rendered
+	 * as soon as the redline design control is activated.
+	 * @returns {sap.ui.vk.Viewer} <code>this</code> to allow method chaining.
+	 * @public
+	 */
+	Viewer.prototype.activateRedlineDesign = function(redlineElements) {
+
+		if (this.getViewport() instanceof sap.ui.vk.threejs.Viewport && this.getViewport().getCamera().getCameraRef().type === "PerspectiveCamera") {
+			this.getViewport()._viewportGestureHandler._activateRedline();
+		}
+		if (this.getViewport() instanceof sap.ui.vk.dvl.Viewport && this.getViewport().getViewInfo().camera && this.getViewport().getViewInfo().camera.projectionType === "perspective") {
+			this.getViewport()._activateRedline();
+		}
+		redlineElements = redlineElements || [];
+		this._instantiateRedlineDesign(redlineElements);
+		// placing the RedlineDesign inside the _stackedViewport
+		this.getRedlineDesign().placeAt(this._stackedViewport);
+		this.getRedlineDesign().setVisible(true);
+
+		var onRedlineDesignPanViewport = function(event) {
+			var deltaX = event.getParameter("deltaX"),
+				deltaY = event.getParameter("deltaY");
+			this.getViewport().queueCommand(function(deltaX, deltaY) {
+				this.getViewport().pan(deltaX, deltaY);
+				this.getViewport().endGesture();
+			}.bind(this, deltaX, deltaY));
+		};
+
+		var onRedlineDesignZoomViewport = function(event) {
+			var originX = event.getParameter("originX"),
+				originY = event.getParameter("originY"),
+				zoomFactor = event.getParameter("zoomFactor");
+			this.getViewport().queueCommand(function(originX, originY, zoomFactor) {
+				this.getViewport().beginGesture(originX, originY);
+				this.getViewport().zoom(zoomFactor);
+				this.getViewport().endGesture();
+			}.bind(this, originX, originY, zoomFactor));
+		};
+
+		var onRedlineDesignPanNativeViewport = function(event) {
+			var deltaX = event.getParameter("deltaX"),
+				deltaY = event.getParameter("deltaY");
+
+			this.getNativeViewport().queueCommand(function() {
+				this.getNativeViewport().pan(deltaX, deltaY);
+				this.getNativeViewport().endGesture();
+			}.bind(this));
+		};
+
+		var onRedlineDesignZoomNativeViewport = function(event) {
+			var originX = event.getParameter("originX"),
+				originY = event.getParameter("originY"),
+				zoomFactor = event.getParameter("zoomFactor");
+
+			this.getNativeViewport().queueCommand(function(originX, originY, zoomFactor) {
+				this.getNativeViewport().beginGesture(originX, originY);
+				this.getNativeViewport().zoom(zoomFactor);
+				this.getNativeViewport().endGesture();
+			}.bind(this, originX, originY, zoomFactor));
+		};
+
+		var onRedlineDesignPanThreejsViewport = function(event) {
+			var deltaX = event.getParameter("deltaX"),
+				deltaY = event.getParameter("deltaY");
+			this.getViewport().queueCommand(function(deltaX, deltaY) {
+				this.getViewport()._viewportGestureHandler._cameraController.beginGesture(deltaX, deltaY);
+				this.getViewport()._viewportGestureHandler._cameraController.pan(deltaX, deltaY);
+				this.getViewport()._viewportGestureHandler._cameraController.endGesture();
+			}.bind(this, deltaX, deltaY));
+		};
+
+		var onRedlineDesignZoomThreejsViewport = function(event) {
+			var originX = event.getParameter("originX"),
+				originY = event.getParameter("originY"),
+				zoomFactor = event.getParameter("zoomFactor");
+			this.getViewport().queueCommand(function(originX, originY, zoomFactor) {
+				this.getViewport()._viewportGestureHandler._cameraController.beginGesture(originX, originY);
+				this.getViewport()._viewportGestureHandler._cameraController.zoom(zoomFactor);
+				this.getViewport()._viewportGestureHandler._cameraController.endGesture();
+			}.bind(this, originX, originY, zoomFactor));
+		};
+
+		// Subscribing to the events fired by the RedlineDesign.
+		// Everytime the RedlineDesign moves, we receive the new coordinates/zoom level
+		// and we use them to update the Viewport/NativeViewport
+		if (this.getNativeViewport() && this.getNativeViewport().getVisible()) {
+			this.getRedlineDesign().attachEvent("pan", onRedlineDesignPanNativeViewport.bind(this));
+			this.getRedlineDesign().attachEvent("zoom", onRedlineDesignZoomNativeViewport.bind(this));
+		} else if (isDvlViewport(this.getViewport()) && this.getViewport() && this.getViewport().getVisible()) {
+			this.getRedlineDesign().attachEvent("pan", onRedlineDesignPanViewport.bind(this));
+			this.getRedlineDesign().attachEvent("zoom", onRedlineDesignZoomViewport.bind(this));
+		} else if (this.getViewport() instanceof sap.ui.vk.threejs.Viewport && this.getViewport().getVisible()) {
+			this.getRedlineDesign().attachEvent("pan", onRedlineDesignPanThreejsViewport.bind(this));
+			this.getRedlineDesign().attachEvent("zoom", onRedlineDesignZoomThreejsViewport.bind(this));
+		} else {
+			jQuery.sap.log.Error("Error: Viewport not supported");
+		}
+
+		return this;
+	};
+
+	/*
+	 * It destroys the current instance of {sap.ui.vk.RedlineDesign}.
+	 * @returns {sap.ui.vk.Viewer} <code>this</code> to allow method chaining.
+	 * @public
+	 */
+	Viewer.prototype.destroyRedlineDesign = function() {
+		if (this.getRedlineDesign()) {
+			if (this.getViewport() instanceof sap.ui.vk.dvl.Viewport) {
+				this.getViewport()._deactivateRedline();
+			}
+			if (this.getViewport() instanceof sap.ui.vk.threejs.Viewport) {
+				this.getViewport()._viewportGestureHandler._deactivateRedline();
+			}
+			this.getRedlineDesign().destroy();
+			this._redlineDesign = null;
+		}
+		return this;
+	};
+
+	Viewer.prototype._onViewportViewActivated = function(event) {
+		// If it's 3D content, we mark the scene tree as 'usable'.
+		// In case of 2D, the scene tree should not be enabled.
+		this._componentsState.sceneTree.shouldBeEnabled = event.getParameter("type") === "3D";
+	};
+
+	Viewer.prototype._handleContentReplaced = function(event) {
+		var content = event.getParameter("newContent");
+
+		if (content && content instanceof sap.ui.vk.Scene) {
+			this._showViewport();
+
+			// each time we load a 3D mode, we have to update the panning ratio of the redline control
+			if (this.getRedlineDesign()) {
+				this.getRedlineDesign().updatePanningRatio();
+			}
+
+			this._setMainScene(content);
+
+			// this.fireSceneLoadingSucceeded({
+			// 	scene: content
+			// });
+		} else if (content instanceof HTMLImageElement || content instanceof HTMLObjectElement) {
+			this._setMainScene(null);
+			this._showNativeViewport();
+
+			if (this.getEnableOverlay()) {
+				this._overlayManager.changed = true;
+				this._showOverlay();
+			}
+
+			// this.fireSceneLoadingSucceeded({
+			// 	scene: content
+			// });
+		} else {
+			this._setMainScene(null);
+			if (this._viewport) {
+				this._viewport.setVisible(false);
+			}
+			if (this._nativeViewport) {
+				this._nativeViewport.setVisible(false);
+			}
+			this._stackedViewport.removeAllContent();
+		}
+	};
+
+	Viewer.prototype._handleContentChangesStarted = function(event) {
+		this.setBusy(true);
+		if (this._componentsState.progressIndicator.defaultEnable) {
+			this._progressIndicator.setPercentValue(0.0);
+			this._progressIndicator.setVisible(true);
+		}
+	};
+
+	Viewer.prototype._handleContentChangesFinished = function(event) {
+		log.info("Finished");
+		this._progressIndicator.setVisible(false);
+		this._progressIndicator.setDisplayValue("");
+		this._progressIndicator.setPercentValue(0);
+		this.setBusy(false);
+		var content = event.getParameter("content");
+		if (content) {
+			this.fireSceneLoadingSucceeded({
+				scene: content
+			});
+		}
+		var failureReason = event.getParameter("failureReason");
+		if (failureReason) {
+			this.fireSceneLoadingFailed({
+				reason: failureReason
+			});
+			// We check if Notifications control is off before showing the error images
+			if (this.getEnableNotifications() === false) {
+				this._showNativeViewport();
+				// Content Connector throws this error if resource type is not supported.
+				if (failureReason.errorMessage === "The content resources cannot be loaded. The type of content resources is unknown.") {
+					// We call NV loadFiled method without parameter so that we use unsupported file text in method already.
+					this._nativeViewport.loadFailed();
+				} else {
+					// If resource has supported type but other issues exist we throw Error loading image.
+					// Translated text from Message library
+					var errorLoadingFile = sap.ui.vk.getResourceBundle().getText("VIEWPORT_MESSAGEERRORLOADINGFILE");
+					// LoadFailed passes parameter as text to present.
+					this._nativeViewport.loadFailed(errorLoadingFile);
+				}
+			}
+			(Array.isArray(failureReason) ? failureReason : [ failureReason ]).forEach(function(reason) {
+				log.error(reason.errorMessage, "", "sap.ui.vk.Viewer");
+			});
+		}
+		this.fireContentResourceChangesProcessed();
+	};
+
+	Viewer.prototype._handleContentChangesProgress = function(event) {
+		if (this._progressIndicator.getVisible()) {
+			var source = event.getParameter("source"),
+			    percentage = event.getParameter("percentage"),
+			    extension = source.match(/\..{3,4}$/),         // if the source has a proper filename with extension, we display it.
+			                                                   // if the file is tokenized, we don't display anything.
+			    processedSource = extension && extension[0] ? source.split(/\\|\//).pop() + " " : "";
+
+			this._progressIndicator.setPercentValue(percentage);
+			this._progressIndicator.setDisplayValue(processedSource + sap.ui.vk.getResourceBundle().getText("PROGRESS_INDICATOR_DOWNLOADING") + " " + (percentage ? Math.floor(percentage) + "%" : ""));
+		}
+	};
+
+	Viewer.prototype._handleContentDestroying = function(event) {
+		this.fireSceneDestroying({
+			scene: event.getParameter("content").scene,
+			preventGarbageCollection: event.getParameter("preventGarbageCollection")
+		});
 	};
 
 	return Viewer;

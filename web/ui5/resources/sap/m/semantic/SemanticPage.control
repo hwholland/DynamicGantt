@@ -23,7 +23,7 @@ The semantics of the content are the following:
 &lt;ul&gt;
 &lt;li&gt;Visual properties (for example, &lt;code&gt;AddAction&lt;/code&gt; will be styled as an icon button)&lt;/li&gt;
 &lt;li&gt;Position in the page (UX guidelines specify that some buttons should be in the header only,
- while others are in the footer or the "share" menu, so we do the correct positioning)&lt;/li&gt;
+ while others are in the footer or the &quot;share&quot; menu, so we do the correct positioning)&lt;/li&gt;
 &lt;li&gt;Sequence order (UX guidelines define a specific sequence order of semantic controls with
 respect to each other)&lt;/li&gt;
 &lt;li&gt;Default localized tooltip for icon-only buttons&lt;/li&gt;
@@ -43,60 +43,60 @@ positioning are automatically added.</documentation>
     <since>1.30.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="title" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="title">
             <documentation>See {@link sap.m.Page#title}</documentation>
         </property>
-        <property name="titleLevel" type="sap.ui.core/TitleLevel" defaultValue="Auto" group="Appearance">
+        <property group="Appearance" defaultValue="Auto" type="sap.ui.core/TitleLevel" name="titleLevel">
             <documentation>See {@link sap.m.Page#titleLevel}</documentation>
         </property>
-        <property name="showNavButton" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="showNavButton">
             <documentation>See {@link sap.m.Page#showNavButton}</documentation>
         </property>
-        <property name="showSubHeader" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="showSubHeader">
             <documentation>See {@link sap.m.Page#showSubHeader}</documentation>
         </property>
-        <property name="enableScrolling" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enableScrolling">
             <documentation>See {@link sap.m.Page#enableScrolling}</documentation>
         </property>
-        <property name="showFooter" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="showFooter">
             <documentation>Hides or shows the page footer</documentation>
         </property>
-        <property name="floatingFooter" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.40.1">
+        <property since="1.40.1" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="floatingFooter">
             <documentation>Determines whether the floating footer behavior is enabled.
 If set to &lt;code&gt;true&lt;/code&gt;, the content is visible when it's underneath the footer.</documentation>
         </property>
-        <property name="semanticRuleSet" type="sap.m/semantic/SemanticRuleSetType" defaultValue="Classic" group="Misc" since="1.44">
+        <property since="1.44" group="Misc" defaultValue="Classic" type="sap.m/semantic/SemanticRuleSetType" name="semanticRuleSet">
             <documentation>Declares the type of semantic ruleset that will govern the styling and positioning of semantic content.</documentation>
         </property>
-        <property name="backgroundDesign" type="sap.m/PageBackgroundDesign" defaultValue="Standard" group="Appearance" since="1.52">
+        <property since="1.52" group="Appearance" defaultValue="Standard" type="sap.m/PageBackgroundDesign" name="backgroundDesign">
             <documentation>Determines the backgound color of the page. For more
 information, see {@link sap.m.Page#backgroundDesign}.</documentation>
         </property>
     </properties>
     <events>
-        <event name="navButtonPress" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="navButtonPress">
             <documentation>See {@link sap.m.Page#navButtonPress}</documentation>
         </event>
     </events>
     <aggregations default="content">
-        <aggregation name="subHeader" type="sap.m/IBar" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/IBar" name="subHeader">
             <documentation>See {@link sap.m.Page#subHeader}</documentation>
         </aggregation>
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>See {@link sap.m.Page#content}</documentation>
         </aggregation>
-        <aggregation name="customHeaderContent" type="sap.m/Button" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.m/Button" name="customHeaderContent">
             <documentation>Custom header buttons</documentation>
         </aggregation>
-        <aggregation name="customFooterContent" type="sap.m/Button" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.m/Button" name="customFooterContent">
             <documentation>Custom footer buttons</documentation>
         </aggregation>
-        <aggregation name="landmarkInfo" type="sap.m/PageAccessibleLandmarkInfo" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/PageAccessibleLandmarkInfo" name="landmarkInfo">
             <documentation>Accessible landmark settings to be applied to the containers of the &lt;code&gt;sap.m.Page&lt;/code&gt; control.
 
 If not set, no landmarks will be written.</documentation>
         </aggregation>
-        <aggregation name="_page" type="sap.m/Page" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/Page" name="_page">
             <documentation>Wrapped instance of {@link sap.m.Page}</documentation>
         </aggregation>
     </aggregations>

@@ -1,14 +1,17 @@
+sap.ui.define([
+    "sap/ushell/services/AppConfiguration"
+], function(AppConfiguration) {
+    "use strict";
+
 sap.ui.controller("sap.ushell.ui.footerbar.SaveAsTile", {
     onExit: function() {
-        "use strict";
         var oView = this.getView();
         var oTileView = oView.getTileView();
         oTileView.destroy();
     },
 
     onInit: function () {
-        "use strict";
-        var appMetaData = sap.ushell.services.AppConfiguration.getMetadata();
+        var appMetaData = AppConfiguration.getMetadata();
         this.oPageBuilderService = sap.ushell.Container.getService("LaunchPage");
         this.oView = this.getView();
         this.appData = this.oView.viewData.appData || {};
@@ -16,6 +19,9 @@ sap.ui.controller("sap.ushell.ui.footerbar.SaveAsTile", {
         if (!jQuery.isEmptyObject(this.appData)) {
             this.oModel = new sap.ui.model.json.JSONModel({
                 showGroupSelection: this.appData.showGroupSelection === false ? false : true,
+                showInfo: this.appData.showInfo === false ? false : true,
+                showIcon: this.appData.showIcon === false ? false : true,
+                showPreview: this.appData.showPreview === false ? false : true,
                 title : this.appData.title ? this.appData.title.substring(0, 256) : '',
                 subtitle: this.appData.subtitle ? this.appData.subtitle.substring(0, 256) : '',
                 numberValue : '',
@@ -29,7 +35,6 @@ sap.ui.controller("sap.ushell.ui.footerbar.SaveAsTile", {
         }
     },
     calcTileDataFromServiceUrl: function (serviceUrl) {
-        "use strict";
         var that = this;
         /* global OData */
         OData.read({requestUri: serviceUrl},
@@ -56,7 +61,6 @@ sap.ui.controller("sap.ushell.ui.footerbar.SaveAsTile", {
         );
     },
     loadPersonalizedGroups: function () {
-        "use strict";
         var oGroupsPromise = this.oPageBuilderService.getGroups(),
             that = this,
             deferred = jQuery.Deferred();
@@ -72,7 +76,6 @@ sap.ui.controller("sap.ushell.ui.footerbar.SaveAsTile", {
         return deferred;
     },
     loadGroupsFromArray : function (aGroups) {
-        "use strict";
         var that = this,
             deferred = jQuery.Deferred(),
             oModel = that.oView.getModel();
@@ -99,7 +102,9 @@ sap.ui.controller("sap.ushell.ui.footerbar.SaveAsTile", {
         return deferred;
     },
     getLocalizedText: function (sMsgId, aParams) {
-        "use strict";
         return aParams ? sap.ushell.resources.i18n.getText(sMsgId, aParams) : sap.ushell.resources.i18n.getText(sMsgId);
     }
 });
+
+
+}, /* bExport= */ false);

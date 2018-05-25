@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /**
  * An invisible container, located (i.e. floats) at the top right side of the shell and can host any <code>sap.ui.core.Control</code> object.<br>
@@ -7,8 +7,8 @@
  */
 
 /*global jQuery, sap */
-sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device'],
-    function (jQuery, library, Device) {
+sap.ui.define(['jquery.sap.global', 'jquery.sap.storage', 'sap/ushell/library', 'sap/ui/Device'],
+    function (jQuery, storage, library, Device) {
         "use strict";
         var FloatingContainer = sap.ui.core.Control.extend("sap.ushell.ui.shell.FloatingContainer", {
 
@@ -36,7 +36,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device'],
             });
 
         FloatingContainer.prototype.init = function () {
-            sap.ui.Device.resize.attachHandler(FloatingContainer.prototype._resizeHandler, this);
+            sap.ui.Device.resize.attachHandler(FloatingContainer.prototype._handleResize, this);
         };
 
         FloatingContainer.prototype._getWindowHeight = function () {
@@ -45,48 +45,112 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device'],
         FloatingContainer.prototype._setContainerHeight = function (oContainer, iFinalHeight) {
             oContainer.css("max-height", iFinalHeight);
         };
-        /**
-         * Calculates the height of the floating container according to window size.
-         * - iInitialContainerMaxHeight is the maximum height of the container according to UX definition.
-         * - iAvailableHeightForContainer is the current window height minus the required offset of the container from the top.
-         * - iFinalHeight can be one of the two:
-         *   1. iAvailableHeightForContainer: If the maximum possible height (iAvailableHeightForContainer) is smaller then the requires height (iInitialContainerMaxHeight).
-         *   2. iInitialContainerMaxHeight: since the window is high enough to contain it.
-         */
-        FloatingContainer.prototype._resizeHandler = function () {
-            var oContainer = jQuery(".sapUshellFloatingContainer"),
-                oStorage = jQuery.sap.storage(jQuery.sap.storage.Type.local, "com.sap.ushell.adapters.local.FloatingContainer"),
-                oWrapper = oContainer.parent()[0],
-                iWindowCurrentWidth = jQuery(window).width(),
-                iWindowCurrentHeight = jQuery(window).height(),
-                iContainerWidth = oContainer.width(),
-                iContainerHeight = oContainer.height(),
+
+        FloatingContainer.prototype._handleResize = function (oEvent) {
+            jQuery.sap.measure.start("FLP:FloatingContainer_handleResize", "resizing floating container","FLP");
+            if (jQuery(".sapUshellFloatingContainer").parent()[0] && (jQuery('.sapUshellContainerDocked').size() == 0) ) {
+                this.oWrapper = jQuery(".sapUshellFloatingContainer").parent()[0];
+                this.oWrapper.setAttribute("style", this.oStorage.get("floatingContainerStyle"));
+                var bIsSSize = window.matchMedia ? window.matchMedia("(max-width: 417px)").matches : false;
+                this.adjustPosition(oEvent, bIsSSize);
+            }else
+            // when copilot is docked to the left and window is resized - we need to align his left
+            if(jQuery(".sapUshellFloatingContainer").parent()[0] && (jQuery('.sapUshellContainerDocked').size() != 0)){
+                if(jQuery('#canvas').hasClass('sapUshellContainer-Narrow-Right')){
+                    var iUpdatedLeft;
+                    if(sap.ui.getCore().getConfiguration().getRTL()){
+                        jQuery("#sapUshellFloatingContainerWrapper").css("left",(416/jQuery(window).width()*100) + "%");
+                        iUpdatedLeft = 416/jQuery(window).width()*100 + "%;" ;
+                    }else{
+                        jQuery("#sapUshellFloatingContainerWrapper").css("left",100 - 416/jQuery(window).width()*100 + "%");
+                        iUpdatedLeft = 100 - 416/jQuery(window).width()*100 + "%;" ;
+                    }
+                    this.oWrapper.setAttribute("style","left:" + iUpdatedLeft  + this.oWrapper.getAttribute("style").substring(this.oWrapper.getAttribute("style").indexOf("top")));
+                    this.oStorage.put("floatingContainerStyle", this.oWrapper.getAttribute("style"));
+                }
+            }
+            if(jQuery('.sapUshellContainerDocked').length>0){
+            sap.ui.getCore().getEventBus().publish("launchpad", "shellFloatingContainerDockedIsResize" );
+            }
+
+            // handle case when co-pilot is dock but screen is less then desktop or landscape tablet
+            var sDevice = sap.ui.Device.media.getCurrentRange(sap.ui.Device.media.RANGESETS.SAP_STANDARD)
+            if(sDevice.name != "Desktop" && (jQuery('.sapUiMedia-Std-Desktop').width() - 416 < sDevice.from)  && (jQuery('.sapUshellContainerDocked').size() != 0)){
+                jQuery('#canvas').removeClass('sapUshellContainerDocked');
+                if(jQuery('#canvas').hasClass('sapUshellContainer-Narrow-Right')){
+                    jQuery('#canvas').removeClass('sapUshellContainer-Narrow-Right sapUshellMoveCanvasRight  sapUshellContainerDockedLaunchpadOpenTranisationRight');
+                }else{
+                    jQuery('#canvas').removeClass('sapUshellContainer-Narrow-Left  sapUshellMoveCanvasLeft sapUshellContainerDockedLaunchpadOpenTranisationLeft');
+                }
+                $(".sapUshellShellFloatingContainerFullHeight").removeClass("sapUshellShellFloatingContainerFullHeight");
+                sap.ui.getCore().byId("mainShell").getController()._handleAnimations(false);
+                var oStorage = jQuery.sap.storage(jQuery.sap.storage.Type.local, "com.sap.ushell.adapters.local.CopilotLastState");
+                if(oStorage){
+                    oStorage.put("lastState", "floating");
+                }
+                sap.ui.getCore().getEventBus().publish("launchpad", "shellFloatingContainerIsUnDockedOnResize" );
+                $("#sapUshellFloatingContainerWrapper").removeClass("sapUshellContainerDocked sapUshellContainerDockedMinimizeCoPilot sapUshellContainerDockedExtendCoPilot");
+                var oViewPortContainer = sap.ui.getCore().byId("viewPortContainer");
+                if(oViewPortContainer){
+                    oViewPortContainer._handleSizeChange();
+                }
+            }
+            jQuery.sap.measure.end("FLP:FloatingContainer_handleResize");
+        };
+
+        FloatingContainer.prototype.adjustPosition = function (oEvent, bIsSSize) {
+            var iWindowCurrentWidth = oEvent ? oEvent.width : jQuery(window).width(),
+                iWindowCurrentHeight = oEvent ? oEvent.height : jQuery(window).height(),
+                iContainerWidth = this.oContainer.width(),
+                iContainerHeight = this.oContainer.height(),
                 bContainerPosExceedWindowWidth,
                 bContainerPosExceedWindowHeight,
                 iLeftPos,
-                iTopPos;
+                iTopPos,
+                isRTL = sap.ui.getCore().getConfiguration().getRTL();
 
-            if (oWrapper) {
-                iLeftPos = oWrapper.style.left.replace("%", "");
+            bIsSSize = bIsSSize !== undefined ? bIsSSize : false;
+
+            if (this.oWrapper) {
+                iLeftPos = this.oWrapper.style.left.replace("%", "");
                 iLeftPos = iWindowCurrentWidth * iLeftPos / 100;
-                iTopPos = oWrapper.style.top.replace("%", "");
+                iTopPos = this.oWrapper.style.top.replace("%", "");
                 iTopPos = iWindowCurrentHeight * iTopPos / 100;
-                bContainerPosExceedWindowWidth = iWindowCurrentWidth < (iLeftPos + iContainerWidth);
-                bContainerPosExceedWindowHeight = iWindowCurrentHeight < (iTopPos + iContainerHeight);
 
-                if (bContainerPosExceedWindowWidth) {
-                    iLeftPos = iWindowCurrentWidth - iContainerWidth;
-                }
-                if (bContainerPosExceedWindowHeight) {
-                    iTopPos = iWindowCurrentHeight - iContainerHeight;
-                }
 
-                if (!bContainerPosExceedWindowWidth && !bContainerPosExceedWindowHeight && oStorage && oStorage.get("floatingContainerStyle")) {
-                    oWrapper.setAttribute("style", oStorage.get("floatingContainerStyle"));
-                    return;
-                }
+                //If we are in the S size screen defined as 417 px, then there is a css class applied to  the container
+                //And we want to preserve the position before going into S size in case the screen is resized back.
+                if (!isNaN(iLeftPos) && !isNaN(iTopPos) && !bIsSSize) { //check if iTopPos or iLeftPos is NaN
+                    if (isRTL) {
+                        bContainerPosExceedWindowWidth = (iLeftPos < iContainerWidth) || (iLeftPos > iWindowCurrentWidth);
+                        if (bContainerPosExceedWindowWidth) {
+                            iLeftPos = iLeftPos < iContainerWidth ? iContainerWidth : iWindowCurrentWidth;
+                        }
+                    } else {
+                        bContainerPosExceedWindowWidth = (iLeftPos < 0) || (iWindowCurrentWidth < (iLeftPos + iContainerWidth));
+                        if (bContainerPosExceedWindowWidth) {
+                            iLeftPos = iLeftPos < 0 ? 0 : (iWindowCurrentWidth - iContainerWidth);
+                        }
+                    }
+                    bContainerPosExceedWindowHeight = (iTopPos < 0) || (iWindowCurrentHeight < (iTopPos + iContainerHeight));
 
-                oWrapper.setAttribute("style", "left:" + iLeftPos * 100 / iWindowCurrentWidth + "%;top:" + iTopPos * 100 / iWindowCurrentHeight + "%;position:absolute;");
+                    if (bContainerPosExceedWindowHeight) {
+                        iTopPos = iTopPos < 0 ? 0 : (iWindowCurrentHeight - iContainerHeight);
+                    }
+
+                    if (!bContainerPosExceedWindowWidth && !bContainerPosExceedWindowHeight) {
+                        this.oWrapper.setAttribute("style", "left:" + iLeftPos * 100 / iWindowCurrentWidth + "%;top:" + iTopPos * 100 / iWindowCurrentHeight + "%;position:absolute;");
+                        return;
+                    }
+                    this.oWrapper.setAttribute("style", "left:" + iLeftPos * 100 / iWindowCurrentWidth + "%;top:" + iTopPos * 100 / iWindowCurrentHeight + "%;position:absolute;");
+                }
+            }
+        };
+        FloatingContainer.prototype.handleDrop = function () {
+
+            if (this.oWrapper) {
+                this.adjustPosition();
+                this.oStorage.put("floatingContainerStyle", this.oWrapper.getAttribute("style"));
             }
 
         };
@@ -98,6 +162,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ushell/library', 'sap/ui/Device'],
                 rm.destroy();
             }
             this.setAggregation("content", aContent, true);
+        };
+        FloatingContainer.prototype.onAfterRendering = function () {
+            this.oStorage = this.oStorage || jQuery.sap.storage(jQuery.sap.storage.Type.local, "com.sap.ushell.adapters.local.FloatingContainer");
+            this.oContainer = jQuery(".sapUshellFloatingContainer");
+            this.oWrapper = jQuery(".sapUshellFloatingContainer").parent()[0];
+
+        };
+        FloatingContainer.prototype.exit = function () {
+            sap.ui.Device.resize.detachHandler(FloatingContainer.prototype._resizeHandler, this);
         };
 
         return FloatingContainer;

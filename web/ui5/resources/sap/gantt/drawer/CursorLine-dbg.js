@@ -5,10 +5,10 @@
 	
  */
 sap.ui.define([
-	"sap/ui/core/Core", "sap/ui/Device", "sap/gantt/misc/Format", "sap/gantt/drawer/Drawer",
+	"sap/ui/core/Core", "sap/ui/Device", "sap/gantt/misc/Format", "sap/gantt/drawer/Drawer", "sap/gantt/misc/Utility",
 	// 3rd party lib
 	"sap/ui/thirdparty/d3"
-], function (Core, Device, Format, Drawer) {
+], function (Core, Device, Format, Drawer, Utility) {
 	"use strict";
 
 	/**
@@ -29,7 +29,7 @@ sap.ui.define([
 	 * 
 	 * @param {object} [aSvgBodyNode]: SVG body of all chart instances. update synchronized
 	 * @param {object} [aSvgHeaderNode] Header SVG documents of Gantt Chart
-	 * @param {sap.ui.core.Locale} [oLocale] Locale instance
+	 * @param {sap.gantt.config.Locale} [oLocale] Locale instance
 	 * @param {object} [oCursorPoint] Cursor point of the target element information including 
 	 *	x: x coordinate of mouse in the triggering SVG relative to the document: pageX,
 	 *	y: y coordinate of mouse in the triggering SVG relative to the document: pageY,
@@ -41,7 +41,7 @@ sap.ui.define([
 		this._oLocale = oLocale;
 
 		// Find out the left offset of SVG document which triggered the event 
-		var iCursorOffsetLeft = jQuery('#' + oCursorPoint.svgId).offset().left;
+		var iCursorOffsetLeft = jQuery(Utility.attributeEqualSelector("id", oCursorPoint.svgId)).offset().left;
 		
 		// The Gantt might have multiple charts. Here find out the chart SVG DOM node offset regarding to the document
 		// Notice: Only Gantt charts in vertical layout are considered. It makes sure cursor line is draw vertical axis.
@@ -198,7 +198,8 @@ sap.ui.define([
 	 * @returns {AxisTime} AxisTime instance of the Gantt Chart control
 	 */
 	CursorLine.prototype._getAxisTime = function (elementId) {
-		var $element = jQuery("#" + elementId);
+		var sWrapSelector = Utility.attributeEqualSelector("id", elementId);
+		var $element = jQuery(sWrapSelector);
 		var oAxisTime = null;
 		if ($element && $element.control()) {
 			oAxisTime = $element.control()[0].getAxisTime();
@@ -207,10 +208,10 @@ sap.ui.define([
 	};
 
 	CursorLine.prototype._getTimeLabel = function (sTimeStamp, oLocale, oAxisTime) {
-		var oLocalTime = Format._convertUTCToLocalTime(sTimeStamp, oLocale);
-		var oZoomStrategy = oAxisTime.getZoomStrategy()[oAxisTime.getCurrentTickTimeIntervalKey()].smallInterval;
+		var oLocalTime = Format._convertUTCToLocalTime(sTimeStamp, oLocale),
+			oZoomStrategy = oAxisTime.getZoomStrategy();
 
-		return Format.creatTimeLabel(oZoomStrategy, oLocalTime);
+		return oZoomStrategy.getLowerRowFormatter().format(oLocalTime);
 	};
 
 	return CursorLine;

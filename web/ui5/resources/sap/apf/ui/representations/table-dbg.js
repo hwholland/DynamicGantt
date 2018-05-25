@@ -7,112 +7,176 @@ jQuery.sap.require("sap.apf.core.constants");
 jQuery.sap.require('sap.apf.ui.utils.formatter');
 jQuery.sap.require("sap.apf.ui.representations.utils.paginationHandler");
 jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
+jQuery.sap.require("sap.apf.ui.representations.utils.paginationDisplayOptionHandler");
+jQuery.sap.require("sap.ui.model.Sorter");
+jQuery.sap.require("sap.ui.table.Table");
+jQuery.sap.require("sap.ui.table.Column");
+jQuery.sap.require("sap.ui.core.CustomData");
+jQuery.sap.require("sap.ui.model.json.JSONModel");
+jQuery.sap.require("sap.ui.core.Icon");
+jQuery.sap.require("sap.ui.layout.VerticalLayout");
+jQuery.sap.require("sap.m.Text");
+jQuery.sap.require("sap.m.Label");
+jQuery.sap.require("sap.m.Button");
+jQuery.sap.require("sap.m.HBox");
+jQuery.sap.require("sap.m.VBox");
+jQuery.sap.require("sap.m.ScrollContainer");
+jQuery.sap.require('sap.ui.export.Spreadsheet');
+jQuery.sap.require("sap.apf.ui.utils.determineColumnSettingsForSpreadSheetExport");
+jQuery.sap.require("sap.ui.export.EdmType");
 (function() {
 	'use strict';
-	var oTableWithoutHeaders;
 	//select the items in the table which are passed as parameter
-	function _selectItemsInTable(aSelectedItems) {
-		oTableWithoutHeaders.removeSelections();// remove all the selections , so that older values are not retained
+	function _selectItemsInTable(tableControl, aSelectedItems) {
 		aSelectedItems.forEach(function(item) {
-			oTableWithoutHeaders.setSelectedItem(item);
+			tableControl.addSelectionInterval(item, item);
 		});
 	}
-	//clear the filters from the UI5Charthelper and also from APF filters
-	function _clearFilters(oTableInstance) {
-		oTableInstance.UI5ChartHelper.filterValues = [];
-		oTableInstance.setFilter(oTableInstance.oApi.createFilter());
+	function _attachEvent(oControl) {
+		oControl.loadAllButton.attachEvent("setFocusOnLoadAllButtonEvent", oControl.loadAllButton.setFocusOnLoadAllButton);
 	}
-	//creates the filter values from the filters
-	function _getFilterTermsFromTableSelection(oTableInstance, sRequiredFilterProperty) {
-		var aFilterTerms = oTableInstance.getFilter().getInternalFilter().getFilterTermsForProperty(sRequiredFilterProperty); //read the filter terms
-		var aFilterValues = aFilterTerms.map(function(term) {
-			return term.getValue();
-		});
-		return aFilterValues;
-	}
-	//toggles the selection based on the event.
-	function _getToggledSelection(sRequiredFilter, aCurrentSelectedItem, aFilterValues) {
-		var newAddedFilters = [];
-		var sCurrentRequiredFilter = aCurrentSelectedItem[0].getBindingContext().getProperty(sRequiredFilter);//required filter from current selected item
-		if (aCurrentSelectedItem[0].isSelected()) {
-			newAddedFilters.push(sCurrentRequiredFilter); // if new item is selected, add it to the new added filter array
-		} else {
-			var indexOfToggledItem = aFilterValues.indexOf(sCurrentRequiredFilter);
-			if (indexOfToggledItem !== -1) { // if item is deselected, find the index of item and remove it from array
-				aFilterValues.splice(indexOfToggledItem, 1);
-			}
+	function _validateFilters(oTableInstance, sRequiredFilterProperty) {
+		if (oTableInstance.bIsAlternateRepresentation && oTableInstance.oApi.getActiveStep()) { //read filters from corresponding chart of alternate table
+			oTableInstance.oApi.getActiveStep().getSelectedRepresentation().oRepresentationFilterHandler.getFilterValues().forEach(function(aFilter) {
+				if (oTableInstance.aFiltersInTable.indexOf(aFilter) === -1) {
+					oTableInstance.aFiltersInTable.push(aFilter);
+				}
+			});
 		}
-		return newAddedFilters;
-	}
-	//update the filter 
-	function _updateFilters(oTableInstance, isSelectionChanged, aFilterValues) {
-		if (isSelectionChanged) { // if the selection has changed and selectionChanged event has to be triggered
-			_clearFilters(oTableInstance); // clear the filters first, so that older values are not retained on the UI5ChartHelper filetr values
-			oTableInstance.filter = oTableInstance.UI5ChartHelper.getFilterFromSelection(aFilterValues);
-			oTableInstance.oApi.getActiveStep().getSelectedRepresentation().UI5ChartHelper.filterValues = oTableInstance.UI5ChartHelper.filterValues; // assign the filter values from table to the selected representation 
-			oTableInstance.oApi.selectionChanged(); // trigger the selection change event
-		} else {
-			isSelectionChanged = true;// make the boolean true, so that the selectionChanges API is triggered
+		if ((sRequiredFilterProperty && oTableInstance.oParameter.top) || oTableInstance.oParameter.isAlternateRepresentation) {
+			oTableInstance.aFiltersInTable = _getAllFilterInTable(oTableInstance, sRequiredFilterProperty);
 		}
 	}
 	//get all the selected items in the table based on the required filter
-	function _getAllSelectionInTable(oAllItemsInTable, sRequiredFilterProperty, aFilterValues) {
-		var aAllSelectionInTable = oAllItemsInTable.filter(function(item) { // selection in table which are based on the result filter values
-			var reqFilterValue = item.getBindingContext().getProperty(sRequiredFilterProperty);
-			return aFilterValues.indexOf(reqFilterValue) !== -1;
+	function _getSelectedIndicesInTable(oTableInstance, sRequiredFilterProperty) {
+		var aSelectedIndex = [];
+		oTableInstance.aDataResponse.forEach(function(item, index) { // selection in table which are based on the result filter values
+			var reqFilterValue = item[sRequiredFilterProperty];
+			if (oTableInstance.aFiltersInTable.indexOf(reqFilterValue) !== -1) {
+				aSelectedIndex.push(index);
+			}
 		});
-		return aAllSelectionInTable;
+		return aSelectedIndex;
+	}
+	//get all the filters in the table based on the required filter
+	function _getAllFilterInTable(oTableInstance, sRequiredFilterProperty) {
+		var aFiltersInTable = [];
+		oTableInstance.aFiltersInTable.forEach(function(filter) {
+			oTableInstance.aDataResponse.forEach(function(item) { // selection in table which are based on the result filter values
+				var reqFilterValue = item[sRequiredFilterProperty];
+				if (reqFilterValue == filter && aFiltersInTable.indexOf(filter) === -1) {
+					aFiltersInTable.push(filter);
+				}
+			});
+		});
+		return aFiltersInTable;
 	}
 	//read the filters and select the rows in table. Also read the selected items where selection is enabled, creates the filters from selections
 	function _drawSelection(oEvent) {
-		var aFilterValues = [], sRequiredFilterProperty;
 		var aRequiredFilter = this.oParameter.requiredFilters;
-		sRequiredFilterProperty = aRequiredFilter && (aRequiredFilter.length > 0) ? aRequiredFilter[0] : undefined; //read the required filter from the internal filter or the required filters (when table is created, the internal filter wont be available)  
-		var aCurrentSelectedItem = oEvent.getParameters("listItems").listItems; // store the current selected item for which selection event is triggered
-		if (this.UI5ChartHelper) { // if the UI5ChartHelper is available , then only filters would be present
-			aFilterValues = sRequiredFilterProperty ? _getFilterTermsFromTableSelection(this, sRequiredFilterProperty) : []; // if there are filters then get the filters or it will be an empty array
-		}
-		//enable the selection mode in the table based on the required filter availability
-		var selectionMode = aRequiredFilter && (aRequiredFilter.length > 0) ? "MultiSelect" : "None";
-		oTableWithoutHeaders.setMode(selectionMode);
-		if (oEvent.getId() === "selectionChange") { //if the explicit selection is made on the table, selectionChanged event is triggered
-			var isSelectionChanged = true;// boolean to indicate if the selection changed API is triggered just once 
-			//toggle the selection in table
-			var newAddedFilters = _getToggledSelection(sRequiredFilterProperty, aCurrentSelectedItem, aFilterValues);
-			aFilterValues = aFilterValues.concat(newAddedFilters.filter(function(item) { // merge the unique filters into an array
-				return aFilterValues.indexOf(item) < 0;
-			}));
-			_updateFilters(this, isSelectionChanged, aFilterValues);
-		}
-		var oAllItemsInTable = oEvent.getSource().getItems();
-		var aAllSelectionInTable = _getAllSelectionInTable(oAllItemsInTable, sRequiredFilterProperty, aFilterValues);//read the filter directly in case of updateFinished event
-		_selectItemsInTable(aAllSelectionInTable);
-	}
-	//reads the filters and selects the rows in print of table
-	function _drawSelectionForPrint(oTableInstance, oPrintTable) {
-		var aRequiredFilter = oTableInstance.oParameter.requiredFilters;
 		var sRequiredFilterProperty = aRequiredFilter && (aRequiredFilter.length > 0) ? aRequiredFilter[0] : undefined; //read the required filter from the internal filter or the required filters (when table is created, the internal filter wont be available)  
-		var aFilterValues = _getFilterTermsFromTableSelection(oTableInstance, sRequiredFilterProperty);
-		var aSelectedListItems = oPrintTable.getItems().filter(function(item) {
-			var reqFilterValue = item.getBindingContext().getProperty(sRequiredFilterProperty);
-			return aFilterValues.indexOf(reqFilterValue) !== -1;
-		});
-		var selectionMode = aRequiredFilter && (aRequiredFilter.length > 0) ? "MultiSelect" : "None";
-		oPrintTable.setMode(selectionMode);
-		return aSelectedListItems;
+		var isUserInteraction = oEvent.getParameter("userInteraction");
+		var aCurrentSelectedItem = oEvent.getParameter("rowIndices"); // store the current selected item for which selection event is triggered
+		if (!isUserInteraction || aCurrentSelectedItem.length === 0) {
+			return;
+		}
+		if (oEvent.getSource().getFocusDomRef() && oEvent.getSource().getFocusDomRef().offsetTop !== 0) { //if row is selected, get the scroll position
+			this.nFirstVisibleRow = this.tableControl.getFirstVisibleRow();
+		}
+		_getToggledSelection(this, sRequiredFilterProperty, aCurrentSelectedItem);
+		var aCombinedFilterValues = jQuery.unique(this.aFiltersInTable);
+		_updateFilters(this, aCombinedFilterValues);
 	}
-	//creates the table and binds the columns to it. Also formats the cell value based on the metadata
-	function _createTableAndBindColumns(tableColumns, oTableInstance, isPrintForTable) {
-		var oFormatter = new sap.apf.ui.utils.formatter({ // formatter for the value formatting
-			getEventCallback : oTableInstance.oApi.getEventCallback.bind(oTableInstance.oApi),
-			getTextNotHtmlEncoded : oTableInstance.oApi.getTextNotHtmlEncoded
-		}, oTableInstance.metadata, oTableInstance.aDataResponse);
+	//toggles the selection based on the event.
+	function _getToggledSelection(oTableInstance, sRequiredFilter, aCurrentSelectedItem) {
+		var sCurrentRequiredFilter = oTableInstance.tableControl.getContextByIndex(aCurrentSelectedItem[0]).getProperty(sRequiredFilter);
+		if ((oTableInstance.tableControl.isIndexSelected(aCurrentSelectedItem[0])) && (oTableInstance.aFiltersInTable.indexOf(sCurrentRequiredFilter)) === -1) {
+			oTableInstance.aFiltersInTable.push(sCurrentRequiredFilter); // if new item is selected, add it to the new added filter array
+		} else {
+			var indexOfToggledItem = oTableInstance.aFiltersInTable.indexOf(sCurrentRequiredFilter);
+			if (indexOfToggledItem !== -1) { // if item is deselected, find the index of item and remove it from array
+				oTableInstance.aFiltersInTable.splice(indexOfToggledItem, 1);
+			}
+		}
+	}
+	//update the filter 
+	function _updateFilters(oTableInstance, aCombinedFilterValues) {
+		_clearFilters(oTableInstance); // clear the filters first, so that older values are not retained on filter values
+		oTableInstance.aFiltersInTable = aCombinedFilterValues;
+		oTableInstance.oApi.getActiveStep().getSelectedRepresentation().oRepresentationFilterHandler.updateFilterFromSelection(aCombinedFilterValues);
+		oTableInstance.oApi.selectionChanged();
+	}
+	//clear the filters
+	function _clearFilters(oTableInstance) {
+		oTableInstance.oRepresentationFilterHandler.clearFilters();
+		oTableInstance.oApi.getActiveStep().getSelectedRepresentation().oRepresentationFilterHandler.clearFilters();
+		oTableInstance.aValidatedFilter = [];
+		oTableInstance.aFiltersInTable = [];
+	}
+	/* rules:
+	* - load all button does not show up in table with configured top n
+	* - same holds for count information (12 of 100 records)
+	*/
+	function createTitlebarForTable(oController, stepTitle, actualNumberOfRecords, bNotLoadAll, width) {
+		var numberOfAllRecords = oController.nDataResponseCount || 0;
+		var buttonBox, titleText;
+		var text = oController.oApi.getTextNotHtmlEncoded("buttonTextExport");
+		var exportButton = new sap.m.Button({
+			text : text,
+			press : function() {
+				oController.exportExcel(stepTitle);
+			}
+		}).addStyleClass("sapUiTinyMarginBeginEnd");
+		oController.titleControl = new sap.m.Title({
+			level : sap.ui.core.TitleLevel.H1
+		}).addStyleClass("sapUiTinyMarginBegin").addStyleClass("sapUiTinyMarginTop");
+		if (width){ //if width is set, the table is created for preview content in the modeler, no buttons in the title then
+			titleText = oController.title;
+		} else if (oController.oParameter.top) {//no loadAll-Button if topN is configured for table,
+			buttonBox = new sap.m.HBox({
+				items : [ exportButton ]
+			});
+			titleText = oController.title;
+		} else if (bNotLoadAll){ // no loadAll-Button if notLoadAll is configured for table (e.g. in case of alternate representation)
+			buttonBox = new sap.m.HBox({
+				items : [ exportButton ]
+			});
+			titleText = oController.oApi.getTextNotHtmlEncoded("stepTitleWithNumberOfRecords", [ oController.title, actualNumberOfRecords, actualNumberOfRecords ]); // comment: this code was written under the assumption that the chart that turns into alternate representation already contains all available data (count of loaded data === count of total data)
+		} else {
+			text = oController.oApi.getTextNotHtmlEncoded("buttonTextLoadAll");
+			if (oController.loadAllButton === undefined) {
+				oController.loadAllButton = new sap.m.Button({
+					text : text,
+					press : oController.loadAll.bind(oController)
+				});
+				oController.loadAllButton.setFocusOnLoadAllButton = function() {
+					this.focus();
+					this.detachEvent("setFocusOnLoadAllButtonEvent", this.setFocusOnLoadAllButton);
+				};
+			}
+			buttonBox = new sap.m.HBox({
+				items : [ oController.loadAllButton, exportButton ]
+			});
+			titleText = oController.oApi.getTextNotHtmlEncoded("stepTitleWithNumberOfRecords", [ oController.title, actualNumberOfRecords, numberOfAllRecords ]);
+			oController.loadAllButton.addAriaLabelledBy(oController.titleControl);
+		}
+		exportButton.addAriaLabelledBy(oController.titleControl);
+		oController.titleControl.setText(titleText);
+		var hbox = new sap.m.HBox({
+			alignItems : "Start",
+			justifyContent : "SpaceBetween",
+			items : [ oController.titleControl, buttonBox ]
+		});
+		return hbox;
+	}
+	//creates the table and binds the columns to it. Also formats the cell value based on the metadata.
+	function _createTableAndBindColumns(tableColumns, oStepTitle, oTableInstance, width) {
 		var formatCellValue = function(index) {
 			return function(columnValue) {
 				if (oTableInstance.metadata !== undefined) {
 					var formatedColumnValue;
 					if (tableColumns.value[index] && columnValue) {
-						formatedColumnValue = oFormatter.getFormattedValue(tableColumns.value[index], columnValue);
+						formatedColumnValue = oTableInstance.oFormatter.getFormattedValueAsString(tableColumns.value[index], columnValue);
 						if (formatedColumnValue !== undefined) {
 							return formatedColumnValue;
 						}
@@ -121,107 +185,80 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 				return columnValue;
 			};
 		};
-		var columnCells = [];
-		for(var indexForColumn = 0; indexForColumn < tableColumns.name.length; indexForColumn++) {
-			var tableCellValues = new sap.m.Text().bindText(tableColumns.value[indexForColumn], formatCellValue(indexForColumn), sap.ui.model.BindingMode.OneWay);
-			columnCells.push(tableCellValues);
+		var oTable = new sap.ui.table.Table({
+			title : oStepTitle,
+			showNoData : false,
+			enableSelectAll : false,
+			visibleRowCountMode : sap.ui.table.VisibleRowCountMode.Auto
+		});
+		if(width){
+			oTable.setWidth(width + "px");
 		}
-		var columnForPrintTable = [], columnForDataTable = [];
+		oTable.setLayoutData(new sap.m.FlexItemData({
+			growFactor : 1
+		}));
+		if (sap.ui.Device.system.desktop) {
+			oTable.addStyleClass("sapUiSizeCompact");
+		}
+		var aRequiredFilter = oTableInstance.oParameter.requiredFilters;
+		var selectionMode = (aRequiredFilter && (aRequiredFilter.length > 0)) ? "MultiToggle" : "None";
+		oTable.setSelectionMode(selectionMode);
+		//Adding the columns headers ,column data to table and custom data for view setting dialog.
+		var columnForDataTable = [], oControl, oColumn, customDataForColumnText;
 		for(var indexTableColumn = 0; indexTableColumn < tableColumns.name.length; indexTableColumn++) {
-			var oColumnForPrint = new sap.m.Column({
-				header : new sap.m.Text({
-					text : tableColumns.name[indexTableColumn]
-				})
+			oControl = new sap.m.Text({
+				wrapping: false
 			});
-			columnForPrintTable.push(oColumnForPrint);
-			var oColumnForDataTable = new sap.m.Column();
-			var customDataForColumnText = new sap.ui.core.CustomData({
+			oControl.bindText(tableColumns.value[indexTableColumn], formatCellValue(indexTableColumn), sap.ui.model.BindingMode.OneWay);
+			oControl.bindProperty("tooltip", tableColumns.value[indexTableColumn], formatCellValue(indexTableColumn));
+			oColumn = new sap.ui.table.Column({
+				label : new sap.m.Label({
+					text : tableColumns.name[indexTableColumn]
+				}),
+				template : oControl
+			});
+			customDataForColumnText = new sap.ui.core.CustomData({
 				value : {
 					text : tableColumns.name[indexTableColumn],
 					key : tableColumns.value[indexTableColumn]
 				}
 			});
-			oColumnForDataTable.addCustomData(customDataForColumnText);
-			columnForDataTable.push(oColumnForDataTable);
+			if(width){ //set Min width for columns in case of preview in modeler
+				oColumn.setMinWidth(125);
+			}
+			oColumn.addCustomData(customDataForColumnText);
+			columnForDataTable.push(oColumn);
 		}
+		//Adding all columns to table.
+		var aColumns;
+		aColumns = columnForDataTable;
+		aColumns.forEach(function(column) {
+			oTable.addColumn(column);
+		});
+		if (columnForDataTable.length > 10) {
+			oTable.getColumns().forEach(function(oColumn) { // Columns > 10, horizontal scroll should come in table
+				oColumn.setWidth("125px");// since the chart width is 1000px ,hence setting the columns  width based on it.
+			});
+		}
+		//Create a JSONModel, fill in the data and bind the Table to this model.
 		var oModelForTable = new sap.ui.model.json.JSONModel();
 		oModelForTable.setSizeLimit(10000);
 		var aTableData = oTableInstance.getData();
 		oModelForTable.setData({
 			tableData : aTableData
 		});
-		var oTable = new sap.m.Table({
-			items : {
-				path : "/tableData",
-				template : new sap.m.ColumnListItem({
-					cells : columnCells
-				})
-			}
-		});
-		var aColumns;
-		aColumns = columnForDataTable;
-		if (isPrintForTable) {
-			aColumns = columnForPrintTable;
-		}
-		aColumns.forEach(function(column) {
-			oTable.addColumn(column);
-		});
 		oTable.setModel(oModelForTable);
-		if (oTableInstance.metadata !== undefined) {// aligning amount fields
+		oTable.bindRows("/tableData");
+		if (oTableInstance.metadata !== undefined) {
 			for(var fieldIndex = 0; fieldIndex < tableColumns.name.length; fieldIndex++) {
 				var oMetadata = oTableInstance.metadata.getPropertyMetadata(tableColumns.value[fieldIndex]);
-				if (oMetadata.unit) {
-					var amountCol = oTable.getColumns()[fieldIndex];
-					amountCol.setHAlign(sap.ui.core.TextAlign.Right);
+				if (oMetadata["aggregation-role"] === "measure") {
+					var measureCol = oTable.getColumns()[fieldIndex];
+					measureCol.setHAlign(sap.ui.core.HorizontalAlign.End);
 				}
 			}
 		}
 		return oTable;
-	}
-	/**
-	* @private
-	* @method _addStyleToTableForPagination  
-	* @param oContainer - the container which has the table on which pagination has to be triggered
-	* @description calculates the height of the scroll in the scroll container where table is contained 
-	* so that pagination could be triggered based on the height of the scroll.
-	*/
-	function _addStyleToTable(oContainer) {
-		var scrollContainerHeight, offsetTop;
-		jQuery(".scrollContainer > div:first-child").css({// For IE-Full width for alternate representation
-			"display" : "table",
-			"width" : "inherit"
-		});
-		if (offsetTop === undefined) {
-			offsetTop = jQuery(".tableWithoutHeaders").offset().top;
-		}
-		if (jQuery(".tableWithoutHeaders").offset().top !== offsetTop) {// fullscreen
-			scrollContainerHeight = ((window.innerHeight - jQuery('.tableWithoutHeaders').offset().top)) + "px";
-		} else {
-			scrollContainerHeight = ((window.innerHeight - jQuery('.tableWithoutHeaders').offset().top) - (jQuery(".applicationFooter").height()) - 20) + "px";
-		}
-		document.querySelector('.tableWithoutHeaders').style.cssText += "height : " + scrollContainerHeight;
-		sap.ui.Device.orientation.attachHandler(function() {// for height issue on orientation change
-			oContainer.rerender();
-		});
-	}
-	function _sortTableData(oSortOption, oRepInstance) {
-		var sorter = [];
-		sorter.push(new sap.ui.model.Sorter(oSortOption.property, oSortOption.descending));
-		oRepInstance.oTableRepresentation.getBinding("items").sort(sorter); // sort the data in the table 
-		oRepInstance.oTableRepresentation.getParent().getParent().setBusy(false); // remove the busy indicator
-	}
-	function _getAvailableFilterInTableData(oTableInstance) {
-		var aSelectionFromUI5 = [];
-		var aTableData = oTableInstance.getData();
-		var aTotalDataWithRequiredFilter = aTableData.map(function(tableRow) {
-			return tableRow[oTableInstance.oParameter.requiredFilters[0]];
-		});
-		oTableInstance.UI5ChartHelper.filterValues.forEach(function(selection) {
-			if (aTotalDataWithRequiredFilter.indexOf(selection[0]) !== -1) {
-				aSelectionFromUI5.push(selection[0]);
-			}
-		});
-		return aSelectionFromUI5;
 	}
 	/**
 	* @description creates the column structure for the table which has the name and value. Also appends the unit of the column in the header of the table.
@@ -233,7 +270,7 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 	*/
 	function _getColumnFromProperties(oTableInstance) {
 		var aTableData = oTableInstance.getData();
-		var aProperties = [];
+		var aProperties = [], nTableDataCount;
 		var oColumnData = {
 			name : [],
 			value : []
@@ -242,16 +279,21 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		if (aTableData.length !== 0) {
 			for(var i = 0; i < aProperties.length; i++) {
 				oColumnData.value[i] = aProperties[i].fieldName;
-				var name = "";
 				var defaultLabel = oTableInstance.metadata.getPropertyMetadata(aProperties[i].fieldName).label || oTableInstance.metadata.getPropertyMetadata(aProperties[i].fieldName).name;// read the label of the property and assign it to the column
 				var sUnitValue = "";
 				if (oTableInstance.metadata !== undefined && oTableInstance.metadata.getPropertyMetadata(aProperties[i].fieldName).unit !== undefined) {
 					var sUnitReference = oTableInstance.metadata.getPropertyMetadata(aProperties[i].fieldName).unit; // read the unit of the data in one column
 					sUnitValue = oTableInstance.getData()[0][sUnitReference]; // take value of unit from first data set
-					name = aProperties[i].fieldDesc === undefined || !oTableInstance.oApi.getTextNotHtmlEncoded(aProperties[i].fieldDesc).length ? defaultLabel + " (" + sUnitValue + ")" : oTableInstance.oApi
-							.getTextNotHtmlEncoded(aProperties[i].fieldDesc)
-							+ " (" + sUnitValue + ")"; // append the unit to the label 
-					oColumnData.name[i] = name;
+					for(nTableDataCount = 0; nTableDataCount < oTableInstance.getData().length; nTableDataCount++) {
+						if (sUnitValue !== oTableInstance.getData()[nTableDataCount][sUnitReference]) {
+							sUnitValue = undefined;
+							break;
+						}
+					}
+					oColumnData.name[i] = aProperties[i].fieldDesc === undefined || !oTableInstance.oApi.getTextNotHtmlEncoded(aProperties[i].fieldDesc).length ? defaultLabel : oTableInstance.oApi.getTextNotHtmlEncoded(aProperties[i].fieldDesc);
+					if (sUnitValue !== undefined && sUnitValue !== "") {
+						oColumnData.name[i] = oTableInstance.oApi.getTextNotHtmlEncoded("displayUnit", [ oColumnData.name[i], sUnitValue ]); // append the unit to the label 
+					}
 				} else { // if there is no unit, just display the label of the column
 					oColumnData.name[i] = aProperties[i].fieldDesc === undefined || !oTableInstance.oApi.getTextNotHtmlEncoded(aProperties[i].fieldDesc).length ? defaultLabel : oTableInstance.oApi.getTextNotHtmlEncoded(aProperties[i].fieldDesc);
 				}
@@ -259,16 +301,15 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		}
 		return oColumnData;
 	}
-	function _getSelectedSortItem(oViewSettingDialog) {
-		var oSortOption = {};
+	function _getSelectedSortItemById(oViewSettingDialog) {
+		var sSortItemKey;
 		var oSelectedSortItem = oViewSettingDialog.getSelectedSortItem();
 		oViewSettingDialog.getSortItems().forEach(function(oSortItem) {
 			if (oSortItem.getId() === oSelectedSortItem) {
-				oSortOption.property = oSortItem.getKey();
+				sSortItemKey = oSortItem.getKey();
 			}
 		});
-		oSortOption.descending = oViewSettingDialog.getSortDescending();
-		return oSortOption;
+		return sSortItemKey;
 	}
 	/**
 	* @class table constructor.
@@ -279,12 +320,16 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 	sap.apf.ui.representations.table = function(oApi, oParameters) {
 		this.oViewSettingDialog = undefined;
 		this.aDataResponse = [];// getData in the base class reads the value of data response from this
+		this.aValidatedFilter = [];
+		this.aFiltersInTable = [];
 		this.oParameter = oParameters;
 		this.orderby = oParameters.orderby;
+		this.omitTopAndSkipOptionsForNextPathUpdate = false;
 		sap.apf.ui.representations.BaseUI5ChartRepresentation.apply(this, [ oApi, oParameters ]);
 		this.alternateRepresentation = oParameters.alternateRepresentationType;
 		this.type = sap.apf.ui.utils.CONSTANTS.representationTypes.TABLE_REPRESENTATION; //the type is read from step toolbar and step container
-		this.oPaginationHandler = new sap.apf.ui.representations.utils.PaginationHandler();//initialize the pagination handler
+		this.oPaginationHandler = new sap.apf.ui.representations.utils.PaginationHandler(this);//initialize the pagination handler
+		this.oPaginationDisplayOptionHandler = new sap.apf.ui.representations.utils.PaginationDisplayOptionHandler();
 	};
 	sap.apf.ui.representations.table.prototype = Object.create(sap.apf.ui.representations.BaseUI5ChartRepresentation.prototype);
 	sap.apf.ui.representations.table.prototype.constructor = sap.apf.ui.representations.table;// Set the "constructor" property to refer to table
@@ -294,83 +339,157 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 	* @param metadata - Metadata of the oData service
 	* @description Public API which Fetches the data from oData service and updates the selection if present
 	*/
-	sap.apf.ui.representations.table.prototype.setData = function(aDataResponse, metadata) {
+	sap.apf.ui.representations.table.prototype.setData = function(aDataResponse, metadata, nDataResponseCount, aValidatedFilters) {
 		var self = this;
-		var skip = this.oPaginationHandler.getPagingOption().skip;
-		if (skip === undefined || skip === 0) { //if data is getting fetched for the first time and no data has to be skipped
-			this.aDataResponse = aDataResponse;// For new table, read only 100 data set
-		} else { //if pagination is triggered , only 10 data has to be fetched and appended to the existing data set
-			aDataResponse.map(function(dataRow) {
-				self.aDataResponse.push(dataRow);// for pagination , append the data to the existing data set
-			});
-		}
+		var sRequiredFilterProperty, sDisplayTextForRequiredFilter;
 		if (!metadata) {
-			this.oMessageObject = this.oApi.createMessageObject({
+			var oMessageObject = this.oApi.createMessageObject({
 				code : "6004",
 				aParameters : [ this.oApi.getTextNotHtmlEncoded("step") ]
 			});
-			this.oApi.putMessage(this.oMessageObject);
-		} else { //if metadata is available
-			this.metadata = metadata; // assign the metadata to be used in the table representation
-			this.UI5ChartHelper.metadata = metadata;
+			this.oApi.putMessage(oMessageObject);
+		}
+		this.metadata = metadata;
+		this.oFormatter = new sap.apf.ui.utils.formatter({ // formatter for the value formatting
+			getEventCallback : this.oApi.getEventCallback.bind(this.oApi),
+			getTextNotHtmlEncoded : this.oApi.getTextNotHtmlEncoded,
+			getExits : this.oApi.getExits()
+		}, this.metadata, this.aDataResponse);
+		if (this.oParameter.requiredFilters.length > 0) {
+			sRequiredFilterProperty = this.oParameter.requiredFilters[0];
+			sDisplayTextForRequiredFilter = metadata.getPropertyMetadata(sRequiredFilterProperty).text;
+		}
+		if (!this.oParameter.isAlternateRepresentation) {
+			if (sRequiredFilterProperty) {
+				this.aValidatedFilter = [];
+				if (aValidatedFilters && aValidatedFilters.length > 0) {
+					aValidatedFilters.forEach(function(filter) {
+						self.aValidatedFilter.push(filter[sRequiredFilterProperty]);
+						self.oPaginationDisplayOptionHandler.createDisplayValueLookupForPaginatedFilter(filter[sRequiredFilterProperty], filter[sDisplayTextForRequiredFilter]);
+					});
+					self.aFiltersInTable = self.aValidatedFilter;
+				} else {
+					self.aFiltersInTable = [];
+				}
+			}
+			var requestOptions = this.getRequestOptions();
+			var skip = requestOptions.paging && requestOptions.paging.skip;
+			this.nDataResponseCount = nDataResponseCount;
+			if (skip === undefined || skip === 0) { //if data is getting fetched for the first time and no data has to be skipped
+				this.aDataResponse = aDataResponse; // For new table, read only 100 data set
+			} else { //if pagination is triggered , only 99 data has to be fetched and appended to the existing data set
+				aDataResponse.map(function(dataRow) {
+					self.aDataResponse.push(dataRow); // for pagination , append the data to the existing data set
+				});
+			}
+			if (!this.oParameter.top && this.titleControl) {
+				var actualNumberOfRecords = (this.aDataResponse && this.aDataResponse.length) || 0;
+				var titleText = this.oApi.getTextNotHtmlEncoded("stepTitleWithNumberOfRecords", [ this.title, actualNumberOfRecords, nDataResponseCount ]);
+				this.titleControl.setText(titleText);
+			}
+		} else { //for alternate table, replace the whole data set
+			this.aDataResponse = aDataResponse;
+		}
+		if (sDisplayTextForRequiredFilter) {
+			this.aDataResponse.forEach(function(dataRow) {
+				self.oPaginationDisplayOptionHandler.createDisplayValueLookupForPaginatedFilter(dataRow[sRequiredFilterProperty], dataRow[sDisplayTextForRequiredFilter]);
+			});
 		}
 	};
-	sap.apf.ui.representations.table.prototype.getSelectionFromChart = function() {
-		var aSelection = oTableWithoutHeaders.getSelectedItems();
-		return aSelection;
+	sap.apf.ui.representations.table.prototype.getFilter = function() {
+		this.filter = this.oRepresentationFilterHandler.createFilterFromSelectedValues(this.aFiltersInTable);
+		return this.filter;
 	};
 	sap.apf.ui.representations.table.prototype.getSelections = function() {
-		var oSelectionObject = [];
-		var aSelectedItemInTable = _getAvailableFilterInTableData(this);
-		aSelectedItemInTable.forEach(function(selectItem) {
+		var oTableInstance = this, oSelectionObject = [], sSelectionText;
+		var sRequiredFilterProperty = oTableInstance.parameter.requiredFilters[0];
+		_validateFilters(oTableInstance, sRequiredFilterProperty);
+		oTableInstance.aFiltersInTable.forEach(function(selection) {
+			sSelectionText = oTableInstance.oPaginationDisplayOptionHandler.getDisplayNameForPaginatedFilter(selection, oTableInstance.parameter.requiredFilterOptions, sRequiredFilterProperty, oTableInstance.oFormatter, oTableInstance.metadata);
 			oSelectionObject.push({
-				id : selectItem,
-				text : selectItem
+				id : selection,
+				text : sSelectionText
 			});
 		});
 		return oSelectionObject;
 	};
-	sap.apf.ui.representations.table.prototype.getRequestOptions = function(bFilterChanged) {
+	/**
+	* @method markSelectionInTable
+	* @description Public API which is called after rendering of table and also after pagination to mark the selection
+	*/
+	sap.apf.ui.representations.table.prototype.markSelectionInTable = function(bIsCalledFromTable) {
+		var sRequiredFilterProperty = this.oParameter.requiredFilters ? this.oParameter.requiredFilters[0] : undefined;
+		if (sRequiredFilterProperty) {
+			var aSelectedIndicesInTable = _getSelectedIndicesInTable(this, sRequiredFilterProperty);
+			if (this.oParameter.isAlternateRepresentation) {
+				var aSelectedIndicesInSortedTable = [];
+				var aSortedIndicesInAlternateTable = this.tableControl.getBinding().aIndices;
+				aSelectedIndicesInTable.forEach(function(selectedItem) {
+					aSelectedIndicesInSortedTable.push(aSortedIndicesInAlternateTable.indexOf(selectedItem));
+				});
+				aSelectedIndicesInTable = aSelectedIndicesInSortedTable;
+			}
+			this.tableControl.clearSelection();
+			if (aSelectedIndicesInTable.length > 0) { //  if there are any filters ,mark the selection in table filter values
+				_selectItemsInTable(this.tableControl, aSelectedIndicesInTable);
+			}
+		}
+	};
+	sap.apf.ui.representations.table.prototype.getRequestOptions = function(bFilterChanged, isAlternateRep) {
+		this.bIsAlternateRepresentation = isAlternateRep;
 		if (bFilterChanged) { // When the filter is changed, then paging option is reset to default.
 			this.oPaginationHandler.resetPaginationOption();
 		}
 		var requestObj = {
-			paging : this.oPaginationHandler.getPagingOption(this.oParameter.top),
+			paging : {},
 			orderby : []
 		};
-		//sort properties in the request object
-		var orderByArray;
-		//table can have the sort property defined in the parameter or the sort property can be changed from view setting dialog
-		if (this.orderby && this.orderby.length) { //else read it from the parameter
-			orderByArray = this.orderby.map(function(oOrderby) {
-				return {
-					property : oOrderby.property,
-					descending : !oOrderby.ascending
-				};
-			});
-			requestObj.orderby = orderByArray;
+		if (bFilterChanged) {
+			this.omitTopAndSkipOptionsForNextPathUpdate = false;
 		}
-		var oSortOption = this.oViewSettingDialog ? _getSelectedSortItem(this.oViewSettingDialog) : {};
-		if (oSortOption.property) {
-			orderByArray = [];// clear the order by since the sort property has changed for the table at runtime
-			orderByArray = [ {
-				property : oSortOption.property,
-				descending : oSortOption.descending
-			} ];
-			requestObj.orderby = orderByArray;
+		if (this.omitTopAndSkipOptionsForNextPathUpdate) {
+			requestObj.paging = {
+				inlineCount : true
+			};
+		} else if (!this.bIsAlternateRepresentation) {
+			requestObj.paging = this.oPaginationHandler.getPagingOption(this.oParameter.top);
+		}
+		//table can have the sort property defined in the parameter or the sort property can be changed from view setting dialog
+		if (this.orderby) {
+			requestObj.orderby = this.orderby;
+		}
+		if (this.oViewSettingDialog) {
+			var sSortProperty = _getSelectedSortItemById(this.oViewSettingDialog);
+			if (sSortProperty) {
+				var oSortOptionFromViewSetting = {
+					property : _getSelectedSortItemById(this.oViewSettingDialog),
+					ascending : !this.oViewSettingDialog.getSortDescending()
+				};
+				this.orderby = [ oSortOptionFromViewSetting ];
+				requestObj.orderby = [ oSortOptionFromViewSetting ];//if the sort property is changed from view setting
+			}
 		}
 		return requestObj;
+	};
+	/**
+	* @method resetPaginationForTable
+	* @description calls the method from pagination handler to resets the paging option to default when there filter change in the path 
+	*/
+	sap.apf.ui.representations.table.prototype.resetPaginationForTable = function() {
+		this.omitTopAndSkipOptionsForNextPathUpdate = false;
+		this.oPaginationHandler.resetPaginationOption();
 	};
 	/**
 	* @method getMainContent
 	* @param oStepTitle - title of the main chart
 	* @param width - width of the main chart
 	* @param height - height of the main chart       
-	 * @description draws Main chart into the Chart area
+	* @description draws Main chart into the Chart area
 	*/
-	sap.apf.ui.representations.table.prototype.getMainContent = function(oStepTitle, height, width) {
+	sap.apf.ui.representations.table.prototype.getMainContent = function(oStepTitle, width, height) {
 		var self = this;
 		var aTableData = this.getData();
+		this.title = oStepTitle;
 		var tableFields = this.oParameter.dimensions.concat(this.oParameter.measures).length ? this.oParameter.dimensions.concat(this.oParameter.measures) : this.oParameter.properties; // read the table properties if available , else Concatenate dimensions & measures
 		var tableColumns = _getColumnFromProperties(this);
 		var oMessageObject;
@@ -395,61 +514,42 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 			});
 			this.oApi.putMessage(oMessageObject);
 		}
-		var chartWidth = (width || 1000) + "px";
-		var columnsWithHeaders = [];
-		for(var indexTableColumn = 0; indexTableColumn < tableColumns.name.length; indexTableColumn++) {
-			var columnNameWithHeaders = new sap.m.Column({
-				header : new sap.m.Text({
-					text : tableColumns.name[indexTableColumn]
-				})
-			});
-			columnsWithHeaders.push(columnNameWithHeaders);
+		var titleLineControl;
+		if (this.oParameter.isAlternateRepresentation) {
+			titleLineControl = createTitlebarForTable(this, oStepTitle, aTableData.length, true, width); // no LoadAll-Button in alternate representation
+		} else {
+			titleLineControl = createTitlebarForTable(this, oStepTitle, aTableData.length, false, width);
 		}
-		// Table with Headers
-		var oTableWithHeaders = new sap.m.Table({
-			headerText : oStepTitle,
-			showNoData : false,
-			columns : columnsWithHeaders
-		}).addStyleClass("tableWithHeaders");
-		var oTableDataModel = new sap.ui.model.json.JSONModel();
-		oTableDataModel.setSizeLimit(10000);
-		oTableDataModel.setData({
-			tableData : aTableData
-		});
-		oTableWithHeaders.setModel(oTableDataModel);
-		// Table without Headers (built to get scroll only on the data part)
-		oTableWithoutHeaders = _createTableAndBindColumns(tableColumns, this);
-		oTableWithoutHeaders.attachSelectionChange(_drawSelection.bind(self));
-		oTableWithoutHeaders.attachUpdateFinished(_drawSelection.bind(self));
-		this.oTableRepresentation = oTableWithoutHeaders; // the table is accessed from the view setting. To sort the data and set the table to busy
-		var containerForDataTable = new sap.m.ScrollContainer({// Scroll container for table without headers(to get vertical scroll on  data part used for pagination
-			content : oTableWithoutHeaders,
-			height : "480px",
-			horizontal : false,
-			vertical : true
-		}).addStyleClass("tableWithoutHeaders");
-		var containerForHeaderAndDataTable = new sap.m.ScrollContainer({// Scroll container to hold table with headers and scroll container containing table without headers
-			content : [ oTableWithHeaders, containerForDataTable ],
-			width : chartWidth,
-			horizontal : true,
-			vertical : false
-		}).addStyleClass("scrollContainer");
-		oTableWithoutHeaders.addEventDelegate({//Event delegate to bind pagination action
+		this.tableControl = _createTableAndBindColumns(tableColumns, titleLineControl, this, width);
+		this.tableControl.addAriaLabelledBy(titleLineControl.getItems()[0]);
+
+		this.tableControl.addEventDelegate({//Event delegate to bind pagination action
 			onAfterRendering : function() {
-				var oSortOption = self.oViewSettingDialog ? _getSelectedSortItem(self.oViewSettingDialog) : {};
-				if (self.oParameter.isAlternateRepresentation && oSortOption.property) { // if sort property is changed from view setting for alternate representation
-					_sortTableData(oSortOption, self); // sort the data in table.Since setData is called from the parent representation, data is not sorted          }
-				}
-				_addStyleToTable(containerForHeaderAndDataTable);
-				//if top N not is provided and table is not an alternate representation, attach the pagination event
-				if (!self.oParameter.top && !self.oParameter.isAlternateRepresentation) {
-					self.oPaginationHandler.attachPaginationOnTable(self);
+				if (self.oParameter) {
+					self.markSelectionInTable(true);
+					if(self.loadAllButton){
+						self.loadAllButton.fireEvent("setFocusOnLoadAllButtonEvent");
+					}
+					//if top N not is provided and table is not an alternate representation, attach the pagination event
+					if (!self.oParameter.top && !self.oParameter.isAlternateRepresentation && self.nDataResponseCount > 100) {
+						self.oPaginationHandler.attachPaginationOnTable(self);
+					}
 				}
 			}
 		});
-		return new sap.ui.layout.VerticalLayout({
-			content : [ containerForHeaderAndDataTable ]
+		this.tableControl.attachRowSelectionChange(_drawSelection.bind(self));
+		this.oLoadMoreLink = new sap.m.Link({// load more link should be shown for the mobile devices
+			text : this.oApi.getTextNotHtmlEncoded("moreIcon"),
+			visible : false
 		});
+		var vbox = new sap.m.VBox({
+			fitContainer : true,
+			items : [ this.tableControl, this.oLoadMoreLink ]
+		}).addStyleClass("tableRepresentation");
+		if(height){
+			vbox.setHeight(height + "px");
+		}
+		return vbox;
 	};
 	/**
 	* @method getThumbnailContent
@@ -482,8 +582,7 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 	*/
 	sap.apf.ui.representations.table.prototype.removeAllSelection = function() {
 		_clearFilters(this);
-		oTableWithoutHeaders.removeSelections();
-		this.oApi.getActiveStep().getSelectedRepresentation().UI5ChartHelper.filterValues = []; // reset the filter values from table to the selected representation
+		this.tableControl.clearSelection();
 		this.oApi.selectionChanged();
 	};
 	/**
@@ -493,42 +592,87 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 	* @description gets the printable content of the representation
 	*/
 	sap.apf.ui.representations.table.prototype.getPrintContent = function(oStepTitle) {
-		var tableColumnsForPrint = _getColumnFromProperties(this);
-		var isPrintForTable = true;
-		var oPrintTable = _createTableAndBindColumns(tableColumnsForPrint, this, isPrintForTable);
-		oPrintTable.setHeaderText(oStepTitle);
-		oPrintTable.setHeaderDesign(sap.m.ListHeaderDesign.Standard);
+		var oPrintTable = this.tableControl.clone();
 		oPrintTable.getColumns().forEach(function(column) {
-			column.setWidth("75px");
+			column.setWidth("auto");
+			column.getTemplate().setWrapping(true);
 		});
-		var aSelectedListItems = _drawSelectionForPrint(this, oPrintTable);// set the selections on table
-		return {
-			oTableForPrint : new sap.ui.layout.VerticalLayout({
-				content : [ oPrintTable ]
-			}),
-			aSelectedListItems : aSelectedListItems
+		var aSelecetdIndices = this.tableControl.getSelectedIndices();
+		oPrintTable.setVisibleRowCountMode(sap.ui.table.VisibleRowCountMode.Fixed);
+		oPrintTable.setVisibleRowCount(oPrintTable.getModel().getData().tableData.length);
+		//To highlight selected rows in printlayout table (Because checkboxes are not visible in printlayout)
+		oPrintTable.onAfterRendering = function() {
+			aSelecetdIndices.forEach(function(index) {
+				oPrintTable.getRows()[index].addStyleClass("sapTableSelectionForPrint");
+			});
 		};
+		var oPrintObject = {
+			oRepresentation : oPrintTable
+		};
+		return oPrintObject;
 	};
-	sap.apf.ui.representations.table.prototype.createViewSettingDialog = function() {
-		var oTableRepresentation = this;
-		var oViewSetting = new sap.ui.view({
-			type : sap.ui.core.mvc.ViewType.JS,
-			viewName : "sap.apf.ui.reuse.view.viewSetting",
-			viewData : oTableRepresentation
-		});
-		this.oViewSettingDialog = oViewSetting.getContent()[0];
-		this.oViewSettingDialog.addStyleClass("sapUiSizeCompact");
+	sap.apf.ui.representations.table.prototype.getViewSettingDialog = function() {
+		if (!this.oViewSettingDialog) {
+			var oViewData = {
+				oTableInstance : this
+			};
+			var oViewSetting = new sap.ui.view({
+				type : sap.ui.core.mvc.ViewType.JS,
+				viewName : "sap.apf.ui.reuse.view.viewSetting",
+				viewData : oViewData
+			});
+			this.oViewSettingDialog = oViewSetting.getContent()[0];
+			this.oViewSettingDialog.addStyleClass("sapUiSizeCompact");
+		}
 		return this.oViewSettingDialog;
+	};
+	/**
+	* load all data, when data in table is paged - show paging / top options away
+	*/
+	sap.apf.ui.representations.table.prototype.loadAll = function() {
+		this.omitTopAndSkipOptionsForNextPathUpdate = true;
+		if (this.loadAllButton) {
+			_attachEvent(this);
+		}
+		this.oApi.selectionChanged();
+	};
+	/**
+	* export the data to excel
+	*/
+	sap.apf.ui.representations.table.prototype.exportExcel = function(stepTitle) {
+		var that = this;
+		function createColumnInfoForSpreadSheet() {
+			var columnProperties = _getColumnFromProperties(that);
+			var columns = [];
+			var i, columnInfo;
+			for(i = 0; i < columnProperties.value.length; i++) {
+				columnInfo = sap.apf.ui.utils.determineColumnSettingsForSpreadSheetExport(columnProperties.value[i], that.metadata);
+				columnInfo.property = columnProperties.value[i];
+				columnInfo.label = columnProperties.name[i];
+				columns.push(columnInfo);
+			}
+			return columns;
+		}
+		var data = this.getData();
+		var columns = createColumnInfoForSpreadSheet();
+		var mSettings = {
+			workbook : {
+				columns : columns
+			},
+			dataSource : data,
+			fileName : stepTitle + ".xlsx"
+		};
+		var spreadsheet = new sap.ui.export.Spreadsheet(mSettings);
+		spreadsheet.build();
+	};
+	sap.apf.ui.representations.table.prototype.onChartSwitch = function() {
+		this.resetPaginationForTable();
 	};
 	/**
 	* @method destroy
 	* @description Destroying instance level variables
 	*/
 	sap.apf.ui.representations.table.prototype.destroy = function() {
-		if (this.UI5ChartHelper) {
-			this.UI5ChartHelper.destroy();
-			this.UI5ChartHelper = null;
-		}
 		if (this.orderby) {
 			this.orderby = null;
 		}
@@ -540,6 +684,12 @@ jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		}
 		if (this.aDataResponse) {
 			this.aDataResponse = null;
+		}
+		if (this.aValidatedFilter) {
+			this.aValidatedFilter = [];
+		}
+		if (this.aFiltersInTable) {
+			this.aFiltersInTable = [];
 		}
 	};
 }());

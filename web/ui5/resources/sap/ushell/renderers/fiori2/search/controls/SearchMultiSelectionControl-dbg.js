@@ -1,10 +1,10 @@
 // iteration 0 : Holger
 /* global sap,window,jQuery */
 
-(function() {
+sap.ui.define([], function() {
     "use strict";
 
-    sap.ui.core.Control.extend("sap.ushell.renderers.fiori2.search.controls.SearchMultiSelectionControl", {
+    return sap.ui.core.Control.extend("sap.ushell.renderers.fiori2.search.controls.SearchMultiSelectionControl", {
         metadata: {
             properties: {
                 resultList: "object"
@@ -69,4 +69,4 @@
         }
     });
 
-})();
+});

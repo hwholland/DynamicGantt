@@ -32,7 +32,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -46,57 +46,70 @@ sap.ui.define([
 				 * <code>sap.gantt.config.ChartScheme</code>. This property is only relevant to top Shape configuration.
 				 */
 				key: {type: "string", defaultValue: null},
-				
+
 				/**
 				 * Specifies the shape class to be used for data representation. Both shapes from <code>sap.gantt.shape</code> and extended
 				 * shapes can be used here.
 				 */
 				shapeClassName: {type: "string", defaultValue: null},
-				
+
 				/**
 				 * Specifies the name of the data name to be represented. This is for the top shape only.
 				 */
 				shapeDataName: {type: "string", defaultValue: null},
-				
+
 				/**
 				 * Specifies the key of modes in which the shape is drawn. If you leave this property empty, the shape is drawn in all modes.
 				 */
-				modeKeys: {type: "array", defaultValue: []},
-				
+				modeKeys: {type: "string[]", defaultValue: []},
+
 				/**
 				 * Level of shapes. Shapes closer to the top shape have a smaller value in level. This property is only relevant to top shape configuration
 				 * (non aggregated shape configuration).
 				 */
 				level: {type: "string", defaultValue: null},
-				
+
 				/**
 				 * Pre-configured values for Shape. The values specified in this object have a higher priority than values coded in the Shape class.
 				 */
 				shapeProperties: {type: "object", defaultValue: sap.gantt.config.DEFAULT_EMPTY_OBJECT},
-				
+
 				/**
 				 * Aggregation shapes for sap.gantt.shape.Group class.
 				 * This aggregation is only valid for shape classes with tag='g'.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Shape[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				groupAggregation: {type: "array"},
-				
-				
+				groupAggregation: {type: "object[]"},
+
 				/**
 				 * Aggregation path classes for sap.gantt.shape.Clippath class.
 				 * This aggregation is only valid for shape classes with tag='clippath'. 
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Shape[]</code>. Otherwise some properties you set may not function properly.
 				 */
-				clippathAggregation: {type: "array"},
-				
+				clippathAggregation: {type: "object[]"},
+
 				/**
 				 * Aggregation class for drawing selection of this shape. If nothing is assigned to this property, <code>sap.gantt.Gantt</code>
 				 * instantiates the default selected shape class. 
 				 */
 				selectedClassName: {type: "string", defaultValue: null},
-				
+
 				/**
 				 * Switch of shape's checkbox value in list legend, its value can be "noShow", "checked" and "unchecked".
 				 */
-				switchOfCheckBox: {type: "string", defaultValue: "noShow"}
+				switchOfCheckBox: {type: "string", defaultValue: "noShow"},
+
+				/**
+				 * Aggregation class for drawing shadow when resizing this shape. If nothing is assigned to this property, <code>sap.gantt.Gantt</code>
+				 * instantiates the default shadow shape class. 
+				 */
+				resizeShadowClassName: {type: "string", defaultValue: null},
+
+				/**
+				 * Specifies whether or not should the shape be considered into bird eye range. we suggest to set this property to true only for shapes
+				 * that really need to be considered into bird eye range.
+				 */
+				countInBirdEye: {type: "boolean", defaultValue: false}
 			}
 		}
 	});

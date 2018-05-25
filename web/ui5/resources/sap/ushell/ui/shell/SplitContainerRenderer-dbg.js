@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap, window*/
 // Provides default renderer for control sap.ushell.ui.shell.SplitContainer
@@ -70,11 +70,13 @@ sap.ui.define(['jquery.sap.global'],
             rm.write("<div id='", sId, "cntnt' class='sapUshellSpltContCntnt'");
             rm.writeAttribute("data-sap-ui-root-content", "true"); // see e.g. sap.m.App#onAfterRendering
             rm.write(">");
+            rm.write("<div id='", sId, "subHeader'>");
+
             if (oSubHeader && oSubHeader.length) {
-                rm.write("<div id='", sId, "subHeader'>");
                 rm.renderControl(oSubHeader[0]);
-                rm.write("</div>");
             }
+
+            rm.write("</div>");
             if (aContent && aContent.length) {
                 rm.write("<div id='", sId, "rootContent' class='sapUshellSpltContainerContentWrapper'>");
                 aContent.forEach(function (oControl, index) {

@@ -4,4 +4,4 @@
 		(c) Copyright 2009-2015 SAP SE. All rights reserved
 	
  */
-sap.ui.define(['jquery.sap.global','./ToolbarGroup'],function(q,T){"use strict";var M=T.extend("sap.gantt.config.ModeGroup",{metadata:{properties:{modeKeys:{type:"array",defaultValue:[]}}}});return M;},true);
+sap.ui.define(['jquery.sap.global','./ToolbarGroup'],function(q,T){"use strict";var M=T.extend("sap.gantt.config.ModeGroup",{metadata:{properties:{modeKeys:{type:"string[]",defaultValue:[]}}}});return M;},true);

@@ -15,8 +15,9 @@
  */
 
 //Module declaration
-jQuery.sap.declare("sap.ushell.components.tiles.indicatorTileUtils.oData4Analytics");
-jQuery.sap.require("sap.ui.core.Core");
+sap.ui.define(['sap/ui/core/Core'],
+	function(Core) {
+	"use strict";
 
 /* this is poor codinga according to eslint */
 /*eslint-disable no-cond-assign*/
@@ -4008,3 +4009,6 @@ sap.ushell.components.tiles.indicatorTileUtils.odata4analytics.DimensionMemberSe
  * })(jQuery);
  *
  */
+
+
+}, /* bExport= */ true);

@@ -4,7 +4,7 @@
     <derived/>
     <documentation>Predefined animations for the ContentSwitcher</documentation>
     <since>1.16.0</since>
-    <developmentState state="experimental" since="1.16.0">API is not yet finished and might change completely</developmentState>
+    <developmentState since="1.16.0" state="experimental">API is not yet finished and might change completely</developmentState>
     <enumeration>
         <value name="None">
             <documentation>No animation. Content is switched instantly.</documentation>
@@ -13,10 +13,10 @@
             <documentation>Content is faded (opacity change).</documentation>
         </value>
         <value name="ZoomIn">
-            <documentation>The new content is "zoomed in" from the center and grows to fill the full content area.</documentation>
+            <documentation>The new content is &quot;zoomed in&quot; from the center and grows to fill the full content area.</documentation>
         </value>
         <value name="ZoomOut">
-            <documentation>The old content is "zoomed out", i.e. shrinks to a point at the center of the content area.</documentation>
+            <documentation>The old content is &quot;zoomed out&quot;, i.e. shrinks to a point at the center of the content area.</documentation>
         </value>
         <value name="Rotate">
             <documentation>The new content rotates in. (Just like one of those old newspaper-animations.)</documentation>

@@ -53,7 +53,7 @@ jQuery.sap.require("sap.m.FeedListItem");
  * Extends the FeedListItem to hide text when it is longer than maxLines. When text is hidden a See more
  * link is displayed, clicking on the link displays the entire text.
  * @extends sap.m.FeedListItem
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -227,6 +227,6 @@ sap.ca.ui.ExpansibleFeedListItem.prototype.onAfterRendering = function() {
  */
 sap.ca.ui.ExpansibleFeedListItem.prototype._getLinkControl = function () {
     // BAD PRACTICE: this is a private method of sap.m.FeedListItem!
-	// Agreement to continue and use this private method on 20141124-1015CET (see email) sap.ca PO / UI5-BS-FCW PO
+	// sap.ca dev & ui5 dev agreed to continue and use this private method on 20141124-1015CET
     return this._getLinkSender();
 };

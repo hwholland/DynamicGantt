@@ -1,78 +1,65 @@
-sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler"], function(TemplateAssembler) {
+sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler",
+	"sap/suite/ui/generic/template/ListReport/controller/ControllerImplementation"
+], function(TemplateAssembler, ControllerImplementation) {
 	"use strict";
 
-	function getMethods(oComponent) {
+	function getMethods(oComponent, oComponentUtils) {
+		var oViewProxy = {};
+
 		return {
+			oControllerSpecification: {
+				getMethods: ControllerImplementation.getMethods.bind(null, oViewProxy),
+				oControllerDefinition: {
+					getVisibleSelectionsWithDefaults: function() {
+						// We need a list of all selection fields in the SmartFilterBar for which defaults are defined
+						// (see method setSmartFilterBarDefaults) and which are currently visible.
+						// This is needed by _getBackNavigationParameters in the NavigationController.
+						var aVisibleFields = [];
+							// if(this.oView.byId(this.sPrefix + ".DateKeyDate").getVisible()){
+						// aVisibleFields.push("KeyDate");
+						// }
+						return aVisibleFields;
+					},
+
+					// ---------------------------------------------
+					// Extensions
+					// ---------------------------------------------
+					onInitSmartFilterBarExtension: function(oEvent) {},
+					getCustomAppStateDataExtension: function(oCustomData) {},
+					restoreCustomAppStateDataExtension: function(oCustomData) {},
+					onBeforeRebindTableExtension: function(oEvent) {},
+					onBeforeRebindChartExtension: function(oEvent) {},
+					adaptNavigationParameterExtension: function(oSelectionVariant, oObjectInfo) {},
+					onListNavigationExtension: function(oEvent) {},
+					getPredefinedValuesForCreateExtension: function(oSmartFilterBar){},
+					adaptTransientMessageExtension: function(){}
+				}
+			},
 			init: function() {
 				var oTemplatePrivate = oComponent.getModel("_templPriv");
 				oTemplatePrivate.setProperty("/listReport", {}); // Note that component properties are not yet available here
-				oTemplatePrivate.setProperty("/complexTable", {}); 
 			},
-			setContainer: function() {
-				var oSettings = oComponent.getComponentContainer().getSettings();
-				if (sap.suite.ui.generic.template.js.AnnotationHelper.isComplexTable(oSettings.routeConfig)) {
-					oComponent.setTemplateName("sap.suite.ui.generic.template.ListReport.view.ComplexTable");
-				}
-			},
-			forView: {
-				hasDraft: function() {
-					return oComponent.getAppComponent().getTransactionController().getDraftController().getDraftContext()
-						.isDraftEnabled(oComponent.getEntitySet());
-				}
+			onActivate: function() {
+				oComponentUtils.setBackNavigation(undefined);
+				oViewProxy.onComponentActivate();
 			},
 			refreshBinding: function(bUnconditional) {
-				// refresh list binding
-				// always refresh for ListReport and ComplexTable
-				/*
-				if (!bUnconditional){
-					return;  // list binding only updated if necessary	
-				}
-				*/
-				var oView = oComponent.getAggregation("rootControl");
-				if (oView instanceof sap.ui.core.mvc.XMLView) {
-					// Rebind table
-					var oSmartTable = oView.byId("listReport");
-					if (oSmartTable && oSmartTable.rebindTable) {
-						oSmartTable.rebindTable();
-					}
-				}
+				oViewProxy.refreshBinding();
 			},
-			overwrite: {
-				
-				updateBindingContext: function() {
-					sap.suite.ui.generic.template.lib.TemplateComponent.prototype.updateBindingContext.apply(oComponent,
-							arguments);
-
-					var oBindingContext = oComponent.getBindingContext();
-					if (oBindingContext) {
-						oComponent.getModel().getMetaModel().loaded()
-								.then(
-										function() {
-											var oUIModel = oComponent.getModel("ui");
-
-											var oActiveEntity = oBindingContext.getObject();
-											if (oActiveEntity) {
-
-												var oDraftController = oComponent.getAppComponent().getTransactionController()
-														.getDraftController();
-												var oDraftContext = oDraftController.getDraftContext();
-												var bIsDraft = oDraftContext.hasDraft(oBindingContext) && !oActiveEntity.IsActiveEntity;
-												//var bHasActiveEntity = oActiveEntity.HasActiveEntity;
-												if (bIsDraft) {
-													oUIModel.setProperty("/editable", true);
-													oUIModel.setProperty("/enabled", true);
-												}
-											}
-										});
-						//fnBindBreadCrumbs();
-					}
-				}
+			getUrlParameterInfo: function() {
+				return oViewProxy.getUrlParameterInfo();
+			},
+			getItems: function(){
+				return oViewProxy.getItems();	
+			},
+			displayNextObject: function(aOrderObjects){
+				return oViewProxy.displayNextObject(aOrderObjects);	
 			}
 		};
 	}
 
 	return TemplateAssembler.getTemplateComponent(getMethods,
-		"sap.suite.ui.generic.template.ListReport.Component", {
+		"sap.suite.ui.generic.template.ListReport", {
 			metadata: {
 				library: "sap.suite.ui.generic.template",
 				properties: {
@@ -80,11 +67,22 @@ sap.ui.define(["sap/suite/ui/generic/template/lib/TemplateAssembler"], function(
 						"type": "string",
 						"defaultValue": "sap.suite.ui.generic.template.ListReport.view.ListReport"
 					},
+					// hide chevron for unauthorized inline external navigation?
+					"hideChevronForUnauthorizedExtNav": {
+						"type": "boolean",
+						"defaultValue": "false"
+					},
+					"treeTable": "boolean",
+					"tableType": "string",
 					"gridTable": "boolean",
+					"createWithFilters": "object",
+					"condensedTableLayout": "boolean",
 					"multiSelect": "boolean",
-					"smartVariantManagement": "boolean",
+					"smartVariantManagement": "boolean",      // true = one variant for filter bar and table, false = separate variants for filter and table
 					"hideTableVariantManagement": "boolean",
-					"complexListId": "string"
+					"variantManagementHidden": "boolean",
+					"creationEntitySet": "string",
+					"isWorklist": "boolean"
 				},
 				"manifest": "json"
 			}

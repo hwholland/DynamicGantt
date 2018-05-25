@@ -56,7 +56,9 @@ sap.ui.define([ "sap/ui/core/mvc/Controller", "sap/ui/model/Filter", "sap/ui/mod
 			//parent control from which view is getting instanitated
 			var parentControl = oController.getView().getViewData().parentControl;
 			oSelectDialog.getBinding("items").filter([]);
-			parentControl.fireEvent("selectService", [ selectedService ]);
+			parentControl.fireEvent("selectService", {
+				"sSelectedService" : selectedService
+			});
 			oController.byId("idGatewayCatalogListDialog").destroy();
 			oController.getView().destroy();
 		},

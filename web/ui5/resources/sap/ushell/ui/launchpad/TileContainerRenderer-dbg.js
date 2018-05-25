@@ -1,10 +1,9 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 
-(function () {
-    "use strict";
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.declare("sap.ushell.ui.launchpad.TileContainerRenderer");
+sap.ui.define(['sap/ushell/resources'],
+	function(resources) {
+	"use strict";
 
     /**
      * @class TileContainer renderer.
@@ -12,7 +11,7 @@
      *
      * @private
      */
-    sap.ushell.ui.launchpad.TileContainerRenderer = {};
+    var TileContainerRenderer = {};
 
     /**
      * Renders the HTML for the given control, using the provided
@@ -25,7 +24,7 @@
      *            oControl an object representation of the control that should be
      *            rendered
      */
-    sap.ushell.ui.launchpad.TileContainerRenderer.render = function (oRm, oControl) {
+    TileContainerRenderer.render = function (oRm, oControl) {
         var aTiles = oControl.getTiles(),
             aHeaderActions = oControl.getHeaderActions(),
             aBeforeContent = oControl.getBeforeContent(),
@@ -48,6 +47,7 @@
         if (aBeforeContent.length) {
             oRm.write("<div");
             oRm.addClass("sapUshellTileContainerBeforeContent");
+            oRm.addClass("sapContrastPlus ");
             oRm.writeClasses();
             oRm.write(">");
             jQuery.each(aBeforeContent, function () {
@@ -99,7 +99,13 @@
             oRm.write("</div>");
             oRm.write("</div>");
         }
-
+        if (oControl.getShowBackground()) {
+            oRm.write("<div");
+            oRm.addClass("sapUshellGroupBackgroundContainer sapContrastPlus");
+            oRm.writeClasses();
+            oRm.write(">");
+            oRm.write("</div>");
+        }
         if (oControl.getShowHeader()) {
             // Title
             oRm.write("<div");
@@ -121,8 +127,20 @@
             oRm.writeClasses();
 
             oRm.writeAttributeEscaped("title", oControl.getHeaderText());
-            oRm.writeAccessibilityState(oControl, {label : sap.ushell.resources.i18n.getText("tileContainerHeader") +
-            sap.ushell.resources.i18n.getText("tileContainerTitle") + oControl.getHeaderText()});
+            oRm.writeAttribute("id", oControl.getId() + "-titleText");
+            oRm.writeAttribute("data-role", "group");
+            var oAccStateObj = {};
+            // group is default case (Home group)
+            if (oControl.getDefaultGroup()) {
+                oAccStateObj.label = resources.i18n.getText("ariaLabelEditModeGroupDefault",  oControl.getHeaderText());
+                // locked group case
+            } else if (oControl.getIsGroupLocked()) {
+                oAccStateObj.label = resources.i18n.getText("ariaLabelEditModeGroupLocked",  oControl.getHeaderText());
+            } else {
+                // general group case
+                oAccStateObj.label = resources.i18n.getText("ariaLabelEditModeGroup",  oControl.getHeaderText());
+            }
+            oRm.writeAccessibilityState(oControl, oAccStateObj);
             oRm.write(">");
             oRm.writeEscaped(oControl.getHeaderText());
             oRm.write("</");
@@ -150,11 +168,9 @@
             oRm.write("</div>");
 
             oRm.write("</div>");
+
             // Title END
-
-
             oRm.write("</div>");
-
         }
 
         //SORTABLE start
@@ -192,7 +208,8 @@
         oRm.write("</ul>");
 
         //Links rendering
-        if (aLinks.length > 0) {
+        var bLineModeContainer = oControl._newLinkContainerEnabled();
+        if (aLinks.length > 0 || bLineModeContainer) {
             if (oControl.getShowBackground() && !(oControl.getIsGroupLocked() && aTiles.length === 0)) {
                 //Links Separator start.
                 oRm.write("<div");
@@ -202,18 +219,85 @@
                 //Links Separator end.
                 oRm.write("</div>");
             }
+
+        oRm.write("<div");
+        var containerClassName = bLineModeContainer ? "sapUshellLineModeContainer" : "sapUshellLinksContainer";
+        oRm.addClass(containerClassName);
+        if (!aLinks.length && bLineModeContainer) {
+            oRm.addClass("sapUshellNoLinksAreaPresent");
+            oRm.writeClasses();
+            oRm.write(">");
+            oRm.write("<div")
+            oRm.addClass("sapUshellNoLinksAreaPresentText");
+            oRm.writeClasses();
+            oRm.write(">");
+            oRm.renderControl(oControl.getNoLinksText());
+            oRm.write("</div>")
+        } else {
+            oRm.writeClasses();
+            oRm.write(">");
+        }
+
+        if (bLineModeContainer) {
+            //Transformation Error
             oRm.write("<div");
-            oRm.addClass('sapUshellLinksContainer');
+            oRm.addClass("sapUshellTransformationError");
             oRm.writeClasses();
             oRm.write(">");
 
-            jQuery.each(aLinks, function () {
-                oRm.renderControl(this);
-            });
+            oRm.write("<div");
+            oRm.addClass("sapUshellTransformationErrorInnerWrapper");
+            oRm.writeClasses();
+            oRm.write(">");
+            oRm.renderControl(oControl.getTransformationErrorIcon());
+            oRm.renderControl(oControl.getTransformationErrorText());
+            oRm.write("</div>");
 
             oRm.write("</div>");
         }
 
+        if (bLineModeContainer) {
+            oRm.write("<div class='sapUshellLinksInnerContainer'>");
+        }
+
+        aLinks.map(function (link, index, aLinks) {
+            if (bLineModeContainer) {
+                var tabIndexData = new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "tabindex",
+                    value: "-1",
+                    writeToDom: true
+                });
+                link.getCustomData().map(function (customData) {
+                    if (customData.getKey() == 'tabindex' && customData.getValue("0")) {
+                        tabIndexData = customData;
+                    }
+                    link.removeCustomData(customData);
+                });
+                link.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "aria-posinset",
+                    value: (index + 1).toString(),
+                    writeToDom: true
+                }));
+                link.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "aria-setsize",
+                    value: aLinks.length.toString(),
+                    writeToDom: true
+                }));
+                link.addCustomData(tabIndexData);
+                link.addStyleClass("sapUshellLinkTile");
+                if (oControl.getIsGroupLocked()) {
+                    link.addStyleClass("sapUshellLockedTile");
+                }
+            }
+            oRm.renderControl(link);
+        });
+
+        if (bLineModeContainer) {
+            oRm.write("</div>");
+        }
+
+        oRm.write("</div>");
+        }
         // FOOTER start
         if (aFootItems.length > 0) {
             oRm.write("<footer");
@@ -234,6 +318,7 @@
         if (aAfterContent.length) {
             oRm.write("<div");
             oRm.addClass("sapUshellTileContainerAfterContent");
+            oRm.addClass("sapContrastPlus ");
             oRm.writeClasses();
             oRm.write(">");
             jQuery.each(aAfterContent, function () {
@@ -248,13 +333,13 @@
     };
 
     // Rendering a message in case no Tiles are visible after applying the user filter
-    sap.ushell.ui.launchpad.TileContainerRenderer.renderNoData = function (oRm, oControl, displayData) {
+    TileContainerRenderer.renderNoData = function (oRm, oControl, displayData) {
         oRm.write("<div id='" + oControl.getId() + "-listNoData' class='sapUshellNoFilteredItems sapUiStrongBackgroundTextColor'>");
         if (displayData) {
             if (oControl.getNoDataText()) {
                 oRm.writeEscaped(oControl.getNoDataText());
             } else {
-                oRm.writeEscaped(oControl.getNoDataText(sap.ushell.resources.i18n.getText("noFilteredItems")));
+                oRm.writeEscaped(oControl.getNoDataText(resources.i18n.getText("noFilteredItems")));
             }
         } else {
             oRm.writeEscaped("");
@@ -262,4 +347,8 @@
         oRm.write("</div>");
     };
 
-}());
+
+
+	return TileContainerRenderer;
+
+}, /* bExport= */ true);

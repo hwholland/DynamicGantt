@@ -1,17 +1,16 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview This file contains miscellaneous functions which may be used
  * to override/replace existing SAPUI5 methods.
  */
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, setTimeout */
 
     // ensure that sap.ushell exists
-    jQuery.sap.declare("sap.ushell.override");
-
-    sap.ushell.override = {};
+    var override = {};
 
     /**
      * Override sap.ui.base.ManagedObject.updateAggregation
@@ -23,7 +22,7 @@
      * these cases, the default method is still invoked.
      * @param {string} sName -
      */
-    sap.ushell.override.updateAggregation = function (sName) {
+    override.updateAggregation = function (sName) {
         if (this.isTreeBinding(sName)) {
             // no idea how to handle -> delegate to parent
             sap.ui.base.ManagedObject.prototype.updateAggregation.apply(this, arguments);
@@ -83,7 +82,7 @@
      *
      * @param {string} sName -
      */
-    sap.ushell.override.updateAggregationGrouped = function (sName) {
+    override.updateAggregationGrouped = function (sName) {
         var oBindingInfo = this.mBindingInfos[sName],
             oBinding = oBindingInfo.binding,
             fnFactory = oBindingInfo.factory,
@@ -168,9 +167,13 @@
      *
      * @return {function} - jQuery.proxy(sap.ushell.override.updateAggregation, this, sName)()
      */
-    sap.ushell.override.updateAggregatesFactory = function (sName) {
+    override.updateAggregatesFactory = function (sName) {
         return function() {
-            jQuery.proxy(sap.ushell.override.updateAggregation, this, sName)();
+            jQuery.proxy(override.updateAggregation, this, sName)();
         };
     };
-}());
+
+
+	return override;
+
+}, /* bExport= */ true);

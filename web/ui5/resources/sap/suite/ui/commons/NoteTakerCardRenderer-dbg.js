@@ -1,214 +1,200 @@
 /*!
  * 
- * 		SAP UI development toolkit for HTML5 (SAPUI5)
- * 		(c) Copyright 2009-2015 SAP SE. All rights reserved
- * 	
+		SAP UI development toolkit for HTML5 (SAPUI5)
+		(c) Copyright 2009-2015 SAP SE. All rights reserved
+	
  */
-jQuery.sap.declare("sap.suite.ui.commons.NoteTakerCardRenderer");
 
-jQuery.sap.require("sap.suite.ui.commons.util.RenderUtils");
+sap.ui.define([ './util/RenderUtils' ], function(RenderUtils) {
+	"use strict";
 
-/**
- * @class NoteTakerCard renderer.
- * @static
- */
-sap.suite.ui.commons.NoteTakerCardRenderer = {
-};
+	/**
+	 * @class NoteTakerCard renderer.
+	 * @static
+	 */
+	var NoteTakerCardRenderer = {};
 
-/**
- * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
- *
- * @param {sap.ui.core.RenderManager} rm the RenderManager that can be used for writing to the render output buffer
- * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
- */
-sap.suite.ui.commons.NoteTakerCardRenderer.render = function(rm, oControl){
+	/**
+	 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
+	 *
+	 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
+	 */
+	NoteTakerCardRenderer.render = function(oRm, oControl) {
 
-    // write the HTML into the render manager
-    var sFullHeader = oControl.getHeader();
-    var sTruncatedHeader = this.getTruncatedHeader(sFullHeader);
-    var bShowViewAllLink = oControl.getBody().length > oControl.getViewAllTrigger();
-    var bShowAttachment = oControl.getAttachmentFilename() !== "";
-    var rh = new sap.suite.ui.commons.util.RenderingHelper(rm);
-    var sTooltip = oControl.getTooltip_AsString();
+		// write the HTML into the render manager
+		var sFullHeader = oControl.getHeader();
+		var sTruncatedHeader = this.getTruncatedHeader(sFullHeader);
+		var bShowViewAllLink = oControl.getBody().length > oControl.getViewAllTrigger();
+		var bShowAttachment = oControl.getAttachmentFilename() !== "";
+		var rh = new RenderUtils(oRm);
+		var sTooltip = oControl.getTooltip_AsString();
 
-    // main DIV element
-    rm.write("<div");
-    rm.writeControlData(oControl);
-    if (sTooltip) {
-        rm.writeAttributeEscaped("title", sTooltip);
-    }
-    rm.addClass("sapSuiteUiCommonsNoteTakerCard");
-    if (oControl.getThumbUp()) {
-        rm.addClass("suiteUiNtcPositiveCard");
-    }
-    if (oControl.getThumbDown()) {
-        rm.addClass("suiteUiNtcNegativeCard");
-    }
-    rm.writeClasses();
-    
-    var ariaInfo = {role : 'region'};
-    // For JAWS 15 is not needed.
-//    if (!jQuery.browser.msie) {
-//	    ariaInfo.describedby = [oControl.getId() + "-headerLabel", oControl.getId() + "-timestamp",
-//	      		              oControl.getId() + "-toolbar", oControl.getId() + "-body"].join(" ");
-//    }	
-    rm.writeAccessibilityState(oControl, ariaInfo);
-    rm.write(">");
+		// main DIV element
+		oRm.write("<div");
+		oRm.writeControlData(oControl);
+		if (sTooltip) {
+			oRm.writeAttributeEscaped("title", sTooltip);
+		}
+		oRm.addClass("sapSuiteUiCommonsNoteTakerCard");
+		if (oControl.getThumbUp()) {
+			oRm.addClass("suiteUiNtcPositiveCard");
+		}
+		if (oControl.getThumbDown()) {
+			oRm.addClass("suiteUiNtcNegativeCard");
+		}
+		oRm.writeClasses();
 
-        // header DIV element
-//      rm.write("<div");
-//      rm.writeAttribute("id", oControl.getId() + "-header");
-//      rm.addClass("sapSuiteUiCommonsNoteTakerCardHeader");
-//      rm.writeClasses();
-//      rm.write(">");
-        rh.writeOpeningTag('div', {
-            attributes: {id: oControl.getId() + "-header"},
-            classes: ['sapSuiteUiCommonsNoteTakerCardHeader']
-        });
-//	        rm.write("<div");
-//	        rm.writeAttribute("id", oControl.getId() + "-header-buttons");
-//          rm.addClass("sapSuiteUiCommonsNoteTakerCardHeaderButtons");
-//          rm.writeClasses();
-//	        rm.write(">");
-            rh.writeOpeningTag('div', {
-                attributes: {id: oControl.getId() + "-header-buttons"},
-                classes: ['sapSuiteUiCommonsNoteTakerCardHeaderButtons']
-            });
-            	rm.renderControl(oControl._oEditButton);
-	            rm.renderControl(oControl._oDeleteButton);
-	        rh.writeClosingTag('div');
-	        //rm.write("</div>");
+		var ariaInfo = { role: 'region' };
+		oRm.writeAccessibilityState(oControl, ariaInfo);
+		oRm.write(">");
 
-            if (!sFullHeader) {
-                rm.write("&nbsp;");
-            } else {
-                rm.write("<label");
-                rm.writeAttribute("id", oControl.getId() + "-headerLabel");
-                if (sFullHeader !== sTruncatedHeader) {
-                    rm.writeAttributeEscaped("title", sFullHeader);
-                }
-                rm.write(">");
-                    rm.writeEscaped(sTruncatedHeader);
-                rm.write("</label>");
-            }
+		// header DIV element
+		rh.writeOpeningTag('div', {
+			attributes: { id: oControl.getId() + "-header" },
+			classes: ['sapSuiteUiCommonsNoteTakerCardHeader']
+		});
+		rh.writeOpeningTag('div', {
+			attributes: { id: oControl.getId() + "-header-buttons" },
+			classes: ['sapSuiteUiCommonsNoteTakerCardHeaderButtons']
+		});
+		oRm.renderControl(oControl._oEditButton);
+		oRm.renderControl(oControl._oDeleteButton);
+		rh.writeClosingTag('div');
 
-            // timestamp DIV element
-            rm.write("<div");
-            rm.writeAttribute("id", oControl.getId() + "-timestamp");
-            rm.addClass("sapSuiteUiCommonsNoteTakerCardTimestamp");
-            rm.writeClasses();
-            rm.write(">");
-                rm.writeEscaped(oControl.getFormattedTimestamp());
-            rm.write("</div>");
-        rm.write("</div>");
+		if (!sFullHeader) {
+			oRm.write("&nbsp;");
+		} else {
+			oRm.write("<label");
+			oRm.writeAttribute("id", oControl.getId() + "-headerLabel");
+			if (sFullHeader !== sTruncatedHeader) {
+				oRm.writeAttributeEscaped("title", sFullHeader);
+			}
+			oRm.write(">");
+			oRm.writeEscaped(sTruncatedHeader);
+			oRm.write("</label>");
+		}
 
-        //body container DIV
-        rm.write("<div");
-        rm.addClass("sapSuiteUiCommonsNoteTakerCardBodyContent");
-        rm.writeClasses();
-        rm.write(">");
+		// timestamp DIV element
+		oRm.write("<div");
+		oRm.writeAttribute("id", oControl.getId() + "-timestamp");
+		oRm.addClass("sapSuiteUiCommonsNoteTakerCardTimestamp");
+		oRm.writeClasses();
+		oRm.write(">");
+		oRm.writeEscaped(oControl.getFormattedTimestamp());
+		oRm.write("</div>");
+		oRm.write("</div>");
 
-            //tag panel DIV
-            rm.write("<div");
-            rm.writeAttribute("id", oControl.getId() + "-toolbar");
-            rm.addClass("suiteUiNtcToolbar");
-            rm.writeClasses();
-            rm.write(">");
-                this.renderToolbar(rm, oControl);
-            rm.write("</div>");
+		//body container DIV
+		oRm.write("<div");
+		oRm.addClass("sapSuiteUiCommonsNoteTakerCardBodyContent");
+		oRm.writeClasses();
+		oRm.write(">");
 
-            //attachment bar DIV
-            if (bShowAttachment) {
-                rm.renderControl(oControl._prepareAttachmentPanel(false));
-            }
+		//tag panel DIV
+		oRm.write("<div");
+		oRm.writeAttribute("id", oControl.getId() + "-toolbar");
+		oRm.addClass("suiteUiNtcToolbar");
+		oRm.writeClasses();
+		oRm.write(">");
+		this.renderToolbar(oRm, oControl);
+		oRm.write("</div>");
 
-            // body DIV element
-            rm.write("<div");
-            rm.writeAttribute("id", oControl.getId() + "-body");
-            rm.addClass("sapSuiteUiCommonsNoteTakerCardBody");
-            if (bShowAttachment && bShowViewAllLink) {
-                rm.addClass("sapSuiteUiCommonsNtcBodyViewAllAttach");
-            } else if (bShowViewAllLink) {
-                rm.addClass("sapSuiteUiCommonsNtcBodyViewAll");
-            } else if (bShowAttachment) {
-                rm.addClass("sapSuiteUiCommonsNtcBodyAttach");
-            }
-            rm.writeClasses();
-            rm.write(">");
-                rm.write(oControl._getFormattedBody());
-            rm.write("</div>");
+		//attachment bar DIV
+		if (bShowAttachment) {
+			oRm.renderControl(oControl._prepareAttachmentPanel(false));
+		}
 
-            // view all DIV element
-            if (bShowViewAllLink) {
-                rm.write("<div");
-                rm.writeAttribute("id", oControl.getId() + "-viewAll");
-                rm.addClass("sapSuiteUiCommonsNoteTakerCardViewAll");
-                rm.writeClasses();
-                rm.write(">&nbsp;");
-                    oControl._oViewAllLink.addStyleClass("sapSuiteUiCommonsNoteTakerCardViewAllLink");
-                    rm.renderControl(oControl._oViewAllLink);
-                rm.write("</div>");
-            }
+		// body DIV element
+		oRm.write("<div");
+		oRm.writeAttribute("id", oControl.getId() + "-body");
+		oRm.addClass("sapSuiteUiCommonsNoteTakerCardBody");
+		if (bShowAttachment && bShowViewAllLink) {
+			oRm.addClass("sapSuiteUiCommonsNtcBodyViewAllAttach");
+		} else if (bShowViewAllLink) {
+			oRm.addClass("sapSuiteUiCommonsNtcBodyViewAll");
+		} else if (bShowAttachment) {
+			oRm.addClass("sapSuiteUiCommonsNtcBodyAttach");
+		}
+		oRm.writeClasses();
+		oRm.write(">");
+		oRm.write(oControl._getFormattedBody());
+		oRm.write("</div>");
 
-        rm.write("</div>"); // body container div
+		// view all DIV element
+		if (bShowViewAllLink) {
+			oRm.write("<div");
+			oRm.writeAttribute("id", oControl.getId() + "-viewAll");
+			oRm.addClass("sapSuiteUiCommonsNoteTakerCardViewAll");
+			oRm.writeClasses();
+			oRm.write(">&nbsp;");
+			oControl._oViewAllLink.addStyleClass("sapSuiteUiCommonsNoteTakerCardViewAllLink");
+			oRm.renderControl(oControl._oViewAllLink);
+			oRm.write("</div>");
+		}
 
-    rm.write("</div>"); // card div
-};
+		oRm.write("</div>"); // body container div
 
-/*
- * Returns truncated version of the header if it exceeds iLength
- */
-sap.suite.ui.commons.NoteTakerCardRenderer.getTruncatedHeader = function(sFullHeader) {
-    var iLength = 20;
-    var sTerminator = "...";
-    if (sFullHeader && sFullHeader.length > iLength) {
-        return sFullHeader.substr(0, iLength - sTerminator.length) + sTerminator;
-    } else {
-        return sFullHeader;
-    }
-};
+		oRm.write("</div>"); // card div
+	};
 
-sap.suite.ui.commons.NoteTakerCardRenderer.renderToolbar = function(rm, oControl) {
-    rm.write("<div");
-    rm.writeAttribute("id", oControl.getId() + "-left-toolbar");
-    rm.addClass("sapSuiteUiCommonsNoteTakerCardLeftPanel");
-    if(oControl.getThumbUp() || oControl.getThumbDown()) {
-        rm.addClass("sapSuiteUiCommonsNoteTakerCardWithThumbs"); 
-    } else {
-        rm.addClass("sapSuiteUiCommonsNoteTakerCardNoThumbs");
-    }
-    rm.writeClasses();
-    rm.write(">");
-    rm.write(oControl._getFormattedTags());
-    rm.write("</div>");
-    
-    rm.write("<div");
-    rm.writeAttribute("id", oControl.getId() + "-right-toolbar");
-    rm.addClass("sapSuiteUiCommonsNoteTakerCardRightPanel");
-    rm.writeClasses();
-    rm.write(">");
-        rm.write("<div");
-        rm.writeAttribute("id", oControl.getId() + "-thumb");
-        
-        var thumbTooltip = "";
-        if(oControl.getThumbUp() && !oControl.getThumbDown()) {
-            rm.writeAttribute("class", "sapSuiteUiCommonsNoteTakerCardThumbUp");
-            thumbTooltip = oControl._rb.getText("NOTETAKERCARD_ICON_THUMB_UP_TOOLTIP");
-            rm.writeAttribute("title", thumbTooltip);
-        } else if(!oControl.getThumbUp() && oControl.getThumbDown()) {
-            rm.writeAttribute("class", "sapSuiteUiCommonsNoteTakerCardThumbDown");
-            thumbTooltip = oControl._rb.getText("NOTETAKERCARD_ICON_THUMB_DOWN_TOOLTIP");
-            rm.writeAttribute("title", thumbTooltip);
-        }
-        rm.write(">");
-        
-        //ARIA info
-        rm.write("<span");
-        rm.writeAttribute("style", "visibility: hidden; display: none;");
-        rm.write(">");
-        rm.writeEscaped(thumbTooltip);
-        rm.write("</span>");
-        
-        rm.write("</div>");
-    rm.write("</div>");
-};
+	/*
+	 * Returns truncated version of the header if it exceeds iLength
+	 */
+	NoteTakerCardRenderer.getTruncatedHeader = function(sFullHeader) {
+		var iLength = 20;
+		var sTerminator = "...";
+		if (sFullHeader && sFullHeader.length > iLength) {
+			return sFullHeader.substr(0, iLength - sTerminator.length) + sTerminator;
+		} else {
+			return sFullHeader;
+		}
+	};
+
+	NoteTakerCardRenderer.renderToolbar = function(oRm, oControl) {
+		oRm.write("<div");
+		oRm.writeAttribute("id", oControl.getId() + "-left-toolbar");
+		oRm.addClass("sapSuiteUiCommonsNoteTakerCardLeftPanel");
+		if (oControl.getThumbUp() || oControl.getThumbDown()) {
+			oRm.addClass("sapSuiteUiCommonsNoteTakerCardWithThumbs");
+		} else {
+			oRm.addClass("sapSuiteUiCommonsNoteTakerCardNoThumbs");
+		}
+		oRm.writeClasses();
+		oRm.write(">");
+		oRm.write(oControl._getFormattedTags());
+		oRm.write("</div>");
+
+		oRm.write("<div");
+		oRm.writeAttribute("id", oControl.getId() + "-right-toolbar");
+		oRm.addClass("sapSuiteUiCommonsNoteTakerCardRightPanel");
+		oRm.writeClasses();
+		oRm.write(">");
+		oRm.write("<div");
+		oRm.writeAttribute("id", oControl.getId() + "-thumb");
+
+		var thumbTooltip = "";
+		if (oControl.getThumbUp() && !oControl.getThumbDown()) {
+			oRm.writeAttribute("class", "sapSuiteUiCommonsNoteTakerCardThumbUp");
+			thumbTooltip = oControl._rb.getText("NOTETAKERCARD_ICON_THUMB_UP_TOOLTIP");
+			oRm.writeAttribute("title", thumbTooltip);
+		} else if (!oControl.getThumbUp() && oControl.getThumbDown()) {
+			oRm.writeAttribute("class", "sapSuiteUiCommonsNoteTakerCardThumbDown");
+			thumbTooltip = oControl._rb.getText("NOTETAKERCARD_ICON_THUMB_DOWN_TOOLTIP");
+			oRm.writeAttribute("title", thumbTooltip);
+		}
+		oRm.write(">");
+
+		//ARIA info
+		oRm.write("<span");
+		oRm.writeAttribute("style", "visibility: hidden; display: none;");
+		oRm.write(">");
+		oRm.writeEscaped(thumbTooltip);
+		oRm.write("</span>");
+
+		oRm.write("</div>");
+		oRm.write("</div>");
+	};
+
+	return NoteTakerCardRenderer;
+}, /* bExport= */ true);

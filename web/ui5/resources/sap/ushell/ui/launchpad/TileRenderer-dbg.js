@@ -1,10 +1,9 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 
-(function () {
-    "use strict";
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.declare("sap.ushell.ui.launchpad.TileRenderer");
+sap.ui.define(['sap/ushell/resources'],
+	function(resources) {
+	"use strict";
 
     /**
      * @class Tile renderer.
@@ -12,7 +11,7 @@
      *
      * @private
      */
-    sap.ushell.ui.launchpad.TileRenderer = {};
+    var TileRenderer = {};
     // var translationBundle = sap.ushell.resources.i18n;
 
     /**
@@ -26,9 +25,12 @@
      *            oControl an object representation of the control that should be
      *            rendered
      */
-    sap.ushell.ui.launchpad.TileRenderer.render = function (oRm, oControl) {
+    TileRenderer.render = function (oRm, oControl) {
         var oTileView = null, oModel = oControl.getModel(),
-            aContent;
+            aContent,
+            oPinButton = oControl.getPinButton();
+
+        oPinButton = oPinButton.length ? oPinButton[0] : undefined;
         try {
             oTileView = oControl.getTileViews()[0];
         } catch (ex) {
@@ -36,11 +38,15 @@
             oTileView = new sap.m.Text({ text: "Failed to load. "});
         }
         var oTileContainer = oControl.getParent(),
-            oTiles = oTileContainer.getTiles ? oTileContainer.getTiles() : [],
+            oTiles = oTileContainer && oTileContainer.getTiles ? oTileContainer.getTiles() : [],
             oVisibleTiles = oTiles.filter(function (oTile) {
                 return oTile.getVisible();
             }),
             iCurrentItemIndex = oVisibleTiles.indexOf(oControl) > -1 ? oVisibleTiles.indexOf(oControl) + 1 : "";
+
+        if (!oTileContainer) {
+            return;
+        }
 
         oRm.write("<li");
 
@@ -48,10 +54,17 @@
         if (oModel && oModel.getProperty("/enableHelp")) {
             // currently only the Tile (and the Tile's footer) has a data attribute in teh xRay integration
             // (as using this value as a class value instead as done in all of the static elements causes parsing errors in the xRay hotspot definition flow)
-            oRm.writeAttribute("data-tileCatalogId", oControl.getTileCatalogId());// xRay support
+            oRm.writeAttribute("data-help-id", oControl.getTileCatalogId());// xRay support
         }
         oRm.writeControlData(oControl);
         oRm.addClass("sapUshellTile");
+
+        //In case of ActionMode we need actual height on tile
+        //By this if we check if we are in the edit mode or not
+        if(oControl.getTileActionModeActive()){
+            oRm.addClass("sapUshellTileWrapper");
+        }
+
         //FeedTile BG should be transparent, since sapUshellTile BG style cannot be changed,
         //We add a special styleClass to FeedTile in order to set its BG to transparent
         if (oTileView && oTileView.getContent && sap.suite && sap.suite.ui && sap.suite.ui.commons && sap.suite.ui.commons.FeedTile) {
@@ -63,9 +76,6 @@
             });
         }
 
-        if (oControl.getFootItems() && oControl.getFootItems().length > 0) {
-            oRm.addClass("sapUshellTileFooter");
-        }
         if (oControl.getLong()) {
             oRm.addClass("sapUshellLong");
         }
@@ -77,12 +87,14 @@
         }
         oRm.writeClasses();
         oRm.writeAccessibilityState(oControl, {role: "option", posinset : iCurrentItemIndex, setsize : oVisibleTiles.length});
-        oRm.writeAttribute("aria-describedby", oControl.getParent().getId() + "-groupheader");
-
+        var ariaDescribedBy = oControl.getParent().getId() + "-titleText";
+        oRm.writeAttribute("aria-describedby", ariaDescribedBy );
         if (oControl.getIeHtml5DnD()) {
             oRm.writeAttribute("draggable", "true");
         }
+
         oRm.writeAttributeEscaped("tabindex", "-1");
+
         var layoutPosition = oControl.data('layoutPosition');
         if (layoutPosition) {
             var stylePosition = '-webkit-transform:' + layoutPosition.translate3D + ';-ms-transform:' + layoutPosition.translate2D + ';transform:' + layoutPosition.translate3D;
@@ -91,56 +103,16 @@
 
         oRm.write(">");
 
-
-        // Add the ActioMode cover DIV to the tile
-        oRm.write("<div");
-        oRm.addClass("sapUshellTileActionLayerDiv");
-        oRm.writeClasses();
-        oRm.write(">");
-
-        if (!oControl.getShowActionsIcon()) {
-            // we display the Delete action icon - only if tile is not part of a locked group
-            if (!oControl.getIsLocked() && oControl.getTileActionModeActive()) {
-                // render the trash bin action
-
-
-                // outer div - the click area for the delete action
-                oRm.write("<div");
-                oRm.addClass("sapUshellTileDeleteClickArea");
-                oRm.writeClasses();
-                oRm.write(">");
-
-                // 2nd div - to draw the circle around the icon
-                oRm.write("<div");
-                oRm.addClass("sapUshellTileDeleteIconOuterClass");
-                oRm.writeClasses();
-                oRm.write(">");
-
-                oRm.renderControl(oControl._initDeleteAction()); // initialize & render the tile's delete action icon
-
-                oRm.write("</div>");// 2nd div - to draw the circle around the icon
-                oRm.write("</div>"); // outer div - the click area for the delete action
-            }
-        }
-
-        // if tile is rendered in Edit-Mode (Tile Action mode)
-        if (oControl.getTileActionModeActive()) {
-            // add a div to render the tile's bottom overflow icon
-            oRm.write("<div class='sapUshellTileActionDivCenter'></div>");
+        //In case of Action Mode we don't need Additional Container
+        //By this if we check if we are in the edit mode or not
+        if (!oControl.getTileActionModeActive()) {
             oRm.write("<div");
-            oRm.addClass("sapUshellTileActionIconDivBottom");
+            oRm.addClass("sapUshellTileWrapper");
             oRm.writeClasses();
             oRm.write(">");
-            oRm.write("<div");
-            oRm.addClass("sapUshellTileActionIconDivBottomInnerDiv");
-            oRm.writeClasses();
-            oRm.write(">");
-            oRm.renderControl(oControl.getActionSheetIcon());
-            oRm.write("</div>");
-            oRm.write("</div>");
         }
 
-        oRm.write("</div>");
+        this.renderTileActionMode(oRm, oControl);
 
         // Tile Content
         oRm.addClass("sapUshellTileInner");
@@ -151,51 +123,120 @@
 
 
         if (this.renderTileView) {
-            this.renderTileView(oRm, oTileView, oControl.getTarget());
+            this.renderTileView(oRm, oTileView, oPinButton, oControl.getTarget(),oControl.getIsCustomTile());
         }
 
 
         // if Tile has the ActionsIcon (overflow icon at its top right corner) - display it
-        if (oControl.getShowActionsIcon()) {
+        if (oControl.getShowActionsIcon() && !oControl.getTileActionModeActive()) {
             oRm.renderControl(oControl.actionIcon);
         }
 
-        // Tile Footer Items
-        oRm.write("<footer");
+        //In case of Action Mode we don't need Additional Container
+        if (!oControl.getTileActionModeActive()) {
+            oRm.write("</div>");
 
-        // if xRay is enabled
-        if (oModel && oModel.getProperty("/enableHelp")) {
-            // currently only the Tile (and the Tile's footer) has a data attribute in teh xRay integration
-            // (as using this value as a class value instead as done in all of the static elements causes parsing errors in the xRay hotspot definition flow)
-            oRm.writeAttribute("data-tileCatalogId", "addRemoveTile-" + oControl.getTileCatalogId());
+            //In here we will add the pin button div
+            if (this.renderTileActionsContainer) {
+                this.renderTileActionsContainer(oRm, oTileView, oPinButton, oControl.getTarget(), oControl.getIsCustomTile());
+            }
         }
-
-        oRm.addClass("sapUshellTileFooterElement");
-        oRm.writeClasses();
-        oRm.write(">");
-        jQuery.each(oControl.getFootItems(), function () {
-            oRm.renderControl(this);
-        });
-        oRm.write("</footer>");
 
         oRm.write("</li>");
     };
 
-    sap.ushell.ui.launchpad.TileRenderer.renderTileView = function (oRm, oTileView, sTarget) {
-        if ((sTarget || "") !== "") {
-            oRm.write("<a");
+    TileRenderer.renderTileActionsContainer = function (oRm, oTileView, oPinButton, sTarget,bIsCustomTile ) {
+        //add overlay and pinButton
+        if (oPinButton) {
+            oPinButton.addStyleClass("sapUshellActionButton");
+
+            oRm.write("<div");
+            oRm.addClass("sapUshellTilePinButtonOverlay");
+
             oRm.writeClasses();
-            oRm.writeAttributeEscaped("href", "#" + sTarget);
+
+            //For accessability needs: the overlay div will be read as readonly field
+            if(oTileView.getHeader) {
+                oRm.writeAccessibilityState(oTileView, {role: "toolbar", label: oTileView.getHeader()});
+            }
+
             oRm.write(">");
-            oRm.renderControl(oTileView);
-            oRm.write("</a>");
-        } else {
+            oRm.renderControl(oPinButton);
+            oRm.write("</div>");
+        }
+    };
+
+    TileRenderer.renderTileView = function (oRm, oTileView, oPinButton, sTarget,bIsCustomTile ) {
+        // if its custom tile - we add it in div
+        // it doesn't support in open new tab by right click
+        if(bIsCustomTile){
             oRm.write("<div");
             oRm.writeClasses();
             oRm.write(">");
             oRm.renderControl(oTileView);
             oRm.write("</div>");
+        }else{
+            oRm.write("<a");
+            oRm.writeClasses();
+            if (sTarget) {
+                oRm.writeAttributeEscaped("href", sTarget);
+            }
+            oRm.write(">");
+            oRm.renderControl(oTileView);
+            oRm.write("</a>");
         }
     };
 
-}());
+    TileRenderer.renderTileActionMode = function (oRm, oControl) {
+        // if tile is rendered in Edit-Mode (Tile Action mode)
+        if (!oControl.getTileActionModeActive()) {
+            return;
+        }
+
+        // Add the ActioMode cover DIV to the tile
+        oRm.write("<div");
+        oRm.addClass("sapUshellTileActionLayerDiv");
+        oRm.writeClasses();
+        oRm.write(">");
+
+        // we display the Delete action icon - only if tile is not part of a locked group
+        if (oControl.getTileActionModeActive() && !oControl.getIsLocked()) {
+            // render the trash bin action
+            // outer div - the click area for the delete action
+            oRm.write("<div");
+            oRm.addClass("sapUshellTileDeleteClickArea");
+            oRm.writeClasses();
+            oRm.write(">");
+            // 2nd div - to draw the circle around the icon
+            oRm.write("<div");
+            oRm.addClass("sapUshellTileDeleteIconOuterClass");
+            oRm.writeClasses();
+            oRm.write(">");
+            oRm.renderControl(oControl._initDeleteAction()); // initialize & render the tile's delete action icon
+            oRm.write("</div>");// 2nd div - to draw the circle around the icon
+            oRm.write("</div>"); // outer div - the click area for the delete action
+        }
+
+        // add a div to render the tile's bottom overflow icon
+        oRm.write("<div class='sapUshellTileActionDivCenter'></div>");
+        oRm.write("<div");
+        oRm.addClass("sapUshellTileActionIconDivBottom");
+        oRm.writeClasses();
+        oRm.write(">");
+        oRm.write("<div");
+        oRm.addClass("sapUshellTileActionIconDivBottomInnerDiv");
+        oRm.writeClasses();
+        oRm.write(">");
+        oRm.renderControl(oControl.getActionSheetIcon());
+        oRm.write("</div>");
+        oRm.write("</div>");
+
+
+        oRm.write("</div>");
+    };
+
+
+
+	return TileRenderer;
+
+}, /* bExport= */ true);

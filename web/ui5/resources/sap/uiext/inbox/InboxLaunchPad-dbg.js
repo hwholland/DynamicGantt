@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * InboxLaunchPad Documentation to be updated later
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -71,18 +71,54 @@ sap.ui.core.Control.extend("sap.uiext.inbox.InboxLaunchPad", { metadata : {
 	deprecated : true,
 	library : "sap.uiext.inbox",
 	properties : {
+
+		/**
+		 * The title text appearing in Inbox LaunchPad header bar.
+		 */
 		"title" : {type : "string", group : "", defaultValue : 'Inbox Launch Pad Title'},
+
+		/**
+		 * Path (src) to the logo icon to be displayed in the Inbox LaunchPad header.
+		 */
 		"logoSrc" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * Property to indicate whether the Logoff button in the header should be displayed or not. Default value is true.
+		 */
 		"showLogoutButton" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * Property to indicate whether loggod on User's Name in the header should be displayed or not. Default value is true.
+		 */
 		"showUserName" : {type : "boolean", group : "Misc", defaultValue : true},
+
+		/**
+		 * User name to be shown in the header.
+		 */
 		"userName" : {type : "string", group : "Misc", defaultValue : null}
 	},
 	aggregations : {
+
+		/**
+		 * Hidden aggregation to contain the Inbox LaunchPad header.
+		 */
 		"launchPadHeader" : {type : "sap.ui.core.Control", multiple : false, visibility : "hidden"}, 
+
+		/**
+		 * Hidden aggregation to contain the Inbox LaunchPad tile container.
+		 */
 		"launchPadTileContainer" : {type : "sap.ui.core.Control", multiple : false, visibility : "hidden"}
 	},
 	events : {
+
+		/**
+		 * Fires an event when a tile is selected in Inbox LaunchPad.
+		 */
 		"tileSelected" : {}, 
+
+		/**
+		 * Fired when the user clicks the "Log-off" button.
+		 */
 		"logout" : {}
 	}
 }});

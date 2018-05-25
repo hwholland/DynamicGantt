@@ -1,6 +1,8 @@
+jQuery.sap.require("sap.apf.modeler.ui.utils.textPoolHelper");
 jQuery.sap.require("sap.apf.modeler.ui.utils.nullObjectChecker");
 jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 jQuery.sap.require("sap.apf.modeler.ui.utils.staticValuesBuilder");
+jQuery.sap.require("sap.m.MessageBox");
 jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 /**
 * @class navigationTarget
@@ -13,7 +15,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 *  			   oParams - Object contains URL Context
 *  			   oConfigurationHandler - Handler for configuration
 *  			   oConfigurationEditor -  manages the facet filter object
-*  			   getAllAvailableSemanticObjects - getter method to get the semantic objects 
+*  			   getAllAvailableSemanticObjects - getter method to get the semantic objects
 *  			   getSemanticActions - getter method to get the list of actions for the given semantic object
 * 			   setNavigationTargetName - To set the updated description of the navigation target to the table
 *  			   createMessageObject - Method to create the message object
@@ -21,17 +23,20 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 (function() {
 	"use strict";
 	var oParams, oTextReader, oTextPool, oConfigurationHandler, oConfigurationEditor, oNavTarget, viewValidatorForNavigationTarget, oNavTargetViewData;
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
-	var optionsValueModelBuilder = new sap.apf.modeler.ui.utils.OptionsValueModelBuilder();
+	var navigationParametersCounter;
+	var nullObjectChecker = sap.apf.modeler.ui.utils.nullObjectChecker;
+	var optionsValueModelBuilder = sap.apf.modeler.ui.utils.optionsValueModelBuilder;
+	var oTranslationFormat = sap.apf.modeler.ui.utils.TranslationFormatMap.NAVTARGET_TITLE;
 	function _setDisplayText(oController) {
-		oController.byId("idNavigationTargetHeaderLabel").setTitle(oTextReader("basicData"));
+		oController.byId("idNavigationTargetHeaderLabel").setText(oTextReader("basicData"));
 		oController.byId("idSemanticObjectLabel").setText(oTextReader("semanticObject"));
 		oController.byId("idActionLabel").setText(oTextReader("action"));
 		oController.byId("idDescriptionLabel").setText(oTextReader("navigationTargetTitle"));
-		oController.byId("idNavigationTargetTypeHeaderLabel").setTitle(oTextReader("navigationTargetType"));
+		oController.byId("idNavigationParametersHeaderLabel").setText(oTextReader("navigationParametersHeader"));
+		oController.byId("idNavigationTargetTypeHeaderLabel").setText(oTextReader("navigationTargetType"));
 		oController.byId("idNavigationTargetTypeLabel").setText(oTextReader("assignmentType"));
 		oController.byId("idAssignedStepsLabel").setText(oTextReader("assignedSteps"));
-		oController.byId("idContextMapping").setTitle(oTextReader("contextMapping"));
+		oController.byId("idContextMapping").setText(oTextReader("contextMapping"));
 	}
 	function _retrieveOrCreateNavTargetObject(oController) {
 		var navigationTargetId;
@@ -44,6 +49,12 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 			_updateTreeNode(oController);
 		}
 	}
+	function _setLabelTitleForNavTarget(oController) {
+		var sTextForLabel = oNavTarget.getTitleKey() ? oTextReader("navigationTargetTitle") : oTextReader("navigationTargetTitle") + " (" + oTextReader("default") + ")";
+		oController.byId("idDescriptionLabel").setText(sTextForLabel);
+		oController.byId("idDescriptionLabel").setTooltip(sTextForLabel);
+		oController.byId("idUseDynamicParametersCheckBoxLabel").setText(oTextReader("useDynamicParametersLabel"));
+	}
 	function _instantiateSubView(oController) {
 		var requestOptionsContextMappingController, oContextMappingView;
 		var oViewData = {
@@ -51,7 +62,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 			oConfigurationHandler : oConfigurationHandler,
 			oConfigurationEditor : oConfigurationEditor,
 			oParentObject : oNavTarget,
-			getCalatogServiceUri: oController.getView().getViewData().getCalatogServiceUri
+			getCalatogServiceUri : oController.getView().getViewData().getCalatogServiceUri
 		};
 		requestOptionsContextMappingController = new sap.ui.controller("sap.apf.modeler.ui.controller.navTargetContextMapping");
 		oContextMappingView = new sap.ui.view({
@@ -62,9 +73,43 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 			controller : requestOptionsContextMappingController
 		});
 		//To be fired to update subView of context mapping and config editor instances after reset
-		oController.getView().attachEvent("updateSubViewInstancesOnResetEvent", oContextMappingView.getController().updateSubViewInstancesOnReset.bind(oContextMappingView.getController()));
-		oContextMappingView.addStyleClass("requestFFForm");
+		oController.getView().attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.UPDATESUBVIEWINSTANCESONRESET, oContextMappingView.getController().updateSubViewInstancesOnReset.bind(oContextMappingView.getController()));
+		oContextMappingView.addStyleClass("formTopPadding");
 		oController.byId("idContextMappingVBox").insertItem(oContextMappingView);
+		//NavigationTargetParameters
+		navigationParametersCounter = 0;
+		var parameters = oNavTarget.getAllNavigationParameters();
+		if (parameters.length > 0) {
+			parameters.forEach(function(parameter) {
+				createNavigationParameter(oController, parameter);
+			});
+		} else {
+			createNavigationParameter(oController);
+		}
+	}
+	function createNavigationParameter(oController, parameter) {
+		var navParamController = new sap.ui.controller("sap.apf.modeler.ui.controller.navigationTargetParameter");
+		var navParam = new sap.ui.view({
+			viewName : "sap.apf.modeler.ui.view.navigationTargetParameter",
+			type : sap.ui.core.mvc.ViewType.XML,
+			id : oController.createId("idNavigationTargetParameter" + navigationParametersCounter),
+			viewData : {
+				oTextReader : oTextReader,
+				oParentController : oController,
+				oNavigationTarget : oNavTarget,
+				parameter : parameter,
+				oConfigurationEditor : oConfigurationEditor
+			},
+			controller : navParamController
+		});
+		oController.byId("idNavigationParameterBox").addItem(navParam);
+		navigationParametersCounter++;
+		updateNavigationParameters(oController);
+	}
+	function updateNavigationParameters(oController) {
+		oController.byId("idNavigationParameterBox").getItems().forEach(function(navigationParameter) {
+			navigationParameter.getController().checkVisibilityOfPlusMinus();
+		});
 	}
 	function _setSemanticObject(oController) {
 		var oPromise = jQuery.Deferred();
@@ -112,22 +157,27 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 	}
 	function _setDescription(aSemanticActions, oController) {
 		var sTitle, sText, i;
-		var aActions = aSemanticActions ? aSemanticActions : oController.byId("idActionField").getModel().getData().Objects;
-		if (nullObjectChecker.checkIsNotNullOrBlank(oController.byId("idActionField").getValue())) {
-			for(i = 0; i < aActions.length; i++) {
-				if (aActions[i].id === oNavTarget.getAction()) {
-					sTitle = aActions[i].text;
-					break;
+		var sTitleKey = oNavTarget.getTitleKey();
+		if (nullObjectChecker.checkIsNotUndefined(sTitleKey)) {
+			sText = oController.getView().getViewData().oConfigurationHandler.getTextPool().get(sTitleKey).TextElementDescription;
+			oController.byId("idDescription").setValue(sText);
+		} else {
+			var aActions = aSemanticActions ? aSemanticActions : oController.byId("idActionField").getModel().getData().Objects;
+			if (aActions && nullObjectChecker.checkIsNotNullOrBlank(oNavTarget.getAction())) {
+				for(i = 0; i < aActions.length; i++) {
+					if (aActions[i].id === oNavTarget.getAction()) {
+						sTitle = aActions[i].text;
+						break;
+					}
 				}
 			}
+			sText = sTitle ? sTitle : oNavTarget.getSemanticObject(); //If action is from list of actions, get action's description; If action is from user input use semantic object as description
+			oController.byId("idDescription").setValue(sText);
 		}
-		sText = sTitle ? sTitle : oNavTarget.getSemanticObject(); //If action is from list of actions, get action's description; If action is from user input use semantic object as description
-		oController.byId("idDescription").setValue(sText);
 	}
 	function _setNavTargetType(oController) {
-		var staticValuesBuilder = new sap.apf.modeler.ui.utils.staticValuesBuilder(oTextReader);
-		var aNavTargetTypes = staticValuesBuilder.getNavTargetTypeData();
-		var oModelForNavTargetType = optionsValueModelBuilder.convert(aNavTargetTypes, aNavTargetTypes.length);
+		var staticValuesBuilder = new sap.apf.modeler.ui.utils.StaticValuesBuilder(oTextReader, optionsValueModelBuilder);
+		var oModelForNavTargetType = staticValuesBuilder.getNavTargetTypeData();
 		oController.byId("idNavigationTargetTypeField").setModel(oModelForNavTargetType);
 		var navTargetType = oNavTarget.isStepSpecific() ? oTextReader("stepSpecific") : oTextReader("globalNavTargets");
 		oController.byId("idNavigationTargetTypeField").setSelectedKey(navTargetType);
@@ -138,8 +188,9 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 			_setVisibilityOfAssignedStepsControls(oController, true);
 			var aAssignedStepData = [];
 			var aSteps = oConfigurationEditor.getSteps();//Get all steps in the configuration
-			for( var i = 0; i < aSteps.length; i++) {
-				var oStepDetails = {};
+			var i, oStepDetails;
+			for(i = 0; i < aSteps.length; i++) {
+				oStepDetails = {};
 				oStepDetails.stepKey = aSteps[i].getId();
 				oStepDetails.stepName = oTextPool.get(aSteps[i].getTitleId()).TextElementDescription;
 				aAssignedStepData.push(oStepDetails);
@@ -153,7 +204,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 	function _updateTreeNode(oController) {
 		var oNavTargetInfo = {
 			id : oNavTarget.getId(),
-			icon : oNavTarget.isGlobal() ? "sap-icon://BusinessSuiteInAppSymbols/icon-where-used" : "sap-icon://pushpin-off"
+			icon : oNavTarget.isGlobal() ? "sap-icon://overview-chart" : "sap-icon://pushpin-off"
 		};
 		if (oController.byId("idDescription").getValue()) {
 			oNavTargetInfo.name = oController.byId("idDescription").getValue();
@@ -184,8 +235,9 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 	}
 	function _removeNavTargetsFromAssignedSteps() {
 		var assignedSteps = oConfigurationEditor.getStepsAssignedToNavigationTarget(oNavTarget.getId());
-		for( var index = 0; index < assignedSteps.length; index++) {
-			var oStep = oConfigurationEditor.getStep(assignedSteps[index]);
+		var index, oStep;
+		for(index = 0; index < assignedSteps.length; index++) {
+			oStep = oConfigurationEditor.getStep(assignedSteps[index]);
 			oStep.removeNavigationTarget(oNavTarget.getId());
 		}
 	}
@@ -212,8 +264,9 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 		},
 		//sets the focus on first element in the object
 		onAfterRendering : function() {
-			if (this.getView().byId("idSemanticObjectField").getValue().length === 0) {
-				this.getView().byId("idSemanticObjectField").focus();
+			var oController = this;
+			if (oController.getView().byId("idSemanticObjectField").getValue().length === 0) {
+				oController.getView().byId("idSemanticObjectField").focus();
 			}
 		},
 		setDetailData : function() {
@@ -223,19 +276,30 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 					_setDescription(aSemanticActions.semanticActions, oController);
 				});
 			});
+			_setLabelTitleForNavTarget(oController);
 			_setNavTargetType(oController);
 			_setAssignedSteps(oController);
+			var useDynamicParameters = oNavTarget.getUseDynamicParameters();
+			if (useDynamicParameters) {
+				this.getView().byId("idUseDynamicParametersCheckBox").setSelected(true);
+			} else {
+				this.getView().byId("idUseDynamicParametersCheckBox").setSelected(false);
+			}
 		},
 		// Updates navigation target object and config editor on reset
 		updateSubViewInstancesOnReset : function(oConfigEditor) {
 			var oController = this;
 			oConfigurationEditor = oConfigEditor;
 			oNavTarget = oConfigurationEditor.getNavigationTarget(oNavTarget.getId());
-			oController.getView().fireEvent("updateSubViewInstancesOnResetEvent", [ oConfigurationEditor, oNavTarget ]);
+			oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.UPDATESUBVIEWINSTANCESONRESET, {
+				"oConfigurationEditor" : oConfigurationEditor,
+				"oParentObject" : oNavTarget
+			});
 		},
 		handleChangeSemanticObjectValue : function(oEvent) {
 			var sSemanticObject, oController = this;
 			sSemanticObject = oEvent.getParameter("value").trim();
+			oNavTarget.setTitleKey(undefined);
 			if (nullObjectChecker.checkIsNotNullOrBlank(sSemanticObject)) {
 				oNavTarget.setSemanticObject(sSemanticObject);
 				_setActionModel(oController).then(function(aSemanticActions) {
@@ -246,6 +310,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 						oController.byId("idActionField").setValue("");
 					}
 					_setDescription(aSemanticActions.semanticActions, oController);
+					_setLabelTitleForNavTarget(oController);
 					_updateTreeNode(oController);
 					_updateFormTitleAndBreadCrumb(oController);
 					_updateNavTargetTextTable(oController);
@@ -256,14 +321,42 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 		handleChangeofAction : function(oEvent) {
 			var sAction, oController = this;
 			sAction = oEvent.getParameter("value");
+			oNavTarget.setTitleKey(undefined);
 			if (nullObjectChecker.checkIsNotNullOrBlank(sAction)) {
 				oNavTarget.setAction(sAction);
 			}
 			_setDescription(undefined, oController);
+			_setLabelTitleForNavTarget(oController);
 			_updateTreeNode(oController);
 			_updateFormTitleAndBreadCrumb(oController);
 			_updateNavTargetTextTable(oController);
 			oConfigurationEditor.setIsUnsaved();
+		},
+		handleChangeForTitleText : function() {
+			var oController = this, sLabelTextKey;
+			var sLabelText = oController.byId("idDescription").getValue();
+			if (sLabelText.trim().length === 0) {
+				sLabelTextKey = undefined;
+				oNavTarget.setTitleKey(sLabelTextKey);
+				_setDescription(undefined, oController);
+				_setLabelTitleForNavTarget(oController);
+				_updateTreeNode(oController);
+				_updateFormTitleAndBreadCrumb(oController);
+				oConfigurationEditor.setIsUnsaved();
+			} else {
+				oController.getView().getViewData().oConfigurationHandler.getTextPool().setTextAsPromise(sLabelText, oTranslationFormat).done(function(sLabelTextKey) {
+					oNavTarget.setTitleKey(sLabelTextKey);
+					_setLabelTitleForNavTarget(oController);
+					oController.byId("idDescription").setValue(sLabelText);
+					_updateTreeNode(oController);
+					_updateFormTitleAndBreadCrumb(oController);
+					oConfigurationEditor.setIsUnsaved();
+				});
+			}
+		},
+		handleSuggestions : function(oEvent) {
+			var oSuggestionTextHandler = new sap.apf.modeler.ui.utils.SuggestionTextHandler(oTextPool);
+			oSuggestionTextHandler.manageSuggestionTexts(oEvent, oTranslationFormat);
 		},
 		handleChangeOfNavigationTargetType : function() {
 			var oController = this;
@@ -278,7 +371,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 				oController.byId("idAssignedStepsCombo").setSelectedKeys([]);//Clear the selected keys
 				_removeNavTargetsFromAssignedSteps();
 			}
-			_updateTreeNode(oController, this.byId("idDescription").getValue());
+			_updateTreeNode(oController, oController.byId("idDescription").getValue());
 		},
 		handleChangeForAssignedSteps : function() {
 			var oController = this;
@@ -300,11 +393,41 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 		},
 		getValidationState : function() {
 			var oController = this;
-			return viewValidatorForNavigationTarget.getValidationState() && oController.byId("idContextMappingView").getController().getValidationState();
+			var validatedNavigationParameters = true;
+			oController.byId("idNavigationParameterBox").getItems().forEach(function(navigationParameter) {
+				if (!navigationParameter.getController().validate()) {
+					validatedNavigationParameters = false;
+				}
+			});
+			return viewValidatorForNavigationTarget.getValidationState() && oController.byId("idContextMappingView").getController().getValidationState() && validatedNavigationParameters;
+		},
+		getNavigationParameters : function() {
+			return this.byId("idNavigationParameterBox").getItems();
+		},
+		addNavigationParameter : function() {
+			createNavigationParameter(this);
+		},
+		removeNavigationParameter : function(navigationParameter) {
+			this.byId("idNavigationParameterBox").removeItem(navigationParameter);
+			updateNavigationParameters(this);
+		},
+		handleChangeForUseDynamicParameters : function() {
+			var onOff = this.byId("idUseDynamicParametersCheckBox").getSelected();
+			oNavTarget.setUseDynamicParameters(onOff);
 		},
 		onExit : function() {
 			var oController = this;
 			oController.byId("idContextMappingView").destroy();
+		},
+		displayHelpAboutDynamicParameters : function() {
+			var messageText = oTextReader("explanationOfDynamicParameters");
+			var title = oTextReader("titleDynamicParameters");
+			sap.m.MessageBox.show(messageText, {
+					icon: sap.m.MessageBox.Icon.INFORMATION,
+					title: title,
+					actions: [sap.m.MessageBox.Action.CLOSE]
+				}
+			);
 		}
 	});
 }());

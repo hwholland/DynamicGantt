@@ -1,7 +1,8 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, hasher, document */
     /*jslint plusplus: true, nomen: true */
 
@@ -30,11 +31,12 @@
             }).addStyleClass("sapUshellInputField");
             this.oSubTitleInput.addAriaLabelledBy("subtitleLbl");
             this.oInfoInput = new sap.m.Input('bookmarkInfoInput', {
-                tooltip: this.oResourceBundle.getText("bookmarkDialogoInfo_tooltip"),
+                tooltip: this.oResourceBundle.getText("tileSettingsDialog_informationField"),
                 value: {
                     path: "/info",
                     mode: sap.ui.model.BindingMode.TwoWay
-                }
+                },
+                visible: "{/showInfo}"
             }).addStyleClass("sapUshellInputField");
             this.oInfoInput.addAriaLabelledBy("infoLbl");
 
@@ -114,18 +116,28 @@
 
             var tileWrapper = new sap.ushell.ui.launchpad.Tile({
                 "long" : false,
-                tileViews : [oTile]
+                tileViews : [oTile],
+                afterRendering: function (oEvent) {
+                    var jqTile = jQuery(this.getDomRef()),
+                        jqGenericTile = jqTile.find(".sapMGT");
+
+                    // remove focus from tile
+                    jqGenericTile.removeAttr("tabindex");
+                }
             }).addStyleClass("sapUshellBookmarkFormPreviewTileMargin");
 
-            var oPreview = new sap.m.Label("previewLbl", {text: " " +  this.oResourceBundle.getText('previewFld')}),
+            var oPreview = new sap.m.Label("previewLbl", {text: " " +  this.oResourceBundle.getText('previewFld'), visible: "{/showPreview}"}),
                 oTitle = new sap.m.Label("titleLbl", {required: true, text: " " +  this.oResourceBundle.getText('titleFld'), labelFor: this.oTitleInput}),
                 oSubTitle = new sap.m.Label("subtitleLbl", {text: this.oResourceBundle.getText('subtitleFld'), labelFor: this.oSubTitleInput}),
-                oInfo = new sap.m.Label("infoLbl", {text: this.oResourceBundle.getText('infoMsg'), labelFor: this.oInfoInput}),
-                hbox = new sap.m.HBox("saveAsTileHBox", {
-                    items: [tileWrapper],
-                    alignItems : sap.m.FlexAlignItems.Center,
-                    justifyContent: sap.m.FlexJustifyContent.Center
-                }).addStyleClass("sapUiStrongBackgroundColor").addStyleClass("sapUshellBookmarkFormPreviewBoxBottomMargin");
+                oInfo = new sap.m.Label("infoLbl", {text: this.oResourceBundle.getText('tileSettingsDialog_informationField'), labelFor: this.oInfoInput, visible: "{/showInfo}"}),
+                oPreviewBackgroundElement = new sap.ui.core.HTML("previewBackgroundElement", {content: "<div class='sapUshellShellBG sapContrastPlus sapUiStrongBackgroundColor'></div>"}),
+                hbox = new sap.m.FlexBox("saveAsTileHBox", {
+                     items: [oPreviewBackgroundElement, tileWrapper],
+                     alignItems : sap.m.FlexAlignItems.Center,
+                     justifyContent: sap.m.FlexJustifyContent.Center,
+                     renderType: sap.m.FlexRendertype.Bare,
+                    visible: "{/showPreview}"
+                }).addStyleClass("sapUshellShellBG").addStyleClass("sapUshellBookmarkFormPreviewBoxBottomMargin");
             oTitle.setLabelFor('bookmarkTitleInput');
             oSubTitle.setLabelFor('bookmarkSubTitleInput');
             oInfo.setLabelFor('bookmarkInfoInput');
@@ -219,4 +231,6 @@
             };
         }
     });
-}());
+
+
+}, /* bExport= */ false);

@@ -1,9 +1,7 @@
 //Required init with {getGroups: functions}
 /*global jQuery, sap, window */
-(function () {
+sap.ui.define(function() {
     "use strict";
-
-    jQuery.sap.declare("sap.ushell.Layout");
 
     var CollisionModule = function(settings) {
         this.init(settings);
@@ -14,13 +12,21 @@
         init: function (settings) {
             this.curTouchMatrixCords = {column: null, row: null};
             this.endGroup = null;
+            this.groupSwitched = false;
             this.item = null;
             this.matrix = null;
             this.tiles = null;
             this.collisionLeft = false;
+            this.startArea = null;
+            this.currentArea = null;
+            this.endArea = undefined;
             this.startGroup = null;
+            this.draggedTileDomRef = null;
+            this.sDragStartGroupModelId = undefined;
+            this.sDragTargetGroupModelId = undefined;
             this.currentGroup = null;
             this.groupsList = null;
+            this.allGroups = null;
             this.settings = this.settings || settings;
             jQuery.extend(this, this.settings);
             this.tileWidth = this.thisLayout.styleInfo.tileWidth;
@@ -29,72 +35,275 @@
             this.aExcludedControlClass = this.aExcludedControlClass || [];
             this.reorderElementsCallback = this.reorderElementsCallback || function () {};
             this.rightToLeft = sap.ui.getCore().getConfiguration().getRTL();
+            this.tabBarArrowCollisionRight = false;
+            this.tabBarArrowCollisionLeft = false;
+            this.collidedLinkAreas = [];
+            this.intersectedLink = null; //When we drag tile/link we can hover on tiles/links, in that case IntersectionItem is the tile/link we hover above
+            this.aLinksBoundingRects = [];
+            this.intersectedLinkPlaceHolder = undefined;
+            this.isLinkPersonalizationSupported = sap.ushell.Container ? sap.ushell.Container.getService("LaunchPage").isLinkPersonalizationSupported() : null;
+            this.isLinkMarkerShown = false;
+            this.bIsTabBarCollision = false;
         },
-
-        moveDraggable: function (moveX, moveY) {
-            var isCollision = this.detectCollision(moveX, moveY);
-            if (isCollision) {
-                this.changePlaceholder();
+        isTabBarCollision: function () {
+            return this.bIsTabBarCollision;
+        },
+        moveDraggable: function (moveX, moveY, aTabBarItemsLocation) {
+            var oCollision = this.getCollisionObject(moveX, moveY, aTabBarItemsLocation),
+                bNeedsPlaceHolder;
+            if (oCollision) {
+                this._toggleAnchorItemHighlighting(false);
+                if (oCollision.collidedObjectType !== "TabBar") {
+                    //We are not in tab bar
+                    this._toggleTabBarOverflowArrows(false);
+                    this.thisLayout.setOnTabBarElement(false);
+                    this._resetOverFlowButtonElements();
+                    this.bIsTabBarCollision = false;
+                } else {
+                    this.bIsTabBarCollision = true;
+                    this._toggleTabBarOverflowArrows(true);
+                    this.removePlaceHolders();
+                    this._handleTabBarCollision(moveX, aTabBarItemsLocation);
+                }
+                if (this.isLinkPersonalizationSupported && oCollision.collidedObjectType === "Group-link") {
+                    bNeedsPlaceHolder = this._handleLinkAreaIntersection(oCollision.collidedObject, moveX, moveY);
+                } else if (oCollision.collidedObjectType === "Group-tile") {
+                    bNeedsPlaceHolder = this._handleTileAreaIntersection(oCollision.collidedObject, moveX, moveY);
+                    this._toggleTileCloneHoverOpacity(false);
+                }
+                if (bNeedsPlaceHolder || this.endAreaChanged) {//we change the place holder according to intersection handlers or if the endArea has changes
+                    this.handlePlaceHolder(oCollision.collidedObject);
+                }
+            } else {
+                this._removeEmptyLinkAreaMark();
             }
         },
 
-        changePlaceholder: function () {
-            var currentGroup = this.currentGroup;
-            // Check if tile moved to different group
-            var tileChangedGroup = (this.endGroup !== this.currentGroup);
-            // If tile moved to different group
-            if (tileChangedGroup) {
-                var currentHostTiles = this.thisLayout.getGroupTiles(this.currentGroup);
-                if (this.currentGroup === this.startGroup) {
-                    currentHostTiles = currentHostTiles.slice(0);
-                    currentHostTiles.splice(currentHostTiles.indexOf(this.item),1);
-                }
-
-                this.tiles = this.thisLayout.getGroupTiles(this.endGroup).slice(0);
-                if (this.startGroup === this.endGroup) {
-                    this.tiles.splice(this.tiles.indexOf(this.item),1);
-                }
-                this.matrix = this.thisLayout.organizeGroup(this.tiles);
-                this.endGroup.getInnerContainerDomRef().appendChild(this.item.getDomRef());
-                this.currentGroup = this.endGroup;
+        _toggleAnchorItemHighlighting: function (bHighlightAnchorItem) {
+            if (this.targetGroup) {
+                this.targetGroup.classList.toggle('sapUshellAnchorItemDropCollision', bHighlightAnchorItem);
+                this.targetGroup.firstElementChild.classList.toggle('sapUshellAnchorInnerMarker', bHighlightAnchorItem);
             }
+        },
 
-            //remove excluded controls which define in this.aExcludedControlClass from the matrix in order to exclude
-            // those controls from reordering
+        removePlaceHolders: function () {
+            this._removeLinkDropMarker();
+            this._removeEmptyLinkAreaMark();
+            this._handleChangedGroup(this.currentGroup);
+
+        },
+        handlePlaceHolder: function (oCollidedObject) {
+            if (this.endArea === "tiles") {
+                if (this.endAreaChanged) {
+                    //Remove link placeholder and show tile placeholder
+                    this._removeLinkDropMarker();
+                }
+                this.handlePlaceholderChange();
+            } else if (this.endArea === "links" && this.intersectedLink) {
+                this._changeLinkPlaceholder(this.intersectedLink, oCollidedObject);
+                if (this.endAreaChanged) {
+                    //Remove tile placeholder and show link placeholder
+                    this.handlePlaceholderChange();
+                }
+            }
+        },
+        switchLinkWithClone: function (oItem) {
+            if (oItem) {
+                this.intersectedLinkPlaceHolder = oItem.getDomRef().cloneNode(true);
+                this.intersectedLinkPlaceHolder.id = "sapUshellIntersectedLinkPlaceHolder";
+                jQuery(oItem.getDomRef()).replaceWith(this.intersectedLinkPlaceHolder);
+            }
+        },
+        _removeLinkDropMarker: function () {
+            jQuery("#sapUshellLinkDropMarker").remove();
+            this.isLinkMarkerShown = false;
+        },
+        saveLinkBoundingRects: function (elLink) {
+            var oLink = sap.ui.getCore().byId(elLink.id);
+            this.draggedLinkBoundingRects = oLink.getBoundingRects();
+        },
+        _getMarkerOffset: function (aRects, oContainer) {
+            //The reason behind the numbers of left adjustment and right adjustment is that the total distance between links is 22px, but the
+            //Division to left and right is like that because the space taken by marker is not equal on the left and right side
+            //And this is in order to place the marker properly with the first link in a row.
+            //For RTL the numbers are different because of the different offsets.
+            var nContainerLeftOffset = jQuery(oContainer.getDomRef()).find(".sapUshellLineModeContainer")[0].getBoundingClientRect().left,
+                nContainerTopOffset =  jQuery(oContainer.getDomRef()).find(".sapUshellLineModeContainer")[0].getBoundingClientRect().top,
+                nRightAdjustment = this.rightToLeft ? 20 : -1,
+                nLeftAdjustment = this.rightToLeft ? 42 : 21,
+                right = aRects[aRects.length - 1].offset.x - nContainerLeftOffset + aRects[aRects.length - 1].width - nRightAdjustment,
+                left = aRects[this.rightToLeft ? aRects.length - 1 : 0].offset.x - nContainerLeftOffset - nLeftAdjustment,
+                topLeft = aRects[this.rightToLeft ? aRects.length - 1 : 0].offset.y - nContainerTopOffset,
+                topRight = aRects[this.rightToLeft ? 0 : aRects.length - 1].offset.y - nContainerTopOffset;
+
+            if (jQuery("body.sapUiSizeCompact").length) {
+                topLeft -= 6;
+                topRight -= 6;
+            }
+            //When the link is first in a row, its position in RTL should be set to 0, so it will be close to the beginning of the first link
+            //So we assume that if the left position value is less than 1 rem, the this link is positioned first.
+            //For RTL - we check if the right offset position is less than 1 rem, and than set it to the right most position of the link
+            if (this.rightToLeft) {
+                if (jQuery(oContainer.getDomRef()).find(".sapUshellLineModeContainer")[0].getBoundingClientRect().right - aRects[aRects.length - 1].offset.x - aRects[aRects.length - 1].width < 16) {
+                    right = right - 8;
+                }
+            } else if (left < 16) {
+                    left =  0;
+            }
+            return {
+                right: right,
+                left: left,
+                topLeft: topLeft,
+                topRight: topRight
+            };
+        },
+        _changeLinkPlaceholder: function (oLink, oContainer) {
+            var oCurrentLinkBoundingRect = this.aLinksBoundingRects[oLink.link.getId()],
+                left = oCurrentLinkBoundingRect.left,
+                topLeft = oCurrentLinkBoundingRect.topLeft,
+                topRight = oCurrentLinkBoundingRect.topRight,
+                right = oCurrentLinkBoundingRect.right;
+
+            if (jQuery(oContainer.getDomRef()).find("#sapUshellLinkDropMarker").length === 0) {
+                this._removeLinkDropMarker();
+                jQuery(oContainer.getDomRef()).find(".sapUshellLinksInnerContainer").prepend(this.LinkDropMarker);
+            }
+            jQuery(this.LinkDropMarker).css({left: oLink.leftSide ? left : right, top: oLink.leftSide ? topLeft : topRight});
+            this.isLinkMarkerShown = true;
+        },
+        showTilePlaceholder: function (currentGroup, bTileChangedGroup, bTilesToLinks) {
+            var tiles,
+                row = this.curTouchMatrixCords.row,
+                column = this.curTouchMatrixCords.column;
+            this.domRef = this.item.getDomRef() ? this.item.getDomRef() : this.domRef;
+            jQuery(this.domRef).show();
             this.removeExcludedElementsFromMatrix(this.aExcludedControlClass);
-            var tiles = this.tiles || this.thisLayout.getGroupTiles(this.endGroup).slice(0);
-            var newTilesOrder;
+            tiles = this.tiles || this.thisLayout.getGroupTiles(this.endGroup).slice(0);
+            if (this.matrix[row] && typeof this.matrix[row][column] === "object") {
+                this.handleMatrixCollision(tiles, currentGroup, bTileChangedGroup, bTilesToLinks);
+                return;
+            }
+            this._handleMoveOutOfBorders(tiles, currentGroup);
 
-            if (this.matrix[this.curTouchMatrixCords.row] && typeof this.matrix[this.curTouchMatrixCords.row][this.curTouchMatrixCords.column] == "object" ) {
-                var replacedTile = this.matrix[this.curTouchMatrixCords.row][this.curTouchMatrixCords.column];
-                var replacedTileIndex = tiles.indexOf(replacedTile);
-                var currentTileIndex = tiles.indexOf(this.item);
+        },
+        removeTilePlaceholder: function (oGroup, bAnimateRemoveTilePlaceholder) {
+            var currentHostTiles,
+                currentGroupMatrix,
+                height,
+                fnCallBack = function() {
+                    if (this.thisLayout.isAnimationsEnabled()) {
+                        this.thisLayout.initGroupDragMode(this.endGroup);
+                        currentGroupMatrix = this.thisLayout.organizeGroup(currentHostTiles);
+                        this.thisLayout.renderLayoutGroup(this.currentGroup, currentGroupMatrix);
+                    }
+                }.bind(this);
 
-                if (this.rightToLeft){this.collisionLeft = !this.collisionLeft; }
+                this.domRef = this.item.getDomRef() ? this.item.getDomRef() : this.domRef;
+
+                currentHostTiles = this.thisLayout.getGroupTiles(this.currentGroup);
+                currentHostTiles = currentHostTiles.slice(0);
+                if (this.startArea !== 'links' && currentHostTiles.indexOf(this.item) > -1) {
+                    currentHostTiles.splice(currentHostTiles.indexOf(this.item), 1);
+                }
+                if (!jQuery(this.domRef.parentNode).hasClass("sapUshellLinksInnerContainer")) {
+                    jQuery(this.domRef).hide();
+                }
+                if (bAnimateRemoveTilePlaceholder) { //we have single tile in last row
+                    height = jQuery(this.currentGroup.getDomRef()).find(".sapUshellTilesContainer-sortable").height() - jQuery(this.domRef).height();
+                    this.collidedLinkAreas = [];
+                    jQuery(this.currentGroup.getDomRef()).find(".sapUshellTilesContainer-sortable").animate({
+                        height: height}, 300, fnCallBack);
+                } else {
+                    fnCallBack();
+                }
+
+        },
+        handlePlaceholderChange: function () {
+                var currentGroup = this.currentGroup,
+                    bTileChangedGroup = (this.endGroup !== this.currentGroup),
+                    bTilesToLinks = this.endAreaChanged && this.endArea === 'links',
+                    bIsTabBarGroupSwitched = this.thisLayout.isTabBarActive() && this.groupSwitched,
+                    bAnimateRemoveTilePlaceholder = false,
+                    matrixLastRow = this.matrix[this.matrix.length - 1];
+
+                if (this.item && matrixLastRow[0]) {
+                    if (!matrixLastRow[1]) { //we have single short tile in last row
+                        bAnimateRemoveTilePlaceholder = true;
+                    }
+                    if (matrixLastRow[0].getLong && matrixLastRow[0].getLong() && matrixLastRow[1] && !matrixLastRow[2]) {  //we have single long tile in last row
+                        bAnimateRemoveTilePlaceholder = true;
+                    }
+                }
+                this.tiles = this.thisLayout.getGroupTiles(this.endGroup).slice(0);
+                this.matrix = this.thisLayout.organizeGroup(this.tiles);
+
+                if (bIsTabBarGroupSwitched) {
+                    this.handleTabBarSwitch(currentGroup);
+                }
+
+                if (bTileChangedGroup) {
+                    this._handleChangedGroup(currentGroup);
+                } else if (bTilesToLinks) {
+                    this.removeTilePlaceholder(undefined, bAnimateRemoveTilePlaceholder);
+                }
+
+                if (!bTilesToLinks) {
+                    this.showTilePlaceholder(currentGroup, bTileChangedGroup, bTilesToLinks);
+                }
+
+            },
+
+        handleMatrixCollision: function (tiles, currentGroup, bTileChangedGroup, bTilesToLinks) {
+            var replacedTile,
+                replacedTileIndex,
+                currentTileIndex,
+                newTilesOrder;
+
+                replacedTile = this.matrix[this.curTouchMatrixCords.row][this.curTouchMatrixCords.column];
+                replacedTileIndex = tiles.indexOf(replacedTile);
+                currentTileIndex = tiles.indexOf(this.item);
+
+                if (this.rightToLeft) {
+                    this.collisionLeft = !this.collisionLeft;
+                }
                 //tiles are in the same group and the target tile is located after the tile you drag
                 if (currentTileIndex > -1 && currentTileIndex < replacedTileIndex) {
                     replacedTile = tiles[replacedTileIndex + 1];
                 }
                 if (replacedTile === this.item) {
-                    if (tileChangedGroup) {
-                        this.reorderElementsCallback({currentGroup: currentGroup, endGroup: this.endGroup, tiles: this.tiles, item: this.item});
-                        this.reorderTilesView(tiles, this.endGroup);
-
-                        this.reorderTilesInDom();
+                    if (bTileChangedGroup || bTilesToLinks) {
+                        tiles.splice(tiles.indexOf(this.item), 1);
                     }
+                    this._handleTileReplace(tiles, currentGroup);
                     return;
                 }
                 newTilesOrder = this.changeTilesOrder(this.item, replacedTile, tiles, this.matrix);
-                if (newTilesOrder) {
-                    this.reorderElementsCallback({currentGroup: currentGroup, endGroup: this.endGroup, tiles: this.tiles, item: this.item});
-                    this.reorderTilesView(newTilesOrder, this.endGroup);
-
-                    this.reorderTilesInDom();
+                if (newTilesOrder && !this.isLinkMarkerShown) {
+                    this._handleTileReplace(newTilesOrder, currentGroup);
                 }
-                return;
-            }
+        },
+        handleTabBarSwitch: function (currentGroup) {
+            var currentTiles = this.thisLayout.getGroupTiles(currentGroup),
+                currentMatrix;
 
-            var maxTile = this.findTileToPlaceAfter(this.matrix, tiles);
+            // The DomRef of the dragged tile is appended to the DomRef of the target group
+            this._appendTargetGroupDomRefWithDraggedTile();
+            if (!this.item.getDomRef()) {
+                this.endGroup.getInnerContainersDomRefs()[0].appendChild(this.draggedTileDomRef);
+            } else {
+                this.endGroup.getInnerContainersDomRefs()[0].appendChild(this.item.getDomRef());
+            }
+            this.currentGroup = this.endGroup;
+            if (this.thisLayout.isAnimationsEnabled()) {
+                this.thisLayout.initGroupDragMode(this.endGroup);
+                currentMatrix = this.thisLayout.organizeGroup(currentTiles);
+                this.thisLayout.renderLayoutGroup(currentGroup, currentMatrix);
+            }
+        },
+
+        _handleMoveOutOfBorders: function (tiles, currentGroup) {
+            var maxTile = this.findTileToPlaceAfter(this.matrix, tiles),
+                replacedTile;
             if (tiles[maxTile + 1] == this.item) {
                 return;
             }
@@ -104,31 +313,216 @@
             } else if (this.currentGroup.getShowPlaceholder()) {
                 replacedTile = tiles[0];
             }
-            newTilesOrder = this.changeTilesOrder(this.item, replacedTile, tiles, this.matrix);
+            var newTilesOrder = this.changeTilesOrder(this.item, replacedTile, tiles, this.matrix);
             if (newTilesOrder) {
-                this.reorderElementsCallback({currentGroup: currentGroup, endGroup: this.endGroup, tiles: this.tiles, item: this.item});
-                this.reorderTilesView(newTilesOrder, this.endGroup);
-
-                this.reorderTilesInDom();
+                this._handleTileReplace(newTilesOrder, currentGroup);
             }
         },
+        _handleChangedGroup: function (currentGroup) {
+            var currentHostTiles = this.thisLayout.getGroupTiles(this.currentGroup),
+                oItemDomRef;
+            if (this.currentGroup === this.startGroup && (this.startArea === "tiles" || this.intersectedLinkPlaceHolder)) {
+                currentHostTiles = currentHostTiles.slice(0);
+                if (currentHostTiles.indexOf(this.item) > -1) {
+                    currentHostTiles.splice(currentHostTiles.indexOf(this.item),1);
+                }
+            }
 
+            if (this.startGroup === this.endGroup && this.startArea === "tiles") {
+                this.tiles.splice(this.tiles.indexOf(this.item),1);
+            }
+            oItemDomRef = this.item.getDomRef() || this.domRef;
+            if (this.startArea === "links" && !this.intersectedLinkPlaceHolder) {
+                this.switchLinkWithClone(this.item);
+            }
+            if (this.endArea === 'tiles') {
+                this.endGroup.getInnerContainersDomRefs()[0].appendChild(oItemDomRef);
+            }
+            if (!jQuery(oItemDomRef.parentNode).hasClass("sapUshellLinksInnerContainer")) {
+                            jQuery(oItemDomRef).hide();
+            }
+            this.currentGroup = this.endGroup;
+            if (this.thisLayout.isAnimationsEnabled()) {
+                this.thisLayout.initGroupDragMode(this.endGroup);
+                var currentGroupMatrix = this.thisLayout.organizeGroup(currentHostTiles);
+                this.thisLayout.renderLayoutGroup(currentGroup, currentGroupMatrix);
+            }
+        },
+        _handleTileReplace: function (tiles, currentGroup) {
+            this.reorderElementsCallback({currentGroup: currentGroup, endGroup: this.endGroup, tiles: tiles, item: this.item});
+            this.reorderTilesView(tiles, this.endGroup);
+            this.reorderTilesInDom();
+            if (this.thisLayout.isAnimationsEnabled()) {
+                this.thisLayout.renderLayoutGroup(this.endGroup, this.matrix);
+            }
+        },
+        _getIntersectedLink: function (collidedGroup, moveX, moveY) {
+            var elLink = jQuery(".sapUshellLinkTile")[0];
+
+            if (!elLink) {
+                return;
+            }
+            var collidedGroupRect = collidedGroup.getDomRef().querySelector(".sapUshellLineModeContainer").getBoundingClientRect(),
+                cozyLayout = !jQuery("body.sapUiSizeCompact").length,
+                //the reason for devision in 31 is related to link height - which is 34, then each link overlaps with its neighbours by 3px
+                //so the absolute height needed to calculate the intersected link is 31, with cozy layout the height is 48 (45 after reducing the overlap)
+                row = Math.floor((moveY - collidedGroupRect.top) / (cozyLayout ? 45 : 31)),
+                aCollidedLinkAreas = this.collidedLinkAreas[collidedGroup.getId()],
+                column;
+
+            if (this.rightToLeft) {
+                column = Math.floor((collidedGroupRect.right- moveX)/ 20);//see _addLinkToHashMap to understand the devision in 20
+            } else {
+                column = Math.floor((moveX - collidedGroupRect.left)/ 20);
+            }
+
+            if (row < aCollidedLinkAreas.length && aCollidedLinkAreas[row] && column < aCollidedLinkAreas[row].length) {
+                return aCollidedLinkAreas[row][column];
+            } else if (aCollidedLinkAreas.length) { //in edit mode we enable to drop to empty link area, this condition will prevent "index out of bounds exception" error
+                //in case links area is not empty, but (moveX,MoveY) mouse position is in link area and not on link,
+                //we define the last link in line as intersected link
+                var linksAreaRowLength = aCollidedLinkAreas.length;
+                if (row >= linksAreaRowLength) {
+                    row = linksAreaRowLength - 1;
+                }
+                if (!this.collidedLinkAreas[collidedGroup.getId()][row]) {
+                    return;
+                }
+                column = this.collidedLinkAreas[collidedGroup.getId()][row].length;
+                return this.collidedLinkAreas[collidedGroup.getId()][row][column - 1];
+            }
+        },
+        _mapGroupLinks: function (collidedGroup) {
+            //check if mapping of this group was already done
+            var sGroupId = collidedGroup.getId(),
+                iLastLinkOffset ,
+                aRects,
+                iRow = 0;
+            if (!this.collidedLinkAreas[sGroupId] || this.bElapseGroupLinksMap) {
+                this.bElapseGroupLinksMap = false;
+                var aLinks = collidedGroup.getLinks(),
+                    collidedLinksHashMap = [];
+                this.collidedLinkAreas.push(collidedGroup.getId());
+                aLinks.forEach(function (oItem) {
+                    aRects =  this._getLinkBoundingRects(oItem, collidedGroup);
+                    aRects.forEach(function(oRect) {
+                        if (oRect.offset.y > iLastLinkOffset) {
+                            iRow++;
+                        }
+                        iLastLinkOffset = oRect.offset.y;
+                        this._addLinkToHashMap(collidedLinksHashMap, collidedGroup, oRect, iRow, oItem);
+                    }.bind(this));
+
+                }.bind(this));
+                this.collidedLinkAreas[sGroupId] = collidedLinksHashMap;
+            }
+        },
+        _getLinkBoundingRects: function (oLink, collidedGroup) {
+            var aRects = oLink.getBoundingRects();
+            if (this.item && this.item.getId() === oLink.getId()) {
+                aRects = this.draggedLinkBoundingRects;
+            }
+            if (aRects.length) {
+                this.aLinksBoundingRects[oLink.getId()] = this._getMarkerOffset(aRects, collidedGroup);
+            }
+            return aRects;
+        },
+        _addLinkToHashMap: function (collidedLinksHashMap, collidedGroup, oRect, row, oLink) {
+              if (!collidedLinksHashMap[row]) {
+                  collidedLinksHashMap[row] = [];
+              }
+              for (var i = 0; i <= (oRect.width + 20) / 20; i++) {
+                  //we duplicate the link in the matrix in order to be able to find it in O(1). We devide by 20 because thats the "space" between links
+                  var link = {
+                      link: oLink,
+                      leftSide: !this.rightToLeft
+                  };
+                  if (i > ((oRect.width + 20) / 20) / 2) {
+                      link.leftSide = this.rightToLeft;
+                  }
+                  collidedLinksHashMap[row].push(link);
+              }
+        },
+        _isLinkAreaIntersection: function (collidedGroup, moveX, moveY) {
+            var innerContainerElement = collidedGroup.getInnerContainersDomRefs();
+            //In case link area is empty of links it should not appear in normal mode.
+            //Tile container will return empty links area domref only when it is in edit mode.
+            //Otherwise, we should not check collisions on it.
+            if (innerContainerElement[1]) {
+                return this._isElementCollideByGivenCordinates(innerContainerElement[1], moveX, moveY);
+            } else {
+                return false;
+            }
+        },
+        _isLinksEquals: function (oLinkA, oLinkB) {
+            if (!oLinkA || !oLinkB) {
+                return false;
+            }
+            if (oLinkA.link.getId() !== oLinkB.link.getId()) {
+                return false;
+            }
+            if (oLinkA.link.leftSide !== oLinkB.link.leftSide) {
+                return false;
+            }
+            return true;
+        },
+        _toggleTileCloneHoverOpacity: function (bValue) {
+            jQuery(".sapUshellTile-clone").toggleClass("sapUshellTileDragOpacity", bValue);
+        },
+        _handleLinkAreaIntersection: function (collidedGroup, moveX, moveY) {
+            var intersectedLink,
+                bChangePlaceHolder = false;
+
+            if (this.isLinkPersonalizationSupported) {
+                this._toggleTileCloneHoverOpacity(true);
+            }
+
+            this._mapGroupLinks(collidedGroup);
+            this.matrix = this.matrix || this.thisLayout.organizeGroup(this.thisLayout.getGroupTiles(collidedGroup));
+            intersectedLink = this._getIntersectedLink(collidedGroup, moveX, moveY);
+
+            if (intersectedLink) {
+
+                bChangePlaceHolder = this._isLinksEquals(this.intersectedLink, intersectedLink);
+                this.intersectedLink = intersectedLink;
+            } else {
+                this.removeTilePlaceholder(collidedGroup);
+            }
+            this._markEmptyLinkArea(collidedGroup);
+            return bChangePlaceHolder;
+        },
+        _markEmptyLinkArea: function (collidedGroup) {
+            if (!collidedGroup.getLinks().length) {//empty link area
+                jQuery(collidedGroup.getDomRef()).find(".sapUshellLineModeContainer").addClass("sapUshellEmptyLinkAreaHover");
+            }
+        },
+        _removeEmptyLinkAreaMark: function () {
+            jQuery(".sapUshellLineModeContainer").removeClass("sapUshellEmptyLinkAreaHover");
+        },
         reorderTilesInDom: function () {
-            var jsSelectedTile = this.item.getDomRef(),
+            var jsSelectedTile = this.item.getDomRef() ? this.item.getDomRef() : this.domRef,
                 iSelectedTileIndex = jQuery(jsSelectedTile).index(),
                 jqSelectedTileGroup = jQuery(jsSelectedTile).closest(".sapUshellTilesContainer-sortable"),
                 destTileIndex = this.calcDestIndexInGroup(),
                 jqTargetGroup = jQuery(this.endGroup.getDomRef()).find(".sapUshellTilesContainer-sortable"),
                 jqGroupTiles = jqTargetGroup.find(".sapUshellTile");
 
-            // remove the dragged tile
-            jqSelectedTileGroup.find(jqGroupTiles[iSelectedTileIndex]).remove();
+            if (this.startArea === "tiles") {
+                // remove the dragged tile
+                jqSelectedTileGroup.find(jqGroupTiles[iSelectedTileIndex]).remove();
+            } else if (!this.intersectedLinkPlaceHolder) {
+                this.switchLinkWithClone(this.item);
+            }
+            if (this.endArea !== 'links') {
+                jqGroupTiles = jqTargetGroup.find(".sapUshellTile");
+                // add the dragged tile to the correct position
+                jqTargetGroup[0].insertBefore(jsSelectedTile, jqGroupTiles[destTileIndex]);
+            }
 
-            jqGroupTiles = jqTargetGroup.find(".sapUshellTile");
-            // add the dragged tile to the correct position
-            jqTargetGroup[0].insertBefore(jsSelectedTile, jqGroupTiles[destTileIndex]);
         },
-
+        isLinkIntersected: function () {
+            return this.intersectedLink !== undefined;
+        },
         calcDestIndexInGroup: function () {
             var lastTileId,
                 tilesCount = 0,
@@ -136,9 +530,9 @@
                 j,
                 bItemFound = false;
 
-            for (i = 0; i < this.matrix.length && !bItemFound; i++ ) {
+            for (i = 0; i < this.matrix.length && !bItemFound; i++) {
                 for (j = 0; j < this.matrix[i].length; j++) {
-                    if (this.matrix[i][j] != undefined) {
+                    if (this.matrix[i][j] !== undefined) {
                         if (this.item.sId !== this.matrix[i][j].sId) {
                             if (lastTileId !== this.matrix[i][j].sId) {
                                 lastTileId = this.matrix[i][j].sId;
@@ -160,16 +554,139 @@
             this.item = sap.ui.getCore().byId(element.id);
             this.tilesInRow = this.thisLayout.getTilesInRow();
             this.groupsList = this.thisLayout.getGroups();
+            this.allGroups = this.thisLayout.getAllGroups();
             this.startGroup = this.currentGroup = this.item.getParent();
-
+            this.groupSwitched = false;
+            this.startArea = this.isLinkPersonalizationSupported && this.item.getMode && this.item.getMode() === 'LineMode' ? "links" : "tiles";
+            this.currentArea = this.startArea;
+            if (this.thisLayout.isAnimationsEnabled()) {
+                this.thisLayout.initDragMode();
+            }
+            if (this.isLinkPersonalizationSupported) {
+                this.LinkDropMarker = this._getLinkDropMarkerElement();
+            }
         },
+        _getLinkDropMarkerElement: function () {
+            var elLinkDropMarker = document.createElement("DIV"),
+                elMarkerDot = document.createElement("DIV"),
+                elMarkerLine = document.createElement("DIV");
 
+            elLinkDropMarker.setAttribute("id", "sapUshellLinkDropMarker");
+            elMarkerDot.setAttribute("id", "sapUshellLinkDropMarkerDot");
+            elMarkerLine.setAttribute("id", "sapUshellLinkDropMarkerLine");
+            elLinkDropMarker.appendChild(elMarkerDot);
+            elLinkDropMarker.appendChild(elMarkerLine);
+
+            return elLinkDropMarker;
+        },
+        isAreaChanged: function () {
+            return (this.currentArea && this.endArea) ? this.currentArea !== this.endArea : false;
+        },
+        isOriginalAreaChanged: function () {
+            return (this.startArea && this.endArea) ? this.startArea !== this.endArea : false;
+        },
+        _getDestinationIndex: function (sType) {
+            if (sType === "links") {
+                if (this.intersectedLink) {
+                    var intersectedLinkIndex = this.endGroup.getLinks().indexOf(this.intersectedLink.link),
+                        draggedItemIndex = this.endGroup.getLinks().indexOf(this.item);
+                    if (this.intersectedLink.leftSide) {
+                        intersectedLinkIndex = this.rightToLeft ? intersectedLinkIndex + 1 : intersectedLinkIndex - 1;
+                    }
+                    // In case draggedItemIndex > intersectedLinkIndex it means that we insert the dragged item after the intersected link, therefor we return intersectedLinkIndex++
+                    // In case draggedItemIndex < 0 then it mean that we drag tile to link area - in that case we insert the dragged after the intersected link
+                    // In other cases we don't increament intersectedLinkIndex because it is "already incremented" when the item is removed from the model
+                    if (draggedItemIndex < 0 || draggedItemIndex > intersectedLinkIndex) {
+                        intersectedLinkIndex = this.rightToLeft ? intersectedLinkIndex : intersectedLinkIndex + 1;
+                    }
+                    return intersectedLinkIndex;
+                } else {
+                    //if this.intersectedLink is not defiend then we drop the item in link area in the last position
+                    return this.endGroup.getLinks().length;
+                }
+            } else {
+                return this._getDestinationTileIndex();
+            }
+        },
         layoutEndCallback: function () {
-            if (!this.tiles) {
+            var response,
+                oSourceGroup,
+                oDestinationGroup;
+
+            this._removeLinkDropMarker();
+            if (this.endArea !== "links" && !this.tiles) {
                 return {tile: this.item};
             }
-            var response = {srcGroup: this.startGroup, dstGroup: this.endGroup, tile: this.item, dstTileIndex: this.tiles.indexOf(this.item), tileMovedFlag: true};
+            oSourceGroup = this._getDragSourceGroup();
+            oDestinationGroup = this._getDestGroupObject(this.targetGroup);
+
+            response = {
+                srcGroup: oSourceGroup,
+                dstGroup: oDestinationGroup,
+                dstGroupData: this._getDropTargetGroup(),
+                tile: this.item,
+                dstTileIndex: this._getDestinationIndex(this.endArea),
+                tileMovedFlag: true,
+                srcArea: this.startArea,
+                dstArea: this.bIsTabBarCollision ? undefined : this.endArea
+            };
             return response;
+        },
+
+        _getDestGroupObject: function ($targetGroup) {
+            return $targetGroup ? sap.ui.getCore().byId(($targetGroup.getAttribute('id'))) : this.endGroup;
+        },
+
+        _getDragSourceGroup: function () {
+            var oSourceGroup;
+
+            oSourceGroup = this.startGroup;
+            // TabBar use-case and the current group is not the one from which the tile was dragged
+            if (this.thisLayout.isTabBarActive() && (this.groupSwitched === true)) {
+                oSourceGroup = {
+                    groupId : this.sDragStartGroupModelId
+                };
+            }
+
+            return oSourceGroup;
+        },
+
+        /**
+         * Returns the destination group of the drag&drop action.
+         * There are two options:
+         * 1. In case of TabBar mode, when the drop action was done on a tab (i.e. another group) -
+         *    the the returned value is an object with only the destination group's model ID
+         *    because destination group UI control does not exist
+         * 2. In case of TabBar when the drop action was not done on a tab, or when it is not TabBar mode -
+         *    then the returned value is destination group UI control
+         */
+        _getDropTargetGroup : function () {
+            var oDestinationGroup;
+
+            // TabBar use-case,  and the drop action was done on a tab
+            if (this.thisLayout.isTabBarActive() && this.thisLayout.isOnTabBarElement()) {
+                oDestinationGroup = {groupId : this.sDragTargetGroupModelId};
+            } else {
+                oDestinationGroup = this.endGroup;
+            }
+            return oDestinationGroup;
+        },
+
+        /**
+         * Returns the index of the dropped tile in the destination group.
+         * In case of TabBar mode, when the drop action was done on a tab (i.e. another group) -
+         * then the tile should be places as the last tile in the destination group
+         */
+        _getDestinationTileIndex : function () {
+            var sDestinationModelGroupId,
+                oModelGroup;
+
+            if (this.thisLayout.isTabBarActive() && this.thisLayout.isOnTabBarElement()) {
+                sDestinationModelGroupId = this._getDropTargetGroup().groupId;
+                oModelGroup = this._getModelGroupById(sDestinationModelGroupId);
+                return oModelGroup.tiles.length;
+            }
+            return this.tiles.indexOf(this.item);
         },
 
         compareArrays: function (a1, a2) {
@@ -197,10 +714,14 @@
          * @returns {*}
          */
         changeTilesOrder: function (item, replacedTile, tiles, matrix) {
-            var newTiles = tiles.slice(0);
-            var deletedItemIndex = newTiles.indexOf(item);
+            var newTiles = tiles.slice(0),
+                deletedItemIndex = newTiles.indexOf(item),
+                newMatrix,
+                cords,
+                newCords;
+
             if (deletedItemIndex > -1) {
-                newTiles.splice(deletedItemIndex,1);
+                newTiles.splice(deletedItemIndex, 1);
             }
             if (replacedTile) {
                 newTiles.splice(newTiles.indexOf(replacedTile), 0, this.item);
@@ -211,14 +732,13 @@
                 if (this.compareArrays(tiles, newTiles)) {
                     return false;
                 }
-                var newMatrix = this.thisLayout.organizeGroup(newTiles);
-                var cords = this.thisLayout.getTilePositionInMatrix(item, matrix);
-                var newCords = this.thisLayout.getTilePositionInMatrix(item, newMatrix);
+                newMatrix = this.thisLayout.organizeGroup(newTiles);
+                cords = this.thisLayout.getTilePositionInMatrix(item, matrix);
+                newCords = this.thisLayout.getTilePositionInMatrix(item, newMatrix);
                 if ((cords.row == newCords.row) && (cords.col == newCords.col)) {
                     return false;
                 }
             }
-
             this.tiles = newTiles;
             this.currentGroup = this.endGroup;
             return newTiles;
@@ -228,59 +748,71 @@
             this.matrix = newMatrix;
         },
 
-        findTileToPlaceAfter: function (curMatrix,tiles){
+        findTileToPlaceAfter: function (curMatrix, tiles) {
             var x = (this.thisLayout.rightToLeft) ? 0 : this.curTouchMatrixCords.column,
                 iIncrease = (this.thisLayout.rightToLeft) ? 1 : -1,
                 maxTile = 0,
+                i,
+                j,
+                tileIndex,
                 rowLength = curMatrix[0].length;
 
-            for (var i = this.curTouchMatrixCords.row; i >= 0; i--) {
-                for (var j = x; j >= 0 && j < rowLength; j += iIncrease) {
-                    if (!curMatrix[i] || typeof curMatrix[i][j] != "object") {
+            for (i = this.curTouchMatrixCords.row; i >= 0; i--) {
+                for (j = x; j >= 0 && j < rowLength; j += iIncrease) {
+                    if (!curMatrix[i] || typeof curMatrix[i][j] !== "object") {
                         continue;
                     }
-                    var tileIndex = tiles.indexOf(curMatrix[i][j]);
+                    tileIndex = tiles.indexOf(curMatrix[i][j]);
                     maxTile = tileIndex > maxTile ? tileIndex : maxTile;
                 }
                 x = curMatrix[0].length - 1;
             }
 
-            return maxTile;
+            return maxTile || (tiles.length - 1);
         },
-        //function return detected collision
-        /*
-         *
-         * @param moveX
-         * @param moveY
-         * @returns
-         */
-        detectCollision: function (moveX, moveY) {
-            var rect, isHorizontalIntersection, isVerticalIntersection, collidedGroup = false;
-            //var style;
+
+        _isElementCollideByGivenCordinates: function (element, moveX, moveY) {
+            var tilesRect = element.getBoundingClientRect(),
+                isHorizontalIntersection = tilesRect.right > moveX && tilesRect.left < moveX,
+                isVerticalIntersection = tilesRect.bottom > moveY && tilesRect.top < moveY;
+
+            return isHorizontalIntersection && isVerticalIntersection;
+        },
+
+        //Returns the collided tile element position in this.matrix
+        _getMatrixCordinatesOfTouchedTile: function (collidedGroup, moveX, moveY) {
+            var curTouchMatrixCords = jQuery.extend({}, this.curTouchMatrixCords),
+                tilesRect = collidedGroup.getInnerContainersDomRefs()[0].getBoundingClientRect();
+
+            this.matrix = this.matrix || this.thisLayout.organizeGroup(this.thisLayout.getGroupTiles(collidedGroup));
+            var offset = this.rightToLeft ? (tilesRect.right + (-1) * moveX) : (tilesRect.left * (-1) + moveX),
+                matrixTouchY = (tilesRect.top * (-1) + moveY) / (this.tileHeight + this.tileMargin),
+                matrixTouchX = offset / (this.tileWidth + this.tileMargin);
+
+            curTouchMatrixCords = {
+                row: Math.floor(matrixTouchY),
+                column: Math.floor(matrixTouchX)
+            };
+
+            return curTouchMatrixCords;
+        },
+
+        _getCollidedGroup: function (moveX, moveY) {
             for (var i = 0; i < this.groupsList.length; i++) {
-                var innerContainerElement = this.groupsList[i].getInnerContainerDomRef();
-                rect = innerContainerElement.getBoundingClientRect();
-                //style = window.getComputedStyle(innerContainerElement);
-                isHorizontalIntersection = !(rect.right < moveX || rect.left > moveX);
-                isVerticalIntersection = !(rect.bottom < moveY || rect.top > moveY);
-                if (isHorizontalIntersection && isVerticalIntersection) {
-                    collidedGroup =  this.groupsList[i];
-                    break;
+                var oGroup = this.groupsList[i],
+                    innerContainerElements = oGroup.getInnerContainersDomRefs();
+                for (var j = 0; j < innerContainerElements.length; j++) {// innerContainerElement[0]: intersect in tile area, innerContainerElement[1]: intersect in link area
+                    if (innerContainerElements[j] && this._isElementCollideByGivenCordinates(innerContainerElements[j], moveX, moveY)) {
+                        return oGroup;
+                    }
                 }
             }
+        },
 
-            var curTouchMatrixCords = jQuery.extend({}, this.curTouchMatrixCords );
-            if (!collidedGroup || collidedGroup.getIsGroupLocked()) {
-                return false;
-            }
-            if (collidedGroup) {
-                this.matrix = this.matrix || this.thisLayout.organizeGroup(this.thisLayout.getGroupTiles(collidedGroup));
-                var offset = this.rightToLeft ? (rect.right + (-1) * moveX) : (rect.left * (-1) + moveX),
-                    matrixTouchY = (rect.top * (-1) + moveY) / (this.tileHeight + this.tileMargin),
-                    matrixTouchX = offset / (this.tileWidth + this.tileMargin);
-                curTouchMatrixCords = { row: Math.floor(matrixTouchY),
-                    column: Math.floor(matrixTouchX)};
-            }
+        //if return value is false it means that no  change has been done
+        _handleTileAreaIntersection: function (collidedGroup, moveX, moveY) {
+            var curTouchMatrixCords = this._getMatrixCordinatesOfTouchedTile(collidedGroup, moveX, moveY);
+
             // if place of the tile is the same place as it was
             // nothing need to be done
             if ((collidedGroup === this.endGroup) &&
@@ -289,9 +821,8 @@
                 return false;
             }
 
-            if (sap.ui.getCore().getConfiguration().getRTL()) {
+            if (this.rightToLeft) {
                 this.collisionLeft = (this.curTouchMatrixCords.column - curTouchMatrixCords.column) > 0;
-
             } else {
                 this.collisionLeft = (curTouchMatrixCords.column - this.curTouchMatrixCords.column) > 0;
             }
@@ -300,16 +831,321 @@
             }
 
             jQuery.extend(this.curTouchMatrixCords, curTouchMatrixCords);
-            this.endGroup = collidedGroup;
             return true;
         },
 
-        /*
-         * Warning!
-         */
+        _getGroupCollisionObject: function (moveX, moveY) {
+            var collidedGroup,
+                bLinkAreaIntersection;
+            collidedGroup = this._getCollidedGroup(moveX, moveY);
+            if (!collidedGroup || collidedGroup.getIsGroupLocked()) {
+                return undefined;
+            }
+            bLinkAreaIntersection = this._isLinkAreaIntersection(collidedGroup, moveX, moveY);
+            this.endGroup = collidedGroup;
+            if (!this.tiles) {
+                this.tiles = this.thisLayout.getGroupTiles(this.endGroup).slice(0);
+            }
+            this.endArea = bLinkAreaIntersection ? 'links' : 'tiles';
+            this.endAreaChanged = this.isAreaChanged();
+            this.currentArea = this.endArea;
+            return {
+                "collidedObjectType":  bLinkAreaIntersection ? "Group-link" : "Group-tile",
+                "collidedObject": collidedGroup
+            };
+        },
 
+        /*
+         * @param moveX
+         * @param moveY
+         * @param collidedObjectType: One of the following strings "Group", "TabBar"
+         * @returns collisionobject:
+         *  {
+         *    collidedObjectType: String
+         *    collidedObject: Object
+         *  }
+         *
+         */
+        getCollisionObject: function (moveX, moveY) {
+            // If TabBar collision timer is on (counting 800ms of long drop)- then it should be cleared since the dragged object was just moved
+            if (this.thisLayout.oTabBarItemClickTimer) {
+                clearTimeout(this.thisLayout.oTabBarItemClickTimer);
+            }
+
+            if (this.thisLayout.isTabBarActive() && this._isTabBarCollision(moveY)) {
+                return {"collidedObjectType": "TabBar"};
+            }
+            return this._getGroupCollisionObject(moveX, moveY);
+        },
+
+        _isTabBarScrollArea : function (moveY) {
+            var iAnchorBarHeight = jQuery("#anchorNavigationBar").height(),
+                oAnchorBarOffset = jQuery("#anchorNavigationBar").offset(),
+                iAnchorBarOffsetTop = oAnchorBarOffset.top;
+
+            return ((moveY > iAnchorBarHeight + iAnchorBarOffsetTop) && (moveY < iAnchorBarHeight + iAnchorBarOffsetTop + 30));
+        },
+
+        _cancelLongDropTimmer: function () {
+            clearTimeout(this.thisLayout.oTabBarItemClickTimer);
+        },
+
+        _isTabBarCollision : function (moveY) {
+            var iAnchorBarHeight = jQuery("#anchorNavigationBar").height(),
+                oAnchorBarOffset = jQuery("#anchorNavigationBar").offset(),
+                iAnchorBarOffsetTop = oAnchorBarOffset.top;
+
+            return (moveY < iAnchorBarHeight + iAnchorBarOffsetTop && moveY > iAnchorBarOffsetTop);
+        },
+
+        /**
+         * Handling TabBar use-case when the dragged tile (actually - the cursor) is on a TabBar item.
+         * Steps:
+         * 1. Get the relevant TabBar item on which the cursor is
+         * 2. Check if the cursor on the horizontal overflow arrow, and if so - handle TabBar horizontal scrolling
+         * 3. Find the index of the tab/group on which the cursor is
+         * 4. Maintain the identity of the current group model id, for the case when a long-drop will switch the groups
+         * 5. Measure 800ms in order to identify long-drop use-case
+         */
+        _handleTabBarCollision : function (moveX, aTabBarItemsLocation) {
+            var that = this,
+                oHighlightedTabItem = this._getTabBarHoverItem(moveX, aTabBarItemsLocation),
+                iTargetGroupIndex,
+                aHoveredTabBarItem,
+                isOverflowCollision,
+                bDraggedBackToSourceGroup,
+                oDropTargetGroupModel;
+
+            // In TabBar, the dragged tile (clone) appears with opacity
+            if (sap.ushell.Layout.isTabBarActive()) {
+                this._toggleTileCloneHoverOpacity(true);
+            }
+            this.lastHighlitedTabItem = oHighlightedTabItem;
+            this.thisLayout.setOnTabBarElement(true);
+            // In case that the tile is dragged onto the overflow arrow of the TabBar
+            isOverflowCollision = this._handleOverflowCollision(moveX);
+            if (isOverflowCollision) {
+                return;
+            }
+
+            // If no Tab was detected (i.e. a Tile is dragged to the height of the TabBar, but not on a specific tab)
+            if (!oHighlightedTabItem) {
+                return;
+            }
+
+            // The index of the target group in the model is calculated,
+            // since this is the way to identify the target group.
+            // In TabBar mode there is no other group (UI5 control) then the current one
+            this.targetGroup = oHighlightedTabItem
+            this.sDragTargetGroupModelId = oHighlightedTabItem.getAttribute('modelGroupId');
+            iTargetGroupIndex = this._getTabBarGroupIndexByModelId(this.sDragTargetGroupModelId);
+            // The timer that counts 800ms is cleared, since the cursor was moved
+            if (this.thisLayout.oTabBarItemClickTimer) {
+                clearTimeout(this.thisLayout.oTabBarItemClickTimer);
+            }
+            oDropTargetGroupModel = this._getModelGroupById(this._getDropTargetGroup().groupId);
+            if (oDropTargetGroupModel.isGroupLocked) {
+                this._toggleTabBarOverflowArrows(false);
+                this.thisLayout.setOnTabBarElement(false);
+                this._resetOverFlowButtonElements();
+
+                return;
+            }
+            this._toggleAnchorItemHighlighting(true);
+            // The model ID of the current (source) group is maintained for the use-case of long-drag.
+            // After 800ms - the Tabs/groups are switched, and we need a way to "remember" the group from which the tile was dragged
+            if (!this.sDragStartGroupModelId) {
+                this.sDragStartGroupModelId = this.startGroup.getGroupId();
+            }
+            // Start counting 800ms in order to identify long-drag use-case
+            this.thisLayout.oTabBarItemClickTimer = setTimeout(function () {
+                var currentTabBarItem = that._getSelectedTabBarItem();
+                if (that.lastHighlitedTabItem === currentTabBarItem ) {
+                    return;
+                }
+                // Long-drag use-case
+                that.draggedTileModelPath = that.item.getBindingContext().getPath();
+                that._prepareDomForDragAndDrop();
+                // Remove the dragged tile from the source group before switching to the target group
+                that.startGroup.removeAggregation('tiles', that.item, true);
+                bDraggedBackToSourceGroup = that.sDragStartGroupModelId === that.sDragTargetGroupModelId;
+                that.item.getBindingContext().oModel.setProperty(that.draggedTileModelPath + "/draggedInTabBarToSourceGroup", bDraggedBackToSourceGroup);
+                that.groupSwitched = true;
+                // Triggering the flow of TabBar item press
+                sap.ui.getCore().getEventBus().publish("launchpad", "switchTabBarItem", {iGroupIndex: iTargetGroupIndex});
+                var aThisGroups = that.thisLayout.getGroups();
+                that.endGroup = aThisGroups[0];
+                that.bElapseGroupLinksMap = true;
+            }, 800);
+
+            if ((this.tiles === null) && (this.endGroup)) {
+                this.tiles = this.thisLayout.getGroupTiles(this.endGroup).slice(0);
+            }
+            // The TabBar item that is currently touched by the cursor should be highlighted
+            aHoveredTabBarItem = jQuery('.sapUshellTabBarHoverOn');
+            aHoveredTabBarItem.removeClass('sapUshellTabBarHoverOn');
+            oHighlightedTabItem.classList.add('sapUshellTabBarHoverOn');
+
+            return true;
+        },
+
+        _prepareDomForDragAndDrop: function () {
+            if (sap.ui.Device.system.tablet) {
+                var cloned = this.item.$().clone();
+                var $item = this.item.$();
+                var $parent = $item.parent();
+                this.origItemId = $item.attr("id");
+                this.origItemDataSapUi = $item.attr("data-sap-ui");
+                $item.removeAttr("id").removeAttr("data-sap-ui");
+                $item.hide();
+                cloned.hide();
+                jQuery("#dashboardGroups").parent().append($item);
+                $parent.append(cloned);
+                this.draggedTileDomRef = $item.get(0);
+            } else if (!this.draggedTileDomRef) {
+                // The dragged tile control will be destroyed as soon as the switch to the target group occurs
+                // so in order to have the placeholder appear in the target group - we maintain the tile's DomRef
+                this.draggedTileDomRef = this.item.getDomRef();
+            }
+        },
+
+        _appendTargetGroupDomRefWithDraggedTile: function () {
+            if (!this.item.getDomRef()) {
+                if (sap.ui.Device.system.tablet){
+                    jQuery(this.draggedTileDomRef).attr("id", this.origItemId);
+                    jQuery(this.draggedTileDomRef).attr("data-sap-ui", this.origItemDataSapUi);
+                    jQuery(this.draggedTileDomRef).show();
+                }
+                this.endGroup.getInnerContainerDomRef().appendChild(this.draggedTileDomRef);
+            } else {
+                this.endGroup.getInnerContainerDomRef().appendChild(this.item.getDomRef());
+                if (sap.ui.Device.system.tablet) {
+                    jQuery(this.item.getDomRef()).show();
+                }
+            }
+        },
+
+        _getSelectedTabBarItem: function () {
+            return jQuery('.sapUshellAnchorItemSelected')[0];
+        },
+
+        _getTabBarGroupIndexByModelId: function (sGroupModelId) {
+            var index,
+                sTempGroupModelId;
+
+            for (index = 0; index < this.allGroups.length; index++) {
+                sTempGroupModelId = this.allGroups[index].groupId;
+                if (sGroupModelId === sTempGroupModelId) {
+                    return index;
+                }
+            }
+        },
+
+        _getModelGroupById : function (sGroupModelId) {
+            var aModelGroups = this.thisLayout.getAllGroups(),
+                index,
+                oTempModelGroup,
+                sTempModelGroupId;
+
+            for (index = 0; index < aModelGroups.length; index++) {
+                oTempModelGroup = aModelGroups[index];
+                sTempModelGroupId = oTempModelGroup.groupId;
+                if (sTempModelGroupId === sGroupModelId) {
+                    return oTempModelGroup;
+                }
+            }
+        },
+
+        _handleOverflowCollision: function (moveX) {
+            var oAnchor = sap.ui.getCore().byId("anchorNavigationBar"),
+                sOverflowSide = this._calculateOverflowButtonSideCollision(moveX);
+
+            //Right overflow
+            if (sOverflowSide == "right") {
+                //Only if we didn't stay on the left overflow button
+                if (!this.tabBarArrowCollisionRight) {
+                    oAnchor._scrollToGroupByGroupIndex(oAnchor.anchorItems.length - 1, 5000);
+                    this.tabBarArrowCollisionRight = true;
+                }
+                return true;
+            } else if (sOverflowSide == "left") { //Left Overflow
+                //Only if we didn't stay on the left overflow button
+                if (!this.tabBarArrowCollisionLeft) {
+                    oAnchor._scrollToGroupByGroupIndex(0, 5000);
+                    this.tabBarArrowCollisionLeft = true;
+                }
+                return true;
+            } else { //We are not on any overflow button but still on tab bar
+                this._resetOverFlowButtonElements();
+                return false;
+            }
+        },
+
+        _calculateOverflowButtonSideCollision: function (moveX) {
+            var anchorRightOverflowArrow = jQuery(".sapUshellAnchorRightOverFlowButton"),
+                anchorRightOverflowArrowLeftOffset = anchorRightOverflowArrow.offset().left,
+                anchorItemOverFlow = jQuery(".sapUshellAnchorItemOverFlow"),
+                anchorItemOverFlowOffset = anchorItemOverFlow.offset().left,
+                anchorLeftOverflowArrow = jQuery(".sapUshellAnchorLeftOverFlowButton"),
+                anchorLeftOverflowArrowLeftOffset = anchorLeftOverflowArrow.offset().left,
+                anchorOverflowArrowLeftWidth = 32,
+                jqAnchor = jQuery("#anchorNavigationBar"),
+                anchorBarOffsetLeft = jqAnchor.offset().left;
+
+            if (moveX > anchorRightOverflowArrowLeftOffset && moveX < anchorItemOverFlowOffset) {
+                return "right";
+            }
+            if (moveX > anchorBarOffsetLeft && (moveX < anchorLeftOverflowArrowLeftOffset + anchorOverflowArrowLeftWidth)) {
+                return "left";
+            }
+        },
+
+        _resetOverFlowButtonElements: function () {
+            var bTablet = sap.ui.Device.system.tablet,
+                anchorBar = jQuery(bTablet ? '.sapUshellAnchorNavigationBarItemsScroll' : '.sapUshellAnchorNavigationBarItems');
+
+            anchorBar.stop();
+            this.tabBarArrowCollisionRight = false;
+            this.tabBarArrowCollisionLeft = false;
+        },
+
+        _toggleTabBarOverflowArrows: function (bShow) {
+            var anchorRightOverflowArrow = jQuery(".sapUshellAnchorRightOverFlowButton"),
+                anchorLeftOverflowArrow = jQuery(".sapUshellAnchorLeftOverFlowButton");
+
+            anchorLeftOverflowArrow.toggleClass("sapUshellTabBarOverflowButton", bShow);
+            anchorRightOverflowArrow.toggleClass("sapUshellTabBarOverflowButton", bShow);
+        },
+
+        _getTabBarHoverItem : function (moveX, aTabBarItemsLocation) {
+            var iNumOfBasicUnits,
+                iLeftTabBarOffset,
+                oHighlightedTabItemIndexInBar,
+                aTabBarItems,
+                oHighlightedTabItem;
+
+            iLeftTabBarOffset = jQuery(".sapUshellAnchorItem:not(.sapUshellShellHidden)").first().offset().left;
+            if (moveX - iLeftTabBarOffset <=0 ) {
+                return;
+            }
+            iNumOfBasicUnits = Math.round((moveX - iLeftTabBarOffset) / 10);
+            if (iNumOfBasicUnits >= aTabBarItemsLocation.length) {
+                iNumOfBasicUnits = aTabBarItemsLocation.length - 1;
+            }
+            oHighlightedTabItemIndexInBar = aTabBarItemsLocation[iNumOfBasicUnits];
+            aTabBarItems = jQuery(".sapUshellAnchorItem");
+            oHighlightedTabItem = aTabBarItems[oHighlightedTabItemIndexInBar];
+
+            return oHighlightedTabItem;
+        },
+
+        //remove excluded controls which define in this.aExcludedControlClass from the matrix in order to exclude
+        // those controls from reordering
         removeExcludedElementsFromMatrix: function (aExcludedControlClass) {
             if (!aExcludedControlClass.length) {
+                return;
+            }
+            if (!this.matrix) {
                 return;
             }
             var newMatrix = this.matrix.map(function (row) {
@@ -331,7 +1167,7 @@
         },
 
         /*
-        Callback to be executed before change views after collision detection
+         Callback to be executed before change views after collision detection
          */
         setReorderTilesCallback : function (func) {
             if (typeof func === "function") {
@@ -340,8 +1176,7 @@
         }
     };
 
-
-    var LayoutConstructor = function (){};
+    var LayoutConstructor = function () {};
     LayoutConstructor.prototype = {
         _initDeferred: jQuery.Deferred(),
         init: function (cfg) {
@@ -360,15 +1195,40 @@
 
 
             this.cfg = cfg || this.cfg;
+            this.cfg.animationsEnabled = !!this.cfg.animationsEnabled;
             this.minTilesinRow = 2;
-            this.maxTilesInRow = 30;
             this.container = this.cfg.container || document.getElementById('dashboardGroups');
+            this.oTabBarItemClickTimer = new Date();
+            this.bTabBarModeActive = false;
+            this.bOnTabBarElement = false;
             timeoutLayoutInfo();
-
+            // @TODO: remove this
+            sap.ui.getCore().getEventBus().subscribe('launchpad', 'tabBarChange', this._onTabBarChange, this);
             return this.getInitPromise();
+        },
+        setOnTabBarElement: function (bOnTabBarElement) {
+            this.bOnTabBarElement = bOnTabBarElement;
+        },
+        isOnTabBarElement: function () {
+            return this.bOnTabBarElement;
+        },
+        _onTabBarChange: function (sChannelId, sEventId, oData) {
+            if (oData === "tabs") {
+                this.bTabBarModeActive = true;
+            } else {
+                this.bTabBarModeActive = false;
+            }
+        },
+        tabBarTileDropped: function () {
+            if (this.oTabBarItemClickTimer) {
+                clearTimeout(this.oTabBarItemClickTimer);
+            }
         },
         getInitPromise: function () {
             return this._initDeferred.promise();
+        },
+        isAnimationsEnabled: function () {
+            return this.cfg.animationsEnabled;
         },
         getLayoutEngine: function () {
             return this.layoutEngine;
@@ -381,25 +1241,42 @@
             tile.setAttribute('style', 'position: absolute; visibility: hidden;');
             container.appendChild(tile);
             var tileStyle = window.getComputedStyle(tile);
-            var info = {"tileMarginHeight" : parseInt(tileStyle.marginBottom, 10) + parseInt(tileStyle.marginTop, 10),
-                "tileMarginWidth" : parseInt(tileStyle.marginLeft, 10) + parseInt(tileStyle.marginRight, 10),
+            var info = {"tileMarginHeight" : parseFloat(tileStyle.marginBottom, 10) + parseFloat(tileStyle.marginTop, 10),
+                "tileMarginWidth" : parseFloat(tileStyle.marginLeft, 10) + parseFloat(tileStyle.marginRight, 10),
                 "tileWidth": tile.offsetWidth,
                 "tileHeight": tile.offsetHeight,
-                "containerWidth": container.offsetWidth - (container.style.marginLeft ? parseInt(container.style.marginLeft, 10) : 0)
+                "containerWidth": container.offsetWidth - (container.style.marginLeft ? parseFloat(container.style.marginLeft, 10) : 0)
             };
             tile.parentNode.removeChild(tile);
 
             return info;
         },
+
         getGroups: function () {
             return this.cfg.getGroups();
         },
+
+        getAllGroups: function () {
+            return this.cfg.getAllGroups ? this.cfg.getAllGroups() : [];
+        },
+
+        isTabBarActive: function () {
+            return this.cfg.isTabBarActive ? this.cfg.isTabBarActive() : false;
+        },
+
         getTilesInRow: function (bIslink) {
             return this.tilesInRow;
         },
+
         setTilesInRow: function (tilesInRow) {
             this.tilesInRow = tilesInRow;
         },
+
+        /*
+         *   Returns an {x,y} object of  coordinates for placing the tile
+         *   Returns false if the space is taken by another tile already
+         *
+         */
         checkPlaceForTile: function (tile, matrix, place, lastRow, bIsLinkTiles) {
             if (typeof matrix[place.y] === "undefined") {
                 matrix.push(new Array(matrix[0].length));
@@ -411,11 +1288,11 @@
                 return false;
             }
             var p = jQuery.extend({}, place);
-            if (bIsLinkTiles || !tile.getLong()) {
+            if (bIsLinkTiles || (tile.getLong && !tile.getLong())) {
                 return [p];
             }
             var cords = [p];
-            if (tile.getLong()) {
+            if (tile.getLong && tile.getLong()) {
                 if ((place.x + 1) >= matrix[0].length || (typeof matrix[p.y][p.x + 1] !== "undefined") ) {
                     return false;
                 }
@@ -429,6 +1306,7 @@
          * @param tile
          * @param matrix
          * @param cords
+         *  Places the given tile in the given coordinates in matrix
          */
         placeTile: function (tile, matrix, cords) {
             for (var i = 0; i < cords.length; i++) {
@@ -453,29 +1331,21 @@
          * @param startRow
          * @param endRow
          * @returns {number}
+         * Fills the given matrix row with tiles.
+         *
          */
-        fillRowsInLine: function (matrix, tiles, startRow, endRow, bIsLinkTiles) {
+        fillRowsInLine: function (matrix, tiles, row, bIsLinkTiles) {
             if (!tiles.length) {
                 return 0;
             }
-
-            var placedTiles = [], cords, i;
-            var toRow = endRow || startRow;
-            for ( i = startRow; i <= toRow && tiles.length; i++) {
-                for (var j = 0; j < matrix[0].length && tiles.length; j++) {
-                    cords = this.checkPlaceForTile(tiles[0], matrix, {x: j, y: i}, endRow, bIsLinkTiles);
-                    if (cords) {
-                        this.placeTile(tiles[0], matrix, cords);
-                        placedTiles.push(tiles.shift());
-                    }
+            var cords;
+            for (var j = 0; j < matrix[0].length && tiles.length; j++) {
+                cords = this.checkPlaceForTile(tiles[0], matrix, {x: j, y: row}, bIsLinkTiles);
+                if (cords) {
+                    this.placeTile(tiles[0], matrix, cords);
+                    tiles.shift();
                 }
             }
-            var maxHeight = 1, height = 1;
-            for (i = 0; i < placedTiles.length; i++) {
-                maxHeight = height > maxHeight ?  height : maxHeight;
-            }
-
-            return maxHeight;
         },
 
         /**
@@ -483,6 +1353,9 @@
          * @param tiles
          * @param containerInfo
          * @returns {Array}
+         *
+         *  Organizes tiles from array to matrix by filing fixed length rows tile-by-tile
+         *  Returnes the new matrix
          */
         organizeGroup: function (tiles, bIsLinkTiles) {
             //copy of tilesCopy array
@@ -492,15 +1365,8 @@
             tilesMatrix.push(new Array(bIsLinkTiles ? Math.floor(this.tilesInRow / 2) : this.tilesInRow));
 
             while (tilesCopy.length) {
-                //lineHeight will be changed if tile that higher that 1 will appear in the row
-                var lineHeight = this.fillRowsInLine(tilesMatrix, tilesCopy, currentRow, undefined, bIsLinkTiles); //to do: get the declaration outside
+                this.fillRowsInLine(tilesMatrix, tilesCopy, currentRow, bIsLinkTiles); //to do: get the declaration outside
                 currentRow++;
-                if (lineHeight <= 1) {
-                    continue;
-                }
-                //If line is higher than 1
-                this.fillRowsInLine(tilesMatrix, tilesCopy, currentRow, currentRow + lineHeight - 2);
-                currentRow += (lineHeight - 1) || 1;
             }
             if (this.rightToLeft){
                 for (var i = 0; i < tilesMatrix.length; i++){
@@ -510,7 +1376,7 @@
             tilesMatrix = this.cleanRows(tilesMatrix);
             return tilesMatrix;
         },
-
+        /* If there is a row with no tiles - it is removed from the matrix*/
         cleanRows:function(tilesMatrix){
 
             var doneChecking = false;
@@ -572,14 +1438,8 @@
 
         calcTilesInRow: function (containerWidth, tileWidth, tileMargin) {
             var tilesInRow = Math.floor(containerWidth / (tileWidth + tileMargin));
-
-            //Max/Min number of tile in row that was predefined by UI
-            if (tilesInRow <= this.maxTilesInRow){
-                tilesInRow = (tilesInRow < this.minTilesinRow ? this.minTilesinRow : tilesInRow );
-            } else {
-                tilesInRow = this.maxTilesInRow;
-            }
-
+            //Min number of tile in row that was predefined by UI
+            tilesInRow = (tilesInRow < this.minTilesinRow ? this.minTilesinRow : tilesInRow );
             return tilesInRow;
         },
 
@@ -601,18 +1461,85 @@
             if (!styleInfo.tileWidth) {
                 return;
             }
-
             this.styleInfo = styleInfo;
             this.tilesInRow =  this.calcTilesInRow(styleInfo.containerWidth, styleInfo.tileWidth, styleInfo.tileMarginWidth);
             groups = groups || this.getGroups();
-
             for (var i = 0; i < groups.length; i++) {
+                if (groups[i].getDomRef && !groups[i].getDomRef()) {
+                    //we don't render invisible groups
+                    continue;
+                }
                 var tiles = this.getGroupTiles(groups[i]);
                 var groupLayoutMatrix = this.organizeGroup(tiles);
                 this.setGroupsLayout(groups[i], groupLayoutMatrix);
             }
+        },
+
+        initDragMode: function () {
+            this.initGroupDragMode(this.layoutEngine.currentGroup);
+        },
+
+        endDragMode: function () {
+            var groups = this.getGroups();
+            for (var i = 0; i < groups.length; i++) {
+                var jqGroup = groups[i].$();
+                if (!jqGroup.hasClass("sapUshellInDragMode")) {
+                    continue;
+                }
+                jqGroup.removeClass("sapUshellInDragMode sapUshellEnableTransition");
+                var tiles = this.getGroupTiles(groups[i]);
+                for (var j = 0; j < tiles.length; j++) {
+                    tiles[j].$().removeAttr("style");
+                }
+                jqGroup.find('.sapUshellInner').removeAttr("style");
+            }
+        },
+
+        initGroupDragMode: function (group) {
+            if (group.$().hasClass("sapUshellInDragMode")) {
+                return;
+            }
+            var tiles = this.getGroupTiles(group);
+            var groupLayoutMatrix = this.organizeGroup(tiles);
+            group.$().addClass("sapUshellInDragMode");
+            this.renderLayoutGroup(group, groupLayoutMatrix);
+            setTimeout(function () {
+                group.$().addClass("sapUshellEnableTransition");
+            });
+
+        },
+
+        calcTranslate: function (row, col) {
+            var translateX = col * (this.styleInfo.tileWidth + this.styleInfo.tileMarginWidth);
+            var translateY = row * (this.styleInfo.tileHeight + this.styleInfo.tileMarginHeight);
+            //for RTL need negative X
+            if (this.layoutEngine.rightToLeft) {
+                translateX = -translateX;
+            }
+            return {x: translateX, y: translateY};
+        },
+
+        renderLayoutGroup: function (group, groupLayoutMatrix) {
+            var height = groupLayoutMatrix.length * (this.styleInfo.tileHeight + this.styleInfo.tileMarginHeight);
+            group.$().find('.sapUshellInner').height(height);
+            var currentTile;
+            for (var i = 0; i < groupLayoutMatrix.length; i++) {
+                for (var j = 0; j < groupLayoutMatrix[i].length; j++) {
+                    if (currentTile == groupLayoutMatrix[i][j]) {
+                        continue;
+                    } else {
+                        currentTile = groupLayoutMatrix[i][j];
+                    }
+                    if (typeof currentTile == "undefined") {
+                        break;
+                    }
+                    var translateCords = this.calcTranslate(i, j);
+                    var translateStyle =  "translate(" + translateCords.x + "px," + translateCords.y + "px) translatez(0)";
+                    groupLayoutMatrix[i][j].getDomRef().style.transform = translateStyle;
+                }
+            }
         }
     };
-
-    sap.ushell.Layout = new LayoutConstructor();
-})();
+    var Layout = new LayoutConstructor();
+    return Layout;
+}, /* bExport= */ true);

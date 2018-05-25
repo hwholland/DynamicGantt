@@ -29,67 +29,67 @@
     <since>1.30.0</since>
     <baseType>sap.m/semantic/ShareMenuPage</baseType>
     <aggregations>
-        <aggregation name="addAction" type="sap.m/semantic/AddAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/AddAction" name="addAction">
             <documentation>Add action</documentation>
         </aggregation>
-        <aggregation name="mainAction" type="sap.m/semantic/MainAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/MainAction" name="mainAction">
             <documentation>Main action</documentation>
         </aggregation>
-        <aggregation name="positiveAction" type="sap.m/semantic/PositiveAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/PositiveAction" name="positiveAction">
             <documentation>Positive action</documentation>
         </aggregation>
-        <aggregation name="negativeAction" type="sap.m/semantic/NegativeAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/NegativeAction" name="negativeAction">
             <documentation>Negative action</documentation>
         </aggregation>
-        <aggregation name="forwardAction" type="sap.m/semantic/ForwardAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/ForwardAction" name="forwardAction">
             <documentation>Negative action</documentation>
         </aggregation>
-        <aggregation name="editAction" type="sap.m/semantic/EditAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/EditAction" name="editAction">
             <documentation>Edit action</documentation>
         </aggregation>
-        <aggregation name="saveAction" type="sap.m/semantic/SaveAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/SaveAction" name="saveAction">
             <documentation>Save action</documentation>
         </aggregation>
-        <aggregation name="deleteAction" type="sap.m/semantic/DeleteAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/DeleteAction" name="deleteAction">
             <documentation>Delete action</documentation>
         </aggregation>
-        <aggregation name="cancelAction" type="sap.m/semantic/CancelAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/CancelAction" name="cancelAction">
             <documentation>Cancel action</documentation>
         </aggregation>
-        <aggregation name="flagAction" type="sap.m/semantic/FlagAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/FlagAction" name="flagAction">
             <documentation>Flag action</documentation>
         </aggregation>
-        <aggregation name="favoriteAction" type="sap.m/semantic/FavoriteAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/FavoriteAction" name="favoriteAction">
             <documentation>Favorite action</documentation>
         </aggregation>
-        <aggregation name="openInAction" type="sap.m/semantic/OpenInAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/OpenInAction" name="openInAction">
             <documentation>OpenIn action</documentation>
         </aggregation>
-        <aggregation name="discussInJamAction" type="sap.m/semantic/DiscussInJamAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/DiscussInJamAction" name="discussInJamAction">
             <documentation>DiscussInJam action</documentation>
         </aggregation>
-        <aggregation name="shareInJamAction" type="sap.m/semantic/ShareInJamAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/ShareInJamAction" name="shareInJamAction">
             <documentation>ShareInJam action</documentation>
         </aggregation>
-        <aggregation name="sendEmailAction" type="sap.m/semantic/SendEmailAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/SendEmailAction" name="sendEmailAction">
             <documentation>SendEmail action</documentation>
         </aggregation>
-        <aggregation name="sendMessageAction" type="sap.m/semantic/SendMessageAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/SendMessageAction" name="sendMessageAction">
             <documentation>SendMessage action</documentation>
         </aggregation>
-        <aggregation name="printAction" type="sap.m/semantic/PrintAction" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/PrintAction" name="printAction">
             <documentation>Print action</documentation>
         </aggregation>
-        <aggregation name="messagesIndicator" type="sap.m/semantic/MessagesIndicator" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/semantic/MessagesIndicator" name="messagesIndicator">
             <documentation>MessagesIndicator</documentation>
         </aggregation>
-        <aggregation name="saveAsTileAction" type="sap.m/Button" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/Button" name="saveAsTileAction">
             <documentation>SaveAsTile button</documentation>
         </aggregation>
-        <aggregation name="pagingAction" type="sap.m/PagingButton" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/PagingButton" name="pagingAction">
             <documentation>Paging action</documentation>
         </aggregation>
-        <aggregation name="draftIndicator" type="sap.m/DraftIndicator" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/DraftIndicator" name="draftIndicator">
             <documentation>DraftIndicator</documentation>
         </aggregation>
     </aggregations>

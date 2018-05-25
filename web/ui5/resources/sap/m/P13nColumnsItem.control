@@ -7,19 +7,19 @@
     <since>1.26.0</since>
     <baseType>sap.ui.core/Item</baseType>
     <properties>
-        <property name="columnKey" type="sap.ui.core/string" group="Misc" since="1.26.0">
+        <property since="1.26.0" group="Misc" type="sap.ui.core/string" name="columnKey">
             <documentation>This property contains the unique table column key</documentation>
         </property>
-        <property name="index" type="sap.ui.core/int" group="Appearance" since="1.26.0">
+        <property since="1.26.0" group="Appearance" type="sap.ui.core/int" name="index">
             <documentation>This property contains the index of a table column</documentation>
         </property>
-        <property name="visible" type="sap.ui.core/boolean" group="Appearance" since="1.26.0">
+        <property since="1.26.0" group="Appearance" type="sap.ui.core/boolean" name="visible">
             <documentation>This property decides whether a &lt;code&gt;P13nColumnsItem&lt;/code&gt; is visible</documentation>
         </property>
-        <property name="width" type="sap.ui.core/string" group="Misc" since="1.26.0">
+        <property since="1.26.0" group="Misc" type="sap.ui.core/string" name="width">
             <documentation>This property contains the with of a table column.</documentation>
         </property>
-        <property name="total" type="sap.ui.core/boolean" since="1.26.0">
+        <property since="1.26.0" type="sap.ui.core/boolean" name="total">
             <documentation>This property contains the total flag of a table column.</documentation>
         </property>
     </properties>

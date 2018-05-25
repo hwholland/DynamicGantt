@@ -8,30 +8,30 @@
     <abstract/>
     <baseType>sap.m/semantic/SemanticControl</baseType>
     <properties>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>See {@link sap.m.Select#getEnabled}</documentation>
         </property>
-        <property name="selectedKey" type="sap.ui.core/string" defaultValue="" group="Data">
+        <property group="Data" defaultValue="" type="sap.ui.core/string" name="selectedKey">
             <documentation>See {@link sap.m.Select#getSelectedKey}</documentation>
         </property>
     </properties>
     <events>
-        <event name="change" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="change">
             <documentation>See {@link sap.m.Select#event:change}</documentation>
             <parameters>
-                <parameter name="selectedItem" type="sap.ui.core/Item">
+                <parameter type="sap.ui.core/Item" name="selectedItem">
                     <documentation>The selected item.</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations default="items">
-        <aggregation name="items" type="sap.ui.core/Item" cardinality="0..n" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..n" type="sap.ui.core/Item" name="items">
             <documentation>See {@link sap.m.Select#getItems}</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="selectedItem" type="sap.ui.core/Item" cardinality="0..1">
+        <association cardinality="0..1" type="sap.ui.core/Item" name="selectedItem">
             <documentation>See {@link sap.m.Select#getSelectedItem}</documentation>
         </association>
     </associations>

@@ -1,15 +1,13 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap */
     /*jslint nomen: true */
 
-    sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.GroupListPopover", {
-        bPopoverCreated: false,
-        oPopover: undefined,
-        oGroupList: undefined,
 
+    sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.GroupListPopover", {
         /*
             view receives viewData with following structure
             {
@@ -34,104 +32,91 @@
         createContent: function (oController) {
             this.iPopoverDataSectionHeight = 192;
             this.oGroupsContainer = this._createPopoverContainer(this.iPopoverDataSectionHeight);
+            this.oLaunchPageService = sap.ushell.Container.getService("LaunchPage");
 
-            if (!this.bPopoverCreated) {
-                this.oPopover = new sap.m.ResponsivePopover({
-                    id : "groupsPopover",
-                    placement : sap.m.PlacementType.Auto,
-                    enableScrolling : true,
-                    title: sap.ushell.resources.i18n.getText("addTileToGroups_popoverTitle"),
-                    contentWidth: '20rem',
-                    beginButton: this._createOkButton(),
-                    endButton: this._createCancelButton(),
-                    content: this.oGroupsContainer,
-                    afterClose: this.getController()._afterCloseHandler.bind(this.getController())
-                });
-                this.bPopoverCreated = true;
-                this.oPopover.setInitialFocus('newGroupItem');
-            }
-        },
+            this.oPopover = sap.ui.getCore().byId("groupsPopover") || new sap.m.ResponsivePopover({
+                id : "groupsPopover",
+                placement : "Auto",
+                title: sap.ushell.resources.i18n.getText("addTileToGroups_popoverTitle"),
+                contentWidth: '20rem',
+                beginButton: this._createCloseButton(),
+                content: this.oGroupsContainer,
+                afterClose: this.getController()._afterCloseHandler.bind(this.getController())
+            });
 
-        /**
-         * Called each time the popover is opened.
-         * Sets the popover's model with the data of the groups according to the relevant (clicked) catalog tile
-         */
-        setGroupsData: function (oGroupData) {
-            this.getController().oPopoverModel.setData({userGroupList: oGroupData});
-        },
-
-        /**
-         * Sets the selection mode of the list (i.e. Single or Multi selection)
-         */
-        setGroupListSingleSelection: function (oGroupListSelectionMode) {
-            this.oGroupList.setMode(oGroupListSelectionMode);
-            if (oGroupListSelectionMode === sap.m.ListMode.SingleSelectMaster) {
-                this.oGroupList.attachSelect(this.getController().okButtonHandler.bind(this.getController()));
-            } else {
-                // @TODO The detachSelect does not work. Instead, the handling is done temporarily in okButtonHandler
-                this.oGroupList.detachSelect(this.getController().okButtonHandler, this.getController());
-            }
+            this.oPopover.setInitialFocus('newGroupItem');
+            //return this.oPopover;
         },
 
         open: function (openByControl) {
             if (document.body.clientHeight - openByControl.getDomRef().getBoundingClientRect().bottom >= 310) {
-                this.oPopover.setPlacement(sap.m.PlacementType.Bottom);
-            } else {
-                this.oPopover.setPlacement(sap.m.PlacementType.Auto);
+                this.oPopover.setPlacement("Bottom");
             }
             this.oPopover.openBy(openByControl);
-
-            // Cleaning the popover's newGroupInput property, in case that a new group was created  in the previous time the popover was used
-            if (this.newGroupInput !== undefined) {
-                this.newGroupInput.setValue('');
-            }
-
-            if (this.oGroupList.getMode() === sap.m.ListMode.SingleSelectMaster) {
+            if (this.getViewData().singleGroupSelection) {
                 this.getController()._setFooterVisibility(false);
-            } else {
-                this.getController()._setFooterVisibility(true);
             }
             this.deferred = jQuery.Deferred();
             return this.deferred.promise();
         },
 
         _createPopoverContainer: function (iPopoverDataSectionHeight) {
-            var oPopoverContainer,
-                oTempGroupList,
-                oNewGroupItemList = this._createNewGroupUiElements();
+            var oNewGroupItemList = this._createNewGroupUiElements(),
+                oGroupList = this._createPopoverGroupList();
 
-            oTempGroupList = this._createPopoverGroupList();
-
-            oPopoverContainer = new sap.m.ScrollContainer({
-               // id: "popoverContainer",
-                horizontal : false,
-                vertical : true,
-                content: [oNewGroupItemList, oTempGroupList]
-            });
+            var popoverContainer = sap.ui.getCore().byId("popoverContainer") || new sap.m.ScrollContainer({
+                    id: "popoverContainer",
+                    horizontal : false,
+                    vertical : true,
+                    content: [oNewGroupItemList, oGroupList]
+                });
 
             if (!sap.ui.Device.system.phone) {
-                oPopoverContainer.setHeight((iPopoverDataSectionHeight - 2) + "px");
+                popoverContainer.setHeight((iPopoverDataSectionHeight - 2) + "px");
             } else {
-                oPopoverContainer.setHeight("100%");
+                popoverContainer.setHeight("100%");
             }
 
-            return oPopoverContainer;
+            return popoverContainer;
         },
 
         _createNewGroupUiElements: function () {
-            var oNewGroupItem = new sap.m.StandardListItem({
-                    id : "newGroupItem",
-                    title : sap.ushell.resources.i18n.getText("newGroup_listItemText"),
-                    type : "Navigation",
-                    press : this.getController()._navigateToCreateNewGroupPane.bind(this.getController())
-                }),
-                oNewGroupItemList = new sap.m.List({});
-
+            var oNewGroupItem = sap.ui.getCore().byId("newGroupItem") || new sap.m.StandardListItem({
+                id : "newGroupItem",
+                title : sap.ushell.resources.i18n.getText("newGroup_listItemText"),
+                type : "Navigation",
+                press : this.getController()._navigateToCreateNewGroupPane.bind(this.getController())
+            });
+            var oNewGroupItemList = new sap.m.List({});
             // if xRay is enabled
             if (this.getViewData().enableHelp) {
                 oNewGroupItem.addStyleClass('help-id-newGroupItem');// xRay help ID
             }
             oNewGroupItemList.addItem(oNewGroupItem);
+
+            oNewGroupItemList.addEventDelegate({
+                onsapdown: function (oEvent) {
+                    try {
+                        oEvent.preventDefault();
+                        oEvent._bIsStopHandlers = true;
+                        var jqFirstGroupListItem = jQuery("#popoverContainer .sapMListModeMultiSelect li, #popoverContainer .sapMListModeSingleSelectMaster li").first();
+                        jqFirstGroupListItem.focus();
+                    } catch (e) {
+                        // continue regardless of error
+                    }
+                },
+                onsaptabnext: function (oEvent) {
+                    try {
+                        oEvent.preventDefault();
+                        oEvent._bIsStopHandlers = true;
+                        var jqCloseButton = jQuery("#closeButton");
+                        jqCloseButton.focus();
+                    } catch (e) {
+                        // continue regardless of error
+                    }
+                }
+            });
+
             return oNewGroupItemList;
         },
 
@@ -150,16 +135,14 @@
 
         _createHeadBarForNewGroup: function () {
             var oBackButton = new sap.m.Button({
-                    icon: sap.ui.core.IconPool.getIconURI("nav-back"),
-                    press : this.getController()._backButtonHandler.bind(this.getController()),
-                    tooltip : sap.ushell.resources.i18n.getText("newGroupGoBackBtn_tooltip")
-                }),
-                oHeadBar;
-
+                icon: sap.ui.core.IconPool.getIconURI("nav-back"),
+                press : this.getController()._backButtonHandler.bind(this.getController()),
+                tooltip : sap.ushell.resources.i18n.getText("newGroupGoBackBtn_tooltip")
+            });
             oBackButton.addStyleClass("sapUshellCatalogNewGroupBackButton");
 
             // new group panel's header
-            oHeadBar = new sap.m.Bar({
+            var oHeadBar = new sap.m.Bar({
                 contentLeft : [oBackButton],
                 contentMiddle : [
                     new sap.m.Label({
@@ -175,44 +158,50 @@
         },
 
         _createPopoverGroupList: function () {
-            var oListItemTemplate = new sap.m.DisplayListItem({
-                    label : "{oGroup/title}",
-                    selected : "{selected}",
-                    tooltip: "{oGroup/title}",
-                    type: sap.m.ListType.Active
-                }),
-                that = this,
-                aUserGroupsFilters = [];
 
+            var oListItemTemplate = new sap.m.DisplayListItem({
+                label : "{oGroup/title}",
+                selected : "{selected}",
+                tooltip: "{oGroup/title}",
+                type: sap.m.ListType.Active,
+                press: this.getController().groupListItemClickHandler.bind(this.getController())
+            });
+            var aUserGroupsFilters = [];
             aUserGroupsFilters.push(new sap.ui.model.Filter("oGroup/isGroupLocked", sap.ui.model.FilterOperator.EQ, false));
             if (this.getViewData().enableHideGroups) {
                 aUserGroupsFilters.push(new sap.ui.model.Filter("oGroup/isGroupVisible", sap.ui.model.FilterOperator.EQ, true));
             }
-            //var bSingleSelection = this.getViewData().singleGroupSelection;
-            this.oGroupList = new sap.m.List("groupListId", {
-                //mode : bSingleSelection ? sap.m.ListMode.SingleSelectMaster : sap.m.ListMode.MultiSelect,
-                includeItemInSelection: true,
-                items: {
-                    path: "/userGroupList",
-                    template: oListItemTemplate,
-                    filters: aUserGroupsFilters
-                }
-            });
+            var bSingleSelection = this.getViewData().singleGroupSelection,
+             	oList = new sap.m.List({
+                    mode : bSingleSelection ? sap.m.ListMode.SingleSelectMaster : sap.m.ListMode.MultiSelect,
+                    growing: true,
+                    growingThreshold: 200,
+                    items: {
+                        path: "/userGroupList",
+                        template: oListItemTemplate,
+                        filters: aUserGroupsFilters
+                    }
+                });
 
-            this.oGroupList.addEventDelegate({
+            if (bSingleSelection){
+                oList.attachSelect(this.getController().okButtonHandler.bind(this.getController()));
+            } else {
+                // While clicking on the checkbox - Check if a group was added or removed
+                oList.attachSelectionChange(this.getController().checkboxClickHandler.bind(this.getController()));
+            }
+
+            oList.addEventDelegate({
                 //used for accessibility, so "new group" element will be a part of it
                 onsapup: function (oEvent) {
                     try {
                         oEvent.preventDefault();
-                        if (that.getView().getModel().getProperty("/groups/length")) {
-                            var jqNewGroupItem,
-                                currentFocusGroup = jQuery(":focus");
 
-                            if (currentFocusGroup.index() === 0) {   //first group in the list
-                                jqNewGroupItem = jQuery("#newGroupItem");
-                                jqNewGroupItem.focus();
-                                oEvent._bIsStopHandlers = true;
-                            }
+                        var jqNewGroupItem,
+                            currentFocusGroup = jQuery(":focus");
+                        if (currentFocusGroup.index() == 0) {   //first group in the list
+                            jqNewGroupItem = jQuery("#newGroupItem");
+                            jqNewGroupItem.focus();
+                            oEvent._bIsStopHandlers = true;
                         }
                     } catch (e) {
                         // continue regardless of error
@@ -220,18 +209,18 @@
                     }
                 }
             });
-            return this.oGroupList;
+            return oList;
         },
 
         _createOkButton: function () {
-            var oOkBtn = new sap.m.Button({
+            var oOkBtn = new sap.m.Button( {
                 id : "okButton",
                 press : this.getController().okButtonHandler.bind(this.getController()),
                 text : sap.ushell.resources.i18n.getText("okBtn")
             });
 
             oOkBtn.addEventDelegate({
-                onsaptabprevious: function (oEvent) {
+                onsaptabprevious: function(oEvent) {
                     try {
                         oEvent.preventDefault();
                         oEvent._bIsStopHandlers = true;
@@ -246,16 +235,25 @@
                     }
                 }
             });
-
             return oOkBtn;
         },
 
         _createCancelButton: function () {
             return new sap.m.Button({
                 id : "cancelButton",
-                press : this.getController()._cancelButtonHandler.bind(this.getController()),
+                press: this.getController()._closeButtonHandler.bind(this.getController()),
                 text : sap.ushell.resources.i18n.getText("cancelBtn")
+            });
+        },
+
+        _createCloseButton: function () {
+            return sap.ui.getCore().byId("closeButton") || new sap.m.Button({
+                id : "closeButton",
+                press: this.getController()._switchGroupsPopoverButtonPress.bind(this.getController()),
+                text : sap.ushell.resources.i18n.getText(sap.ushell.resources.i18n.getText("close"))
             });
         }
     });
-}());
+
+
+}, /* bExport= */ false);

@@ -14,12 +14,12 @@
         <value name="Month">
             <documentation>Intervals have the size of one month.</documentation>
         </value>
-        <value name="Week" since="1.44">
+        <value since="1.44" name="Week">
             <documentation>Intervals have the size of one day where 7 days are displayed, starting with the first day of the week.
 
 Note: This interval type is NOT supported when creating a custom sap.m.PlanningCalendarView.</documentation>
         </value>
-        <value name="OneMonth" since="1.46" value="One Month">
+        <value value="One Month" since="1.46" name="OneMonth">
             <documentation>Intervals have the size of one day where 31 days are displayed, starting with the first day of the month.
 
 Note: This interval type is NOT supported when creating a custom sap.m.PlanningCalendarView.</documentation>

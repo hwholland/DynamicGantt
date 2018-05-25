@@ -1,15 +1,12 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap */
 /**
  * @name sap.ushell.renderers.fiori2.RendererExtensions
  * @since 1.26
  * @private
  */
-(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.renderers.fiori2.RendererExtensions");
-
-
+sap.ui.define(function() {
+	"use strict";
 
     // functions to be uses internally to communicate externally
     /**
@@ -464,6 +461,10 @@
      *
      * @private
      */
-    sap.ushell.renderers.fiori2.RendererExtensions = new RendererExtensions();
+    var RendererExtensions1 = new RendererExtensions();
 
-}());
+
+
+	return RendererExtensions1;
+
+}, /* bExport= */ true);

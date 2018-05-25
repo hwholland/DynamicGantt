@@ -20,7 +20,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -36,7 +36,12 @@ sap.ui.define([
 				/**
 				 * Overflow priority. See {@link sap.m.OverflowToolbarPriority}
 				 */
-				overflowPriority: {type: "sap.m.OverflowToolbarPriority", defaultValue: OverflowToolbarPriority.Low}
+				overflowPriority: {type: "sap.m.OverflowToolbarPriority", defaultValue: OverflowToolbarPriority.Low},
+
+				/**
+				 * Type of a button in the toolbar group if it's a button
+				 */
+				buttonType: {type : "sap.m.ButtonType", group : "Appearance", defaultValue : sap.m.ButtonType.Default}
 			}
 		}
 	});

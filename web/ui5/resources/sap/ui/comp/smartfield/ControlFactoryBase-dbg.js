@@ -1,34 +1,35 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 /**
  * Base class for factory implementations that create controls that are hosted by <code>sap.ui.comp.smartfield.SmartField</code>.
  *
- * @private
  * @name sap.ui.comp.smartfield.ControlFactoryBase
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
+ * @private
  * @since 1.28.0
- * @param {jQuery} jQuery a reference to the jQuery implementation.
- * @param {sap.ui.base.Object} BaseObject a reference to the base object implementation.
- * @param {sap.ui.comp.providers.ValueHelpProvider} ValueHelpProvider a reference to the value help provider implementation.
- * @param {sap.ui.comp.providers.ValueListProvider} ValueListProvider a reference to the value list provider implementation.
- * @param {sap.ui.comp.smartfield.BindingUtil} BindingUtil a reference to the binding utility implementation.
- * @returns {sap.ui.comp.smartfield.ControlFactoryBase} new control factory instance.
  */
 sap.ui.define([
-	"jquery.sap.global", "sap/ui/base/Object", "sap/ui/comp/util/FormatUtil", "sap/ui/comp/providers/ValueHelpProvider", "sap/ui/comp/providers/ValueListProvider", "sap/ui/comp/smartfield/BindingUtil"
-], function(jQuery, BaseObject, FormatUtil, ValueHelpProvider, ValueListProvider, BindingUtil) {
+	"jquery.sap.global",
+	"sap/ui/base/Object",
+	"sap/ui/comp/util/FormatUtil",
+	"sap/ui/comp/providers/ValueHelpProvider",
+	"sap/ui/comp/providers/ValueListProvider",
+	"sap/ui/comp/smartfield/BindingUtil",
+	"sap/m/HBox"
+], function(jQuery, BaseObject, FormatUtil, ValueHelpProvider, ValueListProvider, BindingUtil, HBox) {
 	"use strict";
 
 	/**
 	 * @private
 	 * @constructor
-	 * @param {sap.ui.model.Model} oModel the model currently used.
-	 * @param {sap.ui.core.Control} oParent the parent control.
+	 * @param {sap.ui.model.Model} oModel the model currently used
+	 * @param {sap.ui.core.Control} oParent the parent control
 	 */
 	var ControlFactoryBase = BaseObject.extend("sap.ui.comp.smartfield.ControlFactoryBase", {
 		constructor: function(oModel, oParent) {
@@ -45,12 +46,13 @@ sap.ui.define([
 	/**
 	 * Creates a control instance.
 	 *
-	 * @param {boolean} bBlockSmartLinkCreation if <code>true</code>, a <code>SmartLink</code> will not be created.
-	 * @returns {sap.ui.core.Control} the new control instance or <code>null</code>, if no control could be determined.
+	 * @param {boolean} bBlockSmartLinkCreation if <code>true</code>, a <code>SmartLink</code> will not be created
+	 * @returns {sap.ui.core.Control} the new control instance or <code>null</code>, if no control could be determined
 	 * @public
 	 */
 	ControlFactoryBase.prototype.createControl = function(bBlockSmartLinkCreation) {
-		var sMethod, oControl;
+		var sMethod,
+			oControl;
 
 		sMethod = this._getCreator(bBlockSmartLinkCreation);
 
@@ -68,12 +70,25 @@ sap.ui.define([
 	};
 
 	ControlFactoryBase.prototype._addAriaLabelledBy = function(oControl) {
+		var oTargetControl;
+
 		if ((this._oParent.getControlContext() === sap.ui.comp.smartfield.ControlContextType.None) || (this._oParent.getControlContext() === sap.ui.comp.smartfield.ControlContextType.Form) || (this._oParent.getControlContext() === sap.ui.comp.smartfield.ControlContextType.SmartFormGrid)) {
 
-			if (oControl && oControl.control.addAriaLabelledBy && this._oParent.getAriaLabelledBy().length > 0) {
-				oControl.control.removeAllAriaLabelledBy();
+			if (oControl) {
+				oTargetControl = oControl.control;
+
+				if (oTargetControl instanceof HBox) {
+
+					if (oTargetControl.getItems().length > 0) {
+						oTargetControl = oTargetControl.getItems()[0];
+					}
+				}
+			}
+
+			if (oTargetControl && oTargetControl.addAriaLabelledBy && this._oParent.getAriaLabelledBy().length > 0) {
+				oTargetControl.removeAllAriaLabelledBy();
 				this._oParent.getAriaLabelledBy().forEach(function(vAriaLabelledBy) {
-					oControl.control.addAriaLabelledBy(vAriaLabelledBy);
+					oTargetControl.addAriaLabelledBy(vAriaLabelledBy);
 				});
 			}
 		}
@@ -82,17 +97,22 @@ sap.ui.define([
 	/**
 	 * Adds validations to the given control.
 	 *
-	 * @param {sap.ui.core.Control} oControl the given control.
-	 * @param {string} sMethod an optional method name of a method to be invoked on the parent smart field to notify it of the current state.
+	 * @param {sap.ui.core.Control} oControl the given control
+	 * @param {string} sMethod an optional method name of a method to be invoked on the parent smart field to notify it of the current state
 	 * @public
 	 */
 	ControlFactoryBase.prototype.addValidations = function(oControl, sMethod) {
-		var fState, fError, that = this;
+		var fState,
+			fError,
+			that = this;
 
 		fState = function(sState, oEvent) {
-			var sMessage, oException, oSource = oEvent.getSource();
+			var sMessage,
+				oException,
+				oSource = oEvent.getSource();
 
 			if (oSource) {
+
 				if (oSource.setValueState) {
 					oSource.setValueState(sState);
 				}
@@ -117,6 +137,7 @@ sap.ui.define([
 				that._oParent[sMethod](sState === sap.ui.core.ValueState.Error);
 			}
 		};
+
 		fError = function(oEvent) {
 			fState(sap.ui.core.ValueState.Error, oEvent);
 		};
@@ -131,10 +152,10 @@ sap.ui.define([
 	};
 
 	/**
-	 * Retrieves the displayBehaviour from the configuration
+	 * Gets the display behaviour from the configuration
 	 *
 	 * @param {string} sDefaultDisplayMode determines the default display mode
-	 * @returns {string} relevant displayBehaviour option or <code>null</code>
+	 * @returns {string} Display behaviour or <code>null</code>
 	 * @private
 	 */
 	ControlFactoryBase.prototype._getDisplayBehaviourConfiguration = function(sDefaultDisplayMode) {
@@ -142,6 +163,7 @@ sap.ui.define([
 
 		// check the configuration for display behavior.
 		var oConfig = this._oParent.getConfiguration();
+
 		if (oConfig) {
 			sDisplay = oConfig.getDisplayBehaviour();
 		}
@@ -158,19 +180,18 @@ sap.ui.define([
 	};
 
 	/**
-	 * Retrieves the preventInitialDataFetchInVHDialog from the configuration
+	 * Gets the value of the <code>preventInitialDataFetchInVHDialog</code> from the configuration
 	 *
 	 * @returns {boolean} whether initial data fetch in value help dialog is demanded
 	 * @private
 	 */
 	ControlFactoryBase.prototype._getPreventInitialDataFetchInVHDialog = function() {
 		var oConfig = this._oParent.getConfiguration();
-
 		return oConfig ? oConfig.getPreventInitialDataFetchInValueHelpDialog() : true;
 	};
 
 	/**
-	 * Format a value according to the displayBehaviour settings
+	 * Format a value according to the display behaviour settings
 	 *
 	 * @param {string} sDefaultDisplayMode determines the default display mode
 	 * @param {string} sKey the main value
@@ -185,6 +206,10 @@ sap.ui.define([
 			return this._getFormattedExpressionFromDisplayBehaviour(sDisplay, sKey);
 		}
 
+		if (sDefaultDisplayMode === "defaultComboBoxReadOnlyDisplayBehaviour" && !sDisplay) {
+			sDisplay = "descriptionAndId";
+		}
+
 		return FormatUtil.getFormattedExpressionFromDisplayBehaviour(sDisplay || "idOnly", sKey, sDescription);
 	};
 
@@ -192,12 +217,15 @@ sap.ui.define([
 		var sKey = "";
 
 		switch (sDisplay) {
+
 			case "OnOff":
 				sKey = bValue ? "SMARTFIELD_CB_ON" : "SMARTFIELD_CB_OFF";
 				break;
+
 			case "TrueFalse":
 				sKey = bValue ? "SMARTFIELD_CB_TRUE" : "SMARTFIELD_CB_FALSE";
 				break;
+
 			// case "YesNo": sKey = bValue ? "SMARTFIELD_CB_YES" : "SMARTFIELD_CB_NO"; break;
 			default:
 				sKey = bValue ? "SMARTFIELD_CB_YES" : "SMARTFIELD_CB_NO";
@@ -205,6 +233,16 @@ sap.ui.define([
 		}
 
 		return this._oRb.getText(sKey);
+	};
+
+	ControlFactoryBase.prototype.shouldCreateValueHelpForControl = function(oControl) {
+
+		if (!oControl) {
+			return false;
+		}
+
+		var oParent = this._oParent;
+		return oParent && ((oParent.getMode() === "edit") || (oControl.getMetadata().getName() === "sap.ui.comp.smartfield.DisplayComboBox"));
 	};
 
 	/**
@@ -220,16 +258,19 @@ sap.ui.define([
 	 * @param {string} oValueHelp.dialogtitle title for the value help dialog.
 	 * @param {sap.ui.model.odata.ODataModel} oModel the OData model currently used
 	 * @param {function} fOnChange optional event handler for change event of value list provider and value help provider
-	 * @public
+	 * @protected
 	 */
-	ControlFactoryBase.prototype.addValueHelp = function(oControl, oProperty, oValueHelp, oModel, fOnChange) {
-		var oValueHelpDlg, oValueList, sDisplay, bPreventInitialDataFetchInVHDialog, oDateFormatSettings;
+	ControlFactoryBase.prototype.createValueHelp = function(oControl, oProperty, oValueHelp, oModel, fOnChange) {
+		var oValueHelpDlg,
+			oValueList;
 
 		if (oValueHelp.annotation && (oProperty["sap:value-list"] || oProperty["com.sap.vocabularies.Common.v1.ValueList"])) {
+
 			// check the configuration for display behavior.
-			sDisplay = this._getDisplayBehaviourConfiguration("defaultDropDownDisplayBehaviour");
-			bPreventInitialDataFetchInVHDialog = this._getPreventInitialDataFetchInVHDialog();
-			oDateFormatSettings = this._oParent.data("dateFormatSettings");
+			var sDisplay = this._getDisplayBehaviourConfiguration("defaultDropDownDisplayBehaviour"),
+				oDateFormatSettings = this._oParent.data("dateFormatSettings"),
+				bPreventInitialDataFetchInVHDialog = this._getPreventInitialDataFetchInVHDialog();
+
 			if (typeof oDateFormatSettings === "string") {
 				try {
 					oDateFormatSettings = JSON.parse(oDateFormatSettings);
@@ -237,21 +278,24 @@ sap.ui.define([
 					// Invalid dateformat settings provided, Ignore!
 				}
 			}
-			// add dialog, if necessary.
+
+			// check what is the content of oValueHelp.annotation - path or annotation object
+			var oAnnotation,
+				sAnnotationPath;
+
+			if (typeof oValueHelp.annotation === "string") {
+				sAnnotationPath = oValueHelp.annotation;
+			} else if (oValueHelp && typeof oValueHelp.annotation === "object") {
+				oAnnotation = oValueHelp.analyser.getValueListAnnotationForFunctionImport({
+					"": oValueHelp.annotation
+				}, oProperty.name).primaryValueListAnnotation;
+			}
+
+			// add dialog, if necessary. Case when the value help is no combobox
 			if (!oValueHelp.noDialog) {
+
 				if (oControl.setFilterSuggests) {
 					oControl.setFilterSuggests(false);
-				}
-
-				// check what is the content of oValueHelp.annotation - path or annotation object
-				var oAnnotation;
-				var sAnnotationPath;
-				if (typeof oValueHelp.annotation === "string") {
-					sAnnotationPath = oValueHelp.annotation;
-				} else if (oValueHelp && typeof oValueHelp.annotation === "object") {
-					oAnnotation = oValueHelp.analyser.getValueListAnnotationForFunctionImport({
-						"": oValueHelp.annotation
-					}, oProperty.name).primaryValueListAnnotation;
 				}
 
 				// create the value help provider.
@@ -290,7 +334,8 @@ sap.ui.define([
 				typeAheadEnabled: !oValueHelp.noTypeAhead,
 				aggregation: oValueHelp.aggregation,
 				loadAnnotation: true,
-				fullyQualifiedFieldName: oValueHelp.annotation,
+				fullyQualifiedFieldName: sAnnotationPath,
+				annotation: oAnnotation,
 				metadataAnalyser: oValueHelp.analyser,
 				model: oModel,
 				dateFormatSettings: oDateFormatSettings,
@@ -298,6 +343,7 @@ sap.ui.define([
 			});
 
 			if (!oValueHelp.noTypeAhead) {
+
 				if (oControl.setShowSuggestion) {
 					oControl.setShowSuggestion(true);
 				}
@@ -344,10 +390,12 @@ sap.ui.define([
 	 * @public
 	 */
 	ControlFactoryBase.prototype.createAttributes = function(sAttribute, oTypeInfo, mNames, oEvent) {
-		var that = this, n, oInfo, mAttributes = {};
+		var that = this,
+			mAttributes = {},
+			oInfo;
 
 		// check the standard attributes, whether they are bound or not.
-		for (n in mNames) {
+		for (var n in mNames) {
 			oInfo = this._oParent.getBindingInfo(n);
 
 			if (oInfo) {
@@ -380,9 +428,7 @@ sap.ui.define([
 			};
 		}
 
-		// add an optional object binding.
 		this.addObjectBinding(mAttributes);
-
 		return mAttributes;
 	};
 
@@ -394,7 +440,8 @@ sap.ui.define([
 	 * @public
 	 */
 	ControlFactoryBase.prototype.mapBindings = function(mAttributes, mNames) {
-		var n, oInfo;
+		var n,
+			oInfo;
 
 		for (n in mNames) {
 			oInfo = this._oParent.getBindingInfo(n);
@@ -415,6 +462,7 @@ sap.ui.define([
 	 * @public
 	 */
 	ControlFactoryBase.prototype.addObjectBinding = function(mAttributes, oBinding) {
+
 		if (!oBinding) {
 			oBinding = this._oParent.getObjectBinding(this._oMetaData.model);
 		}
@@ -474,24 +522,24 @@ sap.ui.define([
 		return mFormat;
 	};
 
-	/**
-	 * Frees all resources claimed during the life-time of this instance.
-	 *
-	 * @public
-	 */
-	ControlFactoryBase.prototype.destroy = function() {
-		var len = this._aProviders.length;
+	ControlFactoryBase.prototype.destroyValueHelp = function() {
+		this._aProviders.forEach(function(oProvider) {
+			oProvider.destroy();
+		});
 
-		while (len--) {
-			this._aProviders[len].destroy();
+		this._aProviders = [];
+	};
+
+	ControlFactoryBase.prototype.destroy = function() {
+		this.destroyValueHelp();
+
+		if (this._oBinding) {
+			this._oBinding.destroy();
 		}
 
-		this._oBinding.destroy();
 		this._oBinding = null;
 		this._oParent = null;
 		this._oModel = null;
-		this._aProviders = [];
-
 		this._oRb = null;
 	};
 

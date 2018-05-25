@@ -33,18 +33,18 @@ Controls provide the following features:
     rendering or when the control is destroyed).&lt;/li&gt;
 &lt;/ul&gt;
 
-See section "{@link topic:91f1703b6f4d1014b6dd926db0e91070 Developing OpenUI5/SAPUI5 Controls}"
+See section &quot;{@link topic:91f1703b6f4d1014b6dd926db0e91070 Developing OpenUI5/SAPUI5 Controls}&quot;
 in the documentation for an introduction to control development.</documentation>
     <abstract/>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
-        <property name="busy" type="sap.ui.core/boolean" defaultValue="false">
+        <property defaultValue="false" type="sap.ui.core/boolean" name="busy">
             <documentation>Whether the control is currently in busy state.</documentation>
         </property>
-        <property name="busyIndicatorDelay" type="sap.ui.core/int" defaultValue="1000">
+        <property defaultValue="1000" type="sap.ui.core/int" name="busyIndicatorDelay">
             <documentation>The delay in milliseconds, after which the busy indicator will show up for this control.</documentation>
         </property>
-        <property name="busyIndicatorSize" type="sap.ui.core/BusyIndicatorSize" defaultValue="Medium">
+        <property defaultValue="Medium" type="sap.ui.core/BusyIndicatorSize" name="busyIndicatorSize">
             <documentation>The size of the BusyIndicator. For controls with a width smaller 3rem a
 &lt;code&gt;sap.ui.core.BusyIndicatorSize.Small&lt;/code&gt; should be used.
 If the size could vary in width and the width could get smaller than 3rem, the
@@ -52,7 +52,7 @@ If the size could vary in width and the width could get smaller than 3rem, the
 The default is set to &lt;code&gt;sap.ui.core.BusyIndicatorSize.Medium&lt;/code&gt;
 For a full screen BusyIndicator use &lt;code&gt;sap.ui.core.BusyIndicatorSize.Large&lt;/code&gt;.</documentation>
         </property>
-        <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="visible">
             <documentation>Whether the control should be visible on the screen.
 
 If set to false, a placeholder will be rendered to mark the location of the invisible
@@ -61,7 +61,7 @@ zero dimensions (&lt;code&gt;display: none&lt;/code&gt;).
 
 See {@link sap.ui.core.RenderManager#writeInvisiblePlaceholderData RenderManager#writeInvisiblePlaceholderData} for details.</documentation>
         </property>
-        <property name="fieldGroupIds" type="sap.ui.core/string[]" defaultValue="[]" since="1.31">
+        <property since="1.31" defaultValue="[]" type="sap.ui.core/string[]" name="fieldGroupIds">
             <documentation>The IDs of a logical field group that this control belongs to.
 
 All fields in a logical field group should share the same &lt;code&gt;fieldGroupId&lt;/code&gt;.
@@ -71,14 +71,14 @@ See {@link sap.ui.core.Control#attachValidateFieldGroup}.</documentation>
         </property>
     </properties>
     <events>
-        <event name="validateFieldGroup" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="validateFieldGroup">
             <documentation>Event is fired if a logical field group defined by &lt;code&gt;fieldGroupIds&lt;/code&gt; of a control was left
 or the user explicitly pressed a key combination that triggers validation.
 
 Listen to this event to validate data of the controls belonging to a field group.
 See {@link sap.ui.core.Control#setFieldGroupIds}.</documentation>
             <parameters>
-                <parameter name="fieldGroupIds" type="sap.ui.core/string[]">
+                <parameter type="sap.ui.core/string[]" name="fieldGroupIds">
                     <documentation>field group IDs of the logical field groups to validate</documentation>
                 </parameter>
             </parameters>

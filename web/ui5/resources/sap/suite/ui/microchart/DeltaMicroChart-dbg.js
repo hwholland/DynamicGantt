@@ -1,32 +1,31 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// Provides control sap.suite.ui.microchart.Example.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define([
+	"jquery.sap.global", "./library", "sap/m/library", "sap/m/FlexBox", "sap/ui/core/Control", "sap/ui/Device", "sap/ui/core/ResizeHandler"
+], function(jQuery, library, MobileLibrary, FlexBox, Control, Device, ResizeHandler) {
 	"use strict";
 
 	/**
 	 * Constructor for a new DeltaMicroChart control.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
 	 * Represents the delta of two values as a chart. This control replaces the deprecated sap.suite.ui.commons.DeltaMicroChart.
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
 	 * @alias sap.suite.ui.microchart.DeltaMicroChart
-	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+	 * @ui5-metamodel This control will also be described in the UI5 (legacy) designtime metamodel
 	 */
 	var DeltaMicroChart = Control.extend("sap.suite.ui.microchart.DeltaMicroChart", /** @lends sap.suite.ui.microchart.DeltaMicroChart.prototype */ { metadata: {
 
@@ -84,7 +83,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			size: {type: "sap.m.Size", group: "Misc", defaultValue: "Auto"},
 
 			/**
- 			 * If this set to true, width and height of the control are determined by the width and height of the container in which the control is placed. Size and Width properties are ignored in such case.
+			 * If this set to true, width and height of the control are determined by the width and height of the container in which the control is placed. Size and Width properties are ignored in such case.
 			 * @since 1.38.0
 			 */
 			isResponsive: {type: "boolean", group: "Appearance", defaultValue: false}
@@ -94,7 +93,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		events: {
 
 			/**
-			 * The event is fired when the user chooses the delta micro chart.
+			 * The event is triggered when the chart is pressed.
 			 */
 			press: {}
 
@@ -118,9 +117,21 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 	};
 
+	DeltaMicroChart.prototype.setSize = function(size) {
+		if (this.getSize() !== size) {
+			if (size === MobileLibrary.Size.Responsive) {
+				this.setProperty("isResponsive", true, true);
+			} else {
+				this.setProperty("isResponsive", false, true);
+			}
+			this.setProperty("size", size, false);
+		}
+		return this;
+	};
+
 	/**
-	 * Handler for the core's init event. In order for the control to be rendered only if all themes are loaded
-	 * and everything is properly initialized, we attach a theme check in here.
+	 * Handler for the core's init event. The control will only be rendered if all themes are loaded
+	 * and everything is properly initialized. We attach a theme check here.
 	 *
 	 * @private
 	 */
@@ -132,8 +143,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	/**
-	 * The ColumnMicroChart is not being rendered until the theme was applied.
-	 * If the theme is applied, rendering starts by the control itself.
+	 * The chart will only be rendered if the theme is applied.
+	 * If this is the case, the control invalidates itself.
 	 *
 	 * @private
 	 */
@@ -199,9 +210,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	DeltaMicroChart.prototype.getAltText = function() {
-	    var sDv1 = this.getDisplayValue1();
-	    var sDv2 = this.getDisplayValue2();
-	    var sDdv = this.getDeltaDisplayValue();
+		var sDv1 = this.getDisplayValue1();
+		var sDv2 = this.getDisplayValue2();
+		var sDdv = this.getDeltaDisplayValue();
 		var fVal1 = this.getValue1();
 		var fVal2 = this.getValue2();
 		var sAdv1ToShow = sDv1 ? sDv1 : "" + fVal1;
@@ -212,7 +223,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return this.getTitle1() + " " + sAdv1ToShow + "\n" + this.getTitle2() + " " + sAdv2ToShow + "\n" +  this._oRb.getText("DELTAMICROCHART_DELTA_TOOLTIP", [sAddvToShow, sMeaning]);
 	};
 
-	DeltaMicroChart.prototype.getTooltip_AsString  = function() {
+	DeltaMicroChart.prototype.getTooltip_AsString  = function() { //eslint-disable-line
 		var oTooltip = this.getTooltip();
 		var sTooltip = this.getAltText();
 
@@ -225,12 +236,22 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		return oTooltip ? oTooltip : "";
 	};
 
+	/**
+	 * Returns the translated accessibility control type. It describes the type of the MicroChart control.
+	 *
+	 * @returns {string} The translated accessibility control type
+	 * @private
+	 */
+	DeltaMicroChart.prototype._getAccessibilityControlType = function() {
+		return this._oRb.getText("ACC_CTR_TYPE_DELTAMICROCHART");
+	};
+
 	DeltaMicroChart.prototype._isCalcSupported = function() {
-		return jQuery.sap.byId(this.getId() + "-calc").css("max-width") == "11px";
+		return jQuery.sap.byId(this.getId() + "-calc").css("max-width") === "11px";
 	};
 
 	DeltaMicroChart.prototype._isRoundingSupported = function() {
-		return jQuery.sap.byId(this.getId() + "-calc1").width() == 4;
+		return jQuery.sap.byId(this.getId() + "-calc1").width() === 4;
 	};
 
 	DeltaMicroChart.prototype.onBeforeRendering = function() {
@@ -240,7 +261,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 		this._oChartData = this._calcChartData();
 		if (this._sResizeHandlerId) {
-			sap.ui.core.ResizeHandler.deregister(this._sResizeHandlerId);
+			ResizeHandler.deregister(this._sResizeHandlerId);
 		}
 		this.$().unbind("mouseenter", this._addTitleAttribute);
 		this.$().unbind("mouseleave", this._removeTitleAttribute);
@@ -273,7 +294,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 		if (!this._bCalc || !this._bRounding) {
 			var oChart = jQuery.sap.domById(this.getId() + "-dmc-chart");
-			this._sResizeHandlerId = sap.ui.core.ResizeHandler.register(oChart,  jQuery.proxy(this._adjust, this));
+			this._sResizeHandlerId = ResizeHandler.register(oChart,  jQuery.proxy(this._adjust, this));
 
 			if (!this._bCalc) {
 				this._adjustCalc();
@@ -291,7 +312,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @private
 	 */
 	DeltaMicroChart.prototype._adjustToParent = function() {
-		if (jQuery.isFunction(this.getParent) && this.getParent() instanceof sap.m.FlexBox) {
+		if (jQuery.isFunction(this.getParent) && this.getParent() instanceof FlexBox) {
 			var sParentHeight = parseInt(this.getParent().$().height(), 10);
 			var sParentWidth = parseInt(this.getParent().$().width(), 10);
 			var $this = this.$();
@@ -369,7 +390,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 
 	/**
 	 * Checks if the whole control has enough width to display the right side of the control without truncation.
-	 *
+	 * @param {jQuery} $RightSide The label part of the row
+	 * @returns {boolean} True if the given element's width is smaller than or equal to the chart's, otherwise false
 	 * @private
 	 */
 	DeltaMicroChart.prototype._rightSideTruncated = function($RightSide) {
@@ -377,13 +399,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	DeltaMicroChart.prototype._adjust = function() {
-	    if (!this._bCalc) {
+		if (!this._bCalc) {
 			this._adjustCalc();
-	    }
+		}
 
-	    if (!this._bRounding) {
+		if (!this._bRounding) {
 			this._adjustRound();
-	    }
+		}
 	};
 
 	DeltaMicroChart.prototype._adjustRound = function() {
@@ -414,7 +436,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	DeltaMicroChart.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
+		Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
 		if (this.hasListeners("press")) {
 			this.$().attr("tabindex", 0).addClass("sapSuiteUiMicroChartPointer");
 		}
@@ -422,7 +444,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	DeltaMicroChart.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
+		Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
 		if (!this.hasListeners("press")) {
 			this.$().removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer");
 		}
@@ -430,23 +452,23 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	};
 
 	DeltaMicroChart.prototype.ontap = function(oEvent) {
-	     if (sap.ui.Device.browser.internet_explorer) {
-	         this.$().focus();
-	     }
-	     this.firePress();
+		if (Device.browser.msie) {
+			this.$().focus();
+		}
+		this.firePress();
 	};
 
 	DeltaMicroChart.prototype.onkeydown = function(oEvent) {
-	    if (oEvent.which == jQuery.sap.KeyCodes.SPACE) {
-	        oEvent.preventDefault();
-	    }
+		if (oEvent.which === jQuery.sap.KeyCodes.SPACE) {
+			oEvent.preventDefault();
+		}
 	};
 
 	DeltaMicroChart.prototype.onkeyup = function(oEvent) {
-	    if (oEvent.which == jQuery.sap.KeyCodes.ENTER || oEvent.which == jQuery.sap.KeyCodes.SPACE) {
-	        this.firePress();
-	        oEvent.preventDefault();
-	    }
+		if (oEvent.which === jQuery.sap.KeyCodes.ENTER || oEvent.which === jQuery.sap.KeyCodes.SPACE) {
+			this.firePress();
+			oEvent.preventDefault();
+		}
 	};
 
 	/**
@@ -472,5 +494,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			this.$().removeAttr("title");
 		}
 	};
+
+	library._overrideGetAccessibilityInfo(DeltaMicroChart.prototype);
+
 	return DeltaMicroChart;
 });

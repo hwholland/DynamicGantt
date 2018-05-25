@@ -1,12 +1,12 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The EndUserFeedback service.
  */
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap, localStorage, window, setTimeout, URI*/
     /*jslint regexp: true*/
-    jQuery.sap.declare("sap.ushell.services.EndUserFeedback");
 
     /**
      * Returns the property value of the object by value path
@@ -24,6 +24,10 @@
      * This method MUST be called by the Unified Shell's container only, others
      * MUST call <code>sap.ushell.Container.getService("EndUserFeedback")</code>.
      * Constructs a new instance of the end user feedback service.
+     *
+     * @name sap.ushell.services.EndUserFeedback
+     *
+     * @class The Unified Shell's end user feedback service
      *
      * @param {object}
      *            oAdapter the service adapter for the end user feedback service,
@@ -55,16 +59,13 @@
      * Platform implementations can also enable it dynamically by modification of the
      * bootstrap configuration during boot time.
      *
-     * @class The Unified Shell's end user feedback service
-     *
      * @public
      * @constructor
      * @see sap.ushell.services.Container#getService
      *
      * @since 1.25.1
-     *
      */
-    sap.ushell.services.EndUserFeedback = function (oAdapter, oContainerInterface, sParameters, oServiceConfiguration) {
+    function EndUserFeedback (oAdapter, oContainerInterface, sParameters, oServiceConfiguration) {
         var oServiceConfig = (oServiceConfiguration && oServiceConfiguration.config) || {};
 
         /**
@@ -73,6 +74,7 @@
          * @param {JSON} JSON object containing the input fields required for the end user feedback.
          *
          * @public
+         * @alias sap.ushell.services.EndUserFeedback#sendFeedback
          * @since 1.25.1
          */
         this.sendFeedback = function (oEndUserFeedbackData) {
@@ -107,6 +109,7 @@
          * @param
          *
          * @public
+         * @alias sap.ushell.services.EndUserFeedback#getLegalText
          * @since 1.25.1
          */
         this.getLegalText = function () {
@@ -120,6 +123,7 @@
          * @return {Object} Promise, done = if the service is enabled;
          *
          * @public
+         * @alias sap.ushell.services.EndUserFeedback#isEnabled
          * @since 1.25.1
          */
         this.isEnabled = function () {
@@ -157,4 +161,7 @@
 
     };
 
-}());
+    EndUserFeedback.hasNoAdapter = false;
+    return EndUserFeedback;
+
+}, true /* bExport */);

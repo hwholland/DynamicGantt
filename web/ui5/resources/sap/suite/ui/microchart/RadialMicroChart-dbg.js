@@ -1,27 +1,28 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// This file defines the behavior for the control.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/suite/ui/microchart/RadialMicroChartRenderer', 'sap/ui/Device'],
-	function(jQuery, library, Control, Renderer, Device) {
+sap.ui.define([
+	"jquery.sap.global",
+	"./library",
+	"sap/ui/core/Control",
+	"sap/suite/ui/microchart/RadialMicroChartRenderer",
+	"sap/ui/Device",
+	"sap/m/ValueColor"
+], function(jQuery, library, Control, Renderer, Device, ValueColor) {
 	"use strict";
 
 	/**
 	 * Describes the configuration of the graphic element on the chart.
-	 *
-	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
-	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
 	 * Displays a ring chart highlighting a current status. The status is displayed with a semantically colored radial bar and a percentage value.
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.36.0
 	 *
 	 * @constructor
@@ -30,9 +31,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 	 * @ui5-metamodel This control will also be described in the UI5 (legacy) designtime metamodel
 	 */
 	var RadialMicroChart = Control.extend("sap.suite.ui.microchart.RadialMicroChart", /** @lends sap.suite.ui.microchart.RadialMicroChart.prototype */ {
-		constructor : function(sId, mSettings) {
+		/**
+		 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+		 * @param {object} [mSettings] Initial settings for the new control
+		 */
+		constructor: function(sId, mSettings) {
 			var bPercentageMode;
-			if (mSettings && typeof mSettings.percentage === "number"){
+			if (mSettings && typeof mSettings.percentage === "number") {
 				bPercentageMode = true;
 			} else if (sId && typeof sId.percentage === "number") {
 				bPercentageMode = true;
@@ -48,29 +53,36 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 			}
 		},
 
-		metadata : {
+		metadata: {
 			library: "sap.suite.ui.microchart",
 			properties: {
 				/**
 				 * The total value. This is taken as 360 degrees value on the chart.
 				 */
-				total: {group:"Data", type:"float", defaultValue: null},
+				total: { group: "Data", type: "float", defaultValue: null },
 
 				/**
 				 * The fraction of the total value that is displayed.
 				 */
-				fraction: {group:"Data", type:"float", defaultValue: null},
+				fraction: { group: "Data", type: "float", defaultValue: null },
 
 				/**
 				 * The percentage that is displayed.
 				 * When a percentage is set, properties total and fraction are not considered.
 				 */
-				percentage: {group:"Data", type:"float", defaultValue: null},
+				percentage: { group: "Data", type: "float", defaultValue: null },
 
 				/**
 				 * The color shown in the completed path.
 				 */
-				valueColor: {group: "Appearance", type: "sap.m.ValueCSSColor", defaultValue: "Neutral"}
+				valueColor: { group: "Appearance", type: "sap.m.ValueCSSColor", defaultValue: "Neutral" },
+
+				/**
+				 *The size of the chart. If it is not set, the Responsive size is used.
+				 *Size XS is not supported
+				 *@since 1.44.0
+				 */
+				size: { group: "Misc", type: "sap.m.Size", defaultValue: "Responsive" }
 			},
 			events: {
 				/**
@@ -87,8 +99,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 	 * Init function for the control
 	 */
 	RadialMicroChart.prototype.init = function() {
-		this._rb = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.microchart");
-		this._bPercentageMode; // Flag for tracking if the application is using percentage or fraction and total
+		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.microchart");
 
 		this._bThemeApplied = true;
 		if (!sap.ui.getCore().isInitialized()) {
@@ -124,18 +135,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 		sap.ui.getCore().detachThemeChanged(this._handleThemeApplied, this);
 	};
 
-	/**
-	 * Handler for before rendering
-	 */
 	RadialMicroChart.prototype.onBeforeRendering = function() {
 		if (library._isInGenericTile(this)) {
 			library._removeStandardMargins(this);
-			Device.orientation.detachHandler(this._adjustToTileContent, this);
-			Device.resize.detachHandler(this._adjustToTileContent, this);
 		}
-		if (!this._bPercentageMode) {
+		if (!this._getPercentageMode()) {
 			if (this.getTotal() === 0) {
-				jQuery.sap.log.error("Total can not be 0, please add a valid total value");
+				jQuery.sap.log.info("Total cannot be 0. Please add a valid total value.");
 			} else {
 				this.setProperty("percentage", Math.round((this.getFraction() * 100 / this.getTotal()) * 10) / 10, true);
 			}
@@ -145,43 +151,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 
 	RadialMicroChart.prototype.onAfterRendering = function() {
 		Renderer._handleOnAfterRendering(this);
-		library._checkControlIsVisible(this, this._onControlIsVisible);
 		this._bindMouseEnterLeaveHandler();
-	};
-
-	/**
-	 * Callback function which is called when the control is visible, which means that the check via
-	 * library._checkControlIsVisible was successful.
-	 *
-	 * @private
-	 */
-	RadialMicroChart.prototype._onControlIsVisible = function() {
-		if (library._isInGenericTile(this)) {
-			Device.orientation.attachHandler(this._adjustToTileContent, this);
-			Device.resize.attachHandler(this._adjustToTileContent, this);
-		}
-	};
-
-	RadialMicroChart.prototype.exit = function() {
-		Device.orientation.detachHandler(this._adjustToTileContent, this);
-		Device.resize.detachHandler(this._adjustToTileContent, this);
-	};
-
-	/**
-	 * Performs the necessary adjustments in case of chart located inside of GenericTile control.
-	 *
-	 * @private
-	 */
-	RadialMicroChart.prototype._adjustToTileContent = function() {
-		var sParentWidth = this.getParent().$().css("min-width");
-		this.getParent().$().width(sParentWidth);
-		this.$().width("100%");
 	};
 
 	/* --- Event Handling --- */
 
 	RadialMicroChart.prototype.ontap = function(oEvent) {
-		if (sap.ui.Device.browser.internet_explorer) {
+		if (Device.browser.msie) {
 			this.$().focus();
 		}
 		this.firePress();
@@ -201,7 +177,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 	};
 
 	RadialMicroChart.prototype.attachEvent = function(eventId, data, functionToCall, listener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, eventId, data, functionToCall, listener);
+		Control.prototype.attachEvent.call(this, eventId, data, functionToCall, listener);
 		if (eventId === "press") {
 			this.rerender();
 		}
@@ -209,7 +185,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 	};
 
 	RadialMicroChart.prototype.detachEvent = function(eventId, functionToCall, listener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, eventId, functionToCall, listener);
+		Control.prototype.detachEvent.call(this, eventId, functionToCall, listener);
 		if (eventId === "press") {
 			this.rerender();
 		}
@@ -242,25 +218,27 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 		}
 	};
 
-	RadialMicroChart.prototype.getTooltip_AsString = function() {
+	RadialMicroChart.prototype.getTooltip_AsString = function() { //eslint-disable-line
 		return this._getTooltipText();
 	};
 
-	/* --- Helpers --- */
-
 	/**
-	 * Check if the valueColor property is an instance of sap.m.ValueColor
-	 * @returns {boolean} True if valueColor property is an instance of sap.m.ValueColor, false otherwise.
+	 * Returns the translated accessibility control type. It describes the type of the MicroChart control.
+	 *
+	 * @returns {string} The translated accessibility control type
 	 * @private
 	 */
-	RadialMicroChart.prototype._isValueColorInstanceOfValueColor = function() {
-		var sValue = this.getValueColor();
-		for (var sValueColor in sap.m.ValueColor){
-			if (sValueColor === sValue) {
-				return true;
-			}
-		}
-		return false;
+	RadialMicroChart.prototype._getAccessibilityControlType = function() {
+		return this._oRb.getText("ACC_CTR_TYPE_RADIALMICROCHART");
+	};
+
+	/**
+	 * Checks if the valueColor property is a member of sap.m.ValueColor
+	 * @returns {boolean} True if the valueColor property is a member of sap.m.ValueColor, false if otherwise.
+	 * @private
+	 */
+	RadialMicroChart.prototype._isValueColorValid = function() {
+		return ValueColor.hasOwnProperty(this.getValueColor());
 	};
 
 	/**
@@ -328,10 +306,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 		} else if (fPercentage < 0) {
 			fPercentage = 0;
 		}
-		if (this._isValueColorInstanceOfValueColor()) {
-			sTextValue = this._rb.getText("RADIALMICROCHART_ARIA_LABEL", [this.getPercentage(), this._getStatusText()]);
+		if (this._isValueColorValid()) {
+			sTextValue = this._oRb.getText("RADIALMICROCHART_ARIA_LABEL", [ this.getPercentage(), this._getStatusText() ]);
 		} else {
-			sTextValue = this._rb.getText("RADIALMICROCHART_ARIA_LABEL", [fPercentage, sap.m.ValueColor.Neutral]);
+			sTextValue = this._oRb.getText("RADIALMICROCHART_ARIA_LABEL", [ fPercentage, ValueColor.Neutral ]);
 		}
 		return sTextValue;
 	};
@@ -345,14 +323,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 	RadialMicroChart.prototype._getStatusText = function() {
 		var sValueColor = this.getValueColor();
 		switch (sValueColor) {
-			case sap.m.ValueColor.Error:
-				return this._rb.getText("SEMANTIC_COLOR_ERROR");
-			case sap.m.ValueColor.Critical:
-				return this._rb.getText("SEMANTIC_COLOR_CRITICAL");
-			case sap.m.ValueColor.Good:
-				return this._rb.getText("SEMANTIC_COLOR_GOOD");
+			case ValueColor.Error:
+				return this._oRb.getText("SEMANTIC_COLOR_ERROR");
+			case ValueColor.Critical:
+				return this._oRb.getText("SEMANTIC_COLOR_CRITICAL");
+			case ValueColor.Good:
+				return this._oRb.getText("SEMANTIC_COLOR_GOOD");
 			default:
-				return this._rb.getText("SEMANTIC_COLOR_NEUTRAL");
+				return this._oRb.getText("SEMANTIC_COLOR_NEUTRAL");
 		}
 	};
 
@@ -383,7 +361,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 	 *
 	 * @private
 	 */
-	RadialMicroChart.prototype._bindMouseEnterLeaveHandler = function () {
+	RadialMicroChart.prototype._bindMouseEnterLeaveHandler = function() {
 		this.$().bind("mouseenter.tooltip", this._addTitleAttribute.bind(this));
 		this.$().bind("mouseleave.tooltip", this._removeTitleAttribute.bind(this));
 	};
@@ -393,10 +371,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/sui
 	 *
 	 * @private
 	 */
-	RadialMicroChart.prototype._unbindMouseEnterLeaveHandler = function () {
+	RadialMicroChart.prototype._unbindMouseEnterLeaveHandler = function() {
 		this.$().unbind("mouseenter.tooltip");
 		this.$().unbind("mouseleave.tooltip");
 	};
+
+	library._overrideGetAccessibilityInfo(RadialMicroChart.prototype);
 
 	return RadialMicroChart;
 });

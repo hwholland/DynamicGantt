@@ -1,16 +1,11 @@
-/* global $, jQuery, sap, console, window  */
-(function() {
+/* global jQuery, sap, console, window  */
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/controls/SearchTilesContainerKeyHandler',
+    'sap/ushell/renderers/fiori2/search/controls/SearchTileHighlighter',
+    'sap/ushell/renderers/fiori2/search/controls/SearchResultList',
+    'sap/m/Button'
+], function(KeyHandler, TileHighlighter, SearchResultList) {
     "use strict";
-
-    // =======================================================================
-    // Import packages
-    // =======================================================================
-    jQuery.sap.require('sap.m.Button');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.controls.SearchTilesContainerKeyHandler');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.controls.SearchTileHighlighter');
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.controls.SearchResultList");
-    var KeyHandler = sap.ushell.renderers.fiori2.search.controls.SearchTilesContainerKeyHandler;
-    var TileHighlighter = sap.ushell.renderers.fiori2.search.controls.SearchTileHighlighter;
 
     // =======================================================================
     // Tiles Container
@@ -39,7 +34,12 @@
                 },
                 'resultList': {
                     type: 'sap.ushell.renderers.fiori2.search.controls.SearchResultList'
+                },
+                'addAccInformation': {
+                    type: 'boolean',
+                    defaultValue: false
                 }
+
             },
             aggregations: {
                 'tiles': {
@@ -65,10 +65,10 @@
                     // Properly handle shift-tab events.
                     // See sap.m.ListItemBase.onsaptabprevious for further info.
                     var thisControl;
-                    if ($(this.control.getDomRef()).prop("tagName").toLowerCase() === "button") {
+                    if (jQuery(this.control.getDomRef()).prop("tagName").toLowerCase() === "button") {
                         thisControl = this.control.getDomRef();
                     } else {
-                        var buttonChildren = $(this.control.getDomRef()).find("[role='button']");
+                        var buttonChildren = jQuery(this.control.getDomRef()).find("[role='option']");
                         if (buttonChildren.length > 0) {
                             thisControl = buttonChildren[0];
                         }
@@ -114,6 +114,7 @@
             oRm.writeControlData(oControl);
             oRm.addClass('sapUshellSearchTileContainer');
             oRm.writeClasses();
+            //oRm.writeAttribute('role', 'listbox');
             oRm.write('>');
 
             // render tiles
@@ -133,9 +134,11 @@
             if (tile.attachPress) {
                 tile.attachPress(function() {
                     model = sap.ushell.renderers.fiori2.search.getModelSingleton();
-                    model.analytics.logCustomEvent('FLP: Search', 'Launch App', [tile.usageAnalyticsTitle, tile.getTargetURL()]);
-                    model.analytics.logCustomEvent('FLP: Application Launch point', 'Search Results', [tile.usageAnalyticsTitle, tile.getTargetURL()]);
-
+                    model.eventLogger.logEvent({
+                        type: model.eventLogger.TILE_NAVIGATE,
+                        tileTitle: tile.eventLoggingData.title,
+                        targetUrl: tile.eventLoggingData.targetUrl
+                    });
                 });
                 return;
             }
@@ -150,9 +153,11 @@
                 }
                 innerTile.attachPress(function() {
                     model = sap.ushell.renderers.fiori2.search.getModelSingleton();
-                    model.analytics.logCustomEvent('FLP: Search', 'Launch App', [tile.usageAnalyticsTitle, innerTile.getTargetURL()]);
-                    model.analytics.logCustomEvent('FLP: Application Launch point', 'Search Results', [tile.usageAnalyticsTitle, innerTile.getTargetURL()]);
-
+                    model.eventLogger.logEvent({
+                        type: model.eventLogger.TILE_NAVIGATE,
+                        tileTitle: tile.eventLoggingData.title,
+                        targetUrl: tile.eventLoggingData.targetUrl
+                    });
                 });
             }
         },
@@ -170,9 +175,11 @@
                 oControl.registerAfterRenderingForTile(tile);
                 oRm.write('<div');
                 oRm.addClass('sapUshellSearchTileWrapper');
+
                 oRm.writeClasses();
-                oRm.writeAttribute("title", sap.ushell.resources.i18n.getText("launchTile_tooltip"));
+                //oRm.writeAttribute("title", sap.ushell.resources.i18n.getText("launchTile_tooltip"));
                 //oRm.writeAttribute("tabindex", 0);
+                //oRm.writeAttribute('aria-label', 'tile'); // invisible
                 oRm.write('>');
                 oRm.renderControl(tile);
                 oRm.write('</div>');
@@ -213,6 +220,7 @@
             });
             button.addStyleClass('sapUshellSearchShowMoreTileButton');
             button.addStyleClass('sapMGT');
+            button.addStyleClass('OneByOne');
             oRm.renderControl(button);
             oRm.write('</div>');
 
@@ -221,6 +229,9 @@
         // after rendering
         // ===================================================================
         onAfterRendering: function(oEvent) {
+
+            // limit size of tiles
+            this.limitTileSize();
 
             // limit rows
             while (this.getNumberRows() > this.getMaxRows()) {
@@ -233,11 +244,72 @@
             if (this.getTotalLength() > numberTiles) {
                 this.makePlusTileVisible();
                 this.cutAtRow();
+            } else {
+                container.removeChild(container.children.item(container.children.length - 1));
             }
 
             // accessibility
-            jQuery('.sapUshellSearchTileWrapper [tabindex]').attr('role', 'button');
+            this.addAccessibilityInformation();
+        },
 
+        // add accessibility information
+        // ===================================================================
+        addAccessibilityInformation: function() {
+
+            if (!this.getAddAccInformation()) {
+                return;
+            }
+
+            var container = this.getDomRef();
+            var children = container.children;
+            for (var i = 0; i < children.length; ++i) {
+                var child = children[i];
+                var focusableChild = child.querySelector('[tabindex]');
+                if (!focusableChild) {
+                    focusableChild = child.querySelector('button');
+                }
+                if (!focusableChild) {
+                    continue;
+                }
+
+                var ariaLabel = focusableChild.getAttribute('aria-label');
+                if ((typeof ariaLabel) === 'string') {
+                    focusableChild.setAttribute('aria-label', sap.ushell.resources.i18n.getText('tile') + ' ' + ariaLabel);
+                }
+
+                focusableChild.setAttribute('role', 'option');
+                focusableChild.setAttribute('aria-posinset', i + 1);
+                focusableChild.setAttribute('aria-setsize', children.length);
+            }
+
+        },
+
+        // limit size of tiles
+        // ===================================================================
+        limitTileSize: function() {
+            var container = this.getDomRef();
+            for (var i = 0; i < container.children.length; ++i) {
+                var tile = container.children.item(i);
+                if (!this.hasTileStyleClass(tile)) {
+                    // make tile
+                    tile.classList.add('sapMGT');
+                    tile.classList.add('OneByOne');
+                }
+            }
+        },
+
+        // check recursively whether domref is a tile
+        // ===================================================================
+        hasTileStyleClass: function(domElement) {
+            if (domElement.classList.contains('sapMGT') && domElement.classList.contains('OneByOne')) {
+                return true;
+            }
+            // if we have a single child we assume that current domElement is a container
+            // -> recurse into container
+            if (domElement.children.length === 1) {
+                return this.hasTileStyleClass(domElement.children.item(0));
+            }
+            return false;
         },
 
         // return number of visible tiles (including show more)
@@ -251,11 +323,15 @@
         // ===================================================================
         registerAfterRenderingForTile: function(tileView) {
             var that = this;
+            if (tileView.searchTilesContainerAfterRenderingRegistered) {
+                return;
+            }
             tileView.addEventDelegate({
                 onAfterRendering: function() {
                     that.tileHighlighter.highlight(tileView);
                 }
             });
+            tileView.searchTilesContainerAfterRenderingRegistered = true;
         },
 
         // make plus tile visible
@@ -351,9 +427,4 @@
         }
 
     });
-
-
-
-
-
-})();
+});

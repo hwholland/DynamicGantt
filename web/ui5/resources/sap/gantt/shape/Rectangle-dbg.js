@@ -40,7 +40,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -52,10 +52,10 @@ sap.ui.define([
 				tag: {type: "string", defaultValue: "rect"},
 				isDuration: {type: "boolean", defaultValue: true},
 
-				x: {type: "number"},
-				y: {type: "number"},
-				width: {type: "number"},
-				height: {type: "number", defaultValue: 15},
+				x: {type: "float"},
+				y: {type: "float"},
+				width: {type: "float"},
+				height: {type: "float", defaultValue: 15},
 				rx: {type: "string", defaultValue: "0"},
 				ry: {type: "string", defaultValue: "0"}
 			}
@@ -63,6 +63,7 @@ sap.ui.define([
 	});
 	
 	Rectangle.prototype.init = function() {
+		Shape.prototype.init.apply(this, arguments);
 		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
 		this.setProperty("ariaLabel", oRb.getText("ARIA_RECTANGLE"));
 	};
@@ -249,6 +250,16 @@ sap.ui.define([
 	Rectangle.prototype.getRy = function (oData) {
 		return this._configFirst("ry", oData);
 	};
-	
+
+	Rectangle.prototype.getStyle = function(oData, oRowInfo) {
+		var sInheritedStyle = Shape.prototype.getStyle.apply(this, arguments);
+		var oStyles = {
+			"fill": this.determineValueColor(this.getFill(oData, oRowInfo)),
+			"stroke-dasharray": this.getStrokeDasharray(oData, oRowInfo),
+			"fill-opacity": this.getFillOpacity(oData, oRowInfo),
+			"stroke-opacity": this.getStrokeOpacity(oData, oRowInfo)
+		};
+		return sInheritedStyle + this.getInlineStyle(oStyles);
+	};
 	return Rectangle;
 }, true);

@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.smartfilterbar.ControlConfiguration.
@@ -13,7 +14,7 @@ sap.ui.define([
 	/**
 	 * Constructor for a new smartfilterbar/ControlConfiguration.
 	 * 
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
+	 * @param {string} [sID] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class ControlConfiguration can be used to add additional configuration for filter fields in the SmartFilterBar control, in order to overwrite
 	 *        the default settings from the OData metadata. For instance, it is possible to change the label, index or control type of a filter field.
@@ -78,11 +79,10 @@ sap.ui.define([
 
 				/**
 				 * The SmartFilterBar calculates which kind of control will be used for a filter fields based on multiple OData Attributes and
-				 * annotations. Using this property it is possible to overwrite the OData metadata. Possible values can be found here:
-				 * sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE
+				 * annotations. Using this property it is possible to overwrite the OData metadata.
 				 */
 				controlType: {
-					type: "string",
+					type: "sap.ui.comp.smartfilterbar.ControlType",
 					group: "Misc",
 					defaultValue: 'auto'
 				},
@@ -90,10 +90,9 @@ sap.ui.define([
 				/**
 				 * The filter type specifies whether the filter fields is e.g. type single value, multi-value,or interval. The filter type is being
 				 * calculated by the martFilterBar based on the OData metadata. Using this property the filter type can be configured manually.
-				 * Possible value scan be found here: sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE
 				 */
 				filterType: {
-					type: "string",
+					type: "sap.ui.comp.smartfilterbar.FilterType",
 					group: "Misc",
 					defaultValue: 'auto'
 				},
@@ -118,18 +117,17 @@ sap.ui.define([
 				},
 
 				/**
-				 * Property can be used to overwrite the mandatory state of a filter field. Possible values:
-				 * sap.ui.comp.smartfilterbar.ControlConfiguration.MANDATORY Property can only be set during initialisation. Changes at runtime will
-				 * be ignored.
+				 * Property can be used to overwrite the mandatory state of a filter field. Property can only be set during initialization. Changes at
+				 * runtime will be ignored.
 				 */
 				mandatory: {
-					type: "string",
+					type: "sap.ui.comp.smartfilterbar.MandatoryType",
 					group: "Misc",
 					defaultValue: 'auto'
 				},
 
 				/**
-				 * The width of the filter field in a CSS compatible format. The width can be set only once during initialisation. Changes at runtime
+				 * The width of the filter field in a CSS compatible format. The width can be set only once during initialization. Changes at runtime
 				 * will not be reflected. The width will not be applied to custom controls.
 				 */
 				width: {
@@ -149,8 +147,8 @@ sap.ui.define([
 
 				/**
 				 * In case there are value help annotations for this filter field, it is possible to specify whether the table in the value help
-				 * dialog for this field will be filled initially. The default value is flase, which menas the table will be filled as the data fetch
-				 * is not being prevented.
+				 * dialog for this field will be filled initially. The default value is true, which means the table will not be filled as the data
+				 * fetch is prevented.
 				 */
 				preventInitialDataFetchInValueHelpDialog: {
 					type: "boolean",
@@ -160,23 +158,21 @@ sap.ui.define([
 
 				/**
 				 * The displayBehaviour specifies how the content should be displayed on certain controls. Ex: DescriptionOnly for Combobox (DropDown
-				 * text) , Description and ID for MultiInput (token text) Possible values can be found here:
-				 * sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR
+				 * text) , Description and ID for MultiInput (token text)
 				 */
 				displayBehaviour: {
-					type: "string",
+					type: "sap.ui.comp.smartfilterbar.DisplayBehaviour",
 					group: "Misc",
 					defaultValue: 'auto'
 				},
-				
+
 				/**
-				 * The condition Type class name to use for this filter item
-				 * Implemantation should derive from sap.ui.comp.config.condition.Type
+				 * The condition Type class name to use for this filter item. Implementation should derive from sap.ui.comp.config.condition.Type
 				 */
-				conditionType : {
-					type : "any", 
-					group : "Misc", 
-					defaultValue : null
+				conditionType: {
+					type: "any",
+					group: "Misc",
+					defaultValue: null
 				}
 			},
 			aggregations: {
@@ -191,8 +187,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * If a custom control is specified, the Smart Filter Bar will not create a control but use the custom control. Additional services
-				 * like TypeAhead have to implemented manually.
+				 * If a custom control is specified, the SmartFilterBar will not create a control but use the custom control. Additional services like
+				 * TypeAhead have to implemented manually.
 				 */
 				customControl: {
 					type: "sap.ui.core.Control",
@@ -219,27 +215,6 @@ sap.ui.define([
 		}
 	});
 
-	ControlConfiguration.prototype.setFilterType = function(sFilterType) {
-		if (!ControlConfiguration.FILTERTYPE[sFilterType]) {
-			throw "FilterType " + sFilterType + " is invalid";
-		}
-		this.setProperty("filterType", sFilterType);
-	};
-
-	ControlConfiguration.prototype.setControlType = function(sControlType) {
-		if (!ControlConfiguration.CONTROLTYPE[sControlType]) {
-			throw "ControlType " + sControlType + " is invalid";
-		}
-		this.setProperty("controlType", sControlType);
-	};
-
-	ControlConfiguration.prototype.setMandatory = function(sMandatory) {
-		if (!ControlConfiguration.MANDATORY[sMandatory]) {
-			throw "Mandatory state " + sMandatory + " is invalid";
-		}
-		this.setProperty("mandatory", sMandatory);
-	};
-
 	ControlConfiguration.prototype.setVisible = function(bIsVisible) {
 		this.setProperty("visible", bIsVisible);
 		this.fireChange({
@@ -261,40 +236,11 @@ sap.ui.define([
 		});
 	};
 
-	ControlConfiguration.prototype.setDisplayBehaviour = function(sDisplayBehaviour) {
-		if (!ControlConfiguration.DISPLAYBEHAVIOUR[sDisplayBehaviour]) {
-			throw "DisplayBehaviour " + sDisplayBehaviour + " is invalid";
-		}
-		this.setProperty("displayBehaviour", sDisplayBehaviour);
-	};
-
-	ControlConfiguration.FILTERTYPE = {
-		auto: "auto",
-		single: "single",
-		multiple: "multiple",
-		interval: "interval"
-	};
-
-	ControlConfiguration.CONTROLTYPE = {
-		auto: "auto",
-		input: "input",
-		dropDownList: "dropDownList",
-		date: "date"
-	};
-
-	ControlConfiguration.MANDATORY = {
-		auto: "auto",
-		mandatory: "mandatory",
-		notMandatory: "notMandatory"
-	};
-
-	ControlConfiguration.DISPLAYBEHAVIOUR = {
-		auto: "auto",
-		descriptionOnly: "descriptionOnly",
-		descriptionAndId: "descriptionAndId",
-		idOnly: "idOnly",
-		idAndDescription: "idAndDescription"
-	};
+	// Assign types from library for backward compatibility!
+	ControlConfiguration.FILTERTYPE = sap.ui.comp.smartfilterbar.FilterType;
+	ControlConfiguration.CONTROLTYPE = sap.ui.comp.smartfilterbar.ControlType;
+	ControlConfiguration.MANDATORY = sap.ui.comp.smartfilterbar.MandatoryType;
+	ControlConfiguration.DISPLAYBEHAVIOUR = sap.ui.comp.smartfilterbar.DisplayBehaviour;
 
 	return ControlConfiguration;
 

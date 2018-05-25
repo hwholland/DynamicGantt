@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define([
@@ -35,12 +35,31 @@ sap.ui.define([
 				/**
 				 * Detailed unit infomation of TimeDimension. Please refer to {@link sap.chart.TimeUnitType TimeUnitType}.
 				 */
-				timeUnit : {type : "string"}
+				timeUnit : {type : "sap.chart.TimeUnitType"},
+				/**
+				 * Detailed fiscalYearPeriodCount of TimeDimension. It contains period numbers of fiscal years, like
+				 * <pre>
+				 * {
+				 *	 default: 12,
+				 *	 deviations: {
+				 *	 	 "2012": 10,
+				 *	 	 "2013": 16
+				 *	 }
+				 * }
+				 * </pre>
+				 */
+				fiscalYearPeriodCount : {type : "object"},
+				/**
+				 * A time value (aligned with 'timeUnit') to indicate the start point of projected values.
+				 */
+				projectedValueStartTime : { type: "any"}
 			}
 		}
 	});
 	
 	TimeDimension.prototype.setTimeUnit = ChartUtils.makeNotifyParentProperty("timeUnit");
+	TimeDimension.prototype.setFiscalYearPeriodCount = ChartUtils.makeNotifyParentProperty("fiscalYearPeriodCount");
+	TimeDimension.prototype.setProjectedValueStartTime = ChartUtils.makeNotifyParentProperty("projectedValueStartTime");
 
 	return TimeDimension;
 });

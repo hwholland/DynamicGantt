@@ -57,7 +57,7 @@ jQuery.sap.require("sap.m.CustomListItem");
  * @class
  * Extends the ObjectListItem to display a line in the customer context control.
  * @extends sap.m.CustomListItem
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

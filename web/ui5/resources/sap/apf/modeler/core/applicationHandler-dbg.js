@@ -140,6 +140,30 @@ jQuery.sap.require("sap.apf.utils.hashtable");
 		this.getApplication = function(id) {
 			return applicationList.getItem(id);
 		};
+		/**
+		 * a application has been created during import of content on the server. The application list needs to be updated.
+		 * @private
+		 * @function
+		 * @name sap.apf.modeler.core.applicationHandler#registerApplicationCreatedOnServer
+		 * @param {string} applicationId ID of application
+		 * @param {string} applicationName Name of application
+		 */
+		this.registerApplicationCreatedOnServer = function(applicationId, applicationName) {
+			var existingApps = this.getList();
+			var found = false;
+			existingApps.forEach(function(application){
+				if (application.Application === applicationId) {
+					found = true;
+				}
+			});
+			if (!found) {
+				applicationList.setItem(applicationId, {
+					Application : applicationId,
+					ApplicationName : applicationName,
+					SemanticObject : ""
+				});
+			}
+		};
 		function initialize() {
 			applicationList = new Hashtable(messageHandler);
 			var callbackRead = function(response, metadata, messageObject) {

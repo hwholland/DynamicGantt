@@ -1,12 +1,12 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(["sap/ui/base/EventProvider"], function(EventProvider) {
+	"use strict";
+
     /*global jQuery, sap, document, setTimeout, window */
     /*jslint plusplus: true, nomen: true, bitwise: true */
 
-    jQuery.sap.declare("sap.ushell.components.flp.launchpad.PagingManager");
-    sap.ui.base.EventProvider.extend("sap.ushell.components.flp.launchpad.PagingManager", {
+    var PagingManager = EventProvider.extend("sap.ushell.components.flp.launchpad.PagingManager", {
         metadata : {
             publicMethods : ["setElementClass", "setContainerSize", "getNumberOfAllocatedElements", "moveToNextPage", "getTileHeight"]
         },
@@ -101,4 +101,8 @@
             return elementsPerRow * elementsPerColumn;
         }
     });
-}());
+
+
+	return PagingManager;
+
+});

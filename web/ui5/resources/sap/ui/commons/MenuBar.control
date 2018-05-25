@@ -10,18 +10,18 @@ or all items in a menu, automated layouting of items with or w/o image, and acti
     <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.OverflowToolbar&lt;/code&gt; control.</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>When the MenuBar is not enabled, automatically all single menu items are also displayed as 'disabled'.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="100%" group="Dimension">
+        <property group="Dimension" defaultValue="100%" type="sap.ui.core/CSSSize" name="width">
             <documentation>Specifies the width of the MenuBar</documentation>
         </property>
-        <property name="design" type="sap.ui.commons/MenuBarDesign" defaultValue="Standard" group="Appearance">
+        <property group="Appearance" defaultValue="Standard" type="sap.ui.commons/MenuBarDesign" name="design">
             <documentation>Available design options are Header and Standard. Note that design settings are theme-dependent.</documentation>
         </property>
     </properties>
     <aggregations default="items">
-        <aggregation name="items" type="sap.ui.unified/MenuItem" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.unified/MenuItem" name="items">
             <documentation>Aggregation of menu items.</documentation>
         </aggregation>
     </aggregations>

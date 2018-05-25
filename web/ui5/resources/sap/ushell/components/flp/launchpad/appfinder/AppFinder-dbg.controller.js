@@ -1,71 +1,211 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
-    /*global jQuery, sap, window */
-    /*jslint nomen: true */
+sap.ui.define(['sap/ushell/ui/launchpad/AccessibilityCustomData', 'sap/ushell/ui5service/ShellUIService'],
+    function (AccessibilityCustomData, ShellUIService) {
+        "use strict";
 
-    jQuery.sap.require("sap.ushell.ui.launchpad.AccessibilityCustomData");
+        sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.AppFinder", {
+            onInit: function () {
+                sap.ushell.Container.getRenderer("fiori2").createExtendedShellState("appFinderExtendedShellState", function () {
+                    sap.ushell.Container.getRenderer("fiori2").showHeaderItem('backBtn', true);
+                    sap.ushell.Container.getRenderer("fiori2").showHeaderItem('homeBtn', true);
+                });
+                var oView = this.getView(),
+                    oModel = oView.getModel(),
+                    showEasyAccessMenu = oView.showEasyAccessMenu;
 
-    sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.AppFinder", {
-        onInit: function () {
-            sap.ushell.Container.getRenderer("fiori2").createExtendedShellState("appFinderExtendedShellState", function () {
-                sap.ushell.Container.getRenderer("fiori2").showHeaderItem("homeBtn", true);
-                var isMobile = sap.ui.Device.system.phone;
-                sap.ushell.Container.getRenderer("fiori2").setHeaderHiding(isMobile);
-            });
-            var that = this;
-            var oView = this.getView();
-            var oModel = oView.getModel();
-            //make sure the groups are loaded
-            if (!oModel.getProperty("/groups") || oModel.getProperty("/groups").length === 0) {
-                var dashboardMgr = sap.ushell.components.flp.launchpad.getDashboardManager();
-                dashboardMgr.loadPersonalizedGroups();
-            }
-
-            var enableEasyAccess = oView.enableEasyAccess;
-            this.oRouter = this.getView().parentComponent.getRouter();
-
-            this.catalogView = sap.ui.view("catalogView", {
-                type: sap.ui.core.mvc.ViewType.JS,
-                viewName: "sap.ushell.components.flp.launchpad.appfinder.Catalog",
-                height: "100%",
-                viewData: {parentComponent: oView.parentComponent}
-            });
-            this.catalogView.addStyleClass('sapUiGlobalBackgroundColor sapUiGlobalBackgroundColorForce');
-
-            this._addViewCustomData(this.catalogView, "appFinderCatalogTitle");
-
-            this.oRouter.getRoute("catalog").attachPatternMatched(function (oEvent) {
-                that._navigateTo.apply(that,["appFinder","catalog"]);
-            });
-
-            this.oRouter.getRoute("appFinder").attachPatternMatched(function (oEvent) {
-                that._applyExtendedShellstate();
-                that._getPathAndHandleGroupContext(oEvent);
-                //in fiori 2.0 the header should be merged -> the shell header should be "App Finder"
-                if (that.oView.isFiori2) {
-                    that._updateShellHeader(that.oView.oPage.getTitle());
+                //make sure the groups are loaded
+                if (!oModel.getProperty("/groups") || oModel.getProperty("/groups").length === 0) {
+                    var dashboardMgr = sap.ushell.components.flp.launchpad.getDashboardManager();
+                    dashboardMgr.loadPersonalizedGroups();
                 }
-                if (enableEasyAccess) {
-                    that.onShow(oEvent);
-                }
-                sap.ui.getCore().getEventBus().publish("showCatalog");
-            });
 
-            if (!enableEasyAccess) {
-                // we assume that when enableEasyAccess is undefined or false, then currentMenu should be catalog
-                this.currentMenu = "catalog";
-                oView.oPage.addContent(this.catalogView);
+                // model
+                this.getView().setModel(this._getSubHeaderModel(), "subHeaderModel");
+                this.oConfig = oView.parentComponent.getComponentData().config;
+                this.catalogView = sap.ui.view("catalogView", {
+                    type: sap.ui.core.mvc.ViewType.JS,
+                    viewName: "sap.ushell.components.flp.launchpad.appfinder.Catalog",
+                    height: "100%",
+                    viewData: {
+                        parentComponent: oView.parentComponent,
+                        subHeaderModel: this._getSubHeaderModel()
+                    }
+                });
+                this.catalogView.addStyleClass('sapUiGlobalBackgroundColor sapUiGlobalBackgroundColorForce');
+                this._addViewCustomData(this.catalogView, "appFinderCatalogTitle");
+
+
+                // routing for both 'catalog' and 'appFinder' is supported and added below
+                this.oRouter = this.getView().parentComponent.getRouter();
+                this.oRouter.getRoute("catalog").attachPatternMatched(function (oEvent) {
+                    this._navigateTo.apply(this, ["appFinder", "catalog"]);
+                }.bind(this));
+                this.oRouter.getRoute("appFinder").attachPatternMatched(this._handleAppFinderNavigation.bind(this));
+
+                // setting first focus
+                if (!showEasyAccessMenu) {
+                    oView.oPage.addContent(this.catalogView);
+                    setTimeout(function () {
+                        jQuery('#catalogSelect').focus();
+                    }, 0);
+                }
+
+                // attaching a resize handler to determine is hamburger button should be visible or not in the App Finder sub header.
+                sap.ui.Device.resize.attachHandler(this._resizeHandler.bind(this));
+            },
+
+        _resizeHandler: function () {
+            // update the visibiilty of the hamburger button upon resizing
+            var bShowOpenCloseSplitAppButton = this._showOpenCloseSplitAppButton();
+
+            var bCurrentShowOpenCloseSplitAppButton = this.oSubHeaderModel.getProperty('/openCloseSplitAppButtonVisible');
+            if (bShowOpenCloseSplitAppButton != bCurrentShowOpenCloseSplitAppButton) {
+                this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonVisible', bShowOpenCloseSplitAppButton);
+
+                // in case we now show the button, then it must be foced untoggled, as the left panel closes automatically
+                if (bShowOpenCloseSplitAppButton) {
+                    this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled', false);
+                }
             }
+            // toggle class on app finder page
+            this._toggleViewWithToggleButtonClass(bShowOpenCloseSplitAppButton);
         },
 
-        _applyExtendedShellstate : function() {
+        _handleAppFinderNavigation: function (oEvent) {
+            var oView = this.getView();
+
+            this._preloadAppHandler();
+            this._getPathAndHandleGroupContext(oEvent);
+            // first create the sub header
+            oView.createSubHeader();
+            // toggle class on app finder page
+            this._toggleViewWithToggleButtonClass(this._showOpenCloseSplitAppButton());
+            if (oView.showEasyAccessMenu) {
+                // in case we need to show the easy access menu buttons
+                // update sub header accordingly (within the onShow)
+                this.onShow(oEvent);
+            } else if (oView._showSearch('catalog')) {
+                // else no easy access menu buttons
+                // update sub header accordingly
+                oView.updateSubHeader('catalog', false);
+                // we still have to adjust the view in case we do show the tags in subheader
+                this._toggleViewWithSearchAndTagsClasses('catalog');
+            }
+            sap.ui.getCore().getEventBus().publish("showCatalog");
+            sap.ui.getCore().getEventBus().publish("launchpad", "contentRendered");
+        },
+
+        _showOpenCloseSplitAppButton: function () {
+            return !sap.ui.Device.orientation.landscape || sap.ui.Device.system.phone;
+        },
+
+
+        _resetSubHeaderModel: function () {
+            this.oSubHeaderModel.setProperty('/activeMenu', null);
+
+            this.oSubHeaderModel.setProperty('/search', {
+                searchMode: false,
+                searchTerm: null
+            });
+
+            this.oSubHeaderModel.setProperty('/tag', {
+                tagMode: false,
+                selectedTags: []
+            });
+
+            this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonVisible', this._showOpenCloseSplitAppButton());
+            this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled', false);
+        },
+
+
+        _getSubHeaderModel : function () {
+            if (this.oSubHeaderModel) {
+                return this.oSubHeaderModel;
+            }
+            this.oSubHeaderModel = new sap.ui.model.json.JSONModel();
+            this._resetSubHeaderModel();
+            return this.oSubHeaderModel;
+        },
+
+        onTagsFilter : function (oEvent) {
+            var oTagsFilter = oEvent.getSource(),
+                oSubHeaderModel = oTagsFilter.getModel('subHeaderModel'),
+                aSelectedTags = oEvent.getSource().getSelectedItems(),
+                bTagsMode = aSelectedTags.length > 0,
+                oTagsData = {
+                    tagMode: bTagsMode,
+                    selectedTags: []
+                };
+
+            aSelectedTags.forEach(function (oTag, iTagIndex) {
+                oTagsData.selectedTags.push(oTag.getText());
+            });
+            oSubHeaderModel.setProperty('/activeMenu', this.getCurrentMenuName());
+            oSubHeaderModel.setProperty('/tag', oTagsData);
+
+        },
+
+        searchHandler : function (oEvent) {
+            //get all custom tile keywords
+            var dashboardMgr = sap.ushell.components.flp.launchpad.getDashboardManager();
+            dashboardMgr.loadCustomTilesKeyWords();
+
+            var sSearchTerm = oEvent.getSource().getValue();
+            if (sSearchTerm == null || oEvent.getParameter('clearButtonPressed')) {
+                return;
+            }
+
+            // take the data from the model
+            var oSearchData = this.oSubHeaderModel.getProperty('/search');
+            var sActiveMenu = this.oSubHeaderModel.getProperty('/activeMenu');
+
+            // update active menu to current
+            if (this.getCurrentMenuName() != sActiveMenu) {
+                sActiveMenu = this.getCurrentMenuName();
+            }
+            // update search mode to true - ONLY in case the handler is not invoked by the 'X' button.
+            // In case it does we do not update the search mode, it stays as it is
+            if (!oSearchData.searchMode && !oEvent.getParameter('clearButtonPressed')) {
+                oSearchData.searchMode = true;
+            }
+
+            // we are in search mode and on Phone
+            if (oSearchData.searchMode && sap.ui.Device.system.phone) {
+
+                // in case we are in phone we untoggle the toggle button when search is invoked as
+                // the detailed page of the search results is nevigated to and opened.
+                // therefore we untoggle the button of the master page
+                this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonToggled", false);
+            }
+
+            // check and update the search term
+            if (sSearchTerm != oSearchData.searchTerm) {
+                if (this.containsOnlyWhiteSpac(sSearchTerm)) {
+                    sSearchTerm = '*';
+                }
+                oSearchData.searchTerm = sSearchTerm;
+            }
+
+            // setting property once so no redundant binding updates will occur
+            this.oSubHeaderModel.setProperty("/search", oSearchData);
+            this.oSubHeaderModel.setProperty("/activeMenu", sActiveMenu);
+            this.oSubHeaderModel.refresh(true);
+        },
+
+        /**
+         * This method comes to prepare relevant modifications before loading the app.
+         * This includes;
+         *  - applying custom shell states
+         *  - setting the shell-header-title accordingly
+         **/
+        _preloadAppHandler : function() {
             setTimeout(function () {
                 if (sap.ushell.Container) {
                     sap.ushell.Container.getRenderer("fiori2").applyExtendedShellState("appFinderExtendedShellState");
                 }
-            }, 0);
+                this._updateShellHeader(this.oView.oPage.getTitle());
+            }.bind(this), 0);
         },
         getCurrentMenuName: function () {
             return this.currentMenu;
@@ -86,19 +226,29 @@
             }
         },
 
-        getSystemsModel: function () {
+        getSystemsModels: function () {
+            var that = this;
             if (this.getSystemsPromise) {
                 return this.getSystemsPromise;
             }
 
-            var easyAccessSystemsModel = new sap.ui.model.json.JSONModel();
-            easyAccessSystemsModel.setProperty('/systemSelected', null);
-            easyAccessSystemsModel.setProperty('/systemsList', []);
+            var getSystemsDeferred = new jQuery.Deferred();
+            this.getSystemsPromise = getSystemsDeferred.promise();
 
-            this.getSystemsPromise = this.getSystems().then(function (aReturnSystems) {
-                easyAccessSystemsModel.setProperty("/systemsList", aReturnSystems);
-                return easyAccessSystemsModel;
+            var aModelPromises = ["userMenu", "sapMenu"].map(function (menuType) {
+                var systemsModel = new sap.ui.model.json.JSONModel();
+                systemsModel.setProperty("/systemSelected", null);
+                systemsModel.setProperty("/systemsList", []);
+
+                return that.getSystems(menuType).then(function (aReturnSystems) {
+                    systemsModel.setProperty("/systemsList", aReturnSystems);
+                    return systemsModel;
+                });
             });
+            jQuery.when.apply(jQuery, aModelPromises).then(function (userMenuModel, sapMenuModel) {
+                getSystemsDeferred.resolve(userMenuModel, sapMenuModel);
+            });
+
             return this.getSystemsPromise;
         },
         onSegmentButtonClick: function (oEvent) {
@@ -120,50 +270,155 @@
             if (menu === this.getCurrentMenuName()) {
                 return;
             }
-            this.currentMenu = menu;
 
+            // update place holder string on the search input according to the showed menu
             var oView = this.getView();
-            oView.segmentedButton.setSelectedButton(menu);
-            if (menu === 'catalog') {
-                oView.oPage.removeAllContent();
-                oView.oPage.addContent(this.catalogView);
-            } else {
-                this.getSystemsModel().then(function (menu, systemsModel) {
-                    if (menu === 'userMenu') {
-                        if (!this.userMenuView) {
-                            this.userMenuView = new sap.ui.view("userMenuView", {
-                                type: sap.ui.core.mvc.ViewType.JS,
-                                viewName: "sap.ushell.components.flp.launchpad.appfinder.EasyAccess",
-                                height: "100%",
-                                viewData: {
-                                    menuName: "USER_MENU",
-                                    easyAccessSystemsModel: systemsModel,
-                                    parentComponent: oView.parentComponent
-                                }
-                            });
-                            this._addViewCustomData(this.userMenuView, "appFinderUserMenuTitle");
-                        }
-                        oView.oPage.removeAllContent();
-                        oView.oPage.addContent(this.userMenuView);
-                    } else if (menu === 'sapMenu') {
-                        if (!this.sapMenuView) {
-                            this.sapMenuView = new sap.ui.view("sapMenuView", {
-                                type: sap.ui.core.mvc.ViewType.JS,
-                                viewName: "sap.ushell.components.flp.launchpad.appfinder.EasyAccess",
-                                height: "100%",
-                                viewData: {
-                                    menuName: "SAP_MENU",
-                                    easyAccessSystemsModel: systemsModel,
-                                    parentComponent: oView.parentComponent
-                                }
-                            });
-                            this._addViewCustomData(this.sapMenuView, "appFinderSapMenuTitle");
-                        }
-                        oView.oPage.removeAllContent();
-                        oView.oPage.addContent(this.sapMenuView);
-                    }
+            oView._updateSearchWithPlaceHolder(menu);
 
-                }.bind(this, this.currentMenu));
+            this._updateCurrentMenuName(menu);
+            this.getSystemsModels().then(function (userMenuSystemsModel, sapMenuSystemsModel) {
+                var sapMenuSystemsList = sapMenuSystemsModel.getProperty("/systemsList");
+                var userMenuSystemsList = userMenuSystemsModel.getProperty("/systemsList");
+
+                // call view to remove content from page
+                oView.oPage.removeAllContent();
+
+                // in case we have systems we do want the sub header to be rendered accordingly
+                // (no systems ==> no easy access menu buttons in sub header)
+                var systemsList = (this.currentMenu === 'sapMenu' ? sapMenuSystemsList : userMenuSystemsList);
+                if (systemsList && systemsList.length) {
+                    // call view to render the sub header with easy access menus
+                    oView.updateSubHeader(this.currentMenu, true);
+                } else if (oView._showSearch(this.currentMenu)){
+                    // call view to render the sub header without easy access menus
+                    oView.updateSubHeader(this.currentMenu, false);
+                }
+
+                if (this.currentMenu === 'catalog') {
+                    // add catalog view
+                    oView.oPage.addContent(this.catalogView);
+                } else if (this.currentMenu === 'userMenu') {
+                    // add user menu view
+                    // create if first time.
+                    if (!this.userMenuView) {
+                        this.userMenuView = new sap.ui.view("userMenuView", {
+                            type: sap.ui.core.mvc.ViewType.JS,
+                            viewName: "sap.ushell.components.flp.launchpad.appfinder.EasyAccess",
+                            height: "100%",
+                            viewData: {
+                                menuName: "USER_MENU",
+                                easyAccessSystemsModel: userMenuSystemsModel,
+                                parentComponent: oView.parentComponent,
+                                subHeaderModel: this._getSubHeaderModel(),
+                                enableSearch: this.getView()._showSearch("userMenu")
+                            }
+                        });
+                        this._addViewCustomData(this.userMenuView, "appFinderUserMenuTitle");
+                    }
+                    oView.oPage.addContent(this.userMenuView);
+                } else if (this.currentMenu === 'sapMenu') {
+                    // add sap menu view
+                    // create if first time.
+                    if (!this.sapMenuView) {
+                        this.sapMenuView = new sap.ui.view("sapMenuView", {
+                            type: sap.ui.core.mvc.ViewType.JS,
+                            viewName: "sap.ushell.components.flp.launchpad.appfinder.EasyAccess",
+                            height: "100%",
+                            viewData: {
+                                menuName: "SAP_MENU",
+                                easyAccessSystemsModel: sapMenuSystemsModel,
+                                parentComponent: oView.parentComponent,
+                                subHeaderModel: this._getSubHeaderModel(),
+                                enableSearch: this.getView()._showSearch("sapMenu")
+                            }
+                        });
+                        this._addViewCustomData(this.sapMenuView, "appFinderSapMenuTitle");
+                    }
+                    oView.oPage.addContent(this.sapMenuView);
+                }
+
+                // focus is set on segmented button
+                this._setFocusToSegmentedButton(systemsList);
+
+                // SubHeader Model active-menu is updated with current menu
+                this.oSubHeaderModel.setProperty("/activeMenu", this.currentMenu);
+
+                // In case toggle button is visible (SubHeader Model toggle button toggled)
+                // then it is set to false as we switch the menu
+                if (this.oSubHeaderModel.getProperty("/openCloseSplitAppButtonVisible")) {
+                    this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonToggled", false);
+                }
+
+                this.oSubHeaderModel.refresh(true);
+            }.bind(this));
+        },
+
+        _updateCurrentMenuName: function(sMenu){
+            /**
+             * verify that the menu exist!
+             * in case one of the easy access menu is disabled and the
+             * user is navigating to the desabled menu (using some existing link)
+             * we need to make sure we will not show the disabled menu!
+             */
+            var oView = this.getView();
+
+            if (!oView.showEasyAccessMenu ||
+                (sMenu === "sapMenu" && !oView.enableEasyAccessSAPMenu) ||
+                (sMenu === "userMenu" && !oView.enableEasyAccessUserMenu)){
+                this.currentMenu = "catalog";
+            } else {
+                this.currentMenu = sMenu;
+            }
+
+            // toggle relevant classes on the App Finder page according to wether it displays search or tags in its
+            // subheader or not
+            this._toggleViewWithSearchAndTagsClasses(sMenu);
+        },
+
+        /*
+         this method sets a class on the AppFinder page to state if tags are shown or not currently
+         in the subheader.
+         The reason for it is that if tags do appear than we have a whole set of different styling to the header
+         and its behavior, so we use different css selectors
+         */
+        _toggleViewWithSearchAndTagsClasses: function(sMenu) {
+            var oView = this.getView();
+
+            if (oView._showSearch(sMenu)) {
+                oView.oPage.addStyleClass('sapUshellAppFinderSearch');
+            } else {
+                oView.oPage.removeStyleClass('sapUshellAppFinderSearch');
+            }
+
+            if (oView._showSearchTag(sMenu)) {
+                oView.oPage.addStyleClass('sapUshellAppFinderTags');
+            } else {
+                oView.oPage.removeStyleClass('sapUshellAppFinderTags');
+            }
+        },
+
+        _toggleViewWithToggleButtonClass: function(bButtonVisible) {
+            var oView = this.getView();
+            if (bButtonVisible) {
+                oView.oPage.addStyleClass('sapUshellAppFinderToggleButton');
+            } else {
+                oView.oPage.removeStyleClass('sapUshellAppFinderToggleButton');
+            }
+        },
+
+        _setFocusToSegmentedButton: function(systemsList) {
+            var oView = this.getView();
+
+            if (systemsList && systemsList.length) {
+                var sButtonId = oView.segmentedButton.getSelectedButton();
+                setTimeout(function () {
+                    jQuery("#" + sButtonId).focus();
+                }, 0);
+
+            } else {
+                setTimeout(function () {
+                    jQuery('#catalogSelect').focus();
+                }, 0);
             }
         },
 
@@ -217,16 +472,17 @@
 
         /**
          *
+         * @param {string} sMenuType - the menu type. One of sapMenu, userMenu.
          * @returns {*} - a list of systems to show in the system selector dialog
          */
-        getSystems: function () {
+        getSystems: function (sMenuType) {
             var oDeferred = new jQuery.Deferred();
-            var systemsModel = [];
             var clientService = sap.ushell.Container.getService("ClientSideTargetResolution");
             if (!clientService) {
                 oDeferred.reject("cannot get ClientSideTargetResolution service");
             } else {
-                clientService.getEasyAccessSystems().done(function (oSystems) {
+                clientService.getEasyAccessSystems(sMenuType).done(function (oSystems) {
+                    var systemsModel = [];
                     var aSystemsID = Object.keys(oSystems);
                     for (var i = 0; i < aSystemsID.length; i++) {
                         var sCurrentsystemID = aSystemsID[i];
@@ -247,12 +503,12 @@
         _addViewCustomData: function (oView, sTitleName) {
             var oResourceBundle = sap.ushell.resources.i18n;
 
-            oView.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+            oView.addCustomData(new AccessibilityCustomData({
                 key: "role",
-                value: "main",
+                value: "region",
                 writeToDom: true
             }));
-            oView.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+            oView.addCustomData(new AccessibilityCustomData({
                 key: "aria-label",
                 value: oResourceBundle.getText(sTitleName),
                 writeToDom: true
@@ -260,8 +516,7 @@
         },
 
         _initializeShellUIService: function () {
-            jQuery.sap.require("sap.ushell.ui5service.ShellUIService");
-            this.oShellUIService = new sap.ushell.ui5service.ShellUIService({
+        	this.oShellUIService = new ShellUIService({
                 scopeObject: this.getOwnerComponent(),
                 scopeType: "component"
             });
@@ -269,9 +524,28 @@
 
         _updateShellHeader: function (sTitle) {
             if (!this.oShellUIService) {
-                this._initializeShellUIService()
+                this._initializeShellUIService();
             }
             this.oShellUIService.setTitle(sTitle);
+            this.oShellUIService.setHierarchy([{
+                icon: 'sap-icon://home',
+                title: 'Home',
+                intent: '#'
+            }]);
+        },
+
+        /**
+         *
+         * @param sTerm - the input fiels
+         * @returns {boolean} - the function return true if the input field is ' ' (space)  or '    '(a few spaces)
+         * if the input field contains a not only spaces (for example 'a b')  or if it is an empty string the function should return false
+         */
+        containsOnlyWhiteSpac: function (sTerm) {
+            if (!sTerm || sTerm === "")
+                return false;
+            var sTemp = sTerm;
+            return (!sTemp.replace(/\s/g, '').length)
         }
+
     });
-}());
+}, /* bExport= */ false);

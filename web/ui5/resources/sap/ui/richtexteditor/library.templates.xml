@@ -5,6 +5,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	value: "", // string
@@ -28,9 +29,11 @@
 	plugins: [], // object[]
 	useLegacyTheme: true, // boolean
 	buttonGroups: [], // object[]
+	customToolbar: false, // boolean, since 1.48
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
 	dependents: [], // sap.ui.core.Element, since 1.19
+	customButtons: [], // sap.ui.core.Control, since 1.48
 	validateFieldGroup: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this],
@@ -38,6 +41,9 @@
 		var ${control} = oEvent.getSource();
 	}, this],
 	ready: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	readyRecurring: [function (oEvent) {
 		var ${control} = oEvent.getSource();
 	}, this],
 	beforeEditorInit: [function (oEvent) {
@@ -49,6 +55,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	value=""
@@ -72,12 +79,15 @@
 	plugins=""
 	useLegacyTheme="true"
 	buttonGroups=""
+	customToolbar="false"
 	validateFieldGroup=""
 	change=""
 	ready=""
+	readyRecurring=""
 	beforeEditorInit="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
 		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+		<customButtons></customButtons> <!-- sap.ui.core.Control, since 1.48 -->
 </RichTextEditor>
 ]]></xmlTemplate>
 </Template>

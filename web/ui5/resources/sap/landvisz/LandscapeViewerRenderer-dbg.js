@@ -1,4 +1,3 @@
-
 /*!
 *  @copyright 2012-2014 SAP SE. All rights reserved@
 */
@@ -71,8 +70,8 @@ sap.landvisz.LandscapeViewerRenderer.render = function(oRm, oControl) {
                            this._renderDependencyView(oRm, oControl);
                     }
 
-                   /* if (oControl.getViewType() == sap.landvisz.ViewType.DEPENDENCY_VIEW)
-                           this._renderNavigationPanel(oRm, oControl);*/
+                    if (oControl.getViewType() == sap.landvisz.ViewType.DEPENDENCY_VIEW)
+                           this._renderNavigationPanel(oRm, oControl);
              }
              oRm.write("</div>");
        }
@@ -197,7 +196,7 @@ sap.landvisz.LandscapeViewerRenderer._renderDeploymentViewHeader = function(
 sap.landvisz.LandscapeViewerRenderer._renderSolutionViewer = function(oRm,oControl) {
 
       if(null!= oControl.getPlugContent())
-                 this. _renderPlugContent(oRm,oControl);
+    	 this. _renderPlugContent(oRm,oControl);
 
        oRm.write("<div");
        oRm.writeAttributeEscaped("id", oControl.getId() + "-solutionViewContainer");
@@ -207,26 +206,26 @@ sap.landvisz.LandscapeViewerRenderer._renderSolutionViewer = function(oRm,oContr
        oRm.addStyle("width", width + "px");
         var calHeight; 
        if(oControl.getSolutionType() == sap.landvisz.SolutionType.DEPLOYMENT_VIEW){
-                  calHeight = oControl.getPlugContentHeight() + 90;
-//                   oRm.addStyle("height", "calc(100% - 90px)");
-//                   oRm.addStyle("height", "-webkit-calc(100% - 90px)");
-//                   oRm.addStyle("height", "-moz-calc(100% - 90px)");
-//                   oRm.addStyle("height", "-o-calc(100% - 90px)");
-                                oRm.addStyle("position", "absolute");
+    	  calHeight = oControl.getPlugContentHeight() + 90;
+//	       oRm.addStyle("height", "calc(100% - 90px)");
+//	       oRm.addStyle("height", "-webkit-calc(100% - 90px)");
+//	       oRm.addStyle("height", "-moz-calc(100% - 90px)");
+//	       oRm.addStyle("height", "-o-calc(100% - 90px)");
+    	  	oRm.addStyle("position", "absolute");
        }else{
-                   calHeight = oControl.getPlugContentHeight() + 35;
-//               oRm.addStyle("height", "calc(100% - 35px)");
-//                   oRm.addStyle("height", "-webkit-calc(100% - 35px)");
-//                   oRm.addStyle("height", "-moz-calc(100% - 35px)");
-//                   oRm.addStyle("height", "-o-calc(100% - 35px)");
+    	   calHeight = oControl.getPlugContentHeight() + 35;
+//    	   oRm.addStyle("height", "calc(100% - 35px)");
+//	       oRm.addStyle("height", "-webkit-calc(100% - 35px)");
+//	       oRm.addStyle("height", "-moz-calc(100% - 35px)");
+//	       oRm.addStyle("height", "-o-calc(100% - 35px)");
        }
        
        
-                                oRm.addStyle("height", "calc(100% - "+calHeight+"px)");
-                       oRm.addStyle("height", "-webkit-calc(100% - "+calHeight+"px)");
-                       oRm.addStyle("height", "-moz-calc(100% - "+calHeight+"px)");
-                       oRm.addStyle("height", "-o-calc(100% - "+calHeight+"px)");
-                       oRm.addStyle("top",calHeight+"px");
+       		oRm.addStyle("height", "calc(100% - "+calHeight+"px)");
+	       oRm.addStyle("height", "-webkit-calc(100% - "+calHeight+"px)");
+	       oRm.addStyle("height", "-moz-calc(100% - "+calHeight+"px)");
+	       oRm.addStyle("height", "-o-calc(100% - "+calHeight+"px)");
+	       oRm.addStyle("top",calHeight+"px");
        oRm.writeStyles();
        oRm.write(">");
       
@@ -244,7 +243,7 @@ sap.landvisz.LandscapeViewerRenderer._renderSolutionViewer = function(oRm,oContr
 sap.landvisz.LandscapeViewerRenderer._renderPlugContent = function(oRm,oControl) {
 
 
-                   oRm.write("<div");
+	   oRm.write("<div");
        oRm.writeAttributeEscaped("id", oControl.getId() + "-solutionPlugContent");
         oRm.addStyle("top", "32px");
         oRm.addStyle("width", "100%");
@@ -293,15 +292,15 @@ sap.landvisz.LandscapeViewerRenderer._renderSolutionContainer = function(oRm,
 //algorithm to render components in solution viewer inner container
 sap.landvisz.LandscapeViewerRenderer._renderSolution = function(oRm, oControl) {
 
-                oControl.connection.init();
-                var options = oControl.getSolutionOptions();
-                var connectedLayout;
-                if (options.length >0 && options[0].getType() == sap.landvisz.OptionType.VIEW) 
+	oControl.connection.init();
+	var options = oControl.getSolutionOptions();
+	var connectedLayout;
+	if (options.length >0 && options[0].getType() == sap.landvisz.OptionType.VIEW) 
        connectedLayout = oControl.getViewConnectedLayout()
     else { 
     
            connectedLayout = oControl.getEntityConnectedLayout()
-//            var connectors = oControl.getConnectors();
+//    	var connectors = oControl.getConnectors();
 //       connectedLayout = oControl.connection.getBoxViewConnectedNodesLayout(connectors);
          }
        var entityID;
@@ -733,12 +732,12 @@ sap.landvisz.LandscapeViewerRenderer._makeViewOptionVisible = function(oRm,
              if (selectedDepTypes && selectedDepTypes.length > 0){
                     boxContainerHeight = boxContainerHeight + 40;
                     jQuery.sap.byId(depContainerid).css({
-                                                                                 "display" : "block",
-                                                                 });
+   					 "display" : "block",
+   				 });
              }else{
-                 jQuery.sap.byId(depContainerid).css({
-                                                                                "display" : "none",
-                                                                });
+            	 jQuery.sap.byId(depContainerid).css({
+					 "display" : "none",
+				 });
              }
 
              var boxContainerId = oControl.getId() + "-solutionInnerContainer";
@@ -749,118 +748,118 @@ sap.landvisz.LandscapeViewerRenderer._makeViewOptionVisible = function(oRm,
              }, 400);
 
              setTimeout(
-                                 function() {
+            		 function() {
 
 
-                                                 var boxContainerId = oControl.getId() + "-solutionInnerContainer";
-                                                 var boxContainer = jQuery.sap.byId(boxContainerId);
-                                                 var boxLeftMargine = boxContainer[0].offsetLeft;
-                                                 var boxTopMargine = boxContainer[0].offsetTop;
+            			 var boxContainerId = oControl.getId() + "-solutionInnerContainer";
+            			 var boxContainer = jQuery.sap.byId(boxContainerId);
+            			 var boxLeftMargine = boxContainer[0].offsetLeft;
+            			 var boxTopMargine = boxContainer[0].offsetTop;
 
-                                                 var deploymentOptionsTop = 0;
-                                                 var connectionEntities = oControl.getConnectionEntities();
-                                                 for ( var i = 0; i < connectionEntities.length; i++) {
-                                                                 connectionId = connectionEntities[i].getConnectionId();
-                                                                 if (connectedLayout[connectionId]) {
-                                                                                 leftPos = Number(connectedLayout[connectionId].col
-                                                                                                                 * (oControl.entityWidth + 10));
-                                                                                 topPos = Number(connectedLayout[connectionId].row
-                                                                                                                 * (oControl.entityHeight + 10));
-                                                                                 leftPos = Number(connectedLayout[connectionId].col
-                                                                                                                 * (oControl.entityWidth + 10))
-                                                                                                                 + margin;
-                                                                                 topPos = Number(connectedLayout[connectionId].row
-                                                                                                                 * (oControl.entityHeight + 10))
-                                                                                                                 + margin;
-                                                                                 connectionEntities[i].left = leftPos
-                                                                                 + boxLeftMargine;
-                                                                                 deploymentOptionsTop = connectionEntities[i].top ;
-                                                                                 connectionEntities[i].top = leftPos + boxTopMargine;
-                                                                                 connectionEntityWidth = Number(((connectedLayout[connectionId].colspan) * oControl.entityWidth)
-                                                                                                                 + ((connectedLayout[connectionId].colspan - 1) * margin));
-                                                                                 var entity = jQuery.sap.byId(connectionEntities[i]
-                                                                                 .getId());
+            			 var deploymentOptionsTop = 0;
+            			 var connectionEntities = oControl.getConnectionEntities();
+            			 for ( var i = 0; i < connectionEntities.length; i++) {
+            				 connectionId = connectionEntities[i].getConnectionId();
+            				 if (connectedLayout[connectionId]) {
+            					 leftPos = Number(connectedLayout[connectionId].col
+            							 * (oControl.entityWidth + 10));
+            					 topPos = Number(connectedLayout[connectionId].row
+            							 * (oControl.entityHeight + 10));
+            					 leftPos = Number(connectedLayout[connectionId].col
+            							 * (oControl.entityWidth + 10))
+            							 + margin;
+            					 topPos = Number(connectedLayout[connectionId].row
+            							 * (oControl.entityHeight + 10))
+            							 + margin;
+            					 connectionEntities[i].left = leftPos
+            					 + boxLeftMargine;
+            					 deploymentOptionsTop = connectionEntities[i].top ;
+            					 connectionEntities[i].top = leftPos + boxTopMargine;
+            					 connectionEntityWidth = Number(((connectedLayout[connectionId].colspan) * oControl.entityWidth)
+            							 + ((connectedLayout[connectionId].colspan - 1) * margin));
+            					 var entity = jQuery.sap.byId(connectionEntities[i]
+            					 .getId());
 
-                                                                                 entity.animate({
-                                                                                                 left : connectionEntities[i].left,
-                                                                                                 top : connectionEntities[i].top,
-                                                                                                 width : connectionEntityWidth,
-                                                                                                 height : 90,
-                                                                                 }, 600, 'swing');
+            					 entity.animate({
+            						 left : connectionEntities[i].left,
+            						 top : connectionEntities[i].top,
+            						 width : connectionEntityWidth,
+            						 height : 90,
+            					 }, 600, 'swing');
 
-                                                                                 var connectionRow = jQuery.sap
-                                                                                 .byId(connectionEntities[i].getId()
-                                                                                                                 + "connectionRow");
+            					 var connectionRow = jQuery.sap
+            					 .byId(connectionEntities[i].getId()
+            							 + "connectionRow");
 
-                                                                                connectionRow.animate({
-                                                                                                 width : connectionEntityWidth,
-                                                                                                 height : 90,
-                                                                                 }, 600, 'swing');
-                                                                                 
-                                                                                 var conLbl =  jQuery.sap.byId(connectionEntities[i].getId() +"-connectionLabel");
-                                                                                 var conLblWidth = connectionEntityWidth - 68;
-                                                                                  conLbl.css({
-                                                                                                                "max-width" : conLblWidth,
-                                                                                                });
-                                                                 }
-                                                 }
-                                                 oControl.visibleEntities = [];
-                                                 for ( var i = 0; i < systems.length; i++) {
-                                                                 entityID = systems[i].getSystemId();
-                                                                 var labelWidth = 0;
-                                                                 labelWidth = 30 + margin;
-                                                                 var actualMargin = 30;
-                                                                 if (connectedLayout[entityID]) {
-                                                                                 var leftPos = 0;
-                                                                                 var topPos = 0;
-                                                                                 leftPos += Number((connectedLayout[entityID].col * (oControl.entityWidth))
-                                                                                                                 + ((connectedLayout[entityID].col + 1) * margin));
+            					 connectionRow.animate({
+            						 width : connectionEntityWidth,
+            						 height : 90,
+            					 }, 600, 'swing');
+            					 
+            					 var conLbl =  jQuery.sap.byId(connectionEntities[i].getId() +"-connectionLabel");
+            					 var conLblWidth = connectionEntityWidth - 68;
+            					  conLbl.css({
+            						  	"max-width" : conLblWidth,
+            					  	});
+            				 }
+            			 }
+            			 oControl.visibleEntities = [];
+            			 for ( var i = 0; i < systems.length; i++) {
+            				 entityID = systems[i].getSystemId();
+            				 var labelWidth = 0;
+            				 labelWidth = 30 + margin;
+            				 var actualMargin = 30;
+            				 if (connectedLayout[entityID]) {
+            					 var leftPos = 0;
+            					 var topPos = 0;
+            					 leftPos += Number((connectedLayout[entityID].col * (oControl.entityWidth))
+            							 + ((connectedLayout[entityID].col + 1) * margin));
 
-                                                                                 topPos += Number(((connectedLayout[entityID].row - 1) * (oControl.entityHeight))
-                                                                                                                 + ((connectedLayout[entityID].row + 1) * margin)
-                                                                                                                 + oControl.boxModeHeight);
-                                                                                 systems[i].left = leftPos + boxLeftMargine;
-                                                                                 systems[i].top = topPos + boxTopMargine;
-                                                                                 system = jQuery.sap.byId(systems[i].getId());
-                                                                                 system.css({
-                                                                                                 left : leftPos + boxLeftMargine,
-                                                                                                 top : topPos + boxTopMargine
-                                                                                 });
-                                                                                 system.show("700");
-                                                                                 oControl.visibleEntities.push(systems[i]);
-                                                                 }
+            					 topPos += Number(((connectedLayout[entityID].row - 1) * (oControl.entityHeight))
+            							 + ((connectedLayout[entityID].row + 1) * margin)
+            							 + oControl.boxModeHeight);
+            					 systems[i].left = leftPos + boxLeftMargine;
+            					 systems[i].top = topPos + boxTopMargine;
+            					 system = jQuery.sap.byId(systems[i].getId());
+            					 system.css({
+            						 left : leftPos + boxLeftMargine,
+            						 top : topPos + boxTopMargine
+            					 });
+            					 system.show("700");
+            					 oControl.visibleEntities.push(systems[i]);
+            				 }
 
-                                                 }
+            			 }
 
-                                                 var depContainerid = oControl.getId() + "-deploymentTypeContainer";
-                                                 var depContainer = jQuery.sap.byId(depContainerid);
+            			 var depContainerid = oControl.getId() + "-deploymentTypeContainer";
+            			 var depContainer = jQuery.sap.byId(depContainerid);
 
-                                                 depContainer.css({
-                                                                 left : boxLeftMargine,
-                                                                 width : boxContainerWidth,
-                                                 });
+            			 depContainer.css({
+            				 left : boxLeftMargine,
+            				 width : boxContainerWidth,
+            			 });
 
-                                                 var depLeft;
-                                                 var srcEntity;
-                                                 if (selectedDepTypes && selectedDepTypes.length > 0) {
-                                                                 for ( var x = 0; x < selectedDepTypes.length; x++) {
-                                                                                 deploymentType = selectedDepTypes[x];
-                                                                                 for ( var i = 0; i < systems.length; i++) {
-                                                                                                 if (systems[i].getSystemId() == deploymentType.srcEntityId) {
-                                                                                                                 srcEntity = systems[i];
-                                                                                                                 break;
-                                                                                                 }
-                                                                                 }
-                                                                                 depLeft = srcEntity.left - boxLeftMargine;
-                                                                                 jQuery.sap.byId(deploymentType.getId()).css({
-                                                                                                 "display" : "block",
-                                                                                                 "left" : depLeft
-                                                                                 });
+            			 var depLeft;
+            			 var srcEntity;
+            			 if (selectedDepTypes && selectedDepTypes.length > 0) {
+            				 for ( var x = 0; x < selectedDepTypes.length; x++) {
+            					 deploymentType = selectedDepTypes[x];
+            					 for ( var i = 0; i < systems.length; i++) {
+            						 if (systems[i].getSystemId() == deploymentType.srcEntityId) {
+            							 srcEntity = systems[i];
+            							 break;
+            						 }
+            					 }
+            					 depLeft = srcEntity.left - boxLeftMargine;
+            					 jQuery.sap.byId(deploymentType.getId()).css({
+            						 "display" : "block",
+            						 "left" : depLeft
+            					 });
 
-                                                                 }
-                                                 }
+            				 }
+            			 }
 
-                                 }, 405);
+            		 }, 405);
        }
 };
 
@@ -937,7 +936,7 @@ sap.landvisz.LandscapeViewerRenderer._renderSelectionView = function(oRm,
        var systems = oControl.getSystems();
        var actions = systems[0].getActionBar();
 
-      for ( var j = 0; j < actions.length; j++) {
+       for ( var j = 0; j < actions.length; j++) {
              actions[j].attachEvent("changeView", function(event) {
                     oControl.resetView(systems[0], event.oSource);
              }, this);
@@ -1030,7 +1029,7 @@ sap.landvisz.LandscapeViewerRenderer._renderDependencyView = function(oRm,
        oRm.addStyle("width", width + "px");
        oRm.addStyle("height", height + "px");
        oRm.addStyle("position", "absolute");
-       oRm.addStyle("overflow", "auto");
+       oRm.addStyle("overflow", "hidden");
        oRm.addStyle("top", 26 + "px");
        oRm.writeStyles();
        oRm.write(">");
@@ -1205,7 +1204,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllEntities = function(oRm,
         
         var connectedNodesLayout;
        if(oControl.getConnectionLine() == sap.landvisz.ConnectionLine.Line)
-                   connectedNodesLayout  = oControl.connection.getConnectedNodesLayout(connectors);
+    	   connectedNodesLayout  = oControl.connection.getConnectedNodesLayout(connectors);
        else
          connectedNodesLayout  = oControl.connection.getConnectedNodesLayoutTrack(connectors);
          
@@ -1213,7 +1212,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllEntities = function(oRm,
        var connectionEntities = oControl.getConnectionEntities();
        var systemsMargin = 50;
        if(connectionEntities.length>0)
-                   systemsMargin = 0;
+    	   systemsMargin = 0;
        var entityID;
        var connectionId;
        for ( var i = 0; i < systems.length; i++) {
@@ -1291,7 +1290,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllEntities = function(oRm,
        }
 
        if (oControl.connection.svgForConnections)
-            oControl.connection.svgForConnections.style("display", "block");
+             oControl.connection.svgForConnections.style("display", "block");
        else if (isRendering == false) {
 
              var navigationContainer = jQuery.sap.byId(oControl.getId()
@@ -1627,7 +1626,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllBoxViewEntities = function(oRm,
                                  connectionEntities[i].left = leftPos + 30;
                            connectionEntities[i].top = topPos;
                            connectionEntities[i].viewType = oControl.currentView;
-                          connectionEntities[i].width = connectionEntityWidth;
+                           connectionEntities[i].width = connectionEntityWidth;
                            connectionEntities[i].height = 0;
                            connectionEntities[i].addStyleClass("sapLandviszConnectionBox");
                     } else {
@@ -1654,7 +1653,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllBoxViewEntities = function(oRm,
              var levelHeaderLeft = oControl.boxLeftMargine + margin;
              var levelHeaderTop = oControl.boxModeHeight + (margin * 2)
                            + oControl.boxTopMargine;
-            var boxLevels = oControl.getBoxDependencyLevels();
+             var boxLevels = oControl.getBoxDependencyLevels();
              var boxViewFirstLabel = "Systems";
              var boxViewFirstLabelTooltip = "Systems";
 
@@ -1758,7 +1757,5 @@ sap.landvisz.LandscapeViewerRenderer._animateConnectionEntityContainer = functio
        }, 1000, 'swing');
 
 };
-
-
 
 

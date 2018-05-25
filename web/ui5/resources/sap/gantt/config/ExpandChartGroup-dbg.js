@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.gantt.config.ToolbarGroup
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -31,7 +31,7 @@ sap.ui.define([
 				/**
 				 * Array of {@link sap.gantt.config.ExpandChart}
 				 */
-				expandCharts: {type: "array", defaultValue: []},
+				expandCharts: {type: "object[]", defaultValue: []},
 				
 				/**
 				 * When this property is enabled, expand button is in emphasized button type, and collapse button

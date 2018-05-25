@@ -7,7 +7,7 @@
 &lt;b&gt;Note:&lt;/b&gt; The inherited &lt;code&gt;selected&lt;/code&gt; property of the &lt;code&gt;sap.m.ListItemBase&lt;/code&gt; is not supported.</documentation>
     <baseType>sap.m/ListItemBase</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="text">
             <documentation>Defines the text that appears in the control.</documentation>
         </property>
     </properties>

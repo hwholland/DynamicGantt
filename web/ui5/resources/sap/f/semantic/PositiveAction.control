@@ -8,9 +8,9 @@
     <since>1.46.0</since>
     <baseType>sap.f/semantic/SemanticButton</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="text">
             <documentation>Defines &lt;code&gt;PositiveAction&lt;/code&gt; text.
-&lt;b&gt;Note:&lt;/b&gt; the default text is "Accept"</documentation>
+&lt;b&gt;Note:&lt;/b&gt; the default text is &quot;Accept&quot;</documentation>
         </property>
     </properties>
 </control>

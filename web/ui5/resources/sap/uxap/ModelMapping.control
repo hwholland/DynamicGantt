@@ -7,13 +7,13 @@
     <since>1.26</since>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
-        <property name="externalModelName" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="externalModelName">
             <documentation>Determines the external model name.</documentation>
         </property>
-        <property name="internalModelName" type="sap.ui.core/string" defaultValue="Model" group="Misc">
+        <property group="Misc" defaultValue="Model" type="sap.ui.core/string" name="internalModelName">
             <documentation>Determines the internal model name.</documentation>
         </property>
-        <property name="externalPath" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="externalPath">
             <documentation>Determines the external path.</documentation>
         </property>
     </properties>

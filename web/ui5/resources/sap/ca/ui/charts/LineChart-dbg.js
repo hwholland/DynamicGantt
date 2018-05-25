@@ -66,7 +66,7 @@ jQuery.sap.require("sap.ca.ui.charts.Chart");
  * @class
  * Line Chart for the Fiori Project
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

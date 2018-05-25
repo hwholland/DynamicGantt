@@ -1,24 +1,17 @@
 <core:FragmentDefinition xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"
 						 xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:uxap="sap.uxap">
-
-		<uxap:breadCrumbsLinks>
-			<template:repeat list="{parameter>/settings/componentData/preprocessorsData/breadCrumbs}" var="breadCrumb">
-				<template:repeat list="{entitySet>/dataServices/schema/0/entityContainer/0/entitySet}"
-								 var="tmpEntitySet">
-					<template:if test="{parts: [{path: 'tmpEntitySet>'}, {path: 'breadCrumb>'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.matchesBreadCrumb'}">
-						<template:with path="tmpEntitySet>entityType"
-									   helper="sap.ui.model.odata.AnnotationHelper.gotoEntityType"
-									   var="tmpEntityType">
-
-							<Link text="{path: 'tmpEntityType>com.sap.vocabularies.UI.v1.HeaderInfo/Title/Value', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}">
-								<customData>
-									<core:CustomData key="entitySet" value="{tmpEntitySet>name}"/>
-								</customData>
-							</Link>
-						</template:with>
-					</template:if>
-				</template:repeat>
-			</template:repeat>
-		</uxap:breadCrumbsLinks>
+	
+	<template:if test="{= ${parameter>/manifest/sap.ui.generic.app/settings/objectPageDynamicHeaderTitleWithVM} === true}">
+		<template:then>
+			<Breadcrumbs>
+				<core:Fragment fragmentName="sap.suite.ui.generic.template.ObjectPage.view.fragments.BreadcrumbLinks" type="XML"/>
+			</Breadcrumbs>
+		</template:then>
+		<template:else>
+			<uxap:breadCrumbsLinks>
+				<core:Fragment fragmentName="sap.suite.ui.generic.template.ObjectPage.view.fragments.BreadcrumbLinks" type="XML"/>
+			</uxap:breadCrumbsLinks>
+		</template:else>
+	</template:if>
 
 </core:FragmentDefinition>

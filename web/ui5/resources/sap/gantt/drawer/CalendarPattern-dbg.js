@@ -5,10 +5,10 @@
 	
  */
 sap.ui.define([
-	"sap/ui/core/Core", "sap/gantt/misc/Format","sap/ui/core/format/DateFormat", "sap/gantt/drawer/Drawer",
+	"sap/ui/core/Core", "sap/gantt/misc/Format","sap/ui/core/format/DateFormat", "sap/gantt/drawer/Drawer", "sap/gantt/misc/Utility",
 	// 3rd party lib
 	"sap/ui/thirdparty/d3"
-], function (Core, Format, DateFormat, Drawer) {
+], function (Core, Format, DateFormat, Drawer, Utility) {
 	"use strict";
 
 	var CalendarPattern = Drawer.extend("sap.gantt.drawer.CalendarPattern");
@@ -25,15 +25,16 @@ sap.ui.define([
 		if (oPatternDef && oPatternDef.getDefNode() && oPatternDef.getDefNode().defNodes) {
 			var defNode = oPatternDef.getDefNode();
 			var defId = sParentId + "-calendardefs";
-			if (!(d3.select("#" + defId).empty())) {
-				jQuery("#" + defId).remove();
+			var sWrapDefSelector = Utility.attributeEqualSelector("id", defId);
+			if (!(d3.select(sWrapDefSelector).empty())) {
+				jQuery(sWrapDefSelector).remove();
 			}
 			var width = this._oStatusSet.aViewBoundary[1] - this._oStatusSet.aViewBoundary[0];
 			if (width < 0) {
 				width = this._oStatusSet.aViewBoundary[0] - this._oStatusSet.aViewBoundary[1];
 			}
 			var patternProp = {height: iBaseRowHeight, width: width};
-			var patternDefG = aSvgBodyNode.select("#" + defId);
+			var patternDefG = aSvgBodyNode.select(sWrapDefSelector);
 			if (patternDefG.empty()){
 				patternDefG = aSvgBodyNode.insert("defs",":first-child")
 									.attr("id", defId);

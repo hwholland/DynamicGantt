@@ -3,7 +3,7 @@
     <name>FeederType</name>
     <derived/>
     <documentation>Type of a Feeder.</documentation>
-    <developmentState state="experimental" since="1.2">The whole Feed/Feeder API is still under discussion, significant changes are likely. Especially text presentation (e.g. @-references and formatted text) is not final. Also the Feed model topic is still open.</developmentState>
+    <developmentState since="1.2" state="experimental">The whole Feed/Feeder API is still under discussion, significant changes are likely. Especially text presentation (e.g. @-references and formatted text) is not final. Also the Feed model topic is still open.</developmentState>
     <enumeration>
         <value name="Large">
             <documentation>large Feeder</documentation>

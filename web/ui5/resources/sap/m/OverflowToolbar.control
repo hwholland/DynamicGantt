@@ -61,7 +61,7 @@ The height of the toolbar changes on desktop, tablet, and smartphones.</document
     <since>1.28</since>
     <baseType>sap.m/Toolbar</baseType>
     <aggregations>
-        <aggregation name="_overflowButton" type="sap.m/ToggleButton" cardinality="0..1" visibility="hidden"/>
-        <aggregation name="_popover" type="sap.m/Popover" cardinality="0..1" visibility="hidden"/>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/ToggleButton" name="_overflowButton"/>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/Popover" name="_popover"/>
     </aggregations>
 </control>

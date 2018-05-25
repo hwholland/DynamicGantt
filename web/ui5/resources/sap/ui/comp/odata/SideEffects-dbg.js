@@ -1,7 +1,8 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 sap.ui.define([	"jquery.sap.global" ], function(jQuery) {
@@ -15,7 +16,7 @@ sap.ui.define([	"jquery.sap.global" ], function(jQuery) {
 	 * @classdesc Analyzes OData Side-Effects annotation.
 	 * @author SAP SE
 	 * @experimental to be productized soon
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.31.0
 	 * @alias sap.ui.comp.odata.SideEffects
 	 */

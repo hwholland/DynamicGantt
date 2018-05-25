@@ -1,8 +1,7 @@
-(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.components.flp.CustomRouter");
+sap.ui.define(function() {
+	"use strict";
 
-    sap.ui.core.routing.Router.extend("sap.ushell.components.flp.CustomRouter", {
+    var CustomRouter = sap.ui.core.routing.Router.extend("sap.ushell.components.flp.CustomRouter", {
 
         constructor : function() {
             sap.ui.core.routing.Router.apply(this, arguments);
@@ -26,6 +25,13 @@
                 oTargetControl = sap.ui.getCore().byId(mParameters.config.controlId);
             var result = this.getTarget(mParameters.config.target).display();
             oTargetControl.to(result.oTargetParent);
+            setTimeout(function () {
+                sap.ui.getCore().getEventBus().publish("launchpad", "launchpadCustomRouterRouteMatched");
+            }, 0);
         }
     });
-})();
+
+
+	return CustomRouter;
+
+});

@@ -55,7 +55,7 @@ jQuery.sap.require("sap.m.TileContainer");
  * @class
  * Picture viewer control relying on the TileContainer control
  * @extends sap.m.TileContainer
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -633,14 +633,12 @@ sap.ca.ui.PictureViewer.prototype.onAfterRendering = function () {
 	//init resizing
 	//this._sResizeListenerId = sap.ui.core.ResizeHandler.register(this.getDomRef().parentElement,  jQuery.proxy(this._resize, this));
 
-	//init the dimensions to the container scoll area 
+	//init the dimensions to the container scoll area
 	this._applyDimension();
 	this.$().toggleClass("sapCaPWEditable", this.getRemovable() === true);
 	var that = this;
 	this._sInitialResizeTimeoutId = setTimeout(function () {
 		that.addStyleClass("sapCaPWRendering");
-		that._applyPageStartIndex(that._selectedIndex);
-
 		that._update(false);
 
 	}, this._iInitialResizeTimeout);

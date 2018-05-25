@@ -4,9 +4,11 @@
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
 /*global sap*/
-sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseController) {
+jQuery.sap.require("sap.apf.modeler.ui.controller.requestOptions");
+(function() {
 	"use strict";
-	return BaseController.extend("sap.apf.modeler.ui.controller.facetFilterFRR", {
+	var bServiceChanged = false;
+	sap.apf.modeler.ui.controller.requestOptions.extend("sap.apf.modeler.ui.controller.facetFilterFRR", {
 		// Called on initialization of the view and sets the static texts for all controls in UI
 		setDisplayText : function() {
 			var oController = this;
@@ -42,9 +44,9 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseC
 			return oController.oParentObject.getServiceOfFilterResolution();
 		},
 		// returns all entity sets in a service
-		getAllEntities : function(sSource) {
+		getAllEntitiesAsPromise : function(sSource) {
 			var oController = this;
-			return oController.oConfigurationEditor.getAllEntitySetsOfService(sSource);
+			return oController.oConfigurationEditor.getAllEntitySetsOfServiceAsPromise(sSource);
 		},
 		// returns filter resolution entity set
 		getEntity : function() {
@@ -52,9 +54,9 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseC
 			return oController.oParentObject.getEntitySetOfFilterResolution();
 		},
 		// returns all properties in a particular entity set of a service
-		getAllEntitySetProperties : function(sSource, sEntitySet) {
+		getAllEntitySetPropertiesAsPromise : function(sSource, sEntitySet) {
 			var oController = this;
-			return oController.oConfigurationEditor.getAllPropertiesOfEntitySet(sSource, sEntitySet);
+			return oController.oConfigurationEditor.getAllPropertiesOfEntitySetAsPromise(sSource, sEntitySet);
 		},
 		// clearSource clears filter resolution service. It calls clears entity to clear filter resolution entity as well. Clear entity calls clear select properties on FRR
 		clearSource : function() {
@@ -74,10 +76,17 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseC
 				oController.oParentObject.removeSelectPropertyOfFilterResolution(property);
 			});
 		},
+		removeSelectProperties : function(aProperties) {
+			var oController = this;
+			aProperties.forEach(function(property) {
+				oController.oParentObject.removeSelectPropertyOfFilterResolution(property);
+			});
+		},
 		// updates filter resolution service
 		updateSource : function(sSource) {
 			var oController = this;
 			oController.oParentObject.setServiceOfFilterResolution(sSource);
+			bServiceChanged = true;
 		},
 		// updates filter resolution entity set
 		updateEntity : function(sEntity) {
@@ -97,10 +106,17 @@ sap.ui.define([ "sap/apf/modeler/ui/controller/requestOptions" ], function(BaseC
 			var oController = this;
 			return oController.oParentObject.getSelectPropertiesOfFilterResolution();
 		},
+		fireRelevantEvents : function() {
+			var oController = this;
+			if (bServiceChanged) {
+				oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.UPDATEPROPERTIES);
+				bServiceChanged = false;
+			}
+		},
 		// returns the current validation state of sub view
 		getValidationState : function() {
 			var oController = this;
 			return oController.viewValidator.getValidationState();
 		}
 	});
-});
+}());

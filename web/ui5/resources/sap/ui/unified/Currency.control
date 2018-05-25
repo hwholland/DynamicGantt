@@ -36,10 +36,10 @@ For larger amounts, the unit of measurement wraps to the next line, which makes 
     <since>1.21.1</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="value" type="sap.ui.core/float" defaultValue="0" group="Appearance">
+        <property group="Appearance" defaultValue="0" type="sap.ui.core/float" name="value">
             <documentation>Determines the currency value.</documentation>
         </property>
-        <property name="stringValue" type="sap.ui.core/string" group="Appearance" since="1.54">
+        <property since="1.54" group="Appearance" type="sap.ui.core/string" name="stringValue">
             <documentation>Determines the currency value as a string.
 
 String value is useful if you want to store really big values. If there are more than 21 digits
@@ -49,24 +49,24 @@ decimal format.
 
 &lt;b&gt;Note:&lt;/b&gt; If set, it will take precedence over the &lt;code&gt;value&lt;/code&gt; property.</documentation>
         </property>
-        <property name="currency" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="currency">
             <documentation>Determines the displayed currency code (ISO 4217).
 
 &lt;b&gt;Note:&lt;/b&gt; If a * character is set instead of currency code,
 only the character itself will be rendered, ignoring the &lt;code&gt;value&lt;/code&gt; property.</documentation>
         </property>
-        <property name="maxPrecision" type="sap.ui.core/int" defaultValue="3" group="Appearance">
+        <property group="Appearance" defaultValue="3" type="sap.ui.core/int" name="maxPrecision">
             <documentation>Defines the space that is available for the precision of the various currencies.</documentation>
         </property>
-        <property name="useSymbol" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="useSymbol">
             <documentation>Displays the currency symbol instead of the ISO currency code.</documentation>
         </property>
     </properties>
     <methods>
-        <method name="getFormattedValue" type="sap.ui.core/string">
+        <method type="sap.ui.core/string" name="getFormattedValue">
             <documentation>The formatted value.</documentation>
         </method>
-        <method name="getCurrencySymbol" type="sap.ui.core/string">
+        <method type="sap.ui.core/string" name="getCurrencySymbol">
             <documentation>Get symbol of the currency, if available.</documentation>
         </method>
     </methods>

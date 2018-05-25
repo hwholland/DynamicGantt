@@ -41,34 +41,34 @@
         <value name="Type10">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type11" since="1.50">
+        <value since="1.50" name="Type11">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type12" since="1.50">
+        <value since="1.50" name="Type12">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type13" since="1.50">
+        <value since="1.50" name="Type13">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type14" since="1.50">
+        <value since="1.50" name="Type14">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type15" since="1.50">
+        <value since="1.50" name="Type15">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type16" since="1.50">
+        <value since="1.50" name="Type16">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type17" since="1.50">
+        <value since="1.50" name="Type17">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type18" since="1.50">
+        <value since="1.50" name="Type18">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type19" since="1.50">
+        <value since="1.50" name="Type19">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
-        <value name="Type20" since="1.50">
+        <value since="1.50" name="Type20">
             <documentation>The semantic meaning must be defined by the app. It can be displayed in a legend.</documentation>
         </value>
     </enumeration>

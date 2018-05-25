@@ -1,50 +1,18 @@
 /*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 
-/* ----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying 
- * source files only (*.control, *.js) or they will be lost after the next generation.
- * ---------------------------------------------------------------------------------- */
-
 // Provides control sap.ushell.ui.footerbar.HideGroupsButton.
-jQuery.sap.declare("sap.ushell.ui.footerbar.HideGroupsButton");
-jQuery.sap.require("sap.ushell.library");
-jQuery.sap.require("sap.ushell.ui.launchpad.ActionItem");
-
+sap.ui.define([
+		'sap/ushell/library',
+		'sap/ushell/resources',
+		'sap/ushell/ui/launchpad/AccessibilityCustomData',
+		'sap/ushell/ui/launchpad/ActionItem'
+	], function(library, resources, AccessibilityCustomData, ActionItem) {
+	"use strict";
 
 /**
  * Constructor for a new ui/footerbar/HideGroupsButton.
- * 
- * Accepts an object literal <code>mSettings</code> that defines initial 
- * property values, aggregated and associated objects as well as event handlers. 
- * 
- * If the name of a setting is ambiguous (e.g. a property has the same name as an event), 
- * then the framework assumes property, aggregation, association, event in that order. 
- * To override this automatic resolution, one of the prefixes "aggregation:", "association:" 
- * or "event:" can be added to the name of the setting (such a prefixed name must be
- * enclosed in single or double quotes).
- *
- * The supported settings are:
- * <ul>
- * <li>Properties
- * <ul></ul>
- * </li>
- * <li>Aggregations
- * <ul></ul>
- * </li>
- * <li>Associations
- * <ul></ul>
- * </li>
- * <li>Events
- * <ul>
- * <li>{@link sap.ushell.ui.footerbar.HideGroupsButton#event:save save} : fnListenerFunction or [fnListenerFunction, oListenerObject] or [oData, fnListenerFunction, oListenerObject]</li></ul>
- * </li>
- * </ul> 
- *
- * 
- * In addition, all settings applicable to the base type {@link sap.ushell.ui.launchpad.ActionItem#constructor sap.ushell.ui.launchpad.ActionItem}
- * can be used as well.
  *
  * @param {string} [sId] id for the new control, generated automatically if no id is given 
  * @param {object} [mSettings] initial settings for the new control
@@ -52,122 +20,40 @@ jQuery.sap.require("sap.ushell.ui.launchpad.ActionItem");
  * @class
  * A button to hide groups from the dashboard, for the UShell footerbar.
  * @extends sap.ushell.ui.launchpad.ActionItem
- * @version 1.38.26
  *
  * @constructor
  * @public
  * @name sap.ushell.ui.footerbar.HideGroupsButton
  * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
  */
-sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.HideGroupsButton", { metadata : {
+var HideGroupsButton = ActionItem.extend("sap.ushell.ui.footerbar.HideGroupsButton", /** @lends sap.ushell.ui.footerbar.HideGroupsButton.prototype */ { metadata : {
 
 	library : "sap.ushell",
 	events : {
 
 		/**
 		 */
-		"save" : {}
+		save : {}
 	}
 }});
 
-
-/**
- * Creates a new subclass of class sap.ushell.ui.footerbar.HideGroupsButton with name <code>sClassName</code> 
- * and enriches it with the information contained in <code>oClassInfo</code>.
- * 
- * <code>oClassInfo</code> might contain the same kind of informations as described in {@link sap.ui.core.Element.extend Element.extend}.
- *   
- * @param {string} sClassName name of the class to be created
- * @param {object} [oClassInfo] object literal with informations about the class  
- * @param {function} [FNMetaImpl] constructor function for the metadata object. If not given, it defaults to sap.ui.core.ElementMetadata.
- * @return {function} the created class / constructor function
- * @public
- * @static
- * @name sap.ushell.ui.footerbar.HideGroupsButton.extend
- * @function
- */
-
-sap.ushell.ui.footerbar.HideGroupsButton.M_EVENTS = {'save':'save'};
-
-
-/**
- *
- * @name sap.ushell.ui.footerbar.HideGroupsButton#save
- * @event
- * @param {sap.ui.base.Event} oControlEvent
- * @param {sap.ui.base.EventProvider} oControlEvent.getSource
- * @param {object} oControlEvent.getParameters
- * @public
- */
- 
-/**
- * Attach event handler <code>fnFunction</code> to the 'save' event of this <code>sap.ushell.ui.footerbar.HideGroupsButton</code>.<br/>.
- * When called, the context of the event handler (its <code>this</code>) will be bound to <code>oListener<code> if specified
- * otherwise to this <code>sap.ushell.ui.footerbar.HideGroupsButton</code>.<br/> itself. 
- *  
- *
- * @param {object}
- *            [oData] An application specific payload object, that will be passed to the event handler along with the event object when firing the event.
- * @param {function}
- *            fnFunction The function to call, when the event occurs.  
- * @param {object}
- *            [oListener] Context object to call the event handler with. Defaults to this <code>sap.ushell.ui.footerbar.HideGroupsButton</code>.<br/> itself.
- *
- * @return {sap.ushell.ui.footerbar.HideGroupsButton} <code>this</code> to allow method chaining
- * @public
- * @name sap.ushell.ui.footerbar.HideGroupsButton#attachSave
- * @function
- */
-
-/**
- * Detach event handler <code>fnFunction</code> from the 'save' event of this <code>sap.ushell.ui.footerbar.HideGroupsButton</code>.<br/>
- *
- * The passed function and listener object must match the ones used for event registration.
- *
- * @param {function}
- *            fnFunction The function to call, when the event occurs.
- * @param {object}
- *            oListener Context object on which the given function had to be called.
- * @return {sap.ushell.ui.footerbar.HideGroupsButton} <code>this</code> to allow method chaining
- * @public
- * @name sap.ushell.ui.footerbar.HideGroupsButton#detachSave
- * @function
- */
-
-/**
- * Fire event save to attached listeners.
- *
- * @param {Map} [mArguments] the arguments to pass along with the event.
- * @return {sap.ushell.ui.footerbar.HideGroupsButton} <code>this</code> to allow method chaining
- * @protected
- * @name sap.ushell.ui.footerbar.HideGroupsButton#fireSave
- * @function
- */
-
-// Start of sap/ushell/ui/footerbar/HideGroupsButton.js
-(function () {
-    "use strict";
     /*global jQuery, sap*/
-
-    jQuery.sap.declare("sap.ushell.ui.footerbar.HideGroupsButton");
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.require("sap.ushell.ui.launchpad.AccessibilityCustomData");
 
     /**
      * @name sap.ushell.ui.footerbar.HideGroupsButton
      */
-    sap.ushell.ui.footerbar.HideGroupsButton.prototype.init = function () {
+    /*HideGroupsButton.prototype.init = function () {
         //call the parent sap.ushell.ui.launchpad.ActionItem init method
-        if (sap.ushell.ui.launchpad.ActionItem.prototype.init) {
-            sap.ushell.ui.launchpad.ActionItem.prototype.init.apply(this, arguments);
+        if (ActionItem.prototype.init) {
+            ActionItem.prototype.init.apply(this, arguments);
         }
         this.setIcon('sap-icon://group-2');
-        this.setTooltip(sap.ushell.resources.i18n.getText("hideGroupsBtn_tooltip"));
-        this.setText(sap.ushell.resources.i18n.getText("hideGroupsBtn_title"));
+        this.setTooltip(resources.i18n.getText("hideGroupsBtn_tooltip"));
+        this.setText(resources.i18n.getText("hideGroupsBtn_title"));
         this.attachPress(this.openHideGroupsDialog);
     };
 
-    sap.ushell.ui.footerbar.HideGroupsButton.prototype.openHideGroupsDialog = function () {
+    HideGroupsButton.prototype.openHideGroupsDialog = function () {
         jQuery.sap.require("sap.m.Dialog");
         jQuery.sap.require("sap.m.Button");
         jQuery.sap.require("sap.m.Table");
@@ -206,7 +92,7 @@ sap.ushell.ui.footerbar.HideGroupsButton.M_EVENTS = {'save':'save'};
                     change: that.handleChange,
                     customTextOff: " ",
                     customTextOn: " ",
-                    tooltip: sap.ushell.resources.i18n.getText("hideGroups_switchTooltip")
+                    tooltip: resources.i18n.getText("hideGroups_switchTooltip")
                 })
             ]
         });
@@ -269,7 +155,7 @@ sap.ushell.ui.footerbar.HideGroupsButton.M_EVENTS = {'save':'save'};
         });
 
         this.saveButton = new sap.m.Button("saveBtn", {
-            text: sap.ushell.resources.i18n.getText("okBtn"),
+            text: resources.i18n.getText("okBtn"),
             press: function () {
 
                 setTimeout(function () {
@@ -294,9 +180,9 @@ sap.ushell.ui.footerbar.HideGroupsButton.M_EVENTS = {'save':'save'};
                             that.fireSave();
                         }).fail(function () {
                             var errorMsg = new sap.ushell.ui.launchpad.EmbeddedSupportErrorMessage("HideGroupsErrorMessage", {
-                                title: sap.ushell.resources.i18n.getText("error"),
+                                title: resources.i18n.getText("error"),
                                 content: new sap.m.Text({
-                                    text: sap.ushell.resources.i18n.getText("hideGroups_error")
+                                    text: resources.i18n.getText("hideGroups_error")
                                 })
                             });
                             errorMsg.open();
@@ -315,17 +201,17 @@ sap.ushell.ui.footerbar.HideGroupsButton.M_EVENTS = {'save':'save'};
             }
 
             if (numOfHiddenGroups === 0) {  //All groups are visible on your home page
-                sMsg = sap.ushell.resources.i18n.getText("hideGroups_none");
+                sMsg = resources.i18n.getText("hideGroups_none");
             } else if (numOfHiddenGroups === 1) {//1 group is hidden on your home page
-                sMsg = sap.ushell.resources.i18n.getText("hideGroups_single");
+                sMsg = resources.i18n.getText("hideGroups_single");
             } else {//{0} groups are hidden on your home page
-                sMsg = sap.ushell.resources.i18n.getText("hideGroups_multiple", numOfHiddenGroups);
+                sMsg = resources.i18n.getText("hideGroups_multiple", numOfHiddenGroups);
             }
             sap.ushell.Container.getService("Message").show(sap.ushell.services.Message.Type.INFO, sMsg);
         };
 
         this.cancelButton = new sap.m.Button("CancelBtn", {
-            text: sap.ushell.resources.i18n.getText("cancelBtn"),
+            text: resources.i18n.getText("cancelBtn"),
             press: function () {
                 //Need to revert any model changes if took place by the user prior to pressing the cancel button
                 if (that.aGroupsOriginalStates) {
@@ -343,7 +229,7 @@ sap.ushell.ui.footerbar.HideGroupsButton.M_EVENTS = {'save':'save'};
 
         this.oDialog = new sap.m.Dialog({
             id: "groupsVisibilityDialog",
-            title: sap.ushell.resources.i18n.getText("hideGroups_title"),
+            title: resources.i18n.getText("hideGroups_title"),
             contentWidth : "29.6rem",
             contentHeight : "36.07rem",
             stretch: sap.ui.Device.system.phone,
@@ -355,9 +241,9 @@ sap.ushell.ui.footerbar.HideGroupsButton.M_EVENTS = {'save':'save'};
                 this.oDialog.destroy();
             }.bind(this)
         }).addStyleClass("sapUshellGroupsVisibilityDialog");
-        this.oDialog.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+        this.oDialog.addCustomData(new AccessibilityCustomData({
             key: "aria-label",
-            value: sap.ushell.resources.i18n.getText("hideGroupsDialog_ariaLabel"),
+            value: resources.i18n.getText("hideGroupsDialog_ariaLabel"),
             writeToDom: true
         }));
         this.getModelStates = function (groups) {
@@ -378,5 +264,9 @@ sap.ushell.ui.footerbar.HideGroupsButton.M_EVENTS = {'save':'save'};
         this.aGroupsStates = this.oModel.getProperty('/groups');
         this.aGroupsOriginalStates = this.getModelStates(this.aGroupsStates);
         this.oDialog.open();
-    };
-}());
+    };*/
+
+
+	return HideGroupsButton;
+
+});

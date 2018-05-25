@@ -4,55 +4,55 @@
     <derived/>
     <author>SAP SE</author>
     <documentation>A comprehensive UI design approach with graphical and functional elements for searching data, exploring data, and acting on the data
-("Explore and Act (Exact) Pattern").</documentation>
-    <developmentState state="experimental" since="1.2">API is not yet finished and might change completely</developmentState>
+(&quot;Explore and Act (Exact) Pattern&quot;).</documentation>
+    <developmentState since="1.2" state="experimental">API is not yet finished and might change completely</developmentState>
     <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="resultText" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="resultText">
             <documentation>A title text which is displayed above the result section</documentation>
         </property>
     </properties>
     <events>
-        <event name="search" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="search">
             <documentation>Event is fired when the search button is clicked</documentation>
             <parameters>
-                <parameter name="query" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="query">
                     <documentation>The query string which was entered in the search field.</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="refineSearch" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="refineSearch">
             <documentation>Event which is fired when an attribute is selected or unselected.</documentation>
             <parameters>
-                <parameter name="query" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="query">
                     <documentation>The query string which was entered in the search field</documentation>
                 </parameter>
-                <parameter name="changedAttribute" type="sap.ui.ux3/ExactAttribute">
+                <parameter type="sap.ui.ux3/ExactAttribute" name="changedAttribute">
                     <documentation>The attribute which was selected or unselected recently</documentation>
                 </parameter>
-                <parameter name="allSelectedAttributes" type="sap.ui.core/object">
+                <parameter type="sap.ui.core/object" name="allSelectedAttributes">
                     <documentation>Array of all selected ExcatAttribute.</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations default="attributes">
-        <aggregation name="settingsMenu" type="sap.ui.commons/Menu" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.commons/Menu" name="settingsMenu">
             <documentation>Defines the 'Settings' button in the browse section tool bar</documentation>
         </aggregation>
-        <aggregation name="attributes" type="sap.ui.ux3/ExactAttribute" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.ux3/ExactAttribute" name="attributes">
             <documentation>The attributes which shall be available to refine the search</documentation>
         </aggregation>
-        <aggregation name="controls" type="sap.ui.core/Control" cardinality="0..n" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..n" type="sap.ui.core/Control" name="controls">
             <documentation>Controls managed by the Exact control</documentation>
         </aggregation>
     </aggregations>
     <methods>
-        <method name="getResultArea" type="sap.ui.ux3/ExactArea">
+        <method type="sap.ui.ux3/ExactArea" name="getResultArea">
             <documentation>Returns the ExactArea representing the result section. Arbitrary content can be added here.</documentation>
         </method>
-        <method name="getSearchField" type="sap.ui.commons/SearchField">
+        <method type="sap.ui.commons/SearchField" name="getSearchField">
             <documentation>Returns the SearchField control which is used by the Exact control.</documentation>
         </method>
     </methods>

@@ -1,13 +1,13 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's page building service.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.services.PageBuilding");
 
     jQuery.sap.require("sap.ui2.srvc.factory");
     jQuery.sap.require("sap.ui2.srvc.page");
@@ -27,7 +27,7 @@
      * @since 1.15.0
      * @private
      */
-    sap.ushell.services.PageBuilding = function (oAdapter, oContainerInterface) {
+    function PageBuilding (oAdapter, oContainerInterface) {
 
         /**
          * Returns the UI2 page building factory.
@@ -68,4 +68,7 @@
             return oDeferred.promise();
         };
     };
-}());
+
+    PageBuilding.hasNoAdapter = false;
+    return PageBuilding;
+}, true /* bExport */);

@@ -11,30 +11,30 @@ do not use it for other scenarios than the root control usecase.</documentation>
     <deprecation since="1.44.0"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="showPane" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="showPane">
             <documentation>Shows / Hides the side pane.</documentation>
         </property>
-        <property name="headerHiding" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="headerHiding">
             <documentation>Whether the header can be hidden (manually or automatically). This feature is only available when touch events are supported.</documentation>
         </property>
-        <property name="headerVisible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="headerVisible">
             <documentation>If set to false, no header (and no items, search, ...) is shown.</documentation>
         </property>
     </properties>
     <aggregations default="content">
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>The content to appear in the main canvas.</documentation>
         </aggregation>
-        <aggregation name="paneContent" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="paneContent">
             <documentation>The content to appear in the pane area.</documentation>
         </aggregation>
-        <aggregation name="header" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="header">
             <documentation>The control to appear in the header area.</documentation>
         </aggregation>
-        <aggregation name="canvasSplitContainer" type="sap.ui.unified/SplitContainer" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.unified/SplitContainer" name="canvasSplitContainer">
             <documentation>Private storage for the internal split container for the canvas.</documentation>
         </aggregation>
-        <aggregation name="curtainSplitContainer" type="sap.ui.unified/SplitContainer" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.unified/SplitContainer" name="curtainSplitContainer">
             <documentation>Private storage for the internal split container for the curtain.</documentation>
         </aggregation>
     </aggregations>

@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 /**
  * @class AnchorItem renderer.
@@ -7,26 +7,29 @@
  * @private
  */
 
-(function () {
-    "use strict";
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.require("sap.ui.core.Control");
-    jQuery.sap.declare("sap.ushell.ui.launchpad.AnchorItemRenderer");
+sap.ui.define(['sap/ui/core/Control','sap/ushell/resources'],
+	function(Control, resources) {
+	"use strict";
 
-    sap.ushell.ui.launchpad.AnchorItemRenderer = sap.ui.core.Renderer.extend(sap.ui.core.Control);
-    sap.ushell.ui.launchpad.AnchorItemRenderer.render = function (rm, oAnchorItem) {
+    var AnchorItemRenderer = sap.ui.core.Renderer.extend(Control);
+    AnchorItemRenderer.render = function (rm, oAnchorItem) {
         var oAnchorNavigationBar = oAnchorItem.getParent(),
             oAnchorItems = oAnchorNavigationBar.getGroups(),
             oAnchorVisibleItems = oAnchorItems.filter(function (oGroup) {
                 return oGroup.getVisible();
             }),
-            iCurrentItemIndex = oAnchorVisibleItems.indexOf(oAnchorItem) > -1 ? oAnchorVisibleItems.indexOf(oAnchorItem) + 1 : "";
+            iCurrentItemIndex = oAnchorVisibleItems.indexOf(oAnchorItem) > -1 ? oAnchorVisibleItems.indexOf(oAnchorItem) + 1 : "",
+            oDashboardGroupsModel = oAnchorItem.getModel(),
+            sItemGroupModelPath = oAnchorItem.getBindingContext().getPath(),
+            oItemGroupModelObject = oDashboardGroupsModel.getProperty(sItemGroupModelPath),
+            sItemGroupId = oItemGroupModelObject.groupId;
 
         rm.write("<li");
         rm.writeControlData(oAnchorItem);
         rm.addClass("sapUshellAnchorItem");
         rm.writeAccessibilityState(oAnchorItem, {role: "option", posinset : iCurrentItemIndex, setsize : oAnchorVisibleItems.length});
-        rm.writeAttribute("tabindex", "0");
+        rm.writeAttribute("modelGroupId", sItemGroupId);
+        rm.writeAttribute("tabindex", "-1");
         if (!oAnchorItem.getVisible()) {
             rm.addClass("sapUshellShellHidden");
         }
@@ -41,4 +44,8 @@
         rm.write("</li>");
 
     };
-}());
+
+
+	return AnchorItemRenderer;
+
+}, /* bExport= */ true);

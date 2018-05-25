@@ -1,3 +1,0 @@
-sap.ui.require.preload({
-	"web/ui5/test-resources/sap/apf/testhelper/comp/Component.js": "jQuery.sap.declare(\"sap.apf.testhelper.comp.Component\"),jQuery.sap.require(\"sap.apf.base.Component\"),sap.apf.base.Component.extend(\"sap.apf.testhelper.comp.Component\",{metadata:{config:{fullWidth:!0},name:\"sap.apf.testhelper.comp.Component\",version:\"1.3.0\",manifest:\"json\"},init:function(){sap.apf.base.Component.prototype.init.apply(this,arguments)},createContent:function(){sap.apf.base.Component.prototype.init.apply(this,arguments)}});"
-}, "web/ui5/test-resources/sap/apf/testhelper/comp/Component-preload");

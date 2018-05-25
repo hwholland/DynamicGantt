@@ -1,6 +1,6 @@
 <mvc:View controllerName="sap.apf.modeler.ui.controller.configurationList"
 	xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:l="sap.ui.layout"
-	xmlns:t="sap.apf.modeler.ui.utils">
+	xmlns:core="sap.ui.core" xmlns:t="sap.apf.modeler.ui.utils">
 	<Page xmlns="sap.m" showNavButton="true" showHeader="true"
 		enableScrolling="false" navButtonType="Back" showFooter="true" id="configPage"
 		navButtonPress="handleNavBack">
@@ -24,11 +24,7 @@
 						</items>
 					</VBox>
 					<VBox xmlns="sap.m" id="idConfigDetail" visible="true" width="66%">
-						<l:Grid defaultSpan="L12 M12 S12" class="gridSpacing"
-							id="idConfigDetailData">
-							<l:content>
-							</l:content>
-						</l:Grid>
+						<l:Grid defaultSpan="L12 M12 S12" id="idConfigDetailData" />
 					</VBox>
 				</items>
 			</HBox>
@@ -53,4 +49,5 @@
 
 		</footer>
 	</Page>
+	<core:InvisibleText id="idAriaPropertyForBreadCrumb" />
 </mvc:View>

@@ -1,8 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /**
@@ -34,7 +33,7 @@ sap.ui.define(['jquery.sap.global', 'sap/m/library', 'sap/ui/core/library'],
 		],
 		elements: [],
 		noLibraryCSS: true,
-		version: "1.38.33"
+		version: "1.54.3"
 	});
 	
 	return sap.ndc;

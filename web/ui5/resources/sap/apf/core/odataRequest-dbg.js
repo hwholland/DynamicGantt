@@ -7,8 +7,8 @@
 /*global OData */
 
 jQuery.sap.declare("sap.apf.core.odataRequest");
-jQuery.sap.require("sap.ui.thirdparty.datajs");
 jQuery.sap.require("sap.apf.core.utils.checkForTimeout");
+jQuery.sap.require("sap.ui.model.odata.ODataUtils");
 
 (function() {
 	'use strict';
@@ -44,6 +44,17 @@ jQuery.sap.require("sap.apf.core.utils.checkForTimeout");
 		}
 
 		var oMetadata = oRequest.serviceMetadata;
+		var sapSystem = oInject.functions.getSapSystem();
+		if (sapSystem && !oRequest.isSemanticObjectRequest) {
+			var rSegmentCheck = /(\/[^\/]+)$/g;
+			if (oRequest.requestUri && oRequest.requestUri[oRequest.requestUri.length - 1] === '/') {
+				oRequest.requestUri = oRequest.requestUri.substring(0, oRequest.requestUri.length - 1);
+			}
+			var sLastSegment = oRequest.requestUri.match(rSegmentCheck)[0];
+			var split = oRequest.requestUri.split(sLastSegment);
+			var tmpRequestUri = sap.ui.model.odata.ODataUtils.setOrigin(split[0], { force : true, alias : sapSystem});
+			oRequest.requestUri = tmpRequestUri + sLastSegment;
+		}
 		datajs.request(oRequest, success, error, oBatchHandler, undefined, oMetadata);
 	};
 }());

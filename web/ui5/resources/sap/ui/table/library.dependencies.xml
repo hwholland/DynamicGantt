@@ -147,7 +147,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/table/Table.js" size="139558" compressedSize="50908">
+  <module name="sap/ui/table/Table.js" size="139956" compressedSize="51044">
     <description>Provides control sap.ui.table.Table.</description>
     <requires>
       <module name="jquery.sap.dom.js"/>
@@ -179,11 +179,10 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/table/TableAccExtension.js" size="48844" compressedSize="20472">
+  <module name="sap/ui/table/TableAccExtension.js" size="48644" compressedSize="20323">
     <description>Provides helper sap.ui.table.TableAccExtension.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
-      <module name="sap/ui/Device.js"/>
       <module name="sap/ui/core/Control.js"/>
       <module name="sap/ui/table/TableAccRenderExtension.js"/>
       <module name="sap/ui/table/TableExtension.js"/>
@@ -320,7 +319,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/table/TableScrollExtension.js" size="64730" compressedSize="23760">
+  <module name="sap/ui/table/TableScrollExtension.js" size="64789" compressedSize="23814">
     <description>Provides helper sap.ui.table.TableScrollExtension.</description>
     <requires>
       <module name="jquery.sap.events.js"/>
@@ -399,7 +398,7 @@
   </module>
   <module name="sap/ui/table/designtime/messagebundle.properties" size="143">
   </module>
-  <module name="sap/ui/table/library-h2-preload.js" size="10136">
+  <module name="sap/ui/table/library-h2-preload.js" size="10117">
     <requires>
       <module name="jquery.sap.dom.js"/>
       <module name="jquery.sap.events.js"/>
@@ -492,7 +491,7 @@
       <module name="sap/ui/table/rules/TableHelper.support.js"/>
     </includes>
   </module>
-  <module name="sap/ui/table/library-preload.js" size="282538">
+  <module name="sap/ui/table/library-preload.js" size="282580">
     <requires>
       <module name="jquery.sap.dom.js"/>
       <module name="jquery.sap.events.js"/>

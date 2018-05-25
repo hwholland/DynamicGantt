@@ -17,13 +17,18 @@ jQuery.sap.declare("sap.apf.modeler.core.navigationTarget");
 	 * @constructor
 	 */
 	sap.apf.modeler.core.NavigationTarget = function(navigationTargetId, inject, dataFromCopy) {
-		var semObject, actn, isStepSpecific = false, requestForFilterMapping, targetPropertiesForFilterMapping;
+		var semObject, actn, isStepSpecific = false, requestForFilterMapping, targetPropertiesForFilterMapping, titleKey;
+		var useDynamicParameters = false;
+		var parameters = [];
 		if (dataFromCopy) {
 			semObject = dataFromCopy.semObject;
 			actn = dataFromCopy.actn;
 			isStepSpecific = dataFromCopy.isStepSpecific;
 			requestForFilterMapping = dataFromCopy.requestForFilterMapping;
 			targetPropertiesForFilterMapping = dataFromCopy.targetPropertiesForFilterMapping;
+			parameters = dataFromCopy.parameters;
+			titleKey = dataFromCopy.titleKey;
+			useDynamicParameters = dataFromCopy.useDynamicParameters;
 		} else {
 			requestForFilterMapping = {};
 			targetPropertiesForFilterMapping = new inject.constructors.ElementContainer("TargetPropertyForFilterMapping", undefined, inject);
@@ -191,6 +196,111 @@ jQuery.sap.declare("sap.apf.modeler.core.navigationTarget");
 		this.removeFilterMappingTargetProperty = function(property) {
 			targetPropertiesForFilterMapping.removeElement(property);
 		};
+		
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.sap.apf.modeler.core.NavigationTarget#getNavigationParameter
+		 * @function
+		 * @description Get a navigation parameter
+		 * @param {string} key - key for navigation parameter
+		 * @returns {undefined | Object} - returns undefined for not existing key otherwise Object with key and value 
+		 */
+		this.getNavigationParameter = function(key) {
+			var result;
+			parameters.forEach(function(parameter){
+				if(parameter.key === key) {
+					result = parameter;
+				}
+			});
+			return result;
+		};
+		
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.sap.apf.modeler.core.NavigationTarget#getAllNavigationParameters
+		 * @function
+		 * @description Get all navigation parameters
+		 * @returns {Object[]} - returns an array of Objects with key and value 
+		 */
+		this.getAllNavigationParameters = function() {
+			return parameters;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.sap.apf.modeler.core.NavigationTarget#addNavigationParameter
+		 * @function
+		 * @description Add a navigation parameter
+		 * @param {string} key - key for navigation parameter
+		 * @param {string} value - value for navigation parameter
+		 * @param {number} index - (optional) index where the parameter shall be entered
+		 */
+		this.addNavigationParameter = function(key, value, index) {
+			if(index === undefined || index > parameters.length){
+				index = parameters.length;
+			}
+			parameters.splice(index, 0, {
+				key: key,
+				value: value
+			});
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.sap.apf.modeler.core.NavigationTarget#removeNavigationParameter
+		 * @function
+		 * @description Remove a navigation parameter
+		 * @param {string} key - key for navigation parameter
+		 */
+		this.removeNavigationParameter = function(key) {
+			var indexToBeRemoved;
+			parameters.forEach(function(parameter, index){
+				if(parameter.key === key) {
+					indexToBeRemoved = index;
+				}
+			});
+			if(indexToBeRemoved >= 0){
+				parameters.splice(indexToBeRemoved, 1);
+			}
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.sap.apf.modeler.core.NavigationTarget#setTitleKey
+		 * @function
+		 * @description Set the titleKey
+		 * @param {string} text key for the title
+		 */
+		this.setTitleKey = function(labelKey){
+			titleKey = labelKey;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.sap.apf.modeler.core.NavigationTarget#setUseDynamicParameters
+		 * @function
+		 * @description Set the flag useDynamicParameters
+		 * @param {boolean} onOff
+		 */
+		this.setUseDynamicParameters = function(onOff) {
+			useDynamicParameters = onOff;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.sap.apf.modeler.core.NavigationTarget#getUseDynamicParameters
+		 * @function
+		 * @description get value of the flag useDynamicParameters
+		 * @returns {boolean} onOff
+		 */ 
+		this.getUseDynamicParameters = function() {
+			return useDynamicParameters;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.sap.apf.modeler.core.NavigationTarget#getTitleKey
+		 * @function
+		 * @description Get the titleKey
+		 * @returns {string} text key for the title
+		 */
+		this.getTitleKey = function(){
+			return titleKey;
+		};
 		/**
 		 * @private
 		 * @name sap.apf.modeler.core.NavigationTargetr#copy
@@ -205,7 +315,10 @@ jQuery.sap.declare("sap.apf.modeler.core.navigationTarget");
 				actn : actn,
 				isStepSpecific : isStepSpecific,
 				requestForFilterMapping : requestForFilterMapping,
-				targetPropertiesForFilterMapping : targetPropertiesForFilterMapping
+				targetPropertiesForFilterMapping : targetPropertiesForFilterMapping,
+				parameters : parameters,
+				titleKey: titleKey,
+				useDynamicParameters : useDynamicParameters
 			};
 			var dataFromCopy = sap.apf.modeler.core.ConfigurationObjects.deepDataCopy(dataForCopy);
 			return new sap.apf.modeler.core.NavigationTarget((newIdForCopy || this.getId()), inject, dataFromCopy);

@@ -28,25 +28,25 @@ With version 1.50 you can use a limited set of formatting tags for the message t
     <since>1.30</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" defaultValue="" group="Appearance">
+        <property group="Appearance" defaultValue="" type="sap.ui.core/string" name="text">
             <documentation>Determines the text of the message.</documentation>
         </property>
-        <property name="type" type="sap.ui.core/MessageType" defaultValue="Information" group="Appearance">
+        <property group="Appearance" defaultValue="Information" type="sap.ui.core/MessageType" name="type">
             <documentation>Determines the type of messages that are displayed in the MessageStrip.
 Possible values are: Information (default), Success, Warning, Error.
 If None is passed, the value is set to Information and a warning is displayed in the console.</documentation>
         </property>
-        <property name="customIcon" type="sap.ui.core/URI" defaultValue="" group="Appearance">
+        <property group="Appearance" defaultValue="" type="sap.ui.core/URI" name="customIcon">
             <documentation>Determines a custom icon which is displayed.
 If none is set, the default icon for this message type is used.</documentation>
         </property>
-        <property name="showIcon" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="showIcon">
             <documentation>Determines if an icon is displayed for the message.</documentation>
         </property>
-        <property name="showCloseButton" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="showCloseButton">
             <documentation>Determines if the message has a close button in the upper right corner.</documentation>
         </property>
-        <property name="enableFormattedText" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="enableFormattedText">
             <documentation>Determines the limited collection of HTML elements passed to the &lt;code&gt;text&lt;/code&gt; property should be
 evaluated.
 
@@ -62,18 +62,18 @@ content will not be rendered by the control:
         </property>
     </properties>
     <events>
-        <event name="close" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="close">
             <documentation>This event will be fired after the container is closed.</documentation>
         </event>
     </events>
     <aggregations default="link">
-        <aggregation name="link" type="sap.m/Link" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.m/Link" name="link">
             <documentation>Adds an sap.m.Link control which will be displayed at the end of the message.</documentation>
         </aggregation>
-        <aggregation name="_formattedText" type="sap.m/FormattedText" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/FormattedText" name="_formattedText">
             <documentation>Hidden aggregation which is used to transform the string message into sap.m.Text control.</documentation>
         </aggregation>
-        <aggregation name="_text" type="sap.m/Text" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/Text" name="_text">
             <documentation>Hidden aggregation which is used to transform the string message into sap.m.Text control.</documentation>
         </aggregation>
     </aggregations>

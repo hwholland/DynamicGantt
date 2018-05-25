@@ -3,6 +3,7 @@
 						 xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
 
 	<VBox id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::ContactWithDetails"
+		  visible="{= ${path: 'headerFacet>com.sap.vocabularies.UI.v1.Hidden'} ? ${path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getBindingForHiddenPath'} : true}"
 		  displayInline="true" binding="{parts: [{path: 'headerFacet>Target'}, {path: 'entitySet>'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getNavigationPathWithExpand'}"
 		  class="sapSmartTemplatesObjectPageHeaderForm sapSmartTemplatesObjectPageHeaderContact">
 		<template:if test="{headerFacet>Label}">
@@ -17,10 +18,26 @@
 			<core:Icon id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::Link::Icon"
 					   src="sap-icon://person-placeholder" tooltip="{i18n>CONTACT_INFO}"
 					   visible="false"
-					   class="sapUiTinyMarginEnd sapSmartTemplatesObjectPageHeaderFormLabel" />
+					   class="sapUiTinyMarginEnd sapSmartTemplatesObjectPageHeaderContactLinkIcon" />
 			<Link id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::Link"
 				  text="{path: 'contact>fn', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"
 				  press="._templateEventHandlers.onContactDetails"
+				  class="sapSmartTemplatesObjectPageHeaderContactLink"
+				  build:metadata="#pattern:Header>>HeaderContact;prop:text:FullName">
+				<customData>
+					<core:CustomData key="Location" value="Header"/>
+				</customData>
+			</Link>
+		</HBox>
+		<HBox>
+			<core:Icon id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::LinkSmall::Icon"
+					   src="sap-icon://person-placeholder" tooltip="{i18n>CONTACT_INFO}"
+					   visible="false"
+					   class="sapUiTinyMarginEnd sapSmartTemplatesObjectPageHeaderFormLabel" />
+			<Link id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::LinkSmall"
+				  text="{path: 'contact>fn', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"
+				  press="._templateEventHandlers.onContactDetails"
+				  visible="false"
 				  class="sapSmartTemplatesObjectPageHeaderFormField sapSmartTemplatesObjectPageHeaderContactLink"
 				  build:metadata="#pattern:Header>>HeaderContact;prop:text:FullName">
 				<customData>

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define(function() {
@@ -29,7 +29,7 @@ sap.ui.define(function() {
 		// write the HTML into the render manager
 		oRm.write("<DIV");
 		oRm.writeControlData(oControl);
-		if(oControl.getTooltip_AsString()) {
+		if (oControl.getTooltip_AsString()) {
 			oRm.writeAttributeEscaped("title", oControl.getTooltip_AsString());
 		}
 		oRm.addClass("sapVizChart");

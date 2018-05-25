@@ -3,7 +3,7 @@
     <name>semantic/GroupAction</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>A GroupAction is a {@link sap.m.Button} control enhanced with styling according to the semantics of a common "Group" action.
+    <documentation>A GroupAction is a {@link sap.m.Button} control enhanced with styling according to the semantics of a common &quot;Group&quot; action.
 
 A GroupAction cannot be used independently but only as aggregation content of a {@link sap.m.semantic.SemanticPage}.
 

@@ -6,7 +6,7 @@
     <since>1.9.2</since>
     <baseType>sap.ui.core/LayoutData</baseType>
     <aggregations>
-        <aggregation name="multipleLayoutData" type="sap.ui.core/LayoutData" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/LayoutData" name="multipleLayoutData">
             <documentation>Allows multiple LayoutData.</documentation>
         </aggregation>
     </aggregations>

@@ -22,7 +22,7 @@
 				showReset : true,
 				showPopoverOKButton : true,
 				reset : oController.onResetPress.bind(oController)
-			});
+			}).addStyleClass('facetFilterInitialAlign');
 			if (sap.ui.Device.system.desktop) {
 				oFacetFilter.addStyleClass("facetfilter");
 			}

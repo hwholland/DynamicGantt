@@ -16,7 +16,7 @@ sap.ui.define(function() {
 
 	/**
 	 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
-	 * 
+	 *
 	 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
 	 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
 	 */
@@ -35,21 +35,21 @@ sap.ui.define(function() {
 		oRm.writeAttributeEscaped("id", oControl.getId() + "-wrapper");
 		oRm.addClass("sapUiVkContainerBaseWrapper");
 		oRm.writeClasses();
-		oRm.write(">");	
-		
+		oRm.write(">");
+
 		this.writeContentArea(oRm, oControl);
-		
+
 		this.writeToolbarArea(oRm, oControl);
-		
-		oRm.write("</div>"); // end wrapper	
+
+		oRm.write("</div>"); // end wrapper
 
 		oRm.write("</div>");
 	};
-	
+
 	ContainerBaseRenderer.writeContentArea = function(oRm, oControl) {
 		// content part
 		var selectedContent = oControl.getSelectedContent();
-		
+
 		oRm.write("<div");
 		oRm.addClass("sapUiVkContainerBaseContentArea");
 		oRm.writeClasses();
@@ -62,9 +62,9 @@ sap.ui.define(function() {
 			oRm.renderControl(selectedContent);
 		}
 
-		oRm.write("</div>");// end contentArea		
+		oRm.write("</div>");// end contentArea
 	};
-	
+
 	ContainerBaseRenderer.writeToolbarArea = function(oRm, oControl) {
 		oRm.write("<div");
 		oRm.addClass("sapUiVkContainerBaseToolbarArea");
@@ -72,7 +72,7 @@ sap.ui.define(function() {
 		oRm.write(">");
 		// toolbar
 		oRm.renderControl(oControl._oToolbar);
-		oRm.write("</div>");// end toolbar			
+		oRm.write("</div>");// end toolbar
 	};
 
 	return ContainerBaseRenderer;

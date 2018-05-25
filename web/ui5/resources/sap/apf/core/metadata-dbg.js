@@ -9,7 +9,8 @@
 
 jQuery.sap.declare("sap.apf.core.metadata");
 jQuery.sap.require("sap.apf.utils.utils");
-
+jQuery.sap.require("sap.ui.model.odata.v2.ODataModel");
+jQuery.sap.require("sap.ui.model.odata.ODataUtils");
 (function() {
 	'use strict';
 
@@ -28,6 +29,7 @@ jQuery.sap.require("sap.apf.utils.utils");
 		this.type = "metadata";
 		// Private vars
 		var that = this;
+		var initializationPromise = jQuery.Deferred();
 		var aAllEntityTypes = [];
 		var Hashtable = (oInject && oInject.constructors &&  oInject.constructors.Hashtable) || sap.apf.utils.Hashtable;
 		var oHtPropertyMetadata = new Hashtable(oInject.instances.messageHandler);
@@ -36,12 +38,13 @@ jQuery.sap.require("sap.apf.utils.utils");
 		var oHtParameterEntitySetKeyProperties = new Hashtable(oInject.instances.messageHandler);
 		var oHtEntityTypeMetadata = new Hashtable(oInject.instances.messageHandler);
 		var oHtEntityTypeOfEntitySet = new Hashtable(oInject.instances.messageHandler);
+		var oHtEntitySetOfEntityType = new Hashtable(oInject.instances.messageHandler);
 		var oHtGetSapSemantics = new Hashtable(oInject.instances.messageHandler);
 		var oHtAssociationByParameterEntitySet = new Hashtable(oInject.instances.messageHandler);
 		var oHtAssociationByParameterEntityType = new Hashtable(oInject.instances.messageHandler);
 		var oHtAssociationByAggregateEntitySet = new Hashtable(oInject.instances.messageHandler);
 		var oHtEntityTypes = new Hashtable(oInject.instances.messageHandler);
-		var ODataModel = oInject.constructors.ODataModel || sap.ui.model.odata.ODataModel;
+		var ODataModel = oInject.constructors.ODataModel || sap.ui.model.odata.v2.ODataModel;
 		var bDeactivateFatalError = false;
 		if (oInject.deactivateFatalError) {
 			bDeactivateFatalError = true;
@@ -50,7 +53,17 @@ jQuery.sap.require("sap.apf.utils.utils");
 		var oODataModel;
 		var sEntityTypeQualifier;
 		var sEntityTypeAnnotationsPreFix;
+		var serviceRootWithOrigin = determineServiceRootWithOrigin(sAbsolutePathToServiceDocument);
+		
+		// Private functions
 
+		function determineServiceRootWithOrigin(pathToServiceDocument) {
+			var sapSystem = oInject.functions.getSapSystem();
+			if (sapSystem) {
+				return sap.ui.model.odata.ODataUtils.setOrigin(pathToServiceDocument, { force : true, alias : sapSystem});
+			}
+			return pathToServiceDocument;
+		}
 		// Private functions
 
 		function defineApiResult(input) {
@@ -194,13 +207,12 @@ jQuery.sap.require("sap.apf.utils.utils");
 		}
 
 		function determineEntityTypeName(sEntityTypeOrSetName) {
-			var sEntityType;
-			if (getEntityType(sEntityTypeOrSetName)) {
+			var sEntityType =  getEntityTypeName(sEntityTypeOrSetName);
+			sEntityType = sEntityType || getEntityTypeName(sEntityTypeOrSetName + "Results"); // compatibility!!!
+			
+			if (!sEntityType && getEntityType(sEntityTypeOrSetName)) {  //and compability again
 				sEntityType = sEntityTypeOrSetName;
-			} else {
-				sEntityType = getEntityTypeName(sEntityTypeOrSetName);
-				sEntityType = sEntityType || getEntityTypeName(sEntityTypeOrSetName + "Results"); // compatibility!!!
-			}
+			} 
 			return sEntityType;
 		}
 
@@ -274,11 +286,38 @@ jQuery.sap.require("sap.apf.utils.utils");
 		}
 
 		function initMetadata() {
-
-			oODataModel = createOdataModel();
 			var sMessageCode;
-
-			if (!oODataModel.getServiceMetadata()) {
+			oODataModel = createOdataModel();
+			oODataModel.attachMetadataLoaded(function() {
+				oMetaModel = oODataModel.getMetaModel();
+				oMetaModel.loaded().then(function (){
+					if (!oODataModel.getServiceMetadata()) {
+						sMessageCode = "5018";
+						if (bDeactivateFatalError) {
+							sMessageCode = "11013";
+						}
+						oInject.instances.messageHandler.putMessage(oInject.instances.messageHandler.createMessageObject({
+							code : sMessageCode,
+							aParameters : [ sAbsolutePathToServiceDocument ],
+							oCallingObject : that
+						}));
+						initializationPromise.reject();
+						return;
+					}
+	
+					initializeEntityTypeOfEntitySetsAndAllEntityTypes();
+	
+					initializeEntityTypeQualifier();
+	
+					initializeEntityTypeAnnotationsPreFix(oODataModel);
+	
+					initializeRelevantAssociations();
+					
+					initializationPromise.resolve(this);
+				}.bind(this));
+			}.bind(this));
+			
+			oODataModel.attachMetadataFailed(function(){
 				sMessageCode = "5018";
 				if (bDeactivateFatalError) {
 					sMessageCode = "11013";
@@ -288,19 +327,9 @@ jQuery.sap.require("sap.apf.utils.utils");
 					aParameters : [ sAbsolutePathToServiceDocument ],
 					oCallingObject : that
 				}));
-				that.failed = true;
+				initializationPromise.reject();
 				return;
-			}
-
-			oMetaModel = oODataModel.getMetaModel();
-
-			initializeEntityTypeOfEntitySetsAndAllEntityTypes();
-
-			initializeEntityTypeQualifier();
-
-			initializeEntityTypeAnnotationsPreFix(oODataModel);
-
-			initializeRelevantAssociations();
+			});
 
 			function initializeEntityTypeOfEntitySetsAndAllEntityTypes() {
 				var oCollector = {};
@@ -317,6 +346,7 @@ jQuery.sap.require("sap.apf.utils.utils");
 				entitySet.forEach(function(entitySet) {
 					var entityType = entitySet.entityType.split(/[. ]+/).pop();
 					oHtEntityTypeOfEntitySet.setItem(entitySet.name, entityType);
+					oHtEntitySetOfEntityType.setItem(entityType, entitySet.name);
 					if (!oCollector.hasOwnProperty(entityType)) {
 						oCollector[entityType] = true;
 						aAllEntityTypes.push(entityType);
@@ -406,17 +436,14 @@ jQuery.sap.require("sap.apf.utils.utils");
 
 				});
 			}
-
 			function createOdataModel() {
 				var annotationUris = oInject.instances.annotationHandler.getAnnotationsForService(sAbsolutePathToServiceDocument);
 				var parameterSet = {
-						loadMetadataAsync : false,
 						annotationURI : annotationUris,
 						json : true
 				};
-				return new ODataModel(sAbsolutePathToServiceDocument, parameterSet);
+				return new ODataModel(serviceRootWithOrigin, parameterSet);
 			}
-
 		}
 
 		// Public functions
@@ -534,6 +561,9 @@ jQuery.sap.require("sap.apf.utils.utils");
 			oInject.instances.messageHandler.check(sEntitySet !== undefined && typeof sEntitySet === "string", "sap.apf.core.Metadata:getAllPropertiesOfEntitySet incorrect EntitySet name or type");
 
 			var sEntityType = determineEntityTypeName(sEntitySet);
+			if(!sEntityType){
+				return [];
+			}
 
 			return getAllPropertiesOfEntityType(sEntityType);
 		};
@@ -743,14 +773,178 @@ jQuery.sap.require("sap.apf.utils.utils");
 			}
 			return validEntitySets;
 		};
+		
+		/**
+		 * returns all names of all entity sets exclusive the parameter entity sets.
+		 * @returns {Array} EntitySets Returns entity sets
+		 */
+		this.getAllEntitySetsExceptParameterEntitySets = function() {
+			var container = oMetaModel.getODataEntityContainer();
+			var entitySets = [];
+			if (!container) {
+				return [];
+			}
+			if (container.entitySet) {
+				container.entitySet.forEach(function(entitySet) {
+					var entityType = getEntityTypeName(entitySet.name);
+					if (!isParameterEntityType(entityType)) {
+						entitySets.push(entitySet.name);
+					}	
+				});
+			}
+			return entitySets;
+		};
+		/**
+		 * @description returns the name of the entity set, which has the corresponding entity type
+		 * @param {string} entityType name of the entity type
+		 * @returns {string} entitySet name of the entity set, which is based on the given entity type
+		 */
+		this.getEntitySetByEntityType = function(entityType) {
+			return oHtEntitySetOfEntityType.getItem(entityType);
+		};
+		/**
+		 * @description Returns annotations for hierarchical property
+		 * @param {String} entitySet
+		 * @param {String} hierarchyProperty
+		 * @returns {Object | sap.apf.core.MessageObject} Contains annotation properties for a hierarchical property or a messageObject if the entitySet is not valid or the given property has no hierarchy annotations
+		 */
+		this.getHierarchyAnnotationsForProperty = function(entitySet, hierarchyProperty){
+			var result = {};
+			var properties = this.getAllPropertiesOfEntitySet(entitySet);
+			if(properties.length === 0){
+				return oInject.instances.messageHandler.createMessageObject({
+					code: 5072,
+					aParameters: [entitySet, sAbsolutePathToServiceDocument]
+				});
+			}
+			var entityType = getEntityTypeName(entitySet);
+			var resultEntityType = getEntityTypeOfAggregateEntitySet(entityType);
+			properties.forEach(function(property){
+				var propertyMetadata = getPropertyMetadataFromEntityType(resultEntityType, property);
+				if (propertyMetadata["hierarchy-node-for"] === hierarchyProperty){
+					result.hierarchyNodeFor = property;
+				}
+			});
+			if(!result.hierarchyNodeFor){
+				return oInject.instances.messageHandler.createMessageObject({
+					code: 5073,
+					aParameters: [entitySet, sAbsolutePathToServiceDocument, hierarchyProperty]
+				});
+			}
+			properties.forEach(function(property){
+				var propertyMetadata = getPropertyMetadataFromEntityType(resultEntityType, property);
+				if (propertyMetadata["hierarchy-level-for"] === result.hierarchyNodeFor){
+					result.hierarchyLevelFor = property;
+				} else if (propertyMetadata["hierarchy-parent-node-for"] === result.hierarchyNodeFor){
+					result.hierarchyParentNodeFor = property;
+				} else if (propertyMetadata["hierarchy-drill-state-for"] === result.hierarchyNodeFor){
+					result.hierarchyDrillStateFor = property;
+				} else if (propertyMetadata["hierarchy-node-external-key-for"] === result.hierarchyNodeFor){
+					result.hierarchyNodeExternalKeyFor = property;
+				}
+			});
+			return result;
+		};
+		/**
+		 * @description Returns all entity sets that have hierarchical properties
+		 * @returns {String []} All entity sets that have hierarchical properties
+		 */
+		this.getHierarchicalEntitySets = function(){
+			var resultSets = [];
+			var entitySets = this.getEntitySets();
+			entitySets.forEach(function(entitySet){
+				var hierarchyAnnotations = getHierarchyAnnotations.call(this, entitySet);
+				if(hierarchyAnnotations.entitySet){
+					resultSets.push(hierarchyAnnotations.entitySet);
+				}
+			}.bind(this));
+			return resultSets;
+		};
 
 		/**
+		 * @description Returns all hierarchical properties of an entitySet
+		 * @param {String} entitySet
+		 * @returns {String []} All hierarchical properties of an entitySet
+		 */
+		this.getHierarchicalPropertiesOfEntitySet = function(entitySet){
+			return getHierarchyAnnotations.call(this, entitySet).hierarchyProperties;
+		};
+
+		function getHierarchyAnnotations(entitySet){
+			var result = {};
+			result.hierarchyProperties = [];
+			var entityType = getEntityTypeName(entitySet);
+			if(!entityType){
+				return result;
+			}
+			var resultEntityType = getEntityTypeOfAggregateEntitySet(entityType);
+			var properties = this.getAllPropertiesOfEntitySet(entitySet);
+			properties.forEach(function(property){
+				var propertyMetadata = getPropertyMetadataFromEntityType(resultEntityType, property);
+				var levelFound = false;
+				var parentFound = false;
+				var drillstateFound = false;
+				if (propertyMetadata["hierarchy-node-for"] !== undefined){
+					var hierarchyProperty = propertyMetadata["hierarchy-node-for"];
+					var hierarchyNode = property;
+					properties.forEach(function(property){
+						var propertyMetadata = getPropertyMetadataFromEntityType(resultEntityType, property);
+						if (propertyMetadata["hierarchy-level-for"] === hierarchyNode){
+							levelFound = true;
+						} else if (propertyMetadata["hierarchy-parent-node-for"] === hierarchyNode){
+							parentFound = true;
+						} else if (propertyMetadata["hierarchy-drill-state-for"] === hierarchyNode){
+							drillstateFound = true;
+						}
+					});
+					if(levelFound && parentFound && drillstateFound){
+						result.entitySet = entitySet;
+						result.hierarchyProperties.push(hierarchyProperty);
+					}
+				}
+			});
+			return result;
+		}
+		
+		/**
+		 * @description Returns all non hierarchical properties of an entitySet
+		 * @param {String} entitySet
+		 * @returns {String []} All non hierarchical properties of an entitySet
+		 */
+		this.getNonHierarchicalPropertiesOfEntitySet = function(entitySet){
+			var nonHierarchyProperties = [];
+			var entityType = getEntityTypeName(entitySet);
+			if(!entityType){
+				return nonHierarchyProperties;
+			}
+			var resultEntityType = getEntityTypeOfAggregateEntitySet(entityType);
+			var properties = this.getAllPropertiesOfEntitySet(entitySet);
+			var hierarchyProperties = getHierarchyAnnotations.call(this, entitySet).hierarchyProperties;
+			properties.forEach(function(property){
+				var propertyMetadata = getPropertyMetadataFromEntityType(resultEntityType, property);
+				if (propertyMetadata["hierarchy-node-for"] === undefined &&
+				propertyMetadata["hierarchy-node-external-key-for"] === undefined &&
+				propertyMetadata["hierarchy-parent-node-for"] === undefined &&
+				propertyMetadata["hierarchy-level-for"] === undefined &&
+				propertyMetadata["hierarchy-drill-state-for"] === undefined &&
+				propertyMetadata["hierarchy-node-descendant-count-for"] === undefined &&
+				hierarchyProperties.indexOf(property) === -1){
+					var nonHierarchyProperty = propertyMetadata.name;
+					nonHierarchyProperties.push(nonHierarchyProperty);
+				}
+			});
+			return nonHierarchyProperties;
+		};
+		/**
 		 * @description Returns the ODataModel corresponding to this metadata.
-		 * @returns {sap.ui.model.odata.ODataModel} ODataModel
+		 * @returns {sap.ui.model.odata.v2.ODataModel} ODataModel
          */
 		this.getODataModel = function() {
 			return oODataModel;
 		};
-		initMetadata();
+		this.isInitialized = function(){
+			return initializationPromise.promise();
+		};
+		initMetadata.call(this);
 	};
 }());

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* -----------------------------------------------------------------------------------
@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.uiext.inbox (1.38.33)
+ * Initialization Code and shared classes of library sap.uiext.inbox (1.54.3)
  */
 jQuery.sap.declare("sap.uiext.inbox.library");
 jQuery.sap.require("sap.ui.core.Core");
@@ -49,6 +49,6 @@ sap.ui.getCore().initLibrary({
 		"sap.uiext.inbox.composite.InboxUploadAttachmentTile"
 	],
 	elements: [],
-	version: "1.38.33"
+	version: "1.54.3"
 });
 

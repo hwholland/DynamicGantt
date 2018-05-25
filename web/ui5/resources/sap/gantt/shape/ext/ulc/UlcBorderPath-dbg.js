@@ -35,7 +35,7 @@ sap.ui.define([
 	 * @extends sap.gantt.shape.Path
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -54,41 +54,47 @@ sap.ui.define([
 	 * 
 	 * @param {object} oData Shape data.
 	 * @param {object} oRowInfo Information about the row and row data.
-	 * @return {string} Value of property <code>d</code>.
+	 * @return {string} Value of property <code>d</code> or null if the generated d is invalid according to the given data.
 	 * @public
 	 */
 	UlcBorderPath.prototype.getD = function(oData, oRowInfo){
-		if (this.mShapeConfig.hasShapeProperty("d")){
-			return this._configFirst("d", oData);
-		}
-		
 		var retVal = "";
-		if (oData.values) {
-			for (var i = 0; i < oData.values.length; i++) {
-				var oAxisTime = this.getAxisTime();
-				var xPos1 = oAxisTime.timeToView(Format.abapTimestampToDate(oData.values[i].from));
-				var xPos2 = oAxisTime.timeToView(Format.abapTimestampToDate(oData.values[i].to));
-				var ratio = oData.values[i].value;
-				if (isNaN(ratio)){
-					ratio = 0;
+		if (this.mShapeConfig.hasShapeProperty("d")){
+			retVal = this._configFirst("d", oData);
+		} else {
+			if (oData.values) {
+				for (var i = 0; i < oData.values.length; i++) {
+					var oAxisTime = this.getAxisTime();
+					var xPos1 = oAxisTime.timeToView(Format.abapTimestampToDate(oData.values[i].from));
+					var xPos2 = oAxisTime.timeToView(Format.abapTimestampToDate(oData.values[i].to));
+					var ratio = oData.values[i].value;
+					if (isNaN(ratio)){
+						ratio = 0;
+					}
+					var maxVisibleRatio = 25;
+					if (this.mShapeConfig.hasShapeProperty("maxVisibleRatio")){
+						maxVisibleRatio = this._configFirst("maxVisibleRatio", oData);
+					}
+					if (ratio > (100 + maxVisibleRatio)) {
+						ratio = 100 + maxVisibleRatio;
+					}
+					var yPos = oRowInfo.y + oRowInfo.rowHeight - oRowInfo.rowHeight * (ratio / (100 + maxVisibleRatio));
+					var lowY = oRowInfo.y + oRowInfo.rowHeight;
+					
+					retVal = retVal +
+							(oData.values[i].firstOne ? " M " + xPos1 + " " + lowY : "") +
+							" L " + xPos1 + " " + yPos + " L " + xPos2 + " " + yPos +
+							(oData.values[i].lastOne ? " L " + xPos2 + " " + lowY : "");
 				}
-				var maxVisibleRatio = 25;
-				if (this.mShapeConfig.hasShapeProperty("maxVisibleRatio")){
-					maxVisibleRatio = this._configFirst("maxVisibleRatio", oData);
-				}
-				if (ratio > (100 + maxVisibleRatio)) {
-					ratio = 100 + maxVisibleRatio;
-				}
-				var yPos = oRowInfo.y + oRowInfo.rowHeight - oRowInfo.rowHeight * (ratio / (100 + maxVisibleRatio));
-				var lowY = oRowInfo.y + oRowInfo.rowHeight;
-				
-				retVal = retVal +
-						(oData.values[i].firstOne ? " M " + xPos1 + " " + lowY : "") +
-						" L " + xPos1 + " " + yPos + " L " + xPos2 + " " + yPos +
-						(oData.values[i].lastOne ? " L " + xPos2 + " " + lowY : "");
 			}
 		}
-		return retVal === "" ? "M 0 0" : retVal;
+		
+		if(this.isValid(retVal)) {
+			return retVal;
+		} else {
+			jQuery.sap.log.warning("UlcBorderPath shape generated invalid d: " + retVal + " from the given data: " + oData);
+			return null;
+		}
 	};
 
 	/**

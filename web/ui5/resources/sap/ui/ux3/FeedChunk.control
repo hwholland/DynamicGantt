@@ -6,130 +6,130 @@
     <documentation>The unit that is embedded - single-wise or in a multiple way - into a Feed control.
 The control provides a set of properties for text, sender information, time stamp,
 comments, and functions such as flagging the entry to be favorite, shared, or flagged.</documentation>
-    <developmentState state="experimental" since="1.2">The whole Feed/Feeder API is still under discussion, significant changes are likely. Especially text presentation (e.g. @-references and formatted text) is not final. Also the Feed model topic is still open.</developmentState>
+    <developmentState since="1.2" state="experimental">The whole Feed/Feeder API is still under discussion, significant changes are likely. Especially text presentation (e.g. @-references and formatted text) is not final. Also the Feed model topic is still open.</developmentState>
     <deprecation since="1.38">Instead, use the &lt;code&gt;sap.m.FeedListItem&lt;/code&gt; control.</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="thumbnailSrc" type="sap.ui.core/URI" group="Data">
+        <property group="Data" type="sap.ui.core/URI" name="thumbnailSrc">
             <documentation>URL to the thumbnail image.</documentation>
         </property>
-        <property name="text" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="text">
             <documentation>The FeedChunk text. @References are supported.</documentation>
         </property>
-        <property name="sender" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="sender">
             <documentation>Sender of the chunk</documentation>
         </property>
-        <property name="timestamp" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="timestamp">
             <documentation>Format is ISO 8601 YYYY-MM-DDThh:mm:ss.sZ, Z meaning the time is in UTC time zone</documentation>
         </property>
-        <property name="deletionAllowed" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="deletionAllowed">
             <documentation>Flag if the deletion of the chunk shall be allowed</documentation>
         </property>
-        <property name="commentChunk" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="commentChunk">
             <documentation>This flag changes a FeedChunk into a CommentChunk. In this case, it can not have own comments,
 furthermore it must be assigned to a FeedChunk.</documentation>
             <deprecation since="1.4.0">Not longer used. If a chunk is a comment is determined from hierarchy. If the parent is a chunk it's automatically a comment.</deprecation>
         </property>
-        <property name="feederThumbnailSrc" type="sap.ui.core/URI" group="Data">
+        <property group="Data" type="sap.ui.core/URI" name="feederThumbnailSrc">
             <documentation>URL to the thumbnail image for the comment feeder.
 This property is optional if the chunk is a sub-control of a feed control. In this case the value of the feed control is used if it's not set. So it must be only set once on the feed control.</documentation>
         </property>
-        <property name="feederSender" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="feederSender">
             <documentation>Sender for the comment feeder
 This property is optional if the chunk is a sub-control of a feed control. In this case the value of the feed control is used if it's not set. So it must be only set once on the feed control.</documentation>
         </property>
-        <property name="flagged" type="sap.ui.core/boolean" defaultValue="false" group="Data">
+        <property group="Data" defaultValue="false" type="sap.ui.core/boolean" name="flagged">
             <documentation>Defines whether the entry is flagged. This property is not supported for comment chunks.</documentation>
         </property>
-        <property name="favorite" type="sap.ui.core/boolean" group="Data">
+        <property group="Data" type="sap.ui.core/boolean" name="favorite">
             <documentation>Defines whether the entry shall be displayed as favorite. This property is not supported for comment chunks.</documentation>
         </property>
-        <property name="shared" type="sap.ui.core/boolean" defaultValue="false" group="Data">
+        <property group="Data" defaultValue="false" type="sap.ui.core/boolean" name="shared">
             <documentation>Defines whether the entry shall be shared. This property is not supported for comment chunks.</documentation>
         </property>
-        <property name="enableFlag" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="enableFlag">
             <documentation>If true the flag action is enabled.</documentation>
         </property>
-        <property name="enableShare" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="enableShare">
             <documentation>If true the share action is enabled.</documentation>
         </property>
-        <property name="enableComment" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="enableComment">
             <documentation>If true the comment action is enabled.</documentation>
         </property>
-        <property name="enableInspect" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="enableInspect">
             <documentation>If true the inspect action is enabled.</documentation>
         </property>
-        <property name="enableFavorite" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="enableFavorite">
             <documentation>If true the favorite action is enabled.</documentation>
         </property>
     </properties>
     <events>
-        <event name="deleted" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="deleted">
             <documentation>Event is fired when the deletion button is pressed.</documentation>
         </event>
-        <event name="commentAdded" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="commentAdded">
             <documentation>Event is raised when a comment is added to the entry. This event is not supported for comment chunks.</documentation>
             <parameters>
-                <parameter name="comment" type="sap.ui.ux3/FeedChunk">
+                <parameter type="sap.ui.ux3/FeedChunk" name="comment">
                     <documentation>New comment chunk</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="toggleFlagged" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="toggleFlagged">
             <documentation>Event is raised when the user clicks to flag the entry. This event is not supported for comment chunks.</documentation>
             <parameters>
-                <parameter name="flagged" type="sap.ui.core/boolean">
+                <parameter type="sap.ui.core/boolean" name="flagged">
                     <documentation>Current flagged state</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="senderClicked" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="senderClicked">
             <documentation>Event is fired when the thumbnail or the name of the sender is clicked.</documentation>
         </event>
-        <event name="referenceClicked" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="referenceClicked">
             <documentation>Click on a @-reference</documentation>
             <parameters>
-                <parameter name="text" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="text">
                     <documentation>Text of the @-reference</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="toggleFavorite" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="toggleFavorite">
             <documentation>Event is raised when the user clicks to set the entry as favorite. This event is not supported for comment chunks.</documentation>
             <parameters>
-                <parameter name="favorite" type="sap.ui.core/boolean">
+                <parameter type="sap.ui.core/boolean" name="favorite">
                     <documentation>Current favorite state</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="inspect" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="inspect">
             <documentation>Event is fired when the inspect button was pressed</documentation>
         </event>
-        <event name="toggleShared" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="toggleShared">
             <documentation>Event is raised when the user clicks to share the entry. This event is not supported for comment chunks.</documentation>
             <parameters>
-                <parameter name="shareed" type="sap.ui.core/boolean">
+                <parameter type="sap.ui.core/boolean" name="shareed">
                     <documentation>Current shared state</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="actionItemSelected" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="actionItemSelected">
             <documentation>Event is fired when an item from the action menu button was selected.</documentation>
             <parameters>
-                <parameter name="itemId" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="itemId">
                     <documentation>The Id of the selected item</documentation>
                 </parameter>
-                <parameter name="item" type="sap.ui.unified/MenuItemBase">
+                <parameter type="sap.ui.unified/MenuItemBase" name="item">
                     <documentation>The selected item</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations>
-        <aggregation name="comments" type="sap.ui.ux3/FeedChunk" cardinality="0..n" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..n" type="sap.ui.ux3/FeedChunk" name="comments">
             <documentation>Comments on this chunk</documentation>
         </aggregation>
-        <aggregation name="actionMenuItems" type="sap.ui.commons/MenuItem" cardinality="0..n" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..n" type="sap.ui.commons/MenuItem" name="actionMenuItems">
             <documentation>MenuItems to open when there is a click on the action menu button</documentation>
         </aggregation>
     </aggregations>

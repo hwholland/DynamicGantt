@@ -13,7 +13,7 @@
   "sSourcePathPattern" : "/%frameworkId%/%libId%/themes/%themeId%/%fileId%.less",
   "sVendor" : "SAP",
   "sCompiler" : "Less",
-  "sVersion" : "1.38.33",
-  "sUI5CoreVersion" : "1.38.2",
-  "sUI5DistVersion" : "1.38.33"
+  "sVersion" : "1.54.3",
+  "sUI5CoreVersion" : "1.54.3",
+  "sUI5DistVersion" : "1.54.3"
 }

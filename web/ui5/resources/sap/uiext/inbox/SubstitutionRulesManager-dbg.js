@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * The SubstitutionRulesManager
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -1774,9 +1774,12 @@ sap.uiext.inbox.SubstitutionRulesManager.prototype._sendCreateRuleRequestWithPro
 			this._sendCreateRuleRequest(oSubRuleMgr,oEntry);
 		}
 		else{
-			//Request will be send with JSON payload, reformat dates
-			oEntry.BeginDate = "/Date(" + oEntry.BeginDate + ")/";
-			oEntry.EndDate = "/Date(" + oEntry.EndDate + ")/";
+			var bEdmTypeDateTime = oSubRuleMgr.isSubstitutionDatesDateTimeType();
+			if (bEdmTypeDateTime){
+				//Request will be send with JSON payload, reformat dates
+				oEntry.BeginDate = "/Date(" + oEntry.BeginDate + ")/";
+				oEntry.EndDate = "/Date(" + oEntry.EndDate + ")/";
+			}
 			if (aSelectedProviders.length === 1) { // if substitution rule needs to be created for only one provider
 				this._createSubRuleWithProfile(oEntry, aSelectedProviders[0]);
 			} else if (aSelectedProviders.length > 1) { // if substitution rule needs to be created for more than one providers

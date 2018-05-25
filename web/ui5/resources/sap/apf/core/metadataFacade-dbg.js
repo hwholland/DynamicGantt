@@ -3,10 +3,8 @@
  * 
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
-
 jQuery.sap.declare("sap.apf.core.metadataFacade");
 jQuery.sap.require("sap.apf.utils.utils");
-
 (function() {
 	'use strict';
 	/** 
@@ -24,32 +22,38 @@ jQuery.sap.require("sap.apf.utils.utils");
 		 * @returns {String}
 		 */
 		this.type = "metadataFacade";
-		// Private vars
 		var MetadataProperty = oInject.constructors.MetadataProperty;
-		var oMessageHandler = oInject.instances.messageHandler;
-		var oMetadataFactory = oInject.instances.metadataFactory;
-		var aPropertyNames;
-		var aParameterNames;
-		var oProperties = {};
-
-		// Public functions
+		var messageHandler = oInject.instances.messageHandler;
+		var metadataFactory = oInject.instances.metadataFactory;
+		var propertyNames;
+		var parameterNames;
+		var properties = {};
 		/**
 		 * @description Returns all property names
 		 * @param {Function} callback - callback function providing array of properties as strings
 		 */
 		this.getAllProperties = function(callback) {
-			if (aPropertyNames) {
-				callback(aPropertyNames);
+			var metadataServiceDocuments;
+			var countServiceDocuments;
+			var countMetadataResolved = 0;
+			var i;
+			var propertyNamesBuffer = [];
+			if (propertyNames) {
+				callback(propertyNames);
 			} else {
-				var aMetadataServiceDocuments = getServiceDocuments();
-				var oMetadata;
-				aPropertyNames = [];
-				for(var i = 0; i < aMetadataServiceDocuments.length; i++) {
-					oMetadata = oMetadataFactory.getMetadata(aMetadataServiceDocuments[i]);
-					aPropertyNames = aPropertyNames.concat(oMetadata.getAllProperties());
+				metadataServiceDocuments = getServiceDocuments();
+				countServiceDocuments = metadataServiceDocuments.length;
+				for(i = 0; i < countServiceDocuments; i++) {
+					metadataFactory.getMetadata(metadataServiceDocuments[i]).done(accumulatePropertyNames);
 				}
-				aPropertyNames = sap.apf.utils.eliminateDuplicatesInArray(oMessageHandler, aPropertyNames);
-				callback(aPropertyNames);
+			}
+			function accumulatePropertyNames(metadata) {
+				countMetadataResolved++;
+				propertyNamesBuffer = propertyNamesBuffer.concat(metadata.getAllProperties());
+				if (countServiceDocuments == countMetadataResolved) {
+					propertyNames = sap.apf.utils.eliminateDuplicatesInArray(messageHandler, propertyNamesBuffer);
+					callback(propertyNames);
+				}
 			}
 		};
 		/**
@@ -57,19 +61,43 @@ jQuery.sap.require("sap.apf.utils.utils");
 		 * @param {Function} callback - callback function providing array of properties which are parameter entity set key properties as strings
 		 */
 		this.getAllParameterEntitySetKeyProperties = function(callback) {
-			if (aParameterNames) {
-				callback(aParameterNames);
+			//TODO Additionally most of the code is redundant - General logic for promise resolvement to be extracted in this constructor function if possible
+			var metadataServiceDocuments;
+			var countServiceDocuments;
+			var countMetadataResolved = 0;
+			var i;
+			var parameterNamesBuffer = [];
+			if (parameterNames) {
+				callback(parameterNames);
 			} else {
-				var aMetadataServiceDocuments = getServiceDocuments();
-				var oMetadata;
-				aParameterNames = [];
-				for(var i = 0; i < aMetadataServiceDocuments.length; i++) {
-					oMetadata = oMetadataFactory.getMetadata(aMetadataServiceDocuments[i]);
-					aParameterNames = aParameterNames.concat(oMetadata.getParameterEntitySetKeyPropertiesForService());
+				metadataServiceDocuments = getServiceDocuments();
+				countServiceDocuments = metadataServiceDocuments.length;
+				for(i = 0; i < countServiceDocuments; i++) {
+					metadataFactory.getMetadata(metadataServiceDocuments[i]).done(accumulateParameterNames);
 				}
-				aParameterNames = sap.apf.utils.eliminateDuplicatesInArray(oMessageHandler, aParameterNames);
-				callback(aParameterNames);
 			}
+			function accumulateParameterNames(metadata) {
+				countMetadataResolved++;
+				parameterNamesBuffer = parameterNamesBuffer.concat(metadata.getParameterEntitySetKeyPropertiesForService());
+				if (countServiceDocuments == countMetadataResolved) {
+					parameterNames = sap.apf.utils.eliminateDuplicatesInArray(messageHandler, parameterNamesBuffer);
+					callback(parameterNames);
+				}
+			}
+		};
+		/**
+		 * @param {string} serviceRoot
+		 * @param {string} entitySet
+		 * @param {string} property
+		 * returns {jQuery.Deferred<sap.apf.core.MetadataProperty}
+		 */
+		this.getPropertyMetadataByEntitySet = function(serviceRoot, entitySet, propertyName) {
+			var deferred = jQuery.Deferred();
+			metadataFactory.getMetadata(serviceRoot).done(function(metadata){
+				var prop = metadata.getPropertyMetadata(entitySet, propertyName);
+				deferred.resolve(new sap.apf.core.MetadataProperty(prop));
+			});
+			return deferred.promise();
 		};
 		/**
 		 * @description Returns a object of type {sap.apf.core.MetadataProperty} for
@@ -77,50 +105,46 @@ jQuery.sap.require("sap.apf.utils.utils");
 		 * @param {String} sName - property name
 		 * @param {Function} callback - callback function providing {sap.apf.core.MetadataProperty} object
 		 */
-		this.getProperty = function(sName, callback) {
-			if (oProperties[sName]) {
-				callback(oProperties[sName]);
+		this.getProperty = function(propertyName) {
+			var metadataServiceDocuments;
+			var propertyAttributes;
+			var countServiceDocuments;
+			var deferred = jQuery.Deferred();
+			if (properties[propertyName]) {
+				deferred.resolve(properties[propertyName]);
 			} else {
-				var aMetadataServiceDocuments = getServiceDocuments();
-				var oPropertyAttributes;
-				var oMetadata;
-				for(var i = 0; i < aMetadataServiceDocuments.length; i++) {
-					oMetadata = oMetadataFactory.getMetadata(aMetadataServiceDocuments[i]);
-					oPropertyAttributes = oMetadata.getAttributes(sName);
-					if (oPropertyAttributes.name) {
-						//add attribute isHanaViewParameter
-						if (oMetadata.getParameterEntitySetKeyPropertiesForService().indexOf(sName) > -1) {
-							//add attribute isKey
-							oPropertyAttributes.isParameterEntitySetKeyProperty = true;
+				metadataServiceDocuments = getServiceDocuments();
+				countServiceDocuments = metadataServiceDocuments.length;
+				for( var i = 0; i < countServiceDocuments; i++) {
+					metadataFactory.getMetadata(metadataServiceDocuments[i]).done(function(metadata) {
+						propertyAttributes = metadata.getAttributes(propertyName);
+						if (propertyAttributes.name) {
+							if (metadata.getParameterEntitySetKeyPropertiesForService().indexOf(propertyName) > -1) {
+								propertyAttributes.isParameterEntitySetKeyProperty = true;
+							}
+							if (metadata.getAllKeys().indexOf(propertyName) > -1) {
+								propertyAttributes.isKey = true;
+							}
+							for( var name in propertyAttributes) {
+								if (name === "dataType") {
+									for( var dataTypeName in propertyAttributes.dataType) {
+										propertyAttributes[dataTypeName] = propertyAttributes.dataType[dataTypeName];
+									}
+								}
+							}
+							properties[propertyName] = new MetadataProperty(propertyAttributes);
+							deferred.resolve(properties[propertyName]);
 						}
-						if (oMetadata.getAllKeys().indexOf(sName) > -1) {
-							//resolution of dataType
-							oPropertyAttributes.isKey = true;
-						}
-						break;
-					}
+					});
 				}
-
-				for( var name in oPropertyAttributes) {
-					if (name === "dataType") {
-						for( var dataTypeName in oPropertyAttributes.dataType) {
-							oPropertyAttributes[dataTypeName] = oPropertyAttributes.dataType[dataTypeName];
-						}
-					}
-				}
-
-				var oMetadataProperty = new MetadataProperty(oPropertyAttributes);
-				oProperties[sName] = oMetadataProperty;
-				callback(oProperties[sName]);
 			}
+			return deferred.promise();
 		};
-
-		// Private functions
 		function getServiceDocuments() {
 			if (typeof sAbsolutePathToServiceDocument === "string") {
 				return [ sAbsolutePathToServiceDocument ];
 			}
-			return oMetadataFactory.getServiceDocuments();
+			return metadataFactory.getServiceDocuments();
 		}
 	};
 }());

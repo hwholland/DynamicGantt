@@ -1,19 +1,28 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 sap.ui.define([
     'jquery.sap.global',
     './ShapeMarker',
-    'sap/ui/core/Control'
+    'sap/ui/core/Control',
+    'sap/ui/layout/form/SimpleForm',
+    'sap/ui/layout/Grid',
+    'sap/m/Text',
+    'sap/m/ObjectNumber',
+    'sap/m/Label',
+    'sap/ui/core/TextAlign',
+    '../common/utils/ContentUtil',
+    '../common/utils/SelectionDetailUtil'
 ],
-function(jQuery, ShapeMarker, Control) {
-	
+function(jQuery, ShapeMarker, Control, SimpleForm, Grid, Text, ObjectNumber, Label, TextAlign, ContentUtil,SelectionDetailUtil) {
+    "use strict";
+
     var ContentPanel = Control.extend('sap.viz.ui5.controls.chartpopover.ContentPanel', {
         metadata : {
             properties : {
-                'showLine' : 'boolean',
+                'showLine' : 'boolean'
             },
             publicMethods : ["setContentData"]
         },
@@ -23,6 +32,9 @@ function(jQuery, ShapeMarker, Control) {
                 oRm.write('<div');
                 oRm.addClass("viz-controls-chartPopover-contentPanel");
                 oRm.writeClasses();
+                oRm.writeControlData(oControl);
+                oRm.writeAttribute("aria-labelledby", oControl._oDimLabel.getId() + " " + oControl._oForm.getId());
+                oRm.writeAttribute('tabindex', -1);
                 oRm.write('>');
                 oRm.renderControl(oControl._oShapeLabel);
                 oRm.renderControl(oControl._oPanel);
@@ -38,12 +50,11 @@ function(jQuery, ShapeMarker, Control) {
 
         this._oShapeLabel = new ShapeMarker(this._createId('vizShapeMarker'), {
         }).addStyleClass('viz-controls-chartPopover-dimension-marker');
-        this._oDimLabel = new sap.m.Text(this._createId('vizDimensionLabel'), {
+        this._oDimLabel = new Text(this._createId('vizDimensionLabel'), {
         }).addStyleClass('viz-controls-chartPopover-dimension-label');
         
-        this._oForm = new sap.ui.layout.form.SimpleForm({
+        this._oForm = new SimpleForm({
             editable : false,
-            //minWidth : 80,
             maxContainerCols : 2,
             layout:"ResponsiveGridLayout",
             labelSpanL: 6,
@@ -54,164 +65,143 @@ function(jQuery, ShapeMarker, Control) {
             emptySpanS: 0,
             columnsL: 2,
             columnsM: 2,
-            content: [  
+            content: [
             ]
-        });    
-        this._oPanel = new sap.ui.layout.Grid({
+        });
+        this._oPanel = new Grid({
             width: '100%',
             defaultSpan:"L12 M12 S12",
             content : [
-                this._oDimLabel, 
+                this._oDimLabel,
                 this._oForm
             ]
         }).addStyleClass('viz-controls-chartPopover-Vlt');
 
     };
 
-    ContentPanel.prototype.setContentData = function(data) {        
-        var values = data.val, dims = '', meas = [], measureValue, dimensionValue;
+    ContentPanel.prototype.setContentData = function(data) {
+
         this._measureItemsLen = 0;
+
+        var values = data.val, dims = '';
         if (values) {
             this._oForm.removeAllContent();
+            var isLongMode = false;
 
-	        //Check measure's type long text mode or not
-	        var isLongMode = false, i, displayValue;
-	        for (i = 0; i < values.length; i++) {
-	            if (values[i].type && values[i].type.toLowerCase()  === 'dimension') {
-	                if(data.isTimeSeries && values.hasOwnProperty("timeDimensions") &&
-	                        values.timeDimensions.indexOf(i) > -1){
-	                        //Time Dimension
-	                    dimensionValue = values[i].value;
-	                    displayValue = dimensionValue.time;
-	                    if(dimensionValue.day){
-	                        if(!displayValue || displayValue.length < dimensionValue.day.length){
-	                            displayValue = dimensionValue.day;
-	                        }
-	                    }
-	                    
-	                    if(values[i].name.length > this._maxMeasureLableLen || 
-	                            displayValue.length > this._maxMeasureValueLen){
-	                        isLongMode = true;
-	                        break;
-	                    }
-	                }
-	            } else if (values[i].type && values[i].type.toLowerCase()  === 'measure') {
-                    measureValue = values[i].value;
-                    if (measureValue == null){
-                        measureValue = this._getNoValueLabel();
-                    }
-                    if((values[i].dataName || values[i].name).length > this._maxMeasureLableLen || 
-                            measureValue.length > this._maxMeasureValueLen){
-	                    isLongMode = true;
-	                    break;
-	                }
-	            }
-	        }
-	
-	        for (i = 0; i < values.length; i++) {
-	            if (values[i].type && values[i].type.toLowerCase() === 'dimension') {
-	                var dimensionValue = values[i].value;
-	                if(data.isTimeSeries && values.hasOwnProperty("timeDimensions") &&
-                        values.timeDimensions.indexOf(i) > -1){
-	                    //Time Dimension
-	                    var dimensionName = values[i].dataName || values[i].name;
-	                    if(dimensionValue.time){
-	                        this._renderLabels(isLongMode, dimensionName, dimensionValue.time, data.isTimeSeries);
-	                    }
-	                    if(dimensionValue.day){
-                            this._renderLabels(isLongMode, (dimensionValue.time ? "" : dimensionName),
-                                dimensionValue.day, data.isTimeSeries);
-                        }
-	                } else {
-                        if (dims == null) {
-                            dims = this._getNoValueLabel();
-                        }
-                        else if (dims.length > 0) {
-                            if(dimensionValue === null){
-                                dims = dims + ' - ' + this._getNoValueLabel();
-                            }else{
-                                dims = dims + ' - ' + dimensionValue;                              
-                            }
-    	                } else {
-                            if(dimensionValue === null){
-                                dims = this._getNoValueLabel();
-                            } else {
-                            dims = dimensionValue.toString();                            
-                            }
-    	                }
-	                }
-	            } else if (values[i].type && values[i].type.toLowerCase()  === 'measure') {
-                    measureValue = values[i].value;
-                    if (measureValue == null){
-                        measureValue = this._getNoValueLabel();
-                    }
-                    this._renderLabels(isLongMode, (values[i].dataName || values[i].name), measureValue);
-                }
+            var results = ContentUtil.setContent("popover", data);
+
+            var items = results.items;
+            dims = results.dims;
+            isLongMode = results.isLongMode;
+
+            for (var i = 0; i < items.length; i++) {
+                this._renderLabels(isLongMode, items[i], data.isTimeSeries);
             }
-	
-	        if(typeof data.color === 'string'){
-	            var markerSize = this._oDimLabel.$().css('margin-left');
-	            if (markerSize) {
-	                markerSize = parseInt(markerSize.substr(0, markerSize.length - 2), 10);
-	                this._oShapeLabel.setMarkerSize(markerSize);
-	            }
-	            this._oShapeLabel.setColor(data.pattern || data.color).setType((data.shape ? data.shape : 'square'));
-	            if(this.getShowLine()){
-	                this._oShapeLabel.setShowWithLine(data.type).setLineInfo(data.lineInfo);
-	            } else {
-	                this._oShapeLabel.setShowWithLine(undefined);
-	            }
-	            if(data.stroke && data.stroke.visible){
-	                //Draw marker with stroke
-	                this._oShapeLabel.setStroke(data.stroke);
-	            }
-	        }else{
-	            this._oShapeLabel.setType(null);
-	            this._oShapeLabel.setShowWithLine(undefined);
-	        }
+
+            var isPeriodicWaterfall = function(data) {
+                var result = false;
+                if (data.selectByTimeAxisGroup && data.val) {
+                    var measureCount = 0;
+                    for (var i = 0; i < data.val.length; i++) {
+                        if (data.val[i].type === 'Measure') {
+                            measureCount++;
+                        }
+                    }
+                    if (measureCount > 1) {
+                        result = true;
+                    }
+                }
+                return result;
+            };
+    
+            if (!isPeriodicWaterfall(data) && typeof data.color === 'string') {
+                var markerSize = this._oDimLabel.$().css('margin-left');
+                if (markerSize) {
+                    markerSize = parseInt(markerSize.substr(0, markerSize.length - 2), 10);
+                    this._oShapeLabel.setMarkerSize(markerSize);
+                }
+                this._oShapeLabel.setColor(data.color).setType((data.shape ? data.shape : 'square'));
+                if (this.getShowLine()) {
+                    this._oShapeLabel.setShowWithLine(data.type).setLineInfo(data.lineInfo);
+                } else {
+                    this._oShapeLabel.setShowWithLine(undefined);
+                }
+                if (data.stroke && data.stroke.visible) {
+                    //Draw marker with stroke
+                    this._oShapeLabel.setStroke(data.stroke);
+                }
+            } else {
+                this._oShapeLabel.setType(null);
+                this._oShapeLabel.setShowWithLine(undefined);
+            }
+            
+            if (data.pattern) {
+                this._oShapeLabel.setPattern(data.pattern);
+            } else {
+                this._oShapeLabel.setPattern(null);
+            }
 
             if (dims && dims.length > 0) {
+                this._oDimLabel.setVisible(true);
                 this._oDimLabel.setText(dims);
             } else {
-                this._oPanel.removeContent(this._oDimLabel);
+                this._oDimLabel.setVisible(false);
             }
-	
-	        this._measureItemsLen = data.val.length;
+    
+            this._measureItemsLen = data.val.length;
+            //when it has a dimension label, the padding-left of form is:20px-8px+0.688rem-4px=1.188rem
+            //20px: length of shapeMarker,8px: padding-left of grid,4px: padding-left of dimension label.
+            if (this._oShapeLabel._isShowWithLine()) {
+                this._oForm.addStyleClass('viz-controls-chartPopover-measure-simpleForm');
+            } else {
+                this._oForm.removeStyleClass('viz-controls-chartPopover-measure-simpleForm');
+            }
+            //when it doesnt't have a dimension label, the padding-left of form is:0.688-4px
+            if (!this._oDimLabel.getVisible()){
+                this._oForm.addStyleClass('viz-controls-chartPopover-measure-simpleForm-withoutDimensionLabel');
+            } else {
+                this._oForm.removeStyleClass('viz-controls-chartPopover-measure-simpleForm-withoutDimensionLabel');
+            }
         }
     };
     
-    ContentPanel.prototype._renderLabels = function(isLongMode, name, value, isTimeSeries){
+    ContentPanel.prototype._renderLabels = function(isLongMode, item, isTimeSeries){
         var valueLabel;
-        if(isLongMode){
+        if (isLongMode) {
             this._oForm.setLabelSpanS(12);
-            if(name !== ''){
-                this._oForm.addContent(new sap.m.Text({ 
-                    text: name
-                }).addStyleClass('viz-controls-chartPopover-measure-labels')
-               // .addStyleClass('viz-controls-chartPopover-measure-name')
-                .addStyleClass('viz-controls-chartPopover-measure-labels-wrapper-name'));
+            if (item.name !== '') {
+                this._oForm.addContent(new Text({
+                    text: item.name
+                }).addStyleClass('viz-controls-chartPopover-measure-labels viz-controls-chartPopover-measure-labels-wrapper-name'));
             }
-            valueLabel = new sap.m.Text({
-                text: value,
-                textAlign: sap.ui.core.TextAlign.Start
-            }).addStyleClass('viz-controls-chartPopover-measure-labels')
-            .addStyleClass('viz-controls-chartPopover-measure-labels-wrapper-value');
+            valueLabel = new ObjectNumber({
+                number: item.value,
+                unit: item.unit,
+                textAlign: TextAlign.Begin
+            }).addStyleClass('viz-controls-chartPopover-measure-labels viz-controls-chartPopover-measure-labels-wrapper-value');
             this._oForm.addContent(valueLabel);
-            if(isTimeSeries && (name === '')){
+            if (isTimeSeries && (item.name === '')) {
                 valueLabel.addStyleClass('viz-controls-chartPopover-timeDayDimValue');
             }
-        }else{
+        } else {
             this._oForm.setLabelSpanS(6);
-            this._oForm.addContent(new sap.m.Label({ 
-                text: name
-            }).addStyleClass('viz-controls-chartPopover-measure-labels')
-            .addStyleClass('viz-controls-chartPopover-measure-name'));
-            valueLabel = new sap.m.Text({
-                text: value,
-                textAlign: sap.ui.core.TextAlign.End
-            }).addStyleClass('viz-controls-chartPopover-measure-labels')
-            .addStyleClass('viz-controls-chartPopover-measure-value');
-            if(isTimeSeries && (name === '')){
+            this._oForm.addContent(new Label({
+                text: item.name
+            }).addStyleClass('viz-controls-chartPopover-measure-labels viz-controls-chartPopover-measure-name'));
+            if (item.value !== null) {
+                valueLabel = new ObjectNumber({
+                    number: item.value,
+                    unit: item.unit,
+                    textAlign: TextAlign.End
+                }).addStyleClass('viz-controls-chartPopover-measure-labels viz-controls-chartPopover-measure-value');
+            } else {
+                valueLabel = new ObjectNumber({
+                    number: this._getNoValueLabel(),
+                    textAlign: TextAlign.End
+                }).addStyleClass('viz-controls-chartPopover-measure-labels viz-controls-chartPopover-measure-value');
+            }
+            
+            if (isTimeSeries && (item.name === '')) {
                 //Time axis and min level is second. 
                 valueLabel.addStyleClass('viz-controls-chartPopover-timeDayValue');
             }
@@ -221,7 +211,7 @@ function(jQuery, ShapeMarker, Control) {
 
     ContentPanel.prototype.isMultiSelected = function() {
         return this._measureItemsLen === 0;
-    };        
+    };
 
     /**
      * Creates an id for an Element prefixed with the control id

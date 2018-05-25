@@ -38,7 +38,6 @@ jQuery.sap.declare("sap.apf.modeler.core.registryWrapper");
             });
             return aResults;
         }
-        
         /**
          * @private
          * @function
@@ -57,9 +56,11 @@ jQuery.sap.declare("sap.apf.modeler.core.registryWrapper");
          * @description Retrieve all steps (after loading) from a registry.
          * @returns {Object[]}
          */
-        this.getSteps = function() {
-            return getItemsByType("step");
-        };
+		this.getSteps = function() {
+			var aItems = getItemsByType("step");
+			aItems = jQuery.merge(aItems, getItemsByType("hierarchicalStep"));
+			return aItems;
+		};
 
         /**
          * Retrieve all categories (after loading) from a registry.
@@ -81,10 +82,9 @@ jQuery.sap.declare("sap.apf.modeler.core.registryWrapper");
         this.getFacetFilters = function() {
             if(hashtable.getItem(sap.apf.core.constants.existsEmptyFacetFilterArray) === true) {
                 return {emptyArray : true};
-            }        	
+            }
             return getItemsByType("facetFilter");
         };
-        
         /**
          * @private
          * @function

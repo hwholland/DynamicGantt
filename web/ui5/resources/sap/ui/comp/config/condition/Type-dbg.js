@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides sap.ui.comp.config.condition.Type.
@@ -11,28 +12,28 @@ sap.ui.define([
 	"use strict";
 
 	var Type = EventProvider.extend("sap.ui.comp.config.condition.Type", /* @lends "sap.ui.comp.config.condition.Type.prototype */ {
-		constructor : function(sFieldName, oFilterProvider, oFieldMetadata) {
+		constructor: function(sFieldName, oFilterProvider, oFieldMetadata) {
 			EventProvider.call(this);
 			this.oFilterProvider = oFilterProvider;
 			//create basic data
 			var oData = {
-					condition: {
-						operation: "",
-						value1: null,
-						value2: null,
-						key: sFieldName
-					},
-					operations: [],
-					controls: [],
-					currentoperation: {},
-					pending: false
+				condition: {
+					operation: "",
+					value1: null,
+					value2: null,
+					key: sFieldName
+				},
+				operations: [],
+				controls: [],
+				currentoperation: {},
+				pending: false
 			};
 			this.oModel = new JSONModel(oData);
 
 			var fCheckUpdate = this.oModel.checkUpdate;
 			this.oModel.suspend = function() {
 				this.bSuspended = true;
-				this.checkUpdate = function(){};
+				this.checkUpdate = function() {};
 			};
 			this.oModel.resume = function() {
 				this.bSuspended = false;
@@ -45,36 +46,46 @@ sap.ui.define([
 			this.sFieldName = sFieldName;
 			var oOperationChangeBinding = this.oModel.bindProperty("operation", this.oConditionContext),
 				that = this;
+
 			oOperationChangeBinding.attachChange(function() {
 				var sOperation = that.oModel.getProperty("operation", that.getConditionContext()),
-					oOperation = that.getOperation(sOperation),
-					aControls = that.getControls(oOperation);
-				
-				if (!that.bIgnoreBindingChange) {				
-					var aDefaultValues = that.getDefaultValues(oOperation);
-					that.setDefaultValues(aDefaultValues[0], aDefaultValues[1]);
+					oOperation = that.getOperation(sOperation);
+
+				if (oOperation) {
+					// use new object to not change original operation with current settings
+					oOperation = jQuery.extend({}, oOperation);
+
+					if (!that.bIgnoreBindingChange) {
+						var aDefaultValues = that.getDefaultValues(oOperation);
+						that.setDefaultValues(aDefaultValues[0], aDefaultValues[1]);
+					}
 				}
-				that.setControls(aControls);
+
+				that.setControls([]); //remove the control from the model, before we can create new controls for the current operation 
+				that.setControls(that.getControls(oOperation));
+
 				if (oOperation) {
 					if (oOperation.getValueList) {
 						oOperation.valueList = oOperation.getValueList();
 					}
 					that.oModel.setProperty("/currentoperation", oOperation);
 				}
-				if (!that.bIgnoreBindingChange) {				
-					that.serialize();
+				if (!that.bIgnoreBindingChange) {
+					that.serialize(false, that.bFireFilterChange);
 				}
 			});
+
 			var oValueChangeBinding = this.oModel.bindProperty("value1", this.oConditionContext);
 			oValueChangeBinding.attachChange(function() {
 				if (!that.bIgnoreBindingChange) {
-					that.serialize();
+					that.serialize(false, that.bFireFilterChange);
 				}
 			});
+
 			var oValue2ChangeBinding = this.oModel.bindProperty("value2", this.oConditionContext);
 			oValue2ChangeBinding.attachChange(function() {
 				if (!that.bIgnoreBindingChange) {
-					that.serialize();
+					that.serialize(false, that.bFireFilterChange);
 				}
 			});
 
@@ -84,15 +95,23 @@ sap.ui.define([
 					if (that._iPendingTimer) {
 						jQuery.sap.clearDelayedCall(that._iPendingTimer);
 					}
-					that._iPendingTimer = jQuery.sap.delayedCall(10, that, "fireEvent",["PendingChange",{oSource: that, pending: that.oModel.getProperty("/pending")}]);
+					that._iPendingTimer = jQuery.sap.delayedCall(10, that, "fireEvent", ["PendingChange", { oSource: that, pending: that.oModel.getProperty("/pending") }]);
 				}
 			});
-			this.oOperationSelect = null;
+			this._oOperationSelect = null;
 			this.oFieldMetadata = oFieldMetadata;
-			this.oOperationFilter  = null;
+			this.oOperationFilter = null;
 			this.bAsync = false;
 		}
 	});
+
+	Type._createStableId = function(oInstance, suffix) {
+		if (oInstance && oInstance.oFilterProvider && oInstance.oFieldMetadata) {
+			return oInstance.oFilterProvider._createFilterControlId(oInstance.oFieldMetadata) + (suffix ? suffix : "");
+		} else {
+			return undefined;
+		}
+	};
 
 	Type.getTranslatedText = function(sTextKey, sResourceBundle) {
 		if (typeof sTextKey === "object") {
@@ -108,7 +127,7 @@ sap.ui.define([
 
 	Type.prototype.applySettings = function(oSettings) {
 		if (oSettings && oSettings.operations && oSettings.operations.filter) {
-			this.oOperationFilter  = oSettings.operations.filter;
+			this.oOperationFilter = oSettings.operations.filter;
 		} else {
 			this.oOperationFilter = null;
 		}
@@ -148,11 +167,11 @@ sap.ui.define([
 	};
 
 	Type.prototype.attachPendingChange = function(fHandler) {
-		this.attachEvent("PendingChange",fHandler);
+		this.attachEvent("PendingChange", fHandler);
 	};
 
 	Type.prototype.detachPendingChange = function(fHandler) {
-		this.detachEvent("PendingChange",fHandler);
+		this.detachEvent("PendingChange", fHandler);
 	};
 
 
@@ -219,14 +238,6 @@ sap.ui.define([
 		return aOperations[0];
 	};
 
-	Type.prototype.setLabel = function(oLabel) {
-		this._oLabel = oLabel;
-
-		if (this.oLayout) { // update the labelFor and ariaLabelledBy references
-			this._assignLabelToControls(this.oLayout.getItems());
-		}
-	};
-
 	Type.prototype.setControls = function(aControls) {
 		var aOldControls = this.oModel.getProperty("controls", this.getContext());
 		if (aOldControls) {
@@ -239,23 +250,17 @@ sap.ui.define([
 			for (var i = 0; i < aControls.length; i++) {
 				aControls[i].setBindingContext(this.getConditionContext(), "$smartEntityFilter");
 			}
+			this._setAriaLabeledByToControls(aControls);
 		}
-
-		if (this.oLayout) { // update the labelFor and ariaLabelledBy references
-			this._assignLabelToControls(this.oLayout.getItems());
-		}
-
 	};
 
-	Type.prototype._assignLabelToControls = function(aControls) {
-		if (this._oLabel) {
+	Type.prototype._setAriaLabeledByToControls = function(aControls) {
+		if (this._oOperationLabel && aControls) {
 			for (var i = 0; i < aControls.length; i++) {
-				if (i === 0) {
-					this._oLabel.setLabelFor(aControls[i]);
-				}
-
 				if (aControls[i].addAriaLabelledBy) {
-					aControls[i].addAriaLabelledBy(this._oLabel);
+					if (aControls[i].getAriaLabelledBy().indexOf(this._oOperationLabel.getId()) === -1) {
+						aControls[i].addAriaLabelledBy(this._oOperationLabel);
+					}
 				}
 			}
 		}
@@ -265,7 +270,7 @@ sap.ui.define([
 		var oOperation = this.getOperation(sOperation);
 		if (oOperation) {
 			this.setCondition({
-				operation : oOperation.key,
+				operation: oOperation.key,
 				key: this.sFieldName,
 				value1: oOperation.defaultValues[0] || null,
 				value2: oOperation.defaultValues[1] || null
@@ -301,13 +306,14 @@ sap.ui.define([
 		this.updateOperations();
 	};
 
-	Type.prototype.serialize = function() {
-	};
+	Type.prototype.serialize = function() {};
 
 	Type.prototype.validate = function(bForceError) {
 		this._bForceError = bForceError !== false;
 
-		if (!this.isPending() && this.oFieldMetadata && this.oFieldMetadata.isMandatory && !this.isValidCondition() && this._bForceError) {
+		var sInputState = this.getModel().getProperty("inputstate", this.getContext()) || "NONE";
+
+		if (!this.isPending() && this.oFieldMetadata && this.oFieldMetadata.isMandatory && (!this.isValidCondition() || sInputState !== "NONE") && this._bForceError) {
 			this.getModel().setProperty("inputstate", "ERROR", this.getContext());
 			return false;
 		}
@@ -321,8 +327,7 @@ sap.ui.define([
 		return oCondition;
 	};
 
-	Type.prototype.providerDataUpdated = function(aUpdatedFieldNames, oData) {
-	};
+	Type.prototype.providerDataUpdated = function(aUpdatedFieldNames, oData) {};
 
 	Type.prototype.getFilter = function(oFilter) {
 		return null;
@@ -344,17 +349,33 @@ sap.ui.define([
 		return "Edm";
 	};
 
-	Type.prototype.initializeFilterItem = function(sWidth, oLayout) {
-		var oSelect = new sap.m.Select({
-			width: sWidth
+	Type.prototype._initializeFilterItemPopoverContent = function(oLayout) {
+		//TODO newDRTUI
+		var oOperationLabel = new sap.m.Label({ text: Type.getTranslatedText("CONDITION_DATERANGETYPE_POPOVER_LABEL") });
+		oLayout.addItem(oOperationLabel);
+		this._oOperationLabel = oOperationLabel;
+
+		var oOperationSelect = new sap.m.Select(Type._createStableId(this, "select"), {
+			width: "100%",
+			ariaLabelledBy: oOperationLabel
 		});
-		this.oOperationSelect = oSelect;
-		this.sWidth = sWidth;
-		oSelect.bindProperty("selectedKey", {
+
+		//TODO: Remove once Select supports a public API
+		if (oOperationSelect._oList && oOperationSelect._oList.setShowSecondaryValues) {
+			oOperationSelect._oList.setShowSecondaryValues(true);
+		}
+
+		oOperationSelect.bindProperty("selectedKey", {
 			path: "$smartEntityFilter>condition/operation"
 		});
-		oSelect.bindAggregation("items", {
+
+		oOperationSelect.bindAggregation("items", {
 			path: "$smartEntityFilter>operations",
+			sorter: new sap.ui.model.Sorter("order", false, false),
+			//filters: [new sap.ui.model.Filter("selectVisible", "EQ", true)],
+			filters: new sap.ui.model.Filter("order", function(oValue) {
+				return oValue !== undefined && oValue > -1;
+			}),
 			template: new sap.ui.core.ListItem({
 				text: {
 					path: "$smartEntityFilter>languageText"
@@ -368,33 +389,36 @@ sap.ui.define([
 			})
 		});
 
-		//TODO: Remove once Select supports a public API
-		if (oSelect._oList && oSelect._oList.setShowSecondaryValues) {
-			oSelect._oList.setShowSecondaryValues(true);
-		}
+		oOperationSelect.setBindingContext(this.getContext(), "$smartEntityFilter");
 
-		oSelect.setBindingContext(this.getContext(), "$smartEntityFilter");
 		var oList = this.getModel().bindList("controls", this.getContext());
 		oList.attachChange(function() {
 			var aNewControls = oList.getModel().getProperty("controls", oList.getContext());
-			if (!aNewControls) {
-				return;
-			}
-			for (var i = 0; i < aNewControls.length; i++) {
-				aNewControls[i].setLayoutData(new sap.m.FlexItemData({
-					alignSelf: sap.m.FlexAlignSelf.Center
-				}));
-				//aNewControls[i].bindProperty("busy",{path: "$smartEntityFilter>/pending"});
-				oLayout.addItem(aNewControls[i]);
+			if (aNewControls) {
+				for (var i = 0; i < aNewControls.length; i++) {
+					oLayout.addItem(aNewControls[i]);
+				}
 			}
 		});
-		// The filter definition has own more than 1 operation
-		oLayout.addItem(oSelect);
-		//oSelect.bindProperty("busy",{path: "$smartEntityFilter>/pending"});
+
+		oLayout.addItem(oOperationSelect);
+		oOperationLabel.setLabelFor(oOperationSelect);
+		this._oOperationSelect = oOperationSelect;
+
+		//oOperationSelect.bindProperty("busy",{path: "$smartEntityFilter>/pending"});
 		oLayout.setModel(this.getModel(), "$smartEntityFilter");
+		this.bIgnoreBindingChange = true;
 		this.getModel().checkUpdate(true);
+		this.bIgnoreBindingChange = false;
+
 		this.oLayout = oLayout;
 	};
 
+	Type.prototype.destroy = function() {
+		this.setControls([]);
+		this.oLayout = null;
+		EventProvider.prototype.destroy.apply(this, arguments);
+	};
+
 	return Type;
-}, /* bExport= */true);
+}, /* bExport= */ true);

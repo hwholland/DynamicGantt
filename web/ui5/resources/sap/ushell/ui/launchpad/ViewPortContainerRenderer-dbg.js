@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 
 sap.ui.define(['jquery.sap.global'],
@@ -14,11 +14,13 @@ sap.ui.define(['jquery.sap.global'],
         var ViewPortContainerRenderer = {};
 
         ViewPortContainerRenderer.renderViewPortPart = function (oControl, ctxDomRef, sViewPortId) {
+            //Performance Debug
+            jQuery.sap.measure.start("FLP:ViewPortContainerRenderer.renderViewPortPart", "renderViewPortPart","FLP");
             var jqViewPort = jQuery(ctxDomRef).find("#" + sViewPortId);
-            //centerViewPort.find(".sapUshellViewPortInner").remove();
             var rm = sap.ui.getCore().createRenderManager();
             rm.render(oControl, jqViewPort[0]);
             rm.destroy();
+            jQuery.sap.measure.end("FLP:ViewPortContainerRenderer.renderViewPortPart");
         };
 
         ViewPortContainerRenderer._renderViewPort = function (rm, aViewPortControls, sId,  aViewPortClassNames) {
@@ -34,6 +36,15 @@ sap.ui.define(['jquery.sap.global'],
             aViewPortControls.forEach(function (oViewPortControl) {
                 rm.renderControl(oViewPortControl);
             });
+
+            // the special div which supplies the click area with a pointer cursor should be added
+            // only under the left view port -
+            // as only in the left view port scenario (e.g. when Me-Area is opened) we have a scroll on the opposite
+            // side of the active UI
+            if (sId === 'leftViewPort') {
+                this._renderViewPortCursorPointerArea(rm);
+            }
+
             rm.write("</div>");
         };
 
@@ -47,6 +58,17 @@ sap.ui.define(['jquery.sap.global'],
             ViewPortContainerRenderer._renderViewPort(rm, aViewPortControls, sId,  aViewPortClassNames);
             rm.write("</div>");
         };
+
+        ViewPortContainerRenderer._renderViewPortCursorPointerArea = function(rm) {
+            // render the view port - cursor pointer click area - which is designated part of the left view port
+            // (not the content side, but rather the opposite side, on which we see part of the center view port, which is clickable and scrollable)
+            rm.write("<div id='viewPortCursorPointerArea'");
+            rm.addClass('sapUshellViewPortCursorPointerArea');
+            rm.writeClasses();
+            rm.write(">");
+            rm.write("</div>");
+        };
+
 
         /**
          * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
@@ -75,14 +97,18 @@ sap.ui.define(['jquery.sap.global'],
             var oStates = oControl._states,
                 oState = oStates[oControl.sCurrentState],
                 aVisibleViewPortsData = oState.visibleViewPortsData,
-                sTranslateX = oControl._getTranslateXValue(oControl.sCurrentState),
                 aLeftViewPortClasses = ["sapUshellViewPortLeft"],
                 aCenterViewPortClasses = ["sapUshellViewPortCenter"],
                 aRightViewPortClasses = ["sapUshellViewPortRight"];
 
+            if (oControl.getCurrentState() === "Center"){
+                aLeftViewPortClasses.push("sapUshellShellHidden");
+                aRightViewPortClasses.push("sapUshellShellHidden");
+            }
+
             var oConfiguration = sap.ui.getCore().getConfiguration();
             this.bIsRTL = !jQuery.isEmptyObject(oConfiguration) && oConfiguration.getRTL ? oConfiguration.getRTL() : false;
-            rm.addStyle(this.bIsRTL ? 'right' : 'left', sTranslateX);
+            // rm.addStyle(this.bIsRTL ? 'right' : 'left', sTranslateX);
             rm.writeStyles();
             rm.write(">");
             aVisibleViewPortsData.forEach(function (entry) {

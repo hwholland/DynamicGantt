@@ -2173,7 +2173,7 @@ sap.ui.define([
 
 	ObjectPageLayout.prototype._registerOnContentResize = function () {
 
-		var $container = this._$contentContainer.length && this._$contentContainer[0];
+		var $container = this._$sectionsContainer.length && this._$sectionsContainer[0];
 		if (!$container) {
 			return;
 		}
@@ -2878,10 +2878,10 @@ sap.ui.define([
 	ObjectPageLayout.prototype.getHeaderContent = function () {
 		// If header content not resolved yet - use local aggregation until it is
 		if (!this._getHeaderContent()) {
-			return this.getAggregation("headerContent", []);
+			return this.getAggregation("headerContent");
 		}
 
-		return this._getHeaderContent().getAggregation("content", []);
+		return this._getHeaderContent().getAggregation("content");
 	};
 
 	ObjectPageLayout.prototype.insertHeaderContent = function (oObject, iIndex, bSuppressInvalidate) {
@@ -3037,7 +3037,7 @@ sap.ui.define([
 	 */
 	ObjectPageLayout.prototype._storeScrollLocation = function () {
 
-		if (!this.getDomRef() || !this._bDomReady) {
+		if (!this._bDomReady) {
 			return;
 		}
 		this._iStoredScrollPosition = this._oScroller.getScrollTop(); //TODO: compute the position RELATIVE to the subsection

@@ -96,12 +96,110 @@ sap.apf.core.utils.uriGenerator.getApfLocation = function() {
 };
 /**
  * @memberOf sap.apf.core.utils.uriGenerator
+ * @description Generates the oData path for a given entitySet with parameters and a navigationProperty
+ * @param {sap.apf.core.MessageHandler} messageHandler
+ * @param {sap.apf.core.metadata} metadata of the service that contains the entitySet
+ * @param {String} entitySet Name of the entitySet
+ * @param {sap.apf.core.utils.Filter} filter Filter that should contain all required parameters
+ * @param {String} navigationProperty Navigation property of the given entitySet
+ * @returns {String} oData path: entitySet(param1=2,param2=3)/navigationProperty
+ */
+sap.apf.core.utils.uriGenerator.generateOdataPath = function(messageHandler, metadata, entitySet, filter, navigationProperty){
+	var parameter = retrieveParameters(metadata, filter);
+	var result = entitySet;
+	var parametersExist = false;
+	var param;
+	for(param in parameter) {
+		if (!parametersExist) {
+			result += '(';
+			parametersExist = true;
+		} else {
+			result += ',';
+		}
+		result += param.toString() + '=' + parameter[param];
+	}
+	if (parametersExist) {
+		result += ')/';
+	}
+	result += navigationProperty || '';
+	return result;
+
+	function retrieveParameters() {
+		var result = {};
+		var parameters;
+		var numberOfParameters;
+		var termsContainingParameter;
+		var i;
+		var parameterTerm;
+		parameters = metadata.getParameterEntitySetKeyProperties(entitySet);
+		if (parameters !== undefined) {
+			numberOfParameters = parameters.length;
+		} else {
+			numberOfParameters = 0;
+		}
+		if (numberOfParameters > 0) {
+			for(i = 0; i < numberOfParameters; i++) {
+				if (filter && filter instanceof sap.apf.core.utils.Filter) {
+					termsContainingParameter = filter.getFilterTermsForProperty(parameters[i].name);
+					parameterTerm = termsContainingParameter[termsContainingParameter.length - 1];
+				}
+				if (parameterTerm instanceof sap.apf.core.utils.FilterTerm) {
+					addParameter(i, parameterTerm.getValue());
+				} else if (parameters[i].defaultValue) {
+					addParameter(i, parameters[i].defaultValue);
+				} else if (parameters[i].parameter !== 'optional' ){
+					messageHandler.putMessage(messageHandler.createMessageObject({
+						code : '5016',
+						aParameters : [ parameters[i].name ]
+					}));
+				}
+			}
+		}
+		return result;
+		function addParameter(index, value) {
+			var formatedValue;
+			if (parameters[index].dataType.type === 'Edm.String') {
+				formatedValue = sap.apf.utils.formatValue(value, parameters[index]);
+				result[parameters[index].name] = (jQuery.sap.encodeURL(formatedValue));
+			} else if (parameters[index].dataType.type) {
+				formatedValue = sap.apf.utils.formatValue(value, parameters[index]);
+				if (typeof formatedValue === 'string') {
+					result[parameters[index].name] = jQuery.sap.encodeURL(formatedValue);
+				} else {
+					result[parameters[index].name] = formatedValue;
+				}
+			} else if (typeof value === 'string') {
+				result[parameters[index].name] = jQuery.sap.encodeURL(sap.apf.utils.escapeOdata(value));
+			} else {
+				result[parameters[index].name] = value;
+			}
+		}
+	}
+};
+/**
+ * @memberOf sap.apf.core.utils.uriGenerator
+ * @description Generates a string to be used in $Select statement
+ * @param {String []} aSelectProperties Array of properties
+ * @returns {String} String for $Select statement
+ */
+sap.apf.core.utils.uriGenerator.getSelectString = function(aSelectProperties){
+	var result = "";
+	aSelectProperties.forEach(function(selectProperty, index){
+		result += jQuery.sap.encodeURL(sap.apf.utils.escapeOdata(selectProperty));
+		if (index < aSelectProperties.length - 1) {
+			result += ",";
+		}
+	});
+	return result;
+};
+/**
+ * @memberOf sap.apf.core.utils.uriGenerator
  * @description builds a URI based on parameters
  * @param {sap.apf.core.MessageHandler} oMsgHandler
  * @param {string} sEntityType
  * @param [aSelectProperties]
- * @param {object} oFilter
- * @param {object} oParameter - HANA XSE parameter entity set parameters
+ * @param {object} oFilterForRequest Reduced filter that just contains properties for the $filter statement
+ * @param {object} oFilter Complete filter that should also contain all parameters
  * @param {object} [sortingFields]
  * @param {object} oPaging - values of properties 'top','skip' and 'inlineCount' are evaluated and added to '$top','$skip' and '$inlinecount' URI string parameters if available 
  * @param {string} sFormat of HTTP response,e.g. 'json' or 'xml'. If omitted 'json' is taken as default.
@@ -109,48 +207,22 @@ sap.apf.core.utils.uriGenerator.getApfLocation = function() {
  * @param {sNavigationProperty} Suffix after the parameter - old default is "Results"
  * @returns {string} complete URI
  */
-sap.apf.core.utils.uriGenerator.buildUri = function(oMsgHandler, sEntityType, aSelectProperties, oFilter, oParameter, sortingFields, oPaging, sFormat, fnFormatValue, sNavigationProperty) {
+sap.apf.core.utils.uriGenerator.buildUri = function(oMsgHandler, sEntityType, aSelectProperties, oFilterForRequest, oFilter, sortingFields, oPaging, sFormat, fnFormatValue, sNavigationProperty, oMetadata) {
 	var sReturn = "";
-	sReturn += sEntityType;
-	sReturn += addParamsToUri(oParameter,sNavigationProperty);
+	sReturn += sap.apf.core.utils.uriGenerator.generateOdataPath(oMsgHandler, oMetadata, sEntityType, oFilter, sNavigationProperty);
 	sReturn = sReturn + "?";
 	sReturn += addSelectPropertiesToUri(aSelectProperties);
-	sReturn += addFilterToUri(oFilter, fnFormatValue);
+	sReturn += addFilterToUri(oFilterForRequest, fnFormatValue);
 	sReturn += addSorting(sortingFields, aSelectProperties);
 	sReturn += addPaging(oPaging);
 	sReturn += addFormatToUri(sFormat);
 	return sReturn;
-	function addParamsToUri(oParameter,sNavigationProperty) {
-		var sReturn = '';
-		var bParametersExist = false;
-		var sParameter;
-		for(sParameter in oParameter) {
-			if (!bParametersExist) {
-				sReturn += '(';
-				bParametersExist = true;
-			} else {
-				sReturn += ',';
-			}
-			sReturn += sParameter.toString() + '=' + oParameter[sParameter];
-		}
-		if (bParametersExist) {
-			sReturn += ')/';
-		}
-		sReturn += sNavigationProperty || '';	
-		return sReturn;
-	}
 	function addSelectPropertiesToUri(aSelectProperties) {
 		if (!aSelectProperties[0]) {
 			return '';
 		}
-		var field;
 		var sResult = "$select=";
-		for( field in aSelectProperties) {
-			sResult += jQuery.sap.encodeURL(sap.apf.utils.escapeOdata(aSelectProperties[field]));
-			if (field < aSelectProperties.length - 1) {
-				sResult += ",";
-			}
-		}
+		sResult += sap.apf.core.utils.uriGenerator.getSelectString(aSelectProperties);
 		return sResult;
 	}
 	function addFilterToUri(oFilter, fnFormatValue) {
@@ -197,7 +269,7 @@ sap.apf.core.utils.uriGenerator.buildUri = function(oMsgHandler, sEntityType, aS
 			var sValue = '';
 			if (jQuery.inArray(oOrderBy.property, aSelectProperties) > -1) {
 				sValue += oOrderBy.property;
-				if (oOrderBy.descending === true) {
+				if (oOrderBy.ascending === false) {
 					sValue += ' desc';
 				} else {
 					sValue += ' asc';

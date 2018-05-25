@@ -1,191 +1,189 @@
 /*!
  * 
- * 		SAP UI development toolkit for HTML5 (SAPUI5)
- * 		(c) Copyright 2009-2015 SAP SE. All rights reserved
- * 	
- */
-
-/* ----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying 
- * source files only (*.control, *.js) or they will be lost after the next generation.
- * ---------------------------------------------------------------------------------- */
-
-// Provides control sap.suite.ui.commons.ChartContainerContent.
-jQuery.sap.declare("sap.suite.ui.commons.ChartContainerContent");
-jQuery.sap.require("sap.suite.ui.commons.library");
-jQuery.sap.require("sap.ui.core.Control");
-
-
-/**
- * Constructor for a new ChartContainerContent.
- * 
- * Accepts an object literal <code>mSettings</code> that defines initial 
- * property values, aggregated and associated objects as well as event handlers. 
- * 
- * If the name of a setting is ambiguous (e.g. a property has the same name as an event), 
- * then the framework assumes property, aggregation, association, event in that order. 
- * To override this automatic resolution, one of the prefixes "aggregation:", "association:" 
- * or "event:" can be added to the name of the setting (such a prefixed name must be
- * enclosed in single or double quotes).
- *
- * The supported settings are:
- * <ul>
- * <li>Properties
- * <ul>
- * <li>{@link #getIcon icon} : string</li>
- * <li>{@link #getTitle title} : string</li></ul>
- * </li>
- * <li>Aggregations
- * <ul>
- * <li>{@link #getContent content} : sap.ui.core.Control</li></ul>
- * </li>
- * <li>Associations
- * <ul></ul>
- * </li>
- * <li>Events
- * <ul></ul>
- * </li>
- * </ul> 
-
- *
- * @param {string} [sId] id for the new control, generated automatically if no id is given 
- * @param {object} [mSettings] initial settings for the new control
- *
- * @class
- * Content aggregation for ChartContainer.
- * @extends sap.ui.core.Control
- *
- * @author SAP SE
- * @version 1.38.21
- *
- * @constructor
- * @public
- * @name sap.suite.ui.commons.ChartContainerContent
- * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
- */
-sap.ui.core.Control.extend("sap.suite.ui.commons.ChartContainerContent", { metadata : {
-
-	library : "sap.suite.ui.commons",
-	properties : {
-
-		/**
-		 * Icon of the Chart.
-		 */
-		"icon" : {type : "string", group : "Misc", defaultValue : null},
-
-		/**
-		 * Title of the Chart/Table
-		 */
-		"title" : {type : "string", group : "Misc", defaultValue : null}
-	},
-	aggregations : {
-
-		/**
-		 * Chart or Table as content of the ChartToolBar. Supported Types: sap.viz.ui5.controls.VizFrame, sap.m.Table, sap.ui.table.Table
-		 */
-		"content" : {type : "sap.ui.core.Control", multiple : false}
-	}
-}});
-
-
-/**
- * Creates a new subclass of class sap.suite.ui.commons.ChartContainerContent with name <code>sClassName</code> 
- * and enriches it with the information contained in <code>oClassInfo</code>.
- * 
- * <code>oClassInfo</code> might contain the same kind of informations as described in {@link sap.ui.core.Element.extend Element.extend}.
- *   
- * @param {string} sClassName name of the class to be created
- * @param {object} [oClassInfo] object literal with informations about the class  
- * @param {function} [FNMetaImpl] constructor function for the metadata object. If not given, it defaults to sap.ui.core.ElementMetadata.
- * @return {function} the created class / constructor function
- * @public
- * @static
- * @name sap.suite.ui.commons.ChartContainerContent.extend
- * @function
- */
-
-
-/**
- * Getter for property <code>icon</code>.
- * Icon of the Chart.
- *
- * Default value is empty/<code>undefined</code>
- *
- * @return {string} the value of property <code>icon</code>
- * @public
- * @name sap.suite.ui.commons.ChartContainerContent#getIcon
- * @function
- */
-
-/**
- * Setter for property <code>icon</code>.
- *
- * Default value is empty/<code>undefined</code> 
- *
- * @param {string} sIcon  new value for property <code>icon</code>
- * @return {sap.suite.ui.commons.ChartContainerContent} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.ChartContainerContent#setIcon
- * @function
- */
-
-
-/**
- * Getter for property <code>title</code>.
- * Title of the Chart/Table
- *
- * Default value is empty/<code>undefined</code>
- *
- * @return {string} the value of property <code>title</code>
- * @public
- * @name sap.suite.ui.commons.ChartContainerContent#getTitle
- * @function
- */
-
-/**
- * Setter for property <code>title</code>.
- *
- * Default value is empty/<code>undefined</code> 
- *
- * @param {string} sTitle  new value for property <code>title</code>
- * @return {sap.suite.ui.commons.ChartContainerContent} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.ChartContainerContent#setTitle
- * @function
- */
-
-
-/**
- * Getter for aggregation <code>content</code>.<br/>
- * Chart or Table as content of the ChartToolBar. Supported Types: sap.viz.ui5.controls.VizFrame, sap.m.Table, sap.ui.table.Table
- * 
- * @return {sap.ui.core.Control}
- * @public
- * @name sap.suite.ui.commons.ChartContainerContent#getContent
- * @function
- */
-
-
-/**
- * Setter for the aggregated <code>content</code>.
- * @param {sap.ui.core.Control} oContent
- * @return {sap.suite.ui.commons.ChartContainerContent} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.ChartContainerContent#setContent
- * @function
- */
+		SAP UI development toolkit for HTML5 (SAPUI5)
+		(c) Copyright 2009-2015 SAP SE. All rights reserved
 	
-
-/**
- * Destroys the content in the aggregation 
- * named <code>content</code>.
- * @return {sap.suite.ui.commons.ChartContainerContent} <code>this</code> to allow method chaining
- * @public
- * @name sap.suite.ui.commons.ChartContainerContent#destroyContent
- * @function
  */
 
-// Start of sap/suite/ui/commons/ChartContainerContent.js
-///**
-// * This file defines behavior for the control,
-// */
+sap.ui.define([ 'jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/base/Event', 'sap/m/SelectionDetails', 'sap/m/SelectionDetailsItem', 'sap/m/SelectionDetailsItemLine' ],
+	function(jQuery, Control, Event, SelectionDetails, SelectionDetailsItem, SelectionDetailsItemLine) {
+	"use strict";
+
+	/**
+	 * Constructor for a new ChartContainerContent.
+	 *
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
+	 *
+	 * @class
+	 * Content aggregation for ChartContainer.
+	 * @extends sap.ui.core.Control
+	 *
+	 * @author SAP SE
+	 *
+	 * @constructor
+	 * @public
+	 * @alias sap.suite.ui.commons.ChartContainerContent
+	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	var ChartContainerContent = Control.extend("sap.suite.ui.commons.ChartContainerContent", /** @lends sap.suite.ui.commons.ChartContainerContent.prototype */ {
+		metadata: {
+
+			library: "sap.suite.ui.commons",
+			properties: {
+
+				/**
+				 * Icon of the Chart.
+				 */
+				icon: { type: "string", group: "Misc", defaultValue: null },
+
+				/**
+				 * Title of the Chart/Table
+				 */
+				title: { type: "string", group: "Misc", defaultValue: null }
+			},
+			aggregations: {
+
+				/**
+				 * Chart or Table as content of the ChartToolBar. Supported Types: sap.viz.ui5.controls.VizFrame, sap.m.Table, sap.ui.table.Table
+				 */
+				content: { type: "sap.ui.core.Control", multiple: false }
+			}
+		}
+	});
+
+	/* =========================================================== */
+	/* Lifecycle methods                                           */
+	/* =========================================================== */
+	ChartContainerContent.prototype.init = function() {
+		this._oSelectionDetails = new SelectionDetails();
+		this._oSelectionDetails.registerSelectionDetailsItemFactory(ChartContainerContent._selectionDetailsItemFactory);
+	};
+
+	ChartContainerContent.prototype.onBeforeRendering = function() {
+		this._oSelectionDetails.detachSelectionHandler("_selectionDetails");
+		var oChart = this.getContent();
+		if (oChart && oChart.getMetadata().getName() === "sap.viz.ui5.controls.VizFrame") {
+			this._oSelectionDetails.attachSelectionHandler("_selectionDetails", oChart);
+		}
+	};
+
+	ChartContainerContent.prototype.exit = function() {
+		if (this._oSelectionDetails) {
+			this._oSelectionDetails.destroy();
+			this._oSelectionDetails = null;
+		}
+	};
+
+	/* =========================================================== */
+	/* Public methods                                              */
+	/* =========================================================== */
+	/**
+	 * Getter for the Selection Details facade.
+	 *
+	 * @returns {sap.m.SelectionDetailsFacade} The reduced Selection Details facade for outer framework usages.
+	 * @since 1.48
+	 * @public
+	 */
+	ChartContainerContent.prototype.getSelectionDetails = function() {
+		ChartContainerContent._addEventMapping(this._oSelectionDetails);
+		return this._oSelectionDetails.getFacade();
+	};
+
+	/* =========================================================== */
+	/* Private methods                                             */
+	/* =========================================================== */
+	/**
+	 * Gets SelectionDetails instance
+	 *
+	 * @returns {sap.m.SelectionDetails} The newly created SelectionDetails for ChartContainer.
+	 * @private
+	 */
+	ChartContainerContent.prototype._getSelectionDetails = function() {
+		var oContent = this.getContent();
+		if (oContent && oContent.getMetadata().getName() === "sap.viz.ui5.controls.VizFrame") {
+			return this._oSelectionDetails;
+		}
+	};
+
+	/**
+	 * This function creates items that will be displayed in the Selection Details.
+	 *
+	 * @param {object[]} displayData The display data that is provided by the vizFrame event for the item being created.
+	 * @param {object} data The data related to the line as provided by vizFrame.
+	 * @param {object} context Context of the line as provided by vizFrame.
+	 * @param {object} factoryData Data which were registered with the factory.
+	 * @param {object} shapeString A string or a map of strings of shapeStrings provided by vizFrame.
+	 * @returns {sap.m.SelectionDetailsItem} The newly created SelectionDetailsItem that will be added to the items aggregation of SelectionDetails.
+	 * @private
+	 * @static
+	 */
+	ChartContainerContent._selectionDetailsItemFactory = function (displayData, data, context, factoryData, shapeString) {
+		shapeString = shapeString || "";
+		var aLines = [],
+			oLineItem,
+			bIsSimpleShape = typeof shapeString === "string";
+		for (var i = 0; i < displayData.length; i++) {
+			oLineItem = new SelectionDetailsItemLine({
+				label: displayData[i].label,
+				value: displayData[i].value,
+				unit: displayData[i].unit
+			});
+			if (!bIsSimpleShape) {
+				oLineItem.setLineMarker(shapeString[displayData[i].id]);
+			} else if (i === 0) {
+				oLineItem.setLineMarker(shapeString);
+			}
+			aLines.push(oLineItem);
+		}
+		return new SelectionDetailsItem({
+			lines: aLines
+		});
+	};
+
+	ChartContainerContent._aProxyEvent = [ "beforeOpen", "beforeClose", "navigate", "actionPress" ];
+
+	/**
+	 * Event mapping in order to return SelectionDetails facade for facade events
+	 *
+	 * @param {sap.m.SelectionDetails} selectionDetails The instance for which the event mapping should be done.
+	 * @private
+	 */
+	ChartContainerContent._addEventMapping = function(selectionDetails) {
+		var fnAttachEvent = selectionDetails.attachEvent;
+		selectionDetails.attachEvent = function (eventId, data, callback, listener) {
+			// Only proxy facade events. Not core events.
+			if (ChartContainerContent._aProxyEvent.indexOf(eventId) === -1) {
+				fnAttachEvent.apply(this, arguments);
+				return;
+			} else if (jQuery.type(data) === "function") {
+				listener = callback;
+				callback = data;
+				data = null;
+			}
+			fnAttachEvent.apply(selectionDetails, [ eventId, data, proxy, listener || selectionDetails.getFacade()] );
+
+			function proxy(event) {
+				var oEvent = new Event(eventId, event.oSource, event.mParameters);
+				oEvent.getSource = selectionDetails.getFacade;
+				if (eventId === "actionPress") {
+					event.getParameters().items = getFacades(event);
+				} else if (eventId === "navigate") {
+					event.getParameters().item = event.getParameter("item").getFacade();
+				}
+				callback.call(listener || selectionDetails.getFacade(), oEvent, data);
+			}
+
+			function getFacades(event) {
+				var aItems = event.getParameter("items"),
+					aItemsFacades = [];
+				for (var i = 0; i < aItems.length; i++) {
+					aItemsFacades.push(aItems[i].getFacade());
+				}
+				return aItemsFacades;
+			}
+		};
+	};
+
+	return ChartContainerContent;
+});

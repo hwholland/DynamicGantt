@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview Cross Application Navigation
  *
@@ -7,18 +7,20 @@
  *
  *   It exposes interfaces to perform a hash change and/or trigger an external navigation
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
 
 
 /*global jQuery, sap, window */
 
-(function () {
+sap.ui.define([
+    'sap/ushell/services/Personalization',
+    'sap/ushell/services/AppConfiguration',
+    'sap/ushell/services/_CrossApplicationNavigation/utils',
+    'jquery.sap.storage'
+], function (Personalization, oAppConfiguration, oUtils, storage) {
     "use strict";
     /*global jQuery, sap, location, setTimeout */
-    jQuery.sap.declare("sap.ushell.services.CrossApplicationNavigation");
-    jQuery.sap.require("sap.ushell.services.Personalization");
-    jQuery.sap.require("jquery.sap.storage");
 
     /**
      * The Unified Shell's CrossApplicationNavigation service, which allows to
@@ -69,13 +71,15 @@
      *
      * The same restrictions apply for the Application state
      *
+     * @name sap.ushell.services.CrossApplicationNavigation
+     *
      * @constructor
      * @class
      * @see sap.ushell.services.Container#getService
      * @since 1.15.0
      * @public
      */
-    sap.ushell.services.CrossApplicationNavigation = function (oContainerInterface, sParameters, oServiceConf) {
+    function CrossApplicationNavigation (oContainerInterface, sParameters, oServiceConf) {
         var oAppStateService, oServiceConfiguration;
         if (oServiceConf && oServiceConf.config) {
             oServiceConfiguration = oServiceConf.config;
@@ -131,6 +135,9 @@
          *  "#SO-36&jumper=postman"
          *  </code>
          *
+         * <b>Important</b> The target expressed in this parameter should not
+         * contain an inner-app route.
+         *
          * @param {object} [oComponent]
          *  the root component of the application
          *
@@ -178,7 +185,7 @@
                     }
                 }
             } else {
-                oResolution = sap.ushell.Container.getService("NavTargetResolution").getCurrentResolution();
+                oResolution = oAppConfiguration.getCurrentApplication();
                 if (oResolution && oResolution["sap-system"]) {
                     sSystem = oResolution["sap-system"];
                 } else if (oResolution && oResolution.url) {
@@ -380,6 +387,173 @@
         }
 
         /**
+         * Extracts the inner app route from a given intent.
+         *
+         * This method actually amends the input parameter if it is not
+         * provided as a string (which is immutable in Javascript).
+         *
+         * @param {variant} vIntent
+         *
+         * The input intent. It can be an object or a string in the format:
+         *
+         *  <pre>
+         *  {
+         *     target : { semanticObject : "AnObject", action: "action" },
+         *     params : { A : "B" },
+         *     appSpecificRoute: "some/inner-app/route"
+         *  }
+         *  </pre>
+         *
+         *  or
+         *
+         *  <pre>
+         *  {
+         *     target : {
+         *        semanticObject : "AnObject",
+         *        action: "action", context  : "AB7F3C"
+         *     },
+         *     params : {
+         *        A : "B",
+         *        c : "e"
+         *     },
+         *     appSpecificRoute: "some/inner-app/route"
+         *  }
+         *  </pre>
+         *
+         *  or
+         *
+         *  <pre>
+         *  {
+         *     target : { shellHash : "SO-36?jumper=postman&/some/inner-app/route" }
+         *  }
+         *  </pre>
+         *
+         * @returns {object}
+         *
+         * An object like:
+         * <pre>
+         * {
+         *     innerAppRoute: "&/some/inner-app/route", // always present. "" if none found.
+         *                                              // Includes separator if found.
+         *     intent: { }                              // vIntent without inner app route
+         * }
+         * </pre>
+         *
+         * NOTE: the returned <code>intent</code> field will be a string if the
+         * input <code>vIntent</code> was a string.
+         *
+         * @private
+         */
+        this._extractInnerAppRoute = function (vIntent) {
+            var that = this,
+                aParts,
+                sIntent;
+
+            if (typeof vIntent === "string") {
+                aParts = vIntent.split("&/"); // ["Object-action", "inner-app/route", ... ]
+                sIntent = aParts.shift();     // aParts now contains parts of inner-app route
+
+                return {
+                    intent: sIntent,
+                    innerAppRoute: aParts.length > 0
+                        ? "&/" + aParts.join("&/")
+                        : ""
+                };
+            }
+
+            if (Object.prototype.toString.apply(vIntent) === "[object Object]") {
+                var sShellHash = jQuery.sap.getObject("target.shellHash", undefined, vIntent);
+                if (typeof sShellHash === "string") {
+                    var oResult = that._extractInnerAppRoute(sShellHash);
+
+                    // modify the source object
+                    vIntent.target.shellHash = oResult.intent;
+
+                    return {
+                        intent: vIntent,
+                        innerAppRoute: oResult.innerAppRoute
+                    };
+                }
+
+                if (vIntent.hasOwnProperty("appSpecificRoute")) {
+                    var vAppSpecificRoute = vIntent.appSpecificRoute;
+
+                    delete vIntent.appSpecificRoute;
+
+                    var bIsStringWithoutSeparator = typeof vAppSpecificRoute === "string"
+                        && vAppSpecificRoute.indexOf("&/") !== 0
+                        && vAppSpecificRoute.length > 0;
+
+                    return {
+                        innerAppRoute: bIsStringWithoutSeparator
+                            ? "&/" + vAppSpecificRoute   // vAppSpecificRoute guaranteed to be string
+                            : vAppSpecificRoute,         // can be an object
+                        intent: vIntent
+                    };
+                }
+
+                return {
+                    intent: vIntent,
+                    innerAppRoute: ""
+                };
+            }
+
+            jQuery.sap.log.error(
+                "Invalid input parameter",
+                "expected string or object",
+                "sap.ushell.services.CrossApplicationNavigation"
+            );
+
+            return { intent: vIntent };
+        };
+
+        /**
+         * Adds an inner app route to the given intent.
+         *
+         * @param {variant} vIntent
+         *
+         * The same input object or string that #_extractInnerAppRoute takes.
+         *
+         * @param {string} [sInnerAppRoute]
+         *
+         * The inner app route. This method assumes that, if provided and non
+         * empty, it always starts wih "&/".
+         *
+         * @return {variant}
+         *
+         * The intent with the given <code>sInnerAppRoute</code> parameter.
+         *
+         * @private
+         */
+        this._injectInnerAppRoute = function (vIntent, sInnerAppRoute) {
+            var sShellHash,
+                that = this;
+
+            if (!sInnerAppRoute) {
+                return vIntent;
+            }
+
+            if (typeof vIntent === "string") {
+                return vIntent + sInnerAppRoute;
+            }
+
+            if (Object.prototype.toString.apply(vIntent) === "[object Object]") {
+                sShellHash = jQuery.sap.getObject("target.shellHash", undefined, vIntent);
+                if (typeof sShellHash === "string") {
+                    vIntent.target.shellHash = that._injectInnerAppRoute(
+                        sShellHash, sInnerAppRoute
+                    );
+
+                    return vIntent;
+                }
+
+                vIntent.appSpecificRoute = sInnerAppRoute;
+            }
+
+            return vIntent;
+        };
+
+        /**
         * Returns a string which can be put into the DOM (e.g. in a link tag)
         *
         * @param {object} oArgs
@@ -408,7 +582,7 @@
         *  or
         *  <pre>
         *  {
-        *     target : { shellHash : "SO-36&jumper=postman" }
+        *     target : { shellHash : "SO-36?jumper=postman" }
         *  }
         *  </pre>
         * @param {object} [oComponent]
@@ -419,9 +593,12 @@
         *   compaction requests have been sent
         *
         * @returns {string}
-        *   the href for the specified parameters; always starting with a
-        *   hash character; all parameters are URL-encoded (via
-        *   encodeURIComponent)
+        *   the href for the specified parameters as an *external* shell hash;
+        *   always starting with a
+        *   hash character; all parameters and parameter names are URL-encoded (via
+        *   encodeURIComponent) and the complete string is encoded via encodeURI (!).
+        *   The generated string can not be used in the majority of interfaces which expect a
+        *   internal shell hash.
         *
         * A proper way for an application to generate a link to return to the home page of the
         * Fiori launchpad is :
@@ -431,6 +608,7 @@
         *
         *Do *not* use "#Shell-home" to navigate to a specific homepage!
         *
+        * Note: if object is undefined, the current shell hash is returned.
         *
         * Note that the application parameter length (including
         * SemanticObject/Action) shall not exceed 512 bytes when serialized as
@@ -448,14 +626,28 @@
         *
         * @since 1.15.0
         * @public
+        * @alias sap.ushell.services.CrossApplicationNavigation#hrefForExternal
         */
         this.hrefForExternal = function (oArgs, oComponent, bAsync) {
-            var oArgsClone;
+            var oArgsClone,
+                oExtraction;
 
-            if (sap.ushell && sap.ushell.services && sap.ushell.Container && typeof sap.ushell.Container.getService === "function" && sap.ushell.Container.getService("ShellNavigation")) {
-                oArgsClone = getTargetWithCurrentSystem(oArgs, oComponent);
+            if (sap.ushell && sap.ushell.Container && typeof sap.ushell.Container.getService === "function" && sap.ushell.Container.getService("ShellNavigation")) {
+
+                // Remove and re-add inner app route, as logic that manipulates
+                // the input may assume no inner app hash and anyway, it's not
+                // supposed to tamper with it.
+                oArgsClone = jQuery.sap.extend(true, {}, oArgs);
+                oExtraction = this._extractInnerAppRoute(oArgsClone);
+
+                oArgsClone = getTargetWithCurrentSystem(oExtraction.intent, oComponent);
                 oArgsClone = amendTargetWithSapUshellEncTestParameter(oArgsClone);
-                return sap.ushell.Container.getService("ShellNavigation").hrefForExternal(oArgsClone, undefined, oComponent, bAsync);
+
+                oArgsClone = this._injectInnerAppRoute(oArgsClone, oExtraction.innerAppRoute);
+
+                return sap.ushell.Container.getService("ShellNavigation").hrefForExternal(
+                    oArgsClone, undefined, oComponent, bAsync
+                );
             }
 
             jQuery.sap.log.debug("Shell not available, no Cross App Navigation");
@@ -475,32 +667,59 @@
         *           the success handler of the resolve promise get an expanded shell hash
         *           as first argument
         * @public
+        * @alias sap.ushell.services.CrossApplicationNavigation#expandCompactHash
         */
         this.expandCompactHash = function(sHashFragment) {
             return sap.ushell.Container.getService("NavTargetResolution").expandCompactHash(sHashFragment);
         };
 
         /**
-         * using the browser history, this invocation attempts to navigate back to the previous application
-         * This functionality simply performs a browser back today.
-         * Its behaviour is subject to change.
-         * It may not yield the expected result esp. on mobile devices where "back" is the previous
-         * inner app state iff these are put into the history!
+         * Attempts to use the browser history to navigate to the previous app.
+         * <p>A navigation to the Fiori Launchpad Home is performed in case this
+         * method is called on a first navigation.  In all other cases, this
+         * function simply performs a browser back navigation.
+         * </p>
+         * <p>Please note that the behavior of this method is subject to change
+         * and therefore it may not yield to the expected results especially on
+         * mobile devices where "back" is the previous inner app state iff
+         * these are put into the history!</p>
          *
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#backToPreviousApp
          */
         this.backToPreviousApp = function () {
+            if (this.isInitialNavigation()) {
+                // go back home
+                this.toExternal({ target: { shellHash: "#" }, writeHistory: false});
+                return;
+            }
+
             this.historyBack();
         };
         /**
-         * performs window.history.back() if supported by the underlying
-         * platform.
+         * performs window.history.go() with number of steps if provided and
+         * if supported by the underlying platform.
          * May be a noop if the url is the first url in the browser.
+         * If no argument is provided it wil call window.history.go(-1)
+         * @param {number} iSteps
+         *    positive integer representing the steps to go back in the history
          *
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#historyBack
          */
-        this.historyBack = function () {
-            window.history.back();
+        this.historyBack = function (iSteps) {
+            var iActualStepsBack = -1;
+            if (iSteps && typeof iSteps === "number") {
+                if (iSteps <= 0) {
+                    jQuery.sap.log.warning(
+                        "historyBack called with an argument <= 0 and will result in a forward navigation or refresh",
+                        "expected was an argument > 0",
+                        "sap.ushell.services.CrossApplicationNavigation#historyBack"
+                    );
+                }
+                iActualStepsBack = iSteps * -1;
+            }
+            window.history.go(iActualStepsBack);
         };
 
         /**
@@ -513,6 +732,7 @@
          *    Whether the initial navigation occurred.
          *
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#isInitialNavigation
          * @since 1.36.0
          */
         this.isInitialNavigation = function () {
@@ -584,13 +804,27 @@
         *    an optional SAP UI5 Component,
         * @since 1.15.0
         * @public
+        * @alias sap.ushell.services.CrossApplicationNavigation#toExternal
         */
         this.toExternal = function (oArgs, oComponent) {
-            var oArgsClone;
-            if (sap.ushell && sap.ushell.services && sap.ushell.Container && typeof sap.ushell.Container.getService === "function" && sap.ushell.Container.getService("ShellNavigation")) {
-                oArgsClone = getTargetWithCurrentSystem(oArgs, oComponent);
+            var oArgsClone,
+                oExtraction,
+                bWriteHistory = oArgs.writeHistory;
+
+            if (sap.ushell && sap.ushell.Container && typeof sap.ushell.Container.getService === "function" && sap.ushell.Container.getService("ShellNavigation")) {
+                // clone because _extractInnerAppRoute may change the original
+                // structure.
+                oArgsClone = jQuery.sap.extend(true, {}, oArgs);
+                oExtraction = this._extractInnerAppRoute(oArgsClone);
+
+                oArgsClone = getTargetWithCurrentSystem(oExtraction.intent, oComponent);
                 oArgsClone = amendTargetWithSapUshellEncTestParameter(oArgsClone);
-                sap.ushell.Container.getService("ShellNavigation").toExternal(oArgsClone, oComponent);
+
+                delete oArgsClone.writeHistory;
+
+                oArgsClone = this._injectInnerAppRoute(oArgsClone, oExtraction.innerAppRoute);
+
+                sap.ushell.Container.getService("ShellNavigation").toExternal(oArgsClone, oComponent, bWriteHistory);
                 return;
             }
             jQuery.sap.log.debug("Shell not avialable, no Cross App Navigation");
@@ -617,9 +851,10 @@
          * Note that sAppHash shall not exceed 512 bytes when serialized as UTF-8
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#hrefForAppSpecificHash
          */
         this.hrefForAppSpecificHash = function (sAppHash) {
-            if (sap.ushell && sap.ushell.services && sap.ushell.Container && typeof sap.ushell.Container.getService === "function" && sap.ushell.Container.getService("ShellNavigation")) {
+            if (sap.ushell && sap.ushell.Container && typeof sap.ushell.Container.getService === "function" && sap.ushell.Container.getService("ShellNavigation")) {
                 return sap.ushell.Container.getService("ShellNavigation").hrefForAppSpecificHash(sAppHash);
             }
             jQuery.sap.log.debug("Shell not available, no Cross App Navigation; fallback to app-specific part only");
@@ -627,6 +862,98 @@
             return "#" + encodeURI(sAppHash);
         };
 
+
+        /**
+         * For a given semantic object, this method considers all actions
+         * associated with the semantic object and returns the one tagged as a
+         * "primaryAction". If no inbound tagged as "primaryAction" exists, then
+         * the intent of the first inbound (after sorting has been applied)
+         * matching the action "displayFactSheet".
+         *
+         * The primary intent is determined by querying {@link CrossApplicationNavigation#getLinks}
+         * with the given semantic object and optional parameter. Then the
+         * resulting list is filtered to the outcome that a single item remains.
+         *
+         * @param {string} sSemanticObject Semantic object.
+         * @param {object} [mParameters] @see CrossApplicationNavigation#getSemanticObjectLinks for description.
+         *
+         * @returns {jQuery.Deferred} When a relevant link object exists, it will return
+         * a promise that resolves to an object of the following form:
+         * <pre>
+         *   {
+         *      intent: "#AnObject-Action?A=B&C=e&C=j",
+         *      text: "Perform action",
+         *      icon: "sap-icon://Fiori2/F0018", // optional
+         *      shortTitle: "Perform"            // optional
+         *      tags: ["tag-1", "tag-2"]         // optional
+         *   }
+         * </pre>
+         * Otherwise, the returned promise will resolve to null when no relevant
+         * link object exists.
+         *
+         * @public
+         * @since 1.48
+         * @alias sap.ushell.services.CrossApplicationNavigation#getPrimaryIntent
+         */
+        this.getPrimaryIntent = function ( sSemanticObject, mParameters ) {
+            var oQuery = { };
+            var fnSortPredicate;
+            var rgxDisplayFactSheetAction = /^#\w+-displayFactSheet(?:$|\?.)/;
+
+            oQuery.tags = [ "primaryAction" ];
+            oQuery.semanticObject = sSemanticObject;
+            if ( mParameters ) {
+                oQuery.params = mParameters;
+            }
+
+            return this.getLinks( oQuery )
+                .then( function ( aLinks ) {
+                    if ( aLinks.length === 0 ) {
+                        delete oQuery.tags;
+                        oQuery.action = "displayFactSheet";
+
+                        // Priority given to intents with the action
+                        // 'displayFactSheet'
+                        fnSortPredicate = function ( oLink, oOtherLink ) {
+                            var bEitherIsFactSheetAction;
+
+                            if ( oLink.intent === oOtherLink.intent ) {
+                                return 0;
+                            }
+
+                            bEitherIsFactSheetAction = rgxDisplayFactSheetAction.test( oLink.intent )
+                                    ^ rgxDisplayFactSheetAction.test( oOtherLink.intent );
+
+                            if ( bEitherIsFactSheetAction ) {
+                                return rgxDisplayFactSheetAction.test( oLink.intent )
+                                    ? -1
+                                    : 1;
+                            }
+
+                            return oLink.intent < oOtherLink.intent ? -1 : 1;
+                        };
+
+                        return this.getLinks( oQuery );
+                    }
+
+                    // simple left-right-lexicographic order, based on intent
+                    fnSortPredicate = function ( oLink, oOtherLink ) {
+
+                        if ( oLink.intent === oOtherLink.intent ) {
+                            return 0;
+                        }
+
+                        return oLink.intent < oOtherLink.intent ? -1 : 1;
+                    };
+
+                    return  aLinks;
+                }.bind( this ) )
+                .then( function ( aLinks ) {
+                    return aLinks.length === 0
+                        ? null
+                        : aLinks.sort( fnSortPredicate )[0];
+                } );
+        };
 
         /**
          * Resolves a given semantic object and business parameters to a list of links,
@@ -656,7 +983,10 @@
          * <pre>
          * {
          *   intent: "#AnObject-action?A=B&C=e",
-         *   text: "Perform action"
+         *   text: "Perform action",
+         *   icon: "sap-icon://Fiori2/F0018", //optional
+         *   subTitle: "Action", //optional
+         *   shortTitle: "Perform" //optional
          * }
          * </pre>
          *
@@ -671,6 +1001,7 @@
          * @deprecated since version 1.38.0 use getLinks
          * @since 1.19.0
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#getSemanticObjectLinks
          */
         this.getSemanticObjectLinks = function (sSemanticObject, mParameters, bIgnoreFormFactor, oComponent, sAppStateKey, bCompactIntents) {
             var mParametersPlusSapSystem,
@@ -735,6 +1066,16 @@
          *                                     // true, only the links that use
          *                                     // at least one (non sap-) parameter
          *                                     // from 'params' will be returned.
+         *
+         *      sortResultsBy: "intent", // optional parameter that decides
+         *                               // on how the returned results will be sorted.
+         *                               // Possible values are:
+         *                               //
+         *                               // - "intent" (default) lexicographical sort on returned 'intent' field
+         *                               // - "text" lexicographical sort on returned 'text' field
+         *                               // - "priority" exprimental - top intents are returned first
+         *                               //
+         *
          *      treatTechHintAsFilter : true, // optional, defaults to false
          *                                    // if true, only apps that match
          *                                    // exactly the supplied technology
@@ -750,12 +1091,55 @@
          *      compactIntents: true        // optional, whether intents
          *                                  // should be returned in compact
          *                                  // format. Defaults to false.
-         *      ignoreFormFactor: true,   // optional, defaults to false, deprecated, do not use, may have no effect in the future
+         *      ignoreFormFactor: true,     // optional, defaults to false, deprecated, do not use, may have no effect in the future
+         *
+         *      tags: ["tag-1", "tag-2"]    // optional, if specified,
+         *                                  // only returns links that match
+         *                                  // inbound with certain tags.
          *   }
          *   </pre>
          *
-         *   This method supports a mass invocation interface to obtain
-         *   multiple results with a single call, as shown in the following example:
+         *   Starting from UI5 version 1.52.0 the <code>params</code> argument
+         *   can be specified in the extended format:
+         *
+         *   <pre>
+         *   ...
+         *   params: {
+         *      P1: { value: "v1" },
+         *      P2: { value: ["v2", "v3"] }
+         *   }
+         *   </pre>
+         *
+         *   When the parameter is expressed in this format, the caller can
+         *   specify additional search options.
+         *
+         *   Besides 'value', supported search options for the extended format are:
+         *   <ul>
+         *      <li>
+         *      <b>required</b>: whether the parameter must be required (true)
+         *      or not required (false) in the signature of the matching target
+         *      (once the navigation occurs to the returned link).  Please note
+         *      that this option will be effective if the Fiori Launchpad is
+         *      configured to resolve navigation targets via
+         *      <code>sap.ushell.services.ClientSideTargetResolution</code> and
+         *      therefore may not be supported in all platforms.<br />
+         *
+         *      Example:
+         *<pre>
+         *   ...
+         *   params: {
+         *     P1: { value: "v1", required: true },
+         *     P2: { value: ["v2", "v3"] }
+         *   }
+         *   ...
+         *</pre>
+         *      </li>
+         *   </ul>
+         *
+         *   <p>This method supports a mass invocation interface to obtain
+         *   multiple results with a single call, as shown in the following
+         *   example:
+         *
          *   <pre>
          *      oCrossApplicationService.getLinks([ // array, because multiple invocations are to be made
          *         [                           // arguments for the first invocation
@@ -778,10 +1162,18 @@
          * <pre>
          *   {
          *      intent: "#AnObject-Action?A=B&C=e&C=j",
-         *      text: "Perform action"
+         *      text: "Perform action",
+         *      icon: "sap-icon://Fiori2/F0018", // optional
+         *      subTitle: "Action", //optional
+         *      shortTitle: "Perform"            // optional
+         *      tags: ["tag-1", "tag-2"]         // optional
          *   }
          * </pre>
+         *   <p>
+         *   Properties marked as 'optional' in the example above may not be
+         *   present in the returned result.
          *
+         *   <p>
          *   <b>NOTE:</b> the intents returned are in <b>internal</b> format
          *   and cannot be directly put into a link tag.
          *   <p>
@@ -820,6 +1212,7 @@
          *   </pre>
          *
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#getLinks
          * @since 1.38.0
          */
         this.getLinks = function (vArgs) {
@@ -838,8 +1231,15 @@
             return aExpandedIntents;
         };
 
+        /*
+         * oNominalArgs can be an item from vArgs in this.getLinks()
+         *
+         * @param {type} oNominalArgs
+         * @returns {unresolved}
+         */
         this._getLinks = function (oNominalArgs) {
             var oNominalArgsClone,
+                mParameterDefinition,
                 mParametersPlusSapSystem,
                 oSrv = sap.ushell.Container.getService("NavTargetResolution");
 
@@ -853,11 +1253,16 @@
             oNominalArgsClone = jQuery.extend(true, {}, oNominalArgs);
             oNominalArgsClone.compactIntents = !!oNominalArgsClone.compactIntents;
             oNominalArgsClone.action = oNominalArgsClone.action || undefined;
+            oNominalArgsClone.paramsOptions = oUtils.extractGetLinksParameterOptions(oNominalArgsClone.params);
+
+            mParameterDefinition = oNominalArgsClone.params
+                ? oUtils.extractGetLinksParameterDefinition(oNominalArgsClone.params)
+                : oNominalArgsClone.params;
 
             // propagate sap-system into parameters
 
             mParametersPlusSapSystem = getTargetWithCurrentSystem(
-                { params: oNominalArgsClone.params }, oNominalArgsClone.ui5Component
+                { params: mParameterDefinition }, oNominalArgsClone.ui5Component
             ).params;
 
             mParametersPlusSapSystem = amendTargetWithSapUshellEncTestParameter({
@@ -889,6 +1294,7 @@
          *   </p>
          *
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#getDistinctSemanticObjects
          * @since 1.38.0
          */
         this.getDistinctSemanticObjects = function () {
@@ -936,6 +1342,7 @@
          * Note that this has a slightly different response format
          * @since 1.19.1
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#isIntentSupported
          */
         this.isIntentSupported = function (aIntents, oComponent) {
             var oDeferred = new jQuery.Deferred(),
@@ -978,7 +1385,7 @@
          * as {@link toExternal}/ {@link hrefForExternal}.
          *
          * @param {object[]} aIntents
-         *   the intents (such as <code>["#AnObject-action?A=B&c=e"]</code>) to be checked
+         *   the intents to be checked
          * with object being instances the oArgs object of toExternal, hrefForExternal etc.
          *
          *  e.g. <code>
@@ -1066,11 +1473,13 @@
          *
          * @since 1.32
          * @public
+         * @alias sap.ushell.services.CrossApplicationNavigation#isNavigationSupported
          */
         this.isNavigationSupported = function (aIntents, oComponent) {
-            var aClonedIntents = aIntents.map(function (oIntent) {
-                return getTargetWithCurrentSystem(oIntent, oComponent); // returns clone
-            });
+            var aClonedIntents = aIntents
+                .map(function (oIntent) {
+                    return getTargetWithCurrentSystem(oIntent, oComponent); // returns clone
+                });
 
             return sap.ushell.Container.getService("NavTargetResolution")
                 .isNavigationSupported(aClonedIntents);
@@ -1257,19 +1666,21 @@
          * Creates an empty app state object which act as a parameter container for
          * cross app navigation.
          * @param {object} oAppComponent - a UI5 component used as context for the app state
+         * @param {boolean} bTransient
+         *   true if the appstate should not persisted on the backend.
          * @return {object} App state Container
          * @since 1.28
          * @ignore  SAP Internal usage only, beware! internally public, cannot be changed,
          * but not part of the public documentation
          */
-        this.createEmptyAppState = function (oAppComponent) {
+        this.createEmptyAppState = function (oAppComponent, bTransient) {
             if (!oAppStateService) {
                 oAppStateService = sap.ushell.Container.getService("AppState");
             }
             if (!(oAppComponent instanceof sap.ui.core.UIComponent)) {
                 throw new Error("oAppComponent passed must be a UI5 Component");
             }
-            return oAppStateService.createEmptyAppState(oAppComponent);
+            return oAppStateService.createEmptyAppState(oAppComponent, bTransient);
         };
 
         /**
@@ -1422,5 +1833,7 @@
         };
     }; // CrossApplicationNavigation
 
-    sap.ushell.services.CrossApplicationNavigation.hasNoAdapter = true;
-}());
+    CrossApplicationNavigation.hasNoAdapter = true;
+    return CrossApplicationNavigation;
+
+}, true /* bExport */);

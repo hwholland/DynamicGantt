@@ -1,12 +1,11 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(['sap/ushell/services/Message', 'sap/ui/base/EventProvider', 'sap/ushell/ui/launchpad/TileState', "sap/ushell/components/flp/launchpad/PagingManager", "sap/ushell/components/flp/launchpad/DashboardLoadingManager"],
+	function(Message, EventProvider, TileState, PagingManager, DashboardLoadingManager) {
+	"use strict";
+
     /*global jQuery, sap, document, $, setTimeout, window */
     /*jslint plusplus: true, nomen: true, bitwise: true */
-
-    jQuery.sap.declare("sap.ushell.components.flp.launchpad.DashboardManager");
-    jQuery.sap.require("sap.ushell.services.Message");
 
     /**
      * Return translated text. Private function in this module.
@@ -17,26 +16,10 @@
      */
     var getLocalizedText = function (sMsgId, aParams) {
             return aParams ? sap.ushell.resources.i18n.getText(sMsgId, aParams) : sap.ushell.resources.i18n.getText(sMsgId);
-        },
-
-        /**
-         * This function returns the number of tiles which are supported on the current device in the current catalog.
-         * The catalog is identified by its title, so if several catalogs exists with the same title -
-         * the returned value is the number of the intent-supported-tiles in all of them.
-         * @param oCatalogModel
-         * @returns {Number}
-         * @private
-         */
-        getNumIntentSupportedTiles = function (oCatalogModel) {
-            var aCatalogTiles = this.oModel.getProperty('/catalogTiles'),
-                aCurrentCatalogSupportedTiles = aCatalogTiles.filter(function (oTile) {
-                    return oTile.catalog === oCatalogModel.title && oTile.isTileIntentSupported === true;
-                });
-
-            return aCurrentCatalogSupportedTiles.length;
         };
 
-    sap.ui.base.EventProvider.extend("sap.ushell.components.flp.launchpad.DashboardManager", {
+
+    var DashboardManager = EventProvider.extend("sap.ushell.components.flp.launchpad.DashboardManager", {
         metadata: {
             publicMethods: ["getModel", "getDashboardView", "loadPersonalizedGroups", "attachEvent", "detachEvent", "attachEventOnce", "createTile", "deleteCatalogTileFromGroup", "resetGroupsOnFailure", "createGroupAndSaveTile"]
         },
@@ -63,19 +46,27 @@
             this.oSortableDeferred = $.Deferred();
             this.oSortableDeferred.resolve();
             this.aRequestQueue = [];
+            this.aPendingCatalogQueue = [];
             this.bRequestRunning = false;
             this.tagsPool = [];
+            this.skippedProcessCatalogs = 0;
             this.registerEvents();
             this.oTileCatalogToGroupsMap = {};
+            this.iTabSelected = 0;
             this.tileViewUpdateQueue = [];
             this.tileViewUpdateTimeoutID = 0;
+            this.oSegmentedTabTileViewDB = {};
             this.oPopover = null;
             this.tileUuid = null;
-            // For synchronization between group creation and moving a tile (to the new group)
-            this.oGroupCreatedDeferred = undefined;
-            this.aMoveTileCallsData = undefined;
             this.segmentsStore = [];
+            this.bIsFirstSegment = true;
+            this.iMinNumOfTilesForBlindLoading = this.oModel.getProperty("/OptimizeTileLoadingThreshold") || 100;
+            this.bIsScorllModeAccordingKPI = false;
             this.oGroupNotLockedFilter = new sap.ui.model.Filter("isGroupLocked", sap.ui.model.FilterOperator.EQ, false);
+            this.bLinkPersonalizationSupported = this.oPageBuilderService.isLinkPersonalizationSupported();
+            this.oDashboardLoadingManager = new DashboardLoadingManager("loadingManager", {
+                oDashboardManager: this
+            });
             //get 'home' view from the router
             if (this.oRouter) {
                 var oTarget = this.oRouter.getTarget('home');
@@ -83,62 +74,110 @@
                     this.oDashboardView = oEvent.getParameter('view');
                 }.bind(this));
             }
+
+            this.oModel.bindProperty("/tileActionModeActive").attachChange(this._changeLinksScope.bind(this));
         },
 
-        createMoveActionDialog: function () {
-            var oGroupFilter = this.oGroupNotLockedFilter;
+        isBlindLoading : function () {
+            var homePageGroupDisplay = this.oModel.getProperty("/homePageGroupDisplay");
+            var bIsScorllMode = (homePageGroupDisplay === undefined || homePageGroupDisplay === "scroll") && this.bIsScorllModeAccordingKPI;
+            jQuery.sap.log.info("isBlindLoading reason IsScorllModeAccordingKPI and IsScorllMode: " + bIsScorllMode);
+            this.oModel.getProperty("/tileActionModeActive") !=undefined ? jQuery.sap.log.info("isBlindLoading reason TileActionModeActive : " + this.oModel.getProperty("/tileActionModeActive")):"";
+            return this.oModel.getProperty("/tileActionModeActive") || bIsScorllMode ;
+        },
 
-            this.moveDialog = new sap.m.SelectDialog("moveDialog", {
-                title: sap.ushell.resources.i18n.getText('moveTileDialog_title'),
-                rememberSelections: false,
-                search: function (oEvent) {
-                    var sValue = oEvent.getParameter("value"),
-                        oFilter = new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, sValue),
-                        oBinding = oEvent.getSource().getBinding("items");
-                    oBinding.filter([oFilter, oGroupFilter]);
-                },
-                contentWidth: '400px',
-                confirm: function (oEvent) {
-                    var aContexts = oEvent.getParameter("selectedContexts"),
-                        oEventBus = sap.ui.getCore().getEventBus();
-                    if (aContexts.length) {
-                        oEventBus.publish("launchpad", "moveTile", {
-                            sTileId: this.tileUuid,
-                            toGroupId: aContexts[0].getObject().groupId,
-                            toIndex: aContexts[0].getObject().tiles.length,
-                            source: this.moveDialog.getId()
-                        });
+        createMoveActionDialog: function (sId) {
+            var oGroupFilter = this.oGroupNotLockedFilter,
+                oMoveDialog = new sap.m.SelectDialog(sId, {
+                    title: sap.ushell.resources.i18n.getText('moveTileDialog_title'),
+                    rememberSelections: false,
+                    search: function (oEvent) {
+                        var sValue = oEvent.getParameter("value"),
+                            oFilter = new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, sValue),
+                            oBinding = oEvent.getSource().getBinding("items");
+                        oBinding.filter([oFilter, oGroupFilter]);
+                    },
+                    contentWidth: '400px',
+                    contentHeight:"auto",
+                    confirm: function (oEvent) {
+                        var aContexts = oEvent.getParameter("selectedContexts");
+                        this.publishMoveActionEvents(oEvent, aContexts, "move" + this.tileType);
 
-                        oEventBus.publish("launchpad", "scrollToGroup", {
-                            groupId: aContexts[0].getObject().groupId,
-                            groupChanged: false,
-                            focus: false
-                        });
-
+                    }.bind(this),
+                    cancel: function () {
+                        var oCurrentlyFocusedTile = jQuery('.sapUshellTile[tabindex="0"]')[0];
+                        if (oCurrentlyFocusedTile) {
+                            oCurrentlyFocusedTile.focus();
+                        }
+                    },
+                    items: {
+                        path: "/groups",
+                        filters: [oGroupFilter],
+                        template: new sap.m.StandardListItem({
+                            title: "{title}"
+                        })
                     }
-                }.bind(this),
-                cancel: function () {
-                    var oCurrentlyFocusedTile = jQuery('.sapUshellTile[tabindex="0"]')[0];
-                    if (oCurrentlyFocusedTile) {
-                        oCurrentlyFocusedTile.focus();
+                });
+            return oMoveDialog;
+        },
+
+        publishMoveActionEvents: function (oEvent, aContexts, sMoveAction) {
+            var oEventBus = sap.ui.getCore().getEventBus();
+            if (aContexts.length) {
+              var stileType = this.tileType === "link" ? "links" : "tiles";
+                oEventBus.publish("launchpad", sMoveAction, {
+                    sTileId: this.tileUuid,
+                    sToItems: stileType,
+                    sFromItems: stileType,
+                    sTileType: stileType,
+                    toGroupId: aContexts[0].getObject().groupId,
+                    toIndex: aContexts[0].getObject()[this.tileType === "link" ? "links" : "tiles"].length,
+                    source: oEvent.getSource().getId()
+                });
+
+
+                oEventBus.publish("launchpad", "scrollToGroup", {
+                    groupId: aContexts[0].getObject().groupId,
+                    groupChanged: false,
+                    focus: false
+                });
+
+            }
+        },
+
+        _changeLinksScope: function (oEvent) {
+            var that = this;
+            if (this.bLinkPersonalizationSupported) {
+                var bIsTileActionModeActive = oEvent.getSource().getValue();
+                this.oModel.getProperty("/groups").forEach(function (oGroup, index) {
+                    if (!oGroup.isGroupLocked) {
+                        that._changeGroupLinksScope(oGroup, bIsTileActionModeActive ? 'Actions' : 'Display');
                     }
-                },
-                items: {
-                    path: "/groups",
-                    filters: [oGroupFilter],
-                    template: new sap.m.StandardListItem({
-                        title: "{title}"
-                    })
-                }
+                });
+            }
+        },
+
+        _changeGroupLinksScope: function (oGroup, scope) {
+            var that = this;
+
+            oGroup.links.forEach(function (oLink, index) {
+                that._changeLinkScope(oLink.content[0], scope);
             });
+        },
 
-            this.moveDialog.setModel(this.oModel);
+        _changeLinkScope: function (oLink, scope) {
+            var oLinkView = oLink.getScope ? oLink : oLink.getContent()[0];//hack for demo content
+
+            //if LinkPersonalization is supported by platform, then the link must support personalization
+            if (this.bLinkPersonalizationSupported && oLinkView.setScope) {
+                oLinkView.setScope(scope);
+            }
         },
 
         registerEvents: function () {
-            var oEventBus = sap.ui.getCore().getEventBus(),
-                that = this;
+            var oEventBus = sap.ui.getCore().getEventBus();
             oEventBus.subscribe("launchpad", "addBookmarkTile", this._createBookmark, this);
+            oEventBus.subscribe("launchpad", "tabSelected", this.getSegmentTabContentViews, this);
             oEventBus.subscribe("sap.ushell.services.Bookmark", "bookmarkTileAdded", this._addBookmarkToModel, this);
             oEventBus.subscribe("sap.ushell.services.Bookmark", "catalogTileAdded", this._refreshGroupInModel, this);
             oEventBus.subscribe("sap.ushell.services.Bookmark", "bookmarkTileDeleted", this.loadPersonalizedGroups, this);
@@ -150,38 +189,89 @@
             oEventBus.subscribe("launchpad", "changeGroupTitle", this._changeGroupTitle, this);
             oEventBus.subscribe("launchpad", "moveGroup", this._moveGroup, this);
             oEventBus.subscribe("launchpad", "deleteTile", this._deleteTile, this);
-            oEventBus.subscribe("launchpad", "moveTile", this._moveTile, this);
+            oEventBus.subscribe("launchpad", "movetile", this._moveTile, this);
+            oEventBus.subscribe("launchpad", "movelink", this._moveLink, this);
             oEventBus.subscribe("launchpad", "sortableStart", this._sortableStart, this);
             oEventBus.subscribe("launchpad", "sortableStop", this._sortableStop, this);
             oEventBus.subscribe("renderCatalog", this.loadAllCatalogs, this);
             oEventBus.subscribe("showCatalog", this.updateTilesAssociation, this);
             oEventBus.subscribe("launchpad", "dashboardModelContentLoaded", this._modelLoaded, this);
+            oEventBus.subscribe("launchpad", "convertTile", this._convertTile, this);
 
             //add Remove action for all tiles
-            this.oPageBuilderService.registerTileActionsProvider(function (oTile) {
+            this.oPageBuilderService.registerTileActionsProvider(this._addFLPActionsToTile.bind(this));
+        },
 
-//  This check had been removed, as in the ActionMode._openActionsMenu we have a check if the related group is a locked group
-//  then we do not show any action. This is the current bahviour as the Action of Tile-Settings is added by the tiles themselves
-//  (Dynamin/StaticTile.controller.doInit) and they are not aware of the group being locked, so we do the check in one central place.
-//
-//                var oModelTile = that.getModelTileById(that.oPageBuilderService.getTileId(oTile));
-//                if (oModelTile.isLocked) {
-//                    return;
-//                }
+        _addFLPActionsToTile: function (oTile) {
+            var bLinkPersonalizationSupportedForTile = this.bLinkPersonalizationSupported && this.oPageBuilderService.isLinkPersonalizationSupported(oTile),
+                aActions = [];
 
-                jQuery.sap.require("sap.m.MessageBox");
-                return [{
-                    text: sap.ushell.resources.i18n.getText('moveTileDialog_action'),
-                    press: function (oEvent) {
-                        that.tileUuid = that.getModelTileById(that.oPageBuilderService.getTileId(oTile)).uuid;
-                        if (!that.moveDialog) {
-                            that.createMoveActionDialog();
+            aActions.push(this._getMoveTileAction(oTile));
+
+            if (bLinkPersonalizationSupportedForTile) {
+                aActions.push(this._getConvertTileAction(oTile));
+            }
+
+            return aActions;
+        },
+
+        _getConvertTileAction: function (oTile) {
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                that = this,
+                sTileType = that.oPageBuilderService.getTileType(oTile);
+            return {
+                //Convert Tile action
+                text: sTileType === 'link' ? sap.ushell.resources.i18n.getText('ConvertToTile') : sap.ushell.resources.i18n.getText('ConvertToLink'), //TODO: verify strings with Michael
+                press: function (oSourceTile) {
+                    oEventBus.publish("launchpad", "convertTile", oSourceTile);
+                }
+            };
+        },
+
+        _getMoveTileAction: function (oTile) {
+            var that = this;
+            return {
+                //Move Tile action
+                text: sap.ushell.resources.i18n.getText('moveTileDialog_action'),
+                press: function () {
+                    that.tileType = that.oPageBuilderService.getTileType(oTile);
+                    that.tileUuid = that.getModelTileById(that.oPageBuilderService.getTileId(oTile), that.tileType === "link" ? "links" : "tiles").uuid;
+                    var oMoveDialog =  that.tileType === "tile" ? that.moveTileDialog : that.moveLinkDialog;
+                    if (that.tileType === "tile" || (that.tileType === "link")) {
+                        if (!oMoveDialog) {
+                            oMoveDialog = that.createMoveActionDialog("move" + that.tileType + "Dialog");
+                            oMoveDialog.setModel(that.oModel);
+                            if (that.tileType === "tile") {
+                                that.moveTileDialog = oMoveDialog;
+                            } else {
+                                that.moveLinkDialog = oMoveDialog;
+                            }
+                        } else {
+                            oMoveDialog.getBinding("items").filter([that.oGroupNotLockedFilter]);
                         }
-                        that.moveDialog.getBinding("items").filter([that.oGroupNotLockedFilter]);
-                        that.moveDialog.open();
-                    }
-                }];
-            });
+                        oMoveDialog.open();
+                     }
+                }
+            };
+        },
+
+        _handleTileAppearanceAnimation: function (oSourceTile) {
+            if (!oSourceTile) {
+               return;
+            }
+            var pfx = ["webkit", ""];
+            function PrefixedEvent(element, type) {
+                for (var i = 0; i < pfx.length; i++) {
+                    type = type.toLowerCase();
+                    oSourceTile.attachBrowserEvent(pfx[i]+type, function (oEvent) {
+                        if (oEvent.originalEvent && oEvent.originalEvent.animationName === "sapUshellTileEntranceAnimation") {
+                            oSourceTile.removeStyleClass("sapUshellTileEntrance")
+                        }
+                    }, false);
+                }
+            }
+            PrefixedEvent(oSourceTile, "AnimationEnd");
+            oSourceTile.addStyleClass("sapUshellTileEntrance");
         },
 
         destroy: function () {
@@ -195,7 +285,8 @@
             oEventBus.unsubscribe("launchpad", "changeGroupTitle", this._changeGroupTitle, this);
             oEventBus.unsubscribe("launchpad", "moveGroup", this._moveGroup, this);
             oEventBus.unsubscribe("launchpad", "deleteTile", this._deleteTile, this);
-            oEventBus.unsubscribe("launchpad", "moveTile", this._moveTile, this);
+            oEventBus.unsubscribe("launchpad", "movetile", this._moveTile, this);
+            oEventBus.unsubscribe("launchpad", "movelink", this._moveLink, this);
             oEventBus.unsubscribe("launchpad", "sortableStart", this._sortableStart, this);
             oEventBus.unsubscribe("launchpad", "sortableStop", this._sortableStop, this);
             oEventBus.unsubscribe("renderCatalog", this.loadAllCatalogs, this);
@@ -253,8 +344,8 @@
         /**
          * Add a bookmark to a dashboard group.
          * If no group is specified then the bookmark is added to th edefault group.
-         * This function will be called also if an application used the bookmark service directly to add a bookmark. 
-         * the bookmark service publishes an event so that we will be able to update the model. 
+         * This function will be called also if an application used the bookmark service directly to add a bookmark.
+         * the bookmark service publishes an event so that we will be able to update the model.
          * This method doesn't display a success toast since the application should show success or failure messages
          */
         _addBookmarkToModel: function (sChannelId, sEventId, oData) {
@@ -294,6 +385,7 @@
             srvc = this.oPageBuilderService;
             sTileType = srvc.getTileType(oTile);
             newTile = this._getTileModel(oTile, srvc.isGroupLocked(oGroup), sTileType, this._addModelToTileViewUpdateQueue);
+            this.getTileView(newTile);
             indexOfGroup = this._getIndexOfGroupByObject(oGroup);
             targetGroup = this.oModel.getProperty("/groups/" + indexOfGroup);
 
@@ -428,12 +520,13 @@
             var nGroupIndex = null,
                 aGroups = this.oModel.getProperty("/groups"),
                 sGroupId = this.oPageBuilderService.getGroupId(oGroup);
-            aGroups.forEach(function (oModelGroup, nIndex) {
+            aGroups.every(function (oModelGroup, nIndex) {
                 var sCurrentGroupId = this.oPageBuilderService.getGroupId(oModelGroup.object);
                 if (sCurrentGroupId === sGroupId) {
                     nGroupIndex = nIndex;
                     return false;
                 }
+                return true;
             }.bind(this));
             return nGroupIndex;
         },
@@ -445,23 +538,31 @@
         _getPathOfTile: function (sTileId) {
             var aGroups = this.oModel.getProperty("/groups"),
                 nResGroupIndex = null,
-                nResTileIndex = null;
-
-            jQuery.each(aGroups, function (nGroupIndex, oGroup) {
-                jQuery.each(oGroup.tiles, function (nTileIndex, oTile) {
+                nResTileIndex = null,
+                sType,
+                fnEqual = function (nTileIndex, oTile) {
                     if (oTile.uuid === sTileId) {
-                        nResGroupIndex = nGroupIndex;
                         nResTileIndex = nTileIndex;
                         return false;
                     }
-                });
+                }
 
-                if (nResGroupIndex !== null) {
+            jQuery.each(aGroups, function (nGroupIndex, oGroup) {
+                jQuery.each(oGroup.tiles, fnEqual);
+                if (nResTileIndex !== null) {
+                    nResGroupIndex = nGroupIndex;
+                    sType = "tiles";
+                    return false;
+                }
+                jQuery.each(oGroup.links, fnEqual);
+                if (nResTileIndex !== null) {
+                    nResGroupIndex = nGroupIndex;
+                    sType = "links";
                     return false;
                 }
             });
 
-            return nResGroupIndex !== null ? "/groups/" + nResGroupIndex + "/tiles/" + nResTileIndex : null;
+            return nResGroupIndex !== null ? "/groups/" + nResGroupIndex + "/" + sType + "/" + nResTileIndex : null;
         },
 
         // see http://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another
@@ -579,8 +680,15 @@
                     this.oModel.setProperty("/groups/" + nGroupIndex + "/sortable", true);
 
                     oGroupControl = sap.ui.getCore().byId('dashboardGroups').getGroupControlByGroupId(sGroupId);
+
+                    if (oGroupControl.getBindingContext().getObject().links && oGroupControl.getBindingContext().getObject().links.length && !oGroupControl.getIsGroupLocked()) {
+                        this._changeGroupLinksScope(oGroupControl.getBindingContext().getObject(), this.oModel.getProperty("/tileActionModeActive") ? sap.m.GenericTileScope.Actions : sap.m.GenericTileScope.Display);
+                    }
+
                     if (oGroupControl) {
                         oGroupControl.rerender();
+                        this.updateTilesAssociation();
+                        sap.ushell.utils.handleTilesVisibility();
                     }
 
                 }, this, sGroupId, oGroup)));
@@ -758,20 +866,18 @@
                 // Add the group in the backend.
                 this._addRequest($.proxy(function () {
                     try {
-                        this.oGroupCreatedDeferred = new jQuery.Deferred();
-
                         if (nGroupIndex === aGroups.length - 1) {
                             oResultPromise = this.oPageBuilderService.addGroup(sNewTitle, nGroupIndex);
-
                             oResultPromise.done(this._handleAfterSortable($.proxy(function (sGroupId, oNewGroup) {
-                                nGroupIndex = this._getIndexOfGroup(sGroupId);
-                                this._createGroupUpdate(sGroupId, nGroupIndex, oNewGroup);
+                                var nGroupIndex = this._getIndexOfGroup(sGroupId);
+                                this._loadGroup(nGroupIndex, oNewGroup);
                                 sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
                                     that.analyticsConstants.PERSONALIZATION,
                                     that.analyticsConstants.RENAME_GROUP,
                                     [sOldTitle, sNewTitle, sGroupId]
                                 );
                             }, this, sGroupId)));
+
                             oResultPromise.fail(this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_create_group_msg")));
                             oResultPromise.always($.proxy(this._checkRequestQueue, this));
                         } else {
@@ -780,14 +886,15 @@
                                 oResultPromise = this.oPageBuilderService.addGroupAt(sNewTitle, nGroupOrgIndex);
 
                                 oResultPromise.done(this._handleAfterSortable($.proxy(function (sGroupId, oNewGroup) {
-                                    nGroupIndex = this._getIndexOfGroup(sGroupId);
-                                    this._createGroupUpdate(sGroupId, nGroupIndex, oNewGroup);
+                                    var nGroupIndex = this._getIndexOfGroup(sGroupId);
+                                    this._loadGroup(nGroupIndex, oNewGroup);
                                     sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
                                         that.analyticsConstants.PERSONALIZATION,
                                         that.analyticsConstants.RENAME_GROUP,
                                         [sOldTitle, sNewTitle, sGroupId]
                                     );
                                 }, this, sGroupId)));
+
                                 oResultPromise.fail(this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_create_group_msg")));
                                 oResultPromise.always($.proxy(this._checkRequestQueue, this));
                             }.bind(this));
@@ -823,17 +930,10 @@
                         this.oModel.setProperty(sGroupPath + "/title", sOldTitle);
                         this._requestFailed();
                     }, this, sGroupId)));
-                }, this));
-                if (oResultPromise) {
-                    oResultPromise.always($.proxy(this._checkRequestQueue, this));
-                }
-            }
-        },
 
-        _createGroupUpdate : function (sGroupId, nGroupIndex, oNewGroup) {
-            nGroupIndex = this._getIndexOfGroup(sGroupId);
-            this._loadGroup(nGroupIndex, oNewGroup);
-            this.oGroupCreatedDeferred.resolve();
+                    oResultPromise.always($.proxy(this._checkRequestQueue, this));
+                }, this));
+            }
         },
 
         createTile: function (oData) {
@@ -847,7 +947,6 @@
                 oBus;
 
             //publish event for UserActivityLog
-            oBus = sap.ui.getCore().getEventBus();
             oBus = sap.ui.getCore().getEventBus();
             $.proxy(oBus.publish, oBus, "launchpad", "addTile", {
                 catalogTileContext: oCatalogTileContext,
@@ -897,24 +996,15 @@
         },
 
         createGroup: function (title) {
-            var deferred = jQuery.Deferred(),
-                oGroup,
-                aGroups,
-                sGroupId,
-                index,
-                oResultPromise,
-                nGroupIndex,
-                oContext,
-                oResponseData;
-
+            var deferred = jQuery.Deferred();
             if (!sap.ushell.utils.validHash(title)) {
                 return deferred.reject({status: 0, action: 'createNewGroup'});
             }
 
-            oGroup = this._getGroupModel(null, false, true);
-            aGroups = this.oModel.getProperty("/groups");
-            sGroupId = oGroup.groupId;
-            index = aGroups.length;
+            var oGroup = this._getGroupModel(null, false, true);
+            var aGroups = this.oModel.getProperty("/groups");
+            var sGroupId = oGroup.groupId;
+            var index = aGroups.length;
             if (index > 0) {
                 aGroups[index - 1].isLastGroup = false;
             }
@@ -927,22 +1017,22 @@
             // Create new group
             this._addRequest(function (title) {
                 try {
-                    oResultPromise = this.oPageBuilderService.addGroup(title);
+                    var oResultPromise = this.oPageBuilderService.addGroup(title);
                 } catch (err) {
                     this._resetGroupsOnFailure("fail_to_create_group_msg");
                     return;
                 }
 
                 oResultPromise.done(this._handleAfterSortable(function (sGroupId, oNewGroup) {
-                    nGroupIndex = this._getIndexOfGroup(sGroupId);
+                    var nGroupIndex = this._getIndexOfGroup(sGroupId);
                     this._loadGroup(nGroupIndex, oNewGroup);
-                    oContext = new sap.ui.model.Context(this.oModel, "/groups/" + nGroupIndex);
+                    var oContext = new sap.ui.model.Context(this.oModel, "/groups/" + nGroupIndex);
                     deferred.resolve(oContext);
                 }.bind(this, sGroupId)));
 
                 oResultPromise.fail(function (data) {
                     this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_create_group_msg"));
-                    oResponseData = {group: data.group, status: 0, action: 'createNewGroup'}; // 0 - failure
+                    var oResponseData = {group: data.group, status: 0, action: 'createNewGroup'}; // 0 - failure
                     deferred.resolve(oResponseData); // 0 - failure
                 }.bind(this));
 
@@ -986,15 +1076,16 @@
         _deleteTile: function (sChannelId, sEventId, oData) {
             var that = this,
                 sTileId = oData.tileId || oData.originalTileId,
-                aGroups = this.oModel.getProperty("/groups");
+                aGroups = this.oModel.getProperty("/groups"),
+                sItems = oData.items || 'tiles';
 
             jQuery.each(aGroups, function (nGroupIndex, oGroup) {
                 var bFoundFlag = false;
-                jQuery.each(oGroup.tiles, function (nTileIndex, oTmpTile) {
+                jQuery.each(oGroup[sItems], function (nTileIndex, oTmpTile) {
                     if (oTmpTile.uuid === sTileId || oTmpTile.originalTileId === sTileId) {
                         // Remove tile from group.
-                        that._destroyTileModel("/groups/" + nGroupIndex + "/tiles/" + nTileIndex);
-                        var oTile = oGroup.tiles.splice(nTileIndex, 1)[0],
+                        that._destroyTileModel("/groups/" + nGroupIndex + "/" + sItems + "/" + nTileIndex);
+                        var oTile = oGroup[sItems].splice(nTileIndex, 1)[0],
                             oResultPromise,
                             sTileName = sap.ushell.Container.getService("LaunchPage").getTileTitle(oTile.object),
                             sCatalogTileId = sap.ushell.Container.getService("LaunchPage").getCatalogTileId(oTile.object),
@@ -1014,11 +1105,7 @@
 
                             oResultPromise.done(that._handleAfterSortable(function () {
 
-                                if (sTileName) {
-                                    that._showLocalizedMessage("tile_deleted_msg", [sTileName, oGroup.title]);
-                                } else {
-                                    that._showLocalizedMessage("tile_deleted_msg", [sTileName, oGroup.title]);
-                                }
+                                that._showLocalizedMessage("tile_deleted_msg", [sTileName, oGroup.title]);
                                 sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
                                     that.analyticsConstants.PERSONALIZATION,
                                     that.analyticsConstants.DELETE_TILE,
@@ -1103,191 +1190,60 @@
 
             // Wait for all of the delete requests before resolving the deferred
             jQuery.when.apply(jQuery, aDeleteTilePromises).
-                done(
-                    function (result) {
-                        var bSuccess = true,
-                            index = 0,
-                            promisesLength = aDeleteTilePromises.length;
+            done(
+                function (result) {
+                    var bSuccess = true,
+                        index = 0,
+                        promisesLength = aDeleteTilePromises.length;
 
-                        // Check if at least one deleteTilePromises has failure status
-                        for (index; index < promisesLength; index++) {
-                            if (!result.status) {
-                                bSuccess = false;
-                                break;
-                            }
+                    // Check if at least one deleteTilePromises has failure status
+                    for (index; index < promisesLength; index++) {
+                        if (!result.status) {
+                            bSuccess = false;
+                            break;
                         }
-                        if (bSuccess) {
-                            // that.oModel.setProperty("/groups/" + iGroupIndex + "/tiles/", oGroup.tiles);
-                            that.oModel.setProperty("/groups/" + iGroupIndex, oGroup);
-                        }
-                        deferred.resolve({group: oGroup, status: bSuccess, action: 'remove'});
                     }
-                );
+                    if (bSuccess) {
+                        // that.oModel.setProperty("/groups/" + iGroupIndex + "/tiles/", oGroup.tiles);
+                        that.oModel.setProperty("/groups/" + iGroupIndex, oGroup);
+                    }
+                    deferred.resolve({group: oGroup, status: bSuccess, action: 'remove'});
+                }
+            );
             return deferred.promise();
         },
-
-        /*
-         * oData should have the following parameters:
-         * fromGroupId
-         * toGroupId
-         * fromIndex
-         * toIndex can be null => append as last tile in group
-         */
-        _moveTile : function (sChannelId, sEventId, oData) {
-            var nNewIndex = oData.toIndex,
-                sNewGroupId = oData.toGroupId,
-                sTileId = oData.sTileId,
-                sSource = oData.source,
-                oTile,
-                nTileIndex,
-                oOldGroup,
-                nOldGroupIndex,
-                oNewGroup,
-                nNewGroupIndex,
-                aGroups = this.oModel.getProperty("/groups"),
-                oSourceGroup,
-                oTargetGroup,
-                personalization,
-                index,
-                oMoveTileTempObj;
-
-            jQuery.each(aGroups, function (nTmpGroupIndex, oTmpGroup) {
-                var bFoundFlag = false;
-                jQuery.each(oTmpGroup.tiles, function (nTmpTileIndex, oTmpTile) {
-                    if (oTmpTile.uuid === sTileId) {
-                        oTile = oTmpTile;
-                        nTileIndex = nTmpTileIndex;
-                        oOldGroup = oTmpGroup;
-                        nOldGroupIndex = nTmpGroupIndex;
-                        bFoundFlag = true;
-                        return false;
-                    }
-                });
-                if (bFoundFlag) {
-                    return false;
-                }
-            });
-            jQuery.each(aGroups, function (nTmpGroupIndex, oTmpGroup) {
-                if (oTmpGroup.groupId === sNewGroupId) {
-                    oNewGroup = oTmpGroup;
-                    nNewGroupIndex = nTmpGroupIndex;
-                }
-            });
-
-            //When moving a tile to the group it is already in using the move dialog, there is no change
-            if (oOldGroup.groupId == oNewGroup.groupId && (sSource === "moveDialog" || nNewIndex === null)) {
-                return;
-            }
-
-            // When a tile is dragged into an empty group, the Plus-Tiles in the empty list cause
-            // the new index to be off by one, i.e. 1 instead of 0, which causes an error.
-            // This is a generic check which sanitizes the values if necessary.
-            if (nNewIndex && nNewIndex > oNewGroup.tiles.length) {
-                nNewIndex = oNewGroup.tiles.length;
-            }
-
-            if (oOldGroup.groupId === sNewGroupId) {
-                if (nNewIndex === null || nNewIndex === undefined) {
-                    // moved over group list to same group
-                    oOldGroup.tiles.splice(nTileIndex, 1);
-                    // Tile is appended. Set index accordingly.
-                    nNewIndex = oOldGroup.tiles.length;
-                    // append as last item
-                    oOldGroup.tiles.push(oTile);
-                } else {
-                    nNewIndex = this._adjustTileIndex(nNewIndex, oTile, oOldGroup);
-                    this._moveInArray(oOldGroup.tiles, nTileIndex, nNewIndex);
-                }
-
-                this.oModel.setProperty("/groups/" + nOldGroupIndex + "/tiles", oOldGroup.tiles);
-            } else {
-                // remove from old group
-                personalization = this.oModel.getProperty("/personalization");
-                oOldGroup.tiles.splice(nTileIndex, 1);
-                oOldGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oOldGroup, personalization);
-                this.oModel.setProperty("/groups/" + nOldGroupIndex + "/tiles", oOldGroup.tiles);
-
-                // add to new group
-                if (nNewIndex === null || nNewIndex === undefined) {
-                    // Tile is appended. Set index accordingly.
-                    nNewIndex = oNewGroup.tiles.length;
-                    // append as last item
-                    oNewGroup.tiles.push(oTile);
-                } else {
-                    nNewIndex = this._adjustTileIndex(nNewIndex, oTile, oNewGroup);
-                    oNewGroup.tiles.splice(nNewIndex, 0, oTile);
-                }
-                oNewGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oNewGroup, personalization);
-                this.oModel.setProperty("/groups/" + nNewGroupIndex + "/tiles", oNewGroup.tiles);
-            }
-
-            // Re-calculate the visibility of the Tiles
-            sap.ushell.utils.handleTilesVisibility();
-
-            // change in backend
-            oSourceGroup = this.oModel.getProperty("/groups/" + nOldGroupIndex).object;
-            oTargetGroup = this.oModel.getProperty("/groups/" + nNewGroupIndex).object;
-
-            // If the tile is moved immidiately after a new group was created - then the group object from the beckand might not arrived yet,
-            // in this case oTargetGroup is undefined, so we would like to wait until the process of group creation is completed
-            if (!oTargetGroup && this.oGroupCreatedDeferred && this.oGroupCreatedDeferred.state() === "pending") {
-
-                if (this.aMoveTileCallsData === undefined) {
-                    this.aMoveTileCallsData = [];
-                }
-                // Add the moveTile request to the requests array
-                this.aMoveTileCallsData.push({
-                    sTileId : sTileId,
-                    oTile : oTile,
-                    nTileIndex : nTileIndex,
-                    nNNewIndex : nNewIndex,
-                    oSourceGroup : oSourceGroup,
-                    nNewGroupIndex : nNewGroupIndex
-                });
-
-                if (this.aMoveTileCallsData.length > 1) {
-                    return;
-                }
-
-                // The new group was successfully created: target group object (oTargetGroup) is now available,
-                // and this._moveTileRequest is called for each moveTile request that was kept in aMoveTileCallsData
-                this.oGroupCreatedDeferred.promise().done(function () {
-                    if (this.aMoveTileCallsData !== undefined && this.aMoveTileCallsData.length > 0) {
-                        oTargetGroup = this.oModel.getProperty("/groups/" + nNewGroupIndex).object;
-
-                        // For each movetile request in the array - issue a call _moveTileRequest
-                        for (index = 0; index < this.aMoveTileCallsData.length; index++) {
-                            oMoveTileTempObj = this.aMoveTileCallsData[index];
-                            this._moveTileRequest(
-                                oMoveTileTempObj.sTileId,
-                                oMoveTileTempObj.oTile,
-                                oMoveTileTempObj.nTileIndex,
-                                oMoveTileTempObj.nNewIndex,
-                                oMoveTileTempObj.oSourceGroup,
-                                oMoveTileTempObj.nNewGroupIndex,
-                                oTargetGroup,
-                                true
-                            );
-                        }
-                        this.aMoveTileCallsData = undefined;
-                        this.oGroupCreatedDeferred = undefined;
-                    }
-                }.bind(this));
-            } else {
-                this._moveTileRequest(sTileId, oTile, nTileIndex, nNewIndex, oSourceGroup, nNewGroupIndex, oTargetGroup, false);
+        _getGroupIndex: function (sId) {
+            var aGroups = this.oModel.getProperty("/groups"),
+                oGroupInfo = this._getNewGroupInfo(aGroups, sId);
+            if (oGroupInfo) {
+                return oGroupInfo.newGroupIndex;
             }
         },
+        _convertTile: function (sChannelId, sEventId, oData) {
+            var oSourceTile = oData.tile ? oData.tile : oData,//temp solution - i should change all calls for convert to support oData obj
+                nGroupIndex = oData.srcGroupId ? this._getGroupIndex(oData.srcGroupId) : undefined,
+                oGroup = oData.srcGroupId ? this.oModel.getProperty("/groups/" + nGroupIndex) : oSourceTile.getParent().getBindingContext().getObject(),//please humafy this
+                aTileBindingContext = oSourceTile.getBindingContext().sPath.split("/"),
+                oTile = oSourceTile.getBindingContext().getObject(),
+                sType = aTileBindingContext[aTileBindingContext.length - 2],
+                sTileId = oTile.uuid,
+                curTileIndex = parseInt(aTileBindingContext[aTileBindingContext.length - 1],10),
+                newTileIndex = oData.toIndex !== undefined ? oData.toIndex : undefined,
+                oResultPromise,
+                bActionMode = this.oModel.getProperty("/tileActionModeActive"),
+                newGroupIndex = oData.toGroupId ? this._getGroupIndex(oData.toGroupId) : oGroup.index,
+                oDstGroup =  oData.toGroupId ? this.oModel.getProperty("/groups/" + newGroupIndex) : oGroup;
 
-        _moveTileRequest : function (sTileId, oTile, nTileIndex, nNewIndex, oSourceGroup, nNewGroupIndex, oTargetGroup, bInGroupCreation) {
-            var oResultPromise,
-                sTilePath,
-                oldViewContent,
-                srvc = sap.ushell.Container.getService("LaunchPage"),
-                aUsageAnalyticsCustomProps;
+            var oIndexInfo =  this._getIndexForConvert(sType, curTileIndex, newTileIndex, oGroup, oDstGroup),
+                sourceInfo = {
+                  "tileIndex": curTileIndex,
+                  "groupIndex": nGroupIndex,
+                  "group": oGroup
+                };
 
             this._addRequest($.proxy(function () {
                 try {
-                    oResultPromise = this.oPageBuilderService.moveTile(oTile.object, nTileIndex, nNewIndex, oSourceGroup, oTargetGroup);
+                    oResultPromise = this.oPageBuilderService.moveTile(oTile.object, oIndexInfo.tileIndex, oIndexInfo.newTileIndex, oGroup.object, oDstGroup.object, sType === "links" ? "tile" : "link");
                 } catch (err) {
                     this._resetGroupsOnFailure("fail_to_move_tile_msg");
                     return;
@@ -1298,67 +1254,325 @@
                 // (see in DashboardContent.view
                 oTile.tileIsBeingMoved = true;
 
+                //we call to _handleAfterSortable to handle the case in which convertTile is called by dragAndDrop flow
                 oResultPromise.done(this._handleAfterSortable($.proxy(function (sTileId, oTargetTile) {
-
-                    aUsageAnalyticsCustomProps = [
-                        srvc.getTileTitle(oTile.object),
-                        srvc.getGroupTitle(oSourceGroup),
-                        srvc.getGroupTitle(oTargetGroup),
-                        sTileId];
-
-                    sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
-                        this.analyticsConstants.PERSONALIZATION,
-                        this.analyticsConstants.MOVE_TILE,
-                        aUsageAnalyticsCustomProps
-                    );
-
-                    sTilePath = this._getPathOfTile(sTileId);
+                    var sTilePath = this._getPathOfTile(sTileId);
 
                     // If we cannot find the tile, it might have been deleted -> Check!
                     if (sTilePath) {
-                        // Update the model with the new tile object and new Id.
-                        this.oModel.setProperty(sTilePath + "/object", oTargetTile);
-                        this.oModel.setProperty(sTilePath + "/originalTileId", this.oPageBuilderService.getTileId(oTargetTile));
-
+                        this._checkRequestQueue();
                         // get the target-tile view and align the Model for consistency
                         this.oPageBuilderService.getTileView(oTargetTile).done(function (oView) {
-                            // get the old view from tile's model
-                            oldViewContent = this.oModel.getProperty(sTilePath + "/content");
-                            // first we set new view
-                            this.oModel.setProperty(sTilePath + "/content", [oView]);
-                            //now we destroy the old view
-                            if (oldViewContent && oldViewContent[0]) {
-                                oldViewContent[0].destroy();
+                            if (sType === "tiles") {//it means we convert to link
+                              this._attachLinkPressHandlers(oView);
+                              this._addDraggableAttribute(oView);
+                              this._changeLinkScope(oView, bActionMode && sType !== 'links' ? 'Actions' : 'Display');
                             }
-                            // reset the move-scenario flag
-                            this.oModel.setProperty(sTilePath + "/tileIsBeingMoved", false);
+                            var dstGroupInfo = {
+                              "tileIndex": newTileIndex,
+                              "groupIndex": newGroupIndex,
+                              "group": oDstGroup
+                            },
+                            tileInfo = {
+                              "tile": oTile,
+                              "view": oView,
+                              "type": sType,
+                              "tileObj": oTargetTile
+                            };
+
+                            this.replaceTileViewAfterConvert(sourceInfo, dstGroupInfo, tileInfo);
+                            this.updateTilesAssociation();
+                            sap.ushell.utils.handleTilesVisibility();
+                            if (oData.callBack) {
+                              oData.callBack(oView);
+                            }
                         }.bind(this));
                     }
-                    // If the tile was moved to a new created group (while it was created) -
-                    // then _loadGroup needs to be called after the action is complete
-                    // in order to update the groups content with the new tile
-                    if (bInGroupCreation) {
-                        this._loadGroup(nNewGroupIndex, oTargetGroup);
-                    }
-
-                    //recalculate the associated groups for catalog tiles
-                    this.updateTilesAssociation();
-
                 }, this, sTileId)));
+
                 oResultPromise.fail(this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_move_tile_msg")));
-                oResultPromise.always($.proxy(this._checkRequestQueue, this));
             }, this));
         },
 
+        replaceTileViewAfterConvert: function (oSourceInfo, oDstInfo, oTileInfo) {
+            // get the old view from tile's model
+            var oTile = oTileInfo.tile,
+                oldViewContent = oTile.content;
+                // first we set new view, new tile object and new Id. And reset the move-scenario flag
+                oTile.tileIsBeingMoved = false;
+                oTile.content = [oTileInfo.view];
+                oTile.object = oTileInfo.tileObj;
+                oTile.originalTileId = this.oPageBuilderService.getTileId(oTileInfo.tileObj);
+
+            //fix the tile position in the model and insert the converted tile\link to the group
+            oSourceInfo.group[oTileInfo.type].splice(oSourceInfo.tileIndex, 1);
+            if (oDstInfo.tileIndex !== undefined) {
+              oDstInfo.group[oTileInfo.type === "tiles" ? "links" : "tiles"].splice(oDstInfo.tileIndex, 0, oTile);
+            } else {
+              oDstInfo.group[oTileInfo.type === "tiles" ? "links" : "tiles"].push(oTile);
+            }
+
+            this.oModel.setProperty("/groups/" + oDstInfo.groupIndex , oDstInfo.group);
+            this.oModel.setProperty("/groups/" + oSourceInfo.groupIndex , oSourceInfo.group);
+
+            //handle animation
+            if (oTileInfo.type === "links") {
+                this._handleTileAppearanceAnimation(oTile.content[0].getParent());
+            } else {
+                this._handleTileAppearanceAnimation(oTile.content[0]);
+            }
+
+            if (oldViewContent && oldViewContent[0]) {
+                oldViewContent[0].destroy();
+            }
+        },
+        /*
+        * sType: the type of the tile(lineMode/ContentMode) befor the convert action
+        */
+        _getIndexForConvert: function (sType, curTileIndex, newTileIndexInShellModel, oGroup, oDstGroup) {
+            var nNewTileIndex;
+            if (sType === "tiles") {
+                //If we convert ContentMode-tile to link then we want to enter the new link to the end of the array or to provided newTileIndex
+                if (newTileIndexInShellModel !== undefined) {
+                  nNewTileIndex = oDstGroup[sType].length + newTileIndexInShellModel;
+                } else {
+                  nNewTileIndex = oDstGroup[sType].length + oDstGroup["links"].length;
+                }
+                if (oGroup.groupId === oDstGroup.groupId) {
+                    nNewTileIndex--;
+                }
+            } else {
+                //If we convert link to ContentMode-tile then we want to enter the new tile after the the last ContentMode-tile
+                nNewTileIndex = newTileIndexInShellModel ? newTileIndexInShellModel : oGroup['tiles'].length;
+                curTileIndex += oGroup["tiles"].length;
+            }
+            return {"tileIndex": curTileIndex, "newTileIndex": nNewTileIndex};
+        },
+        _getIndexForMove: function (sType, curTileIndex, newTileIndexInShellModel, oDstGroup, oSourceGroup) {
+          var nNewTileIndex;
+          if (sType === "tiles") {
+              //case move tile
+              nNewTileIndex = newTileIndexInShellModel !== undefined ? newTileIndexInShellModel : oDstGroup[sType].length;
+          } else {
+              //case move link
+              if (newTileIndexInShellModel !== undefined) {
+                nNewTileIndex = oDstGroup["tiles"].length + newTileIndexInShellModel;
+              } else {
+                nNewTileIndex = oDstGroup["tiles"].length + oDstGroup["links"].length;
+              }
+              curTileIndex +=  oSourceGroup["tiles"].length;
+          }
+          return {"tileIndex": curTileIndex, "newTileIndex": nNewTileIndex};
+        },
+
+        _moveLink: function (sChannelId, sEventId, oData) {
+            this._moveTile(sChannelId, sEventId, oData);
+        },
+
+        _getTileInfo: function (aGroups, sTileId, sItems) {
+            var oTileInfo;
+            jQuery.each(aGroups, function (nTmpGroupIndex, oTmpGroup) {
+                var bFoundFlag = false;
+                jQuery.each(oTmpGroup[sItems], function (nTmpTileIndex, oTmpTile) {
+                    if (oTmpTile.uuid === sTileId) {
+                        //the order is oTile, nTileIndex, oOldGroup, nOldGroupIndex
+                        oTileInfo = {"oTile": oTmpTile, "tileIndex": nTmpTileIndex, "oGroup": oTmpGroup, "groupIndex": nTmpGroupIndex};
+                        bFoundFlag = true;
+                        return false;
+                    }
+                });
+                return !bFoundFlag;
+            });
+            return oTileInfo;
+        },
+
+        _getNewGroupInfo: function (aGroups, sNewGroupId) {//should be concidered to improve by inserting the logic into _getTileInfo function
+            var oNewGroupInfo;
+            jQuery.each(aGroups, function (nTmpGroupIndex, oTmpGroup) {
+                if (oTmpGroup.groupId === sNewGroupId) {
+                    //order is oNewGroup, nNewGroupIndex
+                    oNewGroupInfo = {"oNewGroup" : oTmpGroup, "newGroupIndex": nTmpGroupIndex};
+                }
+            });
+            return oNewGroupInfo;
+        },
+
+
+         /*
+          * oData should have the following parameters:
+          * fromGroupId
+          * toGroupId
+          * fromIndex
+          * toIndex can be null => append as last tile in group
+          */
+         _moveTile: function (sChannelId, sEventId, oData) {
+             var nNewIndex = oData.toIndex,
+                 sNewGroupId = oData.toGroupId,
+                 sTileId = oData.sTileId,
+                 sSource = oData.source,
+                 sType = oData.sTileType === "tiles" || oData.sTileType === "tile" ? "tile" : "link",
+                 sToItems = oData.sToItems,
+                 sFromItems = oData.sFromItems,
+                 srvc = sap.ushell.Container.getService("LaunchPage"),
+                 bActionMode = this.oModel.getProperty("/tileActionModeActive"),
+                 aGroups = this.oModel.getProperty("/groups"),
+                 oSourceGroup,
+                 oTargetGroup,
+                 oResultPromise,
+                 personalization,
+                 oTileInfo,
+                 oGroupInfo,
+                 oIndexInfo = {};
+
+             oTileInfo = this._getTileInfo(aGroups, sTileId, sFromItems);
+             oGroupInfo = this._getNewGroupInfo(aGroups, sNewGroupId);
+
+             //When moving a tile to the group it is already in using the move dialog, there is no change
+             if (oTileInfo.oGroup.groupId == oGroupInfo.oNewGroup.groupId && (sSource === "movetileDialog" || nNewIndex === null || sSource === "movelinkDialog")) {
+                 return;
+             }
+             if (sType === "link") {
+                 oTileInfo.oTile.content[0].addStyleClass("sapUshellZeroOpacity");
+             }
+
+             // When a tile is dragged into an empty group, the Plus-Tiles in the empty list cause
+             // the new index to be off by one, i.e. 1 instead of 0, which causes an error.
+             // This is a generic check which sanitizes the values if necessary.
+             if (sType === "tile" && sToItems === 'tiles') {
+                 if (nNewIndex && nNewIndex > oGroupInfo.oNewGroup[sToItems].length) {
+                     nNewIndex = oGroupInfo.oNewGroup[sToItems].length;
+                 }
+             }
+             if (oTileInfo.oGroup.groupId === sNewGroupId && sToItems === sFromItems) {
+                 if (nNewIndex === null || nNewIndex === undefined) {
+                     // moved over group list to same group
+                     oTileInfo.oGroup[sToItems].splice(oTileInfo.tileIndex, 1);
+                     // Tile is appended. Set index accordingly.
+                     nNewIndex = oTileInfo.oGroup[sToItems].length;
+                     // append as last item
+                     oTileInfo.oGroup[sToItems].push(oTileInfo.oTile);
+                 } else {
+                     nNewIndex = this._adjustTileIndex(nNewIndex, oTileInfo.oTile, oTileInfo.oGroup, sToItems);
+                     this._moveInArray(oTileInfo.oGroup[sToItems], oTileInfo.tileIndex, nNewIndex);
+                 }
+
+                 this.oModel.setProperty("/groups/" + oTileInfo.groupIndex + "/" + sToItems, oTileInfo.oGroup[sToItems]);
+             } else {
+                 // remove from old group
+                 personalization = this.oModel.getProperty("/personalization");
+                 oTileInfo.oGroup[sFromItems].splice(oTileInfo.tileIndex, 1);
+                 oTileInfo.oGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oTileInfo.oGroup, personalization);
+                 this.oModel.setProperty("/groups/" + oTileInfo.groupIndex + "/" + sFromItems, oTileInfo.oGroup[sFromItems]);
+
+                 // add to new group
+                 if (nNewIndex === null || nNewIndex === undefined) {
+                     // Tile is appended. Set index accordingly.
+                     nNewIndex = oGroupInfo.oNewGroup[sToItems].length;
+                     // append as last item
+                     oGroupInfo.oNewGroup[sToItems].push(oTileInfo.oTile);
+                 } else {
+                     nNewIndex = this._adjustTileIndex(nNewIndex, oTileInfo.oTile, oGroupInfo.oNewGroup, sToItems);
+                     oGroupInfo.oNewGroup[sToItems].splice(nNewIndex, 0, oTileInfo.oTile);
+                 }
+                 oGroupInfo.oNewGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oGroupInfo.oNewGroup, personalization);
+                 this.oModel.setProperty("/groups/" + oGroupInfo.newGroupIndex + "/" + sToItems, oGroupInfo.oNewGroup[sToItems]);
+             }
+
+             //recalculate the associated groups for catalog tiles
+             this.updateTilesAssociation();
+             // Re-calculate the visibility of the Tiles
+             sap.ushell.utils.handleTilesVisibility();
+
+
+             // change in backend
+             oSourceGroup = this.oModel.getProperty("/groups/" + oTileInfo.groupIndex);
+             oTargetGroup = this.oModel.getProperty("/groups/" + oGroupInfo.newGroupIndex);
+             oIndexInfo =  this._getIndexForMove(sFromItems, oTileInfo.tileIndex, nNewIndex, oGroupInfo.oNewGroup, oSourceGroup);
+
+             this._addRequest($.proxy(function () {
+                 try {
+                     oResultPromise = this.oPageBuilderService.moveTile(oTileInfo.oTile.object, oIndexInfo.tileIndex, oIndexInfo.newTileIndex, oSourceGroup.object, oTargetGroup.object, sType);
+                 } catch (err) {
+                     this._resetGroupsOnFailure("fail_to_move_tile_msg");
+                     return;
+                 }
+
+                 // Putting a special flag on the Tile's object
+                 // this enables us to disable opening the tile's action until it has been updated from the backend
+                 // (see in DashboardContent.view
+                 oTileInfo.oTile.tileIsBeingMoved = true;
+
+                 oResultPromise.done(this._handleAfterSortable($.proxy(function (sTileId, oTargetTile) {
+                     var sTilePath,
+                         aUsageAnalyticsCustomProps = [
+                             srvc.getTileTitle(oTileInfo.oTile.object),
+                             srvc.getGroupTitle(oSourceGroup.object),
+                             srvc.getGroupTitle(oTargetGroup.object),
+                             sTileId];
+
+                     sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
+                         this.analyticsConstants.PERSONALIZATION,
+                         this.analyticsConstants.MOVE_TILE,
+                         aUsageAnalyticsCustomProps
+                     );
+                     sTilePath = this._getPathOfTile(sTileId);
+
+                     // If we cannot find the tile, it might have been deleted -> Check!
+                     if (sTilePath) {
+                         // Update the model with the new tile object and new Id.
+                         this.oModel.setProperty(sTilePath + "/object", oTargetTile);
+                         this.oModel.setProperty(sTilePath + "/originalTileId", this.oPageBuilderService.getTileId(oTargetTile));
+
+                         this._checkRequestQueue();
+                         // get the target-tile view and align the Model for consistency
+                         this.oPageBuilderService.getTileView(oTargetTile).done(function (oView) {
+                             // get the old view from tile's model
+                             var oldViewContent = this.oModel.getProperty(sTilePath + "/content");
+
+                             // first we set new view
+                             if (sToItems === 'links') {
+                                 this._changeLinkScope(oView, bActionMode ? "Actions" : "Display");
+                                 this._attachLinkPressHandlers(oView);
+                                 this._addDraggableAttribute(oView);
+                                 this._handleTileAppearanceAnimation(oView);
+                                 oTileInfo.oTile.content = [oView];
+                                 this.oModel.setProperty(sTilePath, jQuery.extend({}, oTileInfo.oTile));
+                                 this.oModel.setProperty("/groups/" + oGroupInfo.newGroupIndex + "/" + sToItems, this.oModel.getProperty("/groups/" + oGroupInfo.newGroupIndex + "/" + sToItems));
+                             } else {
+                                 this.oModel.setProperty(sTilePath + "/content", [oView]);
+                             }
+
+                             //now we destroy the old view
+                             if (oldViewContent && oldViewContent[0]) {
+                                var origOnAfterRendering = oView.onAfterRendering;
+                                oView.onAfterRendering = function () {
+                                    origOnAfterRendering.apply(this);
+                                    oldViewContent[0].destroy();
+                                    oView.onAfterRendering = origOnAfterRendering;
+                                }
+                             }
+                             // reset the move-scenario flag
+                             this.oModel.setProperty(sTilePath + "/tileIsBeingMoved", false);
+                             if (oData.callBack) {
+                               oData.callBack(oView);
+                             }
+                         }.bind(this));
+                     }
+                 }, this, sTileId)));
+
+                 oResultPromise.fail(this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_move_tile_msg")));
+             }, this));
+         },
+
         // Adjust the moved-tile new index according to the visible+hidden tiles
-        _adjustTileIndex: function (newLocationIndex, oTile, newGroup) {
+        _adjustTileIndex: function (newLocationIndex, oTile, newGroup, sItems) {
             var visibleCounter = 0,
                 bIsTileIncluded = false,
                 i = 0;
             // In order to get the new index, count all tiles (visible+hidden) up to the new index received from the UI.
-            for (i = 0; i < newGroup.tiles.length && visibleCounter < newLocationIndex; i++) {
-                if (newGroup.tiles[i].isTileIntentSupported) {
-                    if (newGroup.tiles[i] === oTile) {
+            for (i = 0; i < newGroup[sItems].length && visibleCounter < newLocationIndex; i++) {
+                if (newGroup[sItems][i].isTileIntentSupported) {
+                    if (newGroup[sItems][i] === oTile) {
                         bIsTileIncluded = true;
                     } else {
                         visibleCounter++;
@@ -1416,19 +1630,35 @@
                 this._destroyAllTileModels("/catalogTiles");
                 // Clear existing Catalog items
                 this.oModel.setProperty("/catalogs", []);
-                this.oModel.setProperty("/catalogTiles", []);
+                this.oModel.setProperty("/catalogSearchEntity", {
+                    appBoxes: [],
+                    customTiles: []
+                });
 
                 // Array of promise objects that are generated inside addCatalogToModel (the "progress" function of getCatalogs)
                 this.aPromises = [];
 
+                jQuery.sap.measure.start("FLP:DashboardManager.GetCatalogsRequest", "GetCatalogsRequest","FLP");
+
+                jQuery.sap.measure.start("FLP:DashboardManager.getCatalogTiles", "getCatalogTiles","FLP");
+                jQuery.sap.measure.pause("FLP:DashboardManager.getCatalogTiles");
+
+                jQuery.sap.measure.start("FLP:DashboardManager.BuildCatalogModelWithRendering", "BuildCatalogModelWithRendering","FLP");
+                jQuery.sap.measure.pause("FLP:DashboardManager.BuildCatalogModelWithRendering");
+
                 // Trigger loading of catalogs
                 sap.ushell.Container.getService("LaunchPage").getCatalogs()
-                    // There's a need to make sure that onDoneLoadingCatalogs is called only after all catalogs are loaded
-                    // (i.e. all calls to addCatalogToModel are finished).
-                    // For this, all the promise objects that are generated inside addCatalogToModel are generated into this.aPromises,
-                    // and jQuery.when calls onDoneLoadingCatalogs only after all the promises are resolved
+                // There's a need to make sure that onDoneLoadingCatalogs is called only after all catalogs are loaded
+                // (i.e. all calls to addCatalogToModel are finished).
+                // For this, all the promise objects that are generated inside addCatalogToModel are generated into this.aPromises,
+                // and jQuery.when calls onDoneLoadingCatalogs only after all the promises are resolved
                     .done(function (catalogs) {
-                        jQuery.when.apply(jQuery, this.aPromises).then(this.onDoneLoadingCatalogs(catalogs));
+                        jQuery.sap.measure.end("FLP:DashboardManager.GetCatalogsRequest");
+                        jQuery.sap.measure.end("FLP:DashboardManager.getCatalogTiles");
+
+                        jQuery.when.apply(jQuery, this.aPromises).then(function () {
+                            that.onDoneLoadingCatalogs(catalogs);
+                        });
                         setDoneCBForGroups();
                     }.bind(this))
                     //in case of a severe error, show an error message
@@ -1442,26 +1672,100 @@
             }
         },
 
+
         updateCatalogTilesToGroupsMap: function () {
-            var catalogTiles = this.getModel().getProperty("/catalogTiles"),
-                tile,
+            var aCatalog = this.getModel().getProperty("/catalogs"),
                 index,
                 tileId,
                 associatedGrps,
                 aGroups,
-                srvc = sap.ushell.Container.getService("LaunchPage");
+                aCatalogCustom,
+                aCatalogAppboxes,
+                aCatalogCustomIndex,
+                aCatalogAppboxesIndex,
+                oAppBoxTile,
+                oCustomTile,
+            srvc = sap.ushell.Container.getService("LaunchPage");
             // if the catalogTile model doesn't exist, it will be updated in some time later
-            if (catalogTiles) {
-                for (index = 0; index < catalogTiles.length; index++) {
-                    tile = catalogTiles[index];
-                    tileId = encodeURIComponent(srvc.getCatalogTileId(tile.src));
-                    associatedGrps = this.getModel().getProperty("/catalogTiles/" + index + "/associatedGroups");
-                    aGroups = this.oTileCatalogToGroupsMap[tileId];
-                    associatedGrps = aGroups ? aGroups : [];
-                    catalogTiles[index].associatedGroups = associatedGrps;
+            if (aCatalog) {
+                for (index = 0; index < aCatalog.length; index++) {
+                    aCatalogAppboxes = aCatalog[index].appBoxes;
+
+                    if (aCatalogAppboxes) {
+                        //Iterate over all the appBoxes.
+                        for (aCatalogAppboxesIndex = 0; aCatalogAppboxesIndex < aCatalogAppboxes.length; aCatalogAppboxesIndex++) {
+                            oAppBoxTile = aCatalogAppboxes[aCatalogAppboxesIndex];
+                            tileId = encodeURIComponent(srvc.getCatalogTileId(oAppBoxTile.src));
+                            //Get the mapping of the associated groups map.
+                            aGroups = this.oTileCatalogToGroupsMap[tileId];
+                            associatedGrps = aGroups ? aGroups : [];
+                            oAppBoxTile.associatedGroups = associatedGrps;
+                        }
+                    }
+
+                    aCatalogCustom = aCatalog[index].customTiles;
+
+                    if (aCatalogCustom) {
+                        //Iterate over all the appBoxes.
+                        for (aCatalogCustomIndex = 0; aCatalogCustomIndex < aCatalogCustom.length; aCatalogCustomIndex++) {
+                            oCustomTile = aCatalogCustom[aCatalogCustomIndex];
+                            tileId = encodeURIComponent(srvc.getCatalogTileId(oCustomTile.src));
+                            //Get the mapping of the associated groups map.
+                            aGroups = this.oTileCatalogToGroupsMap[tileId];
+                            associatedGrps = aGroups ? aGroups : [];
+                            oCustomTile.associatedGroups = associatedGrps;
+                        }
+                    }
                 }
             }
-            this.getModel().setProperty("/catalogTiles", catalogTiles);
+            this.getModel().setProperty("/catalogs", aCatalog);
+        },
+
+
+        _getIsIntentSupported: function (oCatalogTile) {
+            var srvc = sap.ushell.Container.getService("LaunchPage"),
+                bIsIntentSupported = !!(srvc.isTileIntentSupported(oCatalogTile));
+            return bIsIntentSupported;
+
+        },
+
+
+        _getIsAppBox: function (oCatalogTile) {
+            if(!sap.ushell.Container){
+                return false;
+            }
+            var srvc = sap.ushell.Container.getService("LaunchPage"),
+                bIsAppBox = !!(srvc.getCatalogTileTargetURL(oCatalogTile) && (srvc.getCatalogTilePreviewTitle(oCatalogTile) || srvc.getCatalogTilePreviewSubtitle(oCatalogTile)));
+            return bIsAppBox;
+
+        },
+
+        createCatalogAppBoxes: function (oCatalogTile,bGetTileKeyWords) {
+            var srvc = sap.ushell.Container.getService("LaunchPage"),
+                catalogTileId = encodeURIComponent(srvc.getCatalogTileId(oCatalogTile)),
+                associatedGrps = this.oTileCatalogToGroupsMap[catalogTileId] || [],
+                tileTags = srvc.getCatalogTileTags(oCatalogTile) || [];
+
+            if (tileTags.length > 0) {
+                this.tagsPool = this.tagsPool.concat(tileTags);
+            }
+            var sNavigationMode = undefined; //defualt value
+            if(oCatalogTile.tileResolutionResult){
+                sNavigationMode = oCatalogTile.tileResolutionResult.navigationMode;
+            }
+
+            return {
+                id: catalogTileId,
+                associatedGroups: associatedGrps,
+                src: oCatalogTile,
+                title: srvc.getCatalogTilePreviewTitle(oCatalogTile),
+                subtitle: srvc.getCatalogTilePreviewSubtitle(oCatalogTile),
+                icon: srvc.getCatalogTilePreviewIcon(oCatalogTile),
+                keywords: bGetTileKeyWords ? (srvc.getCatalogTileKeywords(oCatalogTile) || []).join(',') : [],
+                tags: tileTags,
+                navigationMode: sNavigationMode,
+                url: srvc.getCatalogTileTargetURL(oCatalogTile)
+            };
         },
 
         /**
@@ -1472,102 +1776,176 @@
          *
          *  @param {object} catalog
          */
-        addCatalogToModel: function (oCatalog) {
-            var aCurrentCatalogs = this.oModel.getProperty('/catalogs'),
-                srvc = sap.ushell.Container.getService("LaunchPage"),
-                sCatalogId = srvc.getCatalogId(oCatalog),
-                bCatalogExist = false,
-                oCatalogModel,
-                oPromise;
 
-            // Check if the catalog already exist in the model, or catalog with similar title
-            aCurrentCatalogs.forEach(function (oCat) {
-                if (oCat.id === sCatalogId) {
-                    bCatalogExist = true;
+        /**TODOs: We want to remove the catalogTiles.
+         *
+         * Align to the Data structure according to the wiki.
+         * I have updated it abit.
+         *
+         * catalogs : [
+         catalog: {
+                    title: srvc.getCatalogTitle(oCatalog),
+                    id: srvc.getCatalogId(oCatalog),
+                    numIntentSupportedTiles: 0,
+                    "static": false,
+                    customTiles: [
+                        the notmal tile model.
+                    ],
+                    appBoxes: [
+                        {
+                            title: ,
+                            subtitle: ,
+                            icon: ,
+                            url: ,
+                            catalogIndex:
+                        }
+                    ],
+                    numberOfCustomTiles: 0,
+                    numberOfAppBoxs: 0
                 }
-            });
+         ]
 
-            if (!bCatalogExist) {
+         Also We can simplify TileContainer to support Flat List. with no headers.
+         TileContainer to support one level indexing visible (true / false).
+         */
+
+        addCatalogToModel: function (oCatalog) {
+            var srvc = sap.ushell.Container.getService("LaunchPage"),
                 oCatalogModel = {
                     title: srvc.getCatalogTitle(oCatalog),
                     id: srvc.getCatalogId(oCatalog),
-                    "static": false,
-                    tiles: [],
-                    numberOfTiles: 0
-                };
-                oPromise = srvc.getCatalogTiles(oCatalog);
-                this.aPromises.push(oPromise);
+                    numberTilesSupportedOnCurrectDevice: 0,
+                    static: false,
+                    customTiles: [],
+                    appBoxes: []
+                },
+                oPromise;
 
-                oPromise.done(function (aTiles) {
-                    //if this catalog has no tiles we do not need to add it to the model
-                    if (!aTiles.length) {
+            jQuery.sap.measure.resume("FLP:DashboardManager.getCatalogTiles");
+
+            oPromise = srvc.getCatalogTiles(oCatalog);
+            this.aPromises.push(oPromise);
+
+            oPromise.done(function (oCatalogEntry) {
+                jQuery.sap.measure.pause("FLP:DashboardManager.getCatalogTiles");
+
+                //if this catalog has no tiles we do not need to add it to the model
+                    if (!oCatalogEntry.length) {
                         return;
                     }
-                    var oCatalogData = {
-                            catalog: oCatalogModel.title,
-                            id: oCatalogModel.id,
-                            index: aCurrentCatalogs.length,
-                            numberOfExistingTiles: 0
-                        },
-                        updateModelSynchronized;
+                    this.aPendingCatalogQueue.push({
+                        oCatalogEntry: oCatalogEntry,
+                        oCatalogModel: oCatalogModel
+                    });
 
-                    // In order to make sure that only one catalog is updated in the model at a given time -
-                    //  the part of adding a catalog (+ catalog tiles) to the model is synchronized
-                    updateModelSynchronized = function () {
+                    // Check if another catalog is currently being put in the model, allow max of 10 skipped catalog processing.
+                    if (this.skippedProcessCatalogs < 10) {
+                        clearTimeout(this.oprocessCatalogsTimer);
+                        this.skippedProcessCatalogs++;
+                        this.oprocessCatalogsTimer = setTimeout(function () {
+                            this.processPendingCatalogs();
+                            if (this.oModel.getProperty("/tagFiltering") === true) {
+                                this.getTagList();
+                            }
+                        }.bind(this), 20);
+                    }
+                }.bind(this)
+            ).fail(this._showLocalizedErrorHelper("fail_to_load_catalog_tiles_msg")
+            );
+        },
+        loadCustomTilesKeyWords: function () {
+          var fn;
+          if (this.aFnToGetTileView) {
+            while (this.aFnToGetTileView.length > 0) {
+              fn = this.aFnToGetTileView.pop();
+              fn();
+            }
+          }
+        },
+        processPendingCatalogs: function () {
+            var that = this,
+                aCurrentCatalogs = this.oModel.getProperty('/catalogs'),
+                oPendingCatalogEntry,
+                oCatalogEntry,
+                oCatalogModel,
+                oExistingCatalogInModel,
+                bIsNewCatalog,
+                oCatalogSearchObject,
+                oCatalogObject,
+                oCatalogTileNew,
+                oEventBus = sap.ui.getCore().getEventBus(),
+                oAppBoxNew,
+                aAllEntryInCatalogMaster = this.oModel.getProperty('/masterCatalogs') || [{
+                    title: getLocalizedText("all")
+                }];
+            jQuery.sap.measure.resume("FLP:DashboardManager.BuildCatalogModelWithRendering");
 
-                        // Check if another catalog is currently being put in the model
-                        if (!this.oModel.getProperty('/isCatalogInUpdate')) {
+            //reset skippedProcessCatalogs counter
+            this.skippedProcessCatalogs = 0;
+            // Check if a catalog with the given title already exists in the model.
+            while (this.aPendingCatalogQueue.length > 0) {
+                    oPendingCatalogEntry = this.aPendingCatalogQueue.shift(),
+                    oCatalogEntry = oPendingCatalogEntry.oCatalogEntry,
+                    oCatalogModel = oPendingCatalogEntry.oCatalogModel,
+                    oExistingCatalogInModel = this.searchModelCatalogByTitle(oCatalogModel.title),
+                    oCatalogSearchObject = this.oModel.getProperty('/catalogSearchEntity');
 
-                            this.oModel.setProperty('/isCatalogInUpdate', true);
+                if (oExistingCatalogInModel.result) {
+                    oCatalogObject = this.oModel.getProperty('/catalogs')[oExistingCatalogInModel.indexOfPreviousInstanceInModel];
+                    bIsNewCatalog = false;
+                } else {
+                    bIsNewCatalog = true;
+                    oCatalogObject = oCatalogModel;
+                }
 
-                            // Check if a catalog with the given title already exists in the model.
-                            var oExistingCatalogInModel = this.searchModelCatalogByTitle(oCatalogModel.title),
-                                aCatalogs;
-
-                            // If a catalog with similar title already exists in the model:
-                            //  - Update the object catalogData before it is passed to setCatalogTiles
-                            //  - Update the relevant catalog in the model with the updated amount of tiles it now has
-                            if (oExistingCatalogInModel.result) {
-
-                                // Update /catalogTiles
-                                oCatalogData.index = oExistingCatalogInModel.indexOfPreviousInstanceInModel;
-                                oCatalogData.numberOfExistingTiles = oExistingCatalogInModel.numOfTilesInCatalog;
-                                this.setCatalogTiles("/catalogTiles", true, oCatalogData, aTiles);
-
-                                // Update /catalogs
-                                aCatalogs = this.oModel.getProperty('/catalogs');
-                                oCatalog = aCatalogs[oExistingCatalogInModel.indexOfPreviousInstanceInModel];
-                                oCatalog.numIntentSupportedTiles = getNumIntentSupportedTiles.call(this, oCatalogModel);
-                                oCatalog.numberOfTiles = oExistingCatalogInModel.numOfTilesInCatalog + aTiles.length;
-                                aCurrentCatalogs[oExistingCatalogInModel.indexOfPreviousInstanceInModel] = oCatalog;
-
-                            } else {
-                                this.setCatalogTiles("/catalogTiles", true, oCatalogData, aTiles);
-                                oCatalogModel.numIntentSupportedTiles = getNumIntentSupportedTiles.call(this, oCatalogModel);
-
-                                oCatalogModel.numberOfTiles = aTiles.length;
-                                aCurrentCatalogs.push(oCatalogModel);
+                oCatalogEntry.forEach(function (oCatalogEntry, iCatalogEntryIndex) {
+                    //Do not add Item if no intent supported
+                    if (this._getIsIntentSupported(oCatalogEntry)) {
+                        if (this._getIsAppBox(oCatalogEntry)) {
+                            oAppBoxNew = this.createCatalogAppBoxes(oCatalogEntry,true);
+                            oCatalogObject.appBoxes.push(oAppBoxNew);
+                            oCatalogSearchObject.appBoxes.push(oAppBoxNew);
+                        } else {
+                            oCatalogTileNew = this.createCatalogTiles(oCatalogEntry);
+                            oCatalogObject.customTiles.push(oCatalogTileNew);
+                            //add the getTileView to an array of functions that will be executed once the caatalog finishs to load
+                            //we need this array in order to call geTileView for all customTiles. see incident: ******
+                            if (!this.aFnToGetTileView) {
+                              this.aFnToGetTileView = [];
                             }
 
-                            this.oModel.setProperty('/catalogs', aCurrentCatalogs);
+                            this.aFnToGetTileView.push((function (oCatalogEntry) {
+                              return function () {
+                                var oCatalogTileNew = that.createCatalogTiles(oCatalogEntry, true);
+                                oCatalogSearchObject.customTiles.push(oCatalogTileNew);
+                              };
+                            })(oCatalogEntry));
+                          }
+                    }
+                }.bind(this));
 
-                            // Update the model with the catalog - finished
-                            this.oModel.setProperty('/isCatalogInUpdate', false);
-                            return;
-                        }
-                        setTimeout(updateModelSynchronized, 50);
-                    }.bind(this);
+                //Update model just if catalog has tiles or appbox.
+                if (oCatalogObject.appBoxes.length > 0 || oCatalogObject.customTiles.length > 0) {
+                    if (bIsNewCatalog) {
+                        aCurrentCatalogs.push(oCatalogModel);
+                        aAllEntryInCatalogMaster.push({
+                            title: oCatalogModel.title
+                        });
 
-                    // Call the synchronized catalog update function
-                    updateModelSynchronized();
-
-                }.bind(this)
-                    ).fail(this._showLocalizedErrorHelper("fail_to_load_catalog_tiles_msg")
-                    );
+                    }
+                }
             }
+
+            //this.oModel.setProperty('/catalogSearchEntity', oCatalogSearchObject);
+            this.oModel.setProperty('/masterCatalogs', aAllEntryInCatalogMaster);
+            this.oModel.setProperty('/catalogs', aCurrentCatalogs);
+            oEventBus.publish("launchpad", "afterCatalogSegment");
+
+            jQuery.sap.measure.pause("FLP:DashboardManager.BuildCatalogModelWithRendering");
+
         },
 
-        /**
+            /**
          * check if a catalog with the given title already exists in the model.
          *
          *  @param {string} catalogTitle
@@ -1614,6 +1992,10 @@
                 oTag,
                 sorted;
 
+            if (this.oModel.getProperty("/tagList") && this.oModel.getProperty("/tagList").length > 0) {
+                this.tagsPool.concat(this.oModel.getProperty("/tagList"))
+            }
+
             for (ind = 0; ind < this.tagsPool.length; ind++) {
                 oTag = this.tagsPool[ind];
                 if (indexedTags[oTag]) {
@@ -1632,10 +2014,6 @@
                 return b.occ - a.occ;
             });
 
-            if (sorted.length === 0) {
-                this.oModel.setProperty("/tagFiltering", false);
-            }
-
             if (maxTags) {
                 this.oModel.setProperty("/tagList", sorted.slice(0, maxTags));
             } else {
@@ -1647,74 +2025,74 @@
             if (!aCatalogs.length) {
                 this.oModel.setProperty("/catalogsNoDataText", sap.ushell.resources.i18n.getText('noCatalogs'));
             }
+
+            //Publish event catalog finished loading.
+            var oEventBus = sap.ui.getCore().getEventBus();
+            oEventBus.publish("launchpad", "catalogContentLoaded");
+
             var srvc = sap.ushell.Container.getService("LaunchPage"),
                 aLoadedCatalogs = aCatalogs.filter(function (oCatalog) {
-                    return !srvc.getCatalogError(oCatalog);
-                }),
-                aCurrentCatalogs;
+                    var sCatalogError = srvc.getCatalogError(oCatalog);
+                    if (sCatalogError) {
+                        jQuery.sap.log.error(
+                            "A catalog could not be loaded",
+                            sCatalogError,
+                            "sap.ushell.components.flp.launchpad.DashboardManager"
+                        );
+                    }
+                    return !sCatalogError;
+                });
+                //aCurrentCatalogs;
             //check if some of the catalogs failed to load
             if (aLoadedCatalogs.length !== aCatalogs.length) {
                 this._showLocalizedError("partialCatalogFail");
             }
 
-            // Check if filtering catalog tiles by tags is enabled
-            if (this.oModel.getProperty("/tagFiltering") === true) {
-                //create the tags menu
-                this.getTagList();
-            }
-
-            aCurrentCatalogs = this.oModel.getProperty('/catalogs');
-            //filter out the "Loading Catalogs..." menu item if exists
-            if (aCurrentCatalogs[0] && aCurrentCatalogs[0].title === sap.ushell.resources.i18n.getText('catalogsLoading')) {
-                aCurrentCatalogs.splice(0, 1);
-            }
-            //create the "All" static entry for the catalogSelect menu
-            aCurrentCatalogs.splice(0, 0, {
-                title: getLocalizedText("catalogSelect_initial_selection"),
-                "static": true,
-                tiles: [],
-                numIntentSupportedTiles: -1//only in order to present this option in the Catalog.view (dropdown menu)since there is a filter there on this property
-            });
-            this.oModel.setProperty('/catalogs', aCurrentCatalogs);
+            /*            aCurrentCatalogs = this.oModel.getProperty('/catalogs');
+             //filter out the "Loading Catalogs..." menu item if exists
+             if (aCurrentCatalogs[0] && aCurrentCatalogs[0].title === sap.ushell.resources.i18n.getText('catalogsLoading')) {
+             aCurrentCatalogs.splice(0, 1);
+             }
+             /*            //create the "All" static entry for the catalogSelect menu
+             aCurrentCatalogs.splice(0, 0, {
+             title: getLocalizedText("catalogSelect_initial_selection"),
+             "static": true,
+             tiles: [],
+             numIntentSupportedTiles: -1//only in order to present this option in the Catalog.view (dropdown menu)since there is a filter there on this property
+             });
+             this.oModel.setProperty('/catalogs', aCurrentCatalogs);*/
             sap.ushell.utils.handleTilesVisibility();
         },
 
-        setCatalogTiles: function (sPath, bAppend, oData, aCatalogTiles) {
+        createCatalogTiles: function (oCatalogTile, bGetTileKeyWords) {
             var srvc = sap.ushell.Container.getService("LaunchPage"),
-                aUpdatedCatalogTiles = $.map(
-                    aCatalogTiles,
-                    function (oCatalogTile, iTile) {
-                        var tileView,
-                            catalogTileId = encodeURIComponent(srvc.getCatalogTileId(oCatalogTile)),
-                            associatedGrps = this.oTileCatalogToGroupsMap[catalogTileId] || [],
-                            tileTags = srvc.getCatalogTileTags(oCatalogTile) || [];
+                tileView,
+                catalogTileId = encodeURIComponent(srvc.getCatalogTileId(oCatalogTile)),
+                associatedGrps = this.oTileCatalogToGroupsMap[catalogTileId] || [],
+                tileTags = srvc.getCatalogTileTags(oCatalogTile) || [];
 
-                        if (tileTags.length > 0) {
-                            this.tagsPool = this.tagsPool.concat(tileTags);
-                        }
+            if (tileTags.length > 0) {
+                this.tagsPool = this.tagsPool.concat(tileTags);
+            }
 
-                        // getCatalogTileView must be called before getCatalogTileKeywords
-                        tileView = srvc.getCatalogTileView(oCatalogTile);
-
-                        return {
-                            associatedGroups: associatedGrps,
-                            src: oCatalogTile,
-                            catalog: oData.catalog,
-                            catalogIndex: this.calculateCatalogTileIndex(oData.index, oData.numberOfExistingTiles, iTile),
-                            catalogId: oData.id,
-                            title: srvc.getCatalogTileTitle(oCatalogTile),
-                            tags: tileTags,
-                            keywords: (srvc.getCatalogTileKeywords(oCatalogTile) || []).join(','), // getCatalogTileView must be called BEFORE
-                            id: catalogTileId,
-                            size: srvc.getCatalogTileSize(oCatalogTile),
-                            content: [tileView],
-                            isTileIntentSupported: srvc.isTileIntentSupported(oCatalogTile)
-                        };
-                    }.bind(this)
-                );
-
-            // Fill tile info for current catalog
-            this.oModel.setProperty(sPath, $.merge((bAppend && this.oModel.getProperty(sPath)) || [], aUpdatedCatalogTiles));
+            tileView = new TileState({state: "Loading"});
+            if (bGetTileKeyWords) {
+              srvc.getCatalogTileView(oCatalogTile);
+            }
+            return {
+                associatedGroups: associatedGrps,
+                src: oCatalogTile,
+                catalog: oCatalogTile.title,
+                catalogId: oCatalogTile.id,
+                title: srvc.getCatalogTileTitle(oCatalogTile),
+                tags: tileTags,
+                keywords: bGetTileKeyWords ? (srvc.getCatalogTileKeywords(oCatalogTile) || []).join(',') : [],
+                id: catalogTileId,
+                size: srvc.getCatalogTileSize(oCatalogTile),
+                content: [tileView],
+                isTileIntentSupported: srvc.isTileIntentSupported(oCatalogTile),
+                tileType: oCatalogTile.tileType
+            };
         },
 
         /**
@@ -1772,7 +2150,7 @@
          *      The message type (optional)
          */
         _showLocalizedMessage: function (sMsgId, oParams, iType) {
-            sap.ushell.Container.getService("Message").show(iType || sap.ushell.services.Message.Type.INFO, getLocalizedText(sMsgId, oParams), oParams);
+            sap.ushell.Container.getService("Message").show(iType || Message.Type.INFO, getLocalizedText(sMsgId, oParams), oParams);
         },
         /**
          * Shows a localized error message in the Message-Toast.
@@ -1783,7 +2161,7 @@
          *
          */
         _showLocalizedError: function (sMsgId, oParams) {
-            this._showLocalizedMessage(sMsgId, oParams, sap.ushell.services.Message.Type.ERROR);
+            this._showLocalizedMessage(sMsgId, oParams, Message.Type.ERROR);
         },
 
         /**
@@ -1846,9 +2224,10 @@
                 oSegGroup = segment[segIndex];
                 groupIndex = oSegGroup.index;
                 oGrp = aGroups[groupIndex];
-                oGrp.isRendered = true;
-                oGrp.tiles = oGrp.tiles.concat(oSegGroup.tiles);
-                oGrp.links = oGrp.links.concat(oSegGroup.links);
+                if (oGrp) {
+                    oGrp.isRendered = true;
+                    oGrp.tiles = oGrp.tiles.concat(oSegGroup.tiles);
+                    oGrp.links = oGrp.links.concat(oSegGroup.links);                }
             }
 
             return aGroups;
@@ -1863,6 +2242,7 @@
             fnCreateFlatGroupClone = function (oGroup) {
                 var clnGroup = jQuery.extend({}, oGroup);
                 clnGroup.tiles = [];
+                clnGroup.pendingLinks = [];
                 clnGroup.links = [];
                 return clnGroup;
             };
@@ -1887,15 +2267,16 @@
                 tempGroup,
                 splitObjectIndex,
                 splitObject,
-                splitObjects = ["tiles", "links"],
+                splitObjects = ["tiles", "pendingLinks"],
                 objectBUCost = 1,
                 fnCreateFlatGroupClone,
+                bIsTabsMode = (this.oModel.getProperty("/homePageGroupDisplay") && this.oModel.getProperty("/homePageGroupDisplay") === 'tabs'),
                 grp;
 
             fnCreateFlatGroupClone = function (oGroup) {
                 var clnGroup = jQuery.extend({}, oGroup);
                 clnGroup.tiles = [];
-                clnGroup.links = [];
+                clnGroup.pendingLinks = [];
                 return clnGroup;
             };
 
@@ -1906,25 +2287,44 @@
 
                 for (splitObjectIndex = 0; splitObjectIndex < splitObjects.length; splitObjectIndex++) {
                     splitObject = splitObjects[splitObjectIndex];
-                    objectBUCost = this.PagingManager.getSizeofSupportedElementInUnits(splitObject === 'links' ? 'link' : 'tile');
+                    objectBUCost = this.PagingManager.getSizeofSupportedElementInUnits(splitObject === 'pendingLinks' ? 'link' : 'tile');
                     for (tileIndex = 0; tileIndex < grp[splitObject].length; tileIndex++) {
                         if (pendingBU <= 0) {
                             pendingBU = allocatedBU;
                             if (tempSegment) {
+                                if (bIsTabsMode) {
+                                    tempSegment.iGroupIndex = grpsIndex;
+                                }
+
                                 this.segmentsStore.push(tempSegment);
                             }
                             tempGroup = fnCreateFlatGroupClone(grp);
+                            tempGroup.links = [];
                             tempSegment = [];
                             tempSegment.push(tempGroup);
                         }
                         tempGroup[splitObject].push(grp[splitObject][tileIndex]);
-                        pendingBU -= objectBUCost;
+                        if (grp[splitObject][tileIndex].isTileIntentSupported) {
+                            pendingBU -= objectBUCost;
+                        }
+                    }
+                }
+
+                //In case tab mode no cross groups segments for Tabs mode
+                if (bIsTabsMode) {
+                    if (tempSegment) {
+                        tempSegment.iGroupIndex = grpsIndex;
+                        this.segmentsStore.push(tempSegment);
+                        tempSegment = [];
                     }
                 }
             }
 
             if (tempSegment) {
-                this.segmentsStore.push(tempSegment);
+                //in tabs mode last segment will be saved alreay by the code above.
+                if (!bIsTabsMode) {
+                    this.segmentsStore.push(tempSegment);
+                }
             }
         },
 
@@ -1937,8 +2337,24 @@
             if (this.segmentsStore.length > 0) {
                 groupSegment = this.segmentsStore.shift();
                 groupIndex = groupSegment[0].index;
-                tileIndex = modelGroups[groupIndex].tiles.length +  modelGroups[groupIndex].links.length;
+                tileIndex = modelGroups[groupIndex].tiles.length +  modelGroups[groupIndex].pendingLinks.length;
 
+                if (this.isBlindLoading() === false) {
+                    if (this.oModel.getProperty("/homePageGroupDisplay") && this.oModel.getProperty("/homePageGroupDisplay") === 'tabs') {
+                        if (groupSegment.iGroupIndex === this.iTabSelected) {
+                            //this is the current tab, display the tile views.
+                            this.getSegmentContentViews(groupSegment);
+                        } else {
+                            //store segment for use when tab is clicked.
+                            if (!this.oSegmentedTabTileViewDB[groupSegment.iGroupIndex]) {
+                                this.oSegmentedTabTileViewDB[groupSegment.iGroupIndex] = [];
+                            }
+                            this.oSegmentedTabTileViewDB[groupSegment.iGroupIndex].push(groupSegment);
+                        }
+                    } else {
+                        this.getSegmentContentViews(groupSegment);
+                    }
+                }
                 modelGroups = this._bindSegment(modelGroups, groupSegment);
 
                 this.oModel.setProperty('/groups', modelGroups);
@@ -1951,6 +2367,53 @@
                 sap.ushell.utils.handleTilesVisibility();
                 oEventBus.publish("launchpad", "dashboardModelContentLoaded");
             }
+        },
+
+        getSegmentContentViews: function (groupSegment) {
+            var nGroupSegmentIndex, nTilesIndex, oSegnmentGrp, oSegmentTile;
+
+            for (nGroupSegmentIndex = 0; nGroupSegmentIndex < groupSegment.length; nGroupSegmentIndex++) {
+                oSegnmentGrp = groupSegment[nGroupSegmentIndex];
+                for(nTilesIndex = 0; nTilesIndex < oSegnmentGrp.tiles.length; nTilesIndex++) {
+                    oSegmentTile = oSegnmentGrp.tiles[nTilesIndex];
+                    if (oSegmentTile.isTileIntentSupported) {
+                        this.getTileView(oSegmentTile);
+                    }
+                }
+
+                for(nTilesIndex = 0; nTilesIndex < oSegnmentGrp.links.length; nTilesIndex++) {
+                    oSegmentTile = oSegnmentGrp.links[nTilesIndex];
+                    if (oSegmentTile.isTileIntentSupported) {
+                        this.getTileView(oSegmentTile, oSegnmentGrp.index);
+                    }
+                }
+
+            }
+        },
+
+        getSegmentTabContentViews: function (sChannelId, sEventId, iProcessTileViewSegmentsForGroup) {
+            var  nTilesIndex,  oSegmentTile,
+                iSegmentsGroup = iProcessTileViewSegmentsForGroup.iSelectedGroup,
+                oGroup;
+
+                oGroup = this.oModel.getProperty("/groups/" + iSegmentsGroup);
+
+                for (nTilesIndex = 0; nTilesIndex < oGroup.tiles.length; nTilesIndex++) {
+                    oSegmentTile = oGroup.tiles[nTilesIndex];
+
+                    if (oSegmentTile.isTileIntentSupported) {
+                        this.getTileView(oSegmentTile);
+                    }
+                }
+
+                for (nTilesIndex = 0; nTilesIndex < oGroup.links.length; nTilesIndex++) {
+                    oSegmentTile = oGroup.links[nTilesIndex];
+                    if (oSegmentTile.isTileIntentSupported) {
+                        this.getTileView(oSegmentTile, iSegmentsGroup);
+                    }
+                }
+
+                this.oSegmentedTabTileViewDB[iSegmentsGroup] = [];
         },
 
         /**
@@ -1970,10 +2433,22 @@
         },
 
         _handleSegment: function () {
+            var oConfigurationSegments = this.oModel.getProperty("/segments"),
+                iInterval = this.bIsFirstSegment? 400: 100;
+
+            if (oConfigurationSegments && oConfigurationSegments.interval) {
+                if (!this.bIsFirstSegment || !oConfigurationSegments.firstInterval) {
+                    iInterval = oConfigurationSegments.interval;
+                } else {
+                    iInterval = oConfigurationSegments.firstInterval;
+                }
+            }
+
             clearTimeout(this.oSegmentTimer);
             this.oSegmentTimer = setTimeout(function () {
+                this.bIsFirstSegment = false;
                 this._processSegment(this.oModel.getProperty('/groups'));
-            }.bind(this), 100);
+            }.bind(this), iInterval);
 
         },
 
@@ -1984,8 +2459,13 @@
          */
         loadGroupsFromArray: function (aGroups) {
             var that = this;
-
+            jQuery.sap.flpmeasure.end(0, "Service: Get Data for Dashboard");
+            jQuery.sap.flpmeasure.start(0, "Process & render the first segment/tiles", 4);
+            //For Performance debug only, enabled only when URL parameter sap-flp-perf activated
+            jQuery.sap.measure.start("FLP:DashboardManager.loadGroupsFromArray", "loadGroupsFromArray","FLP");
+            jQuery.sap.measure.start("FLP:DashboardManager.getDefaultGroup", "getDefaultGroup","FLP");
             this.oPageBuilderService.getDefaultGroup().done(function (oDefaultGroup) {
+                jQuery.sap.measure.end("FLP:DashboardManager.getDefaultGroup");
                 // In case the user has no groups
                 if (aGroups.length == 0 && oDefaultGroup == undefined) {
                     return;
@@ -2000,6 +2480,7 @@
                     oGroup,
                     isLocked,
                     groupLength,
+                    iSelectedGroup,
                     modelGroupsLength,
                     segmentSize,
                     linkBUSize,
@@ -2008,7 +2489,11 @@
                     allocatedBaseUnits = 0,
                     numSeg = 0,
                     groupModel,
-                    numberOfTilesAndLinks = 0;
+                    numberOfTilesAndLinks = 0,
+                    oDashboardView,
+                    totalVisibleTileLinks = 0,
+                    oDashboardGroupsBox,
+                    oConfigurationSegments = that.oModel.getProperty("/segments");
 
                 // remove default group from array
                 aGroups.splice(indexOfDefaultGroup, 1);
@@ -2050,32 +2535,41 @@
 
 
                 if (!that.PagingManager) {
-                    jQuery.sap.require("sap.ushell.components.flp.launchpad.PagingManager");
-                    that.PagingManager = new sap.ushell.components.flp.launchpad.PagingManager('dashboardPaging', {
-                        supportedElements: {
-                            tile : {className: 'sapUshellTile'},
-                            link : {className: 'sapUshellLinkTile'}
-                        },
-                        containerHeight: window.innerHeight,
-                        containerWidth: window.innerWidth
-                    });
+                    that.PagingManager = new PagingManager('dashboardPaging', {
+                            supportedElements: {
+                                tile : {className: 'sapUshellTile'},
+                                link : {className: 'sapUshellLinkTile'}
+                            },
+                            containerHeight: window.innerHeight,
+                            containerWidth: window.innerWidth
+                        });
+                    }
 
-                    //just the first time
                     if (that.PagingManager.currentPageIndex === 0) {
                         that.PagingManager.moveToNextPage();
                         allocatedBaseUnits = that.PagingManager._calcElementsPerPage();
                     }
-                }
+                    linkBUSize = that.PagingManager.getSizeofSupportedElementInUnits('link');
+                    tileBUSize = that.PagingManager.getSizeofSupportedElementInUnits('tile');
 
-                linkBUSize = that.PagingManager.getSizeofSupportedElementInUnits('link');
-                tileBUSize = that.PagingManager.getSizeofSupportedElementInUnits('tile');
+                jQuery.sap.measure.start("FLP:DashboardManager._getGroupModel", "_getGroupModel","FLP");
 
                 for (i = 0; i < groupLength; ++i) {
                     oNewGroupModel = that._getGroupModel(aGroups[i], i === numOfLockedGroup, i === groupLength - 1);
                     oNewGroupModel.index = i;
                     numberOfTilesAndLinks += oNewGroupModel.tiles.length * tileBUSize + oNewGroupModel.links.length * linkBUSize;
+                    if (oNewGroupModel.isGroupVisible) {
+                        //Hidden tilesAndLinks not calculate for the bIsScorllModeAccordingKPI
+                        totalVisibleTileLinks += oNewGroupModel.tiles.length * tileBUSize + oNewGroupModel.links.length * linkBUSize;
+                    }
+                    // Check if blind loading should be activated
+                    that.bIsScorllModeAccordingKPI = totalVisibleTileLinks > that.iMinNumOfTilesForBlindLoading * tileBUSize;
+
                     aNewGroups.push(oNewGroupModel);
                 }
+                that.oModel.setProperty("/iSelectedGroup", iSelectedGroup);
+
+                jQuery.sap.measure.end("FLP:DashboardManager._getGroupModel");
 
                 if (sap.ui.Device.system.desktop) {
                     numSeg = numberOfSegments.desktop;
@@ -2085,24 +2579,57 @@
                     numSeg = numberOfSegments.phone;
                 }
 
-                segmentSize = (numberOfTilesAndLinks - allocatedBaseUnits) / numSeg;
+                //we are override the size of segments according to the configuration
+                if (oConfigurationSegments && (oConfigurationSegments.size || oConfigurationSegments.firstSegmentSize)) {
+                    if (oConfigurationSegments.firstSegmentSize != undefined) {
+                        allocatedBaseUnits = oConfigurationSegments.firstSegmentSize * tileBUSize;
+                    }
 
-                //make sure segment size is not less then 14 BU.
-                if (segmentSize < 14) {
-                    segmentSize = 14;
+                    if (oConfigurationSegments.size != undefined) {
+                        segmentSize = oConfigurationSegments.size  * tileBUSize;
+                        numSeg = parseInt((numberOfTilesAndLinks - allocatedBaseUnits) / segmentSize, 10) + 1;
+                    } else {
+                        segmentSize = (numberOfTilesAndLinks - allocatedBaseUnits) / numSeg;
+                    }
+                } else {
+                    segmentSize = (numberOfTilesAndLinks - allocatedBaseUnits) / numSeg;
+
+                    //make sure segment size is not less then 14 BU.
+                    if (segmentSize < 14) {
+                        segmentSize = 14;
+                    }
                 }
 
                 groupModel = that.createGroupsModelFrame(aNewGroups, that.oModel.getProperty("/personalization"));
                 that._splitGroups(segmentSize, aNewGroups, allocatedBaseUnits);
+                jQuery.sap.measure.start("FLP:DashboardManager._processSegment", "_processSegment","FLP");
                 that._processSegment(groupModel);
-                that.oModel.setProperty("/groups/length", groupModel.length);
 
+                for (var i = 0; i < groupModel.length; i++) {
+                    if (groupModel[i].isGroupVisible && groupModel[i].visibilityModes[0]) {
+                        that.oModel.setProperty("/groups/" + i + "/isGroupSelected", true);
+                        that.oModel.setProperty("/iSelectedGroup", i);
+                        that.iTabSelected = i;
+                        break;
+                    }
+                }
+                if (that.oModel.getProperty("/homePageGroupDisplay") && that.oModel.getProperty("/homePageGroupDisplay") === 'tabs') {
+                    oDashboardView = that.getDashboardView();
+                    oDashboardGroupsBox = oDashboardView.oDashboardGroupsBox;
+                    oDashboardGroupsBox.getBinding('groups').filter([oDashboardView.oFilterSelectedGroup]);
+                }
+
+                jQuery.sap.measure.end("FLP:DashboardManager._processSegment");
+                that.oModel.setProperty("/groups/length", groupModel.length);
                 if (that.oModel.getProperty('/currentState/stateName') === "catalog") {
                     // update the catalogTile's groups mapping, and update the catalogTile
                     // model if nedded only when in the catalog flow
-                    that.mapCatalogTilesToGroups();
-                    that.updateCatalogTilesToGroupsMap();
+                    //that.mapCatalogTilesToGroups();
+                    //that.updateCatalogTilesToGroupsMap();
+                    //this.getModel().setProperty("/catalogTiles", []);
                 }
+                jQuery.sap.measure.end("FLP:DashboardManager.loadGroupsFromArray");
+                jQuery.sap.flpmeasure.end(0, "Process & render the first segment/tiles");
             }).fail(that._resetGroupsOnFailureHelper("fail_to_get_default_group_msg"));
         },
 
@@ -2144,7 +2671,6 @@
                 i,
                 isSortable,
                 oModel = this.getModel();
-
             isSortable = oModel.getProperty("/personalization");
 
             // in a new group scenario we create the group as null at first.
@@ -2165,6 +2691,17 @@
                 }
             }
 
+            /*
+            In case we have pending links (links that their view is not set yet), we cannot
+            render the exising ones, but wait for the all first.
+            this is due to the fact that we do not have link wrapper and therefore changes
+            to the links view do not trigger the control rerender or calling the factory method
+            to get the updated link.
+            therefore we create a new array for the pending links and once all links would
+            updated in the model we will set the links group parameter.
+             */
+//            var bHasPendingLinks = this._hasPendingLinks(aModelLinks);
+
             return {
                 title: (bDefault && getLocalizedText("my_group")) ||
                 (oGroup && srvc.getGroupTitle(oGroup)) || (oData && oData.title) ||
@@ -2172,6 +2709,7 @@
                 object: oGroup,
                 groupId: jQuery.sap.uid(),
                 links: aModelLinks,
+                pendingLinks: [],
                 tiles: aModelTiles,
                 isDefaultGroup: bDefault || false,
                 editMode: !oGroup /*&& isStateHome*/,
@@ -2182,8 +2720,18 @@
                 isGroupVisible: !oGroup || srvc.isGroupVisible(oGroup),
                 isEnabled: !bDefault, //Currently only default groups is considered as locked
                 isLastGroup: bLast || false,
-                isRendered: oData ? !!oData.isRendered : false
+                isRendered: oData ? !!oData.isRendered : false,
+                isGroupSelected: false
             };
+        },
+
+        _hasPendingLinks: function(aModelLinks){
+            for (var i = 0; i < aModelLinks.length; i++){
+                if (aModelLinks[i].content[0] === undefined){
+                    return true;
+                }
+            }
+            return false;
         },
 
         _addTileToGroup: function (sGroupPath, oTile) {
@@ -2197,6 +2745,7 @@
             var isGroupLocked = this.oModel.getProperty(sGroupPath + "/isGroupLocked"),
                 personalization = this.oModel.getProperty("/personalization");
             oGroup.tiles[iNumTiles] = this._getTileModel(oTile, isGroupLocked, sTileType, this._addModelToTileViewUpdateQueue);
+            this.getTileView(oGroup.tiles[iNumTiles]);
             oGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oGroup, personalization);
             this._updateModelWithTileView(oGroup.index, iNumTiles);
             this.oModel.setProperty(sGroupPath, oGroup);
@@ -2236,16 +2785,60 @@
             }, 50);
         },
 
-        _updateModelWithTilesViews: function (startGroup, startTile) {
-            var aGroups = this.oModel.getProperty("/groups"),
-                aTiles,
-                aLinks,
-                oTileModel,
+
+        _updateGroupModelWithTilesViews: function(aTiles, startTile, handledUpdatesIndex, isLink){
+            var oTileModel,
                 oUpdatedTile,
                 sSize,
                 bLong,
+                stTile = startTile || 0;
+
+            for (var j = stTile; j < aTiles.length; j = j + 1) {
+                //group tiles loop - get the tile model
+                oTileModel = aTiles[j];
+                for (var q = 0; q < this.tileViewUpdateQueue.length; q++) {
+                    //updated tiles view queue loop - check if the current tile was updated
+                    oUpdatedTile = this.tileViewUpdateQueue[q];
+                    if (oTileModel.uuid == oUpdatedTile.uuid) {
+                        //mark tileViewUpdate index for removal oUpdatedTile from tileViewUpdateQueue.
+                        handledUpdatesIndex.push(q);
+                        if (oUpdatedTile.view) {
+                            /*
+                             if view is provided then we destroy the current content
+                             (TileState control) and set the tile view
+                             In case of link we do not have a loading link therefor we don't destroy it
+                             */
+                            if (isLink){
+
+                                oTileModel.content = [oUpdatedTile.view];
+                            } else {
+                                oTileModel.content[0].destroy();
+                                oTileModel.content = [oUpdatedTile.view];
+                            }
+                            this.oDashboardLoadingManager.setTileResolved(oTileModel);
+
+                            /*
+                             in some cases tile size can be different then the initial value
+                             therefore we read and set the size again
+                             */
+                            sSize = this.oPageBuilderService.getTileSize(oTileModel.object);
+                            bLong = ((sSize !== null) && (sSize === "1x2")) || false;
+                            if (oTileModel['long'] !== bLong) {
+                                oTileModel['long'] = bLong;
+                            }
+                        } else {
+                            //some error on getTileView, therefore we set the state to 'Failed'
+                            oTileModel.content[0].setState("Failed");
+                        }
+                        break;
+                    }
+                }
+            }
+        },
+
+        _updateModelWithTilesViews: function (startGroup, startTile) {
+            var aGroups = this.oModel.getProperty("/groups"),
                 stGroup = startGroup || 0,
-                stTile = startTile || 0,
                 handledUpdatesIndex = [];
 
             if (!aGroups || this.tileViewUpdateQueue.length === 0) {
@@ -2258,43 +2851,19 @@
              */
             for (var i = stGroup; i < aGroups.length; i = i + 1) {
                 //group loop - get the groups tiles
-                aTiles = aGroups[i].tiles;
-                aLinks = aGroups[i].links;
-                aTiles = aTiles.concat(aLinks);
-
-                for (var j = stTile; j < aTiles.length; j = j + 1) {
-                    //group tiles loop - get the tile model
-                    oTileModel = aTiles[j];
-                    for (var q = 0; q < this.tileViewUpdateQueue.length; q++) {
-                        //updated tiles view queue loop - check if the current tile was updated
-                        oUpdatedTile = this.tileViewUpdateQueue[q];
-                        if (oTileModel.uuid == oUpdatedTile.uuid) {
-                            //mark tileViewUpdate index for removal oUpdatedTile from tileViewUpdateQueue.
-                            handledUpdatesIndex.push(q);
-                            if (oUpdatedTile.view) {
-                                /*
-                                 if view is provided then we destroy the current content
-                                 (TileState control) and set the tile view
-                                 */
-                                oTileModel.content[0].destroy();
-                                oTileModel.content = [oUpdatedTile.view];
-                                /*
-                                 in some cases tile size can be different then the initial value
-                                 therefore we read and set the size again
-                                 */
-                                sSize = this.oPageBuilderService.getTileSize(oTileModel.object);
-                                bLong = ((sSize !== null) && (sSize === "1x2")) || false;
-                                if (oTileModel['long'] !== bLong) {
-                                    oTileModel['long'] = bLong;
-                                }
-                            } else {
-                                //some error on getTileView, therefore we set the state to 'Failed'
-                                oTileModel.content[0].setState("Failed");
-                            }
-                            break;
+                this._updateGroupModelWithTilesViews(aGroups[i].tiles, startTile, handledUpdatesIndex);
+                if (aGroups[i].links){
+                    this._updateGroupModelWithTilesViews(aGroups[i].links, startTile, handledUpdatesIndex, true);
+                    if (aGroups[i].pendingLinks.length > 0){
+                        if (!aGroups[i].links) {
+                            aGroups[i].links = [];
                         }
+                        aGroups[i].links = aGroups[i].links.concat(aGroups[i].pendingLinks);
+                        aGroups[i].pendingLinks = [];
                     }
                 }
+
+//                this.oModel.setProperty("/groups/" + i, aGroups[i]);
             }
 
             //clear the handled updates from the tempTileViewUpdateQueue and set the model
@@ -2309,105 +2878,226 @@
             this.oModel.setProperty("/groups", aGroups);
         },
 
-        getModelTileById: function (sId) {
+        getModelTileById: function (sId, sItems) {
             var aGroups = this.oModel.getProperty('/groups'),
-                oModelTile;
-            aGroups.forEach(function (oGroup) {
-                oGroup.tiles.forEach(function (oTile) {
+                oModelTile,
+                bFound = false;
+            aGroups.every(function (oGroup, index) {
+                oGroup[sItems].every(function (oTile, index) {
                     if (oTile.uuid === sId || oTile.originalTileId === sId) {
                         oModelTile = oTile;
-                        return;
+                        bFound = true;
                     }
+                    return !bFound;
                 });
+                return !bFound;
             });
             return oModelTile;
         },
+        _addDraggableAttribute: function (oView) {
+            if (this.isIeHtml5DnD()) { //should be sap.ushell.Container.getService("LaunchPage").isLinkPersonalizationSupported(oTile)
+                oView.addEventDelegate({
+                   onAfterRendering: function() {
+                       this.$().attr("draggable","true");
+                   }.bind(oView)
+                });
+            }
+        },
 
-        _getTileModel: function (oTile, isGroupLocked, sTileType, fUpdateModel) {
-            var srvc = this.oPageBuilderService,
-                sTileUUID = jQuery.sap.uid(),
-                oTileView,
+        _attachLinkPressHandlers: function (oView) {
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                oTileView = oView.attachPress ? oView : oView.getContent()[0]; // a hack to support demoContent
+            oTileView.attachPress(function(oEvent){
+                var bTileBeingMoved = oView.getBindingContext().getObject().tileIsBeingMoved;
+                if (!bTileBeingMoved && this.getScope && this.getScope() === "Actions") {
+                    switch (oEvent.getParameters().action) {
+                        case "Press":
+                            sap.ushell.components.flp.ActionMode._openActionsMenu(oEvent, oView);
+                            break;
+                        case "Remove":
+                            var tileUuid = oView.getBindingContext().getObject().uuid;
+                            oEventBus.publish("launchpad", "deleteTile", {tileId: tileUuid, items: 'links'});
+                            break;
+                    }
+                } else {
+                    sap.ui.getCore().getEventBus().publish("launchpad", "dashboardTileLinkClick");
+                }
+            });
+        },
+
+        getTileView: function (oTile, iGroup) {
+            var oDfd,
                 that = this,
-                oDfd,
-                oTileModelData,
-                fUpdateModelWithView;
+                srvc = this.oPageBuilderService,
+                sMode,
+                aGroups,
+                oGroupLinks,
+                fUpdateModelWithView = this._addModelToTileViewUpdateQueue,
+                oTileView,
+                bNeedRefreshLinks = false,
+                sTileUUID = oTile.uuid;
 
-            this.sTileType = sTileType;
-
-            // first we set visibility of tile to false
-            // before we get the tile's model etc.
-            srvc.setTileVisible(oTile, false);
-
-            oDfd = srvc.getTileView(oTile);
+            var fh = jQuery.sap.flpmeasure.startFunc(0, "Service + model binding and rendering for all tile-Views", 5, "getTileView", oTile.object);
+            if (that.oDashboardLoadingManager.isTileViewRequestIssued(oTile)) {
+                //no need to get tile view, it was alreay issued.
+                return;
+            }
+            this.oDashboardLoadingManager.setTileInProgress(oTile);
+            srvc.setTileVisible(oTile.object, false);
+            oDfd = srvc.getTileView(oTile.object);
 
             /*
              register done and fail handlers for the getTileView API.
              */
             oDfd.done(function (oView) {
-                oTileView = oView;
-                if (fUpdateModelWithView) {
-                    //call to the '_addModelToTileViewUpdateQueue' with uuid and view
-                    fUpdateModelWithView.apply(that, [sTileUUID, oTileView]);
-                    that._handleSegment();
+                //setting the value of the target when the view is valid and make sure it is not custom tile
+                if (oView.oController && oView.oController.navigationTargetUrl && !oTile.isCustomTile) {
+                    oTile.target = oView.oController.navigationTargetUrl;
                 }
-            });
-            oDfd.fail(function () {
-                if (fUpdateModelWithView) {
-                    //call to the '_addModelToTileViewUpdateQueue' with uuid and no view to indicate failure
-                    fUpdateModelWithView.apply(that, [sTileUUID]);
-                    that._handleSegment();
+                oTileView = oView;
+                //in CDM content, the tils view should have this function
+                if(oTileView.getComponentInstance){
+                    jQuery.sap.measure.average("FLP:getComponentInstance", "get info for navMode", "FLP1");
+                    var oCompData = oTileView.getComponentInstance().getComponentData();
+                    if(oCompData && oCompData.properties){
+                        oTile.navigationMode = oCompData.properties.navigationMode;
+                    }
+                    jQuery.sap.measure.end("FLP:getComponentInstance");
+                }
+                that.oDashboardLoadingManager.setTileResolved(oTile);
+                sMode = oView.getMode ? oView.getMode() : "ContentMode";
+                if (that.bLinkPersonalizationSupported && sMode === "LineMode") { //If the tileType is link and the personalization is supported by the platform, the the link must support personalization
+                    that._attachLinkPressHandlers(oTileView);
+                    that._addDraggableAttribute(oTileView);
+
+                    if (iGroup != undefined) {
+                        aGroups = that.oModel.getProperty("/groups");
+
+                        if (aGroups[iGroup]) {
+                            oTile.content = [oTileView];
+                            oGroupLinks = that.oModel.getProperty("/groups/" + iGroup + "/links");
+                            that.oModel.setProperty("/groups/" + iGroup + "/links", []);
+                            that.oModel.setProperty("/groups/" + iGroup + "/links", oGroupLinks);
+                        }
+                    }
                 } else {
-                    jQuery.sap.require('sap.ushell.ui.launchpad.TileState');
-                    // in case call is synchronise we set the view with 'TileState' control with 'Failed' status
-                    if (that.sTileType === "link") {
-                        oTileView = new sap.m.Link({text: sap.ushell.resources.i18n.getText('cannotLoadTile')});
+                    if (that.isBlindLoading()) {
+                        if (oTile.content.length > 0) {
+                            oTile.content[0].destroy();
+                        }
+                        oTile.content = [oTileView];
+                        if(iGroup != undefined){
+                            var oGroup = that.oModel.getProperty("/groups/" + iGroup);
+                            that.oModel.setProperty("/groups/" + iGroup, oGroup);
+                        }
+                }
+                }
+
+                if (that.isBlindLoading()) {
+                    /*
+                     in some cases tile size can be different then the initial value
+                     therefore we read and set the size again
+                     */
+                    var sSize = that.oPageBuilderService.getTileSize(oTile.object);
+                    var bLong = ((sSize !== null) && (sSize === "1x2")) || false;
+                    if (oTile['long'] !== bLong) {
+                        oTile['long'] = bLong;
+                    }
+                } else {
+                    if (sMode === "LineMode") {
+                        oTile.content = [oTileView];
+
+                        if (bNeedRefreshLinks) {
+                            oGroupLinks = that.oModel.getProperty("/groups/" + iGroup + "/links");
+                            that.oModel.setProperty("/groups/" + iGroup + "/links", []);
+                            that.oModel.setProperty("/groups/" + iGroup + "/links", oGroupLinks);
+                        }
+                    } else if (oTile.content.length === 0) {
+                         oTile.content = [oTileView];
                     } else {
-                        oTileView = new sap.ushell.ui.launchpad.TileState({state: "Failed"});
+                        fUpdateModelWithView.apply(that, [sTileUUID, oTileView]);
+                        that._updateModelWithTileView(0,0);
                     }
                 }
+                jQuery.sap.flpmeasure.endFunc(0, "Service + model binding and rendering for all tile-Views", fh);
+            });
+            oDfd.fail(function () {
+                if (that.sTileType === "link") {
+                    // in case call is synchronise we set the view with 'TileState' control with 'Failed' status
+                    if (!this.bLinkPersonalizationSupported) {
+                        oTileView = new TileState({state: "Failed"});
+                    } else {
+                        var LaunchPage = sap.ushell.Container.getService("LaunchPage");
+                        var subHeader = LaunchPage.getCatalogTilePreviewSubtitle(oTile);
+                        subHeader = (!subHeader || !subHeader.length) ? undefined : subHeader;
+                        var header = LaunchPage.getCatalogTilePreviewTitle(oTile);
+                        header = ((!header || !header.length) && !subHeader) ? sap.ushell.resources.i18n.getText('cannotLoadLinkInformation') : header;
+                        oTileView =  new sap.m.GenericTile({
+                            mode: "LineMode",
+                            state: "Failed",
+                            header: header,
+                            subheader: subHeader
+                        });
+                    }
+                } else {
+                    oTileView = new TileState({state: "Failed"});
+                }
+
+                    oTile.content = [oTileView];
             });
 
-            /*
-             in case getTileView is asynchronous we set the 'fUpdateModelWithView' to handle the view
-             update, and create a 'Loading' TileState control as the tile view
-             */
             if (!oTileView) {
-                fUpdateModelWithView = fUpdateModel ? fUpdateModel : this._addModelToTileViewUpdateQueue;
-                jQuery.sap.require('sap.ushell.ui.launchpad.TileState');
-                oTileView = new sap.ushell.ui.launchpad.TileState({state: "Loading"});
-            }
+                if (srvc.getTileType(oTile.object) === "link") {
+                    bNeedRefreshLinks = true;
+                    oTileView = new sap.m.GenericTile({
+                        mode: "LineMode"
+                    });
+                } else {
+                    oTileView = new TileState();
+                }
+                    oTile.content = [oTileView];
+                }
+        },
+        _getTileModel: function (oTile, isGroupLocked, sTileType, fUpdateModel) {
+            var srvc = this.oPageBuilderService,
+                sTileUUID = jQuery.sap.uid(),
+                oTileView,
+                oTileModelData;
 
+            this.sTileType = sTileType;
+
+            var sSize = srvc.getTileSize(oTile);
+
+            var aLinks = [];
             if (sTileType === "link") {
-                oTileModelData = {
-                    "object": oTile,
-                    "originalTileId": srvc.getTileId(oTile),
-                    "uuid": sTileUUID,
-                    "tileCatalogId": encodeURIComponent(srvc.getCatalogTileId(oTile)),
-                    "content": [oTileView],
-                    "target": srvc.getTileTarget(oTile) || "",
-                    "debugInfo": srvc.getTileDebugInfo(oTile),
-                    "isTileIntentSupported": srvc.isTileIntentSupported(oTile),
-                    "isLocked": isGroupLocked
-                };
-            } else if (sTileType === "tile"){
-                var sSize = srvc.getTileSize(oTile);
-
-                oTileModelData = {
-                    "object": oTile,
-                    "originalTileId": srvc.getTileId(oTile),
-                    "uuid": sTileUUID,
-                    "tileCatalogId": encodeURIComponent(srvc.getCatalogTileId(oTile)),
-                    "content": [oTileView],
-                    "long": ((sSize !== null) && (sSize === "1x2")) || false,
-                    "target": srvc.getTileTarget(oTile) || "",
-                    "debugInfo": srvc.getTileDebugInfo(oTile),
-                    "isTileIntentSupported": srvc.isTileIntentSupported(oTile),
-                    "rgba": "",
-                    "isLocked": isGroupLocked,
-                    "showActionsIcon": this.oModel.getProperty("/tileActionsIconEnabled") || false
-                };
+                aLinks = [new sap.m.GenericTile({
+                    mode: "LineMode"
+                })];
             }
+
+            oTileModelData = {
+                "isCustomTile" : !this._getIsAppBox(oTile),
+                "object": oTile,
+                "originalTileId": srvc.getTileId(oTile),
+                "uuid": sTileUUID,
+                "tileCatalogId": encodeURIComponent(srvc.getCatalogTileId(oTile)),
+                "content": aLinks,
+                "long": ((sSize !== null) && (sSize === "1x2")) || false,
+                "target": srvc.getTileTarget(oTile) || "", // 'target' will be defined (and get a value) later on after the tile will be valid
+                "debugInfo": srvc.getTileDebugInfo(oTile),
+                "isTileIntentSupported": srvc.isTileIntentSupported(oTile),
+                "rgba": "",
+                "isLocked": isGroupLocked,
+                "showActionsIcon": this.oModel.getProperty("/tileActionsIconEnabled") || false,
+                "navigationMode": this.navigationMode
+            };
+
             return oTileModelData;
+        },
+
+        isIeHtml5DnD: function () {
+            return !!((sap.ui.Device.browser.msie || sap.ui.Device.browser.edge) && sap.ui.Device.browser.version >= 11 &&
+                        (sap.ui.Device.system.combi || sap.ui.Device.system.tablet));
         },
 
         _destroyAllGroupModels: function (oTarget) {
@@ -2455,7 +3145,11 @@
                 oGroupsPromise = this.oPageBuilderService.getGroups(),
                 oDeferred = new jQuery.Deferred();
 
+            jQuery.sap.flpmeasure.start(0, "Service: Get Data for Dashboard", 4);
+            jQuery.sap.measure.start("FLP:DashboardManager.loadPersonalizedGroups", "loadPersonalizedGroups","FLP");
+
             oGroupsPromise.done(function (aGroups) {
+                jQuery.sap.measure.end("FLP:DashboardManager.loadPersonalizedGroups");
                 that.loadGroupsFromArray(aGroups);
                 oDeferred.resolve();
             });
@@ -2468,4 +3162,8 @@
             return oDeferred;
         }
     });
-}());
+
+
+	return DashboardManager;
+
+});

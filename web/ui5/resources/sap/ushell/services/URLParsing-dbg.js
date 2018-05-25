@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview URL Parsing shell services
  *
@@ -13,10 +13,10 @@
  * only shell compliant hashes are parsed correctly,
  * invalid or completely empty results ( not silently ignored parts) are returned if the hash is not deemed parseable
  */
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap, URI */
-    jQuery.sap.declare("sap.ushell.services.URLParsing");
 
     // usage : sap.ushell.Container.getService("URLParsing").parseShellHash etc.
 
@@ -44,51 +44,51 @@
      * behaviour for non-compliant hashes is undefined and subject to change,
      * notably we do not aim do "degrade" nicefully or support partial parsing of corrupted urls.
      *
+     * @name sap.ushell.services.URLParsing
+     *
      * @constructor
      * @class
      * @see sap.ushell.services.Container#getService
      * @since 1.15.0
      * @public
      */
-    sap.ushell.services.URLParsing = function () {
+    function URLParsing() {
         /*jslint regexp : true*/
         var reValidShellPart = /^(([A-Za-z0-9_\/]+)-([A-Za-z0-9_\/\-]+)(~([A-Z0-9a-z=+\/]+))?)?([?]([^&]|(&[^\/]))*&?)?$/;
+
         /**
          * Extract the Shell hash# part from an URL
          * The application specific route part is removed
          * @see getHash for a function which retains the app specific route
-        *
-        * Shell services shall use this service to extract relevant
-        * parts of an URL from an actual URL string (which should be treated as opaque)
-        * <p>
-        * The URL has to comply with the Fiori-Wave 2 agreed upon format
-        *
-        * <p>
-        * This service shall be used to extract a hash part from an url.
-        * The result can be further broken up by parseShellHash
-        *
-        * examples <p>
-        *
-        * http://a.b.c?defhij#SemanticObject-Action~Context?PV1=A&PV2=B&/appspecific
-        * <br/>
-        * returns : "#SemanticObject-Action~Context?PV1=A&PV2=B&/appspecific"
-        *
-        * Note: the results when passing an illegal (non-compliant) url are undefined and subject to change
-        * w.o. notice. Notably further checks may added.
-        * The design is deliberately restrictive and non-robust.
-        *
-        * @param {string} sShellHashString
-        *     a valid (Shell) url, e.g. <br/>
-        *     <code>http://xx.b.c#Object-name~AFE2==?PV1=PV2&PV4=V5&/display/detail/7?UU=HH</code>
-        * @returns {Object}
-        *     the parsed result
-        *
-        *
-        * @methodOf sap.ushell.services.URLParsing#
-        * @name parseShellHash
-        * @since 1.16.0
-         *@public
-        */
+         *
+         * Shell services shall use this service to extract relevant
+         * parts of an URL from an actual URL string (which should be treated as opaque)
+         * <p>
+         * The URL has to comply with the Fiori-Wave 2 agreed upon format
+         *
+         * <p>
+         * This service shall be used to extract a hash part from an url.
+         * The result can be further broken up by parseShellHash
+         *
+         * examples <p>
+         *
+         * http://a.b.c?defhij#SemanticObject-Action~Context?PV1=A&PV2=B&/appspecific
+         * <br/>
+         * returns : "#SemanticObject-Action~Context?PV1=A&PV2=B&/appspecific"
+         *
+         * Note: the results when passing an illegal (non-compliant) url are undefined and subject to change
+         * w.o. notice. Notably further checks may added.
+         * The design is deliberately restrictive and non-robust.
+         *
+         * @param {string} sShellHashString
+         *     a valid (Shell) url, e.g. <br/>
+         *     <code>http://xx.b.c#Object-name~AFE2==?PV1=PV2&PV4=V5&/display/detail/7?UU=HH</code>
+         * @returns {Object}
+         *     the parsed result
+         * @since 1.16.0
+         * @public
+         * @alias sap.ushell.services.URLParsing#getShellHash
+         */
         this.getShellHash = function (sShellHashString) {
             /*jslint regexp : true*/
             var re = /[^#]*#(([^&]|&[^\/])*)(&\/.*)?/,
@@ -108,6 +108,7 @@
          *   <code>extracted string</code> if and only if a hash is present, undefined otherwise
          * @since 1.16.0
          * @public
+         * @alias sap.ushell.services.URLParsing#getHash
          */
         this.getHash = function (sURL) {
             /*jslint regexp : true*/
@@ -136,10 +137,12 @@
          * It does not test whether the intent or it's parameters is valid for a given user
          *
          * @param {String} sUrl the URL to test
+         *  Note, this url must be in internal format.
          * @returns {Boolean}
          *   true if the conditions are fulfilled.
          * @since 1.30.0
          * @public
+         * @alias sap.ushell.services.URLParsing#isIntentUrl
          */
         this.isIntentUrl = function (sUrl) {
             /*jslint regexp : true*/
@@ -183,6 +186,7 @@
          *   any value { ABC : ["1","1 2"], DEF : ["4"]}
          * @since 1.20.0
          * @public
+         * @alias sap.ushell.services.URLParsing#parseParameters
          */
         this.parseParameters = function (sParams) {
             if (!sParams) {
@@ -204,6 +208,7 @@
          *   parameter values are encodeURIComponent encoded.
          * @since 1.20.0
          * @public
+         * @alias sap.ushell.services.URLParsing#paramsToString
          */
         this.paramsToString = function (oParams) {
             return this.privparamsToString(oParams, "&", "=");
@@ -277,6 +282,7 @@
          *
          * @since 1.16.0
          * @public
+         * @alias sap.ushell.services.URLParsing#parseShellHash
          */
         this.parseShellHash = function (sHash) {
             /*jslint regexp : true*/
@@ -353,6 +359,7 @@
          *
          * @since 1.16.0
          * @public
+         * @alias sap.ushell.services.URLParsing#splitHash
          */
         this.splitHash = function (sHash) {
             var re = /^(?:#|)([\S\s]*?)(&\/[\S\s]*)?$/,
@@ -413,6 +420,7 @@
          *
          * @since 1.16.0
          * @public
+         * @alias sap.ushell.services.URLParsing#constructShellHash
          */
         this.constructShellHash = function (oShellHash) {
             var shellPart,
@@ -538,6 +546,7 @@
          *   the service URL pointing to the system specified in parameter <code>vComponentOrSystem</code> or
          *   to the system of the current application
          * @public
+         * @alias sap.ushell.services.URLParsing#addSystemToServiceUrl
          * @deprecated please use <code>sap.ui.model.odata.ODataUtils.setOrigin(sServiceUrl, { alias : sSystem });</code>
          * The system alias can be extracted from the Component via <code>getComponentData().startupParameters["sap-system"][0]</code>
          * @since 1.19.1 (passing an SAPUI5 component instance as second parameter is supported since version 1.32.0)
@@ -583,5 +592,7 @@
         };
     };
 
-    sap.ushell.services.URLParsing.hasNoAdapter = true;
-}());
+    URLParsing.hasNoAdapter = true;
+    return URLParsing;
+
+}, true /* bExport */);

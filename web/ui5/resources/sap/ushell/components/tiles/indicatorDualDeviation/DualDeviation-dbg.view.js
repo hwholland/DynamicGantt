@@ -1,7 +1,7 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// @copyright@
 
 (function () {
-    "use strict";
+	"use strict";
     /*global jQuery, sap */
     /*jslint nomen: true */
 

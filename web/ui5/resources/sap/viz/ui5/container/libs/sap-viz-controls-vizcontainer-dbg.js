@@ -1,9 +1,13 @@
 /* SAP CVOM 4.0 © <2012-2014> SAP AG. All rights reserved. Build Version PI_bycheckin.1630 */
 /* Included Components: common,runtime,services,builder,annotation,annotationcontrol,chart,contextmenu,custombutton,feeding,frame,mapbuilder,filterbar,filterbar0,playcontrol,propertyeditor,switchbar,popover,dedicatedlegend */
-if (requirejs && requirejs.s && requirejs.s.contexts && requirejs.s.contexts._) {
-    window.__sap_viz_internal_requirejs_nextTick__ = requirejs.s.contexts._.nextTick;
-    requirejs.s.contexts._.nextTick = function(fn) {fn();};
-}
+(function(){
+    var define = sap.viz.moduleloader.define;
+    var require = sap.viz.moduleloader.require.config({
+        context: 'vizcontainer'
+    });
+    var requirejs = require;
+
+define( "jquery", function() {return jQuery;});
 
 define('sap/viz/controls/Version',[],function() {
     /** sap.viz.controls.Version
@@ -53388,9 +53392,5 @@ function($, VizControlBase, OOUtil, utils, LangManager) {
     });
 
 })(this);
-if (window.__sap_viz_internal_requirejs_nextTick__ !== undefined) {
-    if (requirejs && requirejs.s && requirejs.s.contexts && requirejs.s.contexts._) {
-        requirejs.s.contexts._.nextTick = window.__sap_viz_internal_requirejs_nextTick__;
-    }
-    window.__sap_viz_internal_requirejs_nextTick__ = undefined;
-}
+
+})();

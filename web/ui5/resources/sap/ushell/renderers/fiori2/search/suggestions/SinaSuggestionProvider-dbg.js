@@ -1,22 +1,11 @@
 /* global jQuery, sap */
 
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper',
+    'sap/ushell/renderers/fiori2/search/suggestions/SinaBaseSuggestionProvider',
+    'sap/ushell/renderers/fiori2/search/suggestions/SuggestionType'
+], function(SearchHelper, SinaBaseSuggestionProvider, SuggestionType) {
     "use strict";
-
-    // =======================================================================
-    // import packages
-    // =======================================================================
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    var SearchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
-
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.suggestions.SinaBaseSuggestionProvider');
-    var SinaBaseSuggestionProvider = sap.ushell.renderers.fiori2.search.suggestions.SinaBaseSuggestionProvider;
-
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.suggestions.SuggestionTypeProps');
-    var SuggestionTypeProps = sap.ushell.renderers.fiori2.search.suggestions.SuggestionTypeProps;
-
-    sap.ushell.Container.getService("Search").getSina(); //ensure that sina is loaded
-    var sinaBaseModule = sap.bc.ina.api.sina.base;
 
     // =======================================================================
     // declare package
@@ -39,27 +28,19 @@
         init: function(params) {
             // call super constructor
             SinaBaseSuggestionProvider.prototype.init.apply(this, arguments);
-            // decorate getResultSet method for preventing request overtaking
-            this.getResultSet = SearchHelper.refuseOutdatedRequests(this.getResultSet);
-
             this.dataSourceDeferred = null;
+            this.suggestionQuery = this.sinaNext.createSuggestionQuery();
         },
 
         // abort suggestions
         // ===================================================================
         abortSuggestions: function() {
-            this.getResultSet.abort();
-        },
-
-        // get result set
-        // ===================================================================
-        getResultSet: function() {
-            return this.suggestionQuery.getResultSet();
+            this.suggestionQuery.abort();
         },
 
         // get suggestions
         // ===================================================================
-        getSuggestions: function() {
+        getSuggestions: function(filter) {
 
             var that = this;
 
@@ -67,15 +48,23 @@
             this.suggestions = [];
             this.firstObjectDataSuggestion = true;
             this.numberSuggestionsByType = {};
-            for (var suggestionType in sinaBaseModule.SuggestionType) {
-                this.numberSuggestionsByType[sinaBaseModule.SuggestionType[suggestionType]] = 0;
+            for (var i = 0; i < SuggestionType.types.length; ++i) {
+                var suggestionType = SuggestionType.types[i];
+                this.numberSuggestionsByType[suggestionType] = 0;
             }
 
-            // object data suggestions only starting from 3. character
-            var suggestionTerm = that.model.getProperty('/uiFilter/searchTerms');
+            // object data based search term suggestions only starting from 3. character
+            var suggestionTerm = filter.searchTerm;
             if (this.suggestionTypes.length === 1 &&
-                this.suggestionTypes.indexOf(sinaBaseModule.SuggestionType.OBJECTDATA) >= 0 &&
+                this.suggestionTypes.indexOf(SuggestionType.SearchTermData) >= 0 &&
                 suggestionTerm.length < 3) {
+                return jQuery.when(this.suggestions);
+            }
+
+            // data source suggestions only for ds=all
+            if (this.suggestionTypes.length === 1 &&
+                this.suggestionTypes.indexOf(SuggestionType.DataSource) >= 0 &&
+                that.model.getDataSource() !== that.model.sinaNext.allDataSource) {
                 return jQuery.when(this.suggestions);
             }
 
@@ -83,23 +72,23 @@
             that.createAllAndAppDsSuggestions();
 
             // check that BO search is enabled
-            if (!that.model.isBusinessObjSearchEnabled()) {
+            if (!that.model.config.searchBusinessObjects) {
                 return jQuery.when(this.suggestions);
             }
 
             // no server request for ds = apps
-            if (that.model.getDataSource().equals(that.model.appDataSource)) {
+            if (that.model.getDataSource() === that.model.appDataSource) {
                 return jQuery.when(this.suggestions);
             }
 
             // prepare sina suggestion query
-            that.prepareSuggestionQuery(suggestionTerm);
+            that.prepareSuggestionQuery(filter);
 
             // fire sina suggestion query
-            return that.getResultSet().then(function(resultset) {
+            return that.suggestionQuery.getResultSetAsync().then(function(resultSet) {
 
                 // concatenate searchterm + suggestion term
-                var sinaSuggestions = resultset.getElements();
+                var sinaSuggestions = resultSet.items;
 
                 // assemble items from result set
                 that.formatSinaSuggestions(sinaSuggestions);
@@ -113,11 +102,11 @@
         // ===================================================================
         createAllAndAppDsSuggestions: function() {
 
-            if (this.suggestionTypes.indexOf(sinaBaseModule.SuggestionType.DATASOURCE) < 0) {
+            if (this.suggestionTypes.indexOf(SuggestionType.DataSource) < 0) {
                 return;
             }
 
-            if (!this.model.getDataSource().equals(this.model.allDataSource)) {
+            if (this.model.getDataSource() !== this.model.allDataSource) {
                 return;
             }
 
@@ -125,45 +114,62 @@
             dataSources.unshift(this.model.appDataSource);
             dataSources.unshift(this.model.allDataSource);
 
-            var suggestionTerms = this.model.getProperty('/uiFilter/searchTerms');
+            var suggestionTerms = this.model.getProperty('/uiFilter/searchTerm');
             var suggestionTermsIgnoreStar = suggestionTerms.replace(/\*/g, '');
             var oTester = new SearchHelper.Tester(suggestionTermsIgnoreStar);
 
             for (var i = 0; i < dataSources.length; ++i) {
                 var dataSource = dataSources[i];
-                if (dataSource.key === this.model.getDataSource().key) {
+                if (dataSource.id === this.model.getDataSource().id) {
                     continue;
                 }
                 var oTestResult = oTester.test(dataSource.label);
                 if (oTestResult.bMatch === true) {
+
+                    // limit number of suggestions
+                    var numberSuggestions = this.numberSuggestionsByType[SuggestionType.DataSource];
+                    var limit = SuggestionType.properties.DataSource.limit;
+                    if (numberSuggestions >= limit) {
+                        return;
+                    }
+
+                    // create suggestion
                     var suggestion = {};
-                    suggestion.label = '<i>' + sap.ushell.resources.i18n.getText("searchInPlaceholder", oTestResult.sHighlightedText) + '</i>';
-                    suggestion.labelRaw = '';
+                    suggestion.label = '<i>' + sap.ushell.resources.i18n.getText("searchInPlaceholder", [""]) + '</i> ' + oTestResult.sHighlightedText;
                     suggestion.dataSource = dataSource;
-                    suggestion.type = sinaBaseModule.SuggestionType.DATASOURCE;
-                    suggestion.position = SuggestionTypeProps[sinaBaseModule.SuggestionType.DATASOURCE].position;
-                    suggestion.key = dataSource.key;
+                    suggestion.position = SuggestionType.properties.DataSource.position;
+                    suggestion.type = this.sinaNext.SuggestionType.DataSource;
+                    suggestion.calculationMode = this.sinaNext.SuggestionCalculationMode.Data;
+                    suggestion.key = dataSource.id;
                     this.addSuggestion(suggestion);
                 }
             }
         },
 
         // preformat of suggestions: add ui position and unique key
-        // ===================================================================        
+        // ===================================================================
         preFormatSuggestions: function(sinaSuggestions) {
             for (var i = 0; i < sinaSuggestions.length; ++i) {
                 var sinaSuggestion = sinaSuggestions[i];
+                // suggestion type
+                sinaSuggestion.uiSuggestionType = this.getSuggestionType(sinaSuggestion);
                 // set position
-                sinaSuggestion.position = SuggestionTypeProps[sinaSuggestion.type].position;
+                sinaSuggestion.position = SuggestionType.properties[sinaSuggestion.uiSuggestionType].position;
                 // set key
-                if (sinaSuggestion.type === sinaBaseModule.SuggestionType.DATASOURCE) {
-                    sinaSuggestion.key = sinaSuggestion.labelRaw.key;
-                } else {
-                    sinaSuggestion.key = sinaSuggestion.labelRaw;
+                switch (sinaSuggestion.uiSuggestionType) {
+                    case SuggestionType.SearchTermData:
+                        sinaSuggestion.key = sinaSuggestion.filter.searchTerm;
+                        break;
+                    case SuggestionType.SearchTermHistory:
+                        sinaSuggestion.key = sinaSuggestion.filter.searchTerm;
+                        break;
+                    case SuggestionType.DataSource:
+                        sinaSuggestion.key = sinaSuggestion.dataSource.id;
+                        break;
                 }
                 // process children
-                if (sinaSuggestion.children) {
-                    this.preFormatSuggestions(sinaSuggestion.children);
+                if (sinaSuggestion.childSuggestions) {
+                    this.preFormatSuggestions(sinaSuggestion.childSuggestions);
                 }
             }
         },
@@ -179,37 +185,31 @@
             for (var i = 0; i < sinaSuggestions.length; ++i) {
                 var sinaSuggestion = sinaSuggestions[i];
 
-                // ignore suggestions without label (should not happen)
-                if (!sinaSuggestion.labelRaw) {
-                    continue;
-                }
-
                 // avoid duplicate suggestion terms
                 if (this.suggestionTermBuffer.hasTerm(sinaSuggestion.key)) {
                     continue;
                 }
 
                 // limit number of suggestions
-                var numberSuggestions = this.numberSuggestionsByType[sinaSuggestion.type];
-                var limit = SuggestionTypeProps[sinaSuggestion.type].limit;
+                var numberSuggestions = this.numberSuggestionsByType[sinaSuggestion.uiSuggestionType];
+                var limit = SuggestionType.properties[sinaSuggestion.uiSuggestionType].limit;
                 if (numberSuggestions >= limit) {
                     continue;
                 }
 
                 // format according to type
-                switch (sinaSuggestion.type) {
-                    case this.sina.SuggestionType.DATASOURCE:
-                        if (!this.model.getDataSource().equals(this.model.allDataSource)) {
+                switch (sinaSuggestion.uiSuggestionType) {
+                    case SuggestionType.DataSource:
+                        if (this.model.getDataSource() !== this.model.allDataSource) {
                             continue;
                         }
-                        sinaSuggestion.label = '<i>' + sap.ushell.resources.i18n.getText("searchInPlaceholder", sinaSuggestion.label) + '</i>';
+                        sinaSuggestion.label = '<i>' + sap.ushell.resources.i18n.getText("searchInPlaceholder", [""]) + '</i> ' + sinaSuggestion.label;
                         this.addSuggestion(sinaSuggestion);
                         break;
-                    case this.sina.SuggestionType.OBJECTDATA:
-                        this.formatObjectDataSuggestion(sinaSuggestion);
+                    case SuggestionType.SearchTermData:
+                        this.formatSearchTermDataSuggestion(sinaSuggestion);
                         break;
-                    case this.sina.SuggestionType.HISTORY:
-                        sinaSuggestion.label = sinaSuggestion.label;
+                    case SuggestionType.SearchTermHistory:
                         this.addSuggestion(sinaSuggestion);
                         break;
                     default:
@@ -222,26 +222,30 @@
         },
 
         // add suggestion
-        // ===================================================================        
+        // ===================================================================
         addSuggestion: function(suggestion) {
             this.suggestions.push(suggestion);
             this.suggestionTermBuffer.addTerm(suggestion.key);
-            this.numberSuggestionsByType[suggestion.type] += 1;
+            this.numberSuggestionsByType[suggestion.uiSuggestionType] += 1;
         },
 
-        // format bo suggestion
+        // format search term suggestion
         // ===================================================================
-        formatObjectDataSuggestion: function(sinaSuggestion) {
-            if (this.model.getDataSource().equals(this.model.allDataSource)) {
-                // 1. model datasource is all 
+        formatSearchTermDataSuggestion: function(sinaSuggestion) {
+            if (this.model.getDataSource() === this.model.allDataSource) {
+                // 1. model datasource is all
                 if (this.firstObjectDataSuggestion) {
-                    // 1.1 first suggestion (also use children)                    
+                    // 1.1 first suggestion (display also child suggestions)
                     this.firstObjectDataSuggestion = false;
-                    sinaSuggestion.label = this.assembleSearchInSuggestionLabel(sinaSuggestion);
-                    this.addSuggestion(sinaSuggestion);
-                    this.addChildSuggestions(sinaSuggestion);
+                    if (sinaSuggestion.childSuggestions.length > 0) {
+                        sinaSuggestion.label = this.assembleSearchInSuggestionLabel(sinaSuggestion);
+                        this.addSuggestion(sinaSuggestion);
+                        this.addChildSuggestions(sinaSuggestion);
+                    } else {
+                        this.addSuggestion(sinaSuggestion);
+                    }
                 } else {
-                    // 1.2 subsequent suggestions
+                    // 1.2 subsequent suggestions (ignore child suggestions)
                     this.addSuggestion(sinaSuggestion);
                 }
             } else {
@@ -253,18 +257,19 @@
         // add child suggestions
         // ===================================================================
         addChildSuggestions: function(sinaSuggestion) {
-            if (!sinaSuggestion.children) {
-                return;
-            }
-            var limit = Math.min(sinaSuggestion.children.length,
-                SuggestionTypeProps[sinaBaseModule.SuggestionType.OBJECTDATA].limitDataSource,
-                SuggestionTypeProps[sinaBaseModule.SuggestionType.OBJECTDATA].limit - 1
-            );
-            for (var i = 0; i < limit; ++i) {
-                var sinaChildSuggestion = sinaSuggestion.children[i];
-                this.numberObjectDataSuggestions++;
+            // max 2 child suggestions
+            for (var i = 0; i < Math.min(2, sinaSuggestion.childSuggestions.length); ++i) {
+
+                // check limit
+                var limit = SuggestionType.properties.SearchTermData.limit;
+                var numberSuggestions = this.numberSuggestionsByType[SuggestionType.SearchTermData];
+                if (numberSuggestions >= limit) {
+                    return;
+                }
+
+                // add suggestion
+                var sinaChildSuggestion = sinaSuggestion.childSuggestions[i];
                 sinaChildSuggestion.label = this.assembleSearchInSuggestionLabel(sinaChildSuggestion);
-                sinaChildSuggestion.position = SuggestionTypeProps[sinaBaseModule.SuggestionType.OBJECTDATA].position;
                 this.addSuggestion(sinaChildSuggestion);
             }
         },
@@ -272,9 +277,33 @@
         // assemble search in suggestion label
         // ===================================================================
         assembleSearchInSuggestionLabel: function(sinaSuggestion) {
-            return sinaSuggestion.label + ' <i>' + sap.ushell.resources.i18n.getText("resultsIn") + ' ' + sinaSuggestion.dataSource.labelPlural + "</i>";
+            return sap.ushell.resources.i18n.getText("resultsIn", [
+                '<span>' + sinaSuggestion.label + '</span>',
+                sinaSuggestion.filter.dataSource.labelPlural
+            ]);
+        },
+
+        // get type of sina suggestion
+        // ===================================================================
+        getSuggestionType: function(sinaSuggestion) {
+            switch (sinaSuggestion.type) {
+                case this.sinaNext.SuggestionType.SearchTerm:
+                    if (sinaSuggestion.calculationMode === this.sinaNext.SuggestionCalculationMode.History) {
+                        return SuggestionType.SearchTermHistory;
+                    }
+                    return SuggestionType.SearchTermData;
+                case this.sinaNext.SuggestionType.SearchTermAndDataSource:
+                    if (sinaSuggestion.calculationMode === this.sinaNext.SuggestionCalculationMode.History) {
+                        return SuggestionType.SearchTermHistory;
+                    }
+                    return SuggestionType.SearchTermData;
+                case this.sinaNext.SuggestionType.DataSource:
+                    return SuggestionType.DataSource;
+            }
         }
+
 
     });
 
-})();
+    return module;
+});

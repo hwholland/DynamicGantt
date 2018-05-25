@@ -1,25 +1,24 @@
 /* global jQuery, sap, window */
-(function() {
+sap.ui.define([
+    'sap/m/Select'
+], function() {
     "use strict";
 
-    jQuery.sap.require('sap.m.Select');
-
-    sap.m.Select.extend('sap.ushell.renderers.fiori2.search.controls.SearchSelect', {
+    return sap.m.Select.extend('sap.ushell.renderers.fiori2.search.controls.SearchSelect', {
 
         constructor: function(sId, options) {
             options = jQuery.extend({}, {
                 visible: "{/businessObjSearchEnabled}",
                 autoAdjustWidth: true,
-                maxWidth: "16rem",
                 items: {
                     path: "/dataSources",
                     template: new sap.ui.core.Item({
-                        key: "{key}",
+                        key: "{multiId}",
                         text: "{labelPlural}"
                     })
                 },
                 selectedKey: {
-                    path: '/uiFilter/dataSource/key',
+                    path: '/uiFilter/dataSource/multiId',
                     mode: sap.ui.model.BindingMode.OneWay
                 },
                 change: function(event) {
@@ -28,6 +27,12 @@
                     var dataSource = context.getObject();
                     this.getModel().setDataSource(dataSource, false);
                     this.getModel().abortSuggestions();
+                    try {
+                        this.getModel().eventLogger.logEvent({
+                            type: this.getModel().eventLogger.DROPDOWN_SELECT_DS,
+                            dataSourceId: dataSource.id
+                        });
+                    } catch (e) { /* eslint no-empty:0 */ }
                 },
                 enabled: {
                     parts: [{
@@ -45,12 +50,17 @@
         renderer: 'sap.m.SelectRenderer',
 
         setDisplayMode: function(mode) {
-            if (mode === 'icon') {
-                this.setType(sap.m.SelectType.IconOnly);
-                this.setIcon('sap-icon://slim-arrow-down');
+            switch (mode) {
+                case 'icon':
+                    this.setType(sap.m.SelectType.IconOnly);
+                    this.setIcon('sap-icon://slim-arrow-down');
+                    break;
+                case 'default':
+                    this.setType(sap.m.SelectType.Default);
+                    break;
+                default:
+                    break;
             }
         }
-
     });
-
-})();
+});

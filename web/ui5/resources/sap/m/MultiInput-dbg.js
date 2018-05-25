@@ -80,7 +80,7 @@ function(
 	* @extends sap.m.Input
 	*
 	* @author SAP SE
-	* @version 1.54.5
+	* @version 1.54.3
 	*
 	* @constructor
 	* @public
@@ -1438,9 +1438,8 @@ function(
 	 *
 	 * @protected
 	 */
-	MultiInput.prototype.updateInputField = function(sNewValue) {
-		Input.prototype.updateInputField.call(this, sNewValue);
-		this.setDOMValue('');
+	MultiInput.prototype.updateInputField = function() {
+		Input.prototype.updateInputField.call(this, '');
 	};
 
 	/**

@@ -1,10 +1,12 @@
-(function () {
-    "use strict";
+sap.ui.define([
+		'sap/ca/ui/model/format/NumberFormat',
+		'sap/ui/model/analytics/odata4analytics',
+		'sap/ushell/components/tiles/indicatorTileUtils/smartBusinessUtil'
+	], function(NumberFormat, odata4analytics, smartBusinessUtil) {
+	"use strict";
+
     /*global jQuery, sap */
     /*jslint nomen: true */
-    jQuery.sap.require("sap.ushell.components.tiles.indicatorTileUtils.smartBusinessUtil");
-    jQuery.sap.require("sap.ui.model.analytics.odata4analytics");
-    jQuery.sap.require("sap.ca.ui.model.format.NumberFormat");
     sap.ui.getCore().loadLibrary("sap.suite.ui.commons");
 
     sap.ui.jsview("tiles.indicatorHarveyBall.HarveyBallTile", {
@@ -38,4 +40,6 @@
             //return this.oTile; commented to prevent the tile from loading
         }
     });
-}());
+
+
+}, /* bExport= */ true);

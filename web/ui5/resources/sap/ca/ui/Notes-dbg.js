@@ -58,7 +58,7 @@ jQuery.sap.require("sap.m.List");
  * the FeedListItem or the ExpansibleFeedListItem). The developer is also responsible to implement the code to send
  * the notes to the backend system, by responding to the addNote event.
  * @extends sap.m.List
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

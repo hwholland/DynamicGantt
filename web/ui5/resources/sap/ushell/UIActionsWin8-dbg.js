@@ -1,6 +1,7 @@
 /*global jQuery*/
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     function noop() {}
 
     var UIActionsWin8 = function () {
@@ -8,7 +9,7 @@
     UIActionsWin8.prototype = {
         init: function (cfg) {
             this.cfg = cfg;
-            this.forGroups = this.cfg.forGroups ||  false;
+            this.type = this.cfg.type;
             this.wrapper = jQuery(cfg.wrapperSelector).get(0);
             this.container = jQuery(cfg.containerSelector).get(0);
             this.dragAndScrollCallback = cfg.dragAndScrollCallback || noop;
@@ -16,7 +17,9 @@
             this.dragCallback = cfg.dragCallback || noop;
             this.draggableSelector = cfg.draggableSelector;
             this.endCallback = typeof cfg.endCallback === 'function' ? cfg.endCallback : noop;
+            this.onBeforeCreateClone = cfg.onBeforeCreateClone || noop;
             this.placeHolderClass = cfg.placeHolderClass || "";
+            this.cloneClass = cfg.cloneClass || "";
             this.$root = jQuery(cfg.rootSelector);
             this.startCallback = typeof cfg.startCallback === 'function' ? cfg.startCallback : noop;
             this.onDragStartUIHandler = typeof cfg.onDragStartUIHandler === 'function' ? cfg.onDragStartUIHandler : noop;
@@ -33,7 +36,7 @@
                 on('dragend', this.draggableSelector, this, this.dragEndHandler);
             return this;
         },
-        disable: function disable () {
+        disable: function disable() {
             this.enabled = false;
             this.$root.
                 off('dragstart', this.draggableSelector).
@@ -59,7 +62,7 @@
             e.data.wrapper.scrollTop += ~transformY + 1;
 
         },
-        dragEnterHandler: function dragEnterHandler(evt) {
+        dragEnterScrollHandler: function dragEnterScrollHandler(evt) {
             if (evt.target == evt.data.$bottomScroller.get(0)) {
                 evt.data.startScroll("down");
             }
@@ -90,7 +93,7 @@
             this.$topScroller = jQuery("<div class='UiActionsTopScroller' style='position:absolute; top: 0; height: 70px; left:0; right:0;'></div>");
             this.$bottomScroller = jQuery("<div class='UiActionsBottomScroller' style='position:absolute; bottom: 0; height: 70px; left:0; right:0;'></div>");
             jQuery(document.body).append(this.$topScroller).append(this.$bottomScroller);
-            this.$topScroller.add(this.$bottomScroller).on('dragenter', this, this.dragEnterHandler).on('dragleave', this, this.dragLeaveHandler);
+            this.$topScroller.add(this.$bottomScroller).on('dragenter', this, this.dragEnterScrollHandler).on('dragleave', this, this.dragLeaveHandler);
         },
         removeScrollRegions: function () {
             jQuery('.UiActionsTopScroller, .UiActionsBottomScroller').remove();
@@ -197,8 +200,6 @@
         }
     });
 
-
-
     function TilesDragAndDrop (cfg) {
         this.init(cfg);
     }
@@ -208,13 +209,19 @@
         dragStartHandler: function dragStartHandler(evt) {
             var _that = evt.data;
 
+             if (!evt.target.id) {
+               evt.target = jQuery(evt.target).closest(".sapUshellTile")[0];
+             }
             _that.element = evt.target;
 
             _that.$root.
-                on('dragover', _that.draggableSelector + ", .sapUshellTileContainer", _that, _that.dragOverHandler);
+                 on('dragenter', _that.draggableSelector + ", .sapUshellTileContainer", _that, _that.dragEnterTileHandler);
 
             var id = evt.target.getAttribute("id");
+
             _that.oTile = sap.ui.getCore().byId(id);
+
+            _that.oTile.addStyleClass(_that.cloneClass);
 
             if (_that.oTile.getParent().getIsGroupLocked() && _that.oTile.getParent().getDefaultGroup()) {
                 _that.onDragStartUIHandler();
@@ -250,10 +257,12 @@
         },
         dragEndHandler: function dragEndHandler(evt) {
             var _that = evt.data;
-            _that.$root.off('dragover', _that.draggableSelector + ", .sapUshellTileContainer", _that.dragOverHandler);
+            _that.$root.off('dragenter', _that.draggableSelector + ", .sapUshellTileContainer", _that.dragEnterTileHandler);
 
             _that.removeScrollRegions();
             _that.oTile.getDomRef = _that.getDomRefOriginal;
+
+            _that.oTile.removeStyleClass(_that.cloneClass);
 
             jQuery(_that.element).css('visibility', 'visible');
             _that.$cloned.remove();
@@ -262,32 +271,103 @@
             _that.onDragEndUIHandler();
             _that.element = null;
         },
-        dragOverHandler: function dragOverHandler(evt) {
-            if (evt.data.dragOverTimeout) {
-                return;
+        dragEnterTileHandler: function dragEnterTileHandler(evt){
+            evt.preventDefault();
+            if(this.tileDragEnterTimeout) {
+              window.clearTimeout(this.tileDragEnterTimeout);
             }
-            evt.data.dragOverTimeout = setTimeout(function () {
+            this.tileDragEnterTimeout = setTimeout(function () {
                 evt.data.dragOverTimeout = null;
                 evt.data.overElement = this;
                 evt.data.dragAndScrollCallback({
                     moveX: evt.originalEvent.pageX,
                     moveY: evt.originalEvent.pageY
                 });
-            },50);
+            }, 50);
         }
     });
 
+    function LinksDragAndDrop (cfg) {
+        this.init(cfg);
+    }
+    LinksDragAndDrop.prototype = new UIActionsWin8();
+    jQuery.extend(LinksDragAndDrop.prototype, {
+        dragOverTimeout: null,
+        dragStartHandler: function dragStartHandler(evt) {
+            var _that = evt.data;
+             if (!evt.target.id) {
+               evt.target = jQuery(evt.target).closest(".sapUshellLinkTile")[0];
+             }
+            _that.element = evt.target;
+            
+            _that.onBeforeCreateClone(evt, _that.element);
 
+            _that.$root.
+                on('dragenter', ".sapUshellTileContainer",_that, _that.dragEnterLinkHandler);
+            var id = evt.target.getAttribute("id");
+
+            _that.oTile = sap.ui.getCore().byId(id);
+
+            if (_that.oTile.getParent().getIsGroupLocked() && _that.oTile.getParent().getDefaultGroup()) {
+                evt.preventDefault();
+                _that.onDragStartUIHandler();
+                var mouseUpHandler = function mouseUpHandler() {
+                    _that.onDragEndUIHandler();
+                    document.removeEventListener("mouseup", mouseUpHandler);
+                };
+                document.addEventListener("mouseup", mouseUpHandler);
+                return false;
+            }
+            jQuery(evt.target).addClass(_that.placeHolderClass);
+            _that.initScrollRegions();
+            _that.startCallback(evt, _that.element);
+            _that.onDragStartUIHandler();
+            _that.dragCallback(evt, _that.element);
+        },
+        dragEndHandler: function dragEndHandler(evt) {
+            var _that = evt.data;
+            _that.$root.off('dragenter', ".sapUshellTileContainer", _that.dragEnterLinkHandler);
+
+            _that.removeScrollRegions();
+
+            jQuery(_that.element).css('visibility', 'visible');
+
+            _that.endCallback(evt, _that.element);
+            _that.onDragEndUIHandler();
+            _that.element = null;
+        },
+        dragEnterLinkHandler: function dragEnterLinkHandler(evt) {
+            evt.preventDefault();
+            if(this.linkDragEnterTimeout) {
+              window.clearTimeout(this.linkDragEnterTimeout);
+            }
+            this.linkDragEnterTimeout = setTimeout(function () {
+                evt.data.dragOverTimeout = null;
+                evt.data.overElement = this;
+                evt.data.dragAndScrollCallback({
+                    moveX: evt.originalEvent.pageX,
+                    moveY: evt.originalEvent.pageY
+                });
+            }, 10);
+        }
+    });
 
     var UIActionsWin8Factory = {
         getInstance: function (cfg) {
-            return cfg.forGroups ? new GroupsDragAndDrop(cfg) : new TilesDragAndDrop(cfg);
+            switch (cfg.type) {
+              case "groups":
+                return new GroupsDragAndDrop(cfg);
+              case "links":
+                return new LinksDragAndDrop(cfg);
+              default://tiles
+                return new TilesDragAndDrop(cfg);
+            }
         }
     };
 
 
 
     // Export
-    jQuery.sap.declare("sap.ushell.UIActionsWin8");
-    sap.ushell.UIActionsWin8 = UIActionsWin8Factory;
-}());
+    return UIActionsWin8Factory;
+
+}, /* bExport= */ true);

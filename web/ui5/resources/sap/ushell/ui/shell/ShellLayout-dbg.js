@@ -1,11 +1,11 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap, window, document*/
 // Provides control sap.ushell.ui.shell.ShellLayout.
 sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap/ushell/library',
-        './ShellHeader', './SplitContainer', './ToolArea', './RightFloatingContainer', './FloatingContainer', './ShellFloatingActions'],
-    function (jQuery, Device, Control, ShellHeader, SplitContainer, ToolArea, ShellFloatingActions) {
+        './ShellHeader', './SplitContainer', './ToolArea'/*, './RightFloatingContainer', './FloatingContainer', './ShellFloatingActions'*/],
+    function (jQuery, Device, Control, ShellHeader, SplitContainer, ToolArea/*, ShellFloatingActions*/) {
         "use strict";
 
     /**
@@ -22,7 +22,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
      * @extends sap.ui.core.Control
      *
      * @author SAP SE
-     * @version ${version}
+     * @version 1.54.3
      *
      * @constructor
      * @private
@@ -51,7 +51,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
 
                 showBrandLine: {type : "boolean", group : "Appearance", defaultValue : true},
 
-                showAnimation: {type : "boolean", group : "Appearance", defaultValue : true}
+                showAnimation: {type : "boolean", group : "Appearance", defaultValue : true},
+
+                enableCanvasShapes: {type : "boolean", group : "Appearance", defaultValue : false}
             },
             aggregations : {
                 /**
@@ -69,8 +71,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
                  */
                 rightFloatingContainer : {type : "sap.ushell.ui.shell.RightFloatingContainer", multiple : false},
 
-                floatingContainer : {type : "sap.ushell.ui.shell.FloatingContainer", multiple : false},
-
                 /**
                  * Private storage for the internal split container for the canvas.
                  */
@@ -80,6 +80,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
                  * The action button which is rendered floating in the shell content area. If a custom header is set this aggregation has no effect.
                  */
                 floatingActionsContainer : {type : "sap.ushell.ui.shell.ShellFloatingActions", multiple : false}
+            },
+            associations : {
+                floatingContainer : {type : "sap.ushell.ui.shell.FloatingContainer", multiple : false}
             }
         }});
 
@@ -124,6 +127,32 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
             }
             this.getCanvasSplitContainer()._applySecondaryContentSize();
             this._setSidePaneWidth();
+        };
+
+        ShellLayout.prototype.renderFloatingContainerWrapper = function () {
+            var floatingContainerWrapper = document.getElementById("sapUshellFloatingContainerWrapper"),
+                body = document.getElementsByTagName('body'),
+                storage = jQuery.sap.storage ? jQuery.sap.storage(jQuery.sap.storage.Type.local, "com.sap.ushell.adapters.local.FloatingContainer") : undefined;
+
+            if (!floatingContainerWrapper){
+                floatingContainerWrapper = document.createElement("DIV");
+                floatingContainerWrapper.setAttribute("id", 'sapUshellFloatingContainerWrapper');
+                floatingContainerWrapper.setAttribute("class", 'sapUshellShellFloatingContainerWrapper sapUshellShellHidden');
+                body[0].appendChild(floatingContainerWrapper);
+            }
+
+            if (storage && storage.get("floatingContainerStyle")) {
+                floatingContainerWrapper.setAttribute("style", storage.get("floatingContainerStyle"));
+            }
+        };
+
+        ShellLayout.prototype.renderFloatingContainer = function (oFloatingContainer) {
+            this.renderFloatingContainerWrapper();
+
+            if (oFloatingContainer && !oFloatingContainer.getDomRef()) {
+                jQuery('#sapUshellFloatingContainerWrapper').toggleClass("sapUshellShellHidden", true);
+                oFloatingContainer.placeAt("sapUshellFloatingContainerWrapper");
+            }
         };
 
         ShellLayout.prototype.onThemeChanged = function () {
@@ -200,14 +229,33 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/core/Control', 'sap
             return this;
         };
 
+        ShellLayout.prototype.setFloatingContainer = function (oContainer) {
+            this.setAssociation('floatingContainer', oContainer, true);
+            this.renderFloatingContainer(oContainer);
+        };
+
         ShellLayout.prototype.setFloatingContainerVisible = function (bVisible) {
             // setting the actual ShellLayout property
             this.setProperty("floatingContainerVisible", !!bVisible, true);
             if (this.getDomRef()) {
-                // Change the visibility of the UI control
-                this.$().find('.sapUshellShellFloatingContainerWrapper').toggleClass("sapUshellShellHidden", !bVisible);
+                var storage = jQuery.sap.storage ? jQuery.sap.storage(jQuery.sap.storage.Type.local, "com.sap.ushell.adapters.local.FloatingContainer") : undefined,
+                    floatingContainerWrapper = document.getElementById("sapUshellFloatingContainerWrapper");
+                // Only in case this is first time the container is opened and there is no style for it in local storage
+                if (bVisible && storage && !storage.get("floatingContainerStyle")) {
+                    var emSize = jQuery(".sapUshellShellHeadItm").position() ? jQuery(".sapUshellShellHeadItm").position().left : 0;
+                    var iLeftPos = (jQuery(window).width() - jQuery("#shell-floatingContainer").width() - emSize) * 100 / jQuery(window).width();
+                    var iTopPos = jQuery(".sapUshellShellHeadContainer").height() * 100 / jQuery(window).height();
+                    floatingContainerWrapper.setAttribute("style", "left:" + iLeftPos + "%;" + "top:" + iTopPos + "%;position:absolute;");
+                    storage.put("floatingContainerStyle", floatingContainerWrapper.getAttribute("style"));
+                }
+                jQuery('.sapUshellShellFloatingContainerWrapper').toggleClass("sapUshellShellHidden", !bVisible);
+
             }
             return this;
+        };
+
+        ShellLayout.prototype.setFloatingActionsContainer = function (oContainer) {
+            this.setAggregation('floatingActionsContainer', oContainer, true);
         };
 
         ShellLayout.prototype.setHeaderVisible = function (bHeaderVisible) {

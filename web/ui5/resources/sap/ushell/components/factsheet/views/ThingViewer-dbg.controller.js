@@ -1,3 +1,6 @@
+sap.ui.define(function() {
+	"use strict";
+
 sap.ui.controller("sap.ushell.components.factsheet.views.ThingViewer", {
 
     setService : function(sUri) {
@@ -5,3 +8,5 @@ sap.ui.controller("sap.ushell.components.factsheet.views.ThingViewer", {
     }
 
 });
+
+}, /* bExport= */ false);

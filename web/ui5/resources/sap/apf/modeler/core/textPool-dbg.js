@@ -168,11 +168,22 @@ jQuery.sap.require('sap.apf.utils.utils');
 		};
 		/**
 		 * @description creates a .property file, that suffices the SAP translation format
+		 * @param {string} analyticalConfigurationName
 		 * @returns {string} textPropertyFile
 		 */
-		this.exportTexts = function() {
+		this.exportTexts = function(analyticalConfigurationName) {
 			var textPropertyFile = sap.apf.utils.renderHeaderOfTextPropertyFile(applicationId, messageHandler);
-			return textPropertyFile + sap.apf.utils.renderTextEntries(hashTableForTexts, messageHandler);
+			var textEntryForAnalyticalConfigurationName = {
+					TextElement : "AnalyticalConfigurationName",
+					Language : sap.apf.core.constants.developmentLanguage,
+					TextElementType : "XTIT",
+					TextElementDescription : analyticalConfigurationName,
+					MaximumLength : 250,
+					Application : applicationId,
+					TranslationHint : ""
+			};
+			return textPropertyFile + sap.apf.utils.renderTextEntries(hashTableForTexts, messageHandler) 
+				+ sap.apf.utils.renderEntryOfTextPropertyFile(textEntryForAnalyticalConfigurationName, messageHandler);
 		};
 		/**
 		 * gets the text for a given id
@@ -213,10 +224,11 @@ jQuery.sap.require('sap.apf.utils.utils');
 		 * @param {string} format.TextElementType  example title TITLE",
 		 * @param {number} format.MaximumLength
 		 * @param {string} format.TranslationHint
-		 * @returns {string} key
+		 * @returns {jQuery.Deferred} with argument string key
 		 */
-		this.setText = function(textElementDescription, format) {
+		this.setTextAsPromise = function(textElementDescription, format) {
 			var textKey;
+			var deferred = jQuery.Deferred();
 			var updateTextAndMappingTable = function(textData, metadata, messageObject) {
 				if (messageObject) {
 					messageHandler.putMessage(messageObject);
@@ -225,6 +237,7 @@ jQuery.sap.require('sap.apf.utils.utils');
 					hashTableForTexts.setItem(textData.TextElement, textData);
 					textKey = textData.TextElement;
 				}
+				deferred.resolve(textData && textData.TextElement);
 			};
 			var data = {
 				TextElement : "", //key should be filled automatically
@@ -236,16 +249,17 @@ jQuery.sap.require('sap.apf.utils.utils');
 				TranslationHint : format.TranslationHint || ""
 			};
 			if (!textElementDescription) {
-				return sap.apf.core.constants.textKeyForInitialText;
+				deferred.resolve(sap.apf.core.constants.textKeyForInitialText);
 			}
 			textKey = findExistingTextElement(textElementDescription, format);
 			if (textKey) {
-				return textKey;
+				deferred.resolve(textKey);
+			} else {
+				keyCounter++;
+				persistenceProxy.create('texts', data, updateTextAndMappingTable, true);	
 			}
-			keyCounter++;
-			persistenceProxy.create('texts', data, updateTextAndMappingTable, false);
-			//return artificalKey;
-			return textKey;
+			
+			return deferred.promise();
 		};
 		/**
 		 * returns an array with keys of all texts of given

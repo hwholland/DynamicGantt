@@ -1,99 +1,45 @@
 /*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
-
-/* ----------------------------------------------------------------------------------
- * Hint: This is a derived (generated) file. Changes should be done in the underlying 
- * source files only (*.control, *.js) or they will be lost after the next generation.
- * ---------------------------------------------------------------------------------- */
 
 // Provides control sap.ushell.ui.footerbar.UserPreferencesButton.
-jQuery.sap.declare("sap.ushell.ui.footerbar.UserPreferencesButton");
-jQuery.sap.require("sap.ushell.library");
-jQuery.sap.require("sap.ushell.ui.launchpad.ActionItem");
-
-
-/**
- * Constructor for a new ui/footerbar/UserPreferencesButton.
- * 
- * Accepts an object literal <code>mSettings</code> that defines initial 
- * property values, aggregated and associated objects as well as event handlers. 
- * 
- * If the name of a setting is ambiguous (e.g. a property has the same name as an event), 
- * then the framework assumes property, aggregation, association, event in that order. 
- * To override this automatic resolution, one of the prefixes "aggregation:", "association:" 
- * or "event:" can be added to the name of the setting (such a prefixed name must be
- * enclosed in single or double quotes).
- *
- * The supported settings are:
- * <ul>
- * <li>Properties
- * <ul></ul>
- * </li>
- * <li>Aggregations
- * <ul></ul>
- * </li>
- * <li>Associations
- * <ul></ul>
- * </li>
- * <li>Events
- * <ul></ul>
- * </li>
- * </ul> 
- *
- * 
- * In addition, all settings applicable to the base type {@link sap.ushell.ui.launchpad.ActionItem#constructor sap.ushell.ui.launchpad.ActionItem}
- * can be used as well.
- *
- * @param {string} [sId] id for the new control, generated automatically if no id is given 
- * @param {object} [mSettings] initial settings for the new control
- *
- * @class
- * Add your documentation for the newui/footerbar/UserPreferencesButton
- * @extends sap.ushell.ui.launchpad.ActionItem
- * @version 1.38.26
- *
- * @constructor
- * @public
- * @name sap.ushell.ui.footerbar.UserPreferencesButton
- * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
- */
-sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferencesButton", { metadata : {
-
-	library : "sap.ushell"
-}});
-
-
-/**
- * Creates a new subclass of class sap.ushell.ui.footerbar.UserPreferencesButton with name <code>sClassName</code> 
- * and enriches it with the information contained in <code>oClassInfo</code>.
- * 
- * <code>oClassInfo</code> might contain the same kind of informations as described in {@link sap.ui.core.Element.extend Element.extend}.
- *   
- * @param {string} sClassName name of the class to be created
- * @param {object} [oClassInfo] object literal with informations about the class  
- * @param {function} [FNMetaImpl] constructor function for the metadata object. If not given, it defaults to sap.ui.core.ElementMetadata.
- * @return {function} the created class / constructor function
- * @public
- * @static
- * @name sap.ushell.ui.footerbar.UserPreferencesButton.extend
- * @function
- */
-
-// Start of sap/ushell/ui/footerbar/UserPreferencesButton.js
-/*global jQuery, sap*/
-
-(function () {
+sap.ui.define([
+    'sap/m/Button',
+    'sap/m/Dialog',
+    'sap/m/Bar',
+    'sap/m/Text',
+    'sap/m/List',
+    'sap/ushell/library',
+    'sap/ushell/resources',
+    'sap/ushell/services/Container',
+    'sap/ushell/ui/launchpad/AccessibilityCustomData',
+    'sap/ushell/ui/launchpad/ActionItem',
+    'sap/m/DisplayListItem',
+    'sap/ui/layout/VerticalLayout',
+    'sap/m/ObjectIdentifier'
+], function (Button, Dialog, Bar, Text, List, library, resources, Container, AccessibilityCustomData, ActionItem, DisplayListItem, VerticalLayout, ObjectIdentifier) {
     "use strict";
+
+   /**
+    * Constructor for a new ui/footerbar/UserPreferencesButton.
+    *
+    * @param {string} [sId] id for the new control, generated automatically if no id is given 
+    * @param {object} [mSettings] initial settings for the new control
+    *
+    * @class
+    * Add your documentation for the newui/footerbar/UserPreferencesButton
+    * @extends sap.ushell.ui.launchpad.ActionItem
+    *
+    * @constructor
+   * @public
+   * @name sap.ushell.ui.footerbar.UserPreferencesButton
+   * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+   */
+    var UserPreferencesButton = ActionItem.extend("sap.ushell.ui.footerbar.UserPreferencesButton", /** @lends sap.ushell.ui.footerbar.UserPreferencesButton.prototype */ { metadata : {
+        library : "sap.ushell"
+    }});
+
     /*global jQuery, sap, window*/
-    jQuery.sap.require("sap.m.Dialog");
-    jQuery.sap.require("sap.m.Button");
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.require("sap.ushell.services.Container");
-    jQuery.sap.require("sap.ushell.ui.launchpad.AccessibilityCustomData");
-
-    jQuery.sap.declare("sap.ushell.ui.footerbar.UserPreferencesButton");
-
     /**
      * UserPreferencesButton
      *
@@ -101,26 +47,27 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
      * @private
      * @since 1.16.0
      */
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype.init = function () {
-        //call the parent sap.m.Button init method
-        if (sap.ushell.ui.launchpad.ActionItem.prototype.init) {
-            sap.ushell.ui.launchpad.ActionItem.prototype.init.apply(this, arguments);
+    UserPreferencesButton.prototype.init = function () {
+        //call the parent button init method
+        if (ActionItem.prototype.init) {
+            ActionItem.prototype.init.apply(this, arguments);
         }
         this.setIcon('sap-icon://person-placeholder');
-        this.translationBundle = sap.ushell.resources.i18n;
-        this.setText(this.translationBundle.getText("userPreferences"));
+        this.translationBundle = resources.i18n;
+        this.setText(this.translationBundle.getText("userSettings"));
+        this.setTooltip(this.translationBundle.getText("settings_tooltip"));
         this.attachPress(this.showUserPreferencesDialog);
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype.createDialog = function () {
-        var saveButton;
-        var cancelButton;
-        var that = this;
+    UserPreferencesButton.prototype.createDialog = function () {
+        var saveButton,
+            cancelButton,
+            that = this;
 
         saveButton = this._createSaveButton();
         cancelButton = this._createCancelButton();
 
-        this.oDialog = new sap.m.Dialog({
+        this.oDialog = new Dialog({
             id: "userPreferencesDialog",
             title: "{/userPreferences/dialogTitle}",
             contentWidth: "29.6rem",
@@ -128,7 +75,7 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
             contentHeight: "17rem",
             buttons: [saveButton, cancelButton],
             afterClose: function () {
-                that.oDialog.destroy();
+                this._destroyDialog();
                 this.oUser.resetChangedProperties();
             }.bind(that),
             stretch: sap.ui.Device.system.phone
@@ -136,23 +83,23 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
 
         this._addDialogBackButton();
         this.oDialog.setModel(this.getModel());
-        this.oDialog.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+        this.oDialog.addCustomData(new AccessibilityCustomData({
             key: "aria-label",
-            value: that.translationBundle.getText("UserPreferences_Dialog_Main_label"),
+            value: that.translationBundle.getText("Settings_Dialog_Main_label"),
             writeToDom: true
         }));
         this.oDialog.addContent(this._getOriginalDialogContent());
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._getOriginalDialogContent = function () {
+    UserPreferencesButton.prototype._getOriginalDialogContent = function () {
         if (!this.oInitialContent) {
-            var oUserDetails;
-            var oEntryList;
+            var oUserDetails,
+                oEntryList;
 
             oUserDetails = this._getUserDetailsControl();
             oEntryList = this._getEntryListControl();
 
-            this.oInitialContent = new sap.ui.layout.VerticalLayout('userPreferencesLayout', {
+            this.oInitialContent = new VerticalLayout('userPreferencesLayout', {
                 content: [oUserDetails, oEntryList],
                 width: "100%"
             });
@@ -161,34 +108,36 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         return this.oInitialContent;
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._getEntryListControl = function () {
-        var oEntryTemplate = this._getUserPrefEntriesTemplate();
-        var xRayEnabled = this.getModel() && this.getModel().getProperty('/enableHelp');
-        var that = this,
-            sUserName = this.oUser.getFullName();
+    UserPreferencesButton.prototype._getEntryListControl = function () {
+        var oEntryTemplate = this._getUserPrefEntriesTemplate(),
+            xRayEnabled = this.getModel() && this.getModel().getProperty('/enableHelp'),
+            that = this,
+            i,
+            sUserName = this.oUser.getFullName(),
+            origOnAfterRendering,
+            entryList = new List('userPrefEnteryList', {
+                items : {
+                    path     : "/userPreferences/entries",
+                    template : oEntryTemplate
+                }
+            });
 
-        var entryList = new sap.m.List('userPrefEnteryList', {
-            items : {
-                path     : "/userPreferences/entries",
-                template : oEntryTemplate
-            }
-        });
-        entryList.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+        entryList.addCustomData(new AccessibilityCustomData({
             key: "aria-label",
-            value: that.translationBundle.getText("UserPreferences_EntryList_label") + sUserName,
+            value: that.translationBundle.getText("Settings_EntryList_label") + sUserName,
             writeToDom: true
         }));
 
-        var origOnAfterRendering = entryList.onAfterRendering;
+        origOnAfterRendering = entryList.onAfterRendering;
         entryList.onAfterRendering = function () {
-            var aEntries = this.getItems();
-            var entryPath;
+            var aEntries = this.getItems(),
+                entryPath;
 
             //Execute the genuine onAfterRendering logic of the list.
             origOnAfterRendering.apply(this, arguments);
             //for each item in the list we need to add XRay help id
             //for each item in the list we need to execute the relevant function to get the entry value
-            for (var i = 0; i < aEntries.length; i++) {
+            for (i = 0; i < aEntries.length; i++) {
                 entryPath = aEntries[i].getBindingContext().getPath();
                 //we would like to set the current entry value in case valueResult property is null
                 if (!that.getModel().getProperty(entryPath + "/valueResult")) {
@@ -203,7 +152,7 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         return entryList;
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._addXRayHelpId = function (entryPath, oListItem) {
+    UserPreferencesButton.prototype._addXRayHelpId = function (entryPath, oListItem) {
         var helpID = this.getModel().getProperty(entryPath + "/entryHelpID");
 
         if (helpID) {
@@ -211,7 +160,7 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         }
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._setEntryValueResult = function (entryPath) {
+    UserPreferencesButton.prototype._setEntryValueResult = function (entryPath) {
         var that = this;
         var isEditable = this.getModel().getProperty(entryPath + "/editable");
         var valueArgument = this.getModel().getProperty(entryPath + "/valueArgument");
@@ -226,7 +175,7 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
                 that.getModel().setProperty(entryPath + "/visible", typeof (valueResult) === 'object' ? !!valueResult.value : true);
                 that.getModel().setProperty(entryPath + "/valueResult", typeof (valueResult) === 'object' ? valueResult.displayText : valueResult);
             });
-            oValuePromise.fail(function() {
+            oValuePromise.fail(function () {
                 that.getModel().setProperty(entryPath + "/valueResult", that.translationBundle.getText("loadingErrorMessage"));
             });
         } else if (!!valueArgument) {//if valueArgument is not null or undefined, we would like to present it
@@ -237,75 +186,90 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         }
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._getUserPrefEntriesTemplate = function () {
-        var that = this;
-        var pressHandler = function (e) {
-            var isContentValid = true;
-            var entryLabel = e.getSource().getLabel();
-            var entryPath = e.getSource().getBindingContext().getPath();
-            that.getModel().setProperty("/userPreferences/activeEntryPath",entryPath);
-            that._setDetailedEntryModeMode(true, entryPath, entryLabel, entryPath);
-            that.oDialog.removeAllContent();
-            var oContent = that.getModel().getProperty(entryPath + "/contentResult");
-            if (oContent) {
-                that.oDialog.addContent(oContent);
-            } else {
-                var oBusyIndicator = null;// oBusyIndicator is initialized only when bShowBusyIndicator === true
-                var bShowBusyIndicator = true,
-                    bIsBusyIndicatorShown = false;
-                var contentFunction = that.getModel().getProperty(entryPath + "/contentFunc");
-                if (typeof contentFunction === "function") {
-                    that.getModel().setProperty(entryPath + "/isDirty", true);//Set isDirty = true to the entry. Relevant for saving flow.
-                    var oContentPromise = contentFunction();
+    UserPreferencesButton.prototype._getUserPrefEntriesTemplate = function () {
+        var that = this,
+            oItem,
+            pressHandler = function (e) {
+                var oEventObj = {};
 
-                    oContentPromise.done(function(contentResult) {
-                        bShowBusyIndicator = false;
-                        if (bIsBusyIndicatorShown === true) {
-                            that.oDialog.removeAllContent();
-                            oBusyIndicator.destroy();//oBusyIndicator is destroyed only when it is actually presented
-                        }
+                oEventObj = jQuery.extend(true, {}, {}, e);
 
-                        if (contentResult instanceof sap.ui.core.Control) {
+                sap.ui.require(['sap/m/FlexBox',
+                                'sap/m/FlexAlignItems',
+                                'sap/m/FlexJustifyContent',
+                                'sap/m/BusyIndicator'],
+                    function (FlexBox, FlexAlignItems, FlexJustifyContent, BusyIndicator) {
+                        var isContentValid = true,
+                            oContent,
+                            entryLabel = oEventObj.getSource().getLabel(),
+                            entryPath = oEventObj.getSource().getBindingContext().getPath();
 
-                            that.getModel().setProperty(entryPath + "/contentResult", contentResult);
-                            that.oDialog.addContent(contentResult);
+                        that.getModel().setProperty("/userPreferences/activeEntryPath", entryPath);
+                        that._setDetailedEntryModeMode(true, entryPath, entryLabel, entryPath);
+                        that.oDialog.removeAllContent();
+                        oContent = that.getModel().getProperty(entryPath + "/contentResult");
+                        if (oContent) {
+                            that.oDialog.addContent(oContent);
                         } else {
-                            isContentValid = false;
+                            var oBusyIndicator = null,// oBusyIndicator is initialized only when bShowBusyIndicator === true
+                                oContentPromise,
+                                bShowBusyIndicator = true,
+                                bIsBusyIndicatorShown = false,
+                                contentFunction = that.getModel().getProperty(entryPath + "/contentFunc");
+
+                            if (typeof contentFunction === "function") {
+                                that.getModel().setProperty(entryPath + "/isDirty", true);//Set isDirty = true to the entry. Relevant for saving flow.
+                                oContentPromise = contentFunction();
+
+                                oContentPromise.done(function (contentResult) {
+                                    bShowBusyIndicator = false;
+                                    if (bIsBusyIndicatorShown === true) {
+                                        that.oDialog.removeAllContent();
+                                        oBusyIndicator.destroy();//oBusyIndicator is destroyed only when it is actually presented
+                                    }
+
+                                    if (contentResult instanceof sap.ui.core.Control) {
+
+                                        that.getModel().setProperty(entryPath + "/contentResult", contentResult);
+                                        that.oDialog.addContent(contentResult);
+                                    } else {
+                                        isContentValid = false;
+                                    }
+                                });
+                                oContentPromise.fail(function () {
+                                    bShowBusyIndicator = false;
+                                    if (bIsBusyIndicatorShown === true) {
+                                        that.oDialog.removeAllContent();
+                                        oBusyIndicator.destroy();//oBusyIndicator is destroyed only when it is actually presented
+                                    }
+                                    isContentValid = false;
+                                });
+
+                                oContentPromise.always(function () {
+                                    if (isContentValid === false) {
+                                        var oErrorContent = new FlexBox("userPrefErrorFlexBox", {
+                                            height: "5rem",
+                                            alignItems: FlexAlignItems.Center,
+                                            justifyContent: FlexJustifyContent.Center,
+                                            items: [new Text("userPrefErrorText", {text: that.translationBundle.getText("loadingErrorMessage")})]
+                                        });
+
+                                        that.getModel().setProperty(entryPath + "/contentResult", oErrorContent);
+                                        that.oDialog.addContent(oErrorContent);
+                                    }
+                                });
+
+                                if (bShowBusyIndicator === true) {
+                                    oBusyIndicator = new BusyIndicator('userPrefLoadingBusyIndicator', {size: "2rem"});
+                                    that.oDialog.addContent(oBusyIndicator);
+                                    bIsBusyIndicatorShown = true;
+                                }
+                            }
                         }
                     });
-                    oContentPromise.fail(function() {
-                        bShowBusyIndicator = false;
-                        if (bIsBusyIndicatorShown === true) {
-                            that.oDialog.removeAllContent();
-                            oBusyIndicator.destroy();//oBusyIndicator is destroyed only when it is actually presented
-                        }
-                        isContentValid = false;
-                    });
+            };
 
-                    oContentPromise.always(function() {
-                        if (isContentValid === false) {
-                            var oErrorContent = new sap.m.FlexBox("userPrefErrorFlexBox", {
-                                height: "5rem",
-                                alignItems: sap.m.FlexAlignItems.Center,
-                                justifyContent: sap.m.FlexJustifyContent.Center,
-                                items: [new sap.m.Text("userPrefErrorText", {text: that.translationBundle.getText("loadingErrorMessage")})]
-                            });
-
-                            that.getModel().setProperty(entryPath + "/contentResult", oErrorContent);
-                            that.oDialog.addContent(oErrorContent);
-                        }
-                    });
-
-                    if (bShowBusyIndicator === true) {
-                        oBusyIndicator = new sap.m.BusyIndicator('userPrefLoadingBusyIndicator', {size: "2rem"});
-                        that.oDialog.addContent(oBusyIndicator);
-                        bIsBusyIndicatorShown = true;
-                    }
-                }
-            }
-        };
-
-        var oItem = new sap.m.DisplayListItem({
+        oItem = new DisplayListItem({
             label: "{title}",
             value: "{valueResult}",
             tooltip: {
@@ -327,7 +291,7 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
                 }
             },
             press: pressHandler,
-            customData: new sap.ushell.ui.launchpad.AccessibilityCustomData({
+            customData: new AccessibilityCustomData({
                 key: "aria-label",
                 value: {
                     parts: [
@@ -342,21 +306,20 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
                 writeToDom: true
             })
         });
-
         return oItem;
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._getUserDetailsControl = function () {
-        return new sap.m.ObjectIdentifier({
+    UserPreferencesButton.prototype._getUserDetailsControl = function () {
+        return new ObjectIdentifier({
             title: this.oUser.getFullName(),
             text: this.oUser.getEmail()
         }).addStyleClass("sapUshellUserPrefUserIdentifier");
     };
 
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._createCancelButton = function () {
+    UserPreferencesButton.prototype._createCancelButton = function () {
         var that = this;
-        return new sap.m.Button({
+        return new Button({
             id: "cancelButton",
             text: {
                 parts: ['/userPreferences/entries'],
@@ -372,9 +335,9 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         });
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._createSaveButton = function () {
+    UserPreferencesButton.prototype._createSaveButton = function () {
         var that = this;
-        return new sap.m.Button({
+        return new Button({
             id: "saveButton",
             text: this.translationBundle.getText("saveBtn"),
             press: that._dialogSaveButtonHandler.bind(that),
@@ -389,12 +352,12 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         });
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._setDetailedEntryModeMode = function (isDetailedEntryMode, entryPath, entryLabel, entryValue) {
+    UserPreferencesButton.prototype._setDetailedEntryModeMode = function (isDetailedEntryMode, entryPath, entryLabel, entryValue) {
         this.getModel().setProperty("/userPreferences/isDetailedEntryMode", !!isDetailedEntryMode);
         this.getModel().setProperty("/userPreferences/dialogTitle", entryLabel);
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype.showUserPreferencesDialog = function () {
+    UserPreferencesButton.prototype.showUserPreferencesDialog = function () {
         //if (oModel.getProperty("/enableHelp")) {
         //    that.themeSelection.addStyleClass('help-id-themesDropdown'); // TODO: xRay help ID
         //}
@@ -404,16 +367,20 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         this.oDialog.open();
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._dialogBackButtonHandler = function (e) {
-        this.getModel().setProperty("/userPreferences/isDetailedEntryMode", false);
-        this.getModel().setProperty("/userPreferences/dialogTitle", this.translationBundle.getText("userPreferences"));
-        this.oDialog.removeAllContent();
-        this.oDialog.addContent(this._getOriginalDialogContent());
-        this._setEntryValueResult(this.getModel().getProperty("/userPreferences/activeEntryPath"));
-        this.getModel().setProperty("/userPreferences/activeEntryPath",null);
+    UserPreferencesButton.prototype._dialogBackButtonHandler = function (e) {
+        sap.ui.require(['sap/ui/layout/VerticalLayout'],
+            function (VerticalLayout) {
+                this.getModel().setProperty("/userPreferences/isDetailedEntryMode", false);
+                this.getModel().setProperty("/userPreferences/dialogTitle", this.translationBundle.getText("userSettings"));
+                this.oDialog.removeAllContent();
+                this.oDialog.addContent(this._getOriginalDialogContent());
+                this._setEntryValueResult(this.getModel().getProperty("/userPreferences/activeEntryPath"));
+                this.getModel().setProperty("/userPreferences/activeEntryPath", null);
+            }
+            );
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._destroyDialog = function () {
+    UserPreferencesButton.prototype._destroyDialog = function () {
         this.oHeadBar.destroy();
         this.oInitialContent.destroy();
         this.oInitialContent = null;
@@ -423,9 +390,11 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         this.oDialog.destroy();
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._entriesCleanUp = function () {
-        var entriesArray = this.getModel().getProperty("/userPreferences/entries");
-        for (var i = 0; i < entriesArray.length; i++) {
+    UserPreferencesButton.prototype._entriesCleanUp = function () {
+        var i,
+            entriesArray = this.getModel().getProperty("/userPreferences/entries");
+
+        for (i = 0; i < entriesArray.length; i++) {
             //destroy entry content if exists
             if (entriesArray[i].contentResult) {
                 entriesArray[i].contentResult.destroy();
@@ -438,64 +407,66 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         this.getModel().setProperty("/userPreferences/entries", entriesArray);
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._modelCleanUpToInitial = function () {
+    UserPreferencesButton.prototype._modelCleanUpToInitial = function () {
         this.getModel().setProperty("/userPreferences/isDetailedEntryMode", false);
-        this.getModel().setProperty("/userPreferences/dialogTitle", this.translationBundle.getText("userPreferences"));
+        this.getModel().setProperty("/userPreferences/dialogTitle", this.translationBundle.getText("userSettings"));
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._dialogSaveButtonHandler = function () {
-        var saveEntriesPromise;
-        saveEntriesPromise = this._saveUserPrefEntries();
-        var that = this;
+    UserPreferencesButton.prototype._dialogSaveButtonHandler = function () {
+        var that = this,
+            isDetailedEntryMode,
+            saveEntriesPromise = this._saveUserPrefEntries();
 
         //in case the save button is pressed in the detailed entry mode, there is a need to update value result
         // in the model
-        var isDetailedEntryMode = this.getModel().getProperty("/userPreferences/isDetailedEntryMode");
+        isDetailedEntryMode = this.getModel().getProperty("/userPreferences/isDetailedEntryMode");
         if (isDetailedEntryMode) {
-            this.getModel().setProperty("/userPreferences/activeEntryPath",null);
+            this.getModel().setProperty("/userPreferences/activeEntryPath", null);
         }
 
-        saveEntriesPromise.done(function() {
+        saveEntriesPromise.done(function () {
             that._showSaveMessageToast();
         });
 
-        saveEntriesPromise.fail(function(failureMsgArr) {
-            jQuery.sap.require("sap.m.MessageBox");
-            var errMessageText;
-            var errMessageLog = "";
-            if (failureMsgArr.length === 1) {
-                errMessageText = that.translationBundle.getText("savingEntryError") + " ";
-            } else {
-                errMessageText = that.translationBundle.getText("savingEntriesError") + "\n";
-            }
-            failureMsgArr.forEach(function(errObject) {
-                errMessageText += errObject.entry + "\n";
-                errMessageLog += "Entry: " + errObject.entry + " - Error message: " + errObject.message + "\n";
-            });
+        saveEntriesPromise.fail(function (failureMsgArr) {
+            sap.ui.require(['sap/m/MessageBox'],
+                function (MessageBox) {
+                    var errMessageText,
+                        errMessageLog = "";
 
-            sap.m.MessageBox.show(
-                errMessageText, {
-                    icon: sap.m.MessageBox.Icon.ERROR,
-                    title: that.translationBundle.getText("Error"),
-                    actions: [sap.m.MessageBox.Action.OK]
-                }
-            );
+                    if (failureMsgArr.length === 1) {
+                        errMessageText = that.translationBundle.getText("savingEntryError") + " ";
+                    } else {
+                        errMessageText = that.translationBundle.getText("savingEntriesError") + "\n";
+                    }
+                    failureMsgArr.forEach(function (errObject) {
+                        errMessageText += errObject.entry + "\n";
+                        errMessageLog += "Entry: " + errObject.entry + " - Error message: " + errObject.message + "\n";
+                    });
 
-            jQuery.sap.log.error(
-                "Failed to save the following entries"  ,
-                errMessageLog,
-                "sap.ushell.ui.footerbar.UserPreferencesButton"
-            );
+                    MessageBox.show(errMessageText, {
+                        icon: MessageBox.Icon.ERROR,
+                        title: that.translationBundle.getText("Error"),
+                        actions: [MessageBox.Action.OK]
+                    });
+
+                    jQuery.sap.log.error(
+                        "Failed to save the following entries",
+                        errMessageLog,
+                        "sap.ushell.ui.footerbar.UserPreferencesButton"
+                    );
+                });
         });
-
         this.oDialog.close();
         this._destroyDialog();
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._dialogCancelButtonHandler = function () {
-        var aEntries = this.getModel().getProperty("/userPreferences/entries");
+    UserPreferencesButton.prototype._dialogCancelButtonHandler = function () {
+        var i,
+            aEntries = this.getModel().getProperty("/userPreferences/entries");
+
         //Invoke onCancel function for each userPreferences entry
-        for (var i = 0; i < aEntries.length; i++) {
+        for (i = 0; i < aEntries.length; i++) {
             if (aEntries[i] && aEntries[i].onCancel) {
                 aEntries[i].onCancel();
             }
@@ -504,7 +475,7 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         this._destroyDialog();
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._saveUserPrefEntries = function () {
+    UserPreferencesButton.prototype._saveUserPrefEntries = function () {
         var aEntries = this.getModel().getProperty("/userPreferences/entries");
         var resultDeferred = jQuery.Deferred();
         var whenPromise;
@@ -554,20 +525,20 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         return resultDeferred.promise();
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._addDialogBackButton = function () {
+    UserPreferencesButton.prototype._addDialogBackButton = function () {
         var that = this;
-        var oBackButton = new sap.m.Button('userPrefBackBtn', {
+        var oBackButton = new Button('userPrefBackBtn', {
             visible: "{/userPreferences/isDetailedEntryMode}",
             icon: sap.ui.core.IconPool.getIconURI("nav-back"),
             press: that._dialogBackButtonHandler.bind(that),
             tooltip: this.translationBundle.getText("feedbackGoBackBtn_tooltip")
         });
 
-        var oDialogTitle = new sap.m.Text("userPrefTitle", {
+        var oDialogTitle = new Text("userPrefTitle", {
             text: "{/userPreferences/dialogTitle}"
         });
 
-        this.oHeadBar = new sap.m.Bar({
+        this.oHeadBar = new Bar({
             contentLeft: [oBackButton],
             contentMiddle: [oDialogTitle]
         });
@@ -575,18 +546,21 @@ sap.ushell.ui.launchpad.ActionItem.extend("sap.ushell.ui.footerbar.UserPreferenc
         this.oDialog.setCustomHeader(this.oHeadBar);
     };
 
-    sap.ushell.ui.footerbar.UserPreferencesButton.prototype._showSaveMessageToast = function () {
-        jQuery.sap.require("sap.m.MessageToast");
-        var message = this.translationBundle.getText("savedChanges");
+    UserPreferencesButton.prototype._showSaveMessageToast = function () {
+        sap.ui.require(['sap/m/MessageToast'],
+            function (MessageToast) {
+                var message = this.translationBundle.getText("savedChanges");
 
-        sap.m.MessageToast.show(message, {
-            duration: 3000,
-            width: "15em",
-            my: "center bottom",
-            at: "center bottom",
-            of: window,
-            offset: "0 -50",
-            collision: "fit fit"
-        });
+                MessageToast.show(message, {
+                    duration: 3000,
+                    width: "15em",
+                    my: "center bottom",
+                    at: "center bottom",
+                    of: window,
+                    offset: "0 -50",
+                    collision: "fit fit"
+                });
+            });
     };
-}());
+	return UserPreferencesButton;
+},/* bExport= */true);

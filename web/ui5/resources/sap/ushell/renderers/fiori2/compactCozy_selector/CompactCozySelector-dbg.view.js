@@ -1,18 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(['sap/ushell/resources','sap/ushell/services/Container'],
+	function(resources, Container) {
+	"use strict";
+
     /*global jQuery, sap, document, self */
     /*jslint plusplus: true, nomen: true, vars: true */
-
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.require("sap.ushell.services.Container");
 
     sap.ui.jsview("sap.ushell.renderers.fiori2.compactCozy_selector.CompactCozySelector", {
 
         createContent: function (oController) {
             var oCompactCozyListItem = this._getCompactCozyListItemTemplate();
-            this.translationBundle = sap.ushell.resources.i18n;
+            this.translationBundle = resources.i18n;
             this.oList = new sap.m.List('compactCozySelectorList', {
                 includeItemInSelection: true,
                 mode: "SingleSelectLeft",
@@ -49,4 +48,6 @@
 
     });
 
-}());
+
+
+}, /* bExport= */ true);

@@ -1,12 +1,10 @@
 /*!
  * SAP APF Analysis Path Framework
  * 
- * (c) Copyright 2012-2014 SAP AG. All rights reserved
+ * (c) Copyright 2012-2018 SAP AG. All rights reserved
  */
 
-jQuery.sap.declare("sap.apf.core.messageObject");
-
-(function() {
+sap.ui.define([], function() {
 	'use strict';
 	/**
 	 * @public
@@ -14,7 +12,7 @@ jQuery.sap.declare("sap.apf.core.messageObject");
 	 * @name sap.apf.core.MessageObject
 	 * @param {object} oConfig 
 	 */
-	sap.apf.core.MessageObject = function(oConfig) {
+	function MessageObject(oConfig) {
 		// private vars
 		var sCode = oConfig.code;
 		var aParameters = oConfig.aParameters || [];
@@ -214,9 +212,14 @@ jQuery.sap.declare("sap.apf.core.messageObject");
 			return sap.ui.version;
 		};
 		// private function
-	};
-	// set Prototype to get a JavaScript API Message Object
+	}
+	/*BEGIN_COMPATIBILITY*/
+	sap.apf.core = sap.apf.core || {};
+	sap.apf.core.MessageObject = MessageObject;
+		// set Prototype to get a JavaScript API Message Object
 	sap.apf.core.MessageObject.prototype = new Error();
 	sap.apf.core.MessageObject.prototype.constructor = sap.apf.core.MessageObject;
+	/*END_COMPATIBILITY*/
 
-}());
+	return MessageObject;
+}, true /*GLOBAL_EXPORT*/);

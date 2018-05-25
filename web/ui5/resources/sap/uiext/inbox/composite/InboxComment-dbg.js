@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * fsgg
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -67,11 +67,35 @@ sap.ui.core.Control.extend("sap.uiext.inbox.composite.InboxComment", { metadata 
 
 	library : "sap.uiext.inbox",
 	properties : {
+
+		/**
+		 * Sender of the comment chunk
+		 */
 		"sender" : {type : "string", group : "Data", defaultValue : null},
+
+		/**
+		 * Format is ISO 8601 YYYY-MM-DDThh:mm:ss.sZ, Z meaning the time is in UTC time zone
+		 */
 		"timestamp" : {type : "string", group : "Data", defaultValue : null},
+
+		/**
+		 * URL to the thumbnail image.
+		 */
 		"thumbnailSrc" : {type : "sap.ui.core.URI", group : "Data", defaultValue : null},
+
+		/**
+		 * The FeedChunk text
+		 */
 		"text" : {type : "string", group : "Data", defaultValue : null},
+
+		/**
+		 * Unique username of the user responsible for adding comment
+		 */
 		"createdBy" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * Represent system origin in case of multi origin scenario
+		 */
 		"sapOrigin" : {type : "string", group : "Misc", defaultValue : null}
 	}
 }});

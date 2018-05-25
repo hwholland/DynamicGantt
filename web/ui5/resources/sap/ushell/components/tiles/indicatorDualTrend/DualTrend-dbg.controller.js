@@ -1,5 +1,6 @@
 (function () {
 	"use strict";
+
 	/*eslint-disable no-nested-ternary*/
 	/*global fnError*/
 	sap.ui.controller("tiles.indicatorDualTrend.DualTrend", {

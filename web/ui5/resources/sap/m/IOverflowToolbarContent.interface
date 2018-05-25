@@ -28,7 +28,7 @@
       &lt;b&gt;Note:&lt;/b&gt; See: &lt;code&gt;onBeforeEnterOverflow&lt;/code&gt; for details about the function's context.&lt;/li&gt;
 
       &lt;li&gt;&lt;code&gt;getCustomImportance()&lt;/code&gt; - A function that, if provided, will be called to determine the priority of the control.
-      This function must return a value of type &lt;code&gt;sap.m.OverflowToolbarPriority&lt;/code&gt;. The string "Medium" is also accepted and interpreted as priority between &lt;code&gt;Low&lt;/code&gt; and &lt;code&gt;High&lt;code&gt;.
+      This function must return a value of type &lt;code&gt;sap.m.OverflowToolbarPriority&lt;/code&gt;. The string &quot;Medium&quot; is also accepted and interpreted as priority between &lt;code&gt;Low&lt;/code&gt; and &lt;code&gt;High&lt;code&gt;.
 
       &lt;b&gt;Note:&lt;/b&gt; Normally priority in &lt;code&gt;sap.m.OverflowToolbar&lt;/code&gt; is managed with the &lt;code&gt;priority&lt;/code&gt; property of &lt;code&gt;sap.m.OverflowToolbarLayoutData&lt;/code&gt;.
       However, some controls may have other means of defining priority, such as dedicated properties or other types of layout data for that purpose.

@@ -1,26 +1,21 @@
-/* global sap */
-/* global alert */
-/* global jQuery */
+/* global sap, alert, jQuery */
 
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper'
+], function(SearchHelper) {
     "use strict";
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    var searchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
 
-    sap.m.Label.extend('sap.ushell.renderers.fiori2.search.controls.SearchLabel', {
+    return sap.m.Label.extend('sap.ushell.renderers.fiori2.search.controls.SearchLabel', {
 
         renderer: 'sap.m.LabelRenderer',
         onAfterRendering: function() {
-
             var d = this.getDomRef();
 
             // recover bold tag with the help of text() in a safe way
-            searchHelper.boldTagUnescaperByText(d);
+            SearchHelper.boldTagUnescaper(d);
 
             // forward ellipsis
-            searchHelper.forwardEllipsis4Whyfound(d);
+            SearchHelper.forwardEllipsis4Whyfound(d);
         }
-
     });
-
-})();
+});

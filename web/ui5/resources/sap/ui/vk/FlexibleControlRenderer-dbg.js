@@ -6,8 +6,9 @@
  */
 
 // Provides default renderer for control sap.ui.vk.FlexibleControl
-sap.ui.define(['jquery.sap.global'],
-	function(jQuery) {
+sap.ui.define([
+	"jquery.sap.global"
+], function(jQuery) {
 	"use strict";
 
 
@@ -22,7 +23,7 @@ sap.ui.define(['jquery.sap.global'],
 	 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
 	 *
 	 * @param {sap.ui.core.RenderManager} oRenderManager the RenderManager that can be used for writing to the Render-Output-Buffer
-	 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
+	 * @param {sap.ui.core.Control} oFlexibleControl An object representation of the control that should be rendered
 	 */
 	FlexibleControlRenderer.render = function(oRenderManager, oFlexibleControl){
 		// convenience variable
@@ -33,10 +34,10 @@ sap.ui.define(['jquery.sap.global'],
 		rm.writeControlData(oFlexibleControl);
 		rm.addClass("sapUiFlexControl");
 
-		if (oFlexibleControl.getWidth() && oFlexibleControl.getWidth() != '') {
+		if (oFlexibleControl.getWidth() && oFlexibleControl.getWidth() != "") {
 			rm.addStyle("width", oFlexibleControl.getWidth());
 		}
-		if (oFlexibleControl.getHeight() && oFlexibleControl.getHeight() != '') {
+		if (oFlexibleControl.getHeight() && oFlexibleControl.getHeight() != "") {
 			rm.addStyle("height", oFlexibleControl.getHeight());
 		}
 
@@ -54,7 +55,7 @@ sap.ui.define(['jquery.sap.global'],
 			cellClass = "sapUiFlexCellVertical";
 		}
 
-		for ( var i = 0; i < aContent.length; i++) {
+		for (var i = 0; i < aContent.length; i++) {
 			var content = aContent[i];
 
 			rm.write("<div id=\"" + oFlexibleControl.getId() + "Content_" + i + "\" class=\"" + cellClass + "\"");
@@ -63,17 +64,17 @@ sap.ui.define(['jquery.sap.global'],
 			if (layoutData && layout != "Stacked") {
 				rm.write(" style=\"");
 
-				if (layoutData.getSize() && layoutData.getSize() != '') {
+				if (layoutData.getSize() && layoutData.getSize() != "") {
 					rm.write("height: " + layoutData.getSize() + ";");
 				}
-				if (layoutData.getMinSize() && layoutData.getMinSize() != '') {
-					rm.write("min-height: " + layoutData.getMinSize() + ";" );
+				if (layoutData.getMinSize() && layoutData.getMinSize() != "") {
+					rm.write("min-height: " + layoutData.getMinSize() + ";");
 				}
-				if (layoutData.getMarginTop() && layoutData.getMarginTop() != '') {
-					rm.write("margin-top: " + layoutData.getMarginTop() + ";" );
+				if (layoutData.getMarginTop() && layoutData.getMarginTop() != "") {
+					rm.write("margin-top: " + layoutData.getMarginTop() + ";");
 				}
-				if (layoutData.getMarginBottom() && layoutData.getMarginBottom() != '') {
-					rm.write("margin-bottom: " + layoutData.getMarginBottom() + ";" );
+				if (layoutData.getMarginBottom() && layoutData.getMarginBottom() != "") {
+					rm.write("margin-bottom: " + layoutData.getMarginBottom() + ";");
 				}
 
 				rm.write("\"");

@@ -10,8 +10,8 @@
 			return "sap.apf.ui.reuse.controller.viewSetting";
 		},
 		createContent : function(oController) {
-			var oSelectedRepresentation = this.getViewData();
-			var oTableRepresentation = oSelectedRepresentation.oTableRepresentation; // the table with data in the step container. 
+			var oSelectedRepresentation = this.getViewData().oTableInstance;
+			var oTableRepresentation = oSelectedRepresentation.tableControl; // the table with data in the step container. 
 			// create the sort items from the sort content/ columns of the table
 			var aSortItems = [];
 			oTableRepresentation.getColumns().forEach(function(column) {
@@ -23,7 +23,8 @@
 			});
 			var viewSettingDialog = new sap.m.ViewSettingsDialog({// view setting dialog which has the sort items
 				sortItems : aSortItems,
-				confirm : oController.handleConfirmForSort.bind(oController)
+				confirm : oController.handleConfirmForSort.bind(oController),
+				cancel : oController.handleCancel.bind(oController)
 			});
 			return viewSettingDialog;
 		}

@@ -6,7 +6,7 @@
  */
 
 sap.ui.define([
-	'./ContainerBaseRenderer', 'sap/ui/core/Renderer', 'sap/ui/Device'
+	"./ContainerBaseRenderer", "sap/ui/core/Renderer", "sap/ui/Device"
 ], function(BaseContainerRenderer, Renderer, Device) {
 	"use strict";
 
@@ -31,8 +31,19 @@ sap.ui.define([
 			oRm.addClass("sapUiVkMapContainerNavbarArea");
 			oRm.writeClasses();
 			oRm.write(">");
+
 			// navbar
+			if (oControl.getShowMapLayer() && oControl._shouldRenderMapLayerSwitch) {
+				oRm.renderControl(oControl._currentText);
+				oRm.renderControl(oControl._selectionMap);
+			}
+
+			oRm.write("<div");
+			oRm.addClass("sapUiVkMapContainerNavbarContainer");
+			oRm.writeClasses();
+			oRm.write(">");
 			oRm.renderControl(oControl._oNavbar);
+			oRm.write("</div>");// end navbar
 			oRm.write("</div>");// end navbar
 		}
 
@@ -40,17 +51,17 @@ sap.ui.define([
 		if (!Device.system.phone && oControl._shouldRenderListPanel) {
 			oControl._oScrollCont.addStyleClass("sapUiVkMapContainerListPanelArea");
 			oRm.renderControl(oControl._oScrollCont);
-		}		
+		}
 
 		BaseContainerRenderer.writeToolbarArea(oRm, oControl);
 
 		oRm.write("</div>");// end map overlay
-		
+
 		if (Device.system.phone) {
 			oRm.write("<div id=" + oControl.getId() + "-LPW");
 			oRm.addClass("sapUiVkMapContainerLPW");
 			oRm.writeClasses();
-			oRm.write(">");	
+			oRm.write(">");
 			// close button
 			oRm.renderControl(oControl._oMenuCloseButton);
 			// list panel

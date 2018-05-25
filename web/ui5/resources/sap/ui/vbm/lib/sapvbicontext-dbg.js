@@ -1,4 +1,4 @@
-﻿// ...........................................................................//
+// ...........................................................................//
 // this module does the vbicontext handling..................................//
 
 // Author: Ulrich Roegelein
@@ -113,7 +113,7 @@ VBI.VBIContext = function(control) {
 		return null; // no scene available...................................//
 	};
 
-	vbcx.FireAction = function(action, scene, vo, de, params, instanceDirect) {
+	vbcx.FireAction = function(action, scene, vo, de, params, instanceDirect, allowPreventDefault) {
 		// fire the submit data................................................//
 		// zutun: create the xml or json dependent, on the subscription.........//
 		// and fire the submit event, providing a valid json/xml string........//
@@ -279,15 +279,15 @@ VBI.VBIContext = function(control) {
 				}
 			}
 		}
-
 		// convert to a json string............................................//
 		var txt = JSON.stringify(oRoot, null, '  ');
 
 		// raise the submit....................................................//
 		if (vbcx.m_Control) {
-			vbcx.m_Control.fireSubmit({
-				data: txt
-			});
+			if (allowPreventDefault) {
+				return vbcx.m_Control.fireEvent("submit", {data: txt}, true);
+			}
+			vbcx.m_Control.fireSubmit({data: txt});
 		}
 	};
 

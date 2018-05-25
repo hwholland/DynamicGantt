@@ -1,22 +1,28 @@
 /* global $, jQuery, sap, window */
 
 
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper'
+], function(SearchHelper) {
     "use strict";
 
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    var searchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
+    return sap.m.List.extend('sap.ushell.renderers.fiori2.search.controls.SearchResultList', {
 
-    sap.m.List.extend('sap.ushell.renderers.fiori2.search.controls.SearchResultList', {
+        init: function() {
+            if (sap.m.List.prototype.init) { // check whether superclass implements the method
+                sap.m.List.prototype.init.apply(this, arguments); // call the method with the original arguments
+            }
+
+            this.addStyleClass("searchResultList");
+        },
 
         renderer: 'sap.m.ListRenderer',
 
-        onAfterRenderingParent: sap.m.List.prototype.onAfterRendering,
         onAfterRendering: function() {
             var that = this;
 
             // First let the original sap.m.List do its work
-            that.onAfterRenderingParent();
+            sap.m.List.prototype.onAfterRendering.apply(that, arguments);
 
             var model = sap.ushell.renderers.fiori2.search.getModelSingleton();
             var multiSelectionEnabled = model.getProperty("/multiSelectionEnabled");
@@ -63,6 +69,8 @@
         _doCollectListItemsForNavigation: function() {
             var that = this;
 
+            var i, j;
+
             var oFocusRef = that.getDomRef();
             if (!oFocusRef) {
                 return;
@@ -85,31 +93,36 @@
             //Collect the dom references of the items
             var aRows = oFocusRef.getElementsByTagName("li");
             var aDomRefs = [];
-            for (var i = 0; i < aRows.length; i++) {
+            var aTileDomRefs = [];
+            for (i = 0; i < aRows.length; i++) {
                 var oRow = aRows[i];
                 if ($(oRow).hasClass("sapUshellSearchResultListItemApps")) { // Handle Tiles (including the ShowMore-Tile)
 
                     var aTiles = oRow.getElementsByClassName("sapUshellSearchTileWrapper");
-                    for (var j = 0; j < aTiles.length; j++) {
-                        var domRef = searchHelper.getFocusableTileDomRef(aTiles[j]);
+                    for (j = 0; j < aTiles.length; j++) {
+                        var domRef = SearchHelper.getFocusableTileDomRef(aTiles[j]);
                         if (!domRef || $(domRef).is(":hidden")) {
                             continue;
                         }
                         aDomRefs.push(domRef);
+                        aTileDomRefs.push(domRef);
                     }
 
                     $(oRow).removeAttr("tabindex");
                     $(oRow).removeAttr("role");
+                    $(oRow).attr("aria-hidden", "true");
 
                 } else if ($(oRow).hasClass("sapUshellSearchResultListFooter")) { // Handle ShowMore-Button
 
                     var aShowMoreLink = oRow.getElementsByClassName("sapUshellResultListMoreFooter");
-                    for (var k = 0; k < aShowMoreLink.length; k++) {
-                        aDomRefs.push(aShowMoreLink[k]);
+                    for (j = 0; j < aShowMoreLink.length; j++) {
+                        aDomRefs.push(aShowMoreLink[j]);
+                        aTileDomRefs.push(aShowMoreLink[j]);
                     }
 
                 } else if ($(oRow).hasClass("sapUshellSearchResultListItem")) { // Normal List Items
                     aDomRefs.push(oRow);
+                    aTileDomRefs.push(oRow);
                 }
             }
 
@@ -128,6 +141,15 @@
             oItemNavigation.setCycling(false);
 
             oItemNavigation.setPageSize(10);
+
+            if (aTileDomRefs.length > 0) {
+                var ariaOwnsString = $(aTileDomRefs[0]).attr("id");
+                for (i = 1; i < aTileDomRefs.length; i++) {
+                    ariaOwnsString += " " + $(aTileDomRefs[i]).attr("id");
+                }
+
+                $(that.getDomRef()).children("[role='listbox']").attr("aria-owns", ariaOwnsString);
+            }
         },
 
 
@@ -149,7 +171,7 @@
                 }
 
                 return resizeThresholds.length;
-            }
+            };
 
             var lastWindowWidthIndex = windowWidthIndex();
 
@@ -163,12 +185,12 @@
                     for (var i = 0; i < aMyListItems.length; i++) {
                         var oMyItem = aMyListItems[i];
 
-                        if (oMyItem.getContent() && oMyItem.getContent().length > 0 && oMyItem.getContent()[0].showOrHideExpandButton) {
-                            oMyItem.getContent()[0].showOrHideExpandButton();
+                        if (oMyItem.getContent() && oMyItem.getContent().length > 0 && oMyItem.getContent()[0].resizeEventHappened) {
+                            oMyItem.getContent()[0].resizeEventHappened();
                         }
                     }
                 }
-            }
+            };
 
             $(window).on("resize", resizeHandler);
         },
@@ -178,12 +200,16 @@
         enableSelectionMode: function(animated) {
             var that = this;
 
+            /* eslint new-cap:0 */
+            var deferredReturn = jQuery.Deferred();
+
             animated = animated === undefined ? true : animated;
 
             var searchResultList = $(that.getDomRef());
             if (!animated) {
                 searchResultList.addClass("sapUshellSearchResultList-ShowMultiSelection");
-                return;
+                deferredReturn.resolve();
+                return deferredReturn.promise();
             }
 
             var animationDuration = 200;
@@ -204,7 +230,7 @@
 
                 var newPadding = currentAttributesPadding + checkBoxWidth;
 
-                checkBoxExpandContainers.animate({
+                var animation01 = checkBoxExpandContainers.animate({
                         "width": checkBoxWidth,
                         "opacity": 1
                     },
@@ -213,19 +239,28 @@
                         $(this).css("width", "");
                         $(this).css("opacity", "");
                     });
-                attributesContainers.animate({
+                var animation02 = attributesContainers.animate({
                         "padding-left": newPadding
                     },
                     animationDuration,
                     function() {
                         $(this).css("padding-left", "");
                     });
+                jQuery.when(animation01, animation02).done(function() {
+                    deferredReturn.resolve();
+                });
+            } else {
+                deferredReturn.resolve();
             }
+            return deferredReturn.promise();
         },
 
 
         disableSelectionMode: function(animated) {
             var that = this;
+
+            /* eslint new-cap:0 */
+            var deferredReturn = jQuery.Deferred();
 
             animated = animated === undefined ? true : animated;
 
@@ -233,7 +268,8 @@
 
             if (!animated) {
                 searchResultList.removeClass("sapUshellSearchResultList-ShowMultiSelection");
-                return;
+                deferredReturn.resolve();
+                return deferredReturn.promise();
             }
 
             var animationDuration = 200;
@@ -264,8 +300,13 @@
                     checkBoxExpandContainers.css("width", "");
                     checkBoxExpandContainers.css("opacity", "");
                     attributesContainers.css("padding-left", "");
+                    deferredReturn.resolve();
                 });
+            } else {
+                deferredReturn.resolve();
             }
+
+            return deferredReturn.promise();
         }
 
 
@@ -279,4 +320,4 @@
         //         }
     });
 
-})();
+});

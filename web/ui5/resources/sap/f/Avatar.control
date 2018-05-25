@@ -34,39 +34,39 @@ value for the &lt;code&gt;displaySize&lt;/code&gt; property. Then, you have to s
     <since>1.46</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="src" type="sap.ui.core/URI" group="Data">
+        <property group="Data" type="sap.ui.core/URI" name="src">
             <documentation>Determines the path to the desired image or icon.</documentation>
         </property>
-        <property name="initials" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="initials">
             <documentation>Defines the displayed initials.</documentation>
         </property>
-        <property name="displayShape" type="sap.f/AvatarShape" defaultValue="Circle" group="Appearance">
+        <property group="Appearance" defaultValue="Circle" type="sap.f/AvatarShape" name="displayShape">
             <documentation>Defines the shape of the &lt;code&gt;Avatar&lt;/code&gt;.</documentation>
         </property>
-        <property name="displaySize" type="sap.f/AvatarSize" defaultValue="S" group="Appearance">
+        <property group="Appearance" defaultValue="S" type="sap.f/AvatarSize" name="displaySize">
             <documentation>Sets a predefined display size of the &lt;code&gt;Avatar&lt;/code&gt;.</documentation>
         </property>
-        <property name="customDisplaySize" type="sap.ui.core/CSSSize" defaultValue="3rem" group="Appearance">
+        <property group="Appearance" defaultValue="3rem" type="sap.ui.core/CSSSize" name="customDisplaySize">
             <documentation>Specifies custom display size of the &lt;code&gt;Avatar&lt;/code&gt;.
 
 &lt;b&gt;Note:&lt;/b&gt; It takes effect if the &lt;code&gt;displaySize&lt;/code&gt; property is set to &lt;code&gt;Custom&lt;/code&gt;.</documentation>
         </property>
-        <property name="customFontSize" type="sap.ui.core/CSSSize" defaultValue="1.125rem" group="Appearance">
+        <property group="Appearance" defaultValue="1.125rem" type="sap.ui.core/CSSSize" name="customFontSize">
             <documentation>Specifies custom font size of the &lt;code&gt;Avatar&lt;/code&gt;.
 
 &lt;b&gt;Note:&lt;/b&gt; It takes effect if the &lt;code&gt;displaySize&lt;/code&gt; property is set to &lt;code&gt;Custom&lt;/code&gt;.</documentation>
         </property>
-        <property name="imageFitType" type="sap.f/AvatarImageFitType" defaultValue="Cover" group="Appearance">
+        <property group="Appearance" defaultValue="Cover" type="sap.f/AvatarImageFitType" name="imageFitType">
             <documentation>Specifies how an image would fit in the &lt;code&gt;Avatar&lt;/code&gt;.</documentation>
         </property>
     </properties>
     <events>
-        <event name="press" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="press">
             <documentation>Fired when the user selects the control.</documentation>
         </event>
     </events>
     <aggregations>
-        <aggregation name="detailBox" type="sap.m/LightBox" since="1.48" cardinality="0..1" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..1" since="1.48" type="sap.m/LightBox" name="detailBox">
             <documentation>A &lt;code&gt;sap.m.LightBox&lt;/code&gt; instance, that will be opened automatically when the user interacts with the &lt;code&gt;Avatar&lt;/code&gt; control.
 
 The &lt;code&gt;press&lt;/code&gt; event will still be fired.</documentation>

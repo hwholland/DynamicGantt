@@ -9,15 +9,15 @@ overwrites the default value for property &lt;code&gt;columnWidth&lt;/code&gt; t
     <since>1.50</since>
     <baseType>sap.ui.unified/CalendarLegend</baseType>
     <properties>
-        <property name="itemsHeader" type="sap.ui.core/string" defaultValue="Calendar" group="Appearance">
+        <property group="Appearance" defaultValue="Calendar" type="sap.ui.core/string" name="itemsHeader">
             <documentation>Defines the text displayed in the header of the items list. It is commonly related to the calendar days.</documentation>
         </property>
-        <property name="appointmentItemsHeader" type="sap.ui.core/string" defaultValue="Appointments" group="Appearance">
+        <property group="Appearance" defaultValue="Appointments" type="sap.ui.core/string" name="appointmentItemsHeader">
             <documentation>Defines the text displayed in the header of the appointment items list. It is commonly related to the calendar appointments.</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="appointmentItems" type="sap.ui.unified/CalendarLegendItem" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.unified/CalendarLegendItem" name="appointmentItems">
             <documentation>The legend items which show color and type information about the calendar appointments.</documentation>
         </aggregation>
     </aggregations>

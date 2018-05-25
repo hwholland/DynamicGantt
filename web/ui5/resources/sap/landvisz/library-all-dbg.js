@@ -4535,7 +4535,7 @@ if ( !jQuery.sap.isDeclared('sap.landvisz.library') ) {
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.landvisz (1.38.6)
+ * Initialization Code and shared classes of library sap.landvisz (1.54.0)
  */
 jQuery.sap.declare("sap.landvisz.library");
 jQuery.sap.require('sap.ui.core.Core'); // unlisted dependency retained
@@ -4598,7 +4598,7 @@ sap.ui.getCore().initLibrary({
 		"sap.landvisz.internal.TreeField"
 	],
 	elements: [],
-	version: "1.38.6"
+	version: "1.54.0"
 });
 
 /*!
@@ -4617,7 +4617,7 @@ jQuery.sap.declare("sap.landvisz.ActionType");
 /**
  * @class Action Type of a action
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -4653,7 +4653,7 @@ jQuery.sap.declare("sap.landvisz.ComponentType");
 /**
  * @class [Enter description for ComponentType]
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -4695,7 +4695,7 @@ jQuery.sap.declare("sap.landvisz.ConnectionLine");
 /**
  * @class type file for ps, ts and mob soln
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -4731,7 +4731,7 @@ jQuery.sap.declare("sap.landvisz.ConnectionType");
 /**
  * @class type file for ps, ts and mob soln
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -4773,7 +4773,7 @@ jQuery.sap.declare("sap.landvisz.DependencyType");
 /**
  * @class View type of landscape viewer
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -4809,7 +4809,7 @@ jQuery.sap.declare("sap.landvisz.DependencyVisibility");
 /**
  * @class View Visibility of landscape viewer
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -4851,7 +4851,7 @@ jQuery.sap.declare("sap.landvisz.EntityCSSSize");
 /**
  * @class System Size supported
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -4923,7 +4923,7 @@ jQuery.sap.declare("sap.landvisz.LandscapeObject");
 /**
  * @class Type of object in the landscape
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -4989,7 +4989,7 @@ jQuery.sap.declare("sap.landvisz.ModelingStatus");
 /**
  * @class sampl doc
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5031,7 +5031,7 @@ jQuery.sap.declare("sap.landvisz.OptionType");
 /**
  * @class Action Type of a action
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5067,7 +5067,7 @@ jQuery.sap.declare("sap.landvisz.SelectionViewPosition");
 /**
  * @class position of selection view
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5109,7 +5109,7 @@ jQuery.sap.declare("sap.landvisz.SolutionType");
 /**
  * @class View type of landscape viewer
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5145,7 +5145,7 @@ jQuery.sap.declare("sap.landvisz.TechnicalSystemType");
 /**
  * @class sampl doc
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5289,7 +5289,7 @@ jQuery.sap.declare("sap.landvisz.ViewType");
 /**
  * @class View type of landscape viewer
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5331,7 +5331,7 @@ jQuery.sap.declare("sap.landvisz.internal.ContainerType");
 /**
  * @class ContainerType
  *
- * @version 1.38.6
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5421,7 +5421,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Connector of the entities
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -5594,7 +5594,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control to render the system
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -6818,7 +6818,6 @@ sap.landvisz.LandscapeEntity.prototype.onAfterRendering = function() {
 
 }; // end of sap/landvisz/LandscapeEntity.js
 if ( !jQuery.sap.isDeclared('sap.landvisz.LandscapeViewerRenderer') ) {
-
 /*!
 *  @copyright 2012-2014 SAP SE. All rights reserved@
 */
@@ -6894,8 +6893,8 @@ sap.landvisz.LandscapeViewerRenderer.render = function(oRm, oControl) {
                            this._renderDependencyView(oRm, oControl);
                     }
 
-                   /* if (oControl.getViewType() == sap.landvisz.ViewType.DEPENDENCY_VIEW)
-                           this._renderNavigationPanel(oRm, oControl);*/
+                    if (oControl.getViewType() == sap.landvisz.ViewType.DEPENDENCY_VIEW)
+                           this._renderNavigationPanel(oRm, oControl);
              }
              oRm.write("</div>");
        }
@@ -7020,7 +7019,7 @@ sap.landvisz.LandscapeViewerRenderer._renderDeploymentViewHeader = function(
 sap.landvisz.LandscapeViewerRenderer._renderSolutionViewer = function(oRm,oControl) {
 
       if(null!= oControl.getPlugContent())
-                 this. _renderPlugContent(oRm,oControl);
+    	 this. _renderPlugContent(oRm,oControl);
 
        oRm.write("<div");
        oRm.writeAttributeEscaped("id", oControl.getId() + "-solutionViewContainer");
@@ -7030,26 +7029,26 @@ sap.landvisz.LandscapeViewerRenderer._renderSolutionViewer = function(oRm,oContr
        oRm.addStyle("width", width + "px");
         var calHeight; 
        if(oControl.getSolutionType() == sap.landvisz.SolutionType.DEPLOYMENT_VIEW){
-                  calHeight = oControl.getPlugContentHeight() + 90;
-//                   oRm.addStyle("height", "calc(100% - 90px)");
-//                   oRm.addStyle("height", "-webkit-calc(100% - 90px)");
-//                   oRm.addStyle("height", "-moz-calc(100% - 90px)");
-//                   oRm.addStyle("height", "-o-calc(100% - 90px)");
-                                oRm.addStyle("position", "absolute");
+    	  calHeight = oControl.getPlugContentHeight() + 90;
+//	       oRm.addStyle("height", "calc(100% - 90px)");
+//	       oRm.addStyle("height", "-webkit-calc(100% - 90px)");
+//	       oRm.addStyle("height", "-moz-calc(100% - 90px)");
+//	       oRm.addStyle("height", "-o-calc(100% - 90px)");
+    	  	oRm.addStyle("position", "absolute");
        }else{
-                   calHeight = oControl.getPlugContentHeight() + 35;
-//               oRm.addStyle("height", "calc(100% - 35px)");
-//                   oRm.addStyle("height", "-webkit-calc(100% - 35px)");
-//                   oRm.addStyle("height", "-moz-calc(100% - 35px)");
-//                   oRm.addStyle("height", "-o-calc(100% - 35px)");
+    	   calHeight = oControl.getPlugContentHeight() + 35;
+//    	   oRm.addStyle("height", "calc(100% - 35px)");
+//	       oRm.addStyle("height", "-webkit-calc(100% - 35px)");
+//	       oRm.addStyle("height", "-moz-calc(100% - 35px)");
+//	       oRm.addStyle("height", "-o-calc(100% - 35px)");
        }
        
        
-                                oRm.addStyle("height", "calc(100% - "+calHeight+"px)");
-                       oRm.addStyle("height", "-webkit-calc(100% - "+calHeight+"px)");
-                       oRm.addStyle("height", "-moz-calc(100% - "+calHeight+"px)");
-                       oRm.addStyle("height", "-o-calc(100% - "+calHeight+"px)");
-                       oRm.addStyle("top",calHeight+"px");
+       		oRm.addStyle("height", "calc(100% - "+calHeight+"px)");
+	       oRm.addStyle("height", "-webkit-calc(100% - "+calHeight+"px)");
+	       oRm.addStyle("height", "-moz-calc(100% - "+calHeight+"px)");
+	       oRm.addStyle("height", "-o-calc(100% - "+calHeight+"px)");
+	       oRm.addStyle("top",calHeight+"px");
        oRm.writeStyles();
        oRm.write(">");
       
@@ -7067,7 +7066,7 @@ sap.landvisz.LandscapeViewerRenderer._renderSolutionViewer = function(oRm,oContr
 sap.landvisz.LandscapeViewerRenderer._renderPlugContent = function(oRm,oControl) {
 
 
-                   oRm.write("<div");
+	   oRm.write("<div");
        oRm.writeAttributeEscaped("id", oControl.getId() + "-solutionPlugContent");
         oRm.addStyle("top", "32px");
         oRm.addStyle("width", "100%");
@@ -7116,15 +7115,15 @@ sap.landvisz.LandscapeViewerRenderer._renderSolutionContainer = function(oRm,
 //algorithm to render components in solution viewer inner container
 sap.landvisz.LandscapeViewerRenderer._renderSolution = function(oRm, oControl) {
 
-                oControl.connection.init();
-                var options = oControl.getSolutionOptions();
-                var connectedLayout;
-                if (options.length >0 && options[0].getType() == sap.landvisz.OptionType.VIEW) 
+	oControl.connection.init();
+	var options = oControl.getSolutionOptions();
+	var connectedLayout;
+	if (options.length >0 && options[0].getType() == sap.landvisz.OptionType.VIEW) 
        connectedLayout = oControl.getViewConnectedLayout()
     else { 
     
            connectedLayout = oControl.getEntityConnectedLayout()
-//            var connectors = oControl.getConnectors();
+//    	var connectors = oControl.getConnectors();
 //       connectedLayout = oControl.connection.getBoxViewConnectedNodesLayout(connectors);
          }
        var entityID;
@@ -7556,12 +7555,12 @@ sap.landvisz.LandscapeViewerRenderer._makeViewOptionVisible = function(oRm,
              if (selectedDepTypes && selectedDepTypes.length > 0){
                     boxContainerHeight = boxContainerHeight + 40;
                     jQuery.sap.byId(depContainerid).css({
-                                                                                 "display" : "block",
-                                                                 });
+   					 "display" : "block",
+   				 });
              }else{
-                 jQuery.sap.byId(depContainerid).css({
-                                                                                "display" : "none",
-                                                                });
+            	 jQuery.sap.byId(depContainerid).css({
+					 "display" : "none",
+				 });
              }
 
              var boxContainerId = oControl.getId() + "-solutionInnerContainer";
@@ -7572,118 +7571,118 @@ sap.landvisz.LandscapeViewerRenderer._makeViewOptionVisible = function(oRm,
              }, 400);
 
              setTimeout(
-                                 function() {
+            		 function() {
 
 
-                                                 var boxContainerId = oControl.getId() + "-solutionInnerContainer";
-                                                 var boxContainer = jQuery.sap.byId(boxContainerId);
-                                                 var boxLeftMargine = boxContainer[0].offsetLeft;
-                                                 var boxTopMargine = boxContainer[0].offsetTop;
+            			 var boxContainerId = oControl.getId() + "-solutionInnerContainer";
+            			 var boxContainer = jQuery.sap.byId(boxContainerId);
+            			 var boxLeftMargine = boxContainer[0].offsetLeft;
+            			 var boxTopMargine = boxContainer[0].offsetTop;
 
-                                                 var deploymentOptionsTop = 0;
-                                                 var connectionEntities = oControl.getConnectionEntities();
-                                                 for ( var i = 0; i < connectionEntities.length; i++) {
-                                                                 connectionId = connectionEntities[i].getConnectionId();
-                                                                 if (connectedLayout[connectionId]) {
-                                                                                 leftPos = Number(connectedLayout[connectionId].col
-                                                                                                                 * (oControl.entityWidth + 10));
-                                                                                 topPos = Number(connectedLayout[connectionId].row
-                                                                                                                 * (oControl.entityHeight + 10));
-                                                                                 leftPos = Number(connectedLayout[connectionId].col
-                                                                                                                 * (oControl.entityWidth + 10))
-                                                                                                                 + margin;
-                                                                                 topPos = Number(connectedLayout[connectionId].row
-                                                                                                                 * (oControl.entityHeight + 10))
-                                                                                                                 + margin;
-                                                                                 connectionEntities[i].left = leftPos
-                                                                                 + boxLeftMargine;
-                                                                                 deploymentOptionsTop = connectionEntities[i].top ;
-                                                                                 connectionEntities[i].top = leftPos + boxTopMargine;
-                                                                                 connectionEntityWidth = Number(((connectedLayout[connectionId].colspan) * oControl.entityWidth)
-                                                                                                                 + ((connectedLayout[connectionId].colspan - 1) * margin));
-                                                                                 var entity = jQuery.sap.byId(connectionEntities[i]
-                                                                                 .getId());
+            			 var deploymentOptionsTop = 0;
+            			 var connectionEntities = oControl.getConnectionEntities();
+            			 for ( var i = 0; i < connectionEntities.length; i++) {
+            				 connectionId = connectionEntities[i].getConnectionId();
+            				 if (connectedLayout[connectionId]) {
+            					 leftPos = Number(connectedLayout[connectionId].col
+            							 * (oControl.entityWidth + 10));
+            					 topPos = Number(connectedLayout[connectionId].row
+            							 * (oControl.entityHeight + 10));
+            					 leftPos = Number(connectedLayout[connectionId].col
+            							 * (oControl.entityWidth + 10))
+            							 + margin;
+            					 topPos = Number(connectedLayout[connectionId].row
+            							 * (oControl.entityHeight + 10))
+            							 + margin;
+            					 connectionEntities[i].left = leftPos
+            					 + boxLeftMargine;
+            					 deploymentOptionsTop = connectionEntities[i].top ;
+            					 connectionEntities[i].top = leftPos + boxTopMargine;
+            					 connectionEntityWidth = Number(((connectedLayout[connectionId].colspan) * oControl.entityWidth)
+            							 + ((connectedLayout[connectionId].colspan - 1) * margin));
+            					 var entity = jQuery.sap.byId(connectionEntities[i]
+            					 .getId());
 
-                                                                                 entity.animate({
-                                                                                                 left : connectionEntities[i].left,
-                                                                                                 top : connectionEntities[i].top,
-                                                                                                 width : connectionEntityWidth,
-                                                                                                 height : 90,
-                                                                                 }, 600, 'swing');
+            					 entity.animate({
+            						 left : connectionEntities[i].left,
+            						 top : connectionEntities[i].top,
+            						 width : connectionEntityWidth,
+            						 height : 90,
+            					 }, 600, 'swing');
 
-                                                                                 var connectionRow = jQuery.sap
-                                                                                 .byId(connectionEntities[i].getId()
-                                                                                                                 + "connectionRow");
+            					 var connectionRow = jQuery.sap
+            					 .byId(connectionEntities[i].getId()
+            							 + "connectionRow");
 
-                                                                                connectionRow.animate({
-                                                                                                 width : connectionEntityWidth,
-                                                                                                 height : 90,
-                                                                                 }, 600, 'swing');
-                                                                                 
-                                                                                 var conLbl =  jQuery.sap.byId(connectionEntities[i].getId() +"-connectionLabel");
-                                                                                 var conLblWidth = connectionEntityWidth - 68;
-                                                                                  conLbl.css({
-                                                                                                                "max-width" : conLblWidth,
-                                                                                                });
-                                                                 }
-                                                 }
-                                                 oControl.visibleEntities = [];
-                                                 for ( var i = 0; i < systems.length; i++) {
-                                                                 entityID = systems[i].getSystemId();
-                                                                 var labelWidth = 0;
-                                                                 labelWidth = 30 + margin;
-                                                                 var actualMargin = 30;
-                                                                 if (connectedLayout[entityID]) {
-                                                                                 var leftPos = 0;
-                                                                                 var topPos = 0;
-                                                                                 leftPos += Number((connectedLayout[entityID].col * (oControl.entityWidth))
-                                                                                                                 + ((connectedLayout[entityID].col + 1) * margin));
+            					 connectionRow.animate({
+            						 width : connectionEntityWidth,
+            						 height : 90,
+            					 }, 600, 'swing');
+            					 
+            					 var conLbl =  jQuery.sap.byId(connectionEntities[i].getId() +"-connectionLabel");
+            					 var conLblWidth = connectionEntityWidth - 68;
+            					  conLbl.css({
+            						  	"max-width" : conLblWidth,
+            					  	});
+            				 }
+            			 }
+            			 oControl.visibleEntities = [];
+            			 for ( var i = 0; i < systems.length; i++) {
+            				 entityID = systems[i].getSystemId();
+            				 var labelWidth = 0;
+            				 labelWidth = 30 + margin;
+            				 var actualMargin = 30;
+            				 if (connectedLayout[entityID]) {
+            					 var leftPos = 0;
+            					 var topPos = 0;
+            					 leftPos += Number((connectedLayout[entityID].col * (oControl.entityWidth))
+            							 + ((connectedLayout[entityID].col + 1) * margin));
 
-                                                                                 topPos += Number(((connectedLayout[entityID].row - 1) * (oControl.entityHeight))
-                                                                                                                 + ((connectedLayout[entityID].row + 1) * margin)
-                                                                                                                 + oControl.boxModeHeight);
-                                                                                 systems[i].left = leftPos + boxLeftMargine;
-                                                                                 systems[i].top = topPos + boxTopMargine;
-                                                                                 system = jQuery.sap.byId(systems[i].getId());
-                                                                                 system.css({
-                                                                                                 left : leftPos + boxLeftMargine,
-                                                                                                 top : topPos + boxTopMargine
-                                                                                 });
-                                                                                 system.show("700");
-                                                                                 oControl.visibleEntities.push(systems[i]);
-                                                                 }
+            					 topPos += Number(((connectedLayout[entityID].row - 1) * (oControl.entityHeight))
+            							 + ((connectedLayout[entityID].row + 1) * margin)
+            							 + oControl.boxModeHeight);
+            					 systems[i].left = leftPos + boxLeftMargine;
+            					 systems[i].top = topPos + boxTopMargine;
+            					 system = jQuery.sap.byId(systems[i].getId());
+            					 system.css({
+            						 left : leftPos + boxLeftMargine,
+            						 top : topPos + boxTopMargine
+            					 });
+            					 system.show("700");
+            					 oControl.visibleEntities.push(systems[i]);
+            				 }
 
-                                                 }
+            			 }
 
-                                                 var depContainerid = oControl.getId() + "-deploymentTypeContainer";
-                                                 var depContainer = jQuery.sap.byId(depContainerid);
+            			 var depContainerid = oControl.getId() + "-deploymentTypeContainer";
+            			 var depContainer = jQuery.sap.byId(depContainerid);
 
-                                                 depContainer.css({
-                                                                 left : boxLeftMargine,
-                                                                 width : boxContainerWidth,
-                                                 });
+            			 depContainer.css({
+            				 left : boxLeftMargine,
+            				 width : boxContainerWidth,
+            			 });
 
-                                                 var depLeft;
-                                                 var srcEntity;
-                                                 if (selectedDepTypes && selectedDepTypes.length > 0) {
-                                                                 for ( var x = 0; x < selectedDepTypes.length; x++) {
-                                                                                 deploymentType = selectedDepTypes[x];
-                                                                                 for ( var i = 0; i < systems.length; i++) {
-                                                                                                 if (systems[i].getSystemId() == deploymentType.srcEntityId) {
-                                                                                                                 srcEntity = systems[i];
-                                                                                                                 break;
-                                                                                                 }
-                                                                                 }
-                                                                                 depLeft = srcEntity.left - boxLeftMargine;
-                                                                                 jQuery.sap.byId(deploymentType.getId()).css({
-                                                                                                 "display" : "block",
-                                                                                                 "left" : depLeft
-                                                                                 });
+            			 var depLeft;
+            			 var srcEntity;
+            			 if (selectedDepTypes && selectedDepTypes.length > 0) {
+            				 for ( var x = 0; x < selectedDepTypes.length; x++) {
+            					 deploymentType = selectedDepTypes[x];
+            					 for ( var i = 0; i < systems.length; i++) {
+            						 if (systems[i].getSystemId() == deploymentType.srcEntityId) {
+            							 srcEntity = systems[i];
+            							 break;
+            						 }
+            					 }
+            					 depLeft = srcEntity.left - boxLeftMargine;
+            					 jQuery.sap.byId(deploymentType.getId()).css({
+            						 "display" : "block",
+            						 "left" : depLeft
+            					 });
 
-                                                                 }
-                                                 }
+            				 }
+            			 }
 
-                                 }, 405);
+            		 }, 405);
        }
 };
 
@@ -7760,7 +7759,7 @@ sap.landvisz.LandscapeViewerRenderer._renderSelectionView = function(oRm,
        var systems = oControl.getSystems();
        var actions = systems[0].getActionBar();
 
-      for ( var j = 0; j < actions.length; j++) {
+       for ( var j = 0; j < actions.length; j++) {
              actions[j].attachEvent("changeView", function(event) {
                     oControl.resetView(systems[0], event.oSource);
              }, this);
@@ -7853,7 +7852,7 @@ sap.landvisz.LandscapeViewerRenderer._renderDependencyView = function(oRm,
        oRm.addStyle("width", width + "px");
        oRm.addStyle("height", height + "px");
        oRm.addStyle("position", "absolute");
-       oRm.addStyle("overflow", "auto");
+       oRm.addStyle("overflow", "hidden");
        oRm.addStyle("top", 26 + "px");
        oRm.writeStyles();
        oRm.write(">");
@@ -8028,7 +8027,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllEntities = function(oRm,
         
         var connectedNodesLayout;
        if(oControl.getConnectionLine() == sap.landvisz.ConnectionLine.Line)
-                   connectedNodesLayout  = oControl.connection.getConnectedNodesLayout(connectors);
+    	   connectedNodesLayout  = oControl.connection.getConnectedNodesLayout(connectors);
        else
          connectedNodesLayout  = oControl.connection.getConnectedNodesLayoutTrack(connectors);
          
@@ -8036,7 +8035,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllEntities = function(oRm,
        var connectionEntities = oControl.getConnectionEntities();
        var systemsMargin = 50;
        if(connectionEntities.length>0)
-                   systemsMargin = 0;
+    	   systemsMargin = 0;
        var entityID;
        var connectionId;
        for ( var i = 0; i < systems.length; i++) {
@@ -8114,7 +8113,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllEntities = function(oRm,
        }
 
        if (oControl.connection.svgForConnections)
-            oControl.connection.svgForConnections.style("display", "block");
+             oControl.connection.svgForConnections.style("display", "block");
        else if (isRendering == false) {
 
              var navigationContainer = jQuery.sap.byId(oControl.getId()
@@ -8450,7 +8449,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllBoxViewEntities = function(oRm,
                                  connectionEntities[i].left = leftPos + 30;
                            connectionEntities[i].top = topPos;
                            connectionEntities[i].viewType = oControl.currentView;
-                          connectionEntities[i].width = connectionEntityWidth;
+                           connectionEntities[i].width = connectionEntityWidth;
                            connectionEntities[i].height = 0;
                            connectionEntities[i].addStyleClass("sapLandviszConnectionBox");
                     } else {
@@ -8477,7 +8476,7 @@ sap.landvisz.LandscapeViewerRenderer.renderAllBoxViewEntities = function(oRm,
              var levelHeaderLeft = oControl.boxLeftMargine + margin;
              var levelHeaderTop = oControl.boxModeHeight + (margin * 2)
                            + oControl.boxTopMargine;
-            var boxLevels = oControl.getBoxDependencyLevels();
+             var boxLevels = oControl.getBoxDependencyLevels();
              var boxViewFirstLabel = "Systems";
              var boxViewFirstLabelTooltip = "Systems";
 
@@ -8584,8 +8583,6 @@ sap.landvisz.LandscapeViewerRenderer._animateConnectionEntityContainer = functio
 
 
 
-
-
 }; // end of sap/landvisz/LandscapeViewerRenderer.js
 if ( !jQuery.sap.isDeclared('sap.landvisz.LongTextField') ) {
 /*!
@@ -8643,7 +8640,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Long text for a header
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -8806,7 +8803,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Options for solution entities
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -9040,7 +9037,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Options source for solution entities
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -9170,7 +9167,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control that render actions of a system
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -9781,7 +9778,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control that renders the data container section in a system
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -10160,7 +10157,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control to render deployment type of a component
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -10303,7 +10300,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control to specify entity actions
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -10560,7 +10557,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control to render custom actions of visualization control
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -10800,7 +10797,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control to render headers of a control
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -11117,7 +11114,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Acontrol to render identification bar of a system
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -11611,7 +11608,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control to render linear row fields in data container region of a system
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -11987,7 +11984,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Modeling Status of entity
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -12227,7 +12224,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control to render nester row fields in a control
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -12641,7 +12638,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control that shows all the tabs separately for a better view
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -12984,7 +12981,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A control to render tree field in the control
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -13267,7 +13264,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Connection Entity of Dependency view
  * @extends sap.ui.core.Control
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -13826,7 +13823,7 @@ jQuery.sap.declare("sap.landvisz.LandscapeViewer");
  * @class
  * Visualize the landscape objects in a new user experience
  * @extends sap.landvisz.Option
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -15057,7 +15054,6 @@ sap.landvisz.LandscapeViewer.M_EVENTS = {'close':'close','loadSolutionView':'loa
 // Start of sap/landvisz/LandscapeViewer.js
 
 
-
 jQuery.sap.require('sap.landvisz.libs.lvsvg'); // unlisted dependency retained
 
 
@@ -15105,7 +15101,7 @@ sap.landvisz.LandscapeViewer.prototype.init = function() {
 
 sap.landvisz.LandscapeViewer.prototype.onwindowresize = function(oEvent) {
 
-                   var viewer = jQuery.sap.byId(this.getId());
+	   var viewer = jQuery.sap.byId(this.getId());
        if (this.getHasParent() == false) {
              var win = jQuery(window);
              var resizeWidth = win.width();
@@ -15162,7 +15158,7 @@ sap.landvisz.LandscapeViewer.prototype.onclick = function(oEvent) {
        }
 
        if (this.getViewType() == sap.landvisz.ViewType.SELECTION_VIEW && oEvent.srcControl.getTooltip() == this.RESTORE_TEXT) {
-                                 var expWidth = this.windowWidth - 40;
+    	   	 var expWidth = this.windowWidth - 40;
              var expHeight = this.windowHeight;
              selectedSystem.sViewWidth = expWidth;
              selectedSystem.sViewHeight = expHeight;
@@ -15289,7 +15285,7 @@ sap.landvisz.LandscapeViewer.prototype._animateMaximizeView = function(selectedS
 
 sap.landvisz.LandscapeViewer.prototype._animateRestoreView = function(selectedSystem, container) {
 
-                                                var expWidth = this.windowWidth - 40;
+			 var expWidth = this.windowWidth - 40;
              var expHeight = this.windowHeight;
              selectedSystem.sViewWidth = expWidth;
              selectedSystem.sViewHeight = expHeight;
@@ -15573,33 +15569,33 @@ if (this.getViewType() == sap.landvisz.ViewType.SOLUTION_VIEW) {
                            "max-width" : conLblWidth,
                     });
              }
-                                    if (this.getSolutionType() == sap.landvisz.SolutionType.DEPLOYMENT_VIEW) {
+		    if (this.getSolutionType() == sap.landvisz.SolutionType.DEPLOYMENT_VIEW) {
 
-                                                var depContainerid = this.getId() + "-deploymentTypeContainer";
-                                                var depContainer = jQuery.sap.byId(depContainerid);
-                                                var boxWidth = innerContainer[0].offsetWidth;
-                                                var depContainerTop = this.entityHeight + 90 + 10;
+			var depContainerid = this.getId() + "-deploymentTypeContainer";
+			var depContainer = jQuery.sap.byId(depContainerid);
+			var boxWidth = innerContainer[0].offsetWidth;
+			var depContainerTop = this.entityHeight + 90 + 10;
 
-                                                depContainer.css({
-                                                                left : this.innerLeftMargine,
-                                                                top : depContainerTop,
-                                                                width : boxWidth
-                                                });
+			depContainer.css({
+				left : this.innerLeftMargine,
+				top : depContainerTop,
+				width : boxWidth
+			});
 
-                                  if (null != this.selectedOptionEntity) {
-                                                                var selectedDepTypes = this.depTypeOptions[this.selectedOptionEntity
-                                                                                                .getId()];
-                                                                                if (this.getShowDeploymentTypeSection() == true
-                                                                                                && selectedDepTypes.length <= 0) {
+		  if (null != this.selectedOptionEntity) {
+				var selectedDepTypes = this.depTypeOptions[this.selectedOptionEntity
+						.getId()];
+					if (this.getShowDeploymentTypeSection() == true
+						&& selectedDepTypes.length <= 0) {
 
-                                                                                                var changedHeight = innerContainer[0].offsetHeight - 40;
+						var changedHeight = innerContainer[0].offsetHeight - 40;
 
-                                                                                                innerContainer.css({
-                                                                                                height : changedHeight
-                                                                                                });
-                                                                                }
-                                                                }
-                                    }
+						innerContainer.css({
+						height : changedHeight
+						});
+					}
+				}
+		    }
              if (this.getSolutionOptionType() == sap.landvisz.OptionType.ENTITY) {
 
                     var optionContainerid = this.getId() + "-optionContainer";
@@ -15621,15 +15617,15 @@ if (this.getViewType() == sap.landvisz.ViewType.SOLUTION_VIEW) {
              
              if (this.getSolutionType() == sap.landvisz.SolutionType.COMPONENT_VIEW) {
 
-                 this.compViewBtn.addStyleClass("selectedView");
+            	 this.compViewBtn.addStyleClass("selectedView");
 
-                 this.depViewBtn.removeStyleClass("selectedView");
+            	 this.depViewBtn.removeStyleClass("selectedView");
 
              }else if (this.getSolutionType() == sap.landvisz.SolutionType.DEPLOYMENT_VIEW) {
-                 
-                 this.depViewBtn.addStyleClass("selectedView");
+            	 
+            	 this.depViewBtn.addStyleClass("selectedView");
 
-                 this.compViewBtn.removeStyleClass("selectedView");
+            	 this.compViewBtn.removeStyleClass("selectedView");
              }
        }
 
@@ -15789,18 +15785,18 @@ if (this.getViewType() == sap.landvisz.ViewType.SOLUTION_VIEW) {
 
        if (this.getViewType() == sap.landvisz.ViewType.DEPENDENCY_VIEW
                     && this.currentView == sap.landvisz.DependencyType.NETWORK_VIEW) {
-                   
-                     this.networkViewBtn.addStyleClass("selectedView");
+    	   
+    	     this.networkViewBtn.addStyleClass("selectedView");
 
-                     this.boxViewBtn.removeStyleClass("selectedView");
+    	     this.boxViewBtn.removeStyleClass("selectedView");
        }
 
        if (this.getViewType() == sap.landvisz.ViewType.DEPENDENCY_VIEW
                     && this.currentView == sap.landvisz.DependencyType.BOX_VIEW) {
-                   
-                   this.boxViewBtn.addStyleClass("selectedView");
-                   
-                   this.networkViewBtn.removeStyleClass("selectedView");
+    	   
+    	   this.boxViewBtn.addStyleClass("selectedView");
+    	   
+    	   this.networkViewBtn.removeStyleClass("selectedView");
        }
 
        if (this.getViewType() == sap.landvisz.ViewType.DEPENDENCY_VIEW) {
@@ -15824,7 +15820,7 @@ if (this.getViewType() == sap.landvisz.ViewType.SOLUTION_VIEW) {
              var frameScrollHeight = Number(enitityContainer[0].scrollHeight);
              var frameScrollWidth = Number(enitityContainer[0].scrollWidth);
              var frameHeight = Number(enitityContainer.height());
-            var frameWidth = Number(enitityContainer.width());
+             var frameWidth = Number(enitityContainer.width());
 
              if ((frameScrollWidth > frameWidth)
                            || (frameScrollHeight > frameHeight)) {
@@ -15878,7 +15874,7 @@ if (this.getViewType() == sap.landvisz.ViewType.SOLUTION_VIEW) {
              navigationContainer.draggable({
                     cancel : "div.navigationHeader",
                     containment : enitityContainer
-            });
+             });
        }
 
 };
@@ -15905,23 +15901,24 @@ sap.landvisz.LandscapeViewer.prototype.calculateNavigationMovement = function(
 sap.landvisz.LandscapeViewer.prototype.getVisibleRegion = function() {
 
        var enitityContainer = jQuery.sap.byId(this.getId() + "-viewContainer");
-       /*var navigationContainer = jQuery.sap.byId(this.getId() + "-navigation");
+       var navigationContainer = jQuery.sap.byId(this.getId() + "-navigation");
        var navigator = jQuery.sap.byId(this.getId() + "-navigation_navigator");
        navigationContainer.css({
              height : '29%'
        });
        setTimeout(function() {
-             sap.landvisz.libs.lvsvg.convertHtmltoCanvas(enitityContainer,navigationContainer);
+             sap.landvisz.libs.lvsvg.convertHtmltoCanvas(enitityContainer,
+                           navigationContainer);
        }, 1000);
-       navigationContainer.hide();*/
+       navigationContainer.hide();
 
        setTimeout(function() {
-             /*navigationContainer.show("slow");
+             navigationContainer.show("slow");
              navigationContainer.animate({
                     height : '29%'
              }, 100, "swing", function(e) {
                     navigator.show("slow");
-             });*/
+             });
 
              var frameScrollHeight = Number(enitityContainer[0].scrollHeight);
              var frameScrollWidth = Number(enitityContainer[0].scrollWidth);
@@ -15930,7 +15927,7 @@ sap.landvisz.LandscapeViewer.prototype.getVisibleRegion = function() {
              var heightRatio = frameHeight / frameScrollHeight;
              var widthRatio = frameWidth / frameScrollWidth;
 
-            /* setTimeout(function() {
+             setTimeout(function() {
 
                     var navHeight = Number(navigationContainer[0].scrollHeight);
                     var navWidth = Number(navigationContainer[0].scrollWidth);
@@ -15944,7 +15941,7 @@ sap.landvisz.LandscapeViewer.prototype.getVisibleRegion = function() {
                     });
 
              }, 1500);
-*/
+
        }, 1000);
 };
 
@@ -16244,21 +16241,21 @@ sap.landvisz.LandscapeViewer.prototype.exit = function() {
 
 sap.landvisz.LandscapeViewer.prototype.getViewConnectedLayout = function() {
    
-                var connectedLayout;
-                                var sources;
-                                var optionsEntities;
-                                var sources;
-                                var connectors = this.getConnectors();
-                                optionsEntities = this.oHLayoutOptions.getContent();
-                                for ( var y = 1; y < optionsEntities.length; y++) {
-                                                if (optionsEntities[y].getSelected() == true) {
-                                                                sources = optionsEntities[y].getOptionSources();
-                                                                break;
+     	var connectedLayout;
+		var sources;
+		var optionsEntities;
+		var sources;
+		var connectors = this.getConnectors();
+		optionsEntities = this.oHLayoutOptions.getContent();
+		for ( var y = 1; y < optionsEntities.length; y++) {
+			if (optionsEntities[y].getSelected() == true) {
+				sources = optionsEntities[y].getOptionSources();
+				break;
 
-                                                }
-                                }
+			}
+		}
        // we are taking a tradeoff that there is only one connection entity for
-                                // the
+		// the
        // Solution view & the same is declared as source for the connector
        
        var connectionEntityId = connectors[0].getSource();
@@ -16283,22 +16280,22 @@ sap.landvisz.LandscapeViewer.prototype.getViewConnectedLayout = function() {
 sap.landvisz.LandscapeViewer.prototype.getEntityConnectedLayout = function() {
    
 
-                var connectedLayout;
-                var optionsEntities;
-                var connectors = this.getConnectors();
-                var option;
-                var connectorArray = [];
-                for ( var i = 0; i < connectors.length; i++) {
+	var connectedLayout;
+	var optionsEntities;
+	var connectors = this.getConnectors();
+	var option;
+	var connectorArray = [];
+	for ( var i = 0; i < connectors.length; i++) {
 
-                                option = this.getOptionConnector(connectors[i]);
-                                if ("" !== option)
-                                                connectorArray.push(option);
-                                else
-                                                connectorArray.push(connectors[i]);
-                }
-                                
-                                
-                                connectedLayout = this.connection
+		option = this.getOptionConnector(connectors[i]);
+		if ("" !== option)
+			connectorArray.push(option);
+		else
+			connectorArray.push(connectors[i]);
+	}
+		
+		
+		connectedLayout = this.connection
                     .getBoxViewConnectedNodesLayout(connectorArray);
        
       return connectedLayout;
@@ -16308,48 +16305,48 @@ sap.landvisz.LandscapeViewer.prototype.getEntityConnectedLayout = function() {
 
 sap.landvisz.LandscapeViewer.prototype.getOptionConnector = function(connector) {
 
-                var options = this.getSolutionOptions();
-                var optionsEntities;
-                var sources;
-                var entityConnector;
-                var optionSrcEntity;
-                for ( var x = 0; x < options.length; x++) {
+	var options = this.getSolutionOptions();
+	var optionsEntities;
+	var sources;
+	var entityConnector;
+	var optionSrcEntity;
+	for ( var x = 0; x < options.length; x++) {
 
-                                if (options[x].getCurrentEntity() == connector.getTarget()) {
-                                
-                                                optionsEntities = options[x].getOptionEntities();
-                                                
-                                                for ( var y = 0; y < optionsEntities.length; y++) {
-                                                
-                                                  optionSrcEntity = optionsEntities[y].getOptionSources()[0].getSource();
-                                                  
-                                                                if (optionsEntities[y].getSelected() == true && optionSrcEntity != connector.getTarget()) {
-                                                                                entityConnector = new sap.landvisz.Connector();
-                                                                                entityConnector.setSource(connector.getSource());
-                                                                                optionsEntities[y].getOptionSources()[0].getSource()
-                                                                                entityConnector.setTarget(optionsEntities[y].getOptionSources()[0].getSource());
-                                                                                this.srcEntity = optionSrcEntity;
-                                                                                return entityConnector;
-                                                                                
-                                                                }
-                                                }
+		if (options[x].getCurrentEntity() == connector.getTarget()) {
+		
+			optionsEntities = options[x].getOptionEntities();
+			
+			for ( var y = 0; y < optionsEntities.length; y++) {
+			
+			  optionSrcEntity = optionsEntities[y].getOptionSources()[0].getSource();
+			  
+				if (optionsEntities[y].getSelected() == true && optionSrcEntity != connector.getTarget()) {
+					entityConnector = new sap.landvisz.Connector();
+					entityConnector.setSource(connector.getSource());
+					optionsEntities[y].getOptionSources()[0].getSource()
+					entityConnector.setTarget(optionsEntities[y].getOptionSources()[0].getSource());
+					this.srcEntity = optionSrcEntity;
+					return entityConnector;
+					
+				}
+			}
 
-                                }
-                }
+		}
+	}
 
-                return "";
+	return "";
 };
 sap.landvisz.LandscapeViewer.prototype.setHeight = function(height) {
 
-                                                var win = jQuery(window);
+			var win = jQuery(window);
                     if (height && "" != height) 
                            this.windowHeight = height;
                     else
                            this.windowHeight = win.height();
 };
 sap.landvisz.LandscapeViewer.prototype.setWidth = function(width) {
-                                                                var win = jQuery(window);
-                                                                if (width && "" != width) {
+				var win = jQuery(window);
+				if (width && "" != width) {
                            this.windowWidth = width;
                     } else {
                            this.windowWidth = win.width();
@@ -16419,7 +16416,7 @@ jQuery.sap.declare("sap.landvisz.OptionEntity");
  * @class
  * Options for solution entities
  * @extends sap.landvisz.OptionSource
- * @version 1.38.6
+ * @version 1.54.0
  *
  * @constructor
  * @public

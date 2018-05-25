@@ -1,12 +1,11 @@
  /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
-	function(jQuery, Device) {
+sap.ui.define([ "jquery.sap.global", "sap/ui/Device", "sap/m/ValueColor" ],
+	function(jQuery, Device, ValueColor) {
 	"use strict";
 
 	/**
@@ -17,17 +16,17 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	var RadialMicroChartRenderer = {};
 
 	//Constants
-	RadialMicroChartRenderer.FORM_RATIO = 1000; //Form ratio for the control, means the calculation base
+	RadialMicroChartRenderer.FORM_RATIO = 100; //Form ratio for the control, means the calculation base
 	RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH = 1;
-	RadialMicroChartRenderer.BACKGROUND_CIRCLE_RADIUS = 500; //Calculated by: RadialMicroChartRenderer.FORM_RATIO * 0.5
-	RadialMicroChartRenderer.CIRCLE_BORDER_WIDTH = 87.5; //Calculated by: RadialMicroChartRenderer.BACKGROUND_CIRCLE_RADIUS * 0.175<WHEEL_WIDTH_FACTOR>
-	RadialMicroChartRenderer.CIRCLE_RADIUS = 441.75; //Calculated by: RadialMicroChartRenderer.BACKGROUND_CIRCLE_RADIUS * (1.0 - 0.029<EXTERNAL_OUTER_BORDER_WIDTH_FACTOR> - 0.175<WHEEL_WIDTH_FACTOR> / 2.0)
+	RadialMicroChartRenderer.BACKGROUND_CIRCLE_RADIUS = (RadialMicroChartRenderer.FORM_RATIO / 2.0) - (RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH / 2.0);
+	RadialMicroChartRenderer.RING_WIDTH = 8.75; //Calculated by: RadialMicroChartRenderer.BACKGROUND_CIRCLE_RADIUS * 0.175<WHEEL_WIDTH_FACTOR
+	RadialMicroChartRenderer.RING_CORE_RADIUS = RadialMicroChartRenderer.BACKGROUND_CIRCLE_RADIUS - (RadialMicroChartRenderer.RING_WIDTH / 2.0) - RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH;
 	RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR = "50%";
 	RadialMicroChartRenderer.X_ROTATION = 0;
 	RadialMicroChartRenderer.SWEEP_FLAG = 1;
 	RadialMicroChartRenderer.PADDING_WIDTH = 0.22;//Should be 1 px
-	RadialMicroChartRenderer.NUMBER_FONT_SIZE = 235; //Calculated by: RadialMicroChartRenderer.BACKGROUND_CIRCLE_RADIUS * 0.47<NUMBER_FONT_SIZE_FACTOR>
-	RadialMicroChartRenderer.EDGE_CASE_SIZE_ACCESSIBLE_COLOR = 54; // this value corresponds to 14 px for text font size
+	RadialMicroChartRenderer.NUMBER_FONT_SIZE = 23.5; //Calculated by: RadialMicroChartRenderer.BACKGROUND_CIRCLE_RADIUS * 0.47<NUMBER_FONT_SIZE_FACTOR>
+	RadialMicroChartRenderer.EDGE_CASE_SIZE_USE_SMALL_FONT = 54; // this value corresponds to 14 px for text font size
 	RadialMicroChartRenderer.EDGE_CASE_SIZE_SHOW_TEXT = 46;
 	RadialMicroChartRenderer.EDGE_CASE_SIZE_MICRO_CHART = 24;
 
@@ -44,7 +43,7 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 
 		// Write the HTML into the render manager
 		this._writeDivStartElement(oControl, oRm);
-		this._writeSVGStartElement(oRm);
+		this._writeSVGStartElement(oControl, oRm);
 		this._writeBackground(oRm);
 		if (this._renderingOfInnerContentIsRequired(oControl)) {
 			this._writeBorders(oRm);
@@ -79,6 +78,8 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 			oRm.writeAttribute("tabindex", "0");
 		}
 		oRm.addClass("sapSuiteRMC");
+		var sSizeClass = "sapSuiteRMCSize" + control.getSize();
+		oRm.addClass(jQuery.sap.encodeHTML(sSizeClass));
 		oRm.writeClasses();
 		oRm.writeStyles();
 		oRm.write(">");
@@ -88,16 +89,18 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 * Writes the start tag for the SVG element.
 	 *
 	 * @private
+	 * @param {sap.suite.ui.microchart.RadialMicroChart} control the current chart control
 	 * @param {sap.ui.core.RenderManager} oRm the render manager
 	 */
-	RadialMicroChartRenderer._writeSVGStartElement = function(oRm) {
+	RadialMicroChartRenderer._writeSVGStartElement = function(control, oRm) {
 		var sPreserveAspectRatio;
 		if (!sap.ui.getCore().getConfiguration().getRTL()) {
 			sPreserveAspectRatio = "xMaxYMid meet";
 		} else {
 			sPreserveAspectRatio = "xMinYMid meet";
 		}
-		oRm.write("<svg width=\"100%\" height=\"100%\" focusable=\"false\" viewBox=\"0 0 " + RadialMicroChartRenderer.FORM_RATIO + ' ' + RadialMicroChartRenderer.FORM_RATIO + "\" preserveAspectRatio=\"" + jQuery.sap.encodeHTML(sPreserveAspectRatio) + "\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">");
+		var sSizeClass = "sapSuiteRMCSize" + control.getSize();
+		oRm.write("<svg class=\"sapSuiteRMC " + jQuery.sap.encodeHTML(sSizeClass) + "\" focusable=\"false" + "\" viewBox=\"0 0 " + RadialMicroChartRenderer.FORM_RATIO + ' ' + RadialMicroChartRenderer.FORM_RATIO + "\" preserveAspectRatio=\"" + jQuery.sap.encodeHTML(sPreserveAspectRatio) + "\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">");
 	};
 
 	/**
@@ -111,18 +114,33 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	};
 
 	/**
-	 * Writes the Borders, required for HCB.
-	 * In case of other themes, they are also available to avoid issues during switching themes.
+	 * Writes the Borders, required for High Contrast themes.
+	 * In case of other themes, they are also available to avoid issues while switching themes.
 	 *
 	 * @private
 	 * @param {sap.ui.core.RenderManager} oRm the render manager
 	 */
 	RadialMicroChartRenderer._writeBorders = function(oRm) {
-		var fRadius1 = RadialMicroChartRenderer.CIRCLE_RADIUS + RadialMicroChartRenderer.CIRCLE_BORDER_WIDTH / 2.0 - RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH,
-			fRadius2 = RadialMicroChartRenderer.CIRCLE_RADIUS - RadialMicroChartRenderer.CIRCLE_BORDER_WIDTH / 2.0 + RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH;
+		var fRadius1 = RadialMicroChartRenderer.RING_CORE_RADIUS + (RadialMicroChartRenderer.RING_WIDTH / 2.0) - (RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH / 2.0),
+			fRadius2 = RadialMicroChartRenderer.RING_CORE_RADIUS - (RadialMicroChartRenderer.RING_WIDTH / 2.0) + (RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH / 2.0);
 
-		oRm.write("<circle class=\"sapSuiteRMCHCBIncompleteBorder\" cx=\"" + RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR + "\" cy=\"" + RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR + "\" r=\"" + fRadius1 + "\" stroke-width=\"" + RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH + "\" />");
-		oRm.write("<circle class=\"sapSuiteRMCHCBIncompleteBorder\" cx=\"" + RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR + "\" cy=\"" + RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR + "\" r=\"" + fRadius2 + "\" stroke-width=\"" + RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH + "\" />");
+		oRm.write("<circle");
+		oRm.addClass("sapSuiteRMCRing");
+		oRm.writeClasses();
+		oRm.writeAttribute("cx", RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR);
+		oRm.writeAttribute("cy", RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR);
+		oRm.writeAttribute("r", fRadius1);
+		oRm.writeAttribute("stroke-width", RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH);
+		oRm.write("/>");
+
+		oRm.write("<circle");
+		oRm.addClass("sapSuiteRMCRing");
+		oRm.writeClasses();
+		oRm.writeAttribute("cx", RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR);
+		oRm.writeAttribute("cy", RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR);
+		oRm.writeAttribute("r", fRadius2);
+		oRm.writeAttribute("stroke-width", RadialMicroChartRenderer.BACKGROUND_CIRCLE_BORDER_WIDTH);
+		oRm.write("/>");
 	};
 
 	/**
@@ -135,14 +153,14 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	RadialMicroChartRenderer._writeCircle = function(control, oRm) {
 		var sColor = this._getFullCircleColor(control);
 		oRm.write("<circle");
-		if (control._isValueColorInstanceOfValueColor() || sColor === "sapSuiteRMCPathIncomplete") {
+		if (control._isValueColorValid() || sColor === "sapSuiteRMCRemainingCircle") {
 			oRm.addClass(jQuery.sap.encodeHTML(sColor));
 		} else {
 			oRm.writeAttributeEscaped("stroke", sColor);
 		}
 		oRm.writeClasses();
 		oRm.writeStyles();
-		oRm.write("cx=\"" + RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR + "\" cy=\"" + RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR + "\" r=\"" + RadialMicroChartRenderer.CIRCLE_RADIUS + "\" fill=\"transparent\" stroke-width=\"" + RadialMicroChartRenderer.CIRCLE_BORDER_WIDTH + "px\" />");
+		oRm.write("cx=\"" + RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR + "\" cy=\"" + RadialMicroChartRenderer.SVG_VIEWBOX_CENTER_FACTOR + "\" r=\"" + RadialMicroChartRenderer.RING_CORE_RADIUS + "\" fill=\"transparent\" stroke-width=\"" + RadialMicroChartRenderer.RING_WIDTH + "px\" />");
 	};
 
 	/**
@@ -174,20 +192,20 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 * @param {sap.ui.core.RenderManager} oRm the render manager
 	 */
 	RadialMicroChartRenderer._writePath1 = function(largeArcFlag, pathCoordinates, control, oRm) {
-		var sPathData1 = "M" + pathCoordinates[0] + " " + pathCoordinates[1] + " A " + RadialMicroChartRenderer.CIRCLE_RADIUS + " " + RadialMicroChartRenderer.CIRCLE_RADIUS +
+		var sPathData1 = "M" + pathCoordinates[0] + " " + pathCoordinates[1] + " A " + RadialMicroChartRenderer.RING_CORE_RADIUS + " " + RadialMicroChartRenderer.RING_CORE_RADIUS +
 		", " + RadialMicroChartRenderer.X_ROTATION + ", " + largeArcFlag + ", " + RadialMicroChartRenderer.SWEEP_FLAG + ", " + pathCoordinates[2] + " " + pathCoordinates[3];
 
 		var sColor = this._getPathColor(control);
 		oRm.write("<path");
 		oRm.addClass("sapSuiteRMCPath");
-		if (control._isValueColorInstanceOfValueColor() || sColor === "sapSuiteRMCPathIncomplete") {
+		if (control._isValueColorValid() || sColor === "sapSuiteRMCRemainingCircle") {
 			oRm.addClass(jQuery.sap.encodeHTML(sColor));
 		} else {
 			oRm.writeAttributeEscaped("stroke", sColor);
 		}
 		oRm.writeClasses();
 		oRm.writeStyles();
-		oRm.write("d=\"" + jQuery.sap.encodeHTML(sPathData1) + "\" fill=\"transparent\" stroke-width=\"" + RadialMicroChartRenderer.CIRCLE_BORDER_WIDTH + "px\" />");
+		oRm.write("d=\"" + jQuery.sap.encodeHTML(sPathData1) + "\" fill=\"transparent\" stroke-width=\"" + RadialMicroChartRenderer.RING_WIDTH + "px\" />");
 	};
 
 	/**
@@ -200,10 +218,10 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 * @param {sap.ui.core.RenderManager} oRm the render manager
 	 */
 	RadialMicroChartRenderer._writePath2 = function(largeArcFlag, pathCoordinates, control, oRm) {
-		var sPathData2 = "M" + pathCoordinates[2] + " " + pathCoordinates[3] + " A " + RadialMicroChartRenderer.CIRCLE_RADIUS + " " + RadialMicroChartRenderer.CIRCLE_RADIUS +
+		var sPathData2 = "M" + pathCoordinates[2] + " " + pathCoordinates[3] + " A " + RadialMicroChartRenderer.RING_CORE_RADIUS + " " + RadialMicroChartRenderer.RING_CORE_RADIUS +
 		", " + RadialMicroChartRenderer.X_ROTATION + ", " + (1 - largeArcFlag) + ", " + RadialMicroChartRenderer.SWEEP_FLAG + ", " + pathCoordinates[0] + " " + pathCoordinates[1];
 
-		oRm.write("<path class=\"sapSuiteRMCPath sapSuiteRMCPathIncomplete\" d=\"" + jQuery.sap.encodeHTML(sPathData2) + "\" fill=\"transparent\" stroke-width=\"" + RadialMicroChartRenderer.CIRCLE_BORDER_WIDTH + "px\" />");
+		oRm.write("<path class=\"sapSuiteRMCPath sapSuiteRMCRemainingCircle\" d=\"" + jQuery.sap.encodeHTML(sPathData2) + "\" fill=\"transparent\" stroke-width=\"" + RadialMicroChartRenderer.RING_WIDTH + "px\" />");
 	};
 
 	/**
@@ -242,7 +260,7 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 * @returns {string} factor for vertical center of text
 	 */
 	RadialMicroChartRenderer._getVerticalViewboxCenterFactorForText = function() {
-		if (Device.browser.msie || Device.browser.mozilla) {
+		if (Device.browser.msie || Device.browser.mozilla || Device.browser.edge) {
 			return "57%";
 		} else {
 			return "51%";
@@ -254,14 +272,10 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 *
 	 * @private
 	 * @param {sap.suite.ui.microchart.RadialMicroChart} control the current chart control
-	 * @returns {boolean} true if inner circle has to be rendered, false if inner circle is not required
+	 * @returns {boolean} True if inner circle has to be rendered, false if inner circle is not required
 	 */
 	RadialMicroChartRenderer._innerCircleRequired = function(control) {
-		if (control.getPercentage() >= 100 || control.getPercentage() <= 0) {
-			return true;
-		} else {
-			return false;
-		}
+		return control.getPercentage() >= 100 || control.getPercentage() <= 0;
 	};
 
 	/**
@@ -269,21 +283,23 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 *
 	 * @private
 	 * @param {sap.suite.ui.microchart.RadialMicroChart} control - the current chart control
-	 * @param {float} percentage - the calculated percentage value for bar rendering
-	 * @param {boolean}isPadding - padding is required or not
-	 * @returns {float[]} array with calculated coordinates
+	 * @param {float} percentage The calculated percentage value for bar rendering
+	 * @param {boolean} hasPadding Padding is required or not
+	 * @returns {float[]} Array with calculated coordinates
 	 */
-	RadialMicroChartRenderer._calculatePathCoordinates = function(control, percentage, isPadding) {
+	RadialMicroChartRenderer._calculatePathCoordinates = function(control, percentage, hasPadding) {
 		var aCoordinates = [];
 		var fPadding = 0;
+		var fCenter = RadialMicroChartRenderer.FORM_RATIO / 2;
 
-		if (isPadding) {
+		if (hasPadding) {
 			fPadding = 2 * RadialMicroChartRenderer.PADDING_WIDTH / 100 * 2 * Math.PI;
 		}
-		aCoordinates.push(RadialMicroChartRenderer.FORM_RATIO / 2 + RadialMicroChartRenderer.CIRCLE_RADIUS * Math.cos(-Math.PI / 2.0 - fPadding));
-		aCoordinates.push(RadialMicroChartRenderer.FORM_RATIO / 2 + RadialMicroChartRenderer.CIRCLE_RADIUS * Math.sin(-Math.PI / 2.0 - fPadding));
-		aCoordinates.push(RadialMicroChartRenderer.FORM_RATIO / 2 + RadialMicroChartRenderer.CIRCLE_RADIUS * Math.cos(-Math.PI / 2.0 + percentage / 100 * 2 * Math.PI));
-		aCoordinates.push(RadialMicroChartRenderer.FORM_RATIO / 2 + RadialMicroChartRenderer.CIRCLE_RADIUS * Math.sin(-Math.PI / 2.0 + percentage / 100 * 2 * Math.PI));
+
+		aCoordinates.push(fCenter + RadialMicroChartRenderer.RING_CORE_RADIUS * Math.cos(-Math.PI / 2.0 - fPadding));
+		aCoordinates.push(fCenter + RadialMicroChartRenderer.RING_CORE_RADIUS * Math.sin(-Math.PI / 2.0 - fPadding));
+		aCoordinates.push(fCenter + RadialMicroChartRenderer.RING_CORE_RADIUS * Math.cos(-Math.PI / 2.0 + percentage / 100 * 2 * Math.PI));
+		aCoordinates.push(fCenter + RadialMicroChartRenderer.RING_CORE_RADIUS * Math.sin(-Math.PI / 2.0 + percentage / 100 * 2 * Math.PI));
 
 		return aCoordinates;
 	};
@@ -318,52 +334,52 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 * @param {object} control instance of RadialMicroChart
 	 */
 	RadialMicroChartRenderer._handleOnAfterRendering = function(control) {
-		var sParentWidth;
-		// Within a Generic Tile max-width was applied instead min-width in Chrome and IE, that's why we forced min-width to be applied in this block.
-		if (control.getParent() instanceof sap.m.TileContent) {
-			control._adjustToTileContent(control);
-		} else {
-			//Apply fixed size of parent to make SVG work in all browsers.
+		var sParentWidth, sParentHeight;
+		var $Text = control.$().find("text");
+		var $Svg = control.$().children("svg");
+		if (control.getSize() === "Responsive") {
+			//Applies fixed size of parent to make SVG work in all browsers.
 			if (control.getParent() !== undefined && control.getParent() !== null &&
 					control.getParent().getHeight !== undefined && control.getParent().getHeight !== null) {
 				// Two pixels are subtracted from the original value. Otherwise, there's not enough space for the outline and it won't render correctly.
-				var sParentHeight = parseFloat(control.getParent().$().height()) - 2;
+				sParentHeight = parseFloat(control.getParent().$().height()) - 2;
 				control.$().height(sParentHeight); //Required for rendering in page element. Otherwise element is cutted at the top.
-				control.$().children("svg").height(sParentHeight);
+				$Svg.height(sParentHeight);
 			}
 			if (control.getParent() !== undefined && control.getParent() !== null &&
 					control.getParent().getWidth !== undefined && control.getParent().getWidth !== null) {
 				// Two pixels are subtracted from the original value. Otherwise, there's not enough space for the outline and it won't render correctly.
 				sParentWidth = parseFloat(control.getParent().$().width()) - 2;
 				control.$().width(sParentWidth); //Required for rendering in page element. Otherwise element is cutted at the top.
-				control.$().children("svg").width(sParentWidth);
+				$Svg.width(sParentWidth);
 			}
 		}
-		if (parseInt(control.$().children("svg").css("height"), 10) < RadialMicroChartRenderer.EDGE_CASE_SIZE_MICRO_CHART ||
-				parseInt(control.$().children("svg").css("width"), 10) < RadialMicroChartRenderer.EDGE_CASE_SIZE_MICRO_CHART) {
-			control.$().hide();
-			return;
-		}
-		//Hide text element for small elements (<46px)
-		var $Text = control.$().find("text");
-		var $Svg = control.$().children("svg");
-		if (parseInt($Svg.css("height"), 10) <= RadialMicroChartRenderer.EDGE_CASE_SIZE_SHOW_TEXT ||
-				parseInt($Svg.css("width"), 10) <= RadialMicroChartRenderer.EDGE_CASE_SIZE_SHOW_TEXT) {
-			$Text.hide();
-		} else {
-			var sTextColorClass = this._getTextColorClass(control); // Gets the correct color
-			var sCurrentSVGClass = $Svg.attr("class") || ""; // Gets all the classes applied to the SVG element or uses an empty string if none are found
-			if (sCurrentSVGClass.indexOf(sTextColorClass) < 0) {
-				var sNewClasses = sCurrentSVGClass + " " + sTextColorClass;
-				// If the SVG element is small, then additional class should be added indicating that small fonts are applied
-				var iSvgElementHeight = parseInt($Svg.css("height"), 10);
-				if (iSvgElementHeight <= RadialMicroChartRenderer.EDGE_CASE_SIZE_ACCESSIBLE_COLOR) {
-					sNewClasses += " sapSuiteRMCSmallFont";
-				}
-				// Writes a new class attribute with all the other classes and the new correct color
-				// SVG instead of Text element is used to work around a bug on mobile devices using the Edge browser
-				$Svg.attr("class", sNewClasses );
+		if (control.getSize() === "Responsive") {
+			//Hides control when threshold for visibility reached
+			if (parseInt($Svg.css("height"), 10) < RadialMicroChartRenderer.EDGE_CASE_SIZE_MICRO_CHART ||
+					parseInt($Svg.css("width"), 10) < RadialMicroChartRenderer.EDGE_CASE_SIZE_MICRO_CHART) {
+				control.$().hide();
+				return;
 			}
+			//Hides text element for small elements (<46px)
+			if (parseInt($Svg.css("height"), 10) <= RadialMicroChartRenderer.EDGE_CASE_SIZE_SHOW_TEXT ||
+					parseInt($Svg.css("width"), 10) <= RadialMicroChartRenderer.EDGE_CASE_SIZE_SHOW_TEXT) {
+				$Text.hide();
+			}
+		}
+		//Applies correct color classes
+		var sTextColorClass = this._getTextColorClass(control); // Gets the correct color
+		var sCurrentSVGClass = $Svg.attr("class") || ""; // Gets all the classes applied to the SVG element or uses an empty string if none are found
+		if (sCurrentSVGClass.indexOf(sTextColorClass) < 0) {
+			var sNewClasses = sCurrentSVGClass + " " + sTextColorClass;
+			// If the SVG element is small, then additional class should be added indicating that small fonts are applied
+			var iSvgElementHeight = parseInt($Svg.css("height"), 10);
+			if (iSvgElementHeight <= RadialMicroChartRenderer.EDGE_CASE_SIZE_USE_SMALL_FONT) {
+				sNewClasses += " sapSuiteRMCSmallFont";
+			}
+			// Writes a new class attribute with all the other classes and the new correct color
+			// SVG instead of Text element is used to work around a bug on mobile devices using the Edge browser
+			$Svg.attr("class", sNewClasses );
 		}
 	};
 
@@ -375,20 +391,15 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 * @returns {string} value for CSS Text color class
 	 */
 	RadialMicroChartRenderer._getTextColorClass = function(control) {
-		var iSize = parseInt(jQuery.sap.byId(control.getId()).children("svg").css("height"), 10);
-		if (iSize <= RadialMicroChartRenderer.EDGE_CASE_SIZE_ACCESSIBLE_COLOR && (!control._isValueColorInstanceOfValueColor() || control.getValueColor() === sap.m.ValueColor.Neutral)){
-			return "sapSuiteRMCAccessibleTextColor";
-		} else {
-			switch (control.getValueColor()){
-				case sap.m.ValueColor.Good:
-					return "sapSuiteRMCGoodTextColor";
-				case sap.m.ValueColor.Error:
-					return "sapSuiteRMCErrorTextColor";
-				case sap.m.ValueColor.Critical:
-					return "sapSuiteRMCCriticalTextColor";
-				default:
-					return "sapSuiteRMCNeutralTextColor";
-			}
+		switch (control.getValueColor()){
+			case ValueColor.Good:
+				return "sapSuiteRMCGoodTextColor";
+			case ValueColor.Error:
+				return "sapSuiteRMCErrorTextColor";
+			case ValueColor.Critical:
+				return "sapSuiteRMCCriticalTextColor";
+			default:
+				return "sapSuiteRMCNeutralTextColor";
 		}
 	};
 
@@ -404,7 +415,7 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 			return this._getPathColor(control);
 		}
 		if (control.getPercentage() <= 0) {
-			return "sapSuiteRMCPathIncomplete";
+			return "sapSuiteRMCRemainingCircle";
 		}
 	};
 
@@ -417,13 +428,13 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 */
 	RadialMicroChartRenderer._getPathColor = function(control) {
 		var sValueColor = control.getValueColor();
-		if (control._isValueColorInstanceOfValueColor()) {
+		if (control._isValueColorValid()) {
 			switch (sValueColor){
-				case sap.m.ValueColor.Good:
+				case ValueColor.Good:
 					return "sapSuiteRMCPathGood";
-				case sap.m.ValueColor.Error:
+				case ValueColor.Error:
 					return "sapSuiteRMCPathError";
-				case sap.m.ValueColor.Critical:
+				case ValueColor.Critical:
 					return "sapSuiteRMCPathCritical";
 				default:
 					return "sapSuiteRMCPathNeutral";
@@ -442,20 +453,20 @@ sap.ui.define(["jquery.sap.global", "sap/ui/Device"],
 	 */
 	RadialMicroChartRenderer._generateTextContent = function(control) {
 		if (control.getPercentage() === 100) {
-			return control._rb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [100]);
+			return control._oRb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [100]);
 		}
 		if (control.getPercentage() === 0) {
-			return control._rb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [0]);
+			return control._oRb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [0]);
 		}
 		if (control.getPercentage() >= 100) {
 			jQuery.sap.log.error("Values over 100%(" + control.getPercentage() + "%) are not supported");
-			return control._rb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [100]);
+			return control._oRb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [100]);
 		}
 		if (control.getPercentage() <= 0) {
 			jQuery.sap.log.error("Values below 0%(" + control.getPercentage() + "%) are not supported");
-			return control._rb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [0]);
+			return control._oRb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [0]);
 		}
-		return control._rb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [control.getPercentage()]);
+		return control._oRb.getText("RADIALMICROCHART_PERCENTAGE_TEXT", [control.getPercentage()]);
 	};
 
 	return RadialMicroChartRenderer;

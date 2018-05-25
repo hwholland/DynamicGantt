@@ -1,15 +1,14 @@
 {
-  "_version": "1.2.0",
+  "_version": "1.9.0",
   "sap.app": {
-    "_version": "1.2.0",
     "id": "sap.ovp",
     "type": "library",
     "embeds": [
+      "cards/map",
+      "cards/map/Analytical",
       "cards/charts/analytical",
       "cards/charts/generic",
-      "cards/charts/line",
-      "cards/charts/donut",
-      "cards/charts/bubble",
+      "cards/charts/smart/chart",
       "cards/list",
       "cards/quickview",
       "cards/linklist",
@@ -17,11 +16,12 @@
       "cards/table",
       "cards/image",
       "cards/loading",
+      "cards/custom",
       "cards/stack",
       "app"
     ],
     "applicationVersion": {
-      "version": "1.38.10"
+      "version": "1.54.3"
     },
     "title": "SAP library: sap.ovp",
     "description": "SAP library: sap.ovp",
@@ -29,36 +29,55 @@
     "offline": true
   },
   "sap.ui": {
-    "_version": "1.1.0",
     "technology": "UI5",
     "supportedThemes": [
       "base",
       "sap_belize",
+      "sap_belize_hcb",
+      "sap_belize_hcw",
       "sap_belize_plus",
-      "sap_bluecrystal",
-      "sap_hcb"
+      "sap_bluecrystal"
     ]
   },
   "sap.ui5": {
-    "_version": "1.1.0",
     "dependencies": {
-      "minUI5Version": "1.38",
+      "minUI5Version": "1.54",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.38.12"
+          "minVersion": "1.54.3"
         },
         "sap.ui.layout": {
-          "minVersion": "1.38.12"
+          "minVersion": "1.54.3"
         },
         "sap.ui.generic.app": {
-          "minVersion": "1.38.12"
+          "minVersion": "1.54.3"
         },
         "sap.m": {
-          "minVersion": "1.38.12"
+          "minVersion": "1.54.3"
+        },
+        "sap.f": {
+          "minVersion": "1.54.3"
         },
         "sap.ui.comp": {
-          "minVersion": "1.38.12"
+          "minVersion": "1.54.3"
+        },
+        "sap.viz": {
+          "minVersion": "1.54.3",
+          "lazy": true
+        },
+        "sap.suite.ui.microchart": {
+          "minVersion": "1.54.3",
+          "lazy": true
         }
+      }
+    },
+    "library": {
+      "i18n": "messagebundle.properties",
+      "content": {
+        "controls": [],
+        "elements": [],
+        "types": [],
+        "interfaces": []
       }
     }
   }

@@ -1,22 +1,21 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview URLShortening
  *
  * This service if for internal Shell usage only
  * It has services to compact and expand Long shell hashes
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
 
 
 /*global jQuery, sap, sessionStorage */
 /*jslint nomen: true*/
 
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap, location*/
-    jQuery.sap.declare("sap.ushell.services.URLShortening");
-    jQuery.sap.require("jquery.sap.storage");
 
     /**
      * This method MUST be called by the Unified Shell's container only, others MUST call
@@ -73,7 +72,7 @@
      * @since 1.20.0
      * @private
      */
-    sap.ushell.services.URLShortening = function () {
+    function URLShortening () {
         var that = this;
         this.ABBREV_PARAM_NAME = "sap-intent-param";
         this.URL_LENGTH_LIMIT = 1023;
@@ -172,7 +171,10 @@
             oUrlParsing = sap.ushell.Container.getService("URLParsing");
             oSegments = oUrlParsing.parseShellHash(sUrl);
             if (!oSegments) {
-                jQuery.sap.log.error("the URL is not compliant and may break in a future version " + sUrl);
+                jQuery.sap.log.error(
+                    "the URL " + sUrl + ' is not compliant. It may break the product and cause unwanted navigation behavior.'
+                );
+                return { hash : sUrl };
             }
             // extract a hash iff present
             prependHash = '';
@@ -454,6 +456,7 @@
         *   inserted instead if present in local storage.
         *   note that the parameters are reordered in alphabetic order
         * @public
+        * @alias sap.ushell.services.URLShortening#expandHash
         */
         this.expandHash = function (oUrl) {
             var fRetrieveValue = function (sKey) {
@@ -488,6 +491,7 @@
         *  the expanded sUrl, or the original one if expansion did not happen
         * @since 1.28.0
         * @public
+        * @alias sap.ushell.services.URLShortening#expandParamGivenRetrievalFunction
         */
         this.expandParamGivenRetrievalFunction = function (sUrl, sParamName, fRetrieveValue) {
             var segments,
@@ -559,5 +563,8 @@
 
 
     }; // URLShortening
-    sap.ushell.services.URLShortening.hasNoAdapter = true;
-}());
+
+    URLShortening.hasNoAdapter = true;
+    return URLShortening;
+
+}, true /* bExport */);

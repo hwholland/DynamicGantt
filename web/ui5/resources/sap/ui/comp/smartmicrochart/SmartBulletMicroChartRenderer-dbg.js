@@ -1,15 +1,15 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
-sap.ui.define(['jquery.sap.global'],
-		function(jQuery) {
+sap.ui.define([ "jquery.sap.global" ], function(jQuery) {
 	"use strict";
 	/**
 	 * @class SmartBulletMicroChart renderer.
 	 * @static
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.38.0
 	 */
 	var SmartBulletMicroChartRenderer = {};

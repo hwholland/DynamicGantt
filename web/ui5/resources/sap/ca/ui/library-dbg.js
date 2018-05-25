@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.ca.ui (1.38.5)
+ * Initialization Code and shared classes of library sap.ca.ui (1.54.0)
  */
 jQuery.sap.declare("sap.ca.ui.library");
 jQuery.sap.require("sap.ui.core.Core");
@@ -71,7 +71,7 @@ sap.ui.getCore().initLibrary({
 	elements: [
 		"sap.ca.ui.HierarchicalSelectDialogItem"
 	],
-	version: "1.38.5"
+	version: "1.54.0"
 });
 
 /*!
@@ -88,7 +88,7 @@ jQuery.sap.declare("sap.ca.ui.charts.ChartColor");
 /**
  * @class Enumeration of available color to be used in sap.ca.ui charts.
  *
- * @version 1.38.5
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -176,7 +176,7 @@ jQuery.sap.declare("sap.ca.ui.charts.ChartSelectionMode");
 /**
  * @class Determines the selection mode of a Chart.
  *
- * @version 1.38.5
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -216,7 +216,7 @@ jQuery.sap.declare("sap.ca.ui.charts.ChartSemanticColor");
 /**
  * @class Enumeration of available semantic color to be used in sap.Ca.ui
  *
- * @version 1.38.5
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel

@@ -1,7 +1,8 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, setTimeout, clearTimeout */
     /*jslint plusplus: true, nomen: true */
     sap.ui.controller("sap.ushell.renderers.fiori2.compactCozy_selector.CompactCozySelector", {
@@ -109,4 +110,6 @@
             return this.oModel;
         }
     });
-}());
+
+
+}, /* bExport= */ true);

@@ -7,7 +7,7 @@
     <since>1.16</since>
     <baseType>sap.m/Select</baseType>
     <associations>
-        <association name="buttons" type="sap.m/Button" cardinality="0..n">
+        <association cardinality="0..n" type="sap.m/Button" name="buttons">
             <documentation>Buttons to be added to the ActionSelect content.</documentation>
         </association>
     </associations>

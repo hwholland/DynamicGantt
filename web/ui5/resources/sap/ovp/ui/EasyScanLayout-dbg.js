@@ -1,10 +1,10 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
  */
 
 /*global sap window*/
-sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
-    function (jQuery) {
+sap.ui.define(["jquery.sap.global", 'sap/ovp/cards/CommonUtils', "sap/ovp/library"],
+    function (jQuery, commonUtils) {
         "use strict";
         jQuery.sap.require('sap.ovp.ui.UIActions');
 
@@ -20,7 +20,8 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             settings.endCallback = this._endHandler.bind(this);
 
             this.layout = settings.layout;
-            this.afterReplaceElements = settings.afterReplaceElements || function () {};
+            this.afterReplaceElements = settings.afterReplaceElements || function () {
+            };
             this.settings = settings;
             delete settings.afterReplaceElements;
             this.destroy(); //destroy the previous instance of UIActions
@@ -38,6 +39,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             this.isRTLEnabled = null; //RTL flag
             this.lastCollidedEl = null; //last collided element
             this.lastCollisionTop = null; //last element collision top or bottom true/false
+            this.SCROLL_OFFSET = 16;
         };
 
 
@@ -68,12 +70,21 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
         };
 
         //callback for UIActions, every time when mouse is moved in drag mode.
-        ReplaceItems.prototype._dragMoveHandler = function (actionObject) {
+        ReplaceItems.prototype._dragMoveHandler = function (actionObject, qElement) {
             //{evt : evt, clone : this.clone, element: this.element, isScrolling: isScrolling, moveX : this.moveX, moveY : this.moveY}
             var sourceElement = actionObject.element;
             var moveX = actionObject.moveX - this.layoutOffset.left;
             var moveY = actionObject.moveY - this.jqLayout.get(0).getBoundingClientRect().top + this.jqLayout.scrollTop();
-
+            if (!qElement) {
+                var viewElement = document.getElementsByClassName("sapFDynamicPageContentWrapper")[0];
+                var viewHeight = viewElement.offsetHeight;
+                var viewRect = viewElement.getBoundingClientRect();
+                if ((actionObject.evt.clientY - viewElement.offsetTop + this.SCROLL_OFFSET) > viewHeight) {
+                    viewElement.scrollTop = viewElement.scrollTop + this.SCROLL_OFFSET;
+                } else if (((actionObject.evt.clientY - viewElement.offsetTop) < viewRect.top + this.SCROLL_OFFSET) && viewElement.scrollTop !== 0) {
+                    viewElement.scrollTop = viewElement.scrollTop - this.SCROLL_OFFSET;
+                }
+            }
             var collidedItem = this.findCollision(moveX, moveY, this.aCardsOrder);
             if (!collidedItem) {
                 return; //no collided item, no need to act
@@ -104,7 +115,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                 }
             }
             if (this.lastCollidedEl && (this.lastCollidedEl !== collidedItem && this.lastCollidedEl !== sourceElement) &&
-                (this.lastCollidedEl.posDnD.left === collidedItem.posDnD.left && this.lastCollidedEl.posDnD.left ===  sourceElement.posDnD.left)){
+                (this.lastCollidedEl.posDnD.left === collidedItem.posDnD.left && this.lastCollidedEl.posDnD.left === sourceElement.posDnD.left)) {
                 //complicated situation, when lastCollided, currentCollided and sourceElement, it's 3 different items, and they all in the same column.
                 //it means that we don't want to switch with currentCollided element, becouse it dosn't look good.
                 //Instead we switch with lastCollided item, which is more logical behaviour for user.
@@ -136,6 +147,20 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             var targetElementIndex = itemsList.indexOf(targetElement);
             newOrder[targetElementIndex] = sourceElement;
             newOrder[sourceElementIndex] = targetElement;
+            //store position changes for personalization delta changes
+            if (!!this.positionChanges && targetElement && targetElement.children) {
+                var sTargetElementId = targetElement.children[0].getAttribute("id");
+                this.positionChanges.push({
+                    changeType: "position",
+                    content: {
+                        // sTargetElementId gives full core ID, so remove the prefix "mainView--"
+                        cardId: sTargetElementId.substring(sTargetElementId.indexOf("mainView--") + 10, sTargetElementId.length),
+                        position: sourceElementIndex,
+                        oldPosition: targetElementIndex
+                    },
+                    isUserDependent: true
+                });
+            }
             return newOrder;
         };
 
@@ -148,13 +173,13 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                 });
 
                 var changes = 0;
-                for (var i = 0; i < aLayoutCards.length; i++){
-                    if (aLayoutCards[i] === sourceElement){
+                for (var i = 0; i < aLayoutCards.length; i++) {
+                    if (aLayoutCards[i] === sourceElement) {
                         aLayoutCards[i] = targetElement;
                         changes++;
                         continue;
                     }
-                    if (aLayoutCards[i] === targetElement){
+                    if (aLayoutCards[i] === targetElement) {
                         aLayoutCards[i] = sourceElement;
                         changes++;
                         continue;
@@ -177,6 +202,11 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             this.isRTLEnabled = sap.ui.getCore().getConfiguration().getRTL() ? 1 : -1;
             this.aCardsOrder = [];
             this.layoutOffset = this.jqLayout.offset();
+
+            // fix for infinite scroll issue in iPad
+            if (sap.ui.Device.system.tablet === true && sap.ui.Device.system.desktop === false) {
+                this.jqLayout.css('height', this.jqLayoutInner.height());
+            }
 
             var visibleLayoutItems = this.layout.getVisibleLayoutItems();
             if (!visibleLayoutItems) {
@@ -222,7 +252,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                 var currentHeight = oCountColumnHeight[currentColumn]++;
                 var currentLeft = this.left - this.isRTLEnabled * (currentColumn * this.verticalMargin + currentColumn * this.width);
                 var currentTop = this.top;
-                var domElement =  aCardsLayout[naturalIndex];
+                var domElement = aCardsLayout[naturalIndex];
 
                 for (var j = 0; j < currentHeight; j++) {
                     currentTop += this.horizontalMargin;
@@ -247,6 +277,14 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
 
         //callback when drag starts
         ReplaceItems.prototype._dragStartHandler = function (evt, cardElement) {
+
+            //Array to store position swap changes
+            this.positionChanges = [];
+            //Prevent the browser to mark any elements while dragging
+            if (sap.ui.Device.system.desktop) {
+                jQuery('body').addClass("sapOVPDisableUserSelect sapOVPDisableImageDrag");
+            }
+
             //Prevent selection of text on tiles and groups
             if (window.getSelection) {
                 var selection = window.getSelection();
@@ -257,10 +295,6 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
 
         //callback before clone created
         ReplaceItems.prototype._beforeDragHandler = function (evt, ui) {
-            //Prevent the browser to mark any elements while dragging
-            if (sap.ui.Device.system.desktop) {
-                jQuery('body').addClass("sapOVPDisableUserSelect sapOVPDisableImageDrag");
-            }
             //Prevent text selection menu and magnifier on mobile devices
             if (sap.ui.Device.browser.mobile) {
                 this.selectableElemets = jQuery(ui).find('.sapUiSelectable');
@@ -272,16 +306,24 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
         //model changes, and cleanup after drag and drop finished
         ReplaceItems.prototype._dragEndHandler = function (evt, ui) {
             this.lastCollidedEl = null;
-            if (this.aCardsOrder) {
-                this.afterReplaceElements(this.aCardsOrder);
+            // replacing items only if the drag and drop is completed via lifting the mouse key
+            if (evt.type == 'mouseup' || evt.type == 'touchend') {
+                if (this.aCardsOrder) {
+                    this.afterReplaceElements(this.aCardsOrder);
+                }
             }
             //Cleanup added classes and styles before drag
             if (sap.ui.Device.system.desktop) {
                 jQuery('body').removeClass("sapOVPDisableUserSelect sapOVPDisableImageDrag");
             }
             jQuery(this.settings.wrapper).removeClass("dragAndDropMode");
-            this.jqLayoutInner.removeAttr("style");
-            jQuery(this.aCardsOrder).removeAttr("style");
+            if (this.jqLayoutInner) {
+                this.jqLayoutInner.removeAttr("style");
+            }
+            if (this.aCardsOrder) {
+                jQuery(this.aCardsOrder).removeAttr("style");
+            }
+            this.uiActions.removeClone();
         };
 
         ReplaceItems.prototype._endHandler = function (evt, ui) {
@@ -337,6 +379,45 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             this.jqElement.on("focus.keyboardNavigation", ".easyScanLayoutItemWrapper", this.layoutItemFocusHandler.bind(this));
             this._ignoreSelfFocus = false;
             this.swapSourceElement = null;
+            // variables to capture the last focussed element inside the card that will be used
+            // for f7 handling
+            this.lastFocussedElement = null;
+            this.lastFocussedClassId = null;
+
+            // handler function for ctrl + up/down keys since the control + updown arrows are not triggered on keydown
+            this.jqElement.on('keyup', this.ctrlArrowUpDownHandler.bind(this));
+        };
+
+        /*
+         function to handle keydown for ctrl + up/down arrows and ctrl + pg up/down
+         */
+        KeyboardNavigation.prototype.ctrlArrowUpDownHandler = function (e) {
+            switch (e.keyCode) {
+                case this.keyCodes.ARROW_UP:
+                    if (e.ctrlKey == true) {
+                        this.ctrlArrowHandler(e);
+                        this.arrowUpDownHandler(e, true);
+                    }
+                    break;
+                case this.keyCodes.ARROW_DOWN:
+                    if (e.ctrlKey == true) {
+                        this.ctrlArrowHandler(e);
+                        this.arrowUpDownHandler(e, false);
+                    }
+                    break;
+                case this.keyCodes.PAGE_UP:
+                    if (e.ctrlKey) {
+                        this.ctrlArrowHandler(e);
+                        this.pageUpDownHandler(e, true);
+                    }
+                    break;
+                case this.keyCodes.PAGE_DOWN:
+                    if (e.ctrlKey) {
+                        this.ctrlArrowHandler(e);
+                        this.pageUpDownHandler(e, false);
+                    }
+                    break;
+            }
         };
 
         KeyboardNavigation.prototype.destroy = function () {
@@ -406,16 +487,91 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                 var labelledElement = jqFocused.find("[aria-label]");
                 var i, strIdList = "";
 
-                //  Add every element id with aria label and roll heading inside the LayoutItemWrapper to string list
+
+                // code to add the aria label for the ObjectNumber having state.
+                // We need to add both the value state as well as the text to be added to the aria-label
+                if (jqFocused.find('.valueStateText').length == 1) {
+                    var sText = jqFocused.find('.valueStateText').find('.sapMObjectNumberText').text();
+                    var sValueState = jqFocused.find('.valueStateText').find('.sapUiInvisibleText').text();
+                    jqFocused.find('.valueStateText').attr('aria-label', sText + " " + sValueState);
+                    jqFocused.find('.valueStateText').attr('aria-labelledby', "");
+                }
+
+                //replacing the aria-label for the KPI header and making it similar to the content of the control
+                if (jQuery(labelledElement).hasClass('kpiHeaderClass')) {
+                    var oKpiHeader = jQuery(labelledElement).closest('div.kpiHeaderClass');
+                    var sKpiHeaderText = oKpiHeader.text();
+                    var sNumericContentId = oKpiHeader.attr("id");
+                    var sValueColor = sap.ui.getCore().byId(sNumericContentId).getValueColor();
+                    oKpiHeader.attr('aria-label', sKpiHeaderText + " " + sValueColor);
+                }
+
+                jqFocused.find("[role='listitem']").attr('aria-label', "");
+
+                // creating a dummy div that contains the position of the card in the application and refering it's id in the aria-labelledby for the card container
+                if (jqFocused.hasClass('easyScanLayoutItemWrapper')) {
+                    var sCountDivId = "";
+                    var cardCountDiv = jqFocused.find('.cardCount');
+                    var sCardPositionText = sap.ui.getCore().getLibraryResourceBundle("sap.ovp").getText("cardPositionInApp", [jqFocused.attr('aria-posinset'), jqFocused.attr('aria-setsize')]);
+                    if (cardCountDiv.length === 0) {
+                        sCountDivId = "countDiv_" + new Date().getTime();
+                        var sDummyDivForCardCount = '<div id="'+ sCountDivId +'" class="cardCount" aria-label="'+ sCardPositionText +'" hidden></div>';
+                        jqFocused.append(sDummyDivForCardCount);
+                    } else {
+                        sCountDivId = cardCountDiv[0].id;
+                        cardCountDiv.attr('aria-label', sCardPositionText);
+                    }
+                    strIdList += sCountDivId + " ";
+                    var oCardType = jqFocused.find('.cardType');
+                    if (oCardType.length !== 0) {
+                        strIdList += oCardType[0].id + " ";
+                    }
+                }
+
+                // adding the text card header before if the focus is on the header section
+                if (jqFocused.hasClass('sapOvpCardHeader') && !jqFocused.hasClass('sapOvpStackCardContent')) {
+                    var sCardHeaderTypeDivId = "";
+                    var cardHeaderDiv = jqFocused.find('.cardHeaderType');
+                    if (cardHeaderDiv.length === 0) {
+                        var sCardHeaderType = sap.ui.getCore().getLibraryResourceBundle("sap.ovp").getText("CardHeaderType");
+                        sCardHeaderTypeDivId = "cardHeaderType_" + new Date().getTime();
+                        var sDummyDivForCardHeader = '<div id="'+ sCardHeaderTypeDivId +'" class="cardHeaderType" aria-label="'+ sCardHeaderType +'" hidden></div>';
+                        jqFocused.append(sDummyDivForCardHeader);
+                    } else {
+                        sCardHeaderTypeDivId = cardHeaderDiv[0].id;
+                    }
+
+                    strIdList += sCardHeaderTypeDivId + " ";
+                }
+
+                //  Add every element id with aria label and e heading inside the LayoutItemWrapper to string list
                 for (i = 0; i < labelledElement.length; i++) {
-                    if (labelledElement[i].getAttribute("role") == "heading") {
+                    if (labelledElement[i].getAttribute("role") === "heading") {
                         strIdList += labelledElement[i].id + " ";
+                    }
+                }
+
+                if (jqFocused.hasClass('sapOvpCardHeader')) {
+                    var cardHeaders = jqFocused.find('.cardHeaderText');
+                    if (cardHeaders.length !== 0) {
+                        for (var i = 0; i < cardHeaders.length; i++) {
+                            strIdList += cardHeaders[i].id + " ";
+                        }
                     }
                 }
 
                 // add the id string list to the focus element (warpper) aria-labelledby attribute
                 if (strIdList.length) {
                     jqFocused.attr("aria-labelledby", strIdList);
+                }
+
+                //if the focussed element is li and belongs to a dynamic link list which has the action for popover
+                // creating a hidden element with "has details" text and adding it to the LI
+                if (jqFocused.prop('nodeName') === "LI" && jqFocused.find('.linkListHasPopover').length !== 0) {
+                    if (jqFocused.find('#hasDetails').length === 0) {
+                        jqFocused.append("<div id='hasDetails' hidden>" + sap.ui.getCore().getLibraryResourceBundle("sap.ovp").getText("HAS_DETAILS") + "</div>");
+                        jqFocused.attr('aria-describedby', "hasDetails");
+                    }
                 }
             }
         };
@@ -440,14 +596,22 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             var jqTabbableElements = jQuery('.easyScanLayoutItemWrapper');
             jqTabbableElements.attr("tabindex", "-1");
             jqItem.attr("tabindex", 0);
-            jqItem.focus();
+            // waiting for the item to change the position and set on the DOM
+            // before adding the focus to the current item
+            setTimeout(function () {
+                jqItem.focus();
+            }, 500);
         };
 
         KeyboardNavigation.prototype._swapItemsFocus = function (e, jqItemFrom, jqItemTo) {
             //to preserve last focusable item, first item received tabindex=-1, second tabindex=-1.
             e.preventDefault();
             jqItemFrom.attr("tabindex", "-1");
-            jqItemTo.attr("tabindex", "0").focus();
+            // waiting for the scroll to happen and set on the DOM
+            // before changing the focus to the new position
+            setTimeout(function () {
+                jqItemTo.attr("tabindex", "0").focus();
+            }, 0);
         };
 
 
@@ -459,6 +623,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             //If focus is on a control inside a Item, move focus to the next control in the tab chain inside the same Item.
             //If focus is on the last control inside a Item, move focus to the next control in the tab chain after the Item Container
             var jqFocusedElement = jQuery(document.activeElement);
+            this.lastFocussedElement = jqFocusedElement;
             if (jqFocusedElement.hasClass("easyScanLayoutItemWrapper")) {
                 return;
             }
@@ -504,6 +669,12 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             //If focus is on the first control inside a Item, move focus to the corresponding Item (as a whole).
             //If focus is on a Item, move focus to the previous control in the tab chain before the Item Container.
             var jqFocusedElement = jQuery(document.activeElement);
+
+            if (jqFocusedElement.hasClass('after')) {
+                this.lastFocussedElement.focus();
+                return;
+            }
+
             if (!jqFocusedElement.hasClass("easyScanLayoutItemWrapper")) {
                 return;
             }
@@ -516,11 +687,14 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
         KeyboardNavigation.prototype.arrowUpDownHandler = function (e, isArrowUp) {
             //UP - If focus is on a Item, move focus to the Item above. If focus is on the first Item of a column, do nothing.
             //DOWN - If focus is on a Item, move focus to the Item below. If focus is on the last Item of a column, do nothing.
+            e.preventDefault();
             var fName = isArrowUp ? "prev" : "next";
             var jqFocused = jQuery(document.activeElement);
-            var nextFocus = jQuery(jqFocused)[fName](".easyScanLayoutItemWrapper");
-            if (!nextFocus.is(jqFocused)) {
-                this._swapItemsFocus(e, jqFocused, nextFocus);
+            if (!jqFocused.hasClass("sapOvpCardHeader")) {
+                var nextFocus = jQuery(jqFocused)[fName](".easyScanLayoutItemWrapper");
+                if (!nextFocus.is(jqFocused)) {
+                    this._swapItemsFocus(e, jqFocused, nextFocus);
+                }
             }
         };
 
@@ -543,7 +717,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             }
         };
 
-        KeyboardNavigation.prototype.homeHandler = function (e) {
+        KeyboardNavigation.prototype.altPageUpAndHomeHandler = function (e) {
             //If focus is on a Card, move focus to the first Card of the same row.
             //If focus is on the first Card of a row, move focus to the first item within the Card Container.
             var jqFocused = jQuery(document.activeElement);
@@ -566,7 +740,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             this._swapItemsFocus(e, jqFocused, item.$().parent());
         };
 
-        KeyboardNavigation.prototype.endHandler = function (e) {
+        KeyboardNavigation.prototype.altPageDownAndEndHandler = function (e) {
             //If focus is on a Card, move focus to the last Card of the same row.
             //If focus is on the last Card of a row, move focus to the last item within the Card Container.
             var jqFocused = jQuery(document.activeElement);
@@ -632,7 +806,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             }
             this._swapItemsFocus(e, jqFocused, nextFocus);
         };
-
+        /*
         KeyboardNavigation.prototype.altPageUpHandler = function (e) {
             //If focus is on a Card, move focus left by page size. Page size can be set by apps, default page size is 5 Cards.
             //If there are less Cards available than page size, move focus to the first Card of the row.
@@ -669,6 +843,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                 this._swapItemsFocus(e, jqFocused, item.$().parent());
             }
         };
+        */
 
         KeyboardNavigation.prototype.pageUpDownHandler = function (e, isPageUp) {
             //move focus Up/Down to the first not visible (outside of viewport).
@@ -685,7 +860,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             var nextFocusEl = false;
             var currentEl = jqFocused;
             var windowHeight = jQuery(window).height();
-            var layoutTop = this.jqElement.offset().top;
+            //var layoutTop = this.jqElement.offset().top;
             //find first "outside of viewport" item
             while (!nextFocusEl) {
                 var next = currentEl[fName]();
@@ -697,7 +872,9 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                     nextFocusEl = next;
                     break;
                 }
-                if (isPageUp && (next.offset().top + next.outerHeight()) <= layoutTop) {
+                var offset = next.offset().top;
+                var sign = offset ? offset < 0 ? -1 : 1 : 0;
+                if (isPageUp && (sign <= 0)) {
                     nextFocusEl = next;
                     break;
                 }
@@ -753,6 +930,16 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             }
         };
 
+        KeyboardNavigation.prototype.spacebarHandler = function (e) {
+            // checking if the item has a press event associated and explicitly firing the press event on the item
+            var item = sap.ui.getCore().byId(e.target.id);
+            if (item && item.mEventRegistry.hasOwnProperty('press')) {
+                jQuery('#' + e.target.id).addClass('sapMLIBActive');
+                jQuery('#' + e.target.id + ' span').css('color', '#FFFFFF');
+                item.firePress();
+            }
+        };
+
         KeyboardNavigation.prototype.keydownHandler = function (e) {
             //in case swap was interrupted call end swap
             this.checkIfSwapInterrupted(e);
@@ -802,16 +989,28 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                     this.arrowRightLeftHandler(e, false);
                     break;
                 case this.keyCodes.HOME:
-                    (e.ctrlKey == true) ? this.ctrlHomeHandler(e) : this.homeHandler(e);
+                    (e.ctrlKey == true) ? this.ctrlHomeHandler(e) : this.altPageUpAndHomeHandler(e);
                     break;
                 case this.keyCodes.END:
-                    (e.ctrlKey == true) ? this.ctrlEndHandler(e) : this.endHandler(e);
+                    (e.ctrlKey == true) ? this.ctrlEndHandler(e) : this.altPageDownAndEndHandler(e);
                     break;
                 case this.keyCodes.PAGE_UP:
-                    (e.altKey == true) ? this.altPageUpHandler(e) : this.pageUpDownHandler(e, true);
+                    (e.altKey == true) ? this.altPageUpAndHomeHandler(e) : this.pageUpDownHandler(e, true);
+                    if (e.ctrlKey) {
+                        this.ctrlArrowHandler(e);
+                        this.pageUpDownHandler(e, true);
+                    }
                     break;
                 case this.keyCodes.PAGE_DOWN:
-                    (e.altKey == true) ? this.altPageDownHandler(e) : this.pageUpDownHandler(e, false);
+                    (e.altKey == true) ? this.altPageDownAndEndHandler(e) : this.pageUpDownHandler(e, false);
+                    if (e.ctrlKey) {
+                        this.ctrlArrowHandler(e);
+                        this.pageUpDownHandler(e, false);
+                    }
+                    break;
+                case this.keyCodes.SPACE:
+                case this.keyCodes.ENTER:
+                    this.spacebarHandler(e);
                     break;
             }
         };
@@ -819,6 +1018,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
         var EasyScanLayout = sap.ui.core.Control.extend("sap.ovp.ui.EasyScanLayout", {
 
             metadata: {
+                designTime: true,
                 library: "sap.ovp",
                 aggregations: {
                     content: {type: "sap.ui.core.Control", multiple: true, singularName: "content"}
@@ -826,13 +1026,14 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                 defaultAggregation: "content",
                 events: {
                     afterRendering: {},
-                    afterDragEnds: {}
+                    afterDragEnds: {},
+                    afterColumnUpdate: {}
                 },
                 properties: {
                     useMediaQueries: {group: "Misc", type: "boolean", defaultValue: false},
                     dragAndDropRootSelector: {group: "Misc", type: "string"},
                     dragAndDropEnabled: {group: "Misc", type: "boolean", defaultValue: true},
-                    debounceTime: {group: "Misc", type: "sap.ui.core/int", defaultValue: 150}
+                    debounceTime: {group: "Misc", type: "int", defaultValue: 150}
                 }
             },
 
@@ -844,7 +1045,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                     oRm.writeClasses();
                     oRm.write(">");
 
-                    oRm.write("<div class='sapUshellEasyScanLayoutInner' tabindex='0'>");
+                    oRm.write("<div class='sapUshellEasyScanLayoutInner' role='list' tabindex='0' aria-label='Cards'>");
 
                     var columnCount = oControl.columnCount;
                     var columnList = Array.apply(null, new Array(columnCount)).map(function () {
@@ -860,14 +1061,14 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                     columnList.forEach(function (column) {
                         oRm.write("<div");
                         oRm.addClass("easyScanLayoutColumn");
-                        oRm.writeAccessibilityState(undefined, {role: "list"});
                         oRm.writeClasses();
                         oRm.write(">");
                         column.forEach(function (item, index) {
                             oRm.write("<div ");
                             (itemCounter === 1) ? oRm.write("tabindex='0' ") : oRm.write("tabindex='-1' ");
                             oRm.addClass("easyScanLayoutItemWrapper");
-                            oRm.writeAccessibilityState(undefined, {role: "listitem"});
+                            /* Commented out the following line as the screen reader reads out the role too which should ideally not be read out. See internal incident with ID: 1680054459 */
+                            /* oRm.writeAccessibilityState(undefined, {role: "listitem"}); */
                             oRm.write("aria-setsize=" + filteredItems.length + " aria-posinset=" + itemCounter);
                             itemCounter++;
                             oRm.writeClasses();
@@ -898,7 +1099,7 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                 {minWidth: 1024, styleClass: "columns-narrow", columnCount: 3},
                 {minWidth: 1280, styleClass: "columns-wide", columnCount: 3},
                 {minWidth: 1440, styleClass: "columns-narrow", columnCount: 4},
-                {minWidth: 1920, styleClass: "columns-wide", columnCount: 4},
+                {minWidth: 1800, styleClass: "columns-wide", columnCount: 4},
                 {minWidth: 2560, styleClass: "columns-narrow", columnCount: 5},
                 {minWidth: 3008, styleClass: "columns-wide", columnCount: 5},
 
@@ -970,8 +1171,12 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
 
         EasyScanLayout.prototype.resizeHandler = function (colResList) {
             var width = this.iWidth;
+            var that = this;
             var oControl = this.oControl;
             var resObject;
+            if (jQuery(".sapFDynamicPageContent").length > 0) {
+                width = window.innerWidth;
+            }
             for (var i = 0; i < colResList.length; i++) {
                 if (!colResList[i + 1]) {
                     resObject = colResList[i];
@@ -982,26 +1187,121 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                     break;
                 }
             }
-
-            oControl.refreshColumnCount(resObject.columnCount, oControl.getContent());
+            
+            oControl.refreshColumnCount(resObject.columnCount, oControl.getContent(),that);
             oControl.updateColumnClass(resObject.styleClass);
+            oControl.fireAfterColumnUpdate(resObject);
         };
 
-        EasyScanLayout.prototype.refreshColumnCount = function (columnCount, content) {
+        /*This function is used to get the width of the cards based on the screen size, dependent on less file*/
+        EasyScanLayout.prototype.getColumnWidth = function (styleClass) {
+            var columnWidth;
+            switch (styleClass) {
+                case "columns-blank":
+                    columnWidth = 0;
+                    break;
+                case "columns-narrow":
+                    columnWidth = 20;
+                    break;
+                case "columns-wide":
+                    columnWidth = 25;
+                    break;
+            }
+            return columnWidth;
+        };
+
+        EasyScanLayout.prototype.refreshColumnCount = function (columnCount, content, that) {
             this.columnCount = columnCount;
             var jqColumnsNew = jQuery();
             for (var i = 0; i < columnCount; i++) {
-                jqColumnsNew = jqColumnsNew.add("<div class='easyScanLayoutColumn' role = 'list'/>");
+                jqColumnsNew = jqColumnsNew.add("<div class='easyScanLayoutColumn'/>");
             }
             var filteredItems = content.filter(function (item) {
                 return item.getVisible();
             });
+            var nCardPosition = 1;
             for (var j = 0; j < filteredItems.length; j++) {
+                jQuery(filteredItems[j].getDomRef()).parent().attr('aria-posinset', nCardPosition);
+                nCardPosition++;
                 jqColumnsNew.get(j % columnCount).appendChild(filteredItems[j].getDomRef().parentNode);
             }
-
             this.$().children(".sapUshellEasyScanLayoutInner").empty().append(jqColumnsNew);
+            if (that && that.iWidth) {
+                this.headerMargin(that);
+            }
+        };
 
+        EasyScanLayout.prototype.headerMargin = function (that) {
+            var contentWidth = 0,
+                marginAdd = 0;
+            var width = that.iWidth;
+            var resObject,
+                margin,
+                columnsContainerWidth,
+                scrollWidth = 0, //width of the scroll bar
+                columnWidth,
+                val = 0;
+            var colResList = getColumnResolutionList();
+            var iRemToPx = commonUtils.getPixelPerRem();
+            var screenWidth = (window.innerWidth * 1.0) / iRemToPx;
+            if (jQuery(".sapFDynamicPageContent").length > 0) {
+                width = window.innerWidth;
+            }
+            for (var i = 0; i < colResList.length; i++) {
+                if (!colResList[i + 1]) {
+                    resObject = colResList[i];
+                    break;
+                }
+                if (colResList[i].minWidth <= width && colResList[i + 1].minWidth > width) {
+                    resObject = colResList[i];
+                    break;
+                }
+            }
+            columnWidth = this.getColumnWidth(resObject.styleClass);
+
+            /*multiplied by 16 to convert rem to px and
+             columnCount-1 gives the number of paddings in the column container
+             and is being multiplied by 1 as the padding between the columns is 1rem */
+            columnsContainerWidth = (resObject.columnCount * columnWidth + (resObject.columnCount - 1) * 1);
+            if (sap.ui.Device.system.desktop) {
+                scrollWidth = jQuery('.sapFDynamicPageScrollBar').css('width');
+                if (typeof scrollWidth === "string" || scrollWidth instanceof String) { //take string with a rem unit
+                    val = scrollWidth.length > 0 ? parseInt(scrollWidth.split("px")[0], 10) : 0;
+                }
+                scrollWidth = (val * 1.0) / iRemToPx;
+            }
+            margin = (screenWidth - scrollWidth - columnsContainerWidth) / 2;
+            jQuery('.sapFDynamicPageTitle').css({"margin-left": margin + "rem", "margin-right": margin + "rem","visibility": "visible"});
+            jQuery('.sapFDynamicPageHeader').css({"margin-left": margin + "rem", "margin-right": margin + "rem","visibility": "visible"});
+
+            
+            if (sap.ui.Device.system.desktop) {
+                screenWidth = jQuery("body").width();
+                if (jQuery(".sapFDynamicPageContentFitContainer").length > 0) {
+                    contentWidth = jQuery(".sapFDynamicPageContentFitContainer")[0].clientWidth;
+                }
+
+                if (screenWidth === contentWidth) {
+                    var marginLeft = jQuery('.sapFDynamicPageTitle').css('margin-left');
+                    var marginRight = jQuery('.sapFDynamicPageTitle').css('margin-right');
+                    if (typeof marginLeft === "string" || marginLeft instanceof String) {
+                        marginLeft = marginLeft.length > 0 ? parseInt(marginLeft.split("px")[0], 10) : 0;
+                    }
+                    if (typeof marginRight === "string" || marginRight instanceof String) { //take string with a rem unit
+                        marginRight = marginRight.length > 0 ? parseInt(marginRight.split("px")[0], 10) : 0;
+                    }
+                    scrollWidth = jQuery('.sapFDynamicPageScrollBar').css('width');
+                    if (typeof scrollWidth === "string" || scrollWidth instanceof String) { //take string with a rem unit
+                        val = scrollWidth.length > 0 ? parseInt(scrollWidth.split("px")[0], 10) : 0;
+                    }
+                    scrollWidth = val;
+                    marginAdd = scrollWidth / 2;
+                    marginLeft = (marginLeft + marginAdd) / (iRemToPx * 1.0);
+                    marginRight = (marginRight + marginAdd) / (iRemToPx * 1.0);
+                    jQuery('.sapFDynamicPageTitle').css({"margin-left": marginLeft + "rem", "margin-right": marginRight + "rem", "visibility": "visible"});
+                    jQuery('.sapFDynamicPageHeader').css({"margin-left": marginLeft + "rem", "margin-right": marginRight + "rem", "visibility": "visible"});
+                }
+            }
         };
 
         EasyScanLayout.prototype.getColumnCount = function () {
@@ -1032,16 +1332,17 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
             var aVisibleControls = [];
             var iVizibleIndex = 0;
             //receive contols list from wrapperDOM list
-            aElements.forEach(function (el) {
+            aElements.forEach(function (el, index) {
                 var elementId = el.children[0].getAttribute("id");
                 var oControl = sap.ui.getCore().byId(elementId);
                 aVisibleControls.push(oControl);
+                jQuery(el).attr('aria-posinset', index+1);
             });
 
             // We need to keep all controls in the content aggregation, keep
             // the original order and change the order only for the visible controls
-            for (var i = 0; i < aAllControls.length; i++){
-                if (aAllControls[i].getVisible()){
+            for (var i = 0; i < aAllControls.length; i++) {
+                if (aAllControls[i].getVisible()) {
                     this.addAggregation("content", aVisibleControls[iVizibleIndex], true);
                     iVizibleIndex++;
                 } else {
@@ -1049,8 +1350,8 @@ sap.ui.define(["jquery.sap.global", "sap/ovp/library"],
                 }
 
             }
-
-            this.fireAfterDragEnds();
+            // Pass the position changes as parameter to be saved as delta changes for position
+            this.fireAfterDragEnds({positionChanges: this.layoutDragAndDrop.positionChanges});
             this.refreshColumnCount(this.getColumnCount(), this.getContent());
         };
 

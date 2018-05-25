@@ -7,101 +7,64 @@
 
 // Provides the Scene class.
 sap.ui.define([
-	"jquery.sap.global", "./library", "sap/ui/base/EventProvider", "./NodeHierarchy"
-], function(jQuery, library, EventProvider, NodeHierarchy) {
+	"jquery.sap.global", "sap/ui/base/Object"
+], function(jQuery, BaseObject) {
 	"use strict";
-
-	var log = jQuery.sap.log;
 
 	/**
 	 * Constructor for a new Scene.
 	 *
+	 * The objects of this class should not be created directly.
+	 * They should be created via {@link sap.ui.vk.ContentConnector sap.ui.vk.ContentConnector}.
+	 *
 	 * @class Provides the interface for the 3D model.
 	 *
-	 * The objects of this class should not be created directly. They should be created via call to {@link sap.ui.vk.GraphicsCore#buildSceneTree sap.ui.vk.GraphicsCore.buildSceneTree}.
+	 * The objects of this class should not be created directly.
+	 * They should be created via {@link sap.ui.vk.ContentConnector sap.ui.vk.ContentConnector}.
 	 *
-	 * @param {sap.ui.vk.GraphicsCore} graphicsCore The GraphicsCore object the scene belongs to.
-	 * @param {string} dvlSceneId The identifier of the DVL scene object.
 	 * @public
+	 * @abstract
 	 * @author SAP SE
-	 * @version 1.38.15
-	 * @extends sap.ui.base.EventProvider
+	 * @version 1.54.4
+	 * @extends sap.ui.base.Object
 	 * @alias sap.ui.vk.Scene
-	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
+	 * @experimental Since 1.50.0 This class is experimental and might be modified or removed in future versions.
 	 */
-	var Scene = EventProvider.extend("sap.ui.vk.Scene", /** @lends sap.ui.vk.Scene.prototype */ {
+	var Scene = BaseObject.extend("sap.ui.vk.Scene", /** @lends sap.ui.vk.Scene.prototype */ {
 		metadata: {
-			publicMethods: [
-				"getId",
-				"getGraphicsCore",
-				"getDefaultNodeHierarchy"
-			]
-		},
-		constructor: function(graphicsCore, dvlSceneId) {
-			log.debug("sap.ui.vk.Scene.constructor() called.");
-
-			EventProvider.apply(this);
-
-			this._id = jQuery.sap.uid();
-			this._graphicsCore = graphicsCore;
-			this._dvlSceneId = dvlSceneId;
-			this._defaultNodeHierarchy = null;
+			"abstract": true
 		}
-
 	});
-
-
-	Scene.prototype.destroy = function() {
-		log.debug("sap.ui.vk.Scene.destroy() called.");
-
-		if (this._defaultNodeHierarchy) {
-			this._defaultNodeHierarchy.destroy();
-			this._defaultNodeHierarchy = null;
-		}
-		this._dvlSceneId = null;
-		this._graphicsCore = null;
-
-		EventProvider.prototype.destroy.apply(this);
-	};
 
 	/**
 	 * Gets the unique ID of the Scene object.
+	 *
+	 * @function
+	 * @name sap.ui.vk.Scene#getId
+	 *
 	 * @returns {string} The unique ID of the Scene object.
 	 * @public
 	 */
-	Scene.prototype.getId = function() {
-		return this._id;
-	};
-
-	/**
-	 * Gets the GraphicsCore object this Scene object belongs to.
-	 * @returns {sap.ui.vk.GraphicsCore} The GraphicsCore object this Scene object belongs to.
-	 * @public
-	 */
-	Scene.prototype.getGraphicsCore = function() {
-		return this._graphicsCore;
-	};
 
 	/**
 	 * Gets the default node hierarchy in the Scene object.
+	 *
+	 * @function
+	 * @name sap.ui.vk.Scene#getDefaultNodeHierarchy
+	 *
 	 * @returns {sap.ui.vk.NodeHierarchy} The default node hierarchy in the Scene object.
 	 * @public
 	 */
-	Scene.prototype.getDefaultNodeHierarchy = function() {
-		if (!this._defaultNodeHierarchy) {
-			this._defaultNodeHierarchy = new NodeHierarchy(this);
-		}
-		return this._defaultNodeHierarchy;
-	};
 
 	/**
-	 * Gets the DVL scene ID.
-	 * @returns {string} The DVL scene ID.
-	 * @private
+	 * Gets the scene reference that this Scene object wraps.
+	 *
+	 * @function
+	 * @name sap.ui.vk.Scene#getSceneRef
+	 *
+	 * @returns {any} The scene reference that this Scene object wraps.
+	 * @public
 	 */
-	Scene.prototype._getDvlSceneId = function() {
-		return this._dvlSceneId;
-	};
 
 	return Scene;
 });

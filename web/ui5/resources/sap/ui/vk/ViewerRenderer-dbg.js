@@ -33,13 +33,18 @@ sap.ui.define([
 		rm.writeControlData(control);
 		rm.addClass("sapVizKitViewer");
 		rm.writeClasses();
-		rm.addStyle("width", control.getWidth());
-		rm.addStyle("height", control.getHeight());
+
+		if (control.getWidth()) {
+			rm.addStyle("width", control.getWidth());
+		}
+		if (control.getHeight()) {
+			rm.addStyle("height", control.getHeight());
+		}
 		rm.writeStyles();
 
 		rm.write(">");
-		rm.renderControl(control.getAggregation("layout"));
-		rm.renderControl(control.getAggregation("progressIndicator"));
+		rm.renderControl(control._layout);
+		rm.renderControl(control._progressIndicator);
 		rm.write("</div>");
 	};
 

@@ -14,7 +14,9 @@ jQuery.sap.declare("sap.apf.modeler.core.smartFilterBar");
 	 * @constructor
 	 */
 	sap.apf.modeler.core.SmartFilterBar = function(smartFilterBarId){
-		var service, entityType;
+		var service, entitySet;
+		var bEntityTypeIsNotConverted = false;
+		
 		this.getId = function(){
 			return smartFilterBarId;
 		};
@@ -24,11 +26,23 @@ jQuery.sap.declare("sap.apf.modeler.core.smartFilterBar");
 		this.getService = function(){
 			return service;
 		};
-		this.setEntityType = function(name){
-			entityType = name;
+		/**
+		 * sets the name of the entity set for the smart filter bar. Valid  entity sets are all entity sets under the service root,
+		 *  that are no parameter entity sets.
+		 *  @param {string} name the name of the entity set
+		 *  @param {boolean} entityTypeIsNotConverted in case, that an old configuration was read in and the name of the entity type could not 
+		 *  be converted, then the entity type name is set and if it is not replaced, the configuration editor will serialize the entity type out again.
+		 *  So we have no self healing effect.
+		 */
+		this.setEntitySet = function(name, entityTypeIsNotConverted){
+			entitySet = name;
+			bEntityTypeIsNotConverted = entityTypeIsNotConverted;
 		};
-		this.getEntityType = function(){
-			return entityType;
+		this.getEntitySet = function(){
+			return entitySet;
+		};
+		this.isEntityTypeConverted = function() {
+			return !bEntityTypeIsNotConverted;
 		};
 	};
 }());

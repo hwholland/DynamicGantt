@@ -5,7 +5,7 @@
     <documentation>Enumaration for different switch types.</documentation>
     <enumeration>
         <value name="Default">
-            <documentation>Will show "ON" and "OFF" translated to the current language or the custom text if provided</documentation>
+            <documentation>Will show &quot;ON&quot; and &quot;OFF&quot; translated to the current language or the custom text if provided</documentation>
         </value>
         <value name="AcceptReject">
             <documentation>Switch with accept and reject icons</documentation>

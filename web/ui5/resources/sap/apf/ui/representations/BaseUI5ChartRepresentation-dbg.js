@@ -3,40 +3,55 @@
 *
 * (c) Copyright 2012-2014 SAP SE. All rights reserved
 */
-jQuery.sap.require('sap.apf.ui.representations.utils.UI5ChartHelper');
 jQuery.sap.require('sap.apf.ui.utils.formatter');
 jQuery.sap.require('sap.ui.layout.HorizontalLayout');
 jQuery.sap.require('sap.m.Text');
-jQuery.sap.require('sap.ui.model.json.JSONModel');
-jQuery.sap.require('sap.apf.ui.representations.utils.UI5ChartHelper');
+jQuery.sap.require("sap.apf.ui.representations.utils.chartDataSetHelper");
+jQuery.sap.require("sap.apf.ui.representations.utils.representationFilterHandler");
+jQuery.sap.require("sap.apf.ui.representations.utils.vizFrameSelectionHandler");
+jQuery.sap.require("sap.apf.ui.representations.utils.timeAxisDateConverter");
 jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
-/** 
+jQuery.sap.require('sap.apf.utils.utils');
+/* global jQuery, sap */
+/**
  * @class representation base class constructor.
 * @param oParameters defines parameters required for chart such as Dimension/Measures, tooltip, axis information.
 * @returns chart object
 */
 (function() {
 	'use strict';
+	function _getNameOrLabelOfProperty(oRepresentation, requiredFilterLabel) {
+		if (!requiredFilterLabel) {
+			return undefined;
+		}
+		var oMetaData = oRepresentation.getMetaData();
+		if (!oMetaData) {
+			return null;
+		}
+		var oPropertyMetaData = oMetaData.getPropertyMetadata(requiredFilterLabel);
+		if (!oPropertyMetaData) {
+			return null;
+		}
+		var sFilterLabel = oPropertyMetaData.label || oPropertyMetaData.name;
+		return sFilterLabel !== undefined ? sFilterLabel : null;
+	}
 	sap.apf.ui.representations.BaseUI5ChartRepresentation = function(oApi, oParameters) {
 		this.oMessageObject = "";
-		this.legendBoolean = true;
 		this.aDataResponse = undefined;
 		this.dataset = {};
-		this.oModel = new sap.ui.model.json.JSONModel();
-		this.bDataHasBeenSelected = false;
 		this.parameter = oParameters;
 		this.orderby = oParameters.orderby;
 		this.dimension = oParameters.dimensions;
 		this.measure = oParameters.measures;
 		this.alternateRepresentation = oParameters.alternateRepresentationType;
 		this.requiredFilters = oParameters.requiredFilters;
-		this.UI5ChartHelper = new sap.apf.ui.representations.utils.UI5ChartHelper(oApi, this.parameter);
+		this.oVizFrameSelectionHandler = new sap.apf.ui.representations.utils.VizFrameSelectionHandler(this.parameter, oApi);
+		this.oTimeAxisDateConverter = new sap.apf.ui.representations.utils.TimeAxisDateConverter();
+		this.oRepresentationFilterHandler = new sap.apf.ui.representations.utils.RepresentationFilterHandler(oApi, this.parameter, this.oTimeAxisDateConverter);
 		this.chartInstance = {};
 		this.chartParam = "";
 		this.thumbnailChartParam = "";
-		this.disableSelectEvent = false;
 		this.oApi = oApi;
-		this.showXaxisLabel = true;
 		this.axisType = sap.apf.ui.utils.CONSTANTS.axisTypes.AXIS;
 		this.topN = oParameters.top;
 	};
@@ -56,21 +71,28 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		* Handles data with multiple dimensions .
 		*/
 		setData : function(aDataResponse, metadata) {
-			this.bIsGroupTypeChart = this.getIsGroupTypeChart();
-			this.oDataSetHelper = this.getDataSetHelper();
-			this.formatter = new sap.apf.ui.utils.formatter({
-				getEventCallback : this.oApi.getEventCallback.bind(this.oApi),
-				getTextNotHtmlEncoded : this.oApi.getTextNotHtmlEncoded
-			}, metadata, aDataResponse);
-			this.UI5ChartHelper.init(aDataResponse, metadata, this.bIsGroupTypeChart, this.oDataSetHelper, this.formatter);
-			this.aDataResponse = aDataResponse || [];
-			this.metadata = metadata;
-			if (!this.metadata) {
-				this.oMessageObject = this.oApi.createMessageObject({
-					code : "6004",
-					aParameters : [ this.oApi.getTextNotHtmlEncoded("step") ]
-				});
-				this.oApi.putMessage(this.oMessageObject);
+			if (this.bIsAlternateView && this.toggleInstance && jQuery.isFunction(this.toggleInstance.setData)) {
+				this.toggleInstance.setData(aDataResponse, metadata);
+			} else {
+				this.formatter = new sap.apf.ui.utils.formatter({
+					getEventCallback : this.oApi.getEventCallback.bind(this.oApi),
+					getTextNotHtmlEncoded : this.oApi.getTextNotHtmlEncoded,
+					getExits : this.oApi.getExits()
+				}, metadata, aDataResponse);
+				this.oRepresentationFilterHandler.setMetadataAndDataResponse(metadata, aDataResponse);
+				this.oRepresentationFilterHandler.validateFiltersWithDataset();
+				// initialize chartdata set helper
+				this.oChartDataSetHelper = new sap.apf.ui.representations.utils.ChartDataSetHelper(this.formatter, this.oTimeAxisDateConverter);
+				this.oChartDataSetHelper.createFlattenDataSet(this.parameter, metadata, aDataResponse, this.oApi);
+				this.aDataResponse = aDataResponse || [];
+				this.metadata = metadata;
+				if (!this.metadata) {
+					this.oMessageObject = this.oApi.createMessageObject({
+						code : "6004",
+						aParameters : [ this.oApi.getTextNotHtmlEncoded("step") ]
+					});
+					this.oApi.putMessage(this.oMessageObject);
+				}
 			}
 		},
 		/**
@@ -83,20 +105,6 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 				this.oMessageObject = this.oApi.createMessageObject({
 					code : "6002",
 					aParameters : [ "title", this.oApi.getTextNotHtmlEncoded("step") ]
-				});
-				this.oApi.putMessage(this.oMessageObject);
-			}
-			if (this.dimension.length === 0) {
-				this.oMessageObject = this.oApi.createMessageObject({
-					code : "6002",
-					aParameters : [ "dimensions", oStepTitle ]
-				});
-				this.oApi.putMessage(this.oMessageObject);
-			}
-			if (this.measure.length === 0) {
-				this.oMessageObject = this.oApi.createMessageObject({
-					code : "6002",
-					aParameters : [ "measures", oStepTitle ]
 				});
 				this.oApi.putMessage(this.oMessageObject);
 			}
@@ -124,20 +132,34 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		},
 		/**
 		* @method getFormatStringForMeasure
-		* @param {measure}- a measure
+		* @param [measure] - a measure
 		* @description gets the format string for axis label and tooltip
 		* @return sFormatString , has the format string and also a boolean which indicated whether all the measure unit semantic are same or not
 		*             sFormatString ="#,#0.0"
-		
 		*/
 		getFormatStringForMeasure : function(measure) {
 			var sFormatString = this.formatter.getFormatString(measure); // get the format string
 			return sFormatString;
 		},
+		getFormatStringForMeasureTooltip : function(measure) {
+			var sFormatStringTooltip = this.formatter.getFormatStringTooltip(measure); // get the format string for measure tooltip
+			return sFormatStringTooltip;
+		},
+		getSelectionFilterLabel : function() {
+			var sRequiredFilter = this.getParameter().requiredFilters[0];
+			var sSelectedDimension = this.getSelectedFilterPropertyLabel(sRequiredFilter);
+			if (this.getParameter().requiredFilterOptions && this.getParameter().requiredFilterOptions.fieldDesc) {
+				sSelectedDimension = this.oApi.getTextNotHtmlEncoded(this.getParameter().requiredFilterOptions.fieldDesc);
+			}
+			return sSelectedDimension;
+		},
+		getSelectedFilterPropertyLabel : function(sRequiredFilter) {
+			return _getNameOrLabelOfProperty(this, sRequiredFilter);
+		},
 		/**
 		* @method getIsAllMeasureSameUnit
 		* @description checks if all the measures have same unit semantic and sets a boolean accordingly
-		* @retun bAllMeasuresSameUnit - boolean to indicate if all the measures have same unit semantic. 
+		* @retun bAllMeasuresSameUnit - boolean to indicate if all the measures have same unit semantic.
 		 * This boolean is used to set the formatting to y axis only when all the measures have same unit (e.g. clustered column chart),
 		* otherwise the formatting will not be applied to y axis.
 		*/
@@ -197,19 +219,24 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		* @method getRequestOptions
 		* @description provide optional filter properties for odata request URL such as pagging, sorting etc
 		*/
-		getRequestOptions : function() {
-			var oOptions = {};
+		getRequestOptions : function(bFilterChanged) {
+			if (this.bIsAlternateView && this.toggleInstance && jQuery.isFunction(this.toggleInstance.getRequestOptions)) {
+				return this.toggleInstance.getRequestOptions(bFilterChanged, this.bIsAlternateView);
+			}
+			var oOptions = {
+				paging : {},
+				orderby : []
+			};
 			if (this.orderby && this.orderby.length) {
 				var aOrderbyProps = this.orderby.map(function(oOrderby) {
 					return {
 						property : oOrderby.property,
-						descending : !oOrderby.ascending
+						ascending : oOrderby.ascending
 					};
 				});
 				oOptions.orderby = aOrderbyProps;
 			}
 			if (this.topN && this.topN > 0) {
-				oOptions.paging = {};
 				oOptions.paging.top = this.topN;
 			}
 			return oOptions;
@@ -219,71 +246,48 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		* @description Intantiates the dataset to be consumed by the chart
 		*/
 		createDataset : function() {
-			this.dataset = this.UI5ChartHelper.getDataset();
-			this.oModel = this.UI5ChartHelper.getModel();
+			this.dataset = this.oChartDataSetHelper.getFlattenDataSet();
+			this.oModel = this.oChartDataSetHelper.getModel();
 		},
 		/**
 		* @method drawSelectionOnMainChart
-		* @param
 		* @description Draws the selection on main chart when chart is loaded
 		*/
 		drawSelectionOnMainChart : function() {
-			var aSelections = this.UI5ChartHelper.getSelectionFromFilter(this.filter);
-			if (aSelections.length > 0) {
-				this.disableSelectEvent = true;
+			var aFilterValues = this.oRepresentationFilterHandler.getFilterValues();
+			if (aFilterValues.length > 0) {
+				var aSelections = this.oVizFrameSelectionHandler.getSelectionInfoFromFilter(aFilterValues, this.aDataResponse);
 				this.setSelectionOnMainChart(aSelections);
 			}
 		},
 		/**
 		* @method drawSelectionOnThumbnailChart
-		* @param
 		* @description Draws the selection on the thumbnail chart  when chart is loaded
 		*/
 		drawSelectionOnThumbnailChart : function() {
-			var aSelections = this.UI5ChartHelper.getSelectionFromFilter(this.filter);
-			if (aSelections.length > 0) {
-				this.clearSelectionFromThumbnailChart();
-				this.setSelectionOnThumbnailChart(aSelections);
+			var aFilterValues = this.oRepresentationFilterHandler.getFilterValues();
+			if (aFilterValues.length > 0) {
+				var aSelections = this.oVizFrameSelectionHandler.getSelectionInfoFromFilter(aFilterValues, this.aDataResponse);
+				this.setSelectionOnThumbnailChart(aSelections, false);
 			}
 		},
 		/**
 		* @method handleSelection
-		* @param event
+		* @param event parameter with the selection data
 		* @description  plots the selections made on the chart
 		*/
-		handleSelection : function(evt) {
-			if (!this.disableSelectEvent) {
-				var aSelection = this.getSelectionFromChart();
-				var ctxArray = this.UI5ChartHelper.getHighlightPointsFromSelectionEvent(aSelection);
-				this.setSelectionOnThumbnailChart(ctxArray);
-				this.setSelectionOnMainChart(ctxArray);
-				this.bDataHasBeenSelected = true;
-				this.oApi.selectionChanged();
-			} else {
-				this.disableSelectEvent = false;
-			}
+		handleSelection : function(event) {
+			this.manageSelectionsOnChart(event, false, this.parameter);
+			this.chart.attachEvent("setFocusOnSelectedLinkEvent", this.chart.setFocusOnSelectLink);
 		},
 		/**
 		* @method handleDeselection
-		* @param event
+		* @param event parameter with the deselection data
 		* @description  de-selects the selected datapoints on the chart
 		*/
-		handleDeselection : function(evt) {
-			if (!this.disableSelectEvent) {
-				this.disableSelectEvent = true;
-				var aSelection = this.getSelectionFromChart();
-				var newSelection = this.UI5ChartHelper.getHighlightPointsFromDeselectionEvent(aSelection);
-				this.removeAllSelection();
-				this.setSelectionOnThumbnailChart(newSelection);
-				this.setSelectionOnMainChart(newSelection);
-				if (!newSelection.length) {
-					this.disableSelectEvent = false;
-				}
-				this.bDataHasBeenSelected = true;
-				this.oApi.selectionChanged();
-			} else {
-				this.disableSelectEvent = false;
-			}
+		handleDeselection : function(event) {
+			this.manageSelectionsOnChart(event, true, this.parameter);
+			this.chart.attachEvent("setFocusOnSelectedLinkEvent", this.chart.setFocusOnSelectLink);
 		},
 		/**
 		* @method getSelections
@@ -291,32 +295,32 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		* @returns the filter selections of the current representation.
 		*/
 		getSelections : function() {
-			return this.UI5ChartHelper.getFilters();
+			return this.oRepresentationFilterHandler.getDisplayInfoForFilters(this.metadata, this.oModel.getData().data);
 		},
 		/**
-		* @deprecated since version 1.27.0 and using getSelections API instead
-		* @method getSelectionCount
-		* @description This method helps in determining the selection count of a representation
-		* @returns the selection count of the current representation.
+		* @method getSortedSelections
+		* @description calls getSelections and sorts the values ascending to internal value (id)
+		* @returns the filter selections of the current representation.
 		*/
+		getSortedSelections : function() {
+			var selections = this.getSelections();
+			if (!selections || selections.length === 0) {
+				return [];
+			}
+			var requiredFilterProperty = this.getParameter().requiredFilters[0];
+			var propertyMetadata = this.metadata.getPropertyMetadata(requiredFilterProperty);
+			return sap.apf.utils.sortByProperty(selections, "id", propertyMetadata);
+		},
 		getSelectionCount : function() {
-			return this.UI5ChartHelper.getFilterCount();
-		},
-		/**
-		* @method hasSelection
-		* @description This method helps in determining the selections of a representation
-		* @returns true if the representation holds any selections.
-		*/
-		hasSelection : function() {
-			return this.bDataHasBeenSelected;
+			return this.oRepresentationFilterHandler.getFilterValues().length;
 		},
 		/**
 		* @method removeAllSelection
 		* @description removes all Selection from Chart
 		*/
 		removeAllSelection : function() {
-			this.clearSelectionFromThumbnailChart();
-			this.clearSelectionFromMainChart();
+			this.setSelectionOnThumbnailChart([], false);
+			this.setSelectionOnMainChart([], true);
 		},
 		/**
 		* @method getFilterMethodType
@@ -327,7 +331,7 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 			return sap.apf.core.constants.filterMethodTypes.filter; // returns the filter method type the representation supports
 		},
 		getFilter : function() {
-			this.filter = this.UI5ChartHelper.getFilterFromSelection();
+			this.filter = this.oRepresentationFilterHandler.createFilterFromSelectedValues();
 			return this.filter;
 		},
 		/**
@@ -337,7 +341,6 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		*/
 		setFilter : function(oFilter) {
 			this.filter = oFilter;
-			this.bDataHasBeenSelected = false;
 		},
 		/**
 		* @method adoptSelection
@@ -346,9 +349,10 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		*/
 		adoptSelection : function(oSourceRepresentation) {
 			if (oSourceRepresentation && oSourceRepresentation.getFilter) {
-				this.UI5ChartHelper.filterValues = oSourceRepresentation.getFilter().getInternalFilter().getFilterTerms().map(function(term) {
-					return [ term.getValue() ];
+				var afilterValues = oSourceRepresentation.getFilter().getInternalFilter().getFilterTerms().map(function(term) {
+					return term.getValue();
 				});
+				this.oRepresentationFilterHandler.updateFilterFromSelection(afilterValues);
 			}
 		},
 		/**
@@ -357,9 +361,14 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		* @returns selectionObject
 		*/
 		serialize : function() {
+			var orderby = this.parameter.orderby;
+			if (this.toggleInstance) {
+				orderby = this.toggleInstance.orderby;
+			}
 			return {
-				oFilter : this.UI5ChartHelper.filterValues,
-				bIsAlternateView : this.bIsAlternateView
+				oFilter : this.oRepresentationFilterHandler.getFilterValues(),
+				bIsAlternateView : this.bIsAlternateView,
+				orderby : orderby
 			};
 		},
 		/**
@@ -367,49 +376,15 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		* @description This method uses selection object from serialized data and sets the selection to representation
 		*/
 		deserialize : function(oSerializable) {
-			this.UI5ChartHelper.filterValues = oSerializable.oFilter;
+			this.oRepresentationFilterHandler.updateFilterFromSelection(oSerializable.oFilter);
 			this.bIsAlternateView = oSerializable.bIsAlternateView;
-		},
-		/**
-		* @method getPrintContent
-		* @param oStepTitle title of the step
-		* @description gets the printable content of the representation
-		*/
-		getPrintContent : function(oStepTitle) {
-			var oChartForPrinting, vizType = this.chartType, vizProperties = {};
-			//Retrieves the current chart instance 
-			var oOriginalChart = this.getMainContent(oStepTitle);
-			//Check if chart instance is viz frmae
-			if (oOriginalChart.setVizProperties) {
-				/* 
-				 * If the chart is viz frame clone the chart. Limitation with clone in viz frame as it does only shallow clone, Viz type and viz properties need to be set again
-				 * Therefore we read existing viz properties set in the original chart and set in on the cloned chart
-				 */
-				vizProperties = oOriginalChart.getVizProperties();
-				oChartForPrinting = oOriginalChart.clone();
-				oChartForPrinting.setVizType(vizType);
-				oChartForPrinting.setVizProperties(vizProperties);
-			} else {
-				/*
-				 * If the chart is viz, then create a new chart with the same properties as the original chart
-				 * Read chart param from baseVizChartRepresentation
-				 */
-				vizProperties = jQuery.extend(true, {}, this.chartParam);
-				delete vizProperties.dataset;
-				jQuery.sap.require('sap.viz.ui5.' + vizType);
-				oChartForPrinting = new sap.viz.ui5[vizType](vizProperties);
+			if (this.bIsAlternateView) {
+				this.toggleInstance = this.oApi.getUiApi().getStepContainer().getController().createToggleRepresentationInstance(this, oSerializable.orderby);
 			}
-			//Set height and width on the chart for printing
-			oChartForPrinting.setWidth("1000px");
-			oChartForPrinting.setHeight("600px");
-			//Create new dataset and model for the chart and set them
-			this.createDataset();
-			oChartForPrinting.setDataset(this.dataset);
-			oChartForPrinting.setModel(this.oModel);
-			return {
-				oChartForPrinting : oChartForPrinting,
-				aSelectionOnChart : this.getSelectionFromChart()
-			};
+		},
+		getPrintContent : function() {
+		},
+		onChartSwitch : function() {
 		},
 		/**
 		* @method destroy
@@ -417,14 +392,13 @@ jQuery.sap.declare("sap.apf.ui.representations.BaseUI5ChartRepresentation");
 		*/
 		destroy : function() {
 			this.dataset = null;
-			this.oModel.destroy();
-			this.oDataSetHelper = null;
 			if (this.formatter) {
-				this.formatter.destroy();
 				this.formatter = null;
 			}
-			this.UI5ChartHelper.destroy();
-			this.UI5ChartHelper = null;
+			if (this.oRepresentationFilterHandler) {
+				this.oRepresentationFilterHandler.aFilterValues = [];
+				this.oRepresentationFilterHandler = null;
+			}
 			if (this.chart) {
 				this.chart.detachSelectData(this.fnHandleSelection);
 				this.fnHandleSelection = null;

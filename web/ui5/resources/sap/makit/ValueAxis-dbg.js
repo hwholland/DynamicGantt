@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ jQuery.sap.require("sap.makit.Axis");
  * @extends sap.makit.Axis
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -72,7 +72,15 @@ sap.makit.Axis.extend("sap.makit.ValueAxis", { metadata : {
 	deprecated : true,
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * Highest displayed value on the Value Axis (this value will be automatically adjusted to nearest major tick value depending on the value's range). Set to empty string to switch back to automatic calculation.
+		 */
 		"min" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * Highest displayed value on the Value Axis (this value will be automatically adjusted to nearest major tick value depending on the value's range)
+		 */
 		"max" : {type : "string", group : "Misc", defaultValue : null}
 	}
 }});

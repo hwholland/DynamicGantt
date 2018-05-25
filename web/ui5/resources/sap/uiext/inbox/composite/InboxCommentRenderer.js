@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.require("sap.uiext.inbox.InboxUtils");jQuery.sap.declare("sap.uiext.inbox.composite.InboxCommentRenderer");sap.uiext.inbox.composite.InboxCommentRenderer={};
 sap.uiext.inbox.composite.InboxCommentRenderer.render=function(r,c){var a=r;var C=c;var m=C.getId();a.write('<ARTICLE');a.writeControlData(C);a.addClass('sapuiextInboxCommentChunk');a.addClass('sapuiextInboxComment');a.writeClasses();a.write('>');a.write('<img id='+m+'-thumb');var t=sap.uiext.inbox.InboxUtils.getUserMediaResourceURL(sap.uiext.inbox.composite.InboxComment.bpmSvcUrl,C.getSapOrigin(),C.getCreatedBy());if(!t){t=jQuery.sap.getModulePath("sap.uiext.inbox",'/')+"themes/"+sap.ui.getCore().getConfiguration().getTheme()+"/img/comments/person_placeholder_grey_512.png";}a.writeAttributeEscaped('src',t);a.writeClasses();a.write('>');a.write('<DIV class= "sapuiextInboxCommentText" >');a.write('<SPAN id='+m+'-sender class= "sapuiextInboxCommentSenderText"');a.write('>');a.writeEscaped(C.getSender());a.write('</SPAN> ');this.renderText(a,C);a.write('</DIV>');a.write('<SPAN class= "sapuiextInboxCommentChunkByline" >');a.writeEscaped(C.getTimestamp());a.write('</SPAN>');a.write('</ARTICLE>');};

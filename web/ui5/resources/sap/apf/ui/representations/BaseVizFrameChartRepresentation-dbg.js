@@ -3,17 +3,18 @@
  *
  * (c) Copyright 2012-2014 SAP SE. All rights reserved
  */
+/* global jQuery, sap */
 jQuery.sap.declare("sap.apf.ui.representations.BaseVizFrameChartRepresentation");
 jQuery.sap.require("sap.apf.ui.representations.BaseUI5ChartRepresentation");
-jQuery.sap.require('sap.apf.ui.representations.utils.vizFrameDatasetHelper');
 jQuery.sap.require("sap.apf.ui.utils.constants");
 jQuery.sap.require("sap.viz.ui5.controls.VizFrame");
 jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
-
+jQuery.sap.require("sap.apf.ui.representations.utils.vizFrameSelectionHandler");
 (function() {
 	'use strict';
 	sap.apf.ui.representations.BaseVizFrameChartRepresentation = function(oApi, oParameters) {
 		sap.apf.ui.representations.BaseUI5ChartRepresentation.apply(this, [ oApi, oParameters ]);
+		this.oApi = oApi;
 	};
 	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype = Object.create(sap.apf.ui.representations.BaseUI5ChartRepresentation.prototype);
 	//Set the "constructor" property to refer to BaseUI5ChartRepresentation
@@ -41,6 +42,7 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 		return this.measure;
 	};
 	/**
+	 * FIXME this method also "draws Main chart into the Chart area" which is not part of its purpose as a getter
 	 * @method getMainContent
 	 * @param oStepTitle title of the main chart
 	 * @param width width of the main chart
@@ -50,7 +52,7 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.getMainContent = function(oStepTitle, width, height) {
 		var self = this;
 		var superClass = this;
-		var chartHeight = height || 600;
+		var chartHeight = height || 725;
 		chartHeight = chartHeight + "px";
 		var chartWidth = width || 1000;
 		chartWidth = chartWidth + "px";
@@ -67,7 +69,7 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 					applicationSet : "fiori"
 				}
 			});
-			this.setVizPropertiesOnChart();
+			this.setVizPropertiesOnChart(this.metadata);
 			/**
 			* @method attachRenderComplete
 			* @param event which is triggered on when the chart is initialized
@@ -76,18 +78,21 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 			this.fnDrawSelectionOnMainChart = this.drawSelectionOnMainChart.bind(self);
 			this.chart.attachRenderComplete(this.fnDrawSelectionOnMainChart);
 			if (this.metadata) { //if metadata is available, do the formatting for measures
-				var oMeasureWithFormatString = {};
-				var sFormatStringForTooltip;
-				this.measure.forEach(function(measure) {
-					var sFormatString = superClass.getFormatStringForMeasure(measure); // get the format string for each measure
-					sFormatStringForTooltip = sFormatString; //assign one format string for tooltip
-					oMeasureWithFormatString.measure = measure;
-					oMeasureWithFormatString.formatString = sFormatString; // associate the format string with each measure
-					self.setFormatStringOnChart(oMeasureWithFormatString);
-				});
-				this.setFormatString("tooltip", sFormatStringForTooltip); //tooltip is not a feedItem Id, formatting has to be applied explicitly
-				if (this.handleCustomFormattingOnChart) { //call the sub class formatting 
-					this.handleCustomFormattingOnChart();
+				this._createAndAddFeedItemBasedOnId(this.chart);
+				if (this.measure.length !== 0){
+					var oMeasureWithFormatString = {};
+					var sFormatStringForTooltip;
+					this.measure.forEach(function(measure) {
+						var sFormatString = superClass.getFormatStringForMeasure(measure); // get the format string for each measure
+						sFormatStringForTooltip = superClass.getFormatStringForMeasureTooltip(measure);
+						oMeasureWithFormatString.measure = measure;
+						oMeasureWithFormatString.formatString = sFormatString; // associate the format string with each measure
+						self.setFormatStringOnChart(oMeasureWithFormatString);
+					});
+					this.setFormatString("tooltip", sFormatStringForTooltip); //tooltip is not a feedItem Id, formatting has to be applied explicitly
+					if (this.handleCustomFormattingOnChart) { //call the sub class formatting 
+						this.handleCustomFormattingOnChart();
+					}
 				}
 			}
 			superClass.attachSelectionAndFormatValue.call(this, oStepTitle); // call the base class attachSelectionAndFormatValue
@@ -104,8 +109,8 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 			this.chart.vizUpdate({
 				'data' : this.dataset
 			});
+			this._createAndAddFeedItemBasedOnId(this.chart);
 		}
-		this._createAndAddFeedItemBasedOnId(this.chart);
 		this.chart.setModel(this.oModel);
 		return this.chart;
 	};
@@ -113,12 +118,29 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 	* @method setVizPropertiesOnChart
 	* @description sets the vizProperties common to all charts
 	*/
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.setVizPropertiesOnChart = function() {
+	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.setVizPropertiesOnChart = function(metadata) {
+		var oInteraction = {
+			behaviorType : null
+		};
+		if (this.parameter.requiredFilters.length === 0) {
+			oInteraction = {
+				selectability : {
+					axisLabelSelection : false,
+					legendSelection : false,
+					plotLassoSelection : false,
+					plotStdSelection : false
+				},
+				enableHover : false,
+				noninteractiveMode : false,
+				behaviorType : null
+			};
+		}
 		this.chart.setVizProperties({
 			title : {
 				visible : true,
 				text : this.title
 			},
+			interaction : oInteraction,
 			categoryAxis : {
 				visible : true,
 				title : {
@@ -138,14 +160,16 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 				}
 			},
 			legend : {
-				visible : this.legendBoolean,
+				visible : true,
 				title : {
-					visible : this.legendBoolean
+					visible : true
 				},
 				isScrollable : true
 			},
 			plotArea : {
-				isFixedDataPointSize : false
+				window : {
+					start : null
+				}
 			},
 			tooltip : {
 				visible : true,
@@ -153,15 +177,11 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 					visible : true
 				}
 			},
-			interaction : {
-				behaviorType : null
-			},
 			general : {
 				groupData : false
 			}
 		});
-		this.validateSelectionModes();
-		this.setVizPropsForSpecificRepresentation();//sets the vizProperties specific to the chart
+		this.setVizPropsForSpecificRepresentation(metadata);//sets the vizProperties specific to the chart
 	};
 	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.setVizPropsForSpecificRepresentation = function() {
 	};
@@ -256,7 +276,7 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 	* @private
 	* @function
 	* @method _createFeedItemGroup
-	* @param {aDataToBeGrouped}- dimensions/measures for a chart, which have to be grouped based on the feedItem id assigned
+	* @param [aDataToBeGrouped] - dimensions/measures for a chart, which have to be grouped based on the feedItem id assigned
 	* @description reads the feedItem id from each dimension/measure
 	*         
 	*          e.g. dimensions = [{
@@ -281,7 +301,7 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 			var feedItemList = sameFeedItemGroup[data.axisfeedItemId];
 			if (feedItemList) { //if the group name exist for one feedItem id, push the data in that group
 				var bFieldAlreadyExists = feedItemList.some(function(oData) {
-					return oData.name === data.name;
+					return oData.identity === data.identity;
 				});
 				if (!bFieldAlreadyExists) {
 					feedItemList.push(data);
@@ -291,6 +311,26 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 			}
 		});
 		return sameFeedItemGroup;
+	};
+	/**
+	 * @private
+	 * @function
+	 * @name manageSelectionsOnChart
+	 * @param event parameter with the selection or deselection data
+	 * @param bIsCalledFromDeselection indicates if the method is called to select or deselect the data points
+	 * @param oParameter chart parameter (dimensions, measures, ..)
+	 */
+	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.manageSelectionsOnChart = function(event, bIsCalledFromDeselection, oParameter) {
+		var oVizFrameSelectionHandler = new sap.apf.ui.representations.utils.VizFrameSelectionHandler(oParameter, this.oApi);
+		var aSelectionInChart = this.chart.vizSelection();
+		var oSelectedPointsFromSelection = oVizFrameSelectionHandler.getSelectionInfoFromEvent(event, bIsCalledFromDeselection, aSelectionInChart);
+
+		this.setSelectionOnMainChart(oSelectedPointsFromSelection.dataPointsFromSelection, bIsCalledFromDeselection);
+		this.setSelectionOnThumbnailChart(oSelectedPointsFromSelection.dataPointsFromSelection, bIsCalledFromDeselection);
+		if (this.oRepresentationFilterHandler.getIfSelectedFilterChanged(oSelectedPointsFromSelection.aUniqueFilterValueFromChart)) {
+			this.oRepresentationFilterHandler.updateFilterFromSelection(oSelectedPointsFromSelection.aUniqueFilterValueFromChart);
+			this.oApi.selectionChanged(false);
+		}
 	};
 	/**
 	* @private
@@ -320,7 +360,7 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 			var aFeedItemValue = [];
 			var i = 0;
 			for(i in oGroupedData[key]) { //loop through all the measures/dimensions of one group
-				aFeedItemValue.push(oGroupedData[key][i].name); //push all the measure/dimension name which has same feedIem id to an array
+				aFeedItemValue.push(oGroupedData[key][i].identity); //push all the measure/dimension identity which has same feedIem id to an array
 				oFeedItem.feedItemId = oGroupedData[key][0].axisfeedItemId; //assign one id to each feedItem object (all the id will be same in one group) 
 			}
 			oFeedItem.value = aFeedItemValue; //assign the values to each feedItem object
@@ -330,50 +370,6 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 				values : oFeedItem.value
 			});
 			oChart.addFeed(chartFeedItem);
-		}
-	};
-	/**
-	 * @method validateSelectionModes
-	 * @description sets the different selection modes on the charts based on the required filter
-	 */
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.validateSelectionModes = function() {
-		if (this.parameter.requiredFilters === undefined || this.parameter.requiredFilters.length === 0) {
-			this.chart.setVizProperties({
-				interaction : {
-					selectability : {
-						mode : 'none'
-					},
-					behaviorType : null
-				}
-			});
-		} else {
-			this.chart.setVizProperties({
-				interaction : {
-					selectability : {
-						mode : 'multiple'
-					},
-					behaviorType : null
-				}
-			});
-			if (this.parameter.dimensions.length > 1) {
-				if (this.parameter.requiredFilters[0] === this.parameter.dimensions[1].fieldName) {
-					this.chart.setVizProperties({
-						interaction : {
-							selectability : {
-								axisLabelSelection : false
-							}
-						}
-					});
-				} else if (this.parameter.requiredFilters[0] === this.parameter.dimensions[0].fieldName) {
-					this.chart.setVizProperties({
-						interaction : {
-							selectability : {
-								legendSelection : false
-							}
-						}
-					});
-				}
-			}
 		}
 	};
 	/**
@@ -413,7 +409,7 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 		return this.thumbnailLayout;
 	};
 	/**
-	* @method setVizPropertiesOnChart
+	* @method setVizPropertiesOnThumbnailChart
 	* @description sets the vizProperties common to all charts(thumbnail)
 	*/
 	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.setVizPropertiesOnThumbnailChart = function() {
@@ -449,7 +445,8 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 					plotLassoSelection : false,
 					plotStdSelection : false
 				},
-				enableHover : false
+				enableHover : false,
+				noninteractiveMode : true
 			},
 			background : {
 				visible : false
@@ -461,14 +458,16 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 				groupData : false
 			},
 			plotArea : {
-				isFixedDataPointSize : false,
+				window : {
+					start : null
+				},
 				gridline : {
 					visible : false
 				},
 				dataLabel : {
 					visible : false
 				},
-				lineStyle : {
+				seriesStyle : {
 					rules : [ {
 						properties : {
 							width : 1
@@ -486,60 +485,47 @@ jQuery.sap.require("sap.viz.ui5.controls.common.feeds.FeedItem");
 	 * @param array of selected objects
 	 * @description sets the Selection on main Chart
 	 */
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.setSelectionOnMainChart = function(aSelection) {
-		this.chart.vizSelection(aSelection);
+	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.setSelectionOnMainChart = function(aSelection, bIsDeselection) {
+		this.chart.vizSelection(aSelection, {
+			clearSelection : bIsDeselection
+		});
 	};
 	/**
 	 * @method setSelectionOnThumbnailChart
 	 * @param array of selected objects
 	 * @description sets the Selection on thumbnail Chart
 	 */
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.setSelectionOnThumbnailChart = function(aSelection) {
-		this.clearSelectionFromThumbnailChart();
-		this.thumbnailChart.vizSelection(aSelection);
-	};
-	/**
-	 * @method clearSelectionFromMainChart
-	 * @description clears all Selection from main Chart
-	 */
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.clearSelectionFromMainChart = function() {
-		this.chart.vizSelection([], {
-			clearSelection : true
+	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.setSelectionOnThumbnailChart = function(aSelection, bIsDeselection) {
+		this.thumbnailChart.vizSelection(aSelection, {
+			clearSelection : bIsDeselection
 		});
-	};
-	/**
-	 * @method clearSelectionFromThumbnailChart
-	 * @description clears all Selection from thumbnail Chart
-	 */
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.clearSelectionFromThumbnailChart = function() {
-		this.thumbnailChart.vizSelection([], {
-			clearSelection : true
-		});
-	};
-	/**
-	 * @method getSelectionFromChart
-	 * @description gets the selected datapoints on the chart
-	 * @return the array of selections from the chart
-	 */
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.getSelectionFromChart = function() {
-		var aSelection = this.chart.vizSelection();
-		return aSelection;
-	};
-	/**
-	 * @method getIsGroupTypeChart
-	 * @return a boolean to indicate if the chart is of type "group", e.g. scatter,bubble
-	 */
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.getIsGroupTypeChart = function() {
-		return this.bIsGroupTypeChart ? this.bIsGroupTypeChart : false;
-	};
-	/**
-	 * @method getDataSetHelper
-	 * @description a boolean to indicate if the chart is of type "group", e.g. scatter,bubble
-	 * @return the data set helper for vic chart
-	 */
-	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.getDataSetHelper = function() {
-		return new sap.apf.ui.representations.utils.vizFrameDatasetHelper();
 	};
 	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.getAxisFeedItemId = function(sKind) {
-	}; 
+	};
+	/* 
+	 * If the chart is vizframe clone the chart. Limitation with clone in viz frame as it does only shallow clone, Viz type and viz properties need to be set again
+	 * Therefore we read existing viz properties set in the original chart and set in on the cloned chart
+	 */
+	sap.apf.ui.representations.BaseVizFrameChartRepresentation.prototype.getPrintContent = function(oStepTitle) {
+		var oRepresentation, vizType = this.chartType, vizProperties = {}, aSelectionOnChart, oPrintObject;
+		var oOriginalChart = this.getMainContent(oStepTitle);
+		vizProperties = oOriginalChart.getVizProperties();
+		oRepresentation = oOriginalChart.clone();
+		oRepresentation.setVizType(vizType);
+		oRepresentation.setVizProperties(vizProperties);
+		oRepresentation.setWidth("1000px");
+		oRepresentation.setHeight("600px");
+		this.createDataset();
+		oRepresentation.setDataset(this.dataset);
+		oRepresentation.setModel(this.oModel);
+		aSelectionOnChart = this.chart.vizSelection();
+		//attachRenderComplete() because drawing selection takes time
+		oRepresentation.attachRenderComplete(function() {
+			oRepresentation.vizSelection(aSelectionOnChart);
+		});
+		oPrintObject = {
+			oRepresentation : oRepresentation
+		};
+		return oPrintObject;
+	};
 }());

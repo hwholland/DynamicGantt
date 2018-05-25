@@ -18,7 +18,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/debug/Highlighter', './ControlTree']
 	 * @class Central Class for the Test Environment
 	 *
 	 * @author SAPUI5 Designtime
-	 * @version 1.54.5
+	 * @version 1.54.3
 	 * @constructor
 	 * @private
 	 * @name sap.ui.test.TestEnv

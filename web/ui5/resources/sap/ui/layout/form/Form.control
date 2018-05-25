@@ -26,10 +26,10 @@ like wrong label alignment or wrong spacing between the controls.</documentation
     <since>1.16.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="width" type="sap.ui.core/CSSSize" group="Dimension">
+        <property group="Dimension" type="sap.ui.core/CSSSize" name="width">
             <documentation>Width of the &lt;code&gt;Form&lt;/code&gt;.</documentation>
         </property>
-        <property name="editable" type="sap.ui.core/boolean" defaultValue="false" group="Misc" since="1.20.0">
+        <property since="1.20.0" group="Misc" defaultValue="false" type="sap.ui.core/boolean" name="editable">
             <documentation>Applies a device-specific and theme-specific line height and label alignment to the form rows if the form has editable content.
 If set, all (not only the editable) rows of the form will get the line height of editable fields.
 
@@ -37,30 +37,30 @@ If set, all (not only the editable) rows of the form will get the line height of
         </property>
     </properties>
     <aggregations default="formContainers">
-        <aggregation name="formContainers" type="sap.ui.layout/form/FormContainer" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.layout/form/FormContainer" name="formContainers">
             <documentation>Containers with the content of the form. A &lt;code&gt;FormContainer&lt;/code&gt; represents a group inside the &lt;code&gt;Form&lt;/code&gt;.</documentation>
         </aggregation>
-        <aggregation name="title" type="sap.ui.core/Title" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Title" name="title">
             <documentation>Title of the &lt;code&gt;Form&lt;/code&gt;. Can either be a &lt;code&gt;Title&lt;/code&gt; element or a string.
 If a &lt;code&gt;Title&lt;/code&gt; element it used, the style of the title can be set.
 
 &lt;b&gt;Note:&lt;/b&gt; If a &lt;code&gt;Toolbar&lt;/code&gt; is used, the &lt;code&gt;Title&lt;/code&gt; is ignored.</documentation>
         </aggregation>
-        <aggregation name="toolbar" type="sap.ui.core/Toolbar" since="1.36.0" cardinality="0..1">
+        <aggregation cardinality="0..1" since="1.36.0" type="sap.ui.core/Toolbar" name="toolbar">
             <documentation>Toolbar of the &lt;code&gt;Form&lt;/code&gt;.
 
 &lt;b&gt;Note:&lt;/b&gt; If a &lt;code&gt;Toolbar&lt;/code&gt; is used, the &lt;code&gt;Title&lt;/code&gt; is ignored.
 If a title is needed inside the &lt;code&gt;Toolbar&lt;/code&gt; it must be added at content to the &lt;code&gt;Toolbar&lt;/code&gt;.
 In this case add the &lt;code&gt;Title&lt;/code&gt; to the &lt;code&gt;ariaLabelledBy&lt;/code&gt; association.</documentation>
         </aggregation>
-        <aggregation name="layout" type="sap.ui.layout/form/FormLayout" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.layout/form/FormLayout" name="layout">
             <documentation>Layout of the &lt;code&gt;Form&lt;/code&gt;. The assigned &lt;code&gt;Layout&lt;/code&gt; renders the &lt;code&gt;Form&lt;/code&gt;.
 We recommend using the &lt;code&gt;ResponsiveGridLayout&lt;/code&gt; for rendering a &lt;code&gt;Form&lt;/code&gt;,
 as its responsiveness allows the available space to be used in the best way possible.</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n" since="1.28.0">
+        <association since="1.28.0" cardinality="0..n" type="sap.ui.core/Control" name="ariaLabelledBy">
             <documentation>Association to controls / IDs that label this control (see WAI-ARIA attribute &lt;code&gt;aria-labelledby&lt;/code&gt;).</documentation>
         </association>
     </associations>

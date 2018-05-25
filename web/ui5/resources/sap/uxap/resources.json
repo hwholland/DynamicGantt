@@ -651,7 +651,6 @@
 			"required": [
 				"jquery.sap.global.js",
 				"sap/m/Button.js",
-				"sap/ui/base/ManagedObjectObserver.js",
 				"sap/ui/base/Metadata.js",
 				"sap/ui/core/CustomData.js",
 				"sap/ui/core/IconPool.js",
@@ -664,7 +663,6 @@
 			"required": [
 				"jquery.sap.global.js",
 				"sap/m/Button.js",
-				"sap/ui/base/ManagedObjectObserver.js",
 				"sap/ui/base/Metadata.js",
 				"sap/ui/core/CustomData.js",
 				"sap/ui/core/IconPool.js",

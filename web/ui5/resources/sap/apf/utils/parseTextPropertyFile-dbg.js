@@ -1,7 +1,9 @@
 jQuery.sap.declare("sap.apf.utils.parseTextPropertyFile");
 jQuery.sap.require("sap.ui.core.format.DateFormat");
+jQuery.sap.require("sap.apf.utils.utils");
 jQuery.sap.require("sap.apf.core.constants");
-(function() {
+sap.ui.define([],
+	function() {
 	'use strict';
 	/**
 	 * @private
@@ -21,7 +23,7 @@ jQuery.sap.require("sap.apf.core.constants");
 		var oDate;
 		var aLines = textFileString.split(/\r?\n/);
 		var len = aLines.length;
-		var i;
+		var i, j;
 		var indexOfExpectedEntry = -1;
 		var indexOfLastChangeDate = -1;
 		var textElementEntry;
@@ -32,7 +34,7 @@ jQuery.sap.require("sap.apf.core.constants");
 			TextElements : [],
 			Messages : []
 		};
-		
+		var bSkipNextLine = false;
 		function complain(messageNumber, lineNumber) {
 			var message = messageHandler.createMessageObject({
 				code : messageNumber,
@@ -44,24 +46,23 @@ jQuery.sap.require("sap.apf.core.constants");
 			complain(11013, lineNumber);
 		}
 		function complainMissingTextEntry(lineNumber) {
-			complain(11011, lineNumber);
+			complain(5411, lineNumber);
 		}
 		function isValidGuidFormatForTextElement(textElement, lineNumber) {
 			var isValid = sap.apf.utils.isValidGuid(textElement);
 			if (!isValid) {
-				complain(11012, lineNumber);
+				complain(5412, lineNumber);
 				return false;
 			}
 			return true;
 		}
 		function complainWrongDateFormat(lineNumber) {
-			complain(11015, lineNumber);
+			complain(5415, lineNumber);
 		}
 		function complainInvalidTextEntryGuid(lineNumber) {
-			complain(11012, lineNumber);
+			complain(5412, lineNumber);
 		}
-		
-	
+
 		for(i = 0; i < len; i++) {
 			if (!bApplicationIdFound) {
 				var applicationId = /^\#\s*ApfApplicationId=[0-9A-F]+\s*$/.exec(aLines[i]);
@@ -76,6 +77,10 @@ jQuery.sap.require("sap.apf.core.constants");
 				}
 			}
 			if (aLines[i] === "") {
+				continue;
+			}
+			if (bSkipNextLine) {
+				bSkipNextLine = false;
 				continue;
 			}
 			if (indexOfLastChangeDate === i && /^\#\s*LastChangeDate/.exec(aLines[i])) {
@@ -97,18 +102,26 @@ jQuery.sap.require("sap.apf.core.constants");
 				continue;
 			}
 			if (indexOfExpectedEntry === i) {
-				entry = aLines[i].split('=');
-				if (entry.length === 2) {
+				entry = aLines[i].split('=');			
+				if (entry.length > 1) {
+					if (entry[0] === "AnalyticalConfigurationName") {
+						indexOfLastChangeDate = 0;
+						bSkipNextLine = true;
+						continue;
+					}
 					// take over only proper entries
 					if (isValidGuidFormatForTextElement(entry[0], i)) {
 						textElementEntry.TextElement = entry[0];
 						textElementEntry.TextElementDescription = entry[1];
+						for (j = 2; j < entry.length;j++) {
+							textElementEntry.TextElementDescription += "=" + entry[j];
+						}
 					} else {
 						complainInvalidTextEntryGuid(i);
 					}
 				} else {
 					complainMissingTextEntry(i);
-				}
+				} 
 				continue;
 			}
 			formatWithHint = /^\#(X|Y)[A-Z]{3},[0-9]+:/.exec(aLines[i]);
@@ -145,8 +158,9 @@ jQuery.sap.require("sap.apf.core.constants");
 			}
 		}
 		if (!bApplicationIdFound) {
-			complain(11010, 0);
+			complain(5410, 0);
 		}
 		return parseResult;
 	};
-}());
+	return sap.apf.utils.parseTextPropertyFile;
+}, true /*GLOBAL_EXPORT*/);

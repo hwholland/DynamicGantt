@@ -3,7 +3,7 @@
     <name>semantic/FilterSelect</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>A FilterSelect is a {@link sap.m.Select} control enhanced with styling according to the semantics of a common "Filter" acton.
+    <documentation>A FilterSelect is a {@link sap.m.Select} control enhanced with styling according to the semantics of a common &quot;Filter&quot; acton.
 
 A FilterSelect cannot be used independently but only as aggregation content of a {@link sap.m.semantic.SemanticPage}.
 

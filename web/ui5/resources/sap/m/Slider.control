@@ -41,26 +41,26 @@ You can move the slider handle in several different ways:
 &lt;li&gt; Drag and drop to the desired value&lt;/li&gt;
 &lt;li&gt; Click/tap on the range bar to move the handle to that location &lt;/li&gt;
 &lt;li&gt; Enter the desired value in the input field (if available) &lt;/li&gt;
-&lt;li&gt; Keyboard (Arrow keys, "+" and "-") &lt;/li&gt;
+&lt;li&gt; Keyboard (Arrow keys, &quot;+&quot; and &quot;-&quot;) &lt;/li&gt;
 &lt;/ul&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="100%" group="Appearance">
+        <property group="Appearance" defaultValue="100%" type="sap.ui.core/CSSSize" name="width">
             <documentation>Defines the width of the control.</documentation>
         </property>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>Indicates whether the user can change the value.</documentation>
         </property>
-        <property name="name" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="name">
             <documentation>The name property to be used in the HTML code for the slider (e.g. for HTML forms that send data to the server via submit).</documentation>
         </property>
-        <property name="min" type="sap.ui.core/float" defaultValue="0" group="Data">
+        <property group="Data" defaultValue="0" type="sap.ui.core/float" name="min">
             <documentation>The minimum value.</documentation>
         </property>
-        <property name="max" type="sap.ui.core/float" defaultValue="100" group="Data">
+        <property group="Data" defaultValue="100" type="sap.ui.core/float" name="max">
             <documentation>The maximum value.</documentation>
         </property>
-        <property name="step" type="sap.ui.core/float" defaultValue="1" group="Data">
+        <property group="Data" defaultValue="1" type="sap.ui.core/float" name="step">
             <documentation>Define the amount of units to change the slider when adjusting by drag and drop.
 
 Defines the size of the slider's selection intervals. (e.g. min = 0, max = 10, step = 5 would result in possible selection of the values 0, 5, 10).
@@ -68,64 +68,64 @@ Defines the size of the slider's selection intervals. (e.g. min = 0, max = 10, s
 The step must be positive, if a negative number is provided, the default value will be used instead.
 If the width of the slider converted to pixels is less than the range (max - min), the value will be rounded to multiples of the step size.</documentation>
         </property>
-        <property name="progress" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="progress">
             <documentation>Indicate whether a progress bar indicator is shown.</documentation>
         </property>
-        <property name="value" type="sap.ui.core/float" defaultValue="0" group="Data">
+        <property group="Data" defaultValue="0" type="sap.ui.core/float" name="value">
             <documentation>Define the value.
 
 If the value is lower/higher than the allowed minimum/maximum, the value of the properties &lt;code&gt;min&lt;/code&gt;/&lt;code&gt;max&lt;/code&gt; are used instead.</documentation>
         </property>
-        <property name="showHandleTooltip" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.31">
+        <property since="1.31" group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="showHandleTooltip">
             <documentation>Indicate whether the handle tooltip is shown.</documentation>
         </property>
-        <property name="showAdvancedTooltip" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.42">
+        <property since="1.42" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="showAdvancedTooltip">
             <documentation>Indicate whether the handle's advanced tooltip is shown. &lt;b&gt;Note:&lt;/b&gt; Setting this option to &lt;code&gt;true&lt;/code&gt;
 will ignore the value set in &lt;code&gt;showHandleTooltips&lt;/code&gt;. This will cause only the advanced tooltip to be shown.</documentation>
         </property>
-        <property name="inputsAsTooltips" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.42">
+        <property since="1.42" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="inputsAsTooltips">
             <documentation>Indicates whether input fields should be used as tooltips for the handles. &lt;b&gt;Note:&lt;/b&gt; Setting this option to &lt;code&gt;true&lt;/code&gt;
 will only work if &lt;code&gt;showAdvancedTooltips&lt;/code&gt; is set to &lt;code&gt;true&lt;/code&gt;.</documentation>
         </property>
-        <property name="enableTickmarks" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.44">
+        <property since="1.44" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="enableTickmarks">
             <documentation>Enables tickmarks visualisation</documentation>
         </property>
     </properties>
     <events>
-        <event name="change" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="change">
             <documentation>This event is triggered after the end user finishes interacting, if there is any change.</documentation>
             <parameters>
-                <parameter name="value" type="sap.ui.core/float">
+                <parameter type="sap.ui.core/float" name="value">
                     <documentation>The current value of the slider after a change.</documentation>
                 </parameter>
             </parameters>
         </event>
-        <event name="liveChange" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="liveChange">
             <documentation>This event is triggered during the dragging period, each time the slider value changes.</documentation>
             <parameters>
-                <parameter name="value" type="sap.ui.core/float">
+                <parameter type="sap.ui.core/float" name="value">
                     <documentation>The current value of the slider after a live change.</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations default="scale">
-        <aggregation name="_tooltipContainer" type="sap.ui.core/Control" since="1.54" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" since="1.54" type="sap.ui.core/Control" name="_tooltipContainer">
             <documentation>A Container popup that renders SliderTooltips
 The actual type should be sap.m.SliderTooltipContainer</documentation>
         </aggregation>
-        <aggregation name="scale" type="sap.m/IScale" since="1.46" cardinality="0..1">
+        <aggregation cardinality="0..1" since="1.46" type="sap.m/IScale" name="scale">
             <documentation>Scale for visualisation of tickmarks and labels</documentation>
         </aggregation>
-        <aggregation name="_tooltips" type="sap.m/ISliderTooltip" since="1.54" cardinality="0..n" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..n" since="1.54" type="sap.m/ISliderTooltip" name="_tooltips">
             <documentation>Multiple Aggregation for Tooltips</documentation>
         </aggregation>
-        <aggregation name="_handlesLabels" type="sap.ui.core/InvisibleText" since="1.54" cardinality="0..n" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..n" since="1.54" type="sap.ui.core/InvisibleText" name="_handlesLabels">
             <documentation>Invisible text for handles and progress announcement</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n" since="1.27.0">
+        <association since="1.27.0" cardinality="0..n" type="sap.ui.core/Control" name="ariaLabelledBy">
             <documentation>Association to controls / IDs which label this control (see WAI-ARIA attribute &lt;code&gt;aria-labelledby&lt;/code&gt;).</documentation>
         </association>
     </associations>

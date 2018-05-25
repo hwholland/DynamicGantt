@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.splitapp.MasterPageController");sap.ui.base.Object.extend("sap.uiext.inbox.splitapp.MasterPageController",{constructor:function(){sap.ui.base.Object.apply(this);}});
 sap.uiext.inbox.splitapp.MasterPageController.prototype._selectDetail=function(){var l=sap.ui.getCore().byId(this.Id+"-list");var i=l.getItems();if(!jQuery.device.is.phone&&i.length>0&&!l.getSelectedItem()){l.setSelectedItem(i[0],true);this._showDetail(i[0]);}};

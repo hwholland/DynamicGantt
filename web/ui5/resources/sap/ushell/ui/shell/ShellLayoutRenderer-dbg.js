@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap*/
 // Provides default renderer for control sap.ushell.ui.shell.ShellLayout
@@ -20,7 +20,9 @@ sap.ui.define(['jquery.sap.global'],
          */
         ShellLayoutRenderer.render = function (rm, oShell) {
             var id = oShell.getId(),
-                sClassName;
+                sClassName,
+                canvasWidth = (window.innerWidth > 0) ? window.innerWidth : screen.width,
+                canvasHeight = (window.innerHeight > 0) ? window.innerHeight : screen.height;
 
             rm.write("<div");
             rm.writeControlData(oShell);
@@ -39,9 +41,13 @@ sap.ui.define(['jquery.sap.global'],
             //in Fiori 1.0 the background should not be rendered behind the header
             if (!oShell.getShowBrandLine()) {
                 rm.write("<div id='", id, "-strgbg' class='sapUshellShellBG sapContrastPlus" + (oShell._useStrongBG ? " sapUiStrongBackgroundColor" : "") + "'></div>");
-                rm.write("<div class='sapUiGlobalBackgroundImage sapUiGlobalBackgroundImageForce sapUshellShellBG sapContrastPlus'></div>");
+                rm.write("<div class='sapUiShellBackgroundImage sapUiGlobalBackgroundImageForce sapUshellShellBG sapContrastPlus'></div>");
             }
 
+            if (oShell.getEnableCanvasShapes()) {
+                rm.write("<canvas id='", id, "-shapes' height='", canvasHeight, "'width='", canvasWidth,"' style='position: absolute;'>");
+                rm.write("</canvas>");
+            }
             if (oShell.getShowBrandLine()) {
                 rm.write("<hr id='", id, "-brand' class='sapUshellShellBrand'/>");
             }
@@ -53,17 +59,7 @@ sap.ui.define(['jquery.sap.global'],
             }
 
             rm.write("</div>", "</div>", "</header>");
-            if (oShell.getFloatingContainer()) {
-                rm.write("<div");
-                rm.addClass("sapUshellShellFloatingContainerWrapper ");
-                if (!oShell.getFloatingContainerVisible()) {
-                    rm.addClass("sapUshellShellHidden");
-                }
-                rm.writeClasses();
-                rm.write(">");
-                rm.renderControl(oShell.getFloatingContainer());
-                rm.write("</div>");
-            }
+            
             if (oShell.getToolArea()) {
                 rm.write("<aside>");
                 rm.renderControl(oShell.getToolArea());
@@ -78,7 +74,7 @@ sap.ui.define(['jquery.sap.global'],
 
             sClassName = "sapUshellShellCntnt sapUshellShellCanvas";
             if (oShell.getBackgroundColorForce()) {
-                sClassName += " sapUiGlobalBackgroundColor sapUiGlobalBackgroundColorForce";
+                sClassName += " sapUiShellBackground sapUiGlobalBackgroundColorForce";
             }
             rm.write("<div id='", id, "-cntnt' class='" + sClassName + "'>");
 
@@ -86,7 +82,7 @@ sap.ui.define(['jquery.sap.global'],
             //in Fiori 1.0 the background should not be rendered behind the header
             if (oShell.getShowBrandLine()) {
                 rm.write("<div id='", id, "-strgbg' class='sapUshellShellBG sapContrastPlus" + (oShell._useStrongBG ? " sapUiStrongBackgroundColor" : "") + "'></div>");
-                rm.write("<div class='sapUiGlobalBackgroundImage sapUiGlobalBackgroundImageForce sapUshellShellBG sapContrastPlus'></div>");
+                rm.write("<div class='sapUiShellBackgroundImage sapUiGlobalBackgroundImageForce sapUshellShellBG sapContrastPlus'></div>");
             }
             rm.renderControl(oShell.getCanvasSplitContainer());
 

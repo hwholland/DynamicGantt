@@ -18,7 +18,7 @@
             <documentation>Represents the key of the built-in view, in which the intervals have the size of one day
 where 7 days are displayed, starting with the first day of the week.</documentation>
         </value>
-        <value name="OneMonth" value="One Month">
+        <value value="One Month" name="OneMonth">
             <documentation>Represents the key of the built-in view, in which the intervals have the size of one day
 where 31 days are displayed, starting with the first day of the month.</documentation>
         </value>

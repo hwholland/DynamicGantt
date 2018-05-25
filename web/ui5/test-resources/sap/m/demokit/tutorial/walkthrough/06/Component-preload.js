@@ -1,5 +1,0 @@
-sap.ui.require.preload({
-	"web/ui5/test-resources/sap/m/demokit/tutorial/walkthrough/06/Component.js": "sap.ui.define([\"sap/ui/core/UIComponent\"],function(e){\"use strict\";return e.extend(\"sap.m.tutorial.walkthrough.06.Component\",{metadata:{config:{sample:{iframe:\"webapp/index.html\",stretch:!0,files:[\"webapp/controller/App.controller.js\",\"webapp/view/App.view.xml\",\"webapp/index.html\"]}}}})});",
-	"web/ui5/test-resources/sap/m/demokit/tutorial/walkthrough/06/webapp/controller/App.controller.js": "sap.ui.define([\"sap/ui/core/mvc/Controller\",\"sap/m/MessageToast\"],function(o,e){\"use strict\";return o.extend(\"sap.ui.demo.wt.controller.App\",{onShowHello:function(){e.show(\"Hello World\")}})});",
-	"web/ui5/test-resources/sap/m/demokit/tutorial/walkthrough/06/webapp/view/App.view.xml": "<mvc:View\n\tcontrollerName=\"sap.ui.demo.wt.controller.App\"\n\txmlns=\"sap.m\"\n\txmlns:mvc=\"sap.ui.core.mvc\"><Button\n\t\ttext=\"Say Hello\"\n\t\tpress=\"onShowHello\"/></mvc:View>\n"
-}, "web/ui5/test-resources/sap/m/demokit/tutorial/walkthrough/06/Component-preload");

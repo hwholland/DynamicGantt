@@ -371,18 +371,23 @@ sap.ui.define([
 			type: type
 		};
 		element["VB:s"] = false;
+		var nK, nJ, nI;
+		var str, coords, clen, blen, alen;
 
 		switch (type) {
 			case "Polygon":
 			case "MultiPolygon":
 
-				var str, area, areaParts;
-				for (var nI = 0, alen = array.length; nI < alen; ++nI) {
+				var area, areaParts;
+				alen = array.length;
+				for (nI = 0; nI < alen; ++nI) {
 					area = array[nI];
 					areaParts = [];
-					for (var nJ = 0, blen = area.length; nJ < blen; ++nJ) {
+					blen = area.length;
+					for (nJ = 0; nJ < blen; ++nJ) {
 						str = "";
-						for (var nK = 0, clen = area[nJ].length; nK < clen; ++nK) {
+						clen = area[nJ].length;
+						for (nK = 0; nK < clen; ++nK) {
 							if (nK) {
 								(str += ";");
 							}
@@ -395,9 +400,10 @@ sap.ui.define([
 				break;
 			case "LineString":
 
-				var str = "";
-				var coords = array[0][0];
-				for (var nK = 0, clen = coords.length; nK < clen; ++nK) {
+				str = "";
+				coords = array[0][0];
+				clen = coords.length;
+				for (nK = 0; nK < clen; ++nK) {
 					if (nK) {
 						(str += ";");
 					}
@@ -407,9 +413,10 @@ sap.ui.define([
 				break;
 			case "Point":
 
-				var str = "";
-				var coords = array[0][0];
-				for (var nK = 0, clen = coords.length; nK < clen; ++nK) {
+				str = "";
+				coords = array[0][0];
+				clen = coords.length;
+				for (nK = 0; nK < clen; ++nK) {
 					if (nK) {
 						(str += ";");
 					}
@@ -881,7 +888,7 @@ sap.ui.define([
 				}
 				break;
 			case "number":
-				// ToDo: Are there overlays for non-id GeoJSON objects?
+				// Check: Are there overlays for non-id GeoJSON objects?
 				break;
 			default:
 				jQuery.sap.log.error("GeoJsonLayer: Unextected instance name type " + jQuery.type(name));

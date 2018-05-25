@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * InboxAttachmentsTileContainer
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -75,20 +75,64 @@ sap.ui.core.Control.extend("sap.uiext.inbox.composite.InboxAttachmentsTileContai
 	],
 	library : "sap.uiext.inbox",
 	properties : {
+
+		/**
+		 * URL to upload the selected file
+		 */
 		"uploadUrl" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * name of the selected file for uploading
+		 */
 		"fileName" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * type of the selected file for uploading
+		 */
 		"fileType" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * boolean property to indicate if user has selected a file to upload
+		 */
 		"isFileSelected" : {type : "boolean", group : "Misc", defaultValue : null},
+
+		/**
+		 * description string entered by user while uploading a file
+		 */
 		"enteredDescription" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * boolean value to indicate whether to show Add Attachment tile
+		 */
 		"showAddTile" : {type : "boolean", group : "Misc", defaultValue : true}
 	},
 	aggregations : {
+
+		/**
+		 * aggregation for attachments tile
+		 */
 		"attachments" : {type : "sap.uiext.inbox.composite.InboxAttachmentTile", multiple : true, singularName : "attachment"}, 
+
+		/**
+		 * aggregation for the first tile in tile container
+		 */
 		"firstTile" : {type : "sap.ui.core.Control", multiple : false, visibility : "hidden"}
 	},
 	events : {
+
+		/**
+		 * event is fired to add all the header parameters just before uploading a file
+		 */
 		"uploadButtonPress" : {}, 
+
+		/**
+		 * event is fired when uploading a file is completed successfully
+		 */
 		"uploadSuccess" : {}, 
+
+		/**
+		 * event is fired when uploading a file has failed
+		 */
 		"uploadFailed" : {}
 	}
 }});

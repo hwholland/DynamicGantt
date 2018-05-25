@@ -1,98 +1,55 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 /**
  * @namespace Provides utitlity functions for the personalization dialog
  * @name sap.ui.comp.personalization.Util
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  * @private
  * @since 1.25.0
  */
 sap.ui.define([
-	'sap/ui/base/Object', 'sap/ui/core/MessageType', './ChartWrapper', './ColumnWrapper', 'sap/ui/comp/library'
-], function(BaseObject, MessageType, ChartWrapper, ColumnWrapper, CompLibrary) {
+	'sap/ui/comp/library', 'sap/m/library'
+], function(CompLibrary, MLibrary) {
 	"use strict";
 	var Util = {
 
-		// TODO: improve the performance adding map <oColumn, columnKey>. Use this map for all relevant methods. Consider life cycle aspects [garbage
-		// collection !!].
-
 		/**
+		 * Determines <code>columnKeys</code> of a specific type.
 		 *
+		 * @param {string} sType
+		 * @param {object} oColumnKey2ColumnMap
+		 * @return {array} Array of strings representing the <code>columnKeys</code>
 		 */
-		splitDimeasures: function(aDimeasureItems, aItems, aDimensions, aMeasures) {
-			aDimeasureItems.forEach(function(oDimeasureItem) {
-				var oItem = this.getArrayElementByKey("columnKey", oDimeasureItem.columnKey, aItems);
-				if (oItem.aggregationRole === sap.ui.comp.personalization.AggregationRole.Dimension) {
-					aDimensions.push(oDimeasureItem);
-				} else if (oItem.aggregationRole === sap.ui.comp.personalization.AggregationRole.Measure) {
-					aMeasures.push(oDimeasureItem);
+		getColumnKeysOfType: function(sType, oColumnKey2ColumnMap) {
+			var aColumnKeys = [];
+			for ( var sColumnKey in oColumnKey2ColumnMap) {
+				if (this.getColumnType(oColumnKey2ColumnMap[sColumnKey]) === sType) {
+					aColumnKeys.push(sColumnKey);
 				}
-			}, this);
-		},
-
-		/**
-		 *
-		 */
-		createChartWrapper: function(oChart, aAdditionalData) {
-			var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
-			var aColumns = [], oColumn, oP13nData;
-			oChart.getDimensions().forEach(function(oDimension) {
-				oP13nData = oDimension.data("p13nData");
-				oColumn = new ColumnWrapper({
-					label: oDimension.getLabel(),
-					tooltip: oDimension.getTooltip(),
-					// visible: true,
-					selected: oChart.getVisibleDimensions().indexOf(oDimension.getName()) > -1,
-					aggregationRole: sap.ui.comp.personalization.AggregationRole.Dimension,
-					role: oDimension.getRole() ? oDimension.getRole() : oRb.getText('COLUMNSPANEL_CHARTROLE_CATEGORY')
-				});
-				oColumn.data("p13nData", oP13nData);
-				aColumns.push(oColumn);
-			});
-			oChart.getMeasures().forEach(function(oMeasure) {
-				oP13nData = oMeasure.data("p13nData");
-				oColumn = new ColumnWrapper({
-					label: oMeasure.getLabel(),
-					tooltip: oMeasure.getTooltip(),
-					// visible: true,
-					selected: oChart.getVisibleMeasures().indexOf(oMeasure.getName()) > -1,
-					aggregationRole: sap.ui.comp.personalization.AggregationRole.Measure,
-					role: oMeasure.getRole() ? oMeasure.getRole() : oRb.getText('COLUMNSPANEL_CHARTROLE_AXIS1')
-				});
-				oColumn.data("p13nData", oP13nData);
-				aColumns.push(oColumn);
-			});
-			if (aAdditionalData) {
-				aAdditionalData.forEach(function(oP13nData) {
-					oColumn = new ColumnWrapper({
-						label: oP13nData.label,
-						tooltip: oP13nData.tooltip,
-						// visible: false,
-						selected: false,
-						aggregationRole: sap.ui.comp.personalization.AggregationRole.NotDimeasure
-					});
-					oColumn.data("p13nData", oP13nData);
-					aColumns.push(oColumn);
-				});
 			}
-
-			return new ChartWrapper({
-				chart: oChart,
-				columns: aColumns
-			});
+			return aColumnKeys;
+		},
+		getColumnKeys: function(aColumns) {
+			if (!aColumns || !aColumns.length) {
+				return [];
+			}
+			return aColumns.map(function(oColumn) {
+				return this.getColumnKey(oColumn);
+			}, this);
 		},
 
 		/**
 		 * Sort the items in alphabetical order.
 		 *
-		 * @param {sap.m.P13nItem} aP13nItems
+		 * @param {object} aItems
 		 */
-		sortItemsByText: function(aP13nItems) {
+		sortItemsByText: function(aItems, sKeyName) {
 			var sLanguage;
 			try {
 				var sLanguage = sap.ui.getCore().getConfiguration().getLocale().toString();
@@ -100,12 +57,12 @@ sap.ui.define([
 					var oCollator = window.Intl.Collator(sLanguage, {
 						numeric: true
 					});
-					aP13nItems.sort(function(a, b) {
-						return oCollator.compare(a.text, b.text);
+					aItems.sort(function(a, b) {
+						return oCollator.compare(a[sKeyName], b[sKeyName]);
 					});
 				} else {
-					aP13nItems.sort(function(a, b) {
-						return a.text.localeCompare(b.text, sLanguage, {
+					aItems.sort(function(a, b) {
+						return a[sKeyName].localeCompare(b[sKeyName], sLanguage, {
 							numeric: true
 						});
 					});
@@ -189,16 +146,23 @@ sap.ui.define([
 			return aUnion;
 		},
 
-		getUnionOfColumnKeys: function(oColumnKeys) {
+		getUnionOfColumnKeys: function(oJson) {
 			var aUnion = [];
-			var fConcatUnique = function(aColumnKeys) {
-				var aUnion_ = aUnion.concat(aColumnKeys);
-				aUnion = aUnion_.filter(function(sItem, iPos) {
-					return aUnion_.indexOf(sItem) === iPos;
+			var fnConcatUnique = function(aItems) {
+				aUnion = aUnion.concat(aItems.map(function(oItem) {
+					return oItem.columnKey;
+				}));
+				aUnion = aUnion.filter(function(sColumnKey, iIndex) {
+					return aUnion.indexOf(sColumnKey) === iIndex;
 				});
 			};
-			for ( var sNamespace in oColumnKeys) {
-				fConcatUnique(oColumnKeys[sNamespace]);
+			for ( var sType in oJson) {
+				for ( var sItemType in oJson[sType]) {
+					if (!jQuery.isArray(oJson[sType][sItemType])) {
+						continue;
+					}
+					fnConcatUnique(oJson[sType][sItemType]);
+				}
 			}
 			return aUnion;
 		},
@@ -228,10 +192,19 @@ sap.ui.define([
 			return aResult;
 		},
 
-		removeEmptyProperty: function(oObject) {
-			for ( var type in oObject) {
-				if (oObject[type] === null || oObject[type] === undefined) {
-					delete oObject[type];
+		removeEmptyProperty: function(oJson) {
+			for ( var sType in oJson) {
+				if (oJson[sType] === null || oJson[sType] === undefined) {
+					delete oJson[sType];
+				}
+			}
+			return oJson;
+		},
+		enrichEmptyProperty: function(oObject, oObjectEmpty) {
+			oObject = oObject || {};
+			for ( var sType in oObjectEmpty) {
+				if (oObject[sType] === null || oObject[sType] === undefined) {
+					oObject[sType] = oObjectEmpty[sType];
 				}
 			}
 			return oObject;
@@ -242,7 +215,7 @@ sap.ui.define([
 				return false;
 			}
 			for ( var property in oItemA) {
-				if (oItemB[property] === undefined || oItemA[property] !== oItemB[property]) {
+				if (oItemA[property] !== oItemB[property]) {
 					return false;
 				}
 			}
@@ -264,26 +237,13 @@ sap.ui.define([
 
 		/**
 		 * @param {sap.ui.comp.personalization.ResetType}
-		 * @returns {boolean} true if at least one property of oChangeType has 'ModelChanged' or 'TableChanged'.
+		 * @returns {boolean} true if property <code>sNamespace</code> of oChangeType has 'ModelChanged' or 'TableChanged'.
 		 */
 		isNamespaceChanged: function(oChangeType, sNamespace) {
 			if (oChangeType[sNamespace]) {
 				return oChangeType[sNamespace] === sap.ui.comp.personalization.ChangeType.ModelChanged || oChangeType[sNamespace] === sap.ui.comp.personalization.ChangeType.TableChanged;
 			}
 			return false;
-		},
-
-		/**
-		 * @param {object}
-		 * @returns {boolean} true if at least one property of oChangeType has 'ModelChanged' or 'TableChanged'.
-		 */
-		isTrueForAll: function(oObjectOfBoolean) {
-			for ( var type in oObjectOfBoolean) {
-				if (oObjectOfBoolean[type] === false) {
-					return false;
-				}
-			}
-			return true;
 		},
 
 		/**
@@ -307,14 +267,18 @@ sap.ui.define([
 		},
 
 		/**
-		 * @param {sap.m.P13nSortItem[]} aSortItems
-		 * @param {string} sKey
-		 * @returns {integer} Index of sKey or -1 if not found
+		 * @param {string} sKeyName: property name for key
+		 * @param {string} sKeyValue: kay value which is looking for
+		 * @param {Array} aArray: array where the element with key value 'sKeyValue' is looking for
+		 * @returns {int} Index of sKey or -1 if not found
 		 */
-		getIndexByKey: function(aModelItems, sColumnKey) {
+		getIndexByKey: function(sKeyName, sKeyValue, aArray) {
+			if (!aArray || !aArray.length) {
+				return -1;
+			}
 			var iIndex = -1;
-			aModelItems.some(function(oModelItem, i) {
-				if (oModelItem.columnKey === sColumnKey) {
+			aArray.some(function(oElement, i) {
+				if (oElement[sKeyName] !== undefined && oElement[sKeyName] === sKeyValue) {
 					iIndex = i;
 					return true;
 				}
@@ -323,7 +287,7 @@ sap.ui.define([
 		},
 
 		/**
-		 * @param {sap.m.Column | sap.ui.table.Column} oColumn
+		 * @param {sap.m.Column | sap.ui.table.Column | sap.ui.comp.personalization.ColumnWrapper} oColumn
 		 * @returns {string | null}
 		 */
 		getColumnKey: function(oColumn) {
@@ -338,20 +302,46 @@ sap.ui.define([
 			return this._getCustomProperty(oColumn, "type");
 		},
 
+		hasSortableColumns: function(oColumnKey2ColumnMap) {
+			for ( var sColumnKey in oColumnKey2ColumnMap) {
+				if (Util.isSortable(oColumnKey2ColumnMap[sColumnKey])) {
+					return true;
+				}
+			}
+			return false;
+		},
+		hasGroupableColumns: function(oColumnKey2ColumnMap) {
+			for ( var sColumnKey in oColumnKey2ColumnMap) {
+				if (Util.isGroupable(oColumnKey2ColumnMap[sColumnKey])) {
+					return true;
+				}
+			}
+			return false;
+		},
+		hasFilterableColumns: function(oColumnKey2ColumnMap) {
+			for ( var sColumnKey in oColumnKey2ColumnMap) {
+				if (Util.isFilterable(oColumnKey2ColumnMap[sColumnKey])) {
+					return true;
+				}
+			}
+			return false;
+		},
+		hasAggregatableColumns: function(oColumnKey2ColumnMap) {
+			for ( var sColumnKey in oColumnKey2ColumnMap) {
+				if (Util.isAggregatable(oColumnKey2ColumnMap[sColumnKey])) {
+					return true;
+				}
+			}
+			return false;
+		},
+
 		/**
-		 * @param {sap.m.Column | sap.ui.table.Column} oColumn
+		 * @param {sap.m.Column | sap.ui.table.AnalyticalColumn} oColumn
 		 * @returns {boolean}
 		 */
 		isGroupable: function(oColumn) {
-			if (oColumn instanceof sap.ui.table.AnalyticalColumn) {
-				// cf. implementation of sap.ui.table.AnalyticalColumnMenu.prototype._addGroupMenuItem
-				var oTable = oColumn.getParent();
-				var oBinding = oTable && oTable.getBinding("rows");
-				var oResultSet = oBinding && oBinding.getAnalyticalQueryResult();
-
-				if (oTable && oResultSet && oResultSet.findDimensionByPropertyName(oColumn.getLeadingProperty()) && jQuery.inArray(oColumn.getLeadingProperty(), oBinding.getSortablePropertyNames()) > -1 && jQuery.inArray(oColumn.getLeadingProperty(), oBinding.getFilterablePropertyNames()) > -1) {
-					return true;
-				}
+			if (sap.ui.table && sap.ui.table.AnalyticalColumn && oColumn instanceof sap.ui.table.AnalyticalColumn) {
+				return oColumn.isGroupable() || this._getCustomProperty(oColumn, "isGroupable");
 			}
 
 			if (oColumn instanceof sap.m.Column) {
@@ -362,12 +352,11 @@ sap.ui.define([
 			// if (oColumn instanceof sap.ui.table.Column) {
 			// return oColumn.getParent().getEnableGrouping() && this.isSortable(oColumn);
 			// }
-
 			return false;
 		},
 
 		/**
-		 * @param {sap.m.Column | sap.ui.table.Column} oColumn
+		 * @param {sap.m.Column | sap.ui.table.Column | sap.ui.comp.personalization.ColumnWrapper} oColumn
 		 * @returns {boolean}
 		 */
 		isSortable: function(oColumn) {
@@ -376,14 +365,10 @@ sap.ui.define([
 				return !!oColumn.getSortProperty();
 			}
 			// Only if oColumn does not implement "sortProperty" property then we take "p13nData"
-			if (this._getCustomProperty(oColumn, "sortProperty")) {
-				return true;
-			}
-			return false;
+			return !!this._getCustomProperty(oColumn, "sortProperty");
 		},
-
 		/**
-		 * @param {sap.m.Column | sap.ui.table.Column} oColumn
+		 * @param {sap.m.Column | sap.ui.table.Column | sap.ui.comp.personalization.ColumnWrapper} oColumn
 		 * @returns {boolean}
 		 */
 		isFilterable: function(oColumn) {
@@ -392,30 +377,15 @@ sap.ui.define([
 				return !!oColumn.getFilterProperty();
 			}
 			// Only if oColumn does not implement "filterProperty" property then we take "p13nData".
-			if (this._getCustomProperty(oColumn, "filterProperty")) {
-				return true;
-			}
-			return false;
+			return !!this._getCustomProperty(oColumn, "filterProperty");
 		},
-
-		/**
-		 * @param {sap.m.Column[] || sap.ui.table.Column[]} aColumns
-		 * @returns {boolean} True if all columns support 'columnKey' or all columns do not support 'columnKey'. False in case of mixed situation.
-		 */
-		isConsistent: function(aColumns) {
-			if (!aColumns || !aColumns.length) {
-				return true;
+		isAggregatable: function(oColumn) {
+			// If oColumn implements "aggregationRole" property then we take it.
+			if (oColumn.getAggregationRole) {
+				return oColumn.getAggregationRole() === sap.ui.comp.personalization.AggregationRole.Dimension || oColumn.getAggregationRole() === sap.ui.comp.personalization.AggregationRole.Measure;
 			}
-			var bConsistent = true;
-			var bHasColumnKeyFirst = !!this._getCustomProperty(aColumns[0], "columnKey");
-			aColumns.some(function(oColumn) {
-				var bHasColumnKeyCurrent = !!this._getCustomProperty(oColumn, "columnKey");
-				if (bHasColumnKeyCurrent !== bHasColumnKeyFirst) {
-					bConsistent = false;
-					return true; // leave some()
-				}
-			}, this);
-			return bConsistent;
+			// If oColumn does not implement "getAggregationRole" property we return 'false'
+			return false;
 		},
 
 		/**
@@ -454,29 +424,117 @@ sap.ui.define([
 		},
 
 		/**
-		 * this method will make a json snapshot of the given table instance and stores the column sorting information in the given array
+		 * This method will make an initial json snapshot of the given table instance and stores the column sorting information in the given array.
 		 *
-		 * @param {sap.ui.table.Table} oTable - the table where the sort data has to be extracted
-		 * @param {array} aDestination - the array where the sort json data should be stored
+		 * @param {sap.ui.table.Table | sap.ui.comp.personalization.ChartWrapper} oTable The table where the sort data has to be extracted
+		 * @param {array} aDestination The array where the sort json data should be stored
 		 * @public
 		 */
 		createSort2Json: function(oTable, aDestination, aIgnoreColumnKeys) {
-			if (oTable) {
-				if (oTable instanceof sap.ui.table.Table) {
-					oTable.getColumns().forEach(function(oColumn) {
-						var sColumnKey = this.getColumnKey(oColumn);
-						if (this.isColumnIgnored(oColumn, aIgnoreColumnKeys)) {
-							return;
-						}
-						if (oColumn.getSorted()) {
-							aDestination.push({
-								columnKey: sColumnKey,
-								operation: oColumn.getSortOrder()
-							});
-						}
-					}, this);
-				}
+			if (this.getTableBaseType(oTable) !== sap.ui.comp.personalization.TableType.Table && this.getTableType(oTable) !== sap.ui.comp.personalization.TableType.ChartWrapper) {
+				return;
 			}
+			this.addSortPersistentData(this._mapTable2P13nSortJson(oTable), {
+				sort: {
+					sortItems: aDestination
+				}
+			}, aIgnoreColumnKeys);
+		},
+
+		/**
+		 * @private
+		 */
+		addSortPersistentData: function(oSourceJsonData, oDestinationJsonData, aIgnoreColumnKeys) {
+			oSourceJsonData.sort.sortItems.forEach(function(oSourceItem) {
+				if (!oSourceItem.isSorted || aIgnoreColumnKeys.indexOf(oSourceItem.columnKey) > -1) {
+					return;
+				}
+				oDestinationJsonData.sort.sortItems.push({
+					columnKey: oSourceItem.columnKey,
+					operation: oSourceItem.operation
+				});
+			});
+		},
+
+		/**
+		 *
+		 * @param {sap.ui.table.Table | sap.ui.comp.personalization.ChartWrapper} oTable The table where the sort data has to be extracted
+		 * @private
+		 */
+		_mapTable2P13nSortJson: function(oTable) {
+			return {
+				sort: {
+					sortItems: oTable.getColumns().map(function(oColumn) {
+						return {
+							columnKey: Util.getColumnKey(oColumn),
+							isSorted: oColumn.getSorted(),
+							operation: oColumn.getSortOrder()
+						};
+					})
+				}
+			};
+		},
+
+		/**
+		 * Determines the type of the <code>oTable</code>.
+		 * @param {sap.ui.comp.personalization.ChartWrapper | sap.ui.comp.personalization.SelectionWrapper | sap.m.Table | sap.ui.table.AnalyticalTable | sap.ui.table.TreeTable | sap.ui.table.Table} oTable
+		 * @returns {sap.ui.comp.personalization.TableType | null}
+		 */
+		getTableType: function(oTable) {
+			switch (oTable && oTable.getMetadata().getName()) {
+				case "sap.ui.comp.personalization.ChartWrapper":
+					return sap.ui.comp.personalization.TableType.ChartWrapper;
+				case "sap.ui.comp.personalization.SelectionWrapper":
+					return sap.ui.comp.personalization.TableType.SelectionWrapper;
+				case "sap.m.Table":
+					return sap.ui.comp.personalization.TableType.ResponsiveTable;
+				case "sap.ui.table.AnalyticalTable":
+					return sap.ui.comp.personalization.TableType.AnalyticalTable;
+				case "sap.ui.table.TreeTable":
+					return sap.ui.comp.personalization.TableType.TreeTable;
+				case "sap.ui.table.Table":
+					return sap.ui.comp.personalization.TableType.Table;
+			}
+			return null;
+		},
+
+		/**
+		 * Determines the base type of the <code>oTable</code>.
+		 * @param {sap.ui.comp.personalization.ChartWrapper | sap.ui.comp.personalization.SelectionWrapper | sap.m.Table | sap.ui.table.AnalyticalTable | sap.ui.table.TreeTable | sap.ui.table.Table} oTable
+		 * @return {sap.ui.comp.personalization.TableType | null}
+		 */
+		getTableBaseType: function(oTable) {
+			switch (this.getTableType(oTable)) {
+				case sap.ui.comp.personalization.TableType.ChartWrapper:
+					return sap.ui.comp.personalization.TableType.ChartWrapper;
+				case sap.ui.comp.personalization.TableType.SelectionWrapper:
+					return sap.ui.comp.personalization.TableType.SelectionWrapper;
+				case sap.ui.comp.personalization.TableType.ResponsiveTable:
+					return sap.ui.comp.personalization.TableType.ResponsiveTable;
+				case sap.ui.comp.personalization.TableType.AnalyticalTable:
+				case sap.ui.comp.personalization.TableType.Table:
+				case sap.ui.comp.personalization.TableType.TreeTable:
+					return sap.ui.comp.personalization.TableType.Table;
+			}
+			return null;
+		},
+
+		/**
+		 * Determines the base type of the <code>oColumn</code>.
+		 * @param {sap.ui.comp.personalization.ColumnWrapper | sap.m.Column | sap.ui.table.AnalyticalColumn | sap.ui.table.Column} oColumn
+		 * @return {sap.ui.comp.personalization.ColumnType | null}
+		 */
+		getColumnBaseType: function(oColumn) {
+			switch (oColumn && oColumn.getMetadata().getName()) {
+				case "sap.ui.comp.personalization.ColumnWrapper":
+					return sap.ui.comp.personalization.ColumnType.ColumnWrapper;
+				case "sap.m.Column":
+					return sap.ui.comp.personalization.ColumnType.ResponsiveColumn;
+				case "sap.ui.table.AnalyticalColumn":
+				case "sap.ui.table.Column":
+					return sap.ui.comp.personalization.ColumnType.TableColumn;
+			}
+			return null;
 		},
 
 		/**

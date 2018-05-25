@@ -5,7 +5,7 @@
 	
  */
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/core/Element'
+	"jquery.sap.global", "sap/ui/core/Element"
 ], function (jQuery, Element) {
 	"use strict";
 	/**
@@ -19,10 +19,11 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
+	 * @deprecated As of version 1.44, replaced by sap.gantt.axistime.AxisTimeStrategy
 	 * @alias sap.gantt.config.TimeAxis
 	 */
 	var TimeAxis = Element.extend("sap.gantt.config.TimeAxis", /** @lends sap.gantt.config.TimeAxis.prototype */ {
@@ -31,12 +32,14 @@ sap.ui.define([
 			properties: {
 				/**
 				 * Whole time horizon of the Gantt chart
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.TimeHorizon</code>. Otherwise some properties you set may not function properly.
 				 */
-				planHorizon: {type: "sap.gantt.config.TimeHorizon", defaultValue: sap.gantt.config.DEFAULT_PLAN_HORIZON},
+				planHorizon: {type: "object", defaultValue: sap.gantt.config.DEFAULT_PLAN_HORIZON},
 				/**
 				 * Time horizon which is displayed after the Gantt chart is initialized
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.TimeHorizon</code>. Otherwise some properties you set may not function properly.
 				 */
-				initHorizon: {type: "sap.gantt.config.TimeHorizon", defaultValue: sap.gantt.config.DEFAULT_INIT_HORIZON},
+				initHorizon: {type: "object", defaultValue: sap.gantt.config.DEFAULT_INIT_HORIZON},
 				/**
 				 * Zoom strategy of the Gantt chart
 				 * See {@link sap.gantt.config.DEFAULT_TIME_ZOOM_STRATEGY} as example

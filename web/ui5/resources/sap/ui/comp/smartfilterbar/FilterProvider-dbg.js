@@ -1,15 +1,16 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // -----------------------------------------------------------------------------
 // Generates the data-model required for SmartFilter using SAP-Annotations metadata
 // -----------------------------------------------------------------------------
 sap.ui.define([
-	'jquery.sap.global', 'sap/m/ComboBox', 'sap/m/DatePicker', 'sap/m/DateRangeSelection', 'sap/m/TimePicker', 'sap/m/Input', 'sap/m/MultiComboBox', 'sap/m/MultiInput', 'sap/m/SearchField', 'sap/m/Token', 'sap/ui/comp/odata/MetadataAnalyser', 'sap/ui/comp/providers/ValueHelpProvider', 'sap/ui/comp/providers/ValueListProvider', 'sap/ui/model/Filter', 'sap/ui/model/json/JSONModel', 'sap/ui/comp/odata/ODataType', 'sap/ui/comp/util/FormatUtil', 'sap/ui/base/EventProvider'
-], function(jQuery, ComboBox, DatePicker, DateRangeSelection, TimePicker, Input, MultiComboBox, MultiInput, SearchField, Token, MetadataAnalyser, ValueHelpProvider, ValueListProvider, Filter, JSONModel, ODataType, FormatUtil, EventProvider) {
+	'jquery.sap.global', 'sap/m/DateTimePicker', 'sap/m/Select', 'sap/ui/core/Item', 'sap/m/ComboBox', 'sap/m/DatePicker', 'sap/m/DateRangeSelection', 'sap/m/TimePicker', 'sap/m/Input', 'sap/m/MultiComboBox', 'sap/m/MultiInput', 'sap/m/SearchField', 'sap/m/Token', 'sap/ui/comp/odata/MetadataAnalyser', 'sap/ui/comp/providers/ValueHelpProvider', 'sap/ui/comp/providers/ValueListProvider', 'sap/ui/model/Filter', 'sap/ui/model/json/JSONModel', 'sap/ui/comp/odata/ODataType', 'sap/ui/comp/util/FormatUtil', 'sap/ui/base/EventProvider', 'sap/ui/comp/util/IdentifierUtil', 'sap/ui/comp/providers/TokenParser', 'sap/ui/core/format/DateFormat'
+], function(jQuery, DateTimePicker, Select, Item, ComboBox, DatePicker, DateRangeSelection, TimePicker, Input, MultiComboBox, MultiInput, SearchField, Token, MetadataAnalyser, ValueHelpProvider, ValueListProvider, Filter, JSONModel, ODataType, FormatUtil, EventProvider, IdentifierUtil, TokenParser, DateFormat) {
 	"use strict";
 
 	/**
@@ -18,11 +19,12 @@ sap.ui.define([
 	 * @experimental This module is only for internal/experimental use!
 	 * @public
 	 * @param {object} mPropertyBag - PropertyBag having members model, serviceUrl, entityType, additionalConfiguration
-	 * @author Pavan Nayak, Thomas Biesemann
+	 * @author SAP
 	 */
 	var FilterProvider = function(mPropertyBag) {
 		this._bInitialized = false;
 		this._bPending = true;
+		this._bConsiderAnalyticalParameters = false;
 		if (mPropertyBag) {
 			this._oParentODataModel = mPropertyBag.model;
 			this._sServiceURL = mPropertyBag.serviceUrl;
@@ -30,6 +32,7 @@ sap.ui.define([
 			this._isBasicSearchEnabled = mPropertyBag.enableBasicSearch;
 			this._bUseContainsAsDefault = mPropertyBag.useContainsAsDefaultFilter === "true";
 			this.sEntityType = mPropertyBag.entityType;
+			this.sEntitySet = mPropertyBag.entitySet;
 			this._isRunningInValueHelpDialog = mPropertyBag.isRunningInValueHelpDialog;
 			this._oAdditionalConfiguration = mPropertyBag.additionalConfiguration;
 			this.sDefaultDropDownDisplayBehaviour = mPropertyBag.defaultDropDownDisplayBehaviour;
@@ -43,19 +46,37 @@ sap.ui.define([
 			} else {
 				this._oDateFormatSettings = mPropertyBag.dateFormatSettings;
 			}
+			if (!this._oDateFormatSettings) {
+				this._oDateFormatSettings = {};
+			}
+			// Default to UTC true if nothing is provided --> as sap:display-format="Date" should be used without a timezone
+			if (!this._oDateFormatSettings.hasOwnProperty("UTC")) {
+				this._oDateFormatSettings["UTC"] = true;
+			}
+
 			// Used for IN param handling (visible field)
 			// TODO: CleanUp - a better handling
 			this._oSmartFilter = mPropertyBag.smartFilter;
+
+			this._bConsiderAnalyticalParameters = mPropertyBag.considerAnalyticalParameters;
+			this._bUseDateRangeType = mPropertyBag.useDateRangeType;
+			this._bConsiderSelectionVariants = mPropertyBag.considerSelectionVariants;
+
+			this._aConsiderNavigations = mPropertyBag.considerNavigations;
 		}
 		this.sFilterModelName = FilterProvider.FILTER_MODEL_NAME;
 		this._sBasicFilterAreaID = FilterProvider.BASIC_FILTER_AREA_ID;
+		this._aAnalyticalParameters = [];
 		this._aFilterBarViewMetadata = [];
+		this._aFilterBarFieldNames = [];
 		this._aFilterBarMultiValueFieldMetadata = [];
+		this._aFilterBarStringDateFieldNames = [];
 		this._aFilterBarDateFieldNames = [];
 		this._aFilterBarTimeFieldNames = [];
 		this._aFilterBarTimeIntervalFieldNames = [];
 		this._aFilterBarDateTimeMultiValueFieldNames = [];
 		this._aFilterBarStringFieldNames = [];
+		this._aFilterBarDateTimeFieldNames = [];
 		// Array of FieldGroups from FieldGroup annotations
 		this._aFieldGroupAnnotation = [];
 		this._oMetadataAnalyser = new MetadataAnalyser(this._oParentODataModel || this._sServiceURL);
@@ -64,7 +85,13 @@ sap.ui.define([
 
 		this._aValueListProvider = [];
 		this._aValueHelpDialogProvider = [];
+		this._mTokenHandler = {};
 		this._mConditionTypeFields = {};
+		this._aSelectionVariants = [];
+
+		this._oParameterization = null;
+		this._oNonAnaParameterization = null;
+
 		this._intialiseMetadata();
 		this._bInitialized = true;
 	};
@@ -80,22 +107,34 @@ sap.ui.define([
 	 * @private
 	 */
 	FilterProvider.prototype._intialiseMetadata = function() {
-		var iGroupLen, iFieldLen, oODataFilterGroup, aODataFilterGroups, i, j, oODataFilterField, oFieldMetadata, oGroupMetadata, aCustomFilterField, aCustomGroup;
+		var iGroupLen, iFieldLen, oSelectionFields, oODataFilterGroup, aODataFilterGroups, i, j, oODataFilterField, oFieldMetadata, oGroupMetadata, aCustomFilterField, aCustomGroup;
 		// first, create a Basic Area Group (groupId/groupName shall be "_BASIC")
 		this._aFilterBarViewMetadata.push({
 			groupName: this._sBasicFilterAreaID,
 			index: 0, // should be the 1st group on the UI
 			fields: []
 		});
-		// Store name without namespace to determine the main entity (used for association filter expression)
-		this.sEntityTypeName = this._oMetadataAnalyser.removeNamespace(this.sEntityType);
-		aODataFilterGroups = this._oMetadataAnalyser.getAllFilterableFieldsByEntityTypeName(this.sEntityType);
+		// try to calculate entitySet using entityType, when no entitySet is provided
+		if (!this.sEntitySet && this.sEntityType) {
+			this.sEntitySet = this._oMetadataAnalyser.getEntitySetNameFromEntityTypeName(this.sEntityType);
+		}
+		// Calculate the entityType from entitySet, if not entityType is provided
+
+		this.sEntityType = this._oMetadataAnalyser.getEntityTypeNameFromEntitySetName(this.sEntitySet);
+
+		aODataFilterGroups = this._oMetadataAnalyser.getAllFilterableFieldsByEntitySetName(this.sEntitySet, this._bConsiderAnalyticalParameters, this._aConsiderNavigations);
 		if (aODataFilterGroups) {
 			// update TextArrangement
 			this._updateDisplayBehaviour();
 
 			// Get the array of FieldGroup annotations
-			this._aFieldGroupAnnotation = this._oMetadataAnalyser.getFieldGroupAnnotation(this.sEntityType);
+			this._aFieldGroupAnnotation = this._oMetadataAnalyser.getFieldGroupsByFilterFacetsAnnotation(this.sEntityType);
+
+			// Get the SemanticFields annotation
+			oSelectionFields = this._oMetadataAnalyser.getSelectionFieldsAnnotation(this.sEntityType);
+			if (oSelectionFields && oSelectionFields.selectionFields) {
+				this._aSelectionFields = oSelectionFields.selectionFields;
+			}
 
 			// Create groups based on FieldGroup annotation
 			if (this._aFieldGroupAnnotation) {
@@ -125,6 +164,7 @@ sap.ui.define([
 					if (oODataFilterField.type.indexOf("Edm.") === 0) {
 						oFieldMetadata = this._createFieldMetadata(oODataFilterField);
 						oGroupMetadata.fields.push(oFieldMetadata);
+						this._aFilterBarFieldNames.push(oFieldMetadata.fieldName);
 					}
 				}
 			}
@@ -156,11 +196,64 @@ sap.ui.define([
 			this._aFilterBarViewMetadata[0].fields.push(oFieldMetadata);
 		}
 
+		// parameters
+		if (!this._isRunningInValueHelpDialog) {
+			this._createParameters();
+		}
+
+		// Selection Variants
+		if (this._bConsiderSelectionVariants) {
+			this._createSelectionVariants();
+		}
+
 		this._applyGroupId();
 		this._applyIndexes();
 		this._createInitialModel(true);
 		this._initializeConditionTypeFields();
 		this.setPending(this.isPending());
+	};
+
+	FilterProvider.prototype._createSelectionVariants = function() {
+		// Get the SelectionVariant annotation
+		this._aSelectionVariants = this._oMetadataAnalyser.getSelectionVariantAnnotationList(this.sEntityType);
+	};
+
+	FilterProvider.prototype._createParameters = function() {
+
+		if (this._oMetadataAnalyser.isSemanticAggregation(this.sEntityType)) {
+			if (this._bConsiderAnalyticalParameters) {
+				this._oParameterization = this._getAnalyticParameterization();
+				this._createAnalyticParameters(this._oParameterization);
+			}
+		} else {
+			this._createNonAnalyticParameters();
+		}
+
+	};
+
+	FilterProvider.prototype._getAnalyticParameterization = function() {
+		var o4AnaModel, oQueryResult;
+
+		jQuery.sap.require("sap.ui.model.analytics.odata4analytics");
+		try {
+			o4AnaModel = new sap.ui.model.analytics.odata4analytics.Model(new sap.ui.model.analytics.odata4analytics.Model.ReferenceByModel(this._oParentODataModel));
+		} catch (e) {
+			throw "Failed to instantiate analytical extensions for given OData model: " + e.message;
+		}
+
+		// Will find the necessary entry point to work with the parameter set
+		oQueryResult = o4AnaModel && o4AnaModel.findQueryResultByName(this.sEntitySet);
+		return (oQueryResult && oQueryResult.getParameterization());
+	};
+
+	FilterProvider.prototype._createNonAnalyticParameters = function() {
+
+		if (this.sEntitySet) {
+			this._oNonAnaParameterization = this._oMetadataAnalyser.getParametersByEntitySetName(this.sEntitySet);
+			if (this._oNonAnaParameterization) {
+				this._createParametersByEntitySetName(this._oNonAnaParameterization.entitySetName, this._oNonAnaParameterization.parameters);
+			}
+		}
 	};
 
 	FilterProvider.prototype.attachPendingChange = function(fn) {
@@ -208,14 +301,14 @@ sap.ui.define([
 			if (this._sTextArrangementDisplayBehaviour) {
 				this.sDefaultDropDownDisplayBehaviour = this._sTextArrangementDisplayBehaviour;
 			} else {
-				this.sDefaultDropDownDisplayBehaviour = sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR.descriptionOnly;
+				this.sDefaultDropDownDisplayBehaviour = sap.ui.comp.smartfilterbar.DisplayBehaviour.descriptionOnly;
 			}
 		}
 		if (!this.sDefaultTokenDisplayBehaviour) {
 			if (this._sTextArrangementDisplayBehaviour) {
 				this.sDefaultTokenDisplayBehaviour = this._sTextArrangementDisplayBehaviour;
 			} else {
-				this.sDefaultTokenDisplayBehaviour = sap.ui.comp.smartfilterbar.ControlConfiguration.DISPLAYBEHAVIOUR.descriptionAndId;
+				this.sDefaultTokenDisplayBehaviour = sap.ui.comp.smartfilterbar.DisplayBehaviour.descriptionAndId;
 			}
 		}
 	};
@@ -235,7 +328,7 @@ sap.ui.define([
 	 * @private
 	 */
 	FilterProvider.prototype._getAdditionalConfigurationForCustomFilterFields = function() {
-		var aControlConfiguration, length, nODataFilterFieldKeyLength, i, aResult, j, bFound, aODataFilterFieldName;
+		var aControlConfiguration, length, i, aResult;
 
 		// get additional control configuration
 		if (!this._oAdditionalConfiguration) {
@@ -243,28 +336,19 @@ sap.ui.define([
 		}
 		aControlConfiguration = this._oAdditionalConfiguration.getControlConfiguration();
 
-		// get field names from OData metadata
-		aODataFilterFieldName = this._oMetadataAnalyser.getAllFilterableFieldNamesByEntityTypeName(this.sEntityType);
-		if (!aODataFilterFieldName || !aODataFilterFieldName.length) {
+		// check if fields from OData metadata exist
+		if (!this._aFilterBarFieldNames || !this._aFilterBarFieldNames.length) {
 			return aControlConfiguration;
 		}
 
 		aResult = [];
-		nODataFilterFieldKeyLength = aODataFilterFieldName.length;
 		length = aControlConfiguration.length;
 		for (i = 0; i < length; i++) {
-			bFound = false;
-			for (j = 0; j < nODataFilterFieldKeyLength; j++) {
-				if (aODataFilterFieldName[j] === aControlConfiguration[i].key) {
-					bFound = true;
-					break;
-				}
-			}
-			if (!bFound) { // filter field for control configuration could not be found in OData metadata...this is a custom filter field!
+			// filter field for control configuration could not be found in OData metadata...this is a custom filter field!
+			if (this._aFilterBarFieldNames.indexOf(aControlConfiguration[i].key) < 0) {
 				aResult.push(aControlConfiguration[i]);
 			}
 		}
-
 		return aResult;
 	};
 
@@ -316,34 +400,75 @@ sap.ui.define([
 	 * @private
 	 */
 	FilterProvider.prototype._createInitialModelForField = function(oJSONData, oFilterFieldMetadata, bUseDefaultValues) {
-		var aDefaultFilterValues, oDefaultFilterValue, bHasDefaultFilterValue = false, bIsRangeField = false, sLowValue = null, sHighValue = null, iLength, oItem = null, aItems = [], aRanges = [];
+		var bIsDateTimeType = false, aDefaultFilterValues, oDefaultFilterValue, bHasDefaultFilterValue = false, bIsRangeField = false, sLowValue = null, sHighValue = null, iLength, oItem = null, aItems = [], aRanges = [];
 		// Model will no be created for custom filter fields..
 		if (!oFilterFieldMetadata || oFilterFieldMetadata.isCustomFilterField) {
 			return;
 		}
-		if (oFilterFieldMetadata.filterRestriction !== sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.multiple) {
+		if (oFilterFieldMetadata.filterRestriction !== sap.ui.comp.smartfilterbar.FilterType.multiple) {
 			bIsRangeField = true;
 		}
+
+		if ((oFilterFieldMetadata.filterType === "date") || (oFilterFieldMetadata.filterType === "time")) {
+			bIsDateTimeType = true;
+		}
+
 		if (bUseDefaultValues) {
 			// Get the array of default filter values
 			aDefaultFilterValues = oFilterFieldMetadata.defaultFilterValues;
 			bHasDefaultFilterValue = aDefaultFilterValues && aDefaultFilterValues.length;
+
+			// if (!bHasDefaultFilterValue && oFilterFieldMetadata.defaultFilterValue || oFilterFieldMetadata.defaultPropertyValue) {
+			if (!bHasDefaultFilterValue) {
+
+				if (oFilterFieldMetadata.defaultPropertyValue && oFilterFieldMetadata.isParameter) {
+
+					oDefaultFilterValue = oFilterFieldMetadata.defaultPropertyValue;
+
+					if (oFilterFieldMetadata.filterType === "numeric") {
+						oDefaultFilterValue = this._getType(oFilterFieldMetadata).parseValue(oDefaultFilterValue, "string");
+					}
+
+					aDefaultFilterValues = [
+						{
+							low: oDefaultFilterValue
+						}
+					];
+
+					bHasDefaultFilterValue = true;
+
+				} else if (oFilterFieldMetadata.defaultFilterValue) {
+					aDefaultFilterValues = [
+						{
+							low: oFilterFieldMetadata.defaultFilterValue,
+							high: oFilterFieldMetadata.defaultFilterValue,
+							operator: "EQ",
+							sign: "I"
+						}
+					];
+
+					bHasDefaultFilterValue = true;
+				}
+			}
+
 		}
-		if (oFilterFieldMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.single) {
+		if (oFilterFieldMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.single) {
 			// If there is a default filter value use only the low value of 1st one --> single filter scenario!
 			if (bHasDefaultFilterValue) {
 				oDefaultFilterValue = aDefaultFilterValues[0];
-				sLowValue = oDefaultFilterValue.low;
+				sLowValue = bIsDateTimeType ? this._createDateTimeValue(oFilterFieldMetadata, oDefaultFilterValue.low) : oDefaultFilterValue.low;
 			}
+
 			oJSONData[oFilterFieldMetadata.fieldName] = sLowValue;
 
-		} else if (oFilterFieldMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.interval && oFilterFieldMetadata.type !== "Edm.Time") {
+		} else if (oFilterFieldMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.interval && oFilterFieldMetadata.type !== "Edm.Time") {
 			// If there is a default filter value use both low and high, but only of the 1st one --> interval filter scenario!
 			if (bHasDefaultFilterValue) {
 				oDefaultFilterValue = aDefaultFilterValues[0];
-				sLowValue = oDefaultFilterValue.low;
-				sHighValue = oDefaultFilterValue.high;
+				sLowValue = bIsDateTimeType ? this._createDateTimeValue(oFilterFieldMetadata, oDefaultFilterValue.low) : oDefaultFilterValue.low;
+				sHighValue = bIsDateTimeType ? this._createDateTimeValue(oFilterFieldMetadata, oDefaultFilterValue.high) : oDefaultFilterValue.high;
 			}
+
 			oJSONData[oFilterFieldMetadata.fieldName] = {
 				low: sLowValue,
 				high: sHighValue
@@ -357,16 +482,21 @@ sap.ui.define([
 					if (bIsRangeField) {
 						oItem = {
 							"exclude": oDefaultFilterValue.sign === "E",
-							"operation": oDefaultFilterValue.operator,
+							// Convert "CP" from Configuration to "Contains"
+							"operation": oDefaultFilterValue.operator === "CP" ? "Contains" : oDefaultFilterValue.operator,
 							"keyField": oFilterFieldMetadata.fieldName,
-							"value1": oDefaultFilterValue.low,
-							"value2": oDefaultFilterValue.high
+							"value1": bIsDateTimeType ? this._createDateTimeValue(oFilterFieldMetadata, oDefaultFilterValue.low) : oDefaultFilterValue.low,
+							"value2": bIsDateTimeType ? "" : oDefaultFilterValue.high
 						};
+
+						if ((oFilterFieldMetadata.filterType === "time") && oDefaultFilterValue.high) {
+							oItem.value2 = new Date(oDefaultFilterValue.high);
+						}
 
 					} else {
 						oItem = {
-							key: oDefaultFilterValue.low,
-							text: oDefaultFilterValue.low
+							key: bIsDateTimeType ? this._createDateTimeValue(oFilterFieldMetadata, oDefaultFilterValue.low) : oDefaultFilterValue.low,
+							text: bIsDateTimeType ? "" : oDefaultFilterValue.low
 						};
 					}
 
@@ -391,6 +521,16 @@ sap.ui.define([
 		}
 	};
 
+	FilterProvider.prototype._createDateTimeValue = function(oFilterFieldMetadata, sValue) {
+
+		if ((oFilterFieldMetadata.type === "Edm.Time") && (sValue.indexOf("PT") === 0)) {
+			return this._getTime(sValue);
+		} else {
+			return new Date(sValue);
+		}
+
+	};
+
 	/**
 	 * Initialises the JSON model for filter fields
 	 * @param {boolean} bUseDefaultValues - whether default values from configuration shall be used
@@ -412,10 +552,20 @@ sap.ui.define([
 				}
 			}
 		}
+
+		// set the initial model for analytical parameters
+		if (this._aAnalyticalParameters) {
+			iFieldLength = this._aAnalyticalParameters.length;
+			for (j = 0; j < iFieldLength; j++) {
+				this._createInitialModelForField(oJSONData, this._aAnalyticalParameters[j], bUseDefaultValues);
+			}
+		}
+
 		this.oModel.setData(oJSONData);
 		if (!bUseDefaultValues) {
 			this._clearConditionTypeFields();
 		}
+		this._updateConditionTypeFields();
 		this._bCreatingInitialModel = false;
 	};
 
@@ -424,10 +574,11 @@ sap.ui.define([
 	 * @param {Object} oControl - the control to be updated
 	 * @param {Array} aItems = the array of key, text values to be set in the control
 	 * @param {Array} aRanges = the array of range values to be set in the control
+	 * @param {Object} oFilterFieldMetadata = filter field metadata
 	 * @private
 	 */
-	FilterProvider.prototype._updateMultiValueControl = function(oControl, aItems, aRanges) {
-		var i = 0, aTokens = null, oToken = null, oRange = null, sText = null, aKeys = null;
+	FilterProvider.prototype._updateMultiValueControl = function(oControl, aItems, aRanges, oFilterFieldMetadata) {
+		var i = 0, aTokens = null, oToken = null, oRange = null, sText = null, aKeys = null, value1, value2, oType, oFormat;
 		// MultiComboBox and MultiInput fields cannot be bound, since the tokens are created internally and do not support 2 way binding
 		// In case the model is reset/set initially, set the tokens manually through this
 		if (oControl && aItems) {
@@ -449,7 +600,82 @@ sap.ui.define([
 						if (oRange.tokenText) {
 							sText = oRange.tokenText;
 						} else {
-							sText = FormatUtil.getFormattedRangeText(oRange.operation, oRange.value1, oRange.value2, oRange.exclude);
+							value1 = oRange.value1;
+							value2 = oRange.value2;
+							if (oFilterFieldMetadata) {
+
+								var aDateTypes = [
+									"date", "datetime", "time"
+								];
+								if (!oFilterFieldMetadata.isCalendarDate && aDateTypes.indexOf(oFilterFieldMetadata.filterType) > -1) {
+									if (value1 && typeof value1 === "string") {
+										value1 = new Date(value1);
+									}
+									if (value2 && typeof value2 === "string") {
+										value2 = new Date(value2);
+									}
+
+									switch (oFilterFieldMetadata.filterType) {
+										case "date":
+											oFormat = sap.ui.core.format.DateFormat.getDateInstance(jQuery.extend({}, this._oDateFormatSettings, {
+												UTC: false
+											}));
+											break;
+										case "datetime":
+											oFormat = sap.ui.core.format.DateFormat.getDateTimeInstance(jQuery.extend({}, this._oDateFormatSettings, {
+												UTC: false
+											}));
+											break;
+										case "time":
+											oFormat = sap.ui.core.format.DateFormat.getTimeInstance(jQuery.extend({}, this._oDateFormatSettings, {
+												UTC: false
+											}));
+											break;
+									}
+
+									if (oFormat) {
+
+										if (value1) {
+											value1 = oFormat.format(value1);
+										}
+
+										if (value2) {
+											value2 = oFormat.format(value2);
+										}
+									}
+
+								} else if (oFilterFieldMetadata.filterType === "numeric") {
+
+									oType = this._getType(oFilterFieldMetadata);
+									if (oType) {
+										if (value1) {
+											value1 = oType.formatValue(value1, "string");
+										}
+
+										if (value2) {
+											value2 = oType.formatValue(value2, "string");
+										}
+									}
+								} else {
+
+									var bFormatAsDate = oFilterFieldMetadata.isCalendarDate || ((value1 instanceof Date) || (value2 instanceof Date));
+
+									if (bFormatAsDate) {
+
+										oType = this._getType(oFilterFieldMetadata);
+										if (value1) {
+											value1 = oType.formatValue(value1, "string");
+										}
+										if (value2) {
+											value2 = oType.formatValue(value2, "string");
+										}
+
+									}
+
+								}
+							}
+
+							sText = FormatUtil.getFormattedRangeText(oRange.operation, value1, value2, oRange.exclude);
 						}
 						oToken = new Token({
 							text: sText,
@@ -460,6 +686,9 @@ sap.ui.define([
 					}
 				}
 				oControl.setTokens(aTokens);
+// oControl.fireTokenChange({
+// type: "tokensChanged"
+// });
 			}
 			if (oControl instanceof MultiComboBox) {
 				aKeys = [];
@@ -580,6 +809,20 @@ sap.ui.define([
 	};
 
 	/**
+	 * Creates an id for a filter control based on its field view metadata.
+	 * @param {Object} oFieldViewMetadata - resolved filter view data with OData metadata and control configuration
+	 * @returns {String} Id of a control used inside the SmartFilterBar
+	 * @private
+	 */
+	FilterProvider.prototype._createFilterControlId = function(oFieldViewMetadata) {
+		var sFilterBarName = this._oSmartFilter.getId();
+		var sGroupId = IdentifierUtil.replace(oFieldViewMetadata.groupId || "");
+		var sName = IdentifierUtil.replace(oFieldViewMetadata.fieldName);
+
+		return sFilterBarName + "-filterItemControl" + sGroupId + "-" + sName;
+	};
+
+	/**
 	 * Creates a group based on the OData metadata
 	 * @private
 	 * @param {object} oODataFilterBarGroup - OData metadata for group
@@ -623,19 +866,36 @@ sap.ui.define([
 		return oGroupMetadata;
 	};
 
-	/**
-	 * Creates the control instance based on the OData Metadata and additional configuration
-	 * @param {Object} oFieldViewMetadata - resolved filter view data with OData metadata and control configuration
-	 * @returns {Object} an instance of the control to be used in the SmartFilterBar
-	 * @private
-	 */
-	FilterProvider.prototype._createControl = function(oFieldViewMetadata) {
-		var oControl, oType, bIsInterval = false, oFormatOptions, oConstraints = {}, iMaxLength, fClearModel;
+	FilterProvider.prototype._getTime = function(sValue) {
+		var oFormat = DateFormat.getTimeInstance({
+			pattern: "'PT'hh'H'mm'M'ss'S'"
+		});
 
-		// if a custom control is specified, use it
-		if (oFieldViewMetadata.customControl) {
-			return oFieldViewMetadata.customControl;
+		return oFormat.parse(sValue);
+	};
+
+	FilterProvider.prototype._checkMetadataDefaultValue = function(oFieldViewMetadata) {
+		var sDefaultValue = oFieldViewMetadata.defaultFilterValue || oFieldViewMetadata.defaultPropertyValue;
+
+		if (sDefaultValue) {
+
+			try {
+				if ((oFieldViewMetadata.type === "Edm.Time") && (sDefaultValue.indexOf("PT") === 0)) {
+					this._getTime(sDefaultValue);
+				} else {
+					this._getType(oFieldViewMetadata);
+				}
+
+			} catch (ex) {
+				oFieldViewMetadata.defaultPropertyValue = null;
+				oFieldViewMetadata.defaultFilterValue = null;
+				jQuery.sap.log.error("default value for " + oFieldViewMetadata.fieldName + " could not be parsed.");
+			}
 		}
+	};
+
+	FilterProvider.prototype._getType = function(oFieldViewMetadata) {
+		var oType, oFormatOptions = {}, oConstraints = {};
 
 		// Set constraints from metadata
 		if (oFieldViewMetadata.precision || oFieldViewMetadata.scale) {
@@ -648,34 +908,90 @@ sap.ui.define([
 		if (oFieldViewMetadata.displayFormat) {
 			oConstraints.displayFormat = oFieldViewMetadata.displayFormat;
 		}
+		if (oFieldViewMetadata.isDigitSequence) {
+			oConstraints.isDigitSequence = oFieldViewMetadata.isDigitSequence;
+		}
 
 		// Set Format options from metadata (only for date type for now)
-		if (oFieldViewMetadata.fControlConstructor === DateRangeSelection || oFieldViewMetadata.fControlConstructor === DatePicker) {
-			oFormatOptions = this._oDateFormatSettings;
+		if (oFieldViewMetadata.fControlConstructor === DateRangeSelection || oFieldViewMetadata.fControlConstructor === DatePicker || oFieldViewMetadata.type === "Edm.DateTimeOffset" || oFieldViewMetadata.isCalendarDate) {
+			oFormatOptions = jQuery.extend({}, this._oDateFormatSettings, {
+				UTC: false
+			});
 		}
-		oType = ODataType.getType(oFieldViewMetadata.type, oFormatOptions, oConstraints);
 
-		oControl = new oFieldViewMetadata.fControlConstructor();
+		oType = ODataType.getType(oFieldViewMetadata.type, oFormatOptions, oConstraints, oFieldViewMetadata.isCalendarDate);
+
+		return oType;
+	};
+
+	/**
+	 * Creates the control instance based on the OData Metadata and additional configuration
+	 * @param {Object} oFieldViewMetadata - resolved filter view data with OData metadata and control configuration
+	 * @returns {Object} an instance of the control to be used in the SmartFilterBar
+	 * @private
+	 */
+	FilterProvider.prototype._createControl = function(oFieldViewMetadata) {
+		var oControl, oType, bIsInterval = false, iMaxLength, fClearModel;
+
+		// if a custom control is specified, use it
+		if (oFieldViewMetadata.customControl) {
+			return oFieldViewMetadata.customControl;
+		}
+
+		oType = this._getType(oFieldViewMetadata);
+		// oFieldViewMetadata.ui5Type = oType;
+
+		oControl = new oFieldViewMetadata.fControlConstructor(this._createFilterControlId(oFieldViewMetadata));
 		if (oFieldViewMetadata.fControlConstructor === DateRangeSelection) {
-			oControl.bindProperty('dateValue', this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/low");
-			oControl.bindProperty('secondDateValue', this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/high");
-		} else if (oFieldViewMetadata.fControlConstructor === ComboBox) {
+			if (oFieldViewMetadata.isCalendarDate) {
+				oControl.bindProperty("dateValue", {
+					path: this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/low",
+					type: oType
+				});
+
+				oControl.bindProperty("secondDateValue", {
+					path: this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/high",
+					type: oType
+				});
+			} else {
+				oControl.bindProperty("dateValue", this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/low");
+				oControl.bindProperty("secondDateValue", this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/high");
+			}
+		} else if ((oFieldViewMetadata.fControlConstructor === ComboBox) || (oFieldViewMetadata.fControlConstructor === Select)) {
 			if (oControl.setForceSelection) {
 				oControl.setForceSelection(true);
 			}
-			this._associateValueList(oControl, "items", oFieldViewMetadata);
-			// Listen to the selection change and update the model accordingly
-			oControl.attachSelectionChange(function() {
-				// Do nothing while the data is being created/updated!
-				if (this._bUpdatingFilterData || this._bCreatingInitialModel) {
-					return;
-				}
-				// Manually trigger the change event on sapUI5 control since it doesn't do this internally on selectionChange!
-				oControl.fireChange({
-					filterChangeReason: oFieldViewMetadata.fieldName,
-					value: ""
-				});
-			}.bind(this));
+			if (oFieldViewMetadata.fControlConstructor === Select) {
+				oControl.addItem(new Item({
+					key: "",
+					text: ""
+				}));
+				oControl.addItem(new Item({
+					key: false,
+					text: oType.formatValue(false, "string")
+				}));
+				oControl.addItem(new Item({
+					key: true,
+					text: oType.formatValue(true, "string")
+				}));
+
+			} else {
+				this._associateValueList(oControl, "items", oFieldViewMetadata);
+
+				// Listen to the selection change and update the model accordingly
+				oControl.attachSelectionChange(function() {
+					// Do nothing while the data is being created/updated!
+					if (this._bUpdatingFilterData || this._bCreatingInitialModel) {
+						return;
+					}
+					// Manually trigger the change event on sapUI5 control since it doesn't do this internally on selectionChange!
+					oControl.fireChange({
+						filterChangeReason: oFieldViewMetadata.fieldName,
+						value: ""
+					});
+				}.bind(this));
+			}
+
 			oControl.bindProperty('selectedKey', this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName);
 		} else if (oFieldViewMetadata.fControlConstructor === MultiComboBox) {
 			this._associateValueList(oControl, "items", oFieldViewMetadata);
@@ -705,32 +1021,32 @@ sap.ui.define([
 					value: ""
 				});
 			}.bind(this));
-			oControl.bindProperty('value', this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/value");
+			oControl.bindProperty("value", this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/value");
 		} else if (oFieldViewMetadata.fControlConstructor === MultiInput) {
-			if (oFieldViewMetadata.controlType === sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE.date || oFieldViewMetadata.type === "Edm.Time") {
+			if (oFieldViewMetadata.controlType === sap.ui.comp.smartfilterbar.ControlType.date || oFieldViewMetadata.type === "Edm.Time" || oFieldViewMetadata.type === "Edm.DateTimeOffset") {
 				oControl.setValueHelpOnly(true);
-				if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.interval) {
+				if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.interval) {
 					this._associateValueHelpDialog(oControl, oFieldViewMetadata, false, false);
 				} else {
 					this._associateValueHelpDialog(oControl, oFieldViewMetadata, true, true);
 				}
 			} else {
 				if (oFieldViewMetadata.hasValueHelpDialog) {
-					this._associateValueHelpDialog(oControl, oFieldViewMetadata, oFieldViewMetadata.filterRestriction !== sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.multiple, true);
+					this._associateValueHelpDialog(oControl, oFieldViewMetadata, oFieldViewMetadata.filterRestriction !== sap.ui.comp.smartfilterbar.FilterType.multiple, true);
 				} else {
 					oControl.setShowValueHelp(false);
 				}
-				oControl.bindProperty('value', {
+				oControl.bindProperty("value", {
 					path: this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/value",
 					type: oType
 				});
 			}
-			this._handleMultiInput(oControl, oFieldViewMetadata);
+			this._handleMultiInput(oControl, oFieldViewMetadata, oType);
 		} else if (oFieldViewMetadata.fControlConstructor === Input) {
-			if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.interval) {
+			if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.interval) {
 				bIsInterval = true;
 				// we assume the interval values shall be split by "-"; so bind only to low and resolve this later while creating the filters
-				oControl.bindProperty('value', this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/low");
+				oControl.bindProperty("value", this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName + "/low");
 				if (!this.oResourceBundle) {
 					this.oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp");
 				}
@@ -748,8 +1064,13 @@ sap.ui.define([
 				oControl.setShowValueHelp(true);
 				this._associateValueHelpDialog(oControl, oFieldViewMetadata, false, false);
 			}
-		} else if (oFieldViewMetadata.fControlConstructor === DatePicker || oFieldViewMetadata.fControlConstructor === TimePicker) {
-			oControl.bindProperty('dateValue', this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName);
+		} else if (oFieldViewMetadata.isCalendarDate) {
+			oControl.bindProperty("dateValue", {
+				path: this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName,
+				type: oType
+			});
+		} else if (oFieldViewMetadata.fControlConstructor === DatePicker || oFieldViewMetadata.fControlConstructor === TimePicker || oFieldViewMetadata.fControlConstructor === DateTimePicker) {
+			oControl.bindProperty("dateValue", this.sFilterModelName + ">/" + oFieldViewMetadata.fieldName);
 		}
 
 		if (oControl instanceof DatePicker) {
@@ -788,22 +1109,35 @@ sap.ui.define([
 		}
 
 		// Convert typed in values to UpperCase for displayFormat = UpperCase
-		if (oFieldViewMetadata.displayFormat === "UpperCase" && oControl.attachChange && oControl.setValue) {
+		if (oFieldViewMetadata.displayFormat === "UpperCase" && oControl.attachChange && oControl.getValue && oControl.setValue) {
 			oControl.attachChange(function() {
 				var sValue = oControl.getValue();
 				if (sValue) {
 					oControl.setValue(sValue.toUpperCase());
 				}
 			});
+
+			if (this._mTokenHandler[oControl.getId()] && this._mTokenHandler[oControl.getId()].parser) {
+				var oTokenParser = this._mTokenHandler[oControl.getId()].parser;
+				oTokenParser.getKeyFields()[0].displayFormat = oFieldViewMetadata.displayFormat;
+			}
 		}
 
 		// Additional handling for Input and MultiInput
 		if (oControl instanceof Input) {
-			// Set MaxLength for fields without any ValueListAnnotation or non intervals!
-			if (!oFieldViewMetadata.hasValueListAnnotation && !bIsInterval && oFieldViewMetadata.maxLength) {
+			// MaxLength handling
+			if (oFieldViewMetadata.maxLength) {
 				iMaxLength = parseInt(oFieldViewMetadata.maxLength, 10);
 				if (!isNaN(iMaxLength)) {
-					oControl.setMaxLength(iMaxLength);
+					if (this._mTokenHandler[oControl.getId()] && this._mTokenHandler[oControl.getId()].parser) {
+						var oTokenParser = this._mTokenHandler[oControl.getId()].parser;
+						oTokenParser.getKeyFields()[0].maxLength = iMaxLength;
+					} else {
+						// Set MaxLength for fields without any ValueListAnnotation and non intervals and no TokenParser
+						if (!oFieldViewMetadata.hasValueListAnnotation && !bIsInterval) {
+							oControl.setMaxLength(iMaxLength);
+						}
+					}
 				}
 			}
 		}
@@ -851,18 +1185,20 @@ sap.ui.define([
 	 * @returns {function} the constructor function of the control
 	 * @private
 	 */
-	FilterProvider.prototype._getControlConstructor = function(oFieldViewMetadata) {
+	FilterProvider.prototype._getControlConstructor = function(oFieldViewMetadata, sParamPrefix) {
 		// default to input
-		var fControlConstructor = Input, bFilterRestrictionSingle, bFilterRestrictionInterval;
+		var fControlConstructor = Input, bFilterRestrictionSingle, bFilterRestrictionInterval, sPrefixedFieldName;
+
+		sPrefixedFieldName = sParamPrefix ? sParamPrefix + oFieldViewMetadata.fieldName : oFieldViewMetadata.fieldName;
 
 		// if a custom control is specified, use it
 		if (oFieldViewMetadata.isCustomFilterField) {
 			fControlConstructor = undefined;
 		} else {
-			bFilterRestrictionSingle = (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.single);
-			bFilterRestrictionInterval = (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.interval);
+			bFilterRestrictionSingle = (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.single);
+			bFilterRestrictionInterval = (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.interval);
 
-			if (oFieldViewMetadata.controlType === sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE.date) {
+			if (oFieldViewMetadata.controlType === sap.ui.comp.smartfilterbar.ControlType.date) {
 				// If Date controls are being used --> force the displayFormat to be Date
 				oFieldViewMetadata.displayFormat = "Date";
 				if (bFilterRestrictionSingle) {
@@ -870,15 +1206,24 @@ sap.ui.define([
 				} else {
 					fControlConstructor = bFilterRestrictionInterval ? DateRangeSelection : MultiInput;
 				}
-				this._aFilterBarDateFieldNames.push(oFieldViewMetadata.fieldName); // Date fields need special handling to always store Date objects
-				if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.multiple) {
-					this._aFilterBarDateTimeMultiValueFieldNames.push(oFieldViewMetadata.fieldName);
+				if (oFieldViewMetadata.isCalendarDate) {
+					this._aFilterBarStringDateFieldNames.push(sPrefixedFieldName); // Date fields need special handling to always store Date objects
+				} else {
+					this._aFilterBarDateFieldNames.push(sPrefixedFieldName); // Date fields need special handling to always store Date objects
 				}
-			} else if (oFieldViewMetadata.controlType === sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE.dropDownList) {
-				fControlConstructor = (bFilterRestrictionSingle) ? ComboBox : MultiComboBox;
+				if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.multiple) {
+					this._aFilterBarDateTimeMultiValueFieldNames.push(sPrefixedFieldName);
+				}
+			} else if (oFieldViewMetadata.controlType === sap.ui.comp.smartfilterbar.ControlType.dropDownList) {
+				if (bFilterRestrictionSingle) {
+					fControlConstructor = this._isBooleanWithFixedValuedButWithoutValueListAnnotation(oFieldViewMetadata) ? Select : ComboBox;
+				} else {
+					fControlConstructor = MultiComboBox;
+				}
+
 				// Filter Restriction is defaulted to auto, reset it to multiple if it is a MultiComboBox
 				if (!bFilterRestrictionSingle) {
-					oFieldViewMetadata.filterRestriction = sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.multiple;
+					oFieldViewMetadata.filterRestriction = sap.ui.comp.smartfilterbar.FilterType.multiple;
 				}
 			} else if (oFieldViewMetadata.type === "Edm.Time") {
 				if (bFilterRestrictionSingle) {
@@ -886,12 +1231,25 @@ sap.ui.define([
 				} else {
 					fControlConstructor = MultiInput;
 				}
-				this._aFilterBarTimeFieldNames.push(oFieldViewMetadata.fieldName); // Time fields need special handling to send back time values
+				this._aFilterBarTimeFieldNames.push(sPrefixedFieldName); // Time fields need special handling to send back time values
 				if (bFilterRestrictionInterval) {
-					this._aFilterBarTimeIntervalFieldNames.push(oFieldViewMetadata.fieldName);
-				} else if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.multiple) {
-					this._aFilterBarDateTimeMultiValueFieldNames.push(oFieldViewMetadata.fieldName);
+					this._aFilterBarTimeIntervalFieldNames.push(sPrefixedFieldName);
+				} else if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.multiple) {
+					this._aFilterBarDateTimeMultiValueFieldNames.push(sPrefixedFieldName);
 				}
+			} else if (!bFilterRestrictionInterval && oFieldViewMetadata.controlType === sap.ui.comp.smartfilterbar.ControlType.dateTimePicker) {
+				if (bFilterRestrictionSingle) {
+					fControlConstructor = DateTimePicker;
+				} else {
+					fControlConstructor = MultiInput;
+				}
+
+				this._aFilterBarDateTimeFieldNames.push(sPrefixedFieldName); // DateTime fields need special handling to send back time values
+				if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.multiple) {
+					this._aFilterBarDateTimeMultiValueFieldNames.push(sPrefixedFieldName);
+				}
+			} else if (bFilterRestrictionInterval && oFieldViewMetadata.type === "Edm.DateTimeOffset") {
+				this._aFilterBarDateTimeFieldNames.push(sPrefixedFieldName);
 			} else if (!bFilterRestrictionSingle && !bFilterRestrictionInterval) {
 				fControlConstructor = MultiInput;
 			}
@@ -903,15 +1261,17 @@ sap.ui.define([
 	 * handles MultiInput specific changes
 	 * @param {object} oControl - The control
 	 * @param {object} oFieldViewMetadata - The metadata merged from OData metadata and additional control configuration
+	 * @param {object} oType - odata type of the current field
 	 * @private
 	 */
-	FilterProvider.prototype._handleMultiInput = function(oControl, oFieldViewMetadata) {
+	FilterProvider.prototype._handleMultiInput = function(oControl, oFieldViewMetadata, oType) {
 		oControl.setEnableMultiLineMode(true);
 		oControl.attachTokenChange(function(oEvt) {
 			// Do nothing while the data is being created/updated -or- if tokensChanged is not the event!
-			if (this._bUpdatingFilterData || this._bCreatingInitialModel || oEvt.getParameter("type") !== "tokensChanged") {
+			if (this._bUpdatingFilterData || this._bCreatingInitialModel || (oEvt.getParameter("type") !== "tokensChanged") && (oEvt.getParameter("type") !== "removed")) {
 				return;
 			}
+
 			var aTokens = oEvt.getSource().getTokens(), aItems = [], iLength, oToken = null, oRangeData = null, aRanges = [];
 			if (aTokens) {
 				iLength = aTokens.length;
@@ -935,6 +1295,7 @@ sap.ui.define([
 				this.oModel.setProperty("/" + oFieldViewMetadata.fieldName + "/items", aItems);
 				this.oModel.setProperty("/" + oFieldViewMetadata.fieldName + "/ranges", aRanges);
 			}
+
 			// Manually trigger the change event on sapUI5 control since it doesn't do this internally on setValue!
 			oControl.fireChange({
 				filterChangeReason: oFieldViewMetadata.fieldName,
@@ -942,11 +1303,13 @@ sap.ui.define([
 			});
 		}.bind(this));
 
+		var oDateValue, bDateFormat = ((oFieldViewMetadata.type === "Edm.DateTime" && oFieldViewMetadata.displayFormat === "Date"));
+
 		// Copy/Paste for multi values can work property only for String fields
-		if (oFieldViewMetadata.hasValueListAnnotation || oFieldViewMetadata.type === "Edm.String") {
+		if (oFieldViewMetadata.hasValueListAnnotation || (oFieldViewMetadata.type === "Edm.String") || bDateFormat) {
 			// Handle internal _validateOnPaste event from MultiInput
 			oControl.attachEvent("_validateOnPaste", function(oEvent) {
-				var aTexts = oEvent.getParameter("texts"), oProperty, iLength, sText, aRanges;
+				var aTexts = oEvent.getParameter("texts"), oProperty, iLength, sText, sTokenText, aRanges;
 				iLength = aTexts ? aTexts.length : 0;
 				// When more than 1 text exists .. directly add it on the Input without any validation!
 				if (iLength > 1) {
@@ -963,23 +1326,57 @@ sap.ui.define([
 					while (iLength--) {
 						sText = aTexts[iLength];
 						if (sText) {
+							sTokenText = null;
+
+							if (bDateFormat) {
+								oDateValue = this._getDateValue(sText, oType);
+								if (isNaN(oDateValue.getDate())) {
+									continue;
+								} else {
+									sTokenText = sText;
+									sText = oDateValue;
+								}
+							}
+
 							// Add text to ranges
 							aRanges.push({
 								"exclude": false,
 								"operation": "EQ",
 								"keyField": oFieldViewMetadata.fieldName,
 								"value1": sText,
-								"value2": null
+								"value2": null,
+								"tokenText": sTokenText
+
 							});
 						}
 					}
 					// Set the updated ranges back to the model
 					this.oModel.setProperty("/" + oFieldViewMetadata.fieldName + "/ranges", aRanges);
+
 					// trigger update on the control
 					this._updateMultiValueControl(oControl, oProperty.items, aRanges);
 				}
 			}.bind(this));
 		}
+	};
+
+	FilterProvider.prototype._getDateValue = function(sValue, oType) {
+
+		var oDate;
+		/* eslint-disable no-empty */
+
+		try {
+			oDate = oType.parseValue(sValue, "string");
+			if (oDate) {
+				return oDate;
+			}
+		} catch (ex) {
+
+		}
+		/* eslint-enable no-empty */
+
+		return new Date(sValue);
+
 	};
 
 	/**
@@ -991,7 +1388,7 @@ sap.ui.define([
 	 * @private
 	 */
 	FilterProvider.prototype._associateValueHelpDialog = function(oControl, oFieldViewMetadata, bSupportRanges, bSupportMultiselect) {
-		this._aValueHelpDialogProvider.push(new ValueHelpProvider({
+		var mParams = {
 			loadAnnotation: oFieldViewMetadata.hasValueListAnnotation,
 			fullyQualifiedFieldName: oFieldViewMetadata.fullName,
 			metadataAnalyser: this._oMetadataAnalyser,
@@ -1003,8 +1400,8 @@ sap.ui.define([
 			dateFormatSettings: this._oDateFormatSettings,
 			supportMultiSelect: bSupportMultiselect,
 			supportRanges: bSupportRanges,
-			isUnrestrictedFilter: oFieldViewMetadata.filterRestriction !== sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.multiple,
-			isSingleIntervalRange: oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.interval,
+			isUnrestrictedFilter: oFieldViewMetadata.filterRestriction !== sap.ui.comp.smartfilterbar.FilterType.multiple,
+			isSingleIntervalRange: oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.interval,
 			fieldName: oFieldViewMetadata.fieldName,
 			type: oFieldViewMetadata.filterType,
 			scale: oFieldViewMetadata.scale,
@@ -1012,8 +1409,53 @@ sap.ui.define([
 			maxLength: oFieldViewMetadata.maxLength,
 			displayFormat: oFieldViewMetadata.displayFormat,
 			displayBehaviour: oFieldViewMetadata.displayBehaviour,
-			title: oFieldViewMetadata.label
-		}));
+			// title: this._determineFieldLabel(oFieldViewMetadata), //oFieldViewMetadata.label,
+			fieldViewMetadata: oFieldViewMetadata
+		};
+
+		if (oFieldViewMetadata.isCalendarDate) {
+			mParams.oType = this._getType(oFieldViewMetadata);
+		}
+
+		var oValueHelpProvider = new ValueHelpProvider(mParams);
+
+		oValueHelpProvider.attachValueListChanged(function(oEvent) {
+			if (this._oSmartFilter) {
+				this._oSmartFilter.fireFilterChange(oEvent);
+			}
+		}.bind(this));
+
+		if (oFieldViewMetadata.visibleInAdvancedArea || (oFieldViewMetadata.groupId === FilterProvider.BASIC_FILTER_AREA_ID)) {
+			oValueHelpProvider.loadAnnotation();
+		}
+
+		this._aValueHelpDialogProvider.push(oValueHelpProvider);
+
+		if (bSupportRanges && oControl.addValidator) {
+			var oTokenParser = new TokenParser();
+			oTokenParser.addKeyField({
+				key: oFieldViewMetadata.fieldName,
+				label: oFieldViewMetadata.label,
+				type: oFieldViewMetadata.filterType,
+				oType: oFieldViewMetadata.ui5Type
+			});
+			oTokenParser.associateInput(oControl);
+			this._mTokenHandler[oControl.getId()] = {
+				parser: oTokenParser
+			};
+		}
+	};
+
+	FilterProvider.prototype._determineFieldLabel = function(oFieldViewMetadata) {
+		var oFilterItem, sLabel = oFieldViewMetadata.label;
+		if (this._oSmartFilter && this._oSmartFilter.determineFilterItemByName) {
+			oFilterItem = this._oSmartFilter.determineFilterItemByName(oFieldViewMetadata.name);
+			if (oFilterItem) {
+				sLabel = oFilterItem.getLabel();
+			}
+		}
+
+		return sLabel;
 	};
 
 	/**
@@ -1025,8 +1467,9 @@ sap.ui.define([
 	 * @private
 	 */
 	FilterProvider.prototype._associateValueList = function(oControl, sAggregation, oFieldViewMetadata, bHasTypeAhead) {
+		var oValueListProvider;
 		if (oFieldViewMetadata.hasValueListAnnotation) {
-			this._aValueListProvider.push(new ValueListProvider({
+			oValueListProvider = new ValueListProvider({
 				control: oControl,
 				fieldName: oFieldViewMetadata.fieldName,
 				typeAheadEnabled: bHasTypeAhead,
@@ -1039,9 +1482,178 @@ sap.ui.define([
 				metadataAnalyser: this._oMetadataAnalyser,
 				filterModel: this.oModel,
 				filterProvider: this,
-				model: this._oParentODataModel
-			}));
+				model: this._oParentODataModel,
+				fieldViewMetadata: oFieldViewMetadata
+			});
+
+			oValueListProvider.attachValueListChanged(function(oEvent) {
+				if (this._oSmartFilter) {
+					this._oSmartFilter.fireFilterChange(oEvent);
+				}
+			}.bind(this));
+
+			if (oFieldViewMetadata.visibleInAdvancedArea || (oFieldViewMetadata.groupId === FilterProvider.BASIC_FILTER_AREA_ID)) {
+				oValueListProvider.loadAnnotation();
+			}
+
+			this._aValueListProvider.push(oValueListProvider);
+		} else if (this._mTokenHandler[oControl.getId()] && this._mTokenHandler[oControl.getId()].parser) {
+			this._mTokenHandler[oControl.getId()].parser.setDefaultOperation("EQ");
 		}
+	};
+
+	FilterProvider.prototype._createAnalyticParameters = function(oParameterization) {
+		// Determine all parameters
+		var oEntitySet, aParameterNames;
+
+		if (oParameterization) {
+			aParameterNames = oParameterization.getAllParameterNames();
+			oEntitySet = oParameterization.getEntitySet();
+
+			if (oEntitySet) {
+				this._createParametersByEntitySetName(oEntitySet.getQName(), aParameterNames);
+			}
+		}
+	};
+
+	FilterProvider.prototype._createParametersByEntitySetName = function(sEntitySetName, aParameterNames) {
+
+		var oParameterMetadata, aParameterMetadataOData = this._oMetadataAnalyser.getFieldsByEntitySetName(sEntitySetName);
+
+		for (var i = 0; i < aParameterMetadataOData.length; i++) {
+
+			if (aParameterNames.indexOf(aParameterMetadataOData[i].name) >= 0) {
+				oParameterMetadata = this._createAnalyticParameterMetadata(aParameterMetadataOData[i]);
+
+				if (oParameterMetadata.visible && !oParameterMetadata.hidden) {
+					this._aAnalyticalParameters.push(oParameterMetadata);
+				}
+			}
+		}
+	};
+
+	FilterProvider.prototype._createAnalyticParameterMetadata = function(oParameterMetadataOData) {
+
+		var sParamPrefix = sap.ui.comp.ANALYTICAL_PARAMETER_PREFIX;
+
+		oParameterMetadataOData.filterRestriction = "single-value";
+
+		var oFieldMetadata = this._createFieldMetadata(oParameterMetadataOData, sParamPrefix);
+
+		oFieldMetadata.fieldName = sParamPrefix + oParameterMetadataOData.name;
+		oFieldMetadata.isMandatory = true;
+		oFieldMetadata.isParameter = true;
+		oFieldMetadata.visibleInAdvancedArea = true;
+
+		return oFieldMetadata;
+	};
+
+	/**
+	 * Returns a list of analytical paramaters
+	 * @returns {array} List of names of analytical paramaters. Array can be empty, if none exists.
+	 * @protected
+	 */
+	FilterProvider.prototype.getAnalyticParameters = function() {
+		return this._aAnalyticalParameters;
+	};
+
+	/**
+	 * Returns selection variants
+	 * @returns {array} of SelectionVariant annotations.
+	 * @protected
+	 */
+	FilterProvider.prototype.getSelectionVariants = function() {
+		return this._aSelectionVariants;
+	};
+
+	/**
+	 * Returns the binding paths for the analytic paramaters
+	 * @returns {string} Binding path of the analytical paramaters
+	 * @protected
+	 */
+	FilterProvider.prototype.getAnalyticBindingPath = function() {
+		var oValues, aParamNames = [], aParameters = this.getAnalyticParameters();
+
+		aParameters.forEach(function(oParam) {
+			aParamNames.push(oParam.fieldName);
+		});
+
+		oValues = this.getFilledFilterData(aParamNames);
+
+		if (this._oParameterization) {
+			return this._createAnalyticBindingPath(aParameters, oValues);
+		} else {
+			return this._createNonAnalyticBindingPath(aParameters, oValues);
+		}
+	};
+
+	/**
+	 * Constructs binding information for analytical parameters.
+	 * @param {array} aParameters with analytical parameters and the corresponding values
+	 * @param {object} oValues of the analytic parameters
+	 * @returns {string} Paths information
+	 * @private
+	 */
+	FilterProvider.prototype._createAnalyticBindingPath = function(aParameters, oValues) {
+		var sValue, sPath = "", oParamRequest;
+		oParamRequest = this._getParameterizationRequest(this._oParameterization);
+		if (oParamRequest) {
+			aParameters.forEach(function(oParam) {
+				sValue = oValues[oParam.fieldName];
+				if (!sValue) {
+					sValue = "";
+				} else if (oParam.type === "Edm.Time" && sValue instanceof Date) {
+					if (this._oDateFormatSettings && !this._oDateFormatSettings.UTC) {
+						sValue = new Date(sValue.valueOf() + sValue.getTimezoneOffset() * 60 * 1000);
+					}
+					sValue = {
+						__edmType: "Edm.Time",
+						ms: (((sValue.getHours() * 60) + sValue.getMinutes()) * 60 + sValue.getSeconds()) * 1000 + sValue.getMilliseconds()
+					};
+				} else if (this._oDateFormatSettings && this._oDateFormatSettings.UTC && sValue instanceof Date) {
+					sValue = FilterProvider.getDateInUTCOffset(sValue);
+				}
+
+				oParamRequest.setParameterValue(oParam.name, sValue);
+			}.bind(this));
+
+			sPath = oParamRequest.getURIToParameterizationEntry() + '/' + this._oParameterization.getNavigationPropertyToQueryResult();
+		}
+
+		return sPath;
+	};
+
+	FilterProvider.prototype._createNonAnalyticBindingPath = function(aParameters, oValues) {
+		var sValue, sPath = "", sPeriod = "";
+		if (this._oNonAnaParameterization) {
+			sPath = "/" + this._oNonAnaParameterization.entitySetName + '(';
+			aParameters.forEach(function(oParam) {
+				sValue = oValues[oParam.fieldName];
+				if (!sValue) {
+					sValue = "";
+				} else if (oParam.type === "Edm.Time" && sValue instanceof Date) {
+					sValue = {
+						__edmType: "Edm.Time",
+						ms: (((sValue.getHours() * 60) + sValue.getMinutes()) * 60 + sValue.getSeconds()) * 1000 + sValue.getMilliseconds()
+					};
+				} else if (this._oDateFormatSettings && this._oDateFormatSettings.UTC && sValue instanceof Date) {
+					sValue = FilterProvider.getDateInUTCOffset(sValue);
+				}
+
+				sPath += (sPeriod + oParam.name + "=" + jQuery.sap.encodeURL(this._oParentODataModel.formatValue(sValue, oParam.type)));
+				sPeriod = ",";
+
+			}.bind(this));
+
+			sPath += (")/" + this._oNonAnaParameterization.navPropertyName);
+
+		}
+
+		return sPath;
+	};
+
+	FilterProvider.prototype._getParameterizationRequest = function() {
+		return this._oParameterization ? new sap.ui.model.analytics.odata4analytics.ParameterizationRequest(this._oParameterization) : null;
 	};
 
 	/**
@@ -1050,14 +1662,14 @@ sap.ui.define([
 	 * @returns {Object} the field metadata
 	 * @private
 	 */
-	FilterProvider.prototype._createFieldMetadata = function(oFilterFieldODataMetadata) {
+	FilterProvider.prototype._createFieldMetadata = function(oFilterFieldODataMetadata, sParamPrefix) {
 		var oFieldViewMetadata, oControlConfiguration;
 
 		oFilterFieldODataMetadata.fieldName = this._getFieldName(oFilterFieldODataMetadata);
 		oFilterFieldODataMetadata.fieldNameOData = oFilterFieldODataMetadata.fieldName.replace(FilterProvider.FIELD_NAME_REGEX, "/");
 
 		// Get Additional configuration
-		oControlConfiguration = this._oAdditionalConfiguration.getControlConfigurationByKey(oFilterFieldODataMetadata.fieldName);
+		oControlConfiguration = this._oAdditionalConfiguration ? this._oAdditionalConfiguration.getControlConfigurationByKey(oFilterFieldODataMetadata.fieldName) : null;
 
 		oFieldViewMetadata = jQuery.extend({}, oFilterFieldODataMetadata);
 
@@ -1066,7 +1678,8 @@ sap.ui.define([
 		oFieldViewMetadata.hasValueHelpDialog = this._hasValueHelpDialog(oFieldViewMetadata, oControlConfiguration);
 		oFieldViewMetadata.preventInitialDataFetchInValueHelpDialog = oControlConfiguration ? oControlConfiguration.preventInitialDataFetchInValueHelpDialog : true;
 		oFieldViewMetadata.controlType = this._getControlType(oFieldViewMetadata, oControlConfiguration);
-		if (oControlConfiguration && oControlConfiguration.displayBehaviour) {
+		// Use configured displayBehaviour, only if it is defined!
+		if (oControlConfiguration && oControlConfiguration.displayBehaviour && oControlConfiguration.displayBehaviour !== "auto") {
 			oFieldViewMetadata.displayBehaviour = oControlConfiguration.displayBehaviour;
 		}
 		oFieldViewMetadata.isCustomFilterField = !!(oControlConfiguration && oControlConfiguration.customControl);
@@ -1077,10 +1690,13 @@ sap.ui.define([
 		oFieldViewMetadata.isVisible = this._isVisible(oControlConfiguration);
 		oFieldViewMetadata.groupId = this._getGroupID(oFilterFieldODataMetadata, oControlConfiguration);
 		oFieldViewMetadata.index = this._getIndex(oFilterFieldODataMetadata, oControlConfiguration);
-		oFieldViewMetadata.fControlConstructor = this._getControlConstructor(oFieldViewMetadata);
+		oFieldViewMetadata.fControlConstructor = this._getControlConstructor(oFieldViewMetadata, sParamPrefix);
 		oFieldViewMetadata.filterType = this._getFilterType(oFieldViewMetadata);
 		oFieldViewMetadata.hasTypeAhead = this._hasTypeAhead(oFieldViewMetadata, oFilterFieldODataMetadata, oControlConfiguration);
 		oFieldViewMetadata.customControl = oControlConfiguration ? oControlConfiguration.customControl : undefined;
+
+		oFieldViewMetadata.ui5Type = this._getType(oFieldViewMetadata);
+
 		oFieldViewMetadata.fCreateControl = function(oFieldMetadata) {
 			var oData, oFilterData;
 			oFieldMetadata.control = this._createControl(oFieldMetadata);
@@ -1092,12 +1708,18 @@ sap.ui.define([
 		}.bind(this);
 
 		this._applyWidth(oFieldViewMetadata);
+
 		oFieldViewMetadata.defaultFilterValues = oControlConfiguration ? oControlConfiguration.defaultFilterValues : undefined;
+
 		if (oFieldViewMetadata.type === "Edm.String") {
 			this._aFilterBarStringFieldNames.push(oFieldViewMetadata.fieldName);
 		}
 		oFieldViewMetadata.conditionType = null;
 		var oConditionType = oControlConfiguration ? oControlConfiguration.conditionType : null;
+		if (!oConditionType && this._bUseDateRangeType && (oFieldViewMetadata.fControlConstructor === DateRangeSelection)) {
+			oConditionType = "sap.ui.comp.config.condition.DateRangeType";
+		}
+
 		if (oConditionType) {
 			var sConditionType = "";
 			if (typeof oConditionType === "object") {
@@ -1114,13 +1736,16 @@ sap.ui.define([
 					oFieldViewMetadata.conditionType = new oConditionTypeClass(oFieldViewMetadata.fieldName, this, oFieldViewMetadata);
 					this._mConditionTypeFields[oFieldViewMetadata.fieldName] = oFieldViewMetadata;
 				}
-				if (oConditionType) {
+				if (oConditionType && !this._bUseDateRangeType) {
 					oFieldViewMetadata.conditionType.applySettings(oConditionType);
 				}
 			} catch (ex) {
 				jQuery.sap.log.error("Module " + sConditionType + " could not be loaded");
 			}
 		}
+
+		this._checkMetadataDefaultValue(oFieldViewMetadata);
+
 		return oFieldViewMetadata;
 	};
 
@@ -1131,16 +1756,23 @@ sap.ui.define([
 	 * @private
 	 */
 	FilterProvider.prototype._getFilterType = function(oField) {
-		if (ODataType.isNumeric(oField.type)) {
+		if (oField.isDigitSequence) {
+			return "numc";
+		} else if (ODataType.isNumeric(oField.type)) {
 			return "numeric";
 		} else if (oField.type === "Edm.DateTime" && oField.displayFormat === "Date") {
 			return "date";
 		} else if (oField.type === "Edm.String") {
+			if (oField.isCalendarDate) {
+				return "stringdate";
+			}
 			return "string";
 		} else if (oField.type === "Edm.Boolean") {
 			return "boolean";
 		} else if (oField.type === "Edm.Time") {
 			return "time";
+		} else if (oField.type === "Edm.DateTimeOffset") {
+			return "datetime";
 		}
 		return undefined;
 	};
@@ -1152,6 +1784,7 @@ sap.ui.define([
 	 * @private
 	 */
 	FilterProvider.prototype._updateValueListMetadata = function(oFieldViewMetadata, oFieldODataMetadata) {
+
 		// First check for "sap:value-list" annotation
 		oFieldViewMetadata.hasValueListAnnotation = oFieldODataMetadata["sap:value-list"] !== undefined;
 		if (oFieldViewMetadata.hasValueListAnnotation) {
@@ -1160,6 +1793,9 @@ sap.ui.define([
 			// Then check for "com.sap.vocabularies.Common.v1.ValueList" and retrieve the semantics
 			oFieldViewMetadata.hasValueListAnnotation = true;
 			oFieldViewMetadata.hasFixedValues = this._oMetadataAnalyser.getValueListSemantics(oFieldODataMetadata["com.sap.vocabularies.Common.v1.ValueList"]) === "fixed-values";
+			if (!oFieldViewMetadata.hasFixedValues) {
+				oFieldViewMetadata.hasFixedValues = MetadataAnalyser.isValueListWithFixedValues(oFieldODataMetadata);
+			}
 		}
 	};
 
@@ -1173,7 +1809,7 @@ sap.ui.define([
 		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp");
 
 		oFieldViewMetadata = {};
-		oFieldViewMetadata.filterRestriction = sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.single;
+		oFieldViewMetadata.filterRestriction = sap.ui.comp.smartfilterbar.FilterType.single;
 		oFieldViewMetadata.name = FilterProvider.BASIC_SEARCH_FIELD_ID;
 		oFieldViewMetadata.fieldName = FilterProvider.BASIC_SEARCH_FIELD_ID;
 		oFieldViewMetadata.label = undefined;
@@ -1182,7 +1818,7 @@ sap.ui.define([
 		oFieldViewMetadata.groupId = FilterProvider.BASIC_FILTER_AREA_ID;
 		oFieldViewMetadata.index = -1; // index of Basic Search field is irrelevant!
 		oFieldViewMetadata.control = new SearchField(this._oSmartFilter.getId() + "-btnBasicSearch", {
-			showSearchButton: false
+			showSearchButton: true
 		});
 
 		if (!this._isRunningInValueHelpDialog) {
@@ -1262,14 +1898,14 @@ sap.ui.define([
 		var bValueHelpDialog = true;
 
 		if (oControlConfiguration) {
-			if (oControlConfiguration.controlType === sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE.dropDownList) {
+			if (oControlConfiguration.controlType === sap.ui.comp.smartfilterbar.ControlType.dropDownList) {
 				bValueHelpDialog = false;
 			} else if (oControlConfiguration.hasValueHelpDialog !== true) {
 				bValueHelpDialog = false;
 			}
 		}
 		if (oFieldViewMetadata && !oFieldViewMetadata.hasValueListAnnotation) {
-			if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.single || oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.multiple) {
+			if (oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.single || oFieldViewMetadata.filterRestriction === sap.ui.comp.smartfilterbar.FilterType.multiple) {
 				bValueHelpDialog = false;
 			}
 		}
@@ -1313,17 +1949,17 @@ sap.ui.define([
 	 * @private
 	 */
 	FilterProvider.prototype._isMandatory = function(oFilterFieldODataMetadata, oControlConfiguration) {
-		if (oControlConfiguration && oControlConfiguration.mandatory !== sap.ui.comp.smartfilterbar.ControlConfiguration.MANDATORY.auto) {
-			return oControlConfiguration.mandatory === sap.ui.comp.smartfilterbar.ControlConfiguration.MANDATORY.mandatory;
+		if (oControlConfiguration && oControlConfiguration.mandatory !== sap.ui.comp.smartfilterbar.MandatoryType.auto) {
+			return oControlConfiguration.mandatory === sap.ui.comp.smartfilterbar.MandatoryType.mandatory;
 		}
 		if (oFilterFieldODataMetadata) {
-			return oFilterFieldODataMetadata.requiredField;
+			return oFilterFieldODataMetadata.requiredFilterField;
 		}
 		return false;
 	};
 
 	/**
-	 * Returns the effective filter restriction. Possible values can be found in this enum: sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE
+	 * Returns the effective filter restriction. Possible values can be found in this enum: sap.ui.comp.smartfilterbar.FilterType
 	 * @param {object} oFilterFieldODataMetadata - OData metadata for the filter field
 	 * @param {object} oControlConfiguration - Additional configuration for this filter field
 	 * @private
@@ -1332,23 +1968,23 @@ sap.ui.define([
 	FilterProvider.prototype._getFilterRestriction = function(oFilterFieldODataMetadata, oControlConfiguration) {
 		var sFilterRestriction;
 
-		if (oControlConfiguration && oControlConfiguration.filterType && oControlConfiguration.filterType !== sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.auto) {
+		if (oControlConfiguration && oControlConfiguration.filterType && oControlConfiguration.filterType !== sap.ui.comp.smartfilterbar.FilterType.auto) {
 			sFilterRestriction = oControlConfiguration.filterType;
 		} else if (oFilterFieldODataMetadata.filterRestriction === "single-value") {
-			sFilterRestriction = sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.single;
+			sFilterRestriction = sap.ui.comp.smartfilterbar.FilterType.single;
 		} else if (oFilterFieldODataMetadata.filterRestriction === "multi-value") {
-			sFilterRestriction = sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.multiple;
+			sFilterRestriction = sap.ui.comp.smartfilterbar.FilterType.multiple;
 		} else if (oFilterFieldODataMetadata.filterRestriction === "interval") {
-			sFilterRestriction = sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.interval;
+			sFilterRestriction = sap.ui.comp.smartfilterbar.FilterType.interval;
 		} else {
-			sFilterRestriction = sap.ui.comp.smartfilterbar.ControlConfiguration.FILTERTYPE.auto;
+			sFilterRestriction = sap.ui.comp.smartfilterbar.FilterType.auto;
 		}
 
 		return sFilterRestriction;
 	};
 
 	/**
-	 * Returns the effective control type. Control types can be found in enum: sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE
+	 * Returns the effective control type. Control types can be found in enum: sap.ui.comp.smartfilterbar.ControlType
 	 * @param {object} oFieldViewMetadata - view metadata for the filter field
 	 * @param {object} oControlConfiguration - Additional configuration for this filter field
 	 * @private
@@ -1357,16 +1993,28 @@ sap.ui.define([
 	FilterProvider.prototype._getControlType = function(oFieldViewMetadata, oControlConfiguration) {
 		var sControlType;
 
-		if (oControlConfiguration && oControlConfiguration.controlType && oControlConfiguration.controlType !== sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE.auto) {
+		if (oControlConfiguration && oControlConfiguration.controlType && oControlConfiguration.controlType !== sap.ui.comp.smartfilterbar.ControlType.auto) {
 			sControlType = oControlConfiguration.controlType;
-		} else if (oFieldViewMetadata.type === "Edm.DateTime" && oFieldViewMetadata.displayFormat === "Date") {
-			sControlType = sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE.date;
+		} else if (oFieldViewMetadata.type === "Edm.DateTime" && oFieldViewMetadata.displayFormat === "Date" || oFieldViewMetadata.isCalendarDate) {
+			sControlType = sap.ui.comp.smartfilterbar.ControlType.date;
+		} else if (oFieldViewMetadata.type === "Edm.DateTimeOffset") {
+			sControlType = sap.ui.comp.smartfilterbar.ControlType.dateTimePicker;
 		} else if (oFieldViewMetadata.hasValueListAnnotation && oFieldViewMetadata.hasFixedValues) {
-			sControlType = sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE.dropDownList;
+			sControlType = sap.ui.comp.smartfilterbar.ControlType.dropDownList;
+		} else if (this._isBooleanWithFixedValuedButWithoutValueListAnnotation(oFieldViewMetadata)) {
+			sControlType = sap.ui.comp.smartfilterbar.ControlType.dropDownList;
 		} else {
-			sControlType = sap.ui.comp.smartfilterbar.ControlConfiguration.CONTROLTYPE.input;
+			sControlType = sap.ui.comp.smartfilterbar.ControlType.input;
 		}
 		return sControlType;
+	};
+
+	FilterProvider.prototype._isBooleanWithFixedValuedButWithoutValueListAnnotation = function(oFieldViewMetadata) {
+		if (oFieldViewMetadata.type === "Edm.Boolean" && !oFieldViewMetadata.hasFixedValues && !oFieldViewMetadata.hasValueListAnnotation && (oFieldViewMetadata.filterRestriction === "single")) {
+			return true;
+		}
+
+		return false;
 	};
 
 	/**
@@ -1379,7 +2027,7 @@ sap.ui.define([
 	FilterProvider.prototype._getGroupID = function(oFilterFieldODataMetadata, oControlConfiguration) {
 		if (oControlConfiguration && oControlConfiguration.groupId) {
 			return oControlConfiguration.groupId;
-		} else if (oFilterFieldODataMetadata && oFilterFieldODataMetadata.requiredField) {
+		} else if (oFilterFieldODataMetadata && (oFilterFieldODataMetadata.requiredFilterField || (this._aSelectionFields && this._aSelectionFields.indexOf(oFilterFieldODataMetadata.fieldNameOData) > -1))) {
 			return this._sBasicFilterAreaID;
 		}
 		return this._getGroupIDFromFieldGroup(oFilterFieldODataMetadata);
@@ -1449,11 +2097,13 @@ sap.ui.define([
 	 * @param {Object} oFilterFieldODataMetadata - OData metadata for the filter field
 	 * @param {Object} oControlConfiguration - Additional configuration for this filter field
 	 * @private
-	 * @returns {integer} index; undefined if index is not specified in additional configuration
+	 * @returns {int} index; undefined if index is not specified in additional configuration
 	 */
 	FilterProvider.prototype._getIndex = function(oFilterFieldODataMetadata, oControlConfiguration) {
 		if (oControlConfiguration && (oControlConfiguration.index >= 0)) {
 			return oControlConfiguration.index;
+		} else if (this._aSelectionFields && this._aSelectionFields.indexOf(oFilterFieldODataMetadata.fieldNameOData) > -1) {
+			return this._aSelectionFields.indexOf(oFilterFieldODataMetadata.fieldNameOData);
 		}
 		return this._getIndexFromFieldGroup(oFilterFieldODataMetadata);
 	};
@@ -1462,7 +2112,7 @@ sap.ui.define([
 	 * Returns the index (if found) of the filter field from the FieldGroup annotation
 	 * @param {Object} oFilterFieldODataMetadata - OData metadata for the filter field
 	 * @private
-	 * @returns {integer} index; undefined if field is no part of field group annotation
+	 * @returns {int} index; undefined if field is no part of field group annotation
 	 */
 	FilterProvider.prototype._getIndexFromFieldGroup = function(oFilterFieldODataMetadata) {
 		var iLen = 0, oFieldGroupAnnotation = null, iIndex;
@@ -1487,7 +2137,7 @@ sap.ui.define([
 	 * Returns the index for a filter group from the additional configuration
 	 * @param {Object} oGroupConfiguration - Additional configuration for this filter group
 	 * @private
-	 * @returns {integer} index; undefined if index is not specified in additional configuration
+	 * @returns {int} index; undefined if index is not specified in additional configuration
 	 */
 	FilterProvider.prototype._getGroupIndex = function(oGroupConfiguration) {
 		if (oGroupConfiguration && (oGroupConfiguration.index || oGroupConfiguration.index === 0)) {
@@ -1500,7 +2150,7 @@ sap.ui.define([
 	 * @param {Object} oFilterGroupODataMetadata - OData metadata for the filter group
 	 * @param {Object} oGroupConfiguration - Additional configuration for this filter group
 	 * @private
-	 * @returns {integer} index; undefined if label is not specified in additional configuration
+	 * @returns {int} index; undefined if label is not specified in additional configuration
 	 */
 	FilterProvider.prototype._getGroupLabel = function(oFilterGroupODataMetadata, oGroupConfiguration) {
 		if (oGroupConfiguration && oGroupConfiguration.label) {
@@ -1553,6 +2203,24 @@ sap.ui.define([
 	};
 
 	/**
+	 * Get the list of value help provideres
+	 * @returns {Array} array of value help provideres
+	 * @private
+	 */
+	FilterProvider.prototype.getAssociatedValueHelpProviders = function() {
+		return this._aValueHelpDialogProvider;
+	};
+
+	/**
+	 * Get the list of value list provideres
+	 * @returns {Array} array of value list provideres
+	 * @private
+	 */
+	FilterProvider.prototype.getAssociatedValueListProviders = function() {
+		return this._aValueListProvider;
+	};
+
+	/**
 	 * Returns an parameter object which can be used to restrict the query result from OData. This function is required only for the basic search.
 	 * @returns {object} object containing OData query parameters
 	 * @public
@@ -1594,13 +2262,15 @@ sap.ui.define([
 			dateSettings: this._oDateFormatSettings,
 			useContainsAsDefault: this._bUseContainsAsDefault,
 			stringFields: this._aFilterBarStringFieldNames,
-			timeFields: this._aFilterBarTimeFieldNames
+			timeFields: this._aFilterBarTimeFieldNames,
+			dateTimeOffsetValueFields: this._aFilterBarDateTimeFieldNames,
+			viewMetadataData: this._aFilterBarViewMetadata
 		});
 	};
 
 	/**
 	 * Returns the data currently set in the filter data model
-	 * @returns {object} the json data in the filter bar
+	 * @returns {object} the json data in the FilterBar
 	 * @public
 	 */
 	FilterProvider.prototype.getFilterData = function() {
@@ -1609,7 +2279,7 @@ sap.ui.define([
 
 	/**
 	 * Returns the data currently set in the filter data model as string
-	 * @returns {string} the string json data in the filter bar
+	 * @returns {string} the string json data in the FilterBar
 	 * @public
 	 */
 	FilterProvider.prototype.getFilterDataAsString = function() {
@@ -1619,7 +2289,7 @@ sap.ui.define([
 	/**
 	 * Returns the filled data currently set in the filter data model
 	 * @param {Array} aFieldNames - the names of the fields whose values should be returned (Ex: visible fields)
-	 * @returns {object} the json data in the filter bar
+	 * @returns {object} the json data in the FilterBar
 	 * @public
 	 */
 	FilterProvider.prototype.getFilledFilterData = function(aFieldNames) {
@@ -1669,7 +2339,7 @@ sap.ui.define([
 	/**
 	 * Returns the filled data currently set in the filter data model as string
 	 * @param {Array} aFieldNames - the names of the fields whose values should be returned (Ex: visible fields)
-	 * @returns {string} the string json data in the filter bar
+	 * @returns {string} the string json data in the FilterBar
 	 * @public
 	 */
 	FilterProvider.prototype.getFilledFilterDataAsString = function(aFieldNames) {
@@ -1678,7 +2348,7 @@ sap.ui.define([
 
 	/**
 	 * Sets the data in the filter data model
-	 * @param {object} oJson - the json data in the filter bar
+	 * @param {object} oJson - the json data in the FilterBar
 	 * @param {boolean} bReplace - Replace existing filter data
 	 * @public
 	 */
@@ -1687,30 +2357,35 @@ sap.ui.define([
 		if (this.oModel && oJson) {
 			// Set flag to indicate data is being updated
 			this._bUpdatingFilterData = true;
-			if (bReplace) {
-				this._createInitialModel(false);
-			}
-			oData = this._parseFilterData(oJson, bReplace);
-			if (oData) {
-				this.oModel.setData(oData, true);
-				aFieldNames = [];
-				var sFieldName = arguments[2];
-				if (sFieldName) {
-					aFieldNames.push(sFieldName);
+
+			try {
+				if (bReplace) {
+					this._createInitialModel(false);
 				}
-				for (sKey in oData) {
-					aFieldNames.push(sKey);
+				oData = this._parseFilterData(oJson, bReplace);
+				if (oData) {
+					this.oModel.setData(oData, true);
+					aFieldNames = [];
+					var sFieldName = arguments[2];
+					if (sFieldName) {
+						aFieldNames.push(sFieldName);
+					}
+					for (sKey in oData) {
+						aFieldNames.push(sKey);
+					}
+					this._handleFilterDataUpdate(aFieldNames);
 				}
-				this._handleFilterDataUpdate(aFieldNames);
+			} finally {
+
+				// Reset data update flag
+				this._bUpdatingFilterData = false;
 			}
-			// Reset data update flag
-			this._bUpdatingFilterData = false;
 		}
 	};
 
 	/**
 	 * Sets the data in the filter data model as string
-	 * @param {string} sJson - the json data in the filter bar
+	 * @param {string} sJson - the json data in the FilterBar
 	 * @param {boolean} bReplace - Replace existing filter data
 	 * @public
 	 */
@@ -1729,11 +2404,13 @@ sap.ui.define([
 	 */
 	FilterProvider.prototype._parseFilterData = function(oJson, bReplace) {
 		return FilterProvider.parseFilterData(this.oModel.getData(), oJson, {
+			stringDateFields: this._aFilterBarStringDateFieldNames,
 			dateFields: this._aFilterBarDateFieldNames,
 			timeFields: this._aFilterBarTimeFieldNames,
 			timeIntervalFields: this._aFilterBarTimeIntervalFieldNames,
 			dateTimeMultiValueFields: this._aFilterBarDateTimeMultiValueFieldNames,
-			conditionTypeFields: this._mConditionTypeFields
+			conditionTypeFields: this._mConditionTypeFields,
+			dateTimeOffsetValueFields: this._aFilterBarDateTimeFieldNames
 		}, bReplace);
 	};
 
@@ -1756,7 +2433,7 @@ sap.ui.define([
 					if (aFieldNames.indexOf(oFilterFieldMetadata.fieldName) > -1) {
 						oFilterData = oData[oFilterFieldMetadata.fieldName];
 						if (oFilterData) {
-							this._updateMultiValueControl(oFilterFieldMetadata.control, oFilterData.items, oFilterData.ranges);
+							this._updateMultiValueControl(oFilterFieldMetadata.control, oFilterData.items, oFilterData.ranges, oFilterFieldMetadata);
 						}
 					}
 				}
@@ -1799,7 +2476,6 @@ sap.ui.define([
 
 	/**
 	 * Updates the conditionType fields after changes to other fields and initially
-	 * @param {Array} aUpdatedFields - array of updated fields
 	 * @private
 	 */
 	FilterProvider.prototype._updateConditionTypeFields = function() {
@@ -1849,6 +2525,24 @@ sap.ui.define([
 		return bInvalid;
 	};
 
+	FilterProvider._getFieldMetadata = function(aViewMedatada, sFieldName) {
+		var oFieldMetadata = null;
+		aViewMedatada.some(function(oGroup) {
+			if (oGroup && oGroup.fields) {
+				oGroup.fields.some(function(oField) {
+					if (oField && oField.fieldName === sFieldName) {
+						oFieldMetadata = oField;
+					}
+					return oFieldMetadata !== null;
+				});
+			}
+
+			return oFieldMetadata !== null;
+		});
+
+		return oFieldMetadata;
+	};
+
 	// TODO: Move this to a Util
 	/**
 	 * Static function to generate filter array from the given field name array and Json data object
@@ -1860,18 +2554,24 @@ sap.ui.define([
 	 */
 	FilterProvider.generateFilters = function(aFieldNames, oData, mSettings) {
 		var aFilters = [], aArrayFilters = null, oExcludeFilters = null, aExcludeFilters = null, sField = null, sMatch = FilterProvider.FIELD_NAME_REGEX, oValue = null, oValue1, oValue2, aValue = null, iLen = 0, iFieldLength = 0;
-		var oDateFormatSettings, bEnableUseContainsAsDefault, aStringFields, aTimeFields, bUseContains, bIsTimeField;
+		var oDateFormatSettings, bEnableUseContainsAsDefault, aStringFields, aTimeFields, bUseContains, bIsTimeField, aDateTimeOffsetFields, bIsDateTimeOffsetField, oFieldMetadata, aViewMetadata = [];
 		if (mSettings) {
 			oDateFormatSettings = mSettings.dateSettings;
 			bEnableUseContainsAsDefault = mSettings.useContainsAsDefault;
 			aStringFields = mSettings.stringFields;
 			aTimeFields = mSettings.timeFields;
+			aDateTimeOffsetFields = mSettings.dateTimeOffsetValueFields;
+			aViewMetadata = mSettings.viewMetadataData || [];
 		}
 		if (aFieldNames && oData) {
 			iFieldLength = aFieldNames.length;
 			while (iFieldLength--) {
 				bIsTimeField = false;
+				bIsDateTimeOffsetField = false;
 				sField = aFieldNames[iFieldLength];
+
+				oFieldMetadata = FilterProvider._getFieldMetadata(aViewMetadata, sField);
+
 				if (sField && sField !== FilterProvider.BASIC_SEARCH_FIELD_ID) {
 					bUseContains = false;
 					if (bEnableUseContainsAsDefault && aStringFields) {
@@ -1880,6 +2580,8 @@ sap.ui.define([
 						}
 					} else if (aTimeFields && aTimeFields.indexOf(sField) > -1) {
 						bIsTimeField = true;
+					} else if (aDateTimeOffsetFields && aDateTimeOffsetFields.indexOf(sField) > -1) {
+						bIsDateTimeOffsetField = true;
 					}
 					oValue = oData[sField];
 					// Replace all "." with "/" to convert to proper paths
@@ -1902,8 +2604,32 @@ sap.ui.define([
 								}
 								aFilters.push(new Filter(sField, sap.ui.model.FilterOperator.EQ, oValue1));
 							} else if (typeof oValue.low === "string") {
-								// since we bind non date interval values only to low; resolve this by splitting "-" into an interval
-								aValue = FormatUtil.parseFilterNumericIntervalData(oValue.low);
+
+								if (bIsDateTimeOffsetField) {
+									aValue = FormatUtil.parseDateTimeOffsetInterval(oValue.low);
+
+									if (aValue) {
+										var oFormatter = sap.ui.core.format.DateFormat.getDateTimeInstance({
+											UTC: false
+										});
+
+										var oDate = oFormatter.parse(aValue[0]);
+
+										if (aValue.length === 1) {
+											aValue[0] = oDate ? oDate : FilterProvider.getDateInUTCOffset(new Date(aValue[0]));
+										} else if (aValue.length === 2) {
+											aValue[0] = oDate ? oDate : FilterProvider.getDateInUTCOffset(new Date(aValue[0]));
+
+											oDate = oFormatter.parse(aValue[1]);
+											aValue[1] = oDate ? oDate : FilterProvider.getDateInUTCOffset(new Date(aValue[1]));
+										}
+									}
+
+								} else {
+									// since we bind non date interval values only to low; resolve this by splitting "-" into an interval
+									aValue = FormatUtil.parseFilterNumericIntervalData(oValue.low);
+								}
+
 								if (aValue && aValue.length === 2) {
 									aFilters.push(new Filter(sField, sap.ui.model.FilterOperator.BT, aValue[0], aValue[1]));
 								} else {
@@ -1931,7 +2657,13 @@ sap.ui.define([
 									if (oValue2 instanceof Date) {
 										oValue2 = FormatUtil.getEdmTimeFromDate(oValue2);
 									}
-								} else if (oDateFormatSettings && oDateFormatSettings.UTC) {// Check if Date values have to be converted to UTC
+								} else if (oFieldMetadata && oFieldMetadata.isCalendarDate) {
+
+									oValue1 = oFieldMetadata.ui5Type.parseValue(oValue1);
+									oValue2 = oFieldMetadata.ui5Type.parseValue(oValue2);
+
+								} else if (oDateFormatSettings && oDateFormatSettings.UTC && !bIsDateTimeOffsetField) {// Check if Date values have
+									// to be converted to UTC
 									if (oValue1 instanceof Date) {
 										oValue1 = FilterProvider.getDateInUTCOffset(oValue1);
 									}
@@ -1944,7 +2676,11 @@ sap.ui.define([
 										aExcludeFilters.push(new Filter(sField, sap.ui.model.FilterOperator.NE, oValue1));
 									}
 								} else {
-									aArrayFilters.push(new Filter(sField, aValue[iLen].operation, oValue1, oValue2));
+									if (aValue[iLen].operation === sap.ui.model.FilterOperator.BT) {
+										aArrayFilters.push(new Filter(sField, aValue[iLen].operation, oValue1, oValue2));
+									} else {
+										aArrayFilters.push(new Filter(sField, aValue[iLen].operation, oValue1));
+									}
 								}
 							}
 							if (aExcludeFilters.length) {
@@ -1989,7 +2725,7 @@ sap.ui.define([
 						if (oValue && oValue instanceof Date) {
 							if (bIsTimeField) {
 								oValue = FormatUtil.getEdmTimeFromDate(oValue);
-							} else if (oDateFormatSettings && oDateFormatSettings.UTC) {
+							} else if (oDateFormatSettings && oDateFormatSettings.UTC && !bIsDateTimeOffsetField) {
 								oValue = FilterProvider.getDateInUTCOffset(oValue);
 							}
 						}
@@ -2017,14 +2753,21 @@ sap.ui.define([
 	 * @returns {Object} The resolved/parsed/converted data that can be set into the model
 	 */
 	FilterProvider.parseFilterData = function(oData, oInputJson, mSettings, bReplace) {
-		var oResolvedData = {}, mConditionTypeFields = null, sField = null, oValue = null, oNewValue, oJson, i, iLen, oRange, aFilterBarDateFieldNames, aFilterBarTimeFieldNames, aFilterBarTimeIntervalFieldNames, aFilterBarDateTimeMultiValueFieldNames, aEQRanges;
+		var oResolvedData = {}, mConditionTypeFields = null, sField = null, oValue = null, oNewValue, oJson, i, iLen, oRange, aFilterBarStringDateFieldNames, aFilterBarDateFieldNames, aFilterBarTimeFieldNames, aFilterBarTimeIntervalFieldNames, aFilterBarDateTimeMultiValueFieldNames, aDateTimeOffsetValueFields;
 		if (mSettings) {
+			aFilterBarStringDateFieldNames = mSettings.stringDateFields;
 			aFilterBarDateFieldNames = mSettings.dateFields;
 			aFilterBarTimeFieldNames = mSettings.timeFields;
 			aFilterBarTimeIntervalFieldNames = mSettings.timeIntervalFields;
 			aFilterBarDateTimeMultiValueFieldNames = mSettings.dateTimeMultiValueFields;
 			mConditionTypeFields = mSettings.conditionTypeFields || {};
+			aDateTimeOffsetValueFields = mSettings.dateTimeOffsetValueFields;
 		}
+
+		if (!aFilterBarStringDateFieldNames) {
+			aFilterBarStringDateFieldNames = [];
+		}
+
 		if (!aFilterBarDateFieldNames) {
 			aFilterBarDateFieldNames = [];
 		}
@@ -2037,6 +2780,10 @@ sap.ui.define([
 		if (!aFilterBarDateTimeMultiValueFieldNames) {
 			aFilterBarDateTimeMultiValueFieldNames = [];
 		}
+		if (!aDateTimeOffsetValueFields) {
+			aDateTimeOffsetValueFields = [];
+		}
+
 		if (oData && oInputJson) {
 			oJson = jQuery.extend({}, oInputJson, true);
 			for (sField in oJson) {
@@ -2052,6 +2799,7 @@ sap.ui.define([
 						oResolvedData[sField] = oNewValue;
 						if (oNewValue) {
 							if (oNewValue.low && oNewValue.high) { // Date Range
+
 								if ((aFilterBarDateFieldNames.indexOf(sField) > -1) || (aFilterBarTimeFieldNames.indexOf(sField) > -1)) {
 									// oResolvedData[sField] = oNewValue;
 									if (!(oNewValue.low instanceof Date)) { // Date needs to be set as a Date Object always!
@@ -2060,7 +2808,7 @@ sap.ui.define([
 									if (!(oNewValue.high instanceof Date)) {// Date needs to be set as a Date Object always!
 										oResolvedData[sField].high = new Date(oNewValue.high);
 									}
-								} else {
+								} else if (aFilterBarStringDateFieldNames.indexOf(sField) == -1) {// String dates also need the high/low logic
 									oResolvedData[sField].low = oNewValue.low + '-' + oNewValue.high;
 									oResolvedData[sField].high = null;
 								}
@@ -2108,28 +2856,6 @@ sap.ui.define([
 									}
 									// continue with next field as no further actions is necessary
 									continue;
-								} else if (aFilterBarDateTimeMultiValueFieldNames.indexOf(sField) > -1) {
-									// multi-value Date/Time field
-									iLen = oNewValue.ranges.length;
-									aEQRanges = [];
-									for (i = 0; i < iLen; i++) {
-										oRange = oNewValue.ranges[i];
-										if (!oRange.exclude && oRange.operation === "EQ") {
-											// String input but date expected
-											if (oRange.value1 && typeof oRange.value1 === "string") {
-												oRange.value1 = new Date(oRange.value1);
-											}
-											aEQRanges.push(oRange);
-										}
-									}
-									// Create range data
-									oResolvedData[sField] = {
-										ranges: aEQRanges,
-										items: [],
-										value: ""
-									};
-									// continue with next field as no further actions is necessary
-									continue;
 								} else if (aFilterBarDateFieldNames.indexOf(sField) > -1 || aFilterBarTimeFieldNames.indexOf(sField) > -1) {
 									// Unrestricted Date/Time field
 									iLen = oNewValue.ranges.length;
@@ -2143,9 +2869,19 @@ sap.ui.define([
 											oRange.value2 = new Date(oRange.value2);
 										}
 									}
+								} else if ((oNewValue.ranges.length === 1) && (oNewValue.ranges[0].operation === "EQ") && !oNewValue.ranges[0].value1) {
+									// BCP: 1770464128
+									continue;
 								}
 							}
 							oResolvedData[sField] = oNewValue;
+
+							if (!bReplace && oResolvedData[sField].ranges) {
+								for (i = 0; i < oResolvedData[sField].ranges.length; i++) {
+									oResolvedData[sField].ranges[i].tokenText = null;
+								}
+							}
+
 						} else if (typeof oNewValue === "string" || typeof oNewValue === "number" || oNewValue instanceof Date) { // Single Value
 							// Unrestricted/multi-value Date field
 							if (oNewValue && (aFilterBarDateFieldNames.indexOf(sField) > -1 || aFilterBarTimeFieldNames.indexOf(sField) > -1)) {
@@ -2178,7 +2914,7 @@ sap.ui.define([
 						// Single Date, string, boolean, number value
 						if (typeof oNewValue === "string" || typeof oNewValue === "boolean" || typeof oNewValue === "number" || oNewValue instanceof Date) {
 							// String input but date expected!
-							if (typeof oNewValue === "string" && (aFilterBarDateFieldNames.indexOf(sField) > -1 || aFilterBarTimeFieldNames.indexOf(sField) > -1)) {
+							if (typeof oNewValue === "string" && (aFilterBarDateFieldNames.indexOf(sField) > -1 || aFilterBarTimeFieldNames.indexOf(sField) > -1 || aDateTimeOffsetValueFields.indexOf(sField) > -1)) {
 								oResolvedData[sField] = new Date(oNewValue);
 							} else {
 								oResolvedData[sField] = oNewValue;
@@ -2199,7 +2935,7 @@ sap.ui.define([
 							}
 							if (oRange && oRange.value1) {
 								// String input but date expected!
-								if (typeof oRange.value1 === "string" && (aFilterBarDateFieldNames.indexOf(sField) > -1 || aFilterBarTimeFieldNames.indexOf(sField) > -1)) {
+								if (typeof oRange.value1 === "string" && (aFilterBarDateFieldNames.indexOf(sField) > -1 || aFilterBarTimeFieldNames.indexOf(sField) > -1 || aDateTimeOffsetValueFields.indexOf(sField) > -1)) {
 									oResolvedData[sField] = new Date(oRange.value1);
 								} else {
 									oResolvedData[sField] = oRange.value1;
@@ -2240,14 +2976,25 @@ sap.ui.define([
 				}
 			}
 		};
+		this._oParentODataModel = null;
+		this._aAnalyticalParameters = null;
 		this._aFilterBarViewMetadata = null;
+		this._oParameterization = null;
+		this._oNonAnaParameterization = null;
+		this._aFilterBarFieldNames = null;
+		this._aFilterBarStringDateFieldNames = null;
 		this._aFilterBarDateFieldNames = null;
 		this._aFilterBarTimeFieldNames = null;
 		this._aFilterBarTimeIntervalFieldNames = null;
 		this._aFilterBarDateTimeMultiValueFieldNames = null;
 		this._aFilterBarStringFieldNames = null;
 		this._aFilterBarMultiValueFieldMetadata = null;
+
+		this._aFilterBarDateTimeFieldNames = null;
+
 		this._aFieldGroupAnnotation = null;
+		this._aSelectionFields = null;
+		this._aSelectionVariants = null;
 
 		if (this._oMetadataAnalyser && this._oMetadataAnalyser.destroy) {
 			this._oMetadataAnalyser.destroy();
@@ -2260,6 +3007,17 @@ sap.ui.define([
 		fDestroy(this._aValueListProvider);
 		this._aValueListProvider = null;
 
+		if (this._mTokenHandler) {
+			for ( var sHandlerId in this._mTokenHandler) {
+				var oHandler = this._mTokenHandler[sHandlerId];
+				if (oHandler.parser) {
+					oHandler.parser.destroy();
+					oHandler.parser = null;
+				}
+			}
+			delete this._mTokenHandler;
+		}
+
 		this.oResourceBundle = null;
 		this.sIntervalPlaceholder = null;
 		this.sDefaultDropDownDisplayBehaviour = null;
@@ -2271,6 +3029,16 @@ sap.ui.define([
 				this._oEventProvider.destroy();
 			}
 			this._oEventProvider = null;
+		}
+
+		for ( var n in this._mConditionTypeFields) {
+			this._mConditionTypeFields[n].conditionType.destroy();
+		}
+		this._mConditionTypeFields = null;
+
+		if (this.oModel) {
+			this.oModel.destroy();
+			this.oModel = null;
 		}
 
 		this.bIsDestroyed = true;

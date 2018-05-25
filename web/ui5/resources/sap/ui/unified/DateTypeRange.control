@@ -6,7 +6,7 @@
     <since>1.24.0</since>
     <baseType>sap.ui.unified/DateRange</baseType>
     <properties>
-        <property name="type" type="sap.ui.unified/CalendarDayType" defaultValue="Type01" group="Appearance">
+        <property group="Appearance" defaultValue="Type01" type="sap.ui.unified/CalendarDayType" name="type">
             <documentation>Type of the date range.</documentation>
         </property>
     </properties>

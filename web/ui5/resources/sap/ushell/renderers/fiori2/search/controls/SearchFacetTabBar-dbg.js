@@ -1,14 +1,17 @@
 /* global sap */
 /* global alert */
 /* global jQuery */
-/* global $, document */
+/* global $ */
+/* global document */
 
 
-
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchFacetDialogModel',
+    'sap/ushell/renderers/fiori2/search/controls/SearchFacetDialog',
+    'sap/m/GroupHeaderListItemRenderer',
+    'sap/m/ButtonRenderer'
+], function() {
     "use strict";
-    jQuery.sap.require('sap.m.GroupHeaderListItemRenderer');
-    jQuery.sap.require('sap.m.ButtonRenderer');
 
 
     sap.m.Button.extend('sap.ushell.renderers.fiori2.search.controls.SearchFacetDisplayModeDropDown', {
@@ -17,52 +20,34 @@
 
     sap.ushell.renderers.fiori2.search.controls.SearchFacetDisplayModeDropDownRenderer = jQuery.extend(true, {}, sap.m.ButtonRenderer); // clone
 
-    /*
-    sap.ushell.renderers.fiori2.search.controls.SearchFacetDisplayModeDropDownRenderer.writeImgHtml = function(oRm, oButton) {
-        var icon1 = oButton._getImage((oButton.getId() + "-img"), oButton.getIcon(), oButton.getActiveIcon(), oButton.getIconDensityAware());
-        oRm.renderControl(icon1);
-        oRm.renderControl(new sap.ui.core.Icon({
-            src: 'sap-icon://slim-arrow-down',
-            useIconTooltip: false
-        }).addStyleClass("sapMBtnIcon"));
-    };
-	*/
-
-
 
     sap.m.GroupHeaderListItemRenderer.extend('sap.ushell.renderers.fiori2.search.controls.SearchGroupHeaderListItemRenderer');
     sap.m.GroupHeaderListItem.extend('sap.ushell.renderers.fiori2.search.controls.SearchGroupHeaderListItem', {
         renderer: 'sap.ushell.renderers.fiori2.search.controls.SearchGroupHeaderListItemRenderer',
         metadata: {
             properties: {
-                button: {
-                    type: "control",
-                    defaultValue: null
-                }, // new
                 upperCase: {
                     type: "boolean",
                     group: "Appearance",
                     defaultValue: false
                 } // change default
+            },
+            aggregations: {
+                button: {
+                    type: 'sap.ushell.renderers.fiori2.search.controls.SearchFacetDisplayModeDropDown',
+                    multiple: false
+                }
             }
         }
     });
 
     sap.ushell.renderers.fiori2.search.controls.SearchGroupHeaderListItemRenderer.renderCounter = function(rm, oLI) {
         var btn = oLI.getButton();
-        if (btn) {
+        if (typeof btn === 'object') {
             this.renderCounterContent(rm, oLI, btn);
         }
     };
     sap.ushell.renderers.fiori2.search.controls.SearchGroupHeaderListItemRenderer.renderCounterContent = function(rm, oLI, btn) {
-        /* //old button
-        rm.write("<div");
-        rm.addClass("sapUiTinyMarginBegin");
-        rm.writeClasses();
-        rm.write(">");
-        rm.renderControl(btn);
-        rm.write("</div>");
-		*/
         rm.write('<div>');
         rm.renderControl(btn);
         rm.write('</div>');
@@ -79,12 +64,9 @@
     });
 
     sap.ui.core.Control.extend('sap.ushell.renderers.fiori2.search.controls.SearchFacetTabBar', {
-
-        //setEshRole: function(role) {},
-
         metadata: { // the Control API
             properties: {
-                "eshRole": "string", // setter and getter are created behind the scenes, 
+                "eshRole": "string", // setter and getter are created behind the scenes,
                 "headerText": "string", // including data binding and type validation
                 "selectedButtonParameters": {
                     type: "object",
@@ -125,10 +107,11 @@
 
         storeClickedTabInformation: function(oEvent) {
             var searchFacetTabBarDimension, searchFacetTabBarControl, searchFacetTabBarView, dimension, buttonIndex;
-            var previousClickedTabInformation = $.sap.storage.get("selectedButtonParameters");
-            var oPreviousClickedTabInformation = JSON.parse(previousClickedTabInformation);
             var tabId = oEvent.getSource().sId;
             var searchFacetTabBarInfo = this.getSearchFacetTabBarAndDimensionById(tabId);
+            //            var previousClickedTabInformation = $.sap.storage.get("selectedButtonParameters");
+            var previousClickedTabInformation = searchFacetTabBarInfo.control.getModel().getPersonalizationStorageInstance().getItem("search-facet-panel-chart-state");
+
             searchFacetTabBarDimension = searchFacetTabBarInfo.dimension;
             searchFacetTabBarControl = searchFacetTabBarInfo.control;
             searchFacetTabBarView = searchFacetTabBarInfo.view;
@@ -146,17 +129,21 @@
             obj.dimension = dimension;
             obj.view = searchFacetTabBarView;
             clickedTabInformation.push(obj);
-            if (oPreviousClickedTabInformation) {
-                for (var i = 0; i < oPreviousClickedTabInformation.length; i++) {
-                    var item = oPreviousClickedTabInformation[i];
+            if (previousClickedTabInformation &&
+                Object.prototype.toString.call(previousClickedTabInformation) === '[object Array]') {
+                for (var i = 0; i < previousClickedTabInformation.length; i++) {
+                    var item = previousClickedTabInformation[i];
                     if (item.dimension !== searchFacetTabBarDimension) {
                         clickedTabInformation.push(item);
                     }
                 }
             }
 
-            //$.sap.storage.put("selectedButtonParameters", simpleStringify(oEvent.getParameters()));
-            $.sap.storage.put("selectedButtonParameters", JSON.stringify(clickedTabInformation));
+            searchFacetTabBarInfo.control.getModel().getPersonalizationStorageInstance().setItem("search-facet-panel-chart-state", clickedTabInformation);
+
+            //also store information in model
+            searchFacetTabBarControl.getBindingContext().getObject().chartIndex = buttonIndex;
+
         },
 
 
@@ -172,34 +159,33 @@
                     //sapUshellSearchFacetTabBar sapUshellSearchFacet
                     var node = $(this.getDomRef()).closest(".sapUshellSearchFacetTabBar")[0];
                     var facet = sap.ui.getCore().byId($(node).attr("id"));
-                    var oFacetDialogModel = new sap.ushell.renderers.fiori2.search.SearchFacetDialogModel();
-                    oFacetDialogModel.setData(oControl.getModel().getData());
-                    //                    oFacetDialogModel.facetDialogCall().done(function() {
-                    oFacetDialogModel.prepareFacetList();
-                    if (facet && facet.getBindingContext() && facet.getBindingContext().getObject() && facet.getBindingContext().getObject().dimension) {
-                        dimension = facet.getBindingContext().getObject().dimension;
-                    }
-                    var oDialog = new sap.ushell.renderers.fiori2.search.controls.SearchFacetDialog({
-                        selectedAttribute: dimension,
-                        selectedTabBarIndex: iSelectedTabBarIndex,
-                        tabBarItems: aTabBarItems
-
+                    var oFacetDialogModel = new sap.ushell.renderers.fiori2.search.SearchFacetDialogModel(oControl.getModel());
+                    oFacetDialogModel.initBusinessObjSearch().then(function() {
+                        oFacetDialogModel.setData(oControl.getModel().getData());
+                        oFacetDialogModel.sinaNext = oControl.getModel().sinaNext;
+                        oFacetDialogModel.prepareFacetList();
+                        if (facet && facet.getBindingContext() && facet.getBindingContext().getObject() && facet.getBindingContext().getObject().dimension) {
+                            dimension = facet.getBindingContext().getObject().dimension;
+                        }
+                        var oDialog = new sap.ushell.renderers.fiori2.search.controls.SearchFacetDialog({
+                            selectedAttribute: dimension,
+                            selectedTabBarIndex: iSelectedTabBarIndex,
+                            tabBarItems: aTabBarItems
+                        });
+                        oDialog.setModel(oFacetDialogModel);
+                        oDialog.setModel(oControl.getModel(), 'searchModel');
+                        oDialog.open();
+                        //referece to page, so that dialog can be destroy in onExit()
+                        var oPage = oControl.getParent().getParent().getParent().getParent();
+                        oPage.oFacetDialog = oDialog;
                     });
-                    oDialog.setModel(oFacetDialogModel);
-                    oDialog.setModel(oControl.getModel(), 'searchModel');
-                    oDialog.open();
-                    //referece to page, so that dialog can be destroy in onExit()
-                    var oPage = oControl.getParent().getParent().getParent().getParent();
-                    oPage.oFacetDialog = oDialog;
-                    //                    });
-
                 };
 
             }
 
 
             // outer div
-            oRm.write("<div ");
+            oRm.write('<div tabindex="0"');
             oRm.writeControlData(oControl);
             oRm.addClass("sapUshellSearchFacetTabBar");
             oRm.writeClasses();
@@ -208,15 +194,14 @@
 
             //var currentTabFacetIndex = 0;
             var dimension = oControl.getBindingContext().getObject().dimension;
+            var dataType = oControl.getBindingContext().getObject().dataType;
             var title = oControl.getBindingContext().getObject().title;
             var clickedTabInformation;
             var selectedButtonParameters;
 
-            clickedTabInformation = $.sap.storage.get("selectedButtonParameters");
-            if (clickedTabInformation) {
-                clickedTabInformation = JSON.parse(clickedTabInformation);
-
-
+            //            clickedTabInformation = $.sap.storage.get("selectedButtonParameters");
+            clickedTabInformation = oControl.getModel().getPersonalizationStorageInstance().getItem("search-facet-panel-chart-state");
+            if (clickedTabInformation && Object.prototype.toString.call(clickedTabInformation) === '[object Array]') {
                 for (var k = 0; k < clickedTabInformation.length; k++) {
                     if (clickedTabInformation[k].dimension === dimension) {
                         selectedButtonParameters = clickedTabInformation[k];
@@ -237,8 +222,12 @@
                 selectedButtonIndex = selectedButtonParameters.buttonIndex;
                 selectedButtonIndex = parseInt(selectedButtonIndex, 10);
             }
+            if (dataType != oControl.getModel().sinaNext.AttributeType.String) {
+                selectedButtonIndex = 0;
+            }
 
-
+            //also store information in model
+            oControl.getBindingContext().getObject().chartIndex = selectedButtonIndex;
             var tabBarItems = oControl.getItems();
 
 
@@ -272,53 +261,105 @@
 
 
             var oActionSheet = new sap.m.ActionSheet({
-                showCancelButton: true,
+                showCancelButton: false,
                 buttons: buttons2,
                 placement: sap.m.PlacementType.Bottom,
-                cancelButtonPress: function() {
+                cancelButtonPress: function(oControlEvent) {
                     jQuery.sap.log.info("sap.m.ActionSheet: cancelButton is pressed");
+                },
+                afterClose: function(oControlEvent) {
+                    var that = this;
+
+                    window.setTimeout(function() {
+                        var dimension = that.getFocusDomRef().getAttribute('data-facet-dimension');
+                        var tabBarButtons = $(".sapUshellSearchFacetTabBarButton");
+                        for (var i = 0; i < tabBarButtons.length; i++) {
+
+                            var tabBarButton = tabBarButtons[i];
+                            var tabBarButtonDimension = tabBarButton.parentNode.parentNode.getAttribute('data-facet-dimension');
+                            if (tabBarButtonDimension === dimension) {
+                                tabBarButton.focus();
+                                break;
+                            }
+                        }
+                    }, 100);
+
+                    jQuery.sap.log.info("=====================");
+                    jQuery.sap.log.info("sap.m.ActionSheet: closed");
                 }
             });
-
-
             oActionSheet.data("facet-dimension", dimension, true);
-
-            if ($(".sapUiSizeCompact")[0]) {
-                oActionSheet.addStyleClass("sapUiSizeCompact");
-            }
-
-
-
 
             oDropDownButton.addStyleClass("sapUshellSearchFacetTabBarButton");
             var asWhat = tabBarItems[selectedButtonIndex].getText();
             var displayAs = sap.ushell.resources.i18n.getText('displayAs', [asWhat]);
             oDropDownButton.setTooltip(displayAs);
             oDropDownButton.attachPress(function(oEvent) {
-                //alert("Selected button id: " + oEvent.getParameters().id + ", key: " + oEvent.getParameters().key);
-                //lastSelectedButtonEventParameters = oEvent.getParameters();
-                //oControl.storeClickedTabInformation(oEvent);
-                //oControl.setSelectedButtonParameters(oEvent.getParameters()); //needed to trigger rerender
-
                 oActionSheet.openBy(this);
             });
-
-
-
-
 
             //RENDERING
 
             //set 'filter by' header
             if (oControl.getHeaderText()) {
+
+
+                //===============================================
                 var oHeader = new sap.m.List({
-                    headerText: oControl.getHeaderText()
+                    //headerText: oControl.getHeaderText()
                 });
                 oHeader.setShowNoData(false);
-
                 oHeader.setShowSeparators(sap.m.ListSeparators.None);
+
+                oHeader.data("sap-ui-fastnavgroup", "false", true /* write into DOM */ );
+
+                var bFiltersExist = false;
+                var rootCondition = oControl.getModel().getProperty("/uiFilter/rootCondition");
+                if (rootCondition.hasFilters()) {
+                    bFiltersExist = true;
+                } else {
+                    bFiltersExist = false;
+                }
+
+
+                var oResetButton = new sap.m.Button({
+                    icon: "sap-icon://clear-filter",
+                    tooltip: sap.ushell.resources.i18n.getText("resetFilterButton_tooltip"),
+                    type: 'Transparent',
+                    enabled: bFiltersExist,
+                    press: function(oEvent) {
+                        oControl.getModel().resetFilterConditions(true);
+                    }
+                });
+                oResetButton.addStyleClass("sapUshellSearchFilterByResetButton");
+                if (sap.ushell.ui.launchpad.AccessibilityCustomData) {
+                    oResetButton.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                        key: "aria-label",
+                        value: sap.ushell.resources.i18n.getText("resetFilterButton_tooltip"),
+                        writeToDom: true
+                    }));
+                }
+
+
+                var oLabel = new sap.m.Title({
+                    text: oControl.getHeaderText()
+                });
+                oLabel.addStyleClass("sapUshellSearchFilterByResetButtonLabel");
+
+
+                var oSpacer = new sap.m.ToolbarSpacer();
+
+                var oHeaderToolbar = new sap.m.Toolbar({
+                    content: [oLabel, oSpacer, oResetButton]
+                });
+
+                oHeaderToolbar.data("sap-ui-fastnavgroup", "false", true /* write into DOM */ );
+
+                oHeader.setHeaderToolbar(oHeaderToolbar);
                 oRm.renderControl(oHeader);
 
+
+                //===============================================
             }
 
 
@@ -327,11 +368,21 @@
                 //the above line sadly removes the control from the searchFacetTabBar and relocates it in the ListItem
             });
             oListItem.setModel(oControl.getModel(), 'facets');
+            oListItem.addStyleClass("sapUshellSearchFacetList");
 
-            var oGroupHeaderListItem = new sap.ushell.renderers.fiori2.search.controls.SearchGroupHeaderListItem({
-                title: title,
-                button: oDropDownButton
-            });
+            var oGroupHeaderListItem;
+
+            if (dataType === oControl.getModel().sinaNext.AttributeType.String) {
+                oGroupHeaderListItem = new sap.ushell.renderers.fiori2.search.controls.SearchGroupHeaderListItem({
+                    title: title,
+                    button: oDropDownButton
+                });
+            } else {
+                oGroupHeaderListItem = new sap.ushell.renderers.fiori2.search.controls.SearchGroupHeaderListItem({
+                    title: title
+                });
+            }
+
             oGroupHeaderListItem.data("facet-dimension", dimension, true);
             oGroupHeaderListItem.addStyleClass("sapUshellSearchFacetTabBarHeader");
 
@@ -342,19 +393,35 @@
                 press: createOpenFacetDialogFn(selectedButtonIndex, tabBarItems)
             });
             oShowMore.setModel(oControl.getModel("i18n"));
+            oShowMore.addStyleClass('sapUshellSearchFacetShowMoreLink');
+
+
+            var oInfoZeile = new sap.m.Label({
+                text: ""
+            });
+            oInfoZeile.addStyleClass('sapUshellSearchFacetInfoZeile');
+            var oShowMoreSlot = new sap.m.VBox({
+                items: [
+                    oInfoZeile,
+                    oShowMore
+                ]
+            });
+
+
             var oShowMoreItem = new sap.m.CustomListItem({
-                content: oShowMore,
+                content: oShowMoreSlot, //oShowMore,
                 visible: {
                     parts: [{
                         path: '/uiFilter/dataSource'
                     }],
                     formatter: function(datasource) {
-                        return datasource.getType().toLowerCase() !== "category";
+                        return datasource.type !== this.getModel().sinaNext.DataSourceType.Category;
                     }
                 }
             });
-            //oShowMoreItem.setModel(oControl.getModel());
-            oShowMoreItem.addStyleClass('sapUshellSearchFacetShowMoreLink');
+
+            oShowMoreItem.addStyleClass('sapUshellSearchFacetShowMoreItem');
+
             //------------------------
             var oList = new sap.m.List({
                 showSeparators: sap.m.ListSeparators.None,
@@ -367,6 +434,7 @@
             oList.data("sap-ui-fastnavgroup", "false", true /* write into DOM */ );
             oList.setModel(oControl.getModel());
             oRm.renderControl(oList);
+            //oRm.renderControl(oShowMoreSlot);
 
             oControl.getItems()[selectedButtonIndex].addContent(contents[selectedButtonIndex]);
             //KLUDGE: the above line returns the control to the searchFacetTabBar - otherwise it is lost by being passed to another control
@@ -374,12 +442,11 @@
 
             oRm.write("</div>");
 
-        },
-        onAfterRendering: function() {
 
-            //var ar = $(".sapUshellSearchFacetTabBar");
-        }
+        },
+
+        onAfterRendering: function() {}
 
     });
 
-})();
+});

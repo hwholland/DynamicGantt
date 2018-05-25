@@ -1,13 +1,14 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-(function () {
-    "use strict";
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define([
+		'sap/ui/core/IconPool',
+		'sap/ui/thirdparty/datajs',
+		'sap/ushell/components/tiles/utils',
+		'sap/ushell/components/tiles/utilsRT'
+	], function(IconPool, datajs, utils, utilsRT) {
+	"use strict";
+
     /*global jQuery, OData, sap, setTimeout, hasher */
     sap.ui.getCore().loadLibrary("sap.m");
-    jQuery.sap.require("sap.ui.core.IconPool");
-    jQuery.sap.require("sap.ui.thirdparty.datajs");
-    jQuery.sap.require("sap.ushell.components.tiles.utils");
-    jQuery.sap.require("sap.ushell.components.tiles.utilsRT");
-
     sap.ui.controller("sap.ushell.components.tiles.applauncherdynamic.DynamicTile", {
         // handle to control/cancel browser's setTimeout()
         timer : null,
@@ -17,20 +18,33 @@
             var oView = this.getView(),
                 oViewData = oView.getViewData(),
                 oTileApi = oViewData.chip,
-                oConfig = sap.ushell.components.tiles.utilsRT.getConfiguration(oTileApi, oTileApi.configurationUi.isEnabled(), false),
+                oConfig = utilsRT.getConfiguration(oTileApi, oTileApi.configurationUi.isEnabled(), false),
                 oModel,
                 sKeywords,
                 aKeywords,
                 that = this,
                 sNavigationTargetUrl = oConfig.navigation_target_url,
-                sSystem;
+                sSystem,
+                oUrlParser,
+                oHash;
 
             this.bIsRequestCompleted = false;
 
             sSystem = oTileApi.url.getApplicationSystem();
             if (sSystem) { // propagate system to target application
-                sNavigationTargetUrl += ((sNavigationTargetUrl.indexOf("?") < 0) ? "?" : "&")
-                    + "sap-system=" + sSystem;
+                oUrlParser = sap.ushell.Container.getService("URLParsing");
+                // when the navigation url is hash we want to make sure system parameter is in the parameters part
+                if(oUrlParser.isIntentUrl(sNavigationTargetUrl)){
+                    oHash = oUrlParser.parseShellHash(sNavigationTargetUrl) ;
+                    if(!oHash.params){
+                        oHash[params] = {};
+                    }
+                    oHash.params["sap-system"] = sSystem;
+                    sNavigationTargetUrl = "#"+ oUrlParser.constructShellHash(oHash);
+                }else{
+                    sNavigationTargetUrl += ((sNavigationTargetUrl.indexOf("?") < 0) ? "?" : "&")
+                        + "sap-system=" + sSystem;
+                }
             }
             this.navigationTargetUrl = sNavigationTargetUrl;
             /*
@@ -42,7 +56,7 @@
              */
             oModel = new sap.ui.model.json.JSONModel({
                 config: oConfig,
-                data: sap.ushell.components.tiles.utilsRT.getDataToDisplay(oConfig, {
+                data: utilsRT.getDataToDisplay(oConfig, {
                     number: (oTileApi.configurationUi.isEnabled() ? 1234 : "...")
                 }),
                 nav: {navigation_target_url: (oTileApi.configurationUi && oTileApi.configurationUi.isEnabled() ? "" : sNavigationTargetUrl)},
@@ -116,7 +130,7 @@
                 // is only called by the FLP for bookmark tiles which have been updated via bookmark service
                 oTileApi.bag.attachBagsUpdated(function (aUpdatedBagIds) {
                     if (aUpdatedBagIds.indexOf("tileProperties") > -1) {
-                        sap.ushell.components.tiles.utils._updateTilePropertiesTexts(oView, oTileApi.bag.getBag('tileProperties'));
+                        utils._updateTilePropertiesTexts(oView, oTileApi.bag.getBag('tileProperties'));
                     }
                 });
             }
@@ -125,13 +139,10 @@
             if (oTileApi.configuration && oTileApi.configuration.attachConfigurationUpdated) {
                 // is only called by the FLP for bookmark tiles which have been updated via bookmark service
                 oTileApi.configuration.attachConfigurationUpdated(function (aUpdatedConfigKeys) {
-                    // is only called by the FLP for bookmark tiles which have been updated via bookmark service
-                    oTileApi.configuration.attachConfigurationUpdated(function (aUpdatedConfigKeys) {
                         if (aUpdatedConfigKeys.indexOf("tileConfiguration") > -1) {
-                            sap.ushell.components.tiles.utils._updateTileConfiguration(oView, oTileApi.configuration.getParameterValueAsString("tileConfiguration"));
+                            utils._updateTileConfiguration(oView, oTileApi.configuration.getParameterValueAsString("tileConfiguration"));
                         }
                     });
-                });
             }
 
             // implement preview contract
@@ -139,6 +150,9 @@
                 oTileApi.preview.setTargetUrl(sNavigationTargetUrl);
                 oTileApi.preview.setPreviewIcon(oConfig.display_icon_url);
                 oTileApi.preview.setPreviewTitle(oConfig.display_title_text);
+                if (oTileApi.preview.setPreviewSubtitle && typeof oTileApi.preview.setPreviewSubtitle === 'function'){
+                    oTileApi.preview.setPreviewSubtitle(oConfig.display_subtitle_text);
+                }
             }
 
             // implement refresh contract
@@ -156,14 +170,14 @@
             if (oTileApi.configurationUi.isEnabled()) {
                 oTileApi.configurationUi.setUiProvider(function () {
                     // attach configuration UI provider, which is essentially a components.tiles.dynamicapplauncher.Configuration
-                    var oConfigurationUi = sap.ushell.components.tiles.utils.getConfigurationUi(oView, "sap.ushell.components.tiles.applauncherdynamic.Configuration");
+                    var oConfigurationUi = utils.getConfigurationUi(oView, "sap.ushell.components.tiles.applauncherdynamic.Configuration");
                     oTileApi.configurationUi.attachCancel(that.onCancelConfiguration.bind(null, oConfigurationUi));
                     oTileApi.configurationUi.attachSave(that.onSaveConfiguration.bind(null, oConfigurationUi));
                     return oConfigurationUi;
                 });
 
                 this.getView().getContent()[0].setTooltip(
-                    sap.ushell.components.tiles.utils.getResourceBundleModel().getResourceBundle()
+                    utils.getResourceBundleModel().getResourceBundle()
                         .getText("edit_configuration.tooltip")
                 );
             } else {
@@ -188,14 +202,14 @@
                     aExtendedActions = [];
                 }
 
-                var tileSettingsAction = sap.ushell.components.tiles.utilsRT.getTileSettingsAction(oModel, this.onSaveRuntimeSettings.bind(this));
+                var tileSettingsAction = utilsRT.getTileSettingsAction(oModel, this.onSaveRuntimeSettings.bind(this));
                 aExtendedActions.push(tileSettingsAction);
 
                 oTileApi.actions.setActionsProvider(function (){
                     return aExtendedActions;
                 });
             }
-
+            sap.ui.getCore().getEventBus().subscribe("launchpad", "sessionTimeout", this.stopRequests, this);
         },
         // convenience function to stop browser's timeout and OData calls
         stopRequests: function () {
@@ -223,21 +237,26 @@
         // destroy handler stops requests
         onExit: function () {
             this.stopRequests();
+            sap.ui.getCore().getEventBus().unsubscribe("launchpad", "sessionTimeout", this.stopRequests, this);
         },
         // trigger to show the configuration UI if the tile is pressed in Admin mode
-        onPress: function () {
+        onPress: function (oEvent) {
             var oView = this.getView(),
                 oViewData = oView.getViewData(),
                 oModel = oView.getModel(),
                 sTargetUrl = oModel.getProperty("/nav/navigation_target_url"),
                 oTileApi = oViewData.chip;
-            if (oTileApi.configurationUi.isEnabled()) {
-                oTileApi.configurationUi.display();
-            } else if (sTargetUrl) {
-                if (sTargetUrl[0] === '#') {
-                    hasher.setHash(sTargetUrl);
-                } else {
-                    window.open(sTargetUrl, '_blank');
+            //scope is property of generic tile. It's default value is "Display"
+            if (oEvent.getSource().getScope && oEvent.getSource().getScope() === sap.m.GenericTileScope.Display) {
+                if (oTileApi.configurationUi.isEnabled()) {
+
+                    oTileApi.configurationUi.display();
+                } else if (sTargetUrl) {
+                    if (sTargetUrl[0] === '#') {
+                        hasher.setHash(sTargetUrl);
+                    } else {
+                        window.open(sTargetUrl, '_blank');
+                    }
                 }
             }
         },
@@ -329,7 +348,7 @@
             // tile model placed into configuration model by getConfigurationUi
                 oTileModel = oModel.getProperty("/tileModel"),
                 oTileApi = oConfigurationView.getViewData().chip,
-                aTileNavigationActions = sap.ushell.components.tiles.utils.tileActionsRows2TileActionsArray(oModel.getProperty("/config/tile_actions_rows")),
+                aTileNavigationActions = utils.tileActionsRows2TileActionsArray(oModel.getProperty("/config/tile_actions_rows")),
             // get the configuration to save from the model
                 configToSave = {
                     display_icon_url : oModel.getProperty("/config/display_icon_url"),
@@ -344,9 +363,9 @@
                     display_search_keywords: oModel.getProperty("/config/display_search_keywords")
                 };
             //If the input fields icon, semantic object and action are failing the input validations, then through an error message requesting the user to enter/correct those fields
-            var bReject = sap.ushell.components.tiles.utils.checkInputOnSaveConfig(oConfigurationView);
+            var bReject = utils.checkInputOnSaveConfig(oConfigurationView);
             if (!bReject) {
-                bReject = sap.ushell.components.tiles.utils.checkTileActions(oConfigurationView);
+                bReject = utils.checkTileActions(oConfigurationView);
             }
             if (bReject) {
                 oDeferred.reject("mandatory_fields_missing");
@@ -354,7 +373,7 @@
             }
             // overwrite target URL in case of semantic object navigation
             if (configToSave.navigation_use_semantic_object) {
-                configToSave.navigation_target_url = sap.ushell.components.tiles.utilsRT.getSemanticNavigationUrl(configToSave);
+                configToSave.navigation_target_url = utilsRT.getSemanticNavigationUrl(configToSave);
                 oModel.setProperty("/config/navigation_target_url", configToSave.navigation_target_url);
             }
 
@@ -367,7 +386,7 @@
 
             var tileNavigationActionsBag = oTileApi.bag.getBag('tileNavigationActions');
             //forward populating of tile navigation actions array into the bag, to Utils
-            sap.ushell.components.tiles.utils.populateTileNavigationActionsBag(tileNavigationActionsBag, aTileNavigationActions);
+            utils.populateTileNavigationActionsBag(tileNavigationActionsBag, aTileNavigationActions);
 
             function logErrorAndReject(oError, oErrorInfo) {
                 jQuery.sap.log.error(oError, null, "sap.ushell.components.tiles.applauncherdynamic.DynamicTile.controller");
@@ -379,9 +398,9 @@
                 {tileConfiguration : JSON.stringify(configToSave)},
                 // success handler
                 function () {
-                    var oConfigurationConfig = sap.ushell.components.tiles.utilsRT.getConfiguration(oTileApi, false, false),
+                    var oConfigurationConfig = utilsRT.getConfiguration(oTileApi, false, false),
                     // get tile config data in admin mode
-                        oTileConfig = sap.ushell.components.tiles.utilsRT.getConfiguration(oTileApi, true, false),
+                        oTileConfig = utilsRT.getConfiguration(oTileApi, true, false),
                     // switching the model under the tile -> keep the tile model
                         oModel = new sap.ui.model.json.JSONModel({
                             config: oConfigurationConfig,
@@ -396,6 +415,9 @@
                         oTileApi.preview.setTargetUrl(oConfigurationConfig.navigation_target_url);
                         oTileApi.preview.setPreviewIcon(oConfigurationConfig.display_icon_url);
                         oTileApi.preview.setPreviewTitle(oConfigurationConfig.display_title_text);
+                        if (oTileApi.preview.setPreviewSubtitle && typeof oTileApi.preview.setPreviewSubtitle === 'function'){
+                            oTileApi.preview.setPreviewSubtitle(oConfigurationConfig.display_subtitle_text);
+                        }
                     }
 
                     tilePropertiesBag.save(
@@ -433,13 +455,16 @@
             return oDeferred.promise();
         },
 
-        successHandleFn: function (oResult) {
+         successHandleFn: function (oResult) {
             this.bIsRequestCompleted = true;
 
             var oConfig = this.getView().getModel().getProperty("/config");
             this.oDataRequest = undefined;
             var oData = oResult,
-                oDataToDisplay;
+                oDataToDisplay,
+                sTileInfo;
+
+
             if (typeof oResult === "object") {
                 var uriParamInlinecount = jQuery.sap.getUriParameters(oConfig.service_url).get("$inlinecount");
                 if (uriParamInlinecount && uriParamInlinecount === "allpages") {
@@ -450,7 +475,15 @@
             } else if (typeof oResult === "string") {
                 oData = {number: oResult};
             }
-            oDataToDisplay = sap.ushell.components.tiles.utilsRT.getDataToDisplay(oConfig, oData);
+
+             if((this.getView().getViewData().properties)&&(this.getView().getViewData().properties.info)){
+                if(typeof oData == "object") {
+                    sTileInfo = this.getView().getViewData().properties.info;
+                    oData.info = sTileInfo;
+                }
+            }
+
+            oDataToDisplay = utilsRT.getDataToDisplay(oConfig, oData);
 
             // set data to display
             this.getView().getModel().setProperty("/data", oDataToDisplay);
@@ -460,7 +493,7 @@
 
             // rewrite target URL
             this.getView().getModel().setProperty("/nav/navigation_target_url",
-                sap.ushell.components.tiles.utilsRT.addParamsToUrl(
+                utilsRT.addParamsToUrl(
                     this.navigationTargetUrl,
                     oDataToDisplay
                 ));
@@ -480,7 +513,7 @@
             var oConfig = this.getView().getModel().getProperty("/config");
             this.oDataRequest = undefined;
             var sMessage = oMessage && oMessage.message ? oMessage.message : oMessage,
-                oResourceBundle = sap.ushell.components.tiles.utils.getResourceBundleModel()
+                oResourceBundle = utils.getResourceBundleModel()
                     .getResourceBundle();
 
             if (sMessage === "Request aborted") {
@@ -507,7 +540,7 @@
 
             if (!this.bIsAbortRequestFlow) {
                 this.getView().getModel().setProperty("/data",
-                    sap.ushell.components.tiles.utilsRT.getDataToDisplay(oConfig, {
+                    utilsRT.getDataToDisplay(oConfig, {
                         number: "???",
                         info: oResourceBundle.getText("dynamic_data.error"),
                         infoState: "Critical"
@@ -524,7 +557,7 @@
             // tile model placed into configuration model by getConfigurationUi
                 oTileModel = oModel.getProperty("/tileModel"),
                 oTileApi = oViewData.chip,
-                oCurrentConfig = sap.ushell.components.tiles.utilsRT.getConfiguration(oTileApi, false, false);
+                oCurrentConfig = utilsRT.getConfiguration(oTileApi, false, false);
             oConfigurationView.getModel().setData({config: oCurrentConfig, tileModel: oTileModel}, false);
         },
         // loads data from backend service
@@ -550,11 +583,18 @@
                     "sap.ushell.components.tiles.applauncherdynamic.DynamicTile.controller"
                 );
                 // call again later
+                if (this.timer) {
+                    clearTimeout(this.timer);
+                }
                 this.timer = setTimeout(that.loadData.bind(that, nservice_refresh_interval, false), (nservice_refresh_interval * 1000));
             }
 
             // Verify the the Tile visibility is "true" in order to issue an oData request`
             if (oTileApi.visible.isVisible() && !that.oDataRequest) {
+                var sLang = sap.ushell.Container.getUser().getLanguage();
+                if ((sLang) && (sUrl.indexOf("sap-language=") == -1)) {
+                    sUrl = sUrl + (sUrl.indexOf("?") >= 0 ? "&" : "?") + "sap-language=" + sLang;
+                }
                 that.oDataRequest = OData.read(
                     {
                         requestUri: sUrl,
@@ -570,11 +610,11 @@
                 ); // End of oData.read
             }
         },
-        // loads data once if not in configuration mode
-        refreshHandler: function (oDynamicTileController) {
+        refreshHandler: function (oDynamicTileController, iInterval) {
             var oTileApi = oDynamicTileController.getView().getViewData().chip;
             if (!oTileApi.configurationUi.isEnabled()) {
-                oDynamicTileController.loadData(0);
+                iInterval = iInterval ? iInterval : 0;
+                oDynamicTileController.loadData(iInterval);
             } else {
                 oDynamicTileController.stopRequests();
             }
@@ -589,11 +629,11 @@
             if (isVisible) {
                 if (nservice_refresh_interval > 0) {
                     //tile is visible and the refresh interval isn't set to 0
-                    this.refreshHandler(this);
+                    this.refreshHandler(this, Math.max(nservice_refresh_interval, 10));
                 } else {
                     if (!this.bIsRequestCompleted) {
                         //tile is visible and data should be updated
-                        this.refreshHandler(this);
+                        this.refreshHandler(this, 0);
                     }
                 }
             } else {
@@ -602,4 +642,6 @@
         }
 
     });
-}());
+
+
+}, /* bExport= */ false);

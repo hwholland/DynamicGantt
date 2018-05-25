@@ -18,7 +18,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element'
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -42,7 +42,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element'
 				/**
 				 * Day-light saving time periods. Array of {@link sap.gantt.config.TimeHorizon}
 				 */
-				dstHorizons: {type: "array", defaultValue: []}	// dst: day-light saving
+				dstHorizons: {type: "object[]", defaultValue: []}	// dst: day-light saving
 				// other locale info like langu, dateFormat, timeFormat and numberFormat, please use UI5 standard configuration object.
 			}
 		}

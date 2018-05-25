@@ -15,34 +15,34 @@ The splitter bars used for resizing the contents by the user can be set to diffe
     <since>1.22.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="orientation" type="sap.ui.core/Orientation" defaultValue="Horizontal" group="Behavior">
+        <property group="Behavior" defaultValue="Horizontal" type="sap.ui.core/Orientation" name="orientation">
             <documentation>Whether to split the contents horizontally (default) or vertically.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="100%" group="Appearance">
+        <property group="Appearance" defaultValue="100%" type="sap.ui.core/CSSSize" name="width">
             <documentation>The width of the control</documentation>
         </property>
-        <property name="height" type="sap.ui.core/CSSSize" defaultValue="100%" group="Appearance">
+        <property group="Appearance" defaultValue="100%" type="sap.ui.core/CSSSize" name="height">
             <documentation>The height of the control</documentation>
         </property>
     </properties>
     <events>
-        <event name="resize" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="resize">
             <documentation>Event is fired when contents are resized.</documentation>
             <parameters>
-                <parameter name="id" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="id">
                     <documentation>The ID of the splitter control. The splitter control can also be accessed by calling getSource() on the event.</documentation>
                 </parameter>
-                <parameter name="oldSizes" type="sap.ui.core/int[]">
+                <parameter type="sap.ui.core/int[]" name="oldSizes">
                     <documentation>An array of values representing the old (pixel-)sizes of the splitter contents</documentation>
                 </parameter>
-                <parameter name="newSizes" type="sap.ui.core/int[]">
+                <parameter type="sap.ui.core/int[]" name="newSizes">
                     <documentation>An array of values representing the new (pixel-)sizes of the splitter contents</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations default="contentAreas">
-        <aggregation name="contentAreas" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="contentAreas">
             <documentation>The content areas to be split. The control will show n-1 splitter bars between n controls in this aggregation.</documentation>
         </aggregation>
     </aggregations>

@@ -8,23 +8,23 @@
     <deprecation since="1.44.0"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <events>
-        <event name="closed" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="closed">
             <documentation>Fired when the overlay was closed.</documentation>
         </event>
     </events>
     <aggregations default="content">
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>The content to appear in the overlay.</documentation>
         </aggregation>
-        <aggregation name="search" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="search">
             <documentation>Experimental (This aggregation might change in future!): The search control which should be displayed in the overlay header.</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="shell" type="sap.ui.unified/ShellLayout" cardinality="0..1">
+        <association cardinality="0..1" type="sap.ui.unified/ShellLayout" name="shell">
             <documentation>Reference to the sap.ui.unified.Shell or sap.ui.unified.ShellLayout control.</documentation>
         </association>
-        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
+        <association cardinality="0..n" type="sap.ui.core/Control" name="ariaLabelledBy">
             <documentation>Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).</documentation>
         </association>
     </associations>

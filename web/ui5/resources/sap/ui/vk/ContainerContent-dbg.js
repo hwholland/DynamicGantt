@@ -7,13 +7,13 @@
 
 // Provides control sap.ui.vk.ContainerContent.
 sap.ui.define([
-	'./library', 'sap/ui/core/Control'
+	"./library", "sap/ui/core/Control"
 ], function(library, Control) {
 	"use strict";
 
 	/**
 	 * Constructor for a new ContainerContent.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Aggregation element for the Container Base
@@ -62,8 +62,8 @@ sap.ui.define([
 	// ContainerContent.prototype.init = function(){
 	// // do something for initialization...
 	// };
-	
-	ContainerContent.prototype.setContent = function( oContent ) {
+
+	ContainerContent.prototype.setContent = function(oContent) {
 		if (oContent instanceof sap.ui.vbm.GeoMap) {
 			oContent.setNavcontrolVisible(false);
 			oContent.setWidth("100%");

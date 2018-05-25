@@ -1,13 +1,12 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// Provides control sap.suite.ui.microchart.ComparisonMicroChart.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/Device'],
-	function(jQuery, library, Control, Device) {
+sap.ui.define([
+	"jquery.sap.global", "./library", "sap/ui/core/Control", "sap/m/Size", "sap/ui/Device", "sap/m/FlexBox"
+], function(jQuery, library, Control, Size, Device, FlexBox) {
 	"use strict";
 
 	/**
@@ -20,7 +19,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * Illustrates values as colored bar charts with title, numeric value, and scaling factor in the content area. This control replaces the deprecated sap.suite.ui.commons.ComparisonChart.
 	 * @extends sap.ui.core.Control
 	 *
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -32,7 +31,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		library: "sap.suite.ui.microchart",
 		properties: {
 			/**
-			 * The size of the microchart. If not set, the default size is applied based on the size of the device tile.
+			 * The size of the chart. If not set, the default size is applied based on the size of the device tile.
 			 */
 			size: {type: "sap.m.Size", group: "Misc", defaultValue: "Auto"},
 
@@ -42,9 +41,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			scale: {type: "string", group: "Misc", defaultValue: ""},
 
 			/**
-			 * The width of the chart. If it is not set, the size of the control is defined by the size property.
+			 * The minimum scale value for the chart used to define the value range of the scale for comparing different values.
+			 * @since 1.42.0
 			 */
-			width: {type: "sap.ui.core.CSSSize", group: "Misc"},
+			minValue: {type: "float", group: "Appearance", defaultValue: null},
+
+			/**
+			 * The maximum scale value for the chart used to define the value range of the scale for comparing different values.
+			 * @since 1.42.0
+			 */
+			maxValue: {type: "float", group: "Appearance", defaultValue: null},
 
 			/**
 			 * The view of the chart. If not set, the Normal view is used by default.
@@ -59,7 +65,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			/**
 			 * If it is set to true, the height of the control is defined by its content.
 			 */
-			shrinkable: {type: "boolean", group: "Misc", defaultValue: "false"},
+			shrinkable: {type: "boolean", group: "Misc", defaultValue: false},
+
+			/**
+			 * The width of the chart. If it is not set, the size of the control is defined by the size property.
+			 */
+			width: {type: "sap.ui.core.CSSSize", group: "Misc"},
 
 			/**
 			 * Height of the chart.
@@ -87,13 +98,171 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 	}});
 
-	ComparisonMicroChart.WIDTH_FONT_TRESHOLD = 168;
-	ComparisonMicroChart.HEIGHT_PER_CHART_DISAPPEAR_TRESHOLD = 16;
+	ComparisonMicroChart.WIDTH_FONT_THRESHOLD = 168;
+	ComparisonMicroChart.HEIGHT_PER_CHART_DISAPPEAR_THRESHOLD = 16;
 	ComparisonMicroChart.EDGE_CASE_WIDTH_HIDE_CHART = 32;
+
+	/* =========================================================== */
+	/* API events */
+	/* =========================================================== */
+
+	ComparisonMicroChart.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
+		Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
+		if (this.hasListeners("press")) {
+			this.$().attr("tabindex", 0).addClass("sapSuiteUiMicroChartPointer");
+		}
+
+		return this;
+	};
+
+	ComparisonMicroChart.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
+		Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
+		if (!this.hasListeners("press")) {
+			this.$().removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer");
+		}
+		return this;
+	};
+
+	ComparisonMicroChart.prototype.ontap = function(oEvent) {
+		if (Device.browser.edge) {
+			this.onclick(oEvent);
+		}
+	};
+
+	ComparisonMicroChart.prototype.onclick = function(oEvent) {
+		if (!this.fireBarPress(oEvent)) {
+			this.firePress();
+			if (Device.browser.msie || Device.browser.edge) {
+				this.$().focus();
+				oEvent.preventDefault();
+			}
+		}
+	};
+
+	ComparisonMicroChart.prototype.fireBarPress = function(oEvent) {
+		var oBar = jQuery(oEvent.target);
+		if (oBar && oBar.attr("data-bar-index")) {
+			var iIndex = parseInt(oBar.attr("data-bar-index"), 10);
+			var oComparisonData = this.getData()[iIndex];
+			if (oComparisonData && oComparisonData.hasListeners("press")) {
+				oComparisonData.firePress();
+				oEvent.preventDefault();
+				oEvent.stopImmediatePropagation();
+				if (Device.browser.msie) {
+					jQuery.sap.byId(this.getId() + "-chart-item-bar-" + iIndex).focus();
+				}
+				// find out which bar has tabindex = 0 at this moment
+				var $Bars = this.$().find(".sapSuiteCpMCChartBar");
+				var iBarFocusedIndex = $Bars.index(this.$().find(".sapSuiteCpMCChartBar[tabindex='0']"));
+				this._switchTabindex(iBarFocusedIndex, iIndex, $Bars);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	ComparisonMicroChart.prototype.onsaptabprevious = function() {
+		this.$().css("outline-color", "");
+	};
+
+	ComparisonMicroChart.prototype.onsaptabnext = function() {
+		var $Next = this.$().next();
+		// when the next element is a focusable comparison chart, activate the outline
+		if ($Next.hasClass("sapSuiteCpMC") && $Next.attr("tabindex")) {
+			$Next.css("outline-color", "");
+		}
+	};
+
+	ComparisonMicroChart.prototype.onsapenter = function(event) {
+		if (!this.fireBarPress(event)) {
+			this.firePress();
+			event.preventDefault();
+			event.stopImmediatePropagation();
+		}
+	};
+
+	ComparisonMicroChart.prototype.onsapspace = ComparisonMicroChart.prototype.onsapenter;
+
+	ComparisonMicroChart.prototype.onsapup = function(event) {
+		var $Bars = this.$().find(".sapSuiteUiMicroChartPointer");
+		if ($Bars.length > 0) {
+			var iIndex = $Bars.index(event.target);
+			this._switchTabindex(iIndex, iIndex - 1, $Bars);
+		}
+		event.preventDefault();
+		event.stopImmediatePropagation();
+	};
+
+	ComparisonMicroChart.prototype.onsapdown = function(event) {
+		var $Bars = this.$().find(".sapSuiteUiMicroChartPointer");
+		if ($Bars.length > 0) {
+			var iIndex = $Bars.index(event.target);
+			this._switchTabindex(iIndex, iIndex + 1, $Bars);
+		}
+		event.preventDefault();
+		event.stopImmediatePropagation();
+	};
+
+	ComparisonMicroChart.prototype.onsaphome = function(event) {
+		var $Bars = this.$().find(".sapSuiteUiMicroChartPointer");
+		var iIndex = $Bars.index(event.target);
+		if (iIndex !== 0 && $Bars.length > 0) {
+			this._switchTabindex(iIndex, 0, $Bars);
+		}
+		event.preventDefault();
+		event.stopImmediatePropagation();
+	};
+
+	ComparisonMicroChart.prototype.onsapend = function(event) {
+		var $Bars = this.$().find(".sapSuiteUiMicroChartPointer");
+		var iIndex = $Bars.index(event.target),
+			iLength = $Bars.length;
+		if (iIndex !== iLength - 1 && iLength > 0) {
+			this._switchTabindex(iIndex, iLength - 1, $Bars);
+		}
+		event.preventDefault();
+		event.stopImmediatePropagation();
+	};
+
+	ComparisonMicroChart.prototype.onsapleft = ComparisonMicroChart.prototype.onsapup;
+
+	ComparisonMicroChart.prototype.onsapright = ComparisonMicroChart.prototype.onsapdown;
+
+	/* =========================================================== */
+	/* API methods */
+	/* =========================================================== */
+
+	ComparisonMicroChart.prototype.setMinValue = function(fMinValue) {
+		this._isMinValueSet = jQuery.isNumeric(fMinValue);
+		return this.setProperty("minValue", this._isMinValueSet ? fMinValue : NaN);
+	};
+
+	ComparisonMicroChart.prototype.setMaxValue = function(fMaxValue) {
+		this._isMaxValueSet = jQuery.isNumeric(fMaxValue);
+		return this.setProperty("maxValue", this._isMaxValueSet ? fMaxValue : NaN);
+	};
+
+	ComparisonMicroChart.prototype.setSize = function(size) {
+		if (this.getSize() !== size) {
+			if (size === Size.Responsive) {
+				this.setProperty("isResponsive", true, true);
+			} else {
+				this.setProperty("isResponsive", false, true);
+			}
+			this.setProperty("size", size, false);
+		}
+		return this;
+	};
+
+	/* =========================================================== */
+	/* Protected methods */
+	/* =========================================================== */
 
 	ComparisonMicroChart.prototype.init = function() {
 		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.microchart");
 		this.setAggregation("tooltip", "{AltText}", true);
+		this._isMinValueSet = false;
+		this._isMaxValueSet = false;
 		this._bThemeApplied = true;
 		if (!sap.ui.getCore().isInitialized()) {
 			this._bThemeApplied = false;
@@ -129,8 +298,90 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		sap.ui.getCore().detachThemeChanged(this._handleThemeApplied, this);
 	};
 
+	ComparisonMicroChart.prototype.onBeforeRendering = function() {
+		if (library._isInGenericTile(this)) {
+			this.setIsResponsive(true);
+			library._removeStandardMargins(this);
+		}
+
+		//removes handler for mouseenter event
+		this._unbindMouseEnterLeaveHandler();
+	};
+
+	ComparisonMicroChart.prototype.onAfterRendering = function() {
+		if (this.getIsResponsive()) {
+			this._adjustToParent();
+		}
+		library._checkControlIsVisible(this, this._onControlIsVisible);
+
+		//attaches handler for mouseenter event
+		this._bindMouseEnterLeaveHandler();
+	};
+
 	/**
-	 * Calculates the width in percents of chart bars' elements accordingly with provided chart values.
+	 * Callback function which is called when the control is visible, which means that the check via
+	 * library._checkControlIsVisible was successful.
+	 *
+	 * @private
+	 */
+	ComparisonMicroChart.prototype._onControlIsVisible = function() {
+		if (this.getHeight() !== "" || this.getIsResponsive()) {
+			Device.media.attachHandler(this._onResize, this);
+			this._onResize();
+		}
+	};
+
+	ComparisonMicroChart.prototype.setBarPressable = function(iBarIndex, bPressable) {
+		if (bPressable) {
+			var sBarAltText = this._getBarAltText(iBarIndex);
+			jQuery.sap.byId(this.getId() + "-chart-item-bar-" + iBarIndex).addClass("sapSuiteUiMicroChartPointer").attr("tabindex", 0).attr("title", sBarAltText).attr("role", "presentation").attr("aria-label", sBarAltText);
+		} else {
+			jQuery.sap.byId(this.getId() + "-chart-item-bar-" + iBarIndex).removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer").removeAttr("title").removeAttr("role").removeAttr("aria-label");
+		}
+	};
+
+	ComparisonMicroChart.prototype.getAltText = function() {
+		var sAltText = "", sBarText;
+		for (var i = 0; i < this.getData().length; i++) {
+			sBarText = this._getBarAltText(i);
+			if (!library._isTooltipSuppressed(sBarText)) {
+				if (!library._isTooltipSuppressed(sAltText)) {
+					sAltText += "\n";
+				}
+				sAltText += sBarText;
+			}
+		}
+		return sAltText;
+	};
+
+	ComparisonMicroChart.prototype.getTooltip_AsString  = function() { //eslint-disable-line
+		var oTooltip = this.getTooltip();
+		var sTooltip = this.getAltText();
+
+		if (typeof oTooltip === "string" || oTooltip instanceof String) {
+			sTooltip = oTooltip.split("{AltText}").join(sTooltip).split("((AltText))").join(sTooltip);
+			return sTooltip;
+		} else if (this.isBound("tooltip") && !oTooltip) {
+			return sTooltip;
+		}
+		return oTooltip ? oTooltip : "";
+	};
+
+	/**
+	 * Returns the translated accessibility control type. It describes the type of the MicroChart control.
+	 *
+	 * @returns {string} The translated accessibility control type
+	 * @private
+	 */
+	ComparisonMicroChart.prototype._getAccessibilityControlType = function() {
+		return this._oRb.getText("ACC_CTR_TYPE_COMPARISONMICROCHART");
+	};
+
+	/* =========================================================== */
+	/* Private methods */
+	/* =========================================================== */
+	/**
+	 * Calculates the width in percent of the chart bar elements accordingly with provided chart values.
 	 *
 	 * @returns {Array} array of calculated values for each chart bar.
 	 * @private
@@ -150,6 +401,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			var iDataValue = isNaN(aData[i].getValue()) ? 0 : aData[i].getValue();
 			iMaxValue = Math.max(iMaxValue, iDataValue);
 			iMinValue = Math.min(iMinValue, iDataValue);
+		}
+		if (this._isMinValueSet) {
+			iMinValue = Math.min(iMinValue, this.getMinValue());
+		}
+		if (this._isMaxValueSet) {
+			iMaxValue = Math.max(iMaxValue, this.getMaxValue());
 		}
 
 		iTotal = iMaxValue - iMinValue;
@@ -192,51 +449,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		return aResult;
 	};
 
-	ComparisonMicroChart.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.attachEvent.call(this, sEventId, oData, fnFunction, oListener);
-		if (this.hasListeners("press")) {
-			this.$().attr("tabindex", 0).addClass("sapSuiteUiMicroChartPointer");
-		}
-
-		return this;
-	};
-
-	ComparisonMicroChart.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
-		sap.ui.core.Control.prototype.detachEvent.call(this, sEventId, fnFunction, oListener);
-		if (!this.hasListeners("press")) {
-			this.$().removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer");
-		}
-		return this;
-	};
-
 	ComparisonMicroChart.prototype._getLocalizedColorMeaning = function(sColor) {
 		return this._oRb.getText(("SEMANTIC_COLOR_" + sColor).toUpperCase());
 	};
 
-	ComparisonMicroChart.prototype.getAltText = function() {
-		var sScale = this.getScale();
-		var sAltText = "";
-
-		for (var i = 0; i < this.getData().length; i++) {
-			var oBar = this.getData()[i];
-			var sMeaning = (this.getColorPalette().length) ? "" : this._getLocalizedColorMeaning(oBar.getColor());
-			sAltText += ((i == 0) ? "" : "\n") + oBar.getTitle() + " " + (oBar.getDisplayValue() ? oBar.getDisplayValue() : oBar.getValue()) + sScale + " " + sMeaning;
+	ComparisonMicroChart.prototype._getBarAltText = function(iBarIndex) {
+		var oBar = this.getData()[iBarIndex];
+		var oBarTooltip = this.getData()[iBarIndex].getTooltip();
+		if (oBarTooltip) {
+			return oBarTooltip;
+		} else {
+			var sMeaning = this.getColorPalette().length ? "" : this._getLocalizedColorMeaning(oBar.getColor());
+			return oBar.getTitle() + " " + (oBar.getDisplayValue() ? oBar.getDisplayValue() : oBar.getValue()) + this.getScale() + " " + sMeaning;
 		}
-
-		return sAltText;
-	};
-
-	ComparisonMicroChart.prototype.getTooltip_AsString  = function() {
-		var oTooltip = this.getTooltip();
-		var sTooltip = this.getAltText();
-
-		if (typeof oTooltip === "string" || oTooltip instanceof String) {
-			sTooltip = oTooltip.split("{AltText}").join(sTooltip).split("((AltText))").join(sTooltip);
-			return sTooltip;
-		} else if (this.isBound("tooltip") && !oTooltip) {
-			return sTooltip;
-		}
-		return oTooltip ? oTooltip : "";
 	};
 
 	ComparisonMicroChart.prototype._adjustBars = function() {
@@ -261,39 +486,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			if (iChartsHeightDelta > 0) {
 				jQuery(aBarContainers[0]).css("margin-top", iChartsHeightDelta + "px");
 			}
-		}
-	};
-
-	ComparisonMicroChart.prototype.onBeforeRendering = function() {
-		if (library._isInGenericTile(this)) {
-			this.setIsResponsive(true);
-			library._removeStandardMargins(this);
-		}
-
-		//removes handler for mouseenter event
-		this._unbindMouseEnterLeaveHandler();
-	};
-
-	ComparisonMicroChart.prototype.onAfterRendering = function() {
-		if (this.getIsResponsive()) {
-			this._adjustToParent();
-		}
-		library._checkControlIsVisible(this, this._onControlIsVisible);
-
-		//attaches handler for mouseenter event
-		this._bindMouseEnterLeaveHandler();
-	};
-
-	/**
-	 * Callback function which is called when the control is visible, which means that the check via
-	 * library._checkControlIsVisible was successful.
-	 *
-	 * @private
-	 */
-	ComparisonMicroChart.prototype._onControlIsVisible = function() {
-		if (this.getHeight() !== "" || this.getIsResponsive()) {
-			sap.ui.Device.media.attachHandler(this._onResize, this);
-			this._onResize();
 		}
 	};
 
@@ -338,7 +530,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	ComparisonMicroChart.prototype._adjustToParent = function() {
-		if (jQuery.isFunction(this.getParent) && this.getParent() instanceof sap.m.FlexBox) {
+		if (jQuery.isFunction(this.getParent) && this.getParent() instanceof FlexBox) {
 			var sParentHeight = parseInt(this.getParent().$().height(), 10);
 			var sParentWidth = parseInt(this.getParent().$().width(), 10);
 			var $this = this.$();
@@ -364,10 +556,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		if (iCurrentControlHeight <= iMaxChartHeight) {
 			$this.addClass("sapSuiteCpMCSmallFont");
 		}
-		if (this.getView() === "Normal" && iCurrentChartHeight < (ComparisonMicroChart.HEIGHT_PER_CHART_DISAPPEAR_TRESHOLD + iBarHeight) * iBarCount ) {
+		if (this.getView() === "Normal" && iCurrentChartHeight < (ComparisonMicroChart.HEIGHT_PER_CHART_DISAPPEAR_THRESHOLD + iBarHeight) * iBarCount ) {
 			$this.find(".sapSuiteCpMCChartBar>div").hide();
 		}
-		if (iCurrentChartHeight < ComparisonMicroChart.HEIGHT_PER_CHART_DISAPPEAR_TRESHOLD * iBarCount ) {
+		if (iCurrentChartHeight < ComparisonMicroChart.HEIGHT_PER_CHART_DISAPPEAR_THRESHOLD * iBarCount ) {
 			$this.hide();
 		}
 	};
@@ -386,7 +578,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			$Bars.hide();
 		}
 
-		if (iWidth < ComparisonMicroChart.WIDTH_FONT_TRESHOLD || this._isTruncatedLabel($this, ".sapSuiteCpMCChartItemTitle, .sapSuiteCpMCChartItemValue")) {
+		if (iWidth < ComparisonMicroChart.WIDTH_FONT_THRESHOLD || this._isTruncatedLabel(".sapSuiteCpMCChartItemTitle, .sapSuiteCpMCChartItemValue")) {
 			$this.addClass("sapSuiteCpMCSmallFont");
 		}
 		if (iWidth < ComparisonMicroChart.EDGE_CASE_WIDTH_HIDE_CHART) {
@@ -421,8 +613,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	ComparisonMicroChart.prototype._addTitleAttribute = function() {
 		var sTooltip = this.getTooltip_AsString();
-		if (sTooltip && !this.getIsResponsive()) {
-			this.$().attr("title", sTooltip);
+		if (!library._isTooltipSuppressed(sTooltip)) {
+			if (this.getIsResponsive()){
+				this.$().find(".sapSuiteCpMCVerticalAlignmentContainer").attr("title", sTooltip);
+			} else {
+				this.$().attr("title", sTooltip);
+			}
 		}
 	};
 
@@ -432,125 +628,45 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	ComparisonMicroChart.prototype._removeTitleAttribute = function() {
-		this.$().removeAttr("title");
-	};
-
-	ComparisonMicroChart.prototype._getBarAltText = function(iBarIndex) {
-			var sScale = this.getScale();
-			var oBar = this.getData()[iBarIndex];
-			var sMeaning = (this.getColorPalette().length) ? "" : this._getLocalizedColorMeaning(oBar.getColor());
-			return oBar.getTitle() + " " + (oBar.getDisplayValue() ? oBar.getDisplayValue() : oBar.getValue()) + sScale + " " + sMeaning;
-	};
-
-	ComparisonMicroChart.prototype.onsaptabnext = function(oEvent) {
-		var oLast = this.$().find(":focusable").last();	// last tabstop in the control
-		if (oLast) {
-			this._bIgnoreFocusEvt = true;
-			oLast.get(0).focus();
+		if (this.getIsResponsive()){
+			this.$().find(".sapSuiteCpMCVerticalAlignmentContainer").removeAttr("title");
+		} else {
+			this.$().removeAttr("title");
 		}
 	};
 
-	ComparisonMicroChart.prototype.onsaptabprevious = function(oEvent) {
-		if (oEvent.target.id != oEvent.currentTarget.id) {
-			var oFirst = this.$().find(":focusable").first();	// first tabstop in the control
-			if (oFirst) {
-				oFirst.get(0).focus();
-			}
-		}
-	};
-
-	ComparisonMicroChart.prototype.ontap = function(oEvent) {
-		if (sap.ui.Device.browser.edge) {
-			this.onclick(oEvent);
-		}
-	};
-
-	ComparisonMicroChart.prototype.onclick = function(oEvent) {
-		if (!this.fireBarPress(oEvent)) {
-			if (sap.ui.Device.browser.internet_explorer || sap.ui.Device.browser.edge) {
-				this.$().focus();
-			}
-			this.firePress();
-		}
-	};
-
-	ComparisonMicroChart.prototype.onkeydown = function(oEvent) {
-		switch (oEvent.keyCode) {
-			case jQuery.sap.KeyCodes.SPACE:
-				oEvent.preventDefault();
-				break;
-
-			case jQuery.sap.KeyCodes.ARROW_LEFT:
-			case jQuery.sap.KeyCodes.ARROW_UP:
-				var oFocusables = this.$().find(":focusable");	// all tabstops in the control
-				var iThis = oFocusables.index(oEvent.target);  // focused element index
-				if (oFocusables.length > 0) {
-					oFocusables.eq(iThis - 1).get(0).focus();	// previous tab stop element
-					oEvent.preventDefault();
-					oEvent.stopPropagation();
-				}
-				break;
-
-			case jQuery.sap.KeyCodes.ARROW_DOWN:
-			case jQuery.sap.KeyCodes.ARROW_RIGHT:
-				var oFocusable = this.$().find(":focusable");	// all tabstops in the control
-				var iThisEl = oFocusable.index(oEvent.target);  // focused element index
-				if (oFocusable.length > 0) {
-					oFocusable.eq((iThisEl + 1 < oFocusable.length) ? iThisEl + 1 : 0).get(0).focus();	// next tab stop element
-					oEvent.preventDefault();
-					oEvent.stopPropagation();
-				}
-				break;
-			default:
-		}
-	};
-
-	ComparisonMicroChart.prototype.onkeyup = function(oEvent) {
-		if (oEvent.which == jQuery.sap.KeyCodes.ENTER || oEvent.which == jQuery.sap.KeyCodes.SPACE) {
-			if (!this.fireBarPress(oEvent)) {
-				this.firePress();
-				oEvent.preventDefault();
-			}
-		}
-	};
-
-	ComparisonMicroChart.prototype.fireBarPress = function(oEvent) {
+	/**
+	 * Resolves the chart focus in case a chart bar is activated/released.
+	 * @param {jQuery.Event} oEvent The jQuery event object.
+	 * @private
+	 */
+	ComparisonMicroChart.prototype._resolveFocus = function(oEvent) {
 		var oBar = jQuery(oEvent.target);
 		if (oBar && oBar.attr("data-bar-index")) {
 			var iIndex = parseInt(oBar.attr("data-bar-index"), 10);
-			var oComparisonData = this.getData()[iIndex];
-			if (oComparisonData && oComparisonData.hasListeners("press")) {
-				oComparisonData.firePress();
-				oEvent.preventDefault();
-				oEvent.stopPropagation();
-				if (sap.ui.Device.browser.internet_explorer) {
-					jQuery.sap.byId(this.getId() + "-chart-item-bar-" + iIndex).focus();
-				}
-				return true;
+			var oData = this.getData()[iIndex];
+			if (oData && oData.hasListeners("press")) {
+				this.$().css("outline-color", "transparent");
+			} else {
+				this.$().css("outline-color", "");
 			}
-		}
-		return false;
-	};
-
-
-	ComparisonMicroChart.prototype.setBarPressable = function(iBarIndex, bPressable) {
-		if (bPressable) {
-			var sBarAltText = this._getBarAltText(iBarIndex);
-			jQuery.sap.byId(this.getId() + "-chart-item-bar-" + iBarIndex).addClass("sapSuiteUiMicroChartPointer").attr("tabindex", 0).attr("title", sBarAltText).attr("role", "presentation").attr("aria-label", sBarAltText);
 		} else {
-			jQuery.sap.byId(this.getId() + "-chart-item-bar-" + iBarIndex).removeAttr("tabindex").removeClass("sapSuiteUiMicroChartPointer").removeAttr("title").removeAttr("role").removeAttr("aria-label");
+			this.$().css("outline-color", "");
 		}
 	};
 
-	ComparisonMicroChart.prototype.onfocusin = function(oEvent) {
-		if (this._bIgnoreFocusEvt) {
-			this._bIgnoreFocusEvt = false;
-			return;
-		}
-		if (this.getId() + "-hidden" == oEvent.target.id) {
-			this.$().focus();
-			oEvent.preventDefault();
-			oEvent.stopPropagation();
+	/**
+	 * Adds and removes the tabindex between elements to support keyboard navigation.
+	 *
+	 * @param {int} oldIndex The index of the previously focused bar
+	 * @param {int} newIndex The index of the bar that is to be focused
+	 * @param {jQuery} bars All valid clickable bars inside the chart
+	 * @private
+	 */
+	ComparisonMicroChart.prototype._switchTabindex = function(oldIndex, newIndex, bars) {
+		if (oldIndex >= 0 && oldIndex < bars.length && newIndex >= 0 && newIndex < bars.length) {
+			bars.eq(oldIndex).removeAttr("tabindex");
+			bars.eq(newIndex).attr("tabindex", "0").focus();
 		}
 	};
 
@@ -565,12 +681,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		if (!this._oMouseEnterLeaveHandler) {
 			this._oMouseEnterLeaveHandler = {
 				mouseEnterChart: this._addTitleAttribute.bind(this),
-				mouseLeaveChart: this._removeTitleAttribute.bind(this)
+				mouseLeaveChart: this._removeTitleAttribute.bind(this),
+				mouseDownChart: this._resolveFocus.bind(this)
 			};
 		}
 		// bind events on chart
 		this.$().bind("mouseenter", this._oMouseEnterLeaveHandler.mouseEnterChart);
 		this.$().bind("mouseleave", this._oMouseEnterLeaveHandler.mouseLeaveChart);
+		this.$().bind("mousedown", this._oMouseEnterLeaveHandler.mouseDownChart);
 	};
 
 	/**
@@ -582,9 +700,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		if (this._oMouseEnterLeaveHandler) {
 			this.$().unbind("mouseenter", this._oMouseEnterLeaveHandler.mouseEnterChart);
 			this.$().unbind("mouseleave", this._oMouseEnterLeaveHandler.mouseLeaveChart);
+			this.$().unbind("mousedown", this._oMouseEnterLeaveHandler.mouseDownChart);
 		}
 	};
 
-	return ComparisonMicroChart;
+	library._overrideGetAccessibilityInfo(ComparisonMicroChart.prototype);
 
+	return ComparisonMicroChart;
 });

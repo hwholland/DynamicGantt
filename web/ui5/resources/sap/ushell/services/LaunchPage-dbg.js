@@ -1,20 +1,23 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's page builder service.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.services.LaunchPage");
 
     /**
      * This method MUST be called by the Unified Shell's container only, others MUST call
      * <code>sap.ushell.Container.getService("LaunchPage")</code>.
      * Constructs a new instance of the page builder service.
      *
+     * @name sap.ushell.services.LaunchPage
+     *
      * @class A service for handling groups, tiles and catalogs.
+     *
      * The functions that return the main objects are getGroups, getGroupTitle, getCatalogs and getCatalogTiles.
      * Since the implementation (i.e. adapter) is platform specific, do not call or access properties and functions of returned objects.
      * Instead, use other functions of the LaunchPage service with the relevant object as the input parameter.
@@ -24,15 +27,13 @@
      * @param {object} oContainerInterface
      *     the interface provided by the container
      *
-     * @class The Unified Shell's page builder service.
-     *
      * @constructor
      * @see sap.ushell.services.Container#getService
      * @since 1.15.0
      *
      * @public
      */
-    sap.ushell.services.LaunchPage = function (oAdapter, oContainerInterface) {
+    function LaunchPage (oAdapter, oContainerInterface) {
         var that = this,
             aTileActionsProviders = [];
 
@@ -45,6 +46,7 @@
          *  jQuery.promise object.
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getGroups
          */
         this.getGroups = function () {
             var oPromise = oAdapter.getGroups();
@@ -62,6 +64,7 @@
          *  jQuery.promise object.
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getDefaultGroup
          */
         this.getDefaultGroup = function () {
             var oPromise  = oAdapter.getDefaultGroup();
@@ -80,6 +83,7 @@
          *  group title
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getGroupTitle
          */
         this.getGroupTitle = function (oGroup) {
             return oAdapter.getGroupTitle(oGroup);
@@ -94,6 +98,7 @@
          *  Group id
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getGroupId
          */
         this.getGroupId = function (oGroup) {
             return oAdapter.getGroupId(oGroup);
@@ -110,6 +115,7 @@
          *  The group tiles array
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getGroupTiles
          */
         this.getGroupTiles = function (oGroup) {
             return oAdapter.getGroupTiles(oGroup);
@@ -126,6 +132,7 @@
          *  The array of link tiles
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getLinkTiles
          */
         this.getLinkTiles = function (oGroup) {
             return oAdapter.getLinkTiles(oGroup);
@@ -151,6 +158,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#addGroupAt
          */
         this.addGroupAt = function (sTitle, iIndex) {
             var oPromise, index = iIndex;
@@ -201,6 +209,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#addGroup
          */
         this.addGroup = function (sTitle) {
             var oPromise = oAdapter.addGroup(sTitle);
@@ -227,6 +236,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#removeGroup
          */
         this.removeGroup = function (oGroup, iIndex) {
             var oPromise = oAdapter.removeGroup(oGroup, iIndex);
@@ -259,6 +269,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#resetGroup
          */
         this.resetGroup = function (oGroup, iIndex) {
             var oPromise = oAdapter.resetGroup(oGroup, iIndex);
@@ -281,6 +292,7 @@
          *  <code>true</code> if removable; <code>false</code> if resettable
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#isGroupRemovable
          */
         this.isGroupRemovable = function (oGroup) {
             return oAdapter.isGroupRemovable(oGroup);
@@ -299,6 +311,7 @@
          *  <code>true</code> if locked; <code>false</code> if not (or as default in case the function was not implemented in the proper adapter).
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#isGroupLocked
          */
         this.isGroupLocked = function (oGroup) {
             if (typeof oAdapter.isGroupLocked === "function") {
@@ -321,6 +334,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#moveGroup
          */
         this.moveGroup = function (oGroup, iNewIndex) {
             var oPromise = oAdapter.moveGroup(oGroup, iNewIndex);
@@ -348,6 +362,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#setGroupTitle
          */
         this.setGroupTitle = function (oGroup, sTitle) {
             var oPromise = oAdapter.setGroupTitle(oGroup, sTitle);
@@ -414,6 +429,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#addTile
          */
         this.addTile = function (oCatalogTile, oGroup) {
             var oPromise = oAdapter.addTile(oCatalogTile, oGroup);
@@ -442,6 +458,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#removeTile
          */
         this.removeTile = function (oGroup, oTile, iIndex) {
             var oPromise = oAdapter.removeTile(oGroup, oTile, iIndex);
@@ -475,17 +492,41 @@
          *    The same object type as the one returned by <code>sap.ushell.services.LaunchPage.getGroups</code>
          *    the target group the tile will be placed in, in case this
          *     parameter is not supplied we assume the move tile is within the source group
+         * @param {string} newTileType
+         *    The new type of the tile
+         *
          * @returns {object}
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#moveTile
          */
-        this.moveTile = function (oTile, iSourceIndex, iTargetIndex, oSourceGroup, oTargetGroup) {
-            var oPromise = oAdapter.moveTile(oTile, iSourceIndex, iTargetIndex, oSourceGroup, oTargetGroup);
+        this.moveTile = function (oTile, iSourceIndex, iTargetIndex, oSourceGroup, oTargetGroup, newTileType) {
+            var oPromise = oAdapter.moveTile(oTile, iSourceIndex, iTargetIndex, oSourceGroup, oTargetGroup, newTileType);
             oPromise.fail(function () {
                 jQuery.sap.log.error("Fail to move Tile: " + that.getTileId(oTile)); // TODO: complete message
             });
             return oPromise;
+        };
+
+        /**
+         * Returns <code>true</code> if link personalization is allowed for the tile.
+         *
+         * In case this tile parameter is not supplied, returns <code>true</code> if the link personalization
+         * feature is allowed at least for some of the tiles.
+         *
+         * @param {object} oTile
+         *   A tile instance.
+         * @returns {boolean}
+         *   Returns <code>true</code> if the tile's link personalization is allowed
+         *
+         * @private
+         */
+        this.isLinkPersonalizationSupported = function (oTile) {
+            if (typeof oAdapter.isLinkPersonalizationSupported === "function") {
+                return oAdapter.isLinkPersonalizationSupported(oTile);
+            }
+            return false;
         };
 
         /**
@@ -497,6 +538,7 @@
          *     Tile id
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getTileId
          */
         this.getTileId = function (oTile) {
             return oAdapter.getTileId(oTile);
@@ -511,6 +553,7 @@
          *     The title
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getTileTitle
          */
         this.getTileTitle = function (oTile) {
             return oAdapter.getTileTitle(oTile);
@@ -525,6 +568,7 @@
          *     The type
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getTileType
          */
         this.getTileType = function (oTile) {
             if (oAdapter.getTileType) {
@@ -545,6 +589,7 @@
          *  jQuery.promise object
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getTileView
          */
         this.getTileView = function (oTile) {
             var oDfd = oAdapter.getTileView(oTile);
@@ -559,6 +604,27 @@
             return oDfd;
         };
 
+
+        /**
+         * Returns the press handler for clicking on a tile.
+         *
+         * @param {object} oTile
+         *     The tile
+         *
+         * @returns {function}
+         *  handler for clicking on the tile.
+         *
+         * @public
+         * @alias sap.ushell.services.LaunchPage#getAppBoxPressHandler
+         */
+        this.getAppBoxPressHandler = function (oTile) {
+            if (oAdapter.getAppBoxPressHandler) {
+                return oAdapter.getAppBoxPressHandler(oTile);
+            }
+
+            return undefined;
+        };
+
         /**
          * Returns the tile size in the format of 1x1 or 1x2 string
          *
@@ -569,6 +635,7 @@
          *  tile size in units in 1x1 format
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getTileSize
          */
         this.getTileSize = function (oTile) {
             return oAdapter.getTileSize(oTile);
@@ -586,6 +653,7 @@
          *  the tile target
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getTileTarget
          */
         this.getTileTarget = function (oTile) {
             return oAdapter.getTileTarget(oTile);
@@ -638,6 +706,7 @@
          *      The tile
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#refreshTile
          */
         this.refreshTile = function (oTile) {
             oAdapter.refreshTile(oTile);
@@ -652,6 +721,7 @@
          *   The tile's required visibility state.
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#setTileVisible
          */
         this.setTileVisible = function (oTile, bNewVisible) {
             return oAdapter.setTileVisible(oTile, bNewVisible);
@@ -699,6 +769,7 @@
          *  A callback which returns an array of action objects.
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#registerTileActionsProvider
          */
         this.registerTileActionsProvider = function (fnProvider){
             if (typeof fnProvider !== 'function') {
@@ -711,6 +782,7 @@
          * Returns internal and external tile actions.
          * Tile actions can be provided by external providers registered using
          * @see sap.ushell.services.LaunchPage.registerTileActionsProvider,
+         * @alias sap.ushell.services.LaunchPage#getTileActions
          * and by internal provider that can provide tile actions
          * from the underlying implementation (i.e. adapter)
          *
@@ -773,6 +845,7 @@
          *   Progress notifications are sent for each single catalog, providing a single black-box catalog object each time.
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogs
          */
         this.getCatalogs = function () {
             return oAdapter.getCatalogs();
@@ -791,6 +864,7 @@
          * @see #getCatalogs
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#isCatalogsValid
          */
         this.isCatalogsValid = function () {
             return oAdapter.isCatalogsValid();
@@ -816,6 +890,7 @@
          * @since 1.21.2
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogData
          */
         this.getCatalogData = function (oCatalog) {
             if (typeof oAdapter.getCatalogData !== "function") {
@@ -842,6 +917,7 @@
          * @since 1.17.1
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogError
          */
         this.getCatalogError = function (oCatalog) {
             return oAdapter.getCatalogError(oCatalog);
@@ -857,6 +933,7 @@
          *  Catalog id
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogId
          */
         this.getCatalogId = function (oCatalog) {
             return oAdapter.getCatalogId(oCatalog);
@@ -872,6 +949,7 @@
          *  Catalog title
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTitle
          */
         this.getCatalogTitle = function (oCatalog) {
             return oAdapter.getCatalogTitle(oCatalog);
@@ -888,6 +966,7 @@
          *  jQuery.promise object.
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTiles
          */
         this.getCatalogTiles = function (oCatalog) {
             var oPromise = oAdapter.getCatalogTiles(oCatalog);
@@ -909,6 +988,7 @@
          *  Tile id
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTileId
          */
         this.getCatalogTileId = function (oTile) {
             return oAdapter.getCatalogTileId(oTile);
@@ -924,6 +1004,7 @@
          *  Tile title
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTileTitle
          */
         this.getCatalogTileTitle = function (oCatalogTile) {
             return oAdapter.getCatalogTileTitle(oCatalogTile);
@@ -939,6 +1020,7 @@
          *  Tile size in units in 1x1 or 1x2 format
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTileSize
          */
         this.getCatalogTileSize = function (oCatalogTile) {
             return oAdapter.getCatalogTileSize(oCatalogTile);
@@ -951,9 +1033,37 @@
          *     The catalog tile
          *
          * @returns {object}
+         *  jQuery.deferred.promise object that when resolved, returns the Catalog Tile View
+         *
+         * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTileViewControl
+         */
+        this.getCatalogTileViewControl = function (oCatalogTile) {
+            if (typeof oAdapter.getCatalogTileViewControl === "function") {
+               return oAdapter.getCatalogTileViewControl(oCatalogTile);
+            } else {
+               var oDeferred = new jQuery.Deferred(),
+                   oResult = this.getCatalogTileView(oCatalogTile);
+
+               oDeferred.resolve(oResult);
+               return oDeferred.promise();
+            }
+        };
+
+        /**
+         * Returns the UI5 view or control  of a catalog tile
+         *
+         * @param {object} oCatalogTile
+         *     The catalog tile
+         *
+         * @returns {object}
          *  UI5 view or control
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTileView
+         *
+         * @deprecated since version 1.48 (as a result of XMLHttpRequest spec prohibiting the sending of synchronous requests). 
+         * Use <code>getCatalogTileViewControl</code> instead
          */
         this.getCatalogTileView = function (oCatalogTile) {
             return oAdapter.getCatalogTileView(oCatalogTile);
@@ -971,6 +1081,7 @@
          *     "preview" contract
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTileTargetURL
          */
         this.getCatalogTileTargetURL = function (oCatalogTile) {
             return oAdapter.getCatalogTileTargetURL(oCatalogTile);
@@ -987,6 +1098,7 @@
          *      The tags associated with this catalog tile
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTileTags
          */
         this.getCatalogTileTags = function (oCatalogTile) {
             if (typeof oAdapter.getCatalogTileTags === "function") {
@@ -1009,6 +1121,7 @@
          *      The keywords associated with this catalog tile
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTileKeywords
          */
         this.getCatalogTileKeywords = function (oCatalogTile) {
             return oAdapter.getCatalogTileKeywords(oCatalogTile);
@@ -1027,9 +1140,31 @@
          * @since 1.16.3
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTilePreviewTitle
          */
         this.getCatalogTilePreviewTitle = function (oCatalogTile) {
             return oAdapter.getCatalogTilePreviewTitle(oCatalogTile);
+        };
+
+        /**
+         * Returns preview subtitle for a catalog tile.
+         *
+         * @param {object} oCatalogTile
+         *     The catalog tile
+         *
+         * @returns {string}
+         *     Preview subtitle for the catalog tile's underlying application as provided via the
+         *     "preview" contract
+         *
+         * @since 1.40
+         *
+         * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTilePreviewSubtitle
+         */
+        this.getCatalogTilePreviewSubtitle = function (oCatalogTile) {
+            if (oAdapter.getCatalogTilePreviewSubtitle) {
+                return oAdapter.getCatalogTilePreviewSubtitle(oCatalogTile);
+            }
         };
 
         /**
@@ -1044,13 +1179,14 @@
          * @since 1.16.3
          *
          * @public
+         * @alias sap.ushell.services.LaunchPage#getCatalogTilePreviewIcon
          */
         this.getCatalogTilePreviewIcon = function (oCatalogTile) {
             return oAdapter.getCatalogTilePreviewIcon(oCatalogTile);
         };
 
         /**
-         * Adds a bookmark to the user's home page.
+         * Adds a bookmark tile to one of the user's home page groups.
          *
          * @param {object} oParameters
          *   bookmark parameters. In addition to title and URL, a bookmark might allow additional
@@ -1075,10 +1211,14 @@
          *   The refresh interval for the <code>serviceUrl</code> in seconds.
          * @param {string} [oParameters.numberUnit]
          *   The unit for the number retrieved from <code>serviceUrl</code>.
+         * @param {object} [oGroup]
+         *   Optional reference to the group the bookmark tile should be added to.
+         *   If not given, the default group is used.
          * @returns {object}
          *   a jQuery promise.
          *
          * @see sap.ushell.services.URLParsing#getShellHash
+         * @alias sap.ushell.services.LaunchPage#addBookmark
          * @since 1.15.0
          */
         this.addBookmark = function (oParameters, oGroup) {
@@ -1217,4 +1357,8 @@
             return oAdapter.onCatalogTileAdded(sTileId);
         };
     };
-}());
+
+    LaunchPage.hasNoAdapter = false;
+    return LaunchPage;
+
+}, true /* bExport */);

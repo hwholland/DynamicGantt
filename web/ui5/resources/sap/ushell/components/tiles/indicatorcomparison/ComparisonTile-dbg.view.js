@@ -1,8 +1,9 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// @copyright@
 
 //Comparison Tile
 (function () {
-    "use strict";
+	"use strict";
+
     /*global jQuery, sap */
     /*jslint nomen: true */
 

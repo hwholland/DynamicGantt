@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's UserDefaultParameters service provides
  *               read and write access to the User Default Parameter values.
@@ -7,16 +7,17 @@
  *               This service should be accessed by the application
  *               via the CrossApplicationNavigation service.
  *
- * @version
- * 1.38.26
+ * @version 1.54.3
  */
-(function () {
+sap.ui.define([
+    'sap/ui/base/EventProvider',
+    'sap/ushell/utils'
+], function (EventProvider, oUtils) {
     "use strict";
     /*global jQuery, sap, setTimeout, clearTimeout, window */
-    jQuery.sap.declare("sap.ushell.services.UserDefaultParameters");
 
     var sEventNameValueStored = "valueStored";
-    var sRelevantStoreDeltaMembers = [ "value", "noEdit", "noStore", "extendedValue", "alwaysAskPlugin"];
+    var aStoreMembers = ["value", "noEdit", "noStore", "extendedValue", "alwaysAskPlugin"];
     /**
      * The Unified Shell's UserDefaultParameters service
      * This method MUST be called by the Unified Shell's container only, others
@@ -38,10 +39,15 @@
      *
      * @since 1.32.0
      */
-    sap.ushell.services.UserDefaultParameters = function (oAdapter, oContainerInterface, sParameter, oConfig) {
+    function UserDefaultParameters (oAdapter, oContainerInterface, sParameter, oConfig) {
         this._aPlugins = []; // list of registered plugins, in order
         this._oUserDefaultParametersNames = undefined;
-        var that = this, oStoreValueEventProvider = new sap.ui.base.EventProvider();
+
+        // Indicates whether a parameter was already persisted or scheduled for
+        // persistence.
+        this._oWasParameterPersisted = {};
+
+        var that = this, oStoreValueEventProvider = new EventProvider();
         /**
          * Obtain an integer representing the priority of the plugin
          *
@@ -72,14 +78,14 @@
         * @since 1.32.0
         */
         this._insertPluginOrdered = function (aPlugins, oPlugin) {
-            var prioPlugin = getPrio(oPlugin), 
+            var prioPlugin = getPrio(oPlugin),
                 i,
                 prioNth;
             for (i = 0; (i < aPlugins.length) && oPlugin; ++i) {
                 prioNth = getPrio(aPlugins[i]);
                 if (oPlugin && (prioPlugin > prioNth)) {
-                    aPlugins.splice(i,0, oPlugin); // insert at index i; 
-                    oPlugin = undefined; 
+                    aPlugins.splice(i,0, oPlugin); // insert at index i;
+                    oPlugin = undefined;
                 }
             }
             if (oPlugin) {
@@ -92,6 +98,7 @@
         /**
          * @param {object} oPlugin the Plugin to register with the service
          * @public
+         * @alias sap.ushell.services.UserDefaultParameters#registerPlugin
          */
         this.registerPlugin = function (oPlugin) {
             this._aPlugins = this._insertPluginOrdered(this._aPlugins, oPlugin);
@@ -137,10 +144,6 @@
             return;
         }
 
-        function clone(aObject) {
-            return jQuery.extend(true,{},aObject);
-        }
-
         this._getStoreDate = function() {
             return new Date().toString();
         };
@@ -148,7 +151,7 @@
 //        /**
 //         * Determines whether sParameterName is used as an extended parameter
 //         * @param {string} sParameterName parameter name
-//         * @returns {boolean} true if sParameterName is a parameter which is not used as an Extended Parameter 
+//         * @returns {boolean} true if sParameterName is a parameter which is not used as an Extended Parameter
 //         */
 //        this._isNotExtendedAnymore = function(sParameterName) {
 //            sap.ushell.Container.getService("ClientSideTargetResolution").getUserDefaultParameterNames(true).done(function(oParametersAndExtendedParameters) {
@@ -176,6 +179,7 @@
          * @since 1.32.0
          */
         this._storeValue = function(sParameterName, oValueObject, bFromEditor) {
+            var that = this;
             var resultPromise = new jQuery.Deferred();
             var oDeferred = new jQuery.Deferred();
             if (bFromEditor && oValueObject.extendedValue) {
@@ -194,16 +198,17 @@
                 }
                 if (bFromEditor && that._isInitial(oValueObject)) {
                     oValueObject = undefined; // indicates removal
+                    that._oWasParameterPersisted[sParameterName] = false;
                 } else {
                     oValueObject._shellData = jQuery.extend(true,{ storeDate : that._getStoreDate() }, oValueObject._shellData);
                 }
                 sap.ushell.Container.getService("UserDefaultParameterPersistence").saveParameterValue(sParameterName, oValueObject).always(function() {
                     var oStoreValue = {
                         parameterName : sParameterName,
-                        parameterValue: clone(oValueObject)
+                        parameterValue: oUtils.clone(oValueObject || {})
                     };
                     oStoreValueEventProvider.fireEvent(sEventNameValueStored, oStoreValue);
-                    resultPromise.resolve();
+                    resultPromise.resolve(sParameterName);
                 });
             });
             return resultPromise.promise();
@@ -213,32 +218,28 @@
          * Obtain a present value from the internal store, may return an
          * *empty* <code>{value : undefined}</code> object if not present.
          *
-         * @param {string} sParameterName Name of the parameter for the value which has to be received
-         * @returns {object}
-         *      A jQuery promise
+         * @param {string} sParameterName
+         *   Name of the parameter for the value which has to be received
+         *
+         * @param {object} oPersistedParametersCache
+         *   A cache containing the last value persisted (or scheduled for
+         *   persistence) for a certain parameter.
+         *
+         * @returns {jQuery.Promise}
+         *      A jQuery promise that resolves with an object representing the
+         *      persisted value for the parameter or rejects in case the
+         *      parameter was not found in the persistence.
          *
          * @private
          * @see sap.ushell.services.Container#getService
          *
          * @since 1.32.0
          */
-        this._getCurrentValue = function(sParameterName) {
-            var oDeferred = new jQuery.Deferred();
-            sap.ushell.Container.getService("UserDefaultParameterPersistence").loadParameterValue(sParameterName).done(function (aValue) {
-                oDeferred.resolve(aValue);
-            }).fail(function() {
-                oDeferred.resolve({ value : undefined });
-            });
-            return oDeferred.promise();
-        };
+        this._getPersistedValue = function(sParameterName) {
+            // ask service
+            var oService = sap.ushell.Container.getService("UserDefaultParameterPersistence");
 
-        /**
-         * Determine whether the value represents a value which has never been set
-         * @param {object} oValue value object
-         * @returns {boolean} boolean indicating whether oValue represents a Never set Value
-         */
-        this._isNeverSetValue = function(oValue) {
-            return !oValue || (!oValue._shellData && !oValue.value && !oValue.extendedValue);
+            return oService.loadParameterValue(sParameterName);
         };
 
         /**
@@ -247,13 +248,29 @@
          * @returns {boolean} boolean indicating whether oValue represents a Never set Value
          */
         this._isInitial = function(oValue) {
-            return !(oValue && (oValue.value || oValue.extendedValue));
+            return !oValue || (!oValue.value && !oValue.extendedValue);
         };
 
-        this._isStoreDistinct = function(oValueObject1, oValueObject2) {
-            return !sRelevantStoreDeltaMembers.every(function(sMember) {
-                return (oValueObject1[sMember] === oValueObject2[sMember]
-                    || jQuery.sap.equal(oValueObject1[sMember],oValueObject2[sMember]));
+        /**
+         * Checks whether two objects have the same value for a given set of
+         * members.
+         *
+         * @param {object} oObject1
+         *   The first object to compare
+         * @param {object} oObject2
+         *   The second object to compare
+         * @param {array} aMembersToCheck
+         *   An array of members to check
+         *
+         * @return {boolean}
+         *   true if each member in <code>aMembersToCheck</code> has the same
+         *   value in both the objects. false in case at least one member
+         *   differs.
+         */
+        this._haveSameMembersValue = function(oObject1, oObject2, aMembersToCheck) {
+            return aMembersToCheck.every(function(sRelevantMember) {
+                return (oObject1[sRelevantMember] === oObject2[sRelevantMember]
+                    || jQuery.sap.equal(oObject1[sRelevantMember], oObject2[sRelevantMember]));
             });
         };
 
@@ -363,44 +380,61 @@
          *      <code>undefined</code> if no value could be retrieved.
          */
         this.getValue = function (sParameterName) {
-            // strategy is as follows
+            // Strategy is as follows
             // a) get value from persistence,
             // b) if required ask all plugins in order whether they want to alter value
             // c) return value
             // c2) if value was altered, including set to undefined,
             //    [not on critical path] update value in remote persistences
             //    (potentially deleting value if set to undefined!)
+            //
             var that = this,
-                oDeferred = new jQuery.Deferred(),
-                oDeferred2 = new jQuery.Deferred();
+                oDeferred = new jQuery.Deferred();
+
             this._isRelevantParameter(sParameterName).fail(function() {
                 // no relevant parameter -> no value
-                oDeferred.resolve({});
+                oDeferred.resolve({ });
             }).done(function() {
-                that._getCurrentValue(sParameterName).done(function(aValue) {
-                    var aOriginalValue;
-                    if (!aValue) {
-                        aValue = { };
+                jQuery.when(that._getPersistedValue(sParameterName)).then(function (oPersistedValue) {
+                    that._oWasParameterPersisted[sParameterName] = true;
+                    return jQuery.when(oPersistedValue || {});
+                }, function () {
+                    return jQuery.when({ value: undefined });
+                }).then(function (oPersistedValue) {
+                    var oGotNewValueDeferred = new jQuery.Deferred(),
+                        oValueClone = oUtils.clone(oPersistedValue),
+                        oPluginManagerService = sap.ushell.Container.getService("PluginManager");
+
+                    var bAskValueToPlugins =
+                        (!oPersistedValue._shellData && that._isInitial(oPersistedValue)) // _shellData is added by the shell when the parameter is stored
+                        || oPersistedValue.noStore                                        // i.e., don't use the stored value
+                        || oPersistedValue.alwaysAskPlugin;
+
+                    if (!bAskValueToPlugins) {
+                        // return clone in case caller modifies persisted value
+                        oDeferred.resolve(oValueClone);
+                        return;
                     }
-                    aOriginalValue = clone(aValue);
-                    if ( (aValue._shellData || !that._isInitial(aValue)) && !aValue.noStore && !aValue.alwaysAskPlugin) {
-                        oDeferred2.resolve(aValue);
-                    } else {
-                        sap.ushell.Container.getService("PluginManager").loadPlugins("UserDefaults").done(function () {
-                            iterateOverPluginsToGetDefaultValue(0, that._aPlugins, sParameterName, aValue, oDeferred2);
-                        }).fail(function() {
-                            jQuery.sap.log.error("Cannot get value for " + sParameterName + ". One or more plugins could not be loaded.");
-                            oDeferred2.reject("Initialization of plugins failed");
-                        });
-                    }
-                    oDeferred2.done(function (aNewValue) {
-                        if (that._isNeverSetValue(aOriginalValue) || that._isStoreDistinct(aOriginalValue,aNewValue)) {
-                            that._storeValue(sParameterName, aNewValue);
+
+                    oPluginManagerService.loadPlugins("UserDefaults").done(function() {
+                        iterateOverPluginsToGetDefaultValue(0, that._aPlugins, sParameterName, oPersistedValue, oGotNewValueDeferred);
+                    }).fail(function() {
+                        jQuery.sap.log.error("Cannot get value for " + sParameterName + ". One or more plugins could not be loaded.");
+                        oGotNewValueDeferred.reject("Initialization of plugins failed");
+                    });
+
+                    oGotNewValueDeferred.done(function(oNewValue) {
+                        if (!that._oWasParameterPersisted[sParameterName] || !that._haveSameMembersValue(oValueClone, oNewValue, aStoreMembers)) {
+                            // avoid multiple calls result in storing a parameter, as we fire and forget via _storeValue below.
+                            that._oWasParameterPersisted[sParameterName] = true;
+
+                            that._storeValue(sParameterName, oNewValue);
                         }
-                        oDeferred.resolve(aNewValue);
+                        oDeferred.resolve(oNewValue);
                     }).fail(oDeferred.reject.bind(oDeferred));
                 });
             });
+
             return oDeferred.promise();
         };
 
@@ -597,7 +631,7 @@
             }</pre>
          * the list will not contain values which have noEdit set
          *
-         * Note: whether maintenance of extended User Default values is to be enabled is 
+         * Note: whether maintenance of extended User Default values is to be enabled is
          * indicated by the boolean <code>extendedUsage</code> property(!), not
          * by the presence of an extendedValue.
          * When editing a simple user default ( extendedUsage : undefined ) the extendedValue
@@ -676,6 +710,7 @@
          * @name attachValueStored
          * @since 1.34.0
          * @public
+         * @alias sap.ushell.services.UserDefaultParameters#attachValueStored
          */
         this.attachValueStored = function (fnFunction) {
             oStoreValueEventProvider.attachEvent(sEventNameValueStored, fnFunction);
@@ -691,10 +726,13 @@
          * @name detachValueStored
          * @since 1.34.0
          * @public
+         * @alias sap.ushell.services.UserDefaultParameters#detachValueStored
          */
         this.detachValueStored = function (fnFunction) {
             oStoreValueEventProvider.detachEvent(sEventNameValueStored, fnFunction);
         };
     };
-    sap.ushell.services.UserDefaultParameters.hasNoAdapter = true;
-}());
+
+    UserDefaultParameters.hasNoAdapter = true;
+    return UserDefaultParameters;
+}, true /* bExport */);

@@ -4,9 +4,9 @@
     <derived/>
     <documentation>A string type that represents CSS color values.
 
-Allowed values are CSS hex colors like "#666666" or "#fff", RGB/HSL values like "rgb(0,0,0)"
-or "hsla(50%,10%,30%,0.5)" as well as CSS color names like "green" and "darkblue" and special
-values like "inherit" and "transparent".
+Allowed values are CSS hex colors like &quot;#666666&quot; or &quot;#fff&quot;, RGB/HSL values like &quot;rgb(0,0,0)&quot;
+or &quot;hsla(50%,10%,30%,0.5)&quot; as well as CSS color names like &quot;green&quot; and &quot;darkblue&quot; and special
+values like &quot;inherit&quot; and &quot;transparent&quot;.
 
 The empty string is also allowed and has the same effect as setting no color.</documentation>
     <final/>

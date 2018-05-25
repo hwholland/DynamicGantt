@@ -1,2 +1,2 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-(function(){"use strict";jQuery.sap.declare("sap.ushell.ui.footerbar.LogoutButtonRenderer");jQuery.sap.require("sap.ui.core.Renderer");jQuery.sap.require("sap.ushell.ui.launchpad.ActionItemRenderer");sap.ushell.ui.footerbar.LogoutButtonRenderer=sap.ui.core.Renderer.extend(sap.ushell.ui.launchpad.ActionItemRenderer);}());
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(['sap/ui/core/Renderer','sap/ushell/ui/launchpad/ActionItemRenderer'],function(R,A){"use strict";var L=R.extend(A);return L;},true);

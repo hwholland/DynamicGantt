@@ -7,12 +7,12 @@
     <since>1.16</since>
     <baseType>sap.m/ViewSettingsItem</baseType>
     <properties>
-        <property name="filterCount" type="sap.ui.core/int" defaultValue="0" group="Behavior">
+        <property group="Behavior" defaultValue="0" type="sap.ui.core/int" name="filterCount">
             <documentation>The number of currently active filters for this custom filter item. It will be displayed in the filter list of the ViewSettingsDialog to represent the filter state of the custom control.</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="customControl" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="customControl">
             <documentation>A custom control for the filter field. It can be used for complex filtering mechanisms.</documentation>
         </aggregation>
     </aggregations>

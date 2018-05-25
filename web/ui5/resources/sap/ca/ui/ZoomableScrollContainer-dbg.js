@@ -55,7 +55,7 @@ jQuery.sap.require("sap.m.ScrollContainer");
  * @class
  * Based on a ScrollContainer, it allows you to pinch and zoom on mobile devices
  * @extends sap.m.ScrollContainer
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

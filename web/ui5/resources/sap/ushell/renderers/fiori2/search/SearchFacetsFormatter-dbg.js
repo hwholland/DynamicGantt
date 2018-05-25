@@ -1,9 +1,8 @@
-/* global jQuery, sap*/
+/* global jQuery, sap, window, $*/
 
-(function() {
+sap.ui.define([], function() {
     "use strict";
 
-    jQuery.sap.require("sap.ui.core.format.NumberFormat");
     jQuery.sap.declare('sap.ushell.renderers.fiori2.search.SearchFacetsFormatter');
     var module = sap.ushell.renderers.fiori2.search.SearchFacetsFormatter = function() {
         this.init.apply(this, arguments);
@@ -29,6 +28,7 @@
             this.facetType = properties.facetType; //datasource or attribute
             this.dimension = properties.dimension;
             this.dataType = properties.dataType;
+            this.matchingStrategy = properties.matchingStrategy;
             this.items = properties.items || [];
             this.totalCount = properties.totalCount;
         },
@@ -78,19 +78,16 @@
 
         init: function(properties) {
             properties = properties || {};
-            this.selected = properties.selected ||  false;
-            this.level = properties.level ||  0;
-            this.sina = sap.ushell.Container.getService("Search").getSina();
+            this.selected = properties.selected || false;
+            this.level = properties.level || 0;
             this.filterCondition = properties.filterCondition;
-            this.value = properties.value ||  ""; //value here means count
+            this.value = properties.value || ""; //value here means count
             this.label = properties.label || "";
-            this.facetTitle = properties.facetTitle ||  "";
+            this.facetTitle = properties.facetTitle || "";
             this.facetAttribute = properties.facetAttribute || "";
-            this.valueLabel = typeof this.value === "number" ? sap.ui.core.format.NumberFormat.getIntegerInstance({
-                style: (Math.abs(this.value) >= 99950 ? 'short' : 'standard'), // 99950 is the first number (with precision 3 rounding) that will map to 100000; same as "parseFloat((Math.abs(number)).toPrecision(3)) >= 100000"
-                precision: 3
-            }).format(this.value) : "";
+            this.valueLabel = this.value;
             this.advanced = properties.advanced || false;
+            this.listed = properties.listed || false;
         },
 
         equals: function(otherFacetItem) {
@@ -115,8 +112,8 @@
     };
 
     module.prototype = {
-        init: function() {
-            this.sina = sap.ushell.Container.getService("Search").getSina();
+        init: function(model) {
+            this.model = model;
         },
 
         _getAncestorDataSources: function(oSearchModel) {
@@ -154,7 +151,7 @@
                     label: ds.labelPlural,
                     value: aSiblingNodes[j].count,
                     filterCondition: ds,
-                    selected: currentDS.equals(ds),
+                    selected: currentDS === ds,
                     level: level
                 });
                 aSiblingFacetItems.push(fi);
@@ -192,65 +189,31 @@
             var currentDS = oSearchModel.getProperty("/uiFilter/dataSource");
             var aAncestors = this._getAncestorDataSources(oSearchModel);
             oDataSourceFacet.items.push.apply(oDataSourceFacet.items, aAncestors);
-            var aSiblings = this._getSiblingDataSources(oSearchModel, oSearchModel.allDataSource.equals(currentDS) ? 0 : 1);
+            var aSiblings = this._getSiblingDataSources(oSearchModel, oSearchModel.allDataSource === currentDS ? 0 : 1);
             oDataSourceFacet.items.push.apply(oDataSourceFacet.items, aSiblings);
             return oDataSourceFacet;
         },
 
-        _findAttributeLabelOfFilterGroup: function(filterConditionGroup) {
-            for (var i = 0; i < filterConditionGroup.conditions.length; i++) {
-                var filterCondition = filterConditionGroup.conditions[i];
-                if (filterCondition instanceof sap.bc.ina.api.sina.base.filter.Condition) {
-                    return filterCondition.attributeLabel;
-                } else if (filterCondition instanceof sap.bc.ina.api.sina.base.filter.ConditionGroup) {
-                    return this._findAttributeLabelOfFilterGroup(filterCondition);
-                }
-            }
-        },
-
-        _findAttributeOfFilterGroup: function(filterConditionGroup) {
-            for (var i = 0; i < filterConditionGroup.conditions.length; i++) {
-                var filterCondition = filterConditionGroup.conditions[i];
-                if (filterCondition instanceof sap.bc.ina.api.sina.base.filter.Condition) {
-                    return filterCondition.attribute;
-                } else if (filterCondition instanceof sap.bc.ina.api.sina.base.filter.ConditionGroup) {
-                    return this._findAttributeOfFilterGroup(filterCondition);
-                }
-            }
-        },
-
-        _createFacetItemsFromConditionGroup: function(conditionGroup) {
+        _createFacetItemsFromConditionGroup: function(rootCondition) {
             var facetItems = [];
-            for (var i = 0; i < conditionGroup.conditions.length; i++) {
-                var filterCondition = conditionGroup.conditions[i];
-                if (filterCondition instanceof sap.bc.ina.api.sina.base.filter.Condition) {
-                    facetItems.push(new FacetItem({
-                        label: filterCondition.valueLabel ? filterCondition.valueLabel : filterCondition.value,
-                        facetTitle: filterCondition.attributeLabel,
-                        facetAttribute: filterCondition.attribute,
-                        filterCondition: filterCondition,
-                        selected: true
-                    }));
-                } else if (filterCondition instanceof sap.bc.ina.api.sina.base.filter.ConditionGroup) {
-                    for (var j = 0; j < filterCondition.conditions.length; j++) {
-                        var nestedFilterCondition = filterCondition.conditions[j];
-                        if (nestedFilterCondition instanceof sap.bc.ina.api.sina.base.filter.Condition) {
-                            facetItems.push(new FacetItem({
-                                label: nestedFilterCondition.valueLabel ? nestedFilterCondition.valueLabel : nestedFilterCondition.value,
-                                filterCondition: nestedFilterCondition,
-                                selected: true,
-                                facetTitle: nestedFilterCondition.attributeLabel,
-                                facetAttribute: nestedFilterCondition.attribute
-                            }));
-                        } else if (nestedFilterCondition instanceof sap.bc.ina.api.sina.base.filter.ConditionGroup) {
-                            facetItems.push(new FacetItem({
-                                label: nestedFilterCondition.label,
-                                filterCondition: nestedFilterCondition,
-                                selected: true,
-                                facetTitle: this._findAttributeLabelOfFilterGroup(nestedFilterCondition),
-                                facetAttribute: this._findAttributeOfFilterGroup(nestedFilterCondition)
-                            }));
-                        }
+            for (var i = 0; i < rootCondition.conditions.length; i++) {
+                var complexCondition = rootCondition.conditions[i];
+                for (var j = 0; j < complexCondition.conditions.length; j++) {
+                    var condition = complexCondition.conditions[j];
+                    if (condition.type === this.model.sinaNext.ConditionType.Simple) {
+                        facetItems.push(new FacetItem({
+                            facetAttribute: condition.attribute,
+                            label: condition.valueLabel,
+                            filterCondition: condition,
+                            selected: true
+                        }));
+                    } else {
+                        facetItems.push(new FacetItem({
+                            facetAttribute: condition.conditions[0].attribute,
+                            label: condition.valueLabel,
+                            filterCondition: condition,
+                            selected: true
+                        }));
                     }
                 }
             }
@@ -258,56 +221,56 @@
         },
 
         getAttributeFacetsFromPerspective: function(resultSet, oSearchModel) {
-            var aServerSideFacets = resultSet.getChartFacets().filter(function(element) {
-                return element.facetType === "attribute";
-            });
-            var aClientSideFacets = [];
-            var oClientSideFacetsWithSelection = {};
-            var aClientSideFacetsByDimension = {};
-            var aFacetItemsWithFilterConditions = this._createFacetItemsFromConditionGroup(oSearchModel.getProperty("/uiFilter/defaultConditionGroup"));
 
-            // extract facets from server response:
+            // get chart facets from resultSet
+            var aServerSideFacets = resultSet.facets.filter(function(element) {
+                return element.type === oSearchModel.sinaNext.FacetType.Chart;
+            });
+
+            // create facets and facet items from server respons
+            var aClientSideFacets = [];
+            var aClientSideFacetsByDimension = {};
             for (var i = 0, len = aServerSideFacets.length; i < len; i++) {
                 var oServerSideFacet = aServerSideFacets[i];
                 var oClientSideFacet = new Facet({
                     title: oServerSideFacet.title,
-                    facetType: oServerSideFacet.facetType,
-                    dimension: oServerSideFacet.dimension,
-                    totalCount: oServerSideFacet.query.resultSet.totalCount
+                    facetType: 'attribute',
+                    dimension: oServerSideFacet.query.dimension,
+                    totalCount: resultSet.totalCount
                 });
-                if (!oServerSideFacet.query.resultSet || !oServerSideFacet.query.resultSet.elements || oServerSideFacet.query.resultSet.elements.length === 0) {
+                if (oServerSideFacet.items.length === 0) {
                     continue;
                 }
-                for (var j = 0; j < oServerSideFacet.query.resultSet.elements.length; j++) {
-                    var oFacetListItem = oServerSideFacet.query.resultSet.elements[j];
+                for (var j = 0; j < oServerSideFacet.items.length; j++) {
+                    var oFacetListItem = oServerSideFacet.items[j];
                     var item = new FacetItem({
-                        value: oFacetListItem.valueRaw,
-                        filterCondition: oFacetListItem.dataSource || oFacetListItem.labelRaw,
-                        label: oFacetListItem.label
+                        facetAttribute: oServerSideFacet.query.dimension,
+                        label: oFacetListItem.dimensionValueFormatted,
+                        value: oFacetListItem.measureValue,
+                        filterCondition: oFacetListItem.filterCondition
                     });
-                    if (oFacetListItem.labelRaw) {
-                        if (oFacetListItem.labelRaw.attributeLabel) {
-                            item.facetTitle = oFacetListItem.labelRaw.attributeLabel;
-                        } else if (oFacetListItem.labelRaw.conditions) {
-                            item.facetTitle = this._findAttributeLabelOfFilterGroup(oFacetListItem.labelRaw);
-                        }
-                    }
+                    item.facetTitle = oServerSideFacet.title;
                     item.serverSideItem = true;
                     oClientSideFacet.items.push(item);
                 }
-                aClientSideFacetsByDimension[oServerSideFacet.dimension] = oClientSideFacet;
+                aClientSideFacetsByDimension[oServerSideFacet.query.dimension] = oClientSideFacet;
                 aClientSideFacets.push(oClientSideFacet);
             }
 
-            // add filter conditions as facet items:
+            // create facet items from global filter
+            var oClientSideFacetsWithSelection = {};
+            var aFacetItemsWithFilterConditions = this._createFacetItemsFromConditionGroup(oSearchModel.getProperty("/uiFilter/rootCondition"));
+
+            // combine facets from global filter with facets from server
             for (var k = 0, lenK = aFacetItemsWithFilterConditions.length; k < lenK; k++) {
                 var oSelectedFacetItem = aFacetItemsWithFilterConditions[k];
                 var oClientSideFacetWithSelection = aClientSideFacetsByDimension[oSelectedFacetItem.facetAttribute];
                 if (!oClientSideFacetWithSelection) {
                     // facet was not send from server -> create it
+                    var dimension = oSelectedFacetItem.filterCondition.attribute ? oSelectedFacetItem.filterCondition.attribute : oSelectedFacetItem.filterCondition.conditions[0].attribute;
                     oClientSideFacetWithSelection = new Facet({
-                        dimension: oSelectedFacetItem.filterCondition.attribute ? oSelectedFacetItem.filterCondition.attribute : oSelectedFacetItem.filterCondition.conditions[0].attribute,
-                        title: oSelectedFacetItem.facetTitle,
+                        dimension: dimension,
+                        title: resultSet.query.filter.dataSource.getAttributeMetadata(dimension).label,
                         facetType: "attribute",
                         items: [oSelectedFacetItem]
                     });
@@ -336,20 +299,20 @@
                         }
                     }
                     if (!facetItemFoundInFacet) {
-                        // there is no such facet item -> add the facet item to the facet
-                        //oClientSideFacetWithSelection.items.splice(0, 0, oSelectedFacetItem);
+                        // there is no such facet item -> add the facet item to the facet            
                         oClientSideFacetWithSelection.items.push(oSelectedFacetItem);
                     }
                 }
-                oClientSideFacetsWithSelection[oSelectedFacetItem.facetTitle] = oClientSideFacetWithSelection;
+                oClientSideFacetsWithSelection[oSelectedFacetItem.facetAttribute] = oClientSideFacetWithSelection;
             }
 
+            // no multiselect: 
+            // remove all unselected attributes in facets which have selections
+            // and make them single selected
             if (!oSearchModel.config.multiSelect) {
-                // remove all unselected attributes in facets which have selections
-                // and make them single selected
-                for (var facetTitle in oClientSideFacetsWithSelection) {
-                    if (oClientSideFacetsWithSelection.hasOwnProperty(facetTitle)) {
-                        var facet = oClientSideFacetsWithSelection[facetTitle];
+                for (var facetAttribute in oClientSideFacetsWithSelection) {
+                    if (oClientSideFacetsWithSelection.hasOwnProperty(facetAttribute)) {
+                        var facet = oClientSideFacetsWithSelection[facetAttribute];
                         for (var n = facet.items.length - 1; n >= 0; n--) {
                             var itemN = facet.items[n];
                             if (!itemN.selected) {
@@ -360,37 +323,58 @@
                 }
             }
 
-            return aClientSideFacets;
+            return this.addDataTypeToClientSideFacets(aClientSideFacets, oSearchModel);
+        },
+        addDataTypeToClientSideFacets: function(aClientSideFacets, oSearchModel) {
+
+            var oDataSource = oSearchModel.getDataSource();
+            if (oDataSource.type === oSearchModel.sinaNext.DataSourceType.Category) {
+                //                return $.when(aClientSideFacets);
+                return $.when([]); // UI decision: with Category, common attributes should not be shown
+            }
+
+            for (var i = 0; i < aClientSideFacets.length; i++) {
+                var oFacet = aClientSideFacets[i];
+                var metadata = oDataSource.getAttributeMetadata(oFacet.dimension);
+                oFacet.dataType = metadata.type;
+            }
+
+            return $.when(aClientSideFacets);
+
         },
 
         getFacets: function(oDataSource, oINAPerspective, oSearchModel) {
 
             // generate datasource facet
             var aFacets = [this.getDataSourceFacetFromTree(oSearchModel)];
-            if (oDataSource.equals(oSearchModel.appDataSource) || oDataSource.getTypeAsString().indexOf('Category') > -1) {
-                return aFacets;
+
+            // for ds=apps or ds=category -> no attribute facets
+            if (oDataSource === oSearchModel.appDataSource || oDataSource.type === oSearchModel.sinaNext.DataSourceType.Category) {
+                return $.when(aFacets);
             }
 
-            // return without perspective
+            // return without perspective 
             if (!oINAPerspective) {
-                return [];
+                return $.when(aFacets);
             }
 
             // generate attribute facets
-            var aAttributeFacets = this.getAttributeFacetsFromPerspective(oINAPerspective, oSearchModel);
-            if (aAttributeFacets.length > 0) {
-                aFacets.push.apply(aFacets, aAttributeFacets);
-            }
-
-            return aFacets;
+            var facets = this.getAttributeFacetsFromPerspective(oINAPerspective, oSearchModel);
+            var res = facets.then(function(aAttributeFacets) {
+                if (aAttributeFacets.length > 0) {
+                    aFacets.push.apply(aFacets, aAttributeFacets);
+                }
+                return aFacets;
+            });
+            return res;
         },
 
         getFacetItemsWithFilterConditions: function(oSearchModel) {
-            return this._createFacetItemsFromConditionGroup(oSearchModel.getProperty("/uiFilter/defaultConditionGroup"));
+            return this._createFacetItemsFromConditionGroup(oSearchModel.getProperty("/uiFilter/rootCondition"));
         },
 
         getDialogFacetsFromMetaData: function(oMetaData, oSearchModel) {
-            var aServerSideFacets = jQuery.map(oMetaData.attributeMap, function(el) {
+            var aServerSideFacets = jQuery.map(oMetaData.attributeMetadataMap, function(el) {
                 return el;
             });
             var aClientSideFacets = [];
@@ -399,26 +383,27 @@
             for (var i = 0, len = aServerSideFacets.length; i < len; i++) {
                 var oServerSideFacet = aServerSideFacets[i];
 
-                var bAccess = false;
-                if (oServerSideFacet.accessUsage) {
-                    for (var j = 0; j < oServerSideFacet.accessUsage.length; j++) {
-                        if (oSearchModel.aAllowedAccessUsage.indexOf(oServerSideFacet.accessUsage[j]) >= 0) {
-                            bAccess = true;
-                            break;
-                        }
-                    }
-                } else {
-                    bAccess = true;
-                }
-                if (bAccess) {
+                //                var bAccess = false;
+                //                if (oServerSideFacet.accessUsage) {
+                //                    for (var j = 0; j < oServerSideFacet.accessUsage.length; j++) {
+                //                        if (oSearchModel.aAllowedAccessUsage.indexOf(oServerSideFacet.accessUsage[j]) >= 0) {
+                //                            bAccess = true;
+                //                            break;
+                //                        }
+                //                    }
+                //                } else {
+                //                    bAccess = true;
+                //                }
+                if (oServerSideFacet.usage.AdvancedSearch) {
                     var oClientSideFacet = new Facet({
                         title: oServerSideFacet.label,
                         facetType: "attribute",
-                        dimension: oServerSideFacet.labelRaw,
-                        dataType: oServerSideFacet.type
+                        dimension: oServerSideFacet.id,
+                        dataType: oServerSideFacet.type,
+                        matchingStrategy: oServerSideFacet.matchingStrategy
                     });
 
-                    var aFacetItemsWithFilterConditions = this._createFacetItemsFromConditionGroup(oSearchModel.getProperty("/uiFilter/defaultConditionGroup"));
+                    var aFacetItemsWithFilterConditions = this._createFacetItemsFromConditionGroup(oSearchModel.getProperty("/uiFilter/rootCondition"));
                     var count = 0;
                     for (var k = 0, lenK = aFacetItemsWithFilterConditions.length; k < lenK; k++) {
                         var oSelectedFacetItem = aFacetItemsWithFilterConditions[k];
@@ -433,50 +418,63 @@
                 }
 
             }
-
             return aClientSideFacets;
         },
 
-        getDialogFacetsFromChartQuery: function(resultSet, oSearchModel) {
+        getDialogFacetsFromChartQuery: function(resultSet, oSearchModel, bInitialFilters) {
 
             var oClientSideFacet = new Facet({
-                dimension: resultSet.dimensions[0]
+                dimension: oSearchModel.chartQuery.dimension
             });
-            for (var j = 0; j < resultSet.elements.length; j++) {
-                var oFacetListItem = resultSet.elements[j];
-                var item = new FacetItem({
-                    value: oFacetListItem.valueRaw,
-                    filterCondition: oFacetListItem.labelRaw,
-                    label: oFacetListItem.label,
-                    facetAttribute: resultSet.dimensions[0]
-                });
-                oClientSideFacet.items.push(item);
-            }
 
-            // add filter conditions as facet items:
-            var aFacetItemsWithFilterConditions = this._createFacetItemsFromConditionGroup(oSearchModel.getProperty("/uiFilter/defaultConditionGroup"));
-            for (var k = 0, lenK = aFacetItemsWithFilterConditions.length; k < lenK; k++) {
-                var oSelectedFacetItem = aFacetItemsWithFilterConditions[k];
-                if (oSelectedFacetItem.facetAttribute === oClientSideFacet.dimension) {
-                    var facetItemFoundInFacet = false;
-                    for (var m = 0, lenM = oClientSideFacet.items.length; m < lenM; m++) {
-                        var facetItem = oClientSideFacet.items[m];
-                        if (oSelectedFacetItem.filterCondition.equals(facetItem.filterCondition)) {
-                            facetItem.selected = true;
-                            facetItemFoundInFacet = true;
+            if (resultSet) {
+                for (var j = 0; j < resultSet.items.length; j++) {
+                    var oFacetListItem = resultSet.items[j];
+                    var item = new FacetItem({
+                        value: oFacetListItem.measureValue,
+                        filterCondition: oFacetListItem.filterCondition,
+                        label: oFacetListItem.dimensionValueFormatted,
+                        facetAttribute: resultSet.query.dimension
+                    });
+                    oClientSideFacet.items.push(item);
+                }
+
+                // add filter conditions as facet items:
+                var aFacetItemsWithFilterConditions;
+                if (bInitialFilters) {
+                    aFacetItemsWithFilterConditions = this._createFacetItemsFromConditionGroup(oSearchModel.getProperty("/uiFilter/rootCondition"));
+                } else {
+                    aFacetItemsWithFilterConditions = oSearchModel.aFilters;
+                }
+
+                for (var k = 0, lenK = aFacetItemsWithFilterConditions.length; k < lenK; k++) {
+                    var oSelectedFacetItem = aFacetItemsWithFilterConditions[k];
+                    if (oSelectedFacetItem.facetAttribute === oClientSideFacet.dimension) {
+                        var facetItemFoundInFacet = false;
+                        for (var m = 0, lenM = oClientSideFacet.items.length; m < lenM; m++) {
+                            var facetItem = oClientSideFacet.items[m];
+                            if (oSelectedFacetItem.filterCondition.equals(facetItem.filterCondition)) {
+                                facetItem.selected = true;
+                                facetItemFoundInFacet = true;
+                            }
                         }
-                    }
-                    if (!facetItemFoundInFacet) {
-                        // there is no such facet item -> add the facet item to the facet
-                        oClientSideFacet.items.splice(0, 0, oSelectedFacetItem);
-                        oSelectedFacetItem.advanced = true;
+                        if (!facetItemFoundInFacet) {
+                            // there is no such facet item -> add the facet item to the facet
+                            oClientSideFacet.items.splice(oClientSideFacet.items.length, 0, oSelectedFacetItem);
+                            if (oSelectedFacetItem.filterCondition.userDefined) {
+                                oSelectedFacetItem.advanced = true;
+                            } else {
+                                oSelectedFacetItem.listed = true;
+                            }
+                        } else {
+                            oSelectedFacetItem.listed = true;
+                        }
                     }
                 }
             }
 
             return oClientSideFacet;
         }
-
     };
-
-})();
+    return module;
+});

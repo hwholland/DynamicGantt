@@ -1,7 +1,8 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, jQuery */
     /*jslint nomen: true */
 
@@ -30,12 +31,19 @@
             });
 
             this.oList = new sap.m.List({
+                showSeparators: sap.m.ListSeparators.None,
                 items: {
                     path: "easyAccess>" + this.treePath + "/folders",
                     template: this.oItemTemplate
                 },
                 updateFinished: function () {
+                    var aListItems = this.getItems();
+
                     that.finishEasyAccessAnimation(true);
+                    aListItems.forEach(function (oListItem) {
+                        //UI5 Doesn't support 'space' and 'enter' press behavior alignment while it is required by UX defentions.
+                        oListItem.onsapspace = oListItem.onsapenter;
+                    });
                 },
                 noDataText: {
                     path: "easyAccessSystemsModel>/systemSelected",
@@ -48,28 +56,25 @@
             });
 
             this.pageMenu = new sap.m.Page({
-                title: "{easyAccess>/text}",
                 showNavButton: false,
                 enableScrolling: true,
-                subHeader: new sap.m.Toolbar({
-                    design: "Info",
-                    height: "2rem",
-                    active: {
-                        path: "easyAccessSystemsModel>/systemsList",
-                        formatter: function (systemsList) {
-                            return systemsList.length > 1;
-                        }
-                    },
-                    content: [
-                        this.systemSelectorText,
-                        new sap.m.ToolbarSpacer(),
-                        new sap.ui.core.Icon({
-                            width: "2rem",
-                            src: "sap-icon://edit"
-                        })
-                    ],
-                    press: [oController.onSystemSelectionPress, oController]
-                }),
+                headerContent:  new sap.m.Bar({
+                    contentLeft: [new sap.m.Label({text: {
+                                parts: ["easyAccessSystemsModel>/systemSelected"],
+                                formatter: oController.systemSelectorTextFormatter.bind(oController)
+                            }})],
+                    contentRight: [new sap.m.Button({
+                        text: this.translationBundle.getText("action_change"),
+                        type: sap.m.ButtonType.Transparent,
+                        visible: {
+                            path: "easyAccessSystemsModel>/systemsList",
+                            formatter: function (systemsList) {
+                                return systemsList.length > 1;
+                            }
+                        },
+                        press: [oController.onSystemSelectionPress, oController]
+                    })]
+                }).addStyleClass("sapUshellEasyAccessMasterPageHeader"),
                 content: this.oList
             });
 
@@ -128,8 +133,9 @@
             this.pageMenu.setShowNavButton(bShowBack);
             this.pageMenu.setShowSubHeader(!bShowBack);
             this.prepareEasyAccessAnimation(forwardAnimation);
-            this.pageMenu.bindProperty("title", "easyAccess>" + path + "/text");
             this.oList.bindItems("easyAccess>" + path + "/folders", this.oItemTemplate);
         }
     });
-}());
+
+
+}, /* bExport= */ true);

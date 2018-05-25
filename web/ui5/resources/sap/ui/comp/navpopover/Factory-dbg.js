@@ -1,20 +1,22 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 /**
  * @namespace Factory to access <code>ushell</code> services.
  * @name sap.ui.comp.navpopover.Factory
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  * @private
  * @since 1.36.0
+ * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
  */
 sap.ui.define([
-	'sap/ui/comp/library'
-], function(CompLibrary) {
+	'sap/ui/comp/library', 'sap/ui/comp/navpopover/FlexConnector'
+], function(CompLibrary, FlexConnector) {
 	"use strict";
 	var Factory = {
 
@@ -24,6 +26,8 @@ sap.ui.define([
 					return sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("CrossApplicationNavigation");
 				case "URLParsing":
 					return sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("URLParsing");
+				case "FlexConnector":
+					return FlexConnector;
 				default:
 					return null;
 			}

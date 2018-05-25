@@ -9,7 +9,7 @@ Users can move the pointers along the line to change a range with graphical supp
     <deprecation since="1.38">replaced by {@link sap.m.RangeSlider}</deprecation>
     <baseType>sap.ui.commons/Slider</baseType>
     <properties>
-        <property name="value2" type="sap.ui.core/float" defaultValue="80" group="Appearance">
+        <property group="Appearance" defaultValue="80" type="sap.ui.core/float" name="value2">
             <documentation>Current second value of the slider. (Position of the second grip.)
 
 &lt;b&gt;Note:&lt;/b&gt; If the value is not in the valid range (between &lt;code&gt;min&lt;/code&gt; and &lt;code&gt;max&lt;/code&gt;) it will be changed to be in the valid range.

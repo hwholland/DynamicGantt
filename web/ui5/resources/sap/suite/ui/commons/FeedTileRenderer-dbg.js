@@ -1,151 +1,155 @@
-// @copyright 
-
-jQuery.sap.declare("sap.suite.ui.commons.FeedTileRenderer");
-
-jQuery.sap.require("sap.suite.ui.commons.util.FeedItemUtils");
-
-/**
- * @class FeedTile renderer.
- * @static
- */
-sap.suite.ui.commons.FeedTileRenderer = {};
-
-/**
- * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
+/*!
  * 
- * @param {sap.ui.core.RenderManager}
- *            oRm the RenderManager that can be used for writing to the render output buffer
- * @param {sap.ui.core.Control}
- *            oFeedTile an object representation of the control that should be rendered
+		SAP UI development toolkit for HTML5 (SAPUI5)
+		(c) Copyright 2009-2015 SAP SE. All rights reserved
+	
  */
-sap.suite.ui.commons.FeedTileRenderer.render = function(oRm, oFeedTile) {
 
-	var oLocale = sap.ui.getCore().getConfiguration().getLanguage();
-	var oResBundle = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.commons", oLocale);
+sap.ui.define(['./util/FeedItemUtils'],
+	function(FeedItemUtils) {
+	"use strict";
 
-	var oCurrentItem = oFeedTile.getCurrentItem();		
+	/**
+	 * @class FeedTile renderer.
+	 * @static
+	 */
+	var FeedTileRenderer = {};
 
-	oRm.write("<div");
-	oRm.writeControlData(oFeedTile);
-	oRm.writeAttribute("tabindex", "0");
-	oRm.addClass("sapSuiteUiCommonsFeedTile");
-	oRm.addClass("sapSuiteUiCommonsPointer");
-	oRm.writeClasses();
+	/**
+	 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
+	 *
+	 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
+	 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
+	 */
+	FeedTileRenderer.render = function(oRm, oControl) {
+		var oLocale = sap.ui.getCore().getConfiguration().getLanguage();
+		var oResBundle = sap.ui.getCore().getLibraryResourceBundle("sap.suite.ui.commons", oLocale);
+		var oCurrentItem = oControl.getCurrentItem();
 
-	var sFeedTileTitle = "";
-	if (oFeedTile.getTooltip_AsString()) {
-		oRm.writeAttributeEscaped("title", oFeedTile.getTooltip_AsString());
-		sFeedTileTitle = oFeedTile.getTooltip_AsString();
-	}
-	
-	var sNewsItemTitle = "";
-	if(oCurrentItem){
-		sNewsItemTitle = oCurrentItem.getTitle();
-	}
-	
-	oRm.writeAccessibilityState(oFeedTile, {
-		role : 'link',		
-		label : sFeedTileTitle + " " + sNewsItemTitle	
-	});
+		oRm.write("<div");
+		oRm.writeControlData(oControl);
+		oRm.writeAttribute("tabindex", "0");
+		oRm.addClass("sapSuiteUiCommonsFeedTile");
+		oRm.addClass("sapSuiteUiCommonsPointer");
+		oRm.writeClasses();
 
-	oRm.write(">");
-
-	if (oCurrentItem) {
-		sap.suite.ui.commons.FeedTileRenderer.renderFeedItem(oRm, oFeedTile, oCurrentItem, oFeedTile.getId());
-		var oNextItem = oFeedTile.getNextItem();
-		if (oNextItem) {
-			sap.suite.ui.commons.FeedTileRenderer.renderFeedItem(oRm, oFeedTile, oNextItem, oFeedTile.getId() + '-next', true);
+		var sFeedTileTitle = "";
+		if (oControl.getTooltip_AsString()) {
+			oRm.writeAttributeEscaped("title", oControl.getTooltip_AsString());
+			sFeedTileTitle = oControl.getTooltip_AsString();
 		}
-	} else { // This is a condition when no feed items exist. Add a title that displays the condition & also render the defaultImage
 
-		var oBackgroundImage = oFeedTile.getDefaultImage();
+		var sNewsItemTitle = "";
+		if (oCurrentItem) {
+			sNewsItemTitle = oCurrentItem.getTitle();
+		}
+
+		oRm.writeAccessibilityState(oControl, {
+			role: 'link',
+			label: sFeedTileTitle + " " + sNewsItemTitle
+		});
+
+		oRm.write(">");
+
+		if (oCurrentItem) {
+			FeedTileRenderer.renderFeedItem(oRm, oControl, oCurrentItem, oControl.getId());
+			var oNextItem = oControl.getNextItem();
+			if (oNextItem) {
+				FeedTileRenderer.renderFeedItem(oRm, oControl, oNextItem, oControl.getId() + '-next', true);
+			}
+		} else { // This is a condition when no feed items exist. Add a title that displays the condition & also render the defaultImage
+
+			var oBackgroundImage = oControl.getDefaultImage();
+
+			if (oBackgroundImage) {
+				oRm.write('<div id="' + oControl.getId() + '-feedTileImage"');
+				oRm.write(" style='background-image:url(");
+				oRm.writeEscaped(oBackgroundImage);
+				oRm.write(");'");
+				oRm.addClass("sapSuiteUiCommonsFeedTileBackground");
+				oRm.writeClasses();
+				oRm.write(">");
+			}
+
+			var sTitle = oResBundle.getText("FEEDTILE_NOARTICLE_TITLE"); // "No articles to display";
+
+			oRm.write('<div id="' + oControl.getId() + '-feedTileText"');
+			oRm.addClass("sapSuiteUiCommonsFeedTileText");
+			oRm.writeClasses();
+			oRm.write(">");
+			oRm.write('<div id="' + oControl.getId() + '-feedTileTitle"');
+			oRm.addClass("sapSuiteUiCommonsFeedTileTitle");
+			oRm.writeClasses();
+			oRm.write(">");
+			oRm.writeEscaped(sTitle);
+			oRm.write("</div>");
+			oRm.write("</div>"); // sapSuiteUiCommonsFeedTileText
+			if (oBackgroundImage) {
+				oRm.write("</div>"); // sapSuiteUiCommonsFeedTileBackground
+			}
+		}
+
+		oRm.write("</div>"); // sapSuiteUiCommonsFeedTile
+	};
+
+	FeedTileRenderer.renderFeedItem = function(oRm, oFeedTile, oFeedItem, itemId, hidden) {
+		var oBackgroundImage = oFeedItem.getImage();
+		if (!oBackgroundImage || !oFeedTile.getDisplayArticleImage()) {
+			oBackgroundImage = oFeedTile.getDefaultImage();
+		}
 
 		if (oBackgroundImage) {
-			oRm.write('<div id="' + oFeedTile.getId() + '-feedTileImage"');
+			oRm.write('<div id="' + itemId + '-feedTileImage"');
 			oRm.write(" style='background-image:url(");
 			oRm.writeEscaped(oBackgroundImage);
 			oRm.write(");'");
 			oRm.addClass("sapSuiteUiCommonsFeedTileBackground");
+			if (hidden) {
+				oRm.addClass("sapSuiteFTItemHidden");
+			}
 			oRm.writeClasses();
 			oRm.write(">");
 		}
 
-		var sTitle = oResBundle.getText("FEEDTILE_NOARTICLE_TITLE"); // "No articles to display";
-
-		oRm.write('<div id="' + oFeedTile.getId() + '-feedTileText"');
+		oRm.write('<div id="' + itemId + '-feedTileText"');
 		oRm.addClass("sapSuiteUiCommonsFeedTileText");
 		oRm.writeClasses();
 		oRm.write(">");
-		oRm.write('<div id="' + oFeedTile.getId() + '-feedTileTitle"');
-		oRm.addClass("sapSuiteUiCommonsFeedTileTitle");
-		oRm.writeClasses();
-		oRm.write(">");
-		oRm.writeEscaped(sTitle);
-		oRm.write("</div>");
+
+		var sTitle = oFeedItem.getTitle();
+		if (sTitle) {
+			oRm.write('<div id="' + itemId + '-feedTileTitle"');
+			oRm.addClass("sapSuiteUiCommonsFeedTileTitle");
+			oRm.writeClasses();
+			oRm.write(">");
+			oRm.writeEscaped(sTitle);
+			oRm.write("</div>");
+
+			oRm.write("<div");
+			oRm.addClass("sapSuiteUiCommonsFeedTileLowerText");
+			oRm.writeClasses();
+			oRm.write(">");
+
+			oRm.write('<div id="' + itemId + '-feedTileSource"');
+			oRm.addClass("sapSuiteUiCommonsFeedTileSource");
+			oRm.writeClasses();
+			oRm.write(">");
+			oRm.writeEscaped(oFeedItem.getSource());
+			oRm.write("</div>");
+
+			oRm.write('<div id="' + itemId + '-feedTileAge"');
+			oRm.addClass("sapSuiteUiCommonsFeedTileAge");
+			oRm.writeClasses();
+			oRm.write(">");
+			oRm.writeEscaped(FeedItemUtils.calculateFeedItemAge(oFeedItem.getPublicationDate()));
+			oRm.write("</div>");
+			oRm.write("</div>");
+		}
 		oRm.write("</div>"); // sapSuiteUiCommonsFeedTileText
-		if (oBackgroundImage) {
-			oRm.write("</div>"); // sapSuiteUiCommonsFeedTileBackground
-		}
-	}
+		oRm.write("</div>"); // sapSuiteUiCommonsFeedTileBackground
 
-	oRm.write("</div>"); // sapSuiteUiCommonsFeedTile
-};
+	};
 
-sap.suite.ui.commons.FeedTileRenderer.renderFeedItem = function(oRm, oFeedTile, oFeedItem, itemId, hidden) {
+	return FeedTileRenderer;
 
-	var oBackgroundImage = oFeedItem.getImage();
-	if (!oBackgroundImage || !oFeedTile.getDisplayArticleImage()) {
-		oBackgroundImage = oFeedTile.getDefaultImage();
-	}
-
-	if (oBackgroundImage) {
-		oRm.write('<div id="' + itemId + '-feedTileImage"');
-		oRm.write(" style='background-image:url(");
-		oRm.writeEscaped(oBackgroundImage);
-		oRm.write(");'");
-		oRm.addClass("sapSuiteUiCommonsFeedTileBackground");
-		if (hidden) {
-			oRm.addClass("sapSuiteFTItemHidden");
-		}
-		oRm.writeClasses();
-		oRm.write(">");
-	}
-
-	oRm.write('<div id="' + itemId + '-feedTileText"');
-	oRm.addClass("sapSuiteUiCommonsFeedTileText");
-	oRm.writeClasses();
-	oRm.write(">");
-
-	var sTitle = oFeedItem.getTitle();
-	if (sTitle) {
-		oRm.write('<div id="' + itemId + '-feedTileTitle"');		
-		oRm.addClass("sapSuiteUiCommonsFeedTileTitle");
-		oRm.writeClasses();
-		oRm.write(">");
-		oRm.writeEscaped(sTitle);
-		oRm.write("</div>");
-
-		oRm.write("<div");
-		oRm.addClass("sapSuiteUiCommonsFeedTileLowerText");
-		oRm.writeClasses();
-		oRm.write(">");
-
-		oRm.write('<div id="' + itemId + '-feedTileSource"');
-		oRm.addClass("sapSuiteUiCommonsFeedTileSource");
-		oRm.writeClasses();
-		oRm.write(">");
-		oRm.writeEscaped(oFeedItem.getSource());
-		oRm.write("</div>");
-
-		oRm.write('<div id="' + itemId + '-feedTileAge"');
-		oRm.addClass("sapSuiteUiCommonsFeedTileAge");
-		oRm.writeClasses();
-		oRm.write(">");
-		oRm.writeEscaped(sap.suite.ui.commons.util.FeedItemUtils.calculateFeedItemAge(oFeedItem.getPublicationDate()));
-		oRm.write("</div>");
-		oRm.write("</div>");
-	}
-	oRm.write("</div>"); // sapSuiteUiCommonsFeedTileText
-	oRm.write("</div>"); // sapSuiteUiCommonsFeedTileBackground
-
-};
+}, /* bExport= */ true);

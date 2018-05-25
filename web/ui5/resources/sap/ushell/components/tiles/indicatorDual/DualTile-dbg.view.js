@@ -2,7 +2,8 @@
 //jQuery.sap.require("sap.ushell.components.tiles.Generic");
 //Comparison Tile
 (function () {
-    "use strict";
+	"use strict";
+
     /*global jQuery, sap */
     /*jslint nomen: true */
 

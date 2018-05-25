@@ -7,14 +7,19 @@
 
 // Provides the BaseNodeProxy class.
 sap.ui.define([
-	"jquery.sap.global", "./library", "sap/ui/base/Object"
-], function(jQuery, library, BaseObject) {
+	"jquery.sap.global", "sap/ui/base/Object"
+], function(jQuery, BaseObject) {
 	"use strict";
-
-	var getJSONObject = sap.ui.vk.dvl.getJSONObject;
 
 	/**
 	 * Constructor for a new BaseNodeProxy.
+
+	 * The objects of this class should not be created directly, and should only be created through the use of the following methods:
+	 * <ul>
+	 *   <li>{@link sap.ui.vk.NodeHierarchy#enumerateChildren sap.ui.vk.NodeHierarchy.enumerateChildren}</li>
+	 *   <li>{@link sap.ui.vk.NodeHierarchy#enumerateAncestors sap.ui.vk.NodeHierarchy.enumerateAncestors}</li>
+	 *   <li>{@link sap.ui.vk.ViewStateManager#enumerateSelection sap.ui.vk.ViewStateManager.enumerateSelection}</li>
+	 * </ul>
 	 *
 	 * @class
 	 * Provides a simple, lightweight proxy object to a node in a node hierarchy.
@@ -26,107 +31,75 @@ sap.ui.define([
 	 *   <li>{@link sap.ui.vk.ViewStateManager#enumerateSelection sap.ui.vk.ViewStateManager.enumerateSelection}</li>
 	 * </ul>
 	 *
-	 * @param {sap.ui.vk.NodeHierarchy} nodeHierarchy The node hierarchy to which the node belongs to.
-	 * @param {string} nodeId The ID of the node which we want to provide a proxy object for.
 	 * @public
+	 * @abstract
 	 * @author SAP SE
-	 * @version 1.38.15
-	 * @extends sap.ui.base.BaseObject
-	 * @implements sap.ui.base.Poolable
-	 * @alias sap.ui.vk.BaseNodeProxy
+	 * @version 1.54.4
+	 * @extends sap.ui.base.Object
+	 * @implements sap.ui.base.Poolable, sap.ui.vk.BaseNodeProxy
+	 * @alias sap.ui.vk.dvl.BaseNodeProxy
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
 	 */
-	var BaseNodeProxy = BaseObject.extend("sap.ui.vk.BaseNodeProxy", /** @lends sap.ui.vk.BaseNodeProxy.prototype */ {
+	var BaseNodeProxy = BaseObject.extend("sap.ui.vk.dvl.BaseNodeProxy", /** @lends sap.ui.vk.dvl.BaseNodeProxy.prototype */ {
 		metadata: {
-			publicMethods: [
-				"getNodeId",
-				"getName",
-				"getNodeMetadata",
-				"getHasChildren"
-			]
-		},
-		constructor: function(nodeHierarchy, nodeId) {
-			this.init(nodeHierarchy, nodeId);
+			"abstract": true
 		}
 	});
 
-
 	/**
-	 * Initialize this BaseNodeProxy with its data.
-	 *
-	 * The <code>init</code> method is called by an object pool when the
-	 * object is (re-)activated for a new caller.
-	 *
-	 * @param {sap.ui.vk.NodeHierarchy} nodeHierarchy The NodeHierarchy object this BaseNodeProxy object belongs to.
-	 * @param {string} nodeId The ID of the node for which to get BaseNodeProxy.
-	 *
-	 * @private
-	 *
-	 * @see sap.ui.base.Poolable.prototype#init
+	 * Gets the reference object of the node.
+	 * @function
+	 * @name sap.ui.vk.BaseNodeProxy#getNodeRef
+	 * @returns {any} The node's reference object.
+	 * @public
+	 * @abstract
 	 */
-	BaseNodeProxy.prototype.init = function(nodeHierarchy, nodeId) {
-		this._dvl = nodeHierarchy ? nodeHierarchy.getGraphicsCore()._getDvl() : null;
-		this._dvlSceneId = nodeHierarchy ? nodeHierarchy._getDvlSceneId() : null;
-		this._dvlNodeId = nodeId;
-	};
-
-	/**
-	 * Reset BaseNodeProxy data, needed for pooling.
-	 *
-	 * @private
-	 *
-	 * @see sap.ui.base.Poolable.prototype#reset
-	 */
-	BaseNodeProxy.prototype.reset = function() {
-		this._dvlNodeId = null;
-		this._dvlSceneId = null;
-		this._dvl = null;
-	};
 
 	/**
 	 * Gets the ID of the node.
-	 *
+	 * @function
+	 * @name sap.ui.vk.BaseNodeProxy#getNodeId
 	 * @returns {string} The node's ID.
-	 *
 	 * @public
+	 * @abstract
 	 */
-	BaseNodeProxy.prototype.getNodeId = function() {
-		return this._dvlNodeId;
-	};
 
 	/**
 	 * Gets the name of the node.
-	 *
+	 * @function
+	 * @name sap.ui.vk.BaseNodeProxy#getName
 	 * @returns {string} The node's name.
-	 *
 	 * @public
+	 * @abstract
 	 */
-	BaseNodeProxy.prototype.getName = function() {
-		return getJSONObject(this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, this._dvlNodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_NAME)).NodeName;
-	};
 
+	// NB: We cannot name the method getMetadata as there already exists sap.ui.base.Object.prototype.getMetadata method.
 	/**
 	 * Gets the metadata of the node.
-	 *
-	 * @return {object} A JSON object containing the node's metadata.
-	 *
+	 * @function
+	 * @name sap.ui.vk.BaseNodeProxy#getNodeMetadata
+	 * @returns {object} A JSON object containing the node's metadata.
 	 * @public
+	 * @abstract
 	 */
-	// NB: We cannot name the method getMetadata as there already exists sap.ui.base.Object.getMetadata method.
-	BaseNodeProxy.prototype.getNodeMetadata = function() {
-		return getJSONObject(this._dvl.Scene.RetrieveMetadata(this._dvlSceneId, this._dvlNodeId)).metadata;
-	};
 
 	/**
 	 * Indicates whether the node has child nodes.
-	 *
+	 * @function
+	 * @name sap.ui.vk.BaseNodeProxy#getHasChildren
 	 * @returns {boolean} A value of <code>true</code> indicates that the node has child nodes, and a value of <code>false</code> indicates otherwise.
-	 *
 	 * @public
+	 * @abstract
 	 */
-	BaseNodeProxy.prototype.getHasChildren = function() {
-		return (getJSONObject(this._dvl.Scene.RetrieveNodeInfo(this._dvlSceneId, this._dvlNodeId, sap.ve.dvl.DVLNODEINFO.DVLNODEINFO_FLAGS)).Flags & (sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_MAPPED_HASCHILDREN | sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_CLOSED)) === sap.ve.dvl.DVLNODEFLAG.DVLNODEFLAG_MAPPED_HASCHILDREN;
-	};
+
+	/**
+	 * Gets the scene reference that this BaseNodeProxy object wraps.
+	 * @function
+	 * @name sap.ui.vk.BaseNodeProxy#getSceneRef
+	 * @returns {any} A scene reference that this BaseNodeProxy object wraps.
+	 * @public
+	 * @abstract
+	 */
 
 	return BaseNodeProxy;
 });

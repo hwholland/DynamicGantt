@@ -45,7 +45,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -54,8 +54,8 @@ sap.ui.define([
 	var Pentangle = Polygon.extend("sap.gantt.shape.ext.Pentangle", /** @lends sap.gantt.shape.ext.Pentangle.prototype */ {
 		metadata: {
 			properties: {
-				radius: {type: "number", defaultValue: 10},
-				radius2: {type: "number", defaultValue: undefined}
+				radius: {type: "float", defaultValue: 10},
+				radius2: {type: "float", defaultValue: undefined}
 			}
 		}
 	});

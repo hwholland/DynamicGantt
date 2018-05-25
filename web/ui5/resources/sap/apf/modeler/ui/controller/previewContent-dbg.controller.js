@@ -3,283 +3,180 @@
  * 
  * (c) Copyright 2012-2014 SAP SE. All rights reserved
  */
-sap.ui.getCore().loadLibrary("sap.viz");
-jQuery.sap.require("sap.apf.ui.representations.utils.vizDatasetHelper");
 jQuery.sap.require("sap.apf.ui.utils.constants");
-jQuery.sap.require("sap.apf.core.representationTypes");
 jQuery.sap.require("sap.apf.utils.utils");
-/**
-* @class previewContent
-* @memberOf sap.apf.modeler.ui.controller
-* @name previewContent
-* @description controller for view.previewContent
-*/
-sap.ui.controller("sap.apf.modeler.ui.controller.previewContent", {
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#onInit
-	 * @description Called on initialization of the view.
-	 * 		Accepts parameters through view#getViewData in the following format :
-	 * {	 
-			sChartType - {sap.apf.ui.utils.CONSTANTS.representationTypes}  eg : "PieChart",
-			sStepTitle - {string} Title of the step eg: "DSO by Country over Time",
-			sStepLongTitle - {string} Long Title of the step eg: "DSO by Country over Time"
-			aDimensions - {string[]} Field Names of All dimensions from select properties eg : [ "Country", "YearMonth" ],
-			aMeasures - {string[]} Field Names of All measures from select properties eg: [ "DSO", "OverdueDSO", "Revenue" ],
-			oChartParameter : { // chart parameter similar to the one passed to runtime representations.
-				dimensions : [ {
-					fieldDesc - {string} Name to be displayed eg: "Country of Customer",
-					fieldName - {string} Property Name  eg: "Country",
-					kind - {sap.apf.core.constants.representationMetadata.kind} eg: "sectorColor"
-				} ],
-				measures : [ {
-					name - {string} Name to be displayed eg: "Day Sales Outstanding",
-					value - {string} Property Name  eg: "DSO",
-					kind - {sap.apf.core.constants.representationMetadata.kind} eg: "yAxis"
-				} ]
-			},
-			aSort : [
-				{	// sort object similar to the one passed to runtime representations.
-					sSortField - {string} Property Name eg: "DSO",
-					bDescending - {boolean} eg: true
-				}
-			],
-			aCornerTexts : {	// corner text values.
-				sLeftUpper - {string} eg: "DSO",
-				sRightUpper - {string} eg: "",
-				sLeftLower - {string} eg: "",
-				sRightLower - {string} eg: "COUNTRY"
-			}
-	 *	}
-	 *
-	 *  Reads data from view#getViewData.
-	 *  Prepares dummy data for charts.
-	 *  Draw main chart and thumb nail preview.		
-	 * */
-	onInit : function() {
-		// Views
-		this.oView = this.getView();
-		this.oView.addStyleClass("sapUiSizeCompact");//For non touch devices- compact style class increases the information density on the screen by reducing control dimensions
-		this.oMainChartHolder = this.oView.byId("idMainChart");
-		this.oThumbnailChartHolder = this.oView.byId("idThumbnailChartLayout");
-		// Data
-		this.mParam = this.oView.getViewData();
-		// Actions
-		this._prepareRepresentationInstance();
-		this._drawContent();
-		//Set height for table if its table representation
-		if (this.mParam.sChartType === sap.apf.ui.utils.CONSTANTS.representationTypes.TABLE_REPRESENTATION) {
-			this.oView.byId("idMainChart").getItems()[0].getContent()[0].getContent()[0].addEventDelegate({
-				onAfterRendering : function() {
-					document.querySelector('.tableWithoutHeaders').style.cssText += "height : "+ "400px";
-				}
-			});
+(function() {
+	'use strict';
+	var oRepresentationInstance, oRepresentation, oParentStep, oConfigurationHandler, oTextReader, oRepresentationHandler, oStepPropertyMetadataHandler, oRepresentationTypeHandler;
+	var oTableRepresentation = sap.apf.ui.utils.CONSTANTS.representationTypes.TABLE_REPRESENTATION;
+	function _drawMainChart(oController) {
+		var sStepLongTitleId = oParentStep.getLongTitleId();
+		var sStepTitleId = sStepLongTitleId && !oConfigurationHandler.getTextPool().isInitialTextKey(sStepLongTitleId) ? sStepLongTitleId : oParentStep.getTitleId();
+		var oMainChart = oRepresentationInstance.getMainContent(_checkForTexts(sStepTitleId), 480, 330);
+		oController.byId("idMainChart").addItem(oMainChart);
+	}
+	function _checkForTexts(oSampleTextId) {
+		var oSampleText = oSampleTextId && oConfigurationHandler.getTextPool().get(oSampleTextId), sSampleText;
+		if (oSampleText !== undefined) {
+			sSampleText = oSampleText.TextElementDescription;
 		}
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_drawContent
-	 * @description Draws main chart and thumb nail content.
-	 * 				Adds necessary style classes to view.
-	 * */
-	_drawContent : function() {
-		this._drawMainChart();
-		this._drawThumbnailContent();
-		this._addStyleClasses();
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_drawMainChart
-	 * @description Gets the mainContent of representation instance and draws it on mainChartHolder.
-	 * */
-	_drawMainChart : function() {
-		var oMainChart = this.oRepresentationInstance.getMainContent(this.mParam.sStepLongTitle, 480, 330);
-		this.oMainChartHolder.addItem(oMainChart);
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_drawThumbnailContent
-	 * @description Draws thumb nail chart.
-	 * 				Set Title to thumb nail content.
-	 * 				Draws corner texts.
-	 * */
-	_drawThumbnailContent : function() {
-		this._drawThumbnailChart();
-		this.oView.byId("idStepTitleText").setText(this.mParam.sStepTitle);
-		this._drawCornerTexts();
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_drawThumbnailChart
-	 * @description Gets the thumbnailContent of representation instance and draws it on oThumbnailChartHolder.
-	 * */
-	_drawThumbnailChart : function() {
-		var oThumbnailChart = this.oRepresentationInstance.getThumbnailContent();
-		this.oThumbnailChartHolder.addItem(oThumbnailChart);
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_drawCornerTexts
-	 * @description Draws corner texts on four place holders.
-	 * */
-	_drawCornerTexts : function() {
-		this.oView.byId("idLeftUpperCornerText").setText(this.mParam.aCornerTexts.sLeftUpper);
-		this.oView.byId("idRightUpperCornerText").setText(this.mParam.aCornerTexts.sRightUpper);
-		this.oView.byId("idLeftLowerCornerText").setText(this.mParam.aCornerTexts.sLeftLower);
-		this.oView.byId("idRightLowerCornerText").setText(this.mParam.aCornerTexts.sRightLower);
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_addStyleClasses
-	 * @description Adds style classes to various view controls.
-	 * */
-	_addStyleClasses : function() {
-		this.oView.byId("idChartHolder").addStyleClass("supressDialogPadding");
-		this.oView.byId("idMainChart").addStyleClass("previewMainChartHolder");
-		this.oView.byId("idThumbnail").addStyleClass("previewThumbnailHolder");
-		this.oView.byId("idThumbnailLayout").addStyleClass("previewThumbnailLayout");
-		this.oView.byId("idThumbnailChartLayout").addStyleClass("previewThumbnailChartLayout");
-		this.oView.byId("idTopLayout").addStyleClass("previewThumbnailTopLayout");
-		this.oView.byId("idBottomLayout").addStyleClass("previewThumbnailBottomLayout");
-		this.oView.byId("idLeftUpperCornerText").addStyleClass("previewThumbnailText");
-		this.oView.byId("idRightUpperCornerText").addStyleClass("previewThumbnailText");
-		this.oView.byId("idLeftLowerCornerText").addStyleClass("previewThumbnailText");
-		this.oView.byId("idRightLowerCornerText").addStyleClass("previewThumbnailText");
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_generateSampleData
-	 * @description Generates dynamic data based on the dimensions and measures.
-	 * 				Sorts the data if sort object is provided.
-	 * 				Data grows exponentially based on the number of dimensions available.
-	 * 				Each dimension will have (nSamplesPerDimension) data with random values for measures.
-	 * @returns {object[]} aSampleData
-	 * */
-	_generateSampleData : function() {
-		var aSampleData = [];
-		var nSamplesPerDimension = 3; // Change this value to control the amount of data.
-		var i = 0;
-		var aDimensions = this.mParam.aDimensions;
-		var aMeasures = this.mParam.aMeasures;
-		var aProperties = this.mParam.aProperties;
-		var aSelectedDimensions = this.mParam.oChartParameter.dimensions;
-		var aSelectedMeasures = this.mParam.oChartParameter.measures;
-		var aSelectedProperties = this.mParam.oChartParameter.properties;
-		var sChartType = this.mParam.sChartType;
-		/**
-		 * Function to add 'FieldDesc' fields to sample data with the same value as 'FieldName'.
-		 * */
-		var fnInsertValueToFieldDesc = function(aSelectedFields, sFieldName, sValue, oRow) {
-			var aCurrentSelectedFields = aSelectedFields.filter(function(oSelectedField) {
-				return oSelectedField.fieldName === sFieldName;
-			});
-			aCurrentSelectedFields.forEach(function(oCurrentSelectedField) {
-				if (!oCurrentSelectedField.fieldDesc || !oCurrentSelectedField.fieldDesc.length) {
-					oCurrentSelectedField.fieldDesc = oCurrentSelectedField.fieldName;
-				}
-				oRow[oCurrentSelectedField.fieldDesc] = sValue;
-			});
-		};
-		var len = sChartType !== sap.apf.ui.utils.CONSTANTS.representationTypes.TABLE_REPRESENTATION ? Math.pow(nSamplesPerDimension, this.mParam.aDimensions.length) : Math.pow(nSamplesPerDimension, this.mParam.aProperties.length);
-		for(i = 0; i < len; i++) {
-			var oRow = {};
-			aDimensions.forEach(function(sDimension, nIndex) {
-				var sDimensionValue = sDimension + " - " + (Math.floor(i / Math.pow(nSamplesPerDimension, nIndex)) % nSamplesPerDimension + 1);
-				oRow[sDimension] = sDimensionValue;
-				fnInsertValueToFieldDesc(aSelectedDimensions, sDimension, sDimensionValue, oRow);
-			});
-			aMeasures.forEach(function(sMeasure) {
-				var sMeasureValue = Math.round(Math.random() * 500);
-				oRow[sMeasure] = sMeasureValue;
-				fnInsertValueToFieldDesc(aSelectedMeasures, sMeasure, sMeasureValue, oRow);
-			});
-			aProperties.forEach(function(sProperty) {
-				var sPropertyValue = Math.round(Math.random() * 500);
-				oRow[sProperty] = sPropertyValue;
-				fnInsertValueToFieldDesc(aSelectedProperties, sProperty, sPropertyValue, oRow);
-			});
-			aSampleData.push(oRow);
+		return sSampleText;
+	}
+	function _getCornerText(sMethodName) {
+		var mPreviewCornerText = _checkForTexts(oRepresentation[sMethodName]());
+		if (mPreviewCornerText === undefined) {
+			mPreviewCornerText = _checkForTexts(oParentStep[sMethodName]());
 		}
-		if (this.mParam.aSort && this.mParam.aSort.length) {
-			aSampleData = this._sortData(aSampleData, this.mParam.aSort);
-		}
-		return aSampleData;
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_sortData
-	 * @param {object[]} aData - Source data to be sorted.
-	 * @param {array} aProperteis - Array of properties by which the data has to be sorted of the form: 
-	 * 		[
-	 * 			{
-	 * 				sProperty - {string}	Name of the property.
-	 * 				bDescending - {boolean} Boolean to indicate the order.
-	 * 			}
-	 * 		]
-	 * @description Uses the Array#sort method to sort data.
-	 * @returns {object[]} Sorted Data.
-	 * */
-	_sortData : function(aData, aProperties) {
+		return mPreviewCornerText;
+	}
+	function _drawThumbnailContent(oController) {
+		var sStepLongTitleId = oParentStep.getLongTitleId();
+		var sStepTitleId = sStepLongTitleId && !oConfigurationHandler.getTextPool().isInitialTextKey(sStepLongTitleId) ? sStepLongTitleId : oParentStep.getTitleId();
+		var sStepTitle = _checkForTexts(sStepTitleId);
+		oController.byId("idStepTitleText").setText(sStepTitle);
+		oController.byId("idThumbnailChartLayout").addItem(oRepresentationInstance.getThumbnailContent());
+		oController.byId("idLeftUpperCornerText").setText(_getCornerText("getLeftUpperCornerTextKey"));
+		oController.byId("idRightUpperCornerText").setText(_getCornerText("getRightUpperCornerTextKey"));
+		oController.byId("idLeftLowerCornerText").setText(_getCornerText("getLeftLowerCornerTextKey"));
+		oController.byId("idRightLowerCornerText").setText(_getCornerText("getRightLowerCornerTextKey"));
+	}
+	// Draws main chart and thumb nail content and Adds necessary style classes to view.
+	function _drawContent(oController) {
+		_drawMainChart(oController);
+		_drawThumbnailContent(oController);
+	}
+	// Uses the Array#sort method to sort data.
+	function _sortData(aData, aSortProperties) {
 		return aData.sort(function(oRow1, oRow2) {
 			var nResult, i;
-			for(i = 0; i < aProperties.length; i++) {
-				nResult = 0;
-				if (oRow1[aProperties[i].sSortField] < oRow2[aProperties[i].sSortField]) {
+			for(i = 0; i < aSortProperties.length; i++) {
+				if (oRow1[aSortProperties[i].property] < oRow2[aSortProperties[i].property]) {
 					nResult = -1;
-				} else if (oRow1[aProperties[i].sSortField] > oRow2[aProperties[i].sSortField]) {
+				} else if (oRow1[aSortProperties[i].property] > oRow2[aSortProperties[i].property]) {
 					nResult = 1;
 				}
-				nResult = nResult * [ 1, -1 ][+!!aProperties[i].bDescending];
+				nResult = nResult * [ 1, -1 ][+!aSortProperties[i].ascending];
 				if (nResult !== 0) {
 					return nResult;
 				}
 			}
 		});
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_getRepresentationConstructor
-	 * @description Returns representation constructor given representation id.
-	 * @returns {string} sConstructor - Constructor name space of the representation.
-	 * */
-	_getRepresentationConstructor : function(sChartName) {
-		var aRepresentationTypes = sap.apf.core.representationTypes();
-		var oRepresentationType = aRepresentationTypes.filter(function(oRepresentationType) {
-			return oRepresentationType.id === sChartName;
-		})[0];
-		var sConstructor = oRepresentationType.constructor;
-		return sConstructor;
-	},
-	/**
-	 * @private
-	 * @function
-	 * @name sap.apf.modeler.ui.controller.previewContent#_prepareRepresentationInstance
-	 * @description Prepares the representationInstance from the constructor and host it on 'this.oRepresentationInstance'.
-	 * 				Invokes 'setData' on the instance by passing sample data and dummy meta data.
-	 * */
-	_prepareRepresentationInstance : function() {
-		var sRepresentationConstructor = this._getRepresentationConstructor(this.mParam.sChartType);
+	}
+	function _getSelectedPropertyRowsOfBasicDataAsPromise(sLabelTextKeyMethod, oActualProperties, aProperty) {
+		var deferred = jQuery.Deferred();
+		oStepPropertyMetadataHandler.getEntityTypeMetadataAsPromise().done(function(entityTypeMetadata) {
+			var sPropertyLabelText, sLabelTextKey, aProperties = [];
+			oActualProperties.forEach(function(oData) {
+				if (oData.sProperty !== oTextReader("none") && oData.sProperty !== "") {
+					sLabelTextKey = sLabelTextKeyMethod(oData.sProperty);
+					if (sLabelTextKey !== undefined) {
+						sPropertyLabelText = oConfigurationHandler.getTextPool().get(sLabelTextKey).TextElementDescription;
+					} else {
+						sPropertyLabelText = oStepPropertyMetadataHandler.getDefaultLabel(entityTypeMetadata, oData.sProperty);
+					}
+					aProperties.push({
+						fieldName : oData.sProperty,
+						fieldDesc : sPropertyLabelText,
+						kind : oData.sContext
+					});
+				}
+			});
+			deferred.resolve(aProperties);
+		});
+		return deferred.promise();
+	}
+	function _getPropertyDatasetAsPromise(aPropertyType) {
+		var deferred = jQuery.Deferred();
+		var aPropertyRows = [];
+		if (aPropertyType === "properties" && oRepresentation.getRepresentationType() === oTableRepresentation) {
+			var aProperties = oStepPropertyMetadataHandler.getProperties();
+			_getSelectedPropertyRowsOfBasicDataAsPromise(oRepresentation.getPropertyTextLabelKey, oRepresentationHandler.getActualProperties(), aProperties).done(function(aAllPropertyRows) {
+				aPropertyRows = aAllPropertyRows;
+			});
+		} else if (aPropertyType === "dimensions" && oRepresentation.getRepresentationType() !== oTableRepresentation) {
+			oStepPropertyMetadataHandler.getEntityTypeMetadataAsPromise().done(function(oEntityType) {
+				var aAllProperties = oStepPropertyMetadataHandler.getDimensionsProperties(oEntityType);
+				_getSelectedPropertyRowsOfBasicDataAsPromise(oRepresentation.getDimensionTextLabelKey, oRepresentationHandler.getActualDimensions().concat(oRepresentationHandler.getActualLegends()), aAllProperties).done(function(aAllPropertyRows) {
+					aPropertyRows = aAllPropertyRows;
+				});
+			});
+		} else if (aPropertyType === "measures" && oRepresentation.getRepresentationType() !== oTableRepresentation) {
+			oStepPropertyMetadataHandler.getEntityTypeMetadataAsPromise().done(function(oEntityType) {
+				var aAllProperties = oStepPropertyMetadataHandler.getMeasures(oEntityType);
+				_getSelectedPropertyRowsOfBasicDataAsPromise(oRepresentation.getMeasureTextLabelKey, oRepresentationHandler.getActualMeasures(), aAllProperties).done(function(aAllPropertyRows) {
+					aPropertyRows = aAllPropertyRows;
+				});
+			});
+		}
+		deferred.resolve(aPropertyRows);
+		return deferred.promise();
+	}
+	/*          Generates dynamic data based on the dimensions and measures.
+	            Data grows exponentially based on the number of dimensions available.
+	            Each dimension will have (nSamplesPerDimension) data with random values for measures.*/
+	function _generateSampleDataAsPromise() {
+		var deferred = jQuery.Deferred();
+		var aSampleData = [], aSort = [], i = 0, nSamplesPerDimension = 3; //Change the value of nSamplePerDimension to control the amount of data
+		var aProperties = oStepPropertyMetadataHandler.getProperties();
+		oStepPropertyMetadataHandler.getEntityTypeMetadataAsPromise().done(function(oEntityType) {
+			var aDimensions = oStepPropertyMetadataHandler.getDimensionsProperties(oEntityType);
+			var aMeasures = oStepPropertyMetadataHandler.getMeasures(oEntityType);
+			var sChartType = oRepresentation.getRepresentationType();
+			var len = sChartType !== oTableRepresentation ? Math.pow(nSamplesPerDimension, aDimensions.length) : 7;
+			for(i = 0; i < len; i++) {
+				var oRow = {};
+				if (sChartType === oTableRepresentation) {
+					aProperties.forEach(function(sProperty) {
+						var sPropertyValue = sProperty + " - " + sap.apf.utils.createRandomNumberString(4);
+						oRow[sProperty] = sPropertyValue;
+					});
+				} else {
+					aDimensions.forEach(function(sDimension, nIndex) {
+						var sDimensionValue = sDimension + " - " + (Math.floor(i / Math.pow(nSamplesPerDimension, nIndex)) % nSamplesPerDimension + 1);
+						oRow[sDimension] = sDimensionValue;
+					});
+					aMeasures.forEach(function(sMeasure) {
+						var sMeasureValue = sap.apf.utils.createRandomNumberString(4);
+						oRow[sMeasure] = sMeasureValue;
+					});
+				}
+				aSampleData.push(oRow);
+			}
+			aSort = oRepresentation.getOrderbySpecifications();
+			if (aSort && aSort.length) {
+				aSampleData = _sortData(aSampleData, aSort);
+			}
+			deferred.resolve(aSampleData);
+		});
+		return deferred.promise();
+	}
+	//Prepares the representationInstance from the constructor and host it on 'oRepresentationInstance'. Invokes 'setData' on the instance by passing sample data and dummy meta data.
+	function _prepareRepresentationInstance() {
+		var sRepresentationConstructor = oRepresentationTypeHandler.getConstructorOfRepresentationType(oRepresentation.getRepresentationType());
 		jQuery.sap.require(sRepresentationConstructor);
-		var FnRepresentationConstructor = sap.apf.utils.extractFunctionFromModulePathString(sRepresentationConstructor);
-		var oEmptyStub = function() {};
+		var oRepresentationConstructor = sap.apf.utils.extractFunctionFromModulePathString(sRepresentationConstructor);
+		var oPropertyRows = {};
+		oPropertyRows.requiredFilters = [];
+		function _getText(sText) {
+			return sText;
+		}
+		function oEmptyStub() {
+		}
 		var oApiStub = {
-			getTextNotHtmlEncoded : function(sText) {
-				return sText;
-			},
-			getTextHtmlEncoded : function(sText) {
-				return sText;
-			},
+			getTextNotHtmlEncoded : _getText,
+			getTextHtmlEncoded : _getText,
 			getEventCallback : oEmptyStub,
+			getExits : function() {
+				var exits = {};
+				return exits;
+			},
+			getUiApi : function() {
+				var oUiApi = {};
+				oUiApi.getStepContainer = function() {
+					return undefined;
+				};
+				return oUiApi;
+			},
 			createFilter : function() {
 				return {
 					getOperators : function() {
@@ -292,9 +189,9 @@ sap.ui.controller("sap.apf.modeler.ui.controller.previewContent", {
 							addOr : oEmptyStub
 						};
 					},
-					getInternalFilter : function(){
-						return{
-							getProperties : function(){
+					getInternalFilter : function() {
+						return {
+							getProperties : function() {
 								return [];
 							}
 						};
@@ -315,15 +212,62 @@ sap.ui.controller("sap.apf.modeler.ui.controller.previewContent", {
 				};
 			}
 		};
-		this.oRepresentationInstance = new FnRepresentationConstructor(oApiStub, this.mParam.oChartParameter);
+		_getPropertyDatasetAsPromise("dimensions").done(function(oDimensions) {
+			oPropertyRows.dimensions = oDimensions;
+		});
+		_getPropertyDatasetAsPromise("measures").done(function(oMeasures) {
+			oPropertyRows.measures = oMeasures;
+		});
+		_getPropertyDatasetAsPromise("properties").done(function(oProperties) {
+			oPropertyRows.properties = oProperties;
+		});
+		oRepresentationInstance = new oRepresentationConstructor(oApiStub, oPropertyRows);
+		if (oRepresentationInstance.chartType === oTableRepresentation) {
+			oRepresentationInstance.oTableRepresentation.removeEventDelegate();
+			oRepresentationInstance.oTableRepresentation.onAfterRendering(function() {
+				return;
+			});
+		}
 		var oMetadataStub = {
-			getPropertyMetadata : function() {
+			getPropertyMetadata : function(property) {
 				return {
-					label : undefined
+					label : property
 				};
 			}
 		};
-		var aSampleData = this._generateSampleData();
-		this.oRepresentationInstance.setData(aSampleData, oMetadataStub);
+		_generateSampleDataAsPromise().done(function(sampleData) {
+			oRepresentationInstance.setData(sampleData, oMetadataStub);
+		});
 	}
-});
+	function _setDisplayText(oController) {
+		var oPreviewContentDialog = oController.byId("idPreviewContentDialog");
+		oPreviewContentDialog.setTitle(oTextReader("preview"));
+		oPreviewContentDialog.getEndButton().setText(oTextReader("close"));
+	}
+	sap.ui.controller("sap.apf.modeler.ui.controller.previewContent", {
+		onInit : function() {
+			var oController = this;
+			var oPreviewContentDialog = oController.byId("idPreviewContentDialog");
+			oRepresentation = oController.getView().getViewData().oRepresentation;
+			oParentStep = oController.getView().getViewData().oParentStep;
+			oConfigurationHandler = oController.getView().getViewData().oConfigurationHandler;
+			oTextReader = oController.getView().getViewData().oCoreApi.getText;
+			oRepresentationHandler = oController.getView().getViewData().oRepresentationHandler;
+			oStepPropertyMetadataHandler = oController.getView().getViewData().oStepPropertyMetadataHandler;
+			oRepresentationTypeHandler = oController.getView().getViewData().oRepresentationTypeHandler;
+			_setDisplayText(oController);
+			_prepareRepresentationInstance();
+			_drawContent(oController);
+			oPreviewContentDialog.open();
+		},
+		handleCloseButtonOfDialog : function() {
+			var oController = this;
+			oController.byId("idPreviewContentDialog").close();
+		},
+		handleClose : function() {
+			var oController = this;
+			oController.byId("idPreviewContentDialog").destroy();
+			oController.getView().destroy();
+		}
+	});
+}());

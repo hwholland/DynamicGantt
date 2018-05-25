@@ -45,7 +45,7 @@ sap.ui.define(['sap/ui/core/theming/Parameters', "sap/gantt/misc/Utility"], func
 	GanttChartContainerRenderer.renderSvgDefs = function (oRm, oGanttChartContainer) {
 		var oSvgDefs = oGanttChartContainer.getSvgDefs();
 		if (oSvgDefs) {
-			oRm.write("<svg id='" + oGanttChartContainer.getId() + "-svg-psdef'");
+			oRm.write("<svg id='" + oGanttChartContainer.getId() + "-svg-psdef' tabindex='-1' focusable='false'");
 			oRm.addClass("sapGanttInvisiblePaintServer");
 			oRm.writeClasses();
 			oRm.write(">");
@@ -66,9 +66,7 @@ sap.ui.define(['sap/ui/core/theming/Parameters', "sap/gantt/misc/Utility"], func
 		var sGanttViewHeight = oGanttChartContainer.getHeight();
 		if (oGanttChartContainer._oToolbar.getAllToolbarItems().length > 0) {
 			var sCSSMode = Utility.findSapUiSizeClass();
-			var sToolbarHeight = (sCSSMode === "sapUiSizeCozy") ? 
-					Parameters.get("sapGlobalToolbarCozyHeight") : 
-						Parameters.get("sapGlobalToolbarCompactHeight");
+			var sToolbarHeight = (sCSSMode === "sapUiSizeCompact" || sCSSMode === "sapUiSizeCondensed") ? "32px" : "48px";
 			sGanttViewHeight = "calc(" + sGanttViewHeight + " - " + sToolbarHeight + ")";
 		}
 		oRm.addStyle("height", sGanttViewHeight);

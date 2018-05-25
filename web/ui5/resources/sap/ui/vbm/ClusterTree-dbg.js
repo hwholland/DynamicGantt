@@ -33,7 +33,7 @@ sap.ui.define([
 				animateClusterSplit: {
 					type: "boolean",
 					group: "Behaviour",
-					defaultValue: "true"
+					defaultValue: true
 				}
 			},
 			aggregations: {},

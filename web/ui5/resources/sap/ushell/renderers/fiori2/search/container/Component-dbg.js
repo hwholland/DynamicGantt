@@ -1,36 +1,37 @@
 // iteration 0 ok
 
-// define a root UIComponent which exposes the main view
-jQuery.sap.declare("sap.ushell.renderers.fiori2.search.container.Component");
-jQuery.sap.require("sap.ui.core.UIComponent");
+sap.ui.define(['sap/ui/core/UIComponent'], function(UIComponent) {
+    "use strict";
 
-// new Component
-sap.ui.core.UIComponent.extend("sap.ushell.renderers.fiori2.search.container.Component", {
+    // new Component
+    return UIComponent.extend("sap.ushell.renderers.fiori2.search.container.Component", {
 
-    metadata: {
+        metadata: {
 
-        version: "1.38.26",
+            version: "1.54.3",
 
-        library: "sap.ushell.renderers.fiori2.search.container",
+            library: "sap.ushell.renderers.fiori2.search.container",
 
-        includes: [],
+            includes: [],
 
-        dependencies: {
-            libs: ["sap.m"],
-            components: []
+            dependencies: {
+                libs: ["sap.m"],
+                components: []
+            },
+
+            config: {
+                title: sap.ushell.resources.i18n.getText("searchAppTitle"),
+                compactContentDensity: true,
+                cozyContentDensity: true
+            }
         },
 
-        config: {
-            title: sap.ushell.resources.i18n.getText("searchAppTitle")
+        createContent: function() {
+            return sap.ui.view({
+                id: "searchContainerApp",
+                viewName: "sap.ushell.renderers.fiori2.search.container.App",
+                type: sap.ui.core.mvc.ViewType.JS
+            });
         }
-    },
-
-    createContent: function() {
-        "use strict";
-        return sap.ui.view({
-            id: "searchContainerApp",
-            viewName: "sap.ushell.renderers.fiori2.search.container.App",
-            type: sap.ui.core.mvc.ViewType.JS
-        });
-    }
+    });
 });

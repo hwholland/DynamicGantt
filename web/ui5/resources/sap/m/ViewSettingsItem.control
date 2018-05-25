@@ -4,25 +4,25 @@
     <derived/>
     <author>SAP SE</author>
     <documentation>ViewSettingsItem is used for modelling filter behaviour in the ViewSettingsDialog.
-It is derived from a core Item, but does not support the base class properties "textDirection" and "enabled", setting these properties will not have any effects.</documentation>
+It is derived from a core Item, but does not support the base class properties &quot;textDirection&quot; and &quot;enabled&quot;, setting these properties will not have any effects.</documentation>
     <since>1.16</since>
     <baseType>sap.ui.core/Item</baseType>
     <properties>
-        <property name="selected" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
-            <documentation>Selected state of the item. If set to "true", the item will be displayed as selected in the view settings dialog.</documentation>
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="selected">
+            <documentation>Selected state of the item. If set to &quot;true&quot;, the item will be displayed as selected in the view settings dialog.</documentation>
         </property>
     </properties>
     <events>
-        <event name="itemPropertyChanged" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="itemPropertyChanged">
             <documentation>Let the outside world know that some of its properties has changed.</documentation>
             <parameters>
-                <parameter name="changedItem" type="sap.m/ViewSettingsItem">
+                <parameter type="sap.m/ViewSettingsItem" name="changedItem">
                     <documentation>Instance of the item that changed.</documentation>
                 </parameter>
-                <parameter name="propertyKey" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="propertyKey">
                     <documentation>Key of the changed property.</documentation>
                 </parameter>
-                <parameter name="propertyValue" type="sap.ui.core/any">
+                <parameter type="sap.ui.core/any" name="propertyValue">
                     <documentation>Value of the changed property.</documentation>
                 </parameter>
             </parameters>

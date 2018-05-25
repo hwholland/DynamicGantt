@@ -6,16 +6,17 @@
  */
 
 // Provides control sap.ui.vk.CheckEye.
-sap.ui.define(['jquery.sap.global', 'sap/ui/commons/CheckBox', './library'],
-	function(jQuery, CheckBox, library) {
+sap.ui.define([
+	"jquery.sap.global", "sap/ui/commons/CheckBox", "./library"
+], function(jQuery, CheckBox, library) {
 	"use strict";
 
 
-	
+
 	/**
 	 * Constructor for a new CheckEye.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given 
+	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
@@ -23,7 +24,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/commons/CheckBox', './library'],
 	 * @extends sap.m.CheckBox
 	 *
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 *
 	 * @constructor
 	 * @public
@@ -32,20 +33,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/commons/CheckBox', './library'],
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 * @experimental Since 1.32.0 This class is experimental and might be modified or removed in future versions.
 	 */
-	var CheckEye = CheckBox.extend("sap.ui.vk.CheckEye", /** @lends sap.ui.vk.CheckEye.prototype */ { metadata : {
+	var CheckEye = CheckBox.extend("sap.ui.vk.CheckEye", /** @lends sap.ui.vk.CheckEye.prototype */ { metadata: {
 
-		library : "sap.ui.vk",
-		properties : {
+		library: "sap.ui.vk",
+		properties: {
 		}
 	},
 
 	onAfterRendering: function() {
 		var $this = this.$();
-		$this.removeClass('sapUiCb');
-		$this.removeClass('sapUiCbChk');
-		$this.removeClass('sapUiCbInteractive');
-		$this.removeClass('sapUiCbStd');
-		$this.addClass('sapUiCheckEye');
+		$this.removeClass("sapUiCb");
+		$this.removeClass("sapUiCbChk");
+		$this.removeClass("sapUiCbInteractive");
+		$this.removeClass("sapUiCbStd");
+		$this.addClass("sapUiVkCheckEye");
 	},
 
 	renderer: {

@@ -1,13 +1,17 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /**
  * Initialization Code and shared classes of library sap.viz.
  */
-sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
+sap.ui.define(['sap/ui/core/Core',
+	'sap/ui/core/library',
+	'sap/viz/ui5/format/ChartFormatter',
+	'sap/viz/ui5/api/env/Format'
+	],
 	function(Core, library1) {
 	"use strict";
 
@@ -69,13 +73,16 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 
 
 
+
 			//@@end generated-types-list
 		],
 		interfaces: [],
 		controls: [
 			"sap.viz.ui5.VizContainer",
 			"sap.viz.ui5.controls.Popover",
+			"sap.viz.ui5.controls.VizTooltip",
 			"sap.viz.ui5.controls.VizFrame",
+			 "sap.viz.ui5.controls.VizSlider",
 			"sap.viz.ui5.controls.common.BaseControl",
 			"sap.viz.ui5.core.BaseChart",
 			//@@begin generated-controls-list
@@ -103,6 +110,7 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 			"sap.viz.ui5.StackedColumn100",
 			"sap.viz.ui5.TimeBubble",
 			"sap.viz.ui5.Treemap"
+
 
 
 			//@@end generated-controls-list
@@ -210,28 +218,29 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 
 
 
+
 			//@@end generated-elements-list
 		],
-		version: "1.38.33"
+		version: "1.54.3"
 	});
 
 	//@@begin generated-enums
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Area_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -251,20 +260,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Area_marker_shape
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -320,20 +329,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Area_mode
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -353,20 +362,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Area_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -386,20 +395,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Axis_gridline_type
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -425,20 +434,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Axis_label_unitFormatType
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -458,20 +467,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Axis_position
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -503,20 +512,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Axis_type
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -542,20 +551,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Background_direction
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -575,20 +584,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Background_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -608,20 +617,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Bar_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -641,20 +650,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Bar_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -674,20 +683,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Bubble_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -707,20 +716,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Bullet_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -740,20 +749,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Bullet_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -773,20 +782,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Combination_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -806,20 +815,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Combination_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -839,20 +848,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Datalabel_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -872,20 +881,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Datalabel_outsidePosition
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -917,20 +926,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Datalabel_paintingMode
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -950,20 +959,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Datalabel_position
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -983,20 +992,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Legend_layout_position
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1028,20 +1037,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Line_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1061,20 +1070,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Line_marker_shape
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1130,20 +1139,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Line_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1163,20 +1172,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Pie_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1196,20 +1205,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Pie_valign
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1229,20 +1238,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Scatter_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1262,20 +1271,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.StackedVerticalBar_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1295,20 +1304,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.StackedVerticalBar_mode
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1328,20 +1337,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.StackedVerticalBar_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1361,20 +1370,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Title_alignment
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1400,20 +1409,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.Tooltip_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1433,20 +1442,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.VerticalBar_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1466,20 +1475,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.VerticalBar_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1499,20 +1508,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.controller.Interaction_pan_orientation
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1538,20 +1547,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.controller.Interaction_selectability_mode
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1589,20 +1598,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.legend.Common_alignment
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1628,20 +1637,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.legend.Common_drawingEffect
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1661,20 +1670,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.legend.Common_position
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1706,20 +1715,20 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	};
 	/**
 	 * List (Enum) type sap.viz.ui5.types.legend.Common_type
-	 * 
+	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.7.2
-	 * @deprecated Since version 1.32.0. 
-	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0. 
-	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the 
-	 * SAPUI5 distribution for backward compatibility. 
-	 * 
-	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame} 
+	 * @deprecated Since version 1.32.0.
+	 * The chart controls in the <code>sap.viz.ui5</code> package (which were always marked as <i>experimental</i>) have been deprecated since 1.32.0.
+	 * They are no longer actively developed and won't receive new features or improvements, only important bug fixes. They will only remain in the
+	 * SAPUI5 distribution for backward compatibility.
+	 *
+	 * <b>SAP strongly recommends that existing consumers of those controls migrate to the new {@link sap.viz.ui5.controls.VizFrame VizFrame}
 	 * control to benefit from new charting enhancements and timely support. </b>
-	 * 
+	 *
 	 * <b>Note</b>: As the feature set, design and API usage of VizFrame might differ from the old chart controls, make sure you evaluate it thoroughly before migration.
-	 * @experimental Since version 1.7.2. 
+	 * @experimental Since version 1.7.2.
 	 * Charting API is not finished yet and might change completely.
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -1771,6 +1780,7 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 
 
 
+
 	//@@end generated-enums
 
 	// check whether browser supports svg
@@ -1779,8 +1789,7 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 	if (sap.viz.__svg_support) {
 		//enforce early loading of D3 and Charting lib to load sap.viz.core early
 		jQuery.sap.require("sap.ui.thirdparty.d3");
-		//	jQuery.sap.require("sap.viz.libs.d3");
-		//	jQuery.sap.require("sap.viz.ui5.controls.libs.common.libs.jquery-ui.jquery-ui");
+		jQuery.sap.require("sap.ui.thirdparty.require");
 		jQuery.sap.require("sap.ui.thirdparty.jqueryui.jquery-ui-core");
 		jQuery.sap.require("sap.ui.thirdparty.jqueryui.jquery-ui-widget");
 		jQuery.sap.require("sap.ui.thirdparty.jqueryui.jquery-ui-mouse");
@@ -1790,6 +1799,7 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 		jQuery.sap.require("sap.viz.libs.rgbcolor");
 		jQuery.sap.require("sap.viz.libs.sap-viz-info-framework");
 		jQuery.sap.require("sap.viz.libs.sap-viz-info-charts");
+		jQuery.sap.require("sap.viz.resources.chart.templates.standard_fiori.template");
 		jQuery.sap.require("sap.viz.ui5.controls.libs.sap-viz-vizframe.sap-viz-vizframe");
 		jQuery.sap.require("sap.viz.ui5.controls.libs.sap-viz-vizservices.sap-viz-vizservices");
 
@@ -1919,6 +1929,15 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 		} else if (pathVizControls === 'controls') {
 			sPaths.push(jQuery.sap.getModulePath("sap.viz.ui5.controls.libs.sap-viz-vizframe.resources.locale", "/"));
 		}
+		var treatAsMobile = "auto";
+		if (sap.ui && sap.ui.Device && sap.ui.Device.system) {
+			if (sap.ui.Device.system.desktop === true) {
+				treatAsMobile = "off";
+			} else if (sap.ui.Device.system.desktop === false) {
+				treatAsMobile = "on";
+			}
+		}
+		sap.viz.api.env.globalSettings({"treatAsMobile": treatAsMobile});
 		// Load
 		if (sPaths.length > 0) {
 			if (pathVizControls) {
@@ -1944,10 +1963,6 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 				});
 				sap.viz._applyTheme();
 			}
-			// Locale
-			sap.ui.getCore().attachLocalizationChanged(function(evt) {
-				sap.viz._applyLocale();
-			});
 			sap.viz._applyLocale(callback);
 		}
 	};
@@ -1976,6 +1991,17 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 		write('sapUiChartPaletteQualitativeHue9');
 		write('sapUiChartPaletteQualitativeHue10');
 		write('sapUiChartPaletteQualitativeHue11');
+		write('sapUiChartPaletteQualitativeHue12');
+		write('sapUiChartPaletteQualitativeHue13');
+		write('sapUiChartPaletteQualitativeHue14');
+		write('sapUiChartPaletteQualitativeHue15');
+		write('sapUiChartPaletteQualitativeHue16');
+		write('sapUiChartPaletteQualitativeHue17');
+		write('sapUiChartPaletteQualitativeHue18');
+		write('sapUiChartPaletteQualitativeHue19');
+		write('sapUiChartPaletteQualitativeHue20');
+		write('sapUiChartPaletteQualitativeHue21');
+		write('sapUiChartPaletteQualitativeHue22');
 		// Semantic color
 		write('sapUiChartPaletteSemanticBadLight3');
 		write('sapUiChartPaletteSemanticBadLight2');
@@ -2001,6 +2027,12 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 		write('sapUiChartPaletteSemanticNeutral');
 		write('sapUiChartPaletteSemanticNeutralDark1');
 		write('sapUiChartPaletteSemanticNeutralDark2');
+		write('sapUiChartPaletteNoSemDiv1Dark2');
+		write('sapUiChartPaletteNoSemDiv1Dark1');
+		write('sapUiChartPaletteNoSemDiv1');
+		write('sapUiChartPaletteNoSemDiv1Light1');
+		write('sapUiChartPaletteNoSemDiv1Light2');
+		write('sapUiChartPaletteNoSemDiv1Light3');
 		// Sequential color
 		write('sapUiChartPaletteSequentialHue1Light3');
 		write('sapUiChartPaletteSequentialHue1Light2');
@@ -2020,6 +2052,12 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 		write('sapUiChartPaletteSequentialHue3');
 		write('sapUiChartPaletteSequentialHue3Dark1');
 		write('sapUiChartPaletteSequentialHue3Dark2');
+		write('sapUiChartPaletteSequentialHue6Light3');
+		write('sapUiChartPaletteSequentialHue6Light2');
+		write('sapUiChartPaletteSequentialHue6Light1');
+		write('sapUiChartPaletteSequentialHue6');
+		write('sapUiChartPaletteSequentialHue6Dark1');
+		write('sapUiChartPaletteSequentialHue6Dark2');
 		write('sapUiChartPaletteSequentialNeutralLight3');
 		write('sapUiChartPaletteSequentialNeutralLight2');
 		write('sapUiChartPaletteSequentialNeutralLight1');
@@ -2027,9 +2065,14 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 		write('sapUiChartPaletteSequentialNeutralDark1');
 		write('sapUiChartPaletteSequentialNeutralDark2');
 		write('sapUiChoroplethRegionBG');
+		write('sapUiChartZeroAxisColor');
+		write('sapUiNegativeElement');
+		write('sapUiCriticalElement');
+		write('sapUiPositiveElement');
+		write('sapUiNeutralElement');
 		sap.viz.api.env.globalSettings({
 			'colorMapping': mapping
-		})
+		});
 	};
 
 	sap.viz._changeTemplate = function(template) {
@@ -2040,10 +2083,11 @@ sap.ui.define(['sap/ui/core/Core','sap/ui/core/library'],
 
 	sap.viz._applyLocale = function(callback) {
 		// Get locale from ui5
-		var oLocale = sap.ui.getCore().getConfiguration().getLocale();
+		var oConfig = sap.ui.getCore().getConfiguration();
+		var oLocale = oConfig.getLocale();
 		var sVIZLanguageId = oLocale.getLanguage();
 		if (sVIZLanguageId === 'zh') {
-			sVIZLanguageId = oLocale.getLanguage() + (oLocale.getRegion() ? "_" + oLocale.getRegion() : "");
+			sVIZLanguageId = (oConfig.getSAPLogonLanguage() === 'ZH') ? 'zh_CN' : 'zh_TW';
 		}
 		// Set locale to viz
 		sap.viz.api.env.Locale.set(sVIZLanguageId, function() {

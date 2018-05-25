@@ -3,7 +3,10 @@
 
 	<name>sap.collaboration</name>
 	<vendor>SAP SE</vendor>
-	<version>1.38.7</version>
+	<copyright>SAP UI development toolkit for HTML5 (SAPUI5)
+
+(c) Copyright 2009-2017 SAP SE. All rights reserved</copyright>
+	<version>1.54.0</version>
 
 	<documentation>SAP UI library: SAP Collaboration for Social Media Integration.</documentation>
 
@@ -23,6 +26,9 @@
         <ownership xmlns="http://www.sap.com/ui5/buildext/ownership">
             <component>CA-UI5-BS-SM</component>
         </ownership>
+        <jscoverage>
+			<exclude name="*.js" /> <!-- exclude files within current folder --> 
+		</jscoverage>
 	</appData>
 
 </library>

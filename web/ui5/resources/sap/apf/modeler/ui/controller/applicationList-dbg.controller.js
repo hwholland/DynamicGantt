@@ -9,8 +9,8 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 (function() {
 	"use strict";
 	var oCoreApi, oApplicationHandler;
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
-	var optionsValueModelBuilder = new sap.apf.modeler.ui.utils.OptionsValueModelBuilder();
+	var nullObjectChecker = sap.apf.modeler.ui.utils.nullObjectChecker;
+	var optionsValueModelBuilder = sap.apf.modeler.ui.utils.optionsValueModelBuilder;
 	function _setDisplayText(oController) {
 		var oTextReader = oCoreApi.getText;
 		oController.byId("idAppPage").setTitle(oTextReader("configModelerTitle"));
@@ -25,6 +25,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 		oController.byId("idImportButton").setText(oTextReader("import"));
 		oController.byId("idNewButton").setTooltip(oTextReader("newApplication"));
 		oController.byId("idDeleteIcon").setTooltip(oTextReader("deleteButton"));
+		oController.byId("idAriaPropertyForDelete").setText(oTextReader("ariaTextForDeleteIcon"));
 	}
 	function _setDeleteConfirmationDialogText() {
 		var oTextReader = oCoreApi.getText;
@@ -53,8 +54,11 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 		var oModel = optionsValueModelBuilder.prepareModel(aAppDetails, aAppDetails.length);
 		oController.byId("idApplicationTable").setModel(oModel);
 	}
-	function _showSuccessMessageToast(key) {
-		sap.m.MessageToast.show(oCoreApi.getText(key));
+	function _showSuccessMessageToast(sMsgCode) {
+		var oMessageObject = oCoreApi.createMessageObject({
+			code : sMsgCode
+		});
+		oCoreApi.putMessage(oMessageObject);
 	}
 	function _attachEvents(oController) {
 		oController.byId("idAppDescription").attachBrowserEvent("click", oController.handleNavigationToConfigurationList.bind(oController));
@@ -153,11 +157,13 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 		oPopover.addContent(oActionListItem);
 		oPopover.openBy(oEvent.getSource());
 	}
-	function _showError(oMsgObj, sMsgCode) {
+	function _showError(sMsgCode, oMsgObj) {
 		var oMessageObject = oCoreApi.createMessageObject({
 			code : sMsgCode
 		});
-		oMessageObject.setPrevious(oMsgObj);
+		if (oMsgObj) {
+			oMessageObject.setPrevious(oMsgObj);
+		}
 		oCoreApi.putMessage(oMessageObject);
 	}
 	function _enableDisplayMode(oController) {
@@ -186,9 +192,13 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 			if (nullObjectChecker.checkIsNotUndefined(oComponent)) {
 				oCoreApi = oComponent.oCoreApi;
 				_setDisplayText(oController);
-				oCoreApi.getApplicationHandler(function(applicationHandler) {
+				oCoreApi.getApplicationHandler(function(applicationHandler, messageObject) {
 					oApplicationHandler = applicationHandler;
-					_updateAppList(oController);
+					if (oApplicationHandler && !nullObjectChecker.checkIsNotUndefined(messageObject)) {
+						_updateAppList(oController);
+					} else {
+						_showError("11508", messageObject);
+					}
 				});
 			}
 			_attachEvents(oController);
@@ -196,7 +206,11 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 		},
 		handleAddNewAppPress : function() {
 			var oController = this;
-			_instantiateDialogView(oController, "newApplication");
+			if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oApplicationHandler)) {
+				_instantiateDialogView(oController, "newApplication");
+			} else {
+				_showError("11509");
+			}
 		},
 		handleListItemSelect : function() { //handler for selection in application list
 			var oController = this;
@@ -215,21 +229,25 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 		},
 		handleEditPress : function() {
 			var oController = this;
-			oController.byId("idNewButton").setEnabled(false);
-			oController.byId("idEditButton").setVisible(false);
-			oController.byId("idSaveButton").setVisible(true);
-			oController.byId("idCancelButton").setVisible(true);
-			oController.byId("idTextCleanupButton").setVisible(true);
-			oController.byId("idImportButton").setVisible(false);
-			oController.byId("idApplicationTable").setMode("SingleSelectMaster");
-			var items = oController.byId("idApplicationTable").getItems();
-			if (items.length) {
-				items.forEach(function(item) {
-					item.getCells()[0].setEditable(true);
-					item.getCells()[1].setEditable(true);
-					item.getCells()[2].setVisible(true);
-					item.setType("Inactive");
-				});
+			if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oApplicationHandler)) {
+				oController.byId("idNewButton").setEnabled(false);
+				oController.byId("idEditButton").setVisible(false);
+				oController.byId("idSaveButton").setVisible(true);
+				oController.byId("idCancelButton").setVisible(true);
+				oController.byId("idTextCleanupButton").setVisible(true);
+				oController.byId("idImportButton").setVisible(false);
+				oController.byId("idApplicationTable").setMode("SingleSelectMaster");
+				var items = oController.byId("idApplicationTable").getItems();
+				if (items.length) {
+					items.forEach(function(item) {
+						item.getCells()[0].setEditable(true);
+						item.getCells()[1].setEditable(true);
+						item.getCells()[2].setVisible(true);
+						item.setType("Inactive");
+					});
+				}
+			} else {
+				_showError("11509");
 			}
 		},
 		handleDeletePress : function(evt) {
@@ -252,10 +270,10 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 				oApplicationHandler.removeApplication(removeId, function(oResponse, oMetadata, msgObj) {
 					if (!nullObjectChecker.checkIsNotUndefined(msgObj) && (typeof oResponse === "string")) {
 						_updateAppList(oController);
-						_showSuccessMessageToast("successMsgForAppDelete");
+						_showSuccessMessageToast("11510");
 						oController.byId("idEditButton").firePress();
 					} else {
-						_showError(msgObj, "11501");
+						_showError("11501", msgObj);
 					}
 					oController.closeDialog();
 				});
@@ -295,12 +313,10 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 			sap.ui.core.Fragment.byId("idUnsavedDataConfirmationFragment", "idMessageDialog").destroy();
 		},
 		handleImportPress : function(oEvent) {
-			var oController = this;
-			var isLrepActive = oCoreApi.getStartParameterFacade().isLrepActive();
-			if (isLrepActive) {
-				_openImportMenu(oController, oEvent);
+			if (oCoreApi.isVendorContentAvailable()) {
+				_openImportMenu(this, oEvent);
 			} else {
-				_instantiateDialogView(oController, "importFiles");
+				_instantiateDialogView(this, "importFiles");
 			}
 		},
 		handleSavePress : function() {
@@ -321,7 +337,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 					if (!nullObjectChecker.checkIsNotUndefined(msgObj) && (typeof oResponse === "string")) {
 						_enableDisplayMode(oController);
 					} else {
-						_showError(msgObj, "11500");
+						_showError("11500", msgObj);
 					}
 				}, app.id);
 			});
@@ -336,13 +352,13 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 					if (!nullObjectChecker.checkIsNotUndefined(msgObj)) {
 						oTextPool.removeTexts(aUnusedTexts, appId, function(msgObj) {
 							if (!nullObjectChecker.checkIsNotUndefined(msgObj)) {
-								_showSuccessMessageToast("successtextCleanup");
+								_showSuccessMessageToast("11511");
 							} else {
-								_showError(msgObj, "11507");
+								_showError("11507", msgObj);
 							}
 						});
 					} else {
-						_showError(msgObj, "11506");
+						_showError("11506", msgObj);
 					}
 				});
 			});
@@ -357,14 +373,22 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 				oController.byId("idApplicationTable").fireItemPress(mParameters);
 			}
 		},
-		handleAdditionOfNewApp : function() {
-			var oController = this;
+		handleAdditionOfNewApp : function(oEvent) {
+			var oController = this, applicationId, aAppData, i, index = 0, oItems;
+			applicationId = oEvent.getParameter("appId");
 			_updateAppList(oController);
-			_showSuccessMessageToast("successsMsgForAppSave");
+			aAppData = oController.byId('idApplicationTable').getModel().getData().Objects;
+			_showSuccessMessageToast("11512");
 			oController.byId('idApplicationTable').rerender();
-			var oItems = oController.byId('idApplicationTable').getItems();
+			for(i = 0; i < aAppData.length; i++) {
+				if (aAppData[i].id === applicationId) {
+					index = i;
+					break;
+				}
+			}
+			oItems = oController.byId('idApplicationTable').getItems();
 			if (oItems.length) {
-				var appTableItemDOM = oItems[oItems.length - 1].getDomRef();
+				var appTableItemDOM = oItems[index].getDomRef();
 				if (appTableItemDOM) {
 					appTableItemDOM.scrollIntoView();
 				}

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 sap.ui.base.Object.extend("sap.uiext.inbox.TCMMetadata",{constructor:function(){sap.ui.base.Object.apply(this);this.oServiceMetadata=null;this.serviceSupportsFilterOption=false;this.oSubstitutionConstants=sap.uiext.inbox.SubstitutionRulesManagerConstants;this.oInboxConstants=sap.uiext.inbox.InboxConstants;}});
 sap.uiext.inbox.TCMMetadata.prototype.setServiceMetadata=function(s){if(s)this.oServiceMetadata=s;this.serviceSupportsFilterOption=this._isPropertyAvailable(this.oInboxConstants.ENTITY_NAME_TASK_COLLECTION,this.oInboxConstants.PROPERTY_NAME_CUSTOM_STATUS);};

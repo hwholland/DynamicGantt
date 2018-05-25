@@ -8,33 +8,33 @@ It can provide sub items.</documentation>
     <since>1.34</since>
     <baseType>sap.ui.core/Item</baseType>
     <properties>
-        <property name="icon" type="sap.ui.core/URI" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/URI" name="icon">
             <documentation>Specifies the icon for the item.</documentation>
         </property>
-        <property name="expanded" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="expanded">
             <documentation>Specifies if the item is expanded.</documentation>
         </property>
-        <property name="hasExpander" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="hasExpander">
             <documentation>Specifies if the item has an expander.</documentation>
         </property>
-        <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.52">
+        <property since="1.52" group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="visible">
             <documentation>Specifies if the item should be shown.</documentation>
         </property>
     </properties>
     <events>
-        <event name="select" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="select">
             <documentation>Fired when this item is selected.</documentation>
             <parameters>
-                <parameter name="item" type="sap.ui.core/Item">
+                <parameter type="sap.ui.core/Item" name="item">
                     <documentation>The selected item.</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations default="items">
-        <aggregation name="items" type="sap.tnt/NavigationListItem" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.tnt/NavigationListItem" name="items">
             <documentation>The sub items.</documentation>
         </aggregation>
-        <aggregation name="_expandIconControl" type="sap.ui.core/Icon" cardinality="0..1" visibility="hidden"/>
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.ui.core/Icon" name="_expandIconControl"/>
     </aggregations>
 </control>

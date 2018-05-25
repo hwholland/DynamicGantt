@@ -7,13 +7,13 @@
 
 // Provides control sap.ui.vk.ContainerBase.
 sap.ui.define([
-	'jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/IconPool', 'sap/ui/core/Popup', 'sap/ui/Device', 'sap/m/library'
-], function(jQuery, library, Control, IconPool, Popup, Device, m_library) {
+	"jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/core/IconPool", "sap/ui/core/Popup", "sap/ui/Device", "sap/m/library"
+], function(jQuery, library, Control, IconPool, Popup, Device, mobileLibrary) {
 	"use strict";
 
 	/**
 	 * Abstract Constructor for a new Container.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Abstract Constructor for a new Container.
@@ -69,7 +69,7 @@ sap.ui.define([
 				"title": {
 					type: "string",
 					group: "Misc",
-					defaultValue: ''
+					defaultValue: ""
 				},
 				"autoAdjustHeight": {
 					type: "boolean",
@@ -116,7 +116,7 @@ sap.ui.define([
 
 	/**
 	 * default Content could be defined in application
-	 * 
+	 *
 	 * @param {sap.ui.vk.ContainerContent} oContent the content to be visible; involves re-rendering
 	 * @returns {void}
 	 * @public
@@ -130,7 +130,7 @@ sap.ui.define([
 
 	/**
 	 * update container to allow dynamic change button layout
-	 * 
+	 *
 	 * @returns {void}
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -142,7 +142,7 @@ sap.ui.define([
 
 	/**
 	 * set selected content
-	 * 
+	 *
 	 * @param {sap.ui.vk.ContainerContent} oContent the selected content; involves no re-rendering
 	 * @returns {void}
 	 * @public
@@ -154,7 +154,7 @@ sap.ui.define([
 
 	/**
 	 * get selected content
-	 * 
+	 *
 	 * @returns {sap.ui.vk.ContainerContent} the currently selected content container
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -175,6 +175,7 @@ sap.ui.define([
 		this._oSelectedContent = null;
 		this._bSegmentedButtonSaveSelectState = false;
 		this._oMenu = null;
+		this._customButtons = [];
 
 		// Right side..
 		var oLayoutData = new sap.m.OverflowToolbarLayoutData({
@@ -266,9 +267,9 @@ sap.ui.define([
 			Device.resize.attachHandler(this._performHeightChanges, this);
 		}
 
-		//Adding new icons to the IconPool^M
+		// Adding new icons to the IconPool
 		jQuery.sap.require("sap.ui.thirdparty.URI");
-		var mapContainerIcons = [{
+		var mapContainerIcons = [ {
 				name: "selection-lasso",
 				unicode: "E000"
 			}, {
@@ -277,14 +278,13 @@ sap.ui.define([
 			}, {
 				name: "selection-single",
 				unicode: "E002"
-			}],
+			} ],
 			collectionName = "map-container",
 			fontFamily = "map-container";
 
 		mapContainerIcons.forEach(function(icon) {
 			sap.ui.core.IconPool.addIcon(icon.name, collectionName, fontFamily, icon.unicode);
 		});
-
 	};
 
 	ContainerBase.prototype.exit = function() {
@@ -319,7 +319,7 @@ sap.ui.define([
 
 	/**
 	 * set FullScreen - default is normal mode, but app can call this method to set the default to full screen
-	 * 
+	 *
 	 * @param {boolean} bFullScreen Fullscreen mode on or off
 	 * @returns {void}
 	 * @public
@@ -350,7 +350,6 @@ sap.ui.define([
 				that._performHeightChanges();
 			});
 		}
-
 		this._firstTime = false;
 		if (this.getSelectedContent() !== null) {
 			var control = this.getSelectedContent().getContent();
@@ -373,14 +372,14 @@ sap.ui.define([
 		if (this._contentChanged) {
 			this._contentChange();
 		}
-		// re-populate toolbar content according current settings		
+		// re-populate toolbar content according to current settings
 		this._oToolbar.removeAllContent();
 		this._addToolbarContent();
 	};
 
 	/**
 	 * Display title
-	 * 
+	 *
 	 * @param {string} sValue the title
 	 * @returns {void}
 	 * @public
@@ -393,7 +392,7 @@ sap.ui.define([
 
 	/**
 	 * add container content - map, table..
-	 * 
+	 *
 	 * @param {sap.ui.vk.ContainerContent} oObject content object to add
 	 * @returns {void}
 	 * @public
@@ -406,7 +405,7 @@ sap.ui.define([
 
 	/**
 	 * insert container content - map, table..
-	 * 
+	 *
 	 * @param {sap.ui.vk.ContainerContent} oObject content object to insert
 	 * @param {int} iIndex index in the content aggregation where to insert the new content object
 	 * @returns {void}
@@ -432,7 +431,7 @@ sap.ui.define([
 
 	/**
 	 * Toggle normal and full screen mode
-	 * 
+	 *
 	 * @private
 	 */
 	ContainerBase.prototype._toggleFullScreen = function() {
@@ -478,7 +477,7 @@ sap.ui.define([
 
 	/**
 	 * Open Container content with Full Screen
-	 * 
+	 *
 	 * @param {boolean} bNeedsScroll add scrolling to full screen display
 	 * @private
 	 */
@@ -524,7 +523,7 @@ sap.ui.define([
 		if (this.getAutoAdjustHeight() || this.getFullScreen()) {
 			var $this = this.$();
 			// Only adjust height after both toolbar and content area are rendered in DOM
-			if (($this.find('.sapUiVkContainerBaseToolbarArea').children()[0]) && ($this.find('.sapUiVkContainerBaseContentArea').children()[0])) {
+			if (($this.find(".sapUiVkContainerBaseToolbarArea").children()[0]) && ($this.find(".sapUiVkContainerBaseContentArea").children()[0])) {
 				// var iContainerHeight = $this.height();
 				// var iToolbarHeight = $this.find('.sapUiVkContainerBaseToolbarArea').children()[0].clientHeight;
 				// var iToolbarBottomBorder = Math.round(parseFloat($this.find('.sapUiVkContainerBaseToolbarArea').children().css("border-bottom")));
@@ -541,7 +540,7 @@ sap.ui.define([
 
 	/**
 	 * Switch Content
-	 * 
+	 *
 	 * @param {string} sContentId id of the content object
 	 * @private
 	 */
@@ -601,7 +600,7 @@ sap.ui.define([
 
 	/**
 	 * get content to display by id
-	 * 
+	 *
 	 * @param {string} sId id of the content object
 	 * @returns {sap.ui.vk.ContainerContent} content object found for given id
 	 */
@@ -623,8 +622,8 @@ sap.ui.define([
 	 * @protected
 	 */
 	ContainerBase.prototype._addToolbarContent = function() {
-		this._oToolbar.addContent(new sap.m.ToolbarSpacer()); //right align remaining content
-		
+		this._oToolbar.addContent(new sap.m.ToolbarSpacer()); // right align remaining content
+
 		if (this._aContentIcons.length > 1) {
 			this._oToolbar.addContent(this._oContentSegmentedButton);
 		}
@@ -638,6 +637,41 @@ sap.ui.define([
 			}
 		}
 
+		this._customButtons.forEach(function(item){
+			if (item.visible) {
+				var settings = {
+					type: sap.m.ButtonType.Transparent,
+					layoutData: new sap.m.OverflowToolbarLayoutData({ priority: sap.m.OverflowToolbarPriority.High })
+				};
+				if ("active" in item) {
+					settings.enabled = item.active;
+				}
+				if ("icon" in item) {
+					settings.icon = item.icon;
+				}
+				if ("activeIcon" in item) {
+					settings.activeIcon = item.activeIcon;
+				}
+				if ("text" in item) {
+					settings.text = item.text;
+				}
+				if ("tooltip" in item) {
+					settings.tooltip = item.tooltip;
+				}
+				if ("press" in item) {
+					settings.press = item.press;
+				}
+				switch (item.type) { // supports "click" and "toggle" types only for now
+					case sap.ui.vk.MapContainerButtonType.Click:
+						this._oToolbar.addContent(new sap.m.OverflowToolbarButton(settings));
+						break;
+					default:
+						this._oToolbar.addContent(new sap.m.OverflowToolbarToggleButton(settings));
+						break;
+				}
+			}
+		}, this);
+
 		if (this.getShowSettings()) {
 			this._oToolbar.addContent(this._oSettingsButton);
 		}
@@ -649,7 +683,7 @@ sap.ui.define([
 	/**
 	 * The first button inside the segmented button is only set as default if the user did not click explicitly on another button inside the segmented
 	 * button
-	 * 
+	 *
 	 * @private
 	 */
 	ContainerBase.prototype._setDefaultOnSegmentedButton = function() {
@@ -661,7 +695,7 @@ sap.ui.define([
 
 	/**
 	 * Buttons which are not needed anymore are destroyed here.
-	 * 
+	 *
 	 * @param {array} buttons The buttons which need to be destroyed.
 	 * @private
 	 */
@@ -673,11 +707,11 @@ sap.ui.define([
 
 	ContainerBase.prototype._handleSelection = function(mode) {
 		var control = this.getSelectedContent().getContent();
-		if (control instanceof sap.ui.vbm.GeoMap) {
-			if (mode == "LASSO") {
+		if (control instanceof sap.ui.vbm.GeoMap || control instanceof sap.ui.vbm.AnalyticMap) {
+			if (mode === "LASSO") {
 				control.setLassoSelection(true);
 				this._selectionState = mode;
-			} else if (mode == "RECT") {
+			} else if (mode === "RECT") {
 				control.setRectangularSelection(true);
 				this._selectionState = mode;
 			} else if (mode === "SINGLE") {

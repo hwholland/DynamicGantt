@@ -12,18 +12,18 @@ The main usage for the asp.tnt controls is for scenarios in the tooling or admin
     <since>1.34</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="sideExpanded" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="sideExpanded">
             <documentation>Indicates if the side area is expanded. Overrides the expanded property of the sideContent aggregation.</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="header" type="sap.tnt/ToolHeader" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.tnt/ToolHeader" name="header">
             <documentation>The control to appear in the header area.</documentation>
         </aggregation>
-        <aggregation name="sideContent" type="sap.tnt/SideNavigation" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.tnt/SideNavigation" name="sideContent">
             <documentation>The side menu of the layout.</documentation>
         </aggregation>
-        <aggregation name="mainContents" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="mainContents">
             <documentation>The content section.</documentation>
         </aggregation>
     </aggregations>

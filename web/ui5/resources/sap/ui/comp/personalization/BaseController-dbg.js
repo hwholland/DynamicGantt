@@ -3,13 +3,14 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides BaseController
 sap.ui.define([
-	'jquery.sap.global', 'sap/m/P13nItem', 'sap/ui/base/ManagedObject', './Util', 'sap/ui/table/Table'
-], function(jQuery, P13nItem, ManagedObject, Util, Table) {
+	'sap/ui/base/ManagedObject', './Util', './ColumnHelper'
+], function(ManagedObject, Util, ColumnHelper) {
 	"use strict";
 
 	/**
@@ -20,13 +21,14 @@ sap.ui.define([
 	 * @class An abstract class for personalization Controllers.
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.25.0-SNAPSHOT *
+	 * @version 1.25.0-SNAPSHOT
 	 * @constructor
+	 * @private
+	 * @abstract
 	 * @since 1.28.0
 	 * @alias sap.ui.comp.personalization.BaseController
 	 */
-	var BaseController = ManagedObject.extend("sap.ui.comp.personalization.BaseController",
-	/** @lends sap.ui.comp.personalization.BaseController */
+	var BaseController = ManagedObject.extend("sap.ui.comp.personalization.BaseController", /** @lends sap.ui.comp.personalization.BaseController */
 	{
 		metadata: {
 			"abstract": true,
@@ -34,54 +36,56 @@ sap.ui.define([
 			properties: {
 				/**
 				 * Controller type for generic use. Due to extensibility reason the type of "type" property should be "string". So it is feasible to
-				 * add a custom controller without expanding the type.
-				 *
-				 * @since 1.28.0
+				 * add a custom controller without expanding the type. The type is also used as namespace for Json model.
 				 */
 				type: {
 					type: "string",
-					group: "Misc",
 					defaultValue: null
 				},
 				/**
-				 * Controller model. Each controller has its own name space as part of the entire model.
-				 *
-				 * @since 1.28.0
+				 * The itemType is used in Json model.
 				 */
-				model: {
-					type: "sap.ui.model.json.JSONModel",
-					group: "Misc",
+				itemType: {
+					type: "string",
 					defaultValue: null
-				},
-				/**
-				 * @since 1.28.0
-				 */
-				persistentDataRestore: {
-					type: "object",
-					group: "Misc",
-					defaultValue: null,
-					visibility: "hidden"
 				},
 				/**
 				 * @since 1.32.0
 				 */
 				ignoreColumnKeys: {
 					type: "object",
-					group: "Misc",
-					defaultValue: [],
-					visibility: "hidden"
+					defaultValue: []
 				},
+				/**
+				 * @since 1.54.0
+				 */
+				additionalIgnoreColumnKeys: {
+					type: "object",
+					defaultValue: []
+				},
+				/**
+				 * ColumnHelper object.
+				 */
 				columnHelper: {
 					type: "sap.ui.comp.personalization.ColumnHelper",
-					defaultValue: null,
-					visibility: "hidden"
+					defaultValue: null
+				},
+				/**
+				 * Once the <code>columnKeys</code> is passed it must contain all possible column keys. The order of the column keys is taken into account.
+				 * <bold>Note</bold>: this property is not allowed to be changed afterwards.
+				 */
+				columnKeys: {
+					type: "string[]",
+					defaultValue: []
+				},
+				tableType: {
+					type: "string",
+					defaultValue: null
 				}
 			},
 			associations: {
 				/**
 				 * Table for which settings are applied.
-				 *
-				 * @since 1.28.0
 				 */
 				table: {
 					type: "sap.ui.core.Control",
@@ -91,27 +95,20 @@ sap.ui.define([
 			events: {
 				/**
 				 * Event is raised before potential change on table will be applied.
-				 *
-				 * @since 1.28.0
 				 */
 				beforePotentialTableChange: {},
 				/**
 				 * Event is raised after potential change on table has be applied.
-				 *
-				 * @since 1.28.0
 				 */
 				afterPotentialTableChange: {}
 			}
 		}
 	});
 
-	/**
-	 * Initialization hook.
-	 *
-	 * @private
-	 */
-	BaseController.prototype.init = function() {
-		this._aColumnKeys = [];
+	BaseController.prototype.exit = function() {
+		if (this.getModel()) {
+			this.getModel().destroy();
+		}
 	};
 
 	/**
@@ -124,17 +121,15 @@ sap.ui.define([
 		var that = this;
 		return function() {
 			if (!this.getModel("$sapmP13nPanel")) {
-				this.setModel(that.getModel("$sapuicomppersonalizationBaseController"), "$sapmP13nPanel");
+				this.setModel(that.getInternalModel(), "$sapmP13nPanel");
 			}
 		};
 	};
-
-	/**
-	 * Getter for association <code>table</code>
-	 *
-	 * @returns {object} that represents sap.m.Table || sap.ui.table.Table
-	 * @protected
-	 */
+	BaseController.prototype.setTable = function(oTable) {
+		this.setAssociation("table", oTable);
+		this.setTableType(Util.getTableType(this.getTable()));
+		return this;
+	};
 	BaseController.prototype.getTable = function() {
 		var oTable = this.getAssociation("table");
 		if (typeof oTable === "string") {
@@ -142,138 +137,297 @@ sap.ui.define([
 		}
 		return oTable;
 	};
-
-	/**
-	 * Creates persistent object
-	 *
-	 * @param {array} aItems is a list of items that will be placed in the new created persistent structure
-	 * @returns {object} JSON object
-	 * @protected
-	 */
-	BaseController.prototype.createPersistentStructure = function(aItems) {
+	BaseController.prototype.getColumnMap = function() {
+		return this.getColumnHelper().getColumnMap();
+	};
+	BaseController.prototype.createControlDataStructure = function(aItems) {
 		aItems = aItems || [];
-		var oPersistentData = {};
-		oPersistentData[this.getType()] = {};
-		oPersistentData[this.getType()][this.getItemType()] = aItems;
-		return oPersistentData;
+		var oJson = {};
+		oJson[this.getType()] = {};
+		oJson[this.getType()][this.getItemType()] = aItems;
+		return oJson;
 	};
-
-	BaseController.prototype.getItemType = function() {
-		return this.getType() + "Items";
+	BaseController.prototype.createColumnKeysStructure = function(aColumnKeys) {
+		aColumnKeys = aColumnKeys || [];
+		var oJsonColumnKeys = {};
+		oJsonColumnKeys[this.getType()] = {};
+		oJsonColumnKeys[this.getType()][this.getItemType()] = aColumnKeys.map(function(sColumnKey) {
+			return {
+				columnKey: sColumnKey
+			};
+		});
+		return oJsonColumnKeys;
 	};
-
-	/**
-	 * Getter of persistent data object
-	 *
-	 * @returns {object} JSON object
-	 * @protected
-	 */
-	BaseController.prototype.getPersistentData = function() {
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-		var oPersistentData = {};
-		if (!oData.persistentData[this.getType()]) {
-			oPersistentData = this.createPersistentStructure();
-		} else {
-			oPersistentData[this.getType()] = oData.persistentData[this.getType()];
-		}
-		return oPersistentData;
-	};
-
-	/**
-	 * Setter of persistent data object *
-	 *
-	 * @param {object} oDataNew contains the new data that will be set into model persistentData
-	 * @protected
-	 */
-	BaseController.prototype.setPersistentData = function(oDataNew) {
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-		oData.persistentData[this.getType()] = oDataNew[this.getType()];
-	};
-
-	/**
-	 * Getter of persistent items data object
-	 *
-	 * @returns {object} JSON object
-	 * @protected
-	 */
-	BaseController.prototype.getPersistentDataItems = function() {
-		return this.getPersistentData()[this.getType()][this.getItemType()];
-	};
-
-	/**
-	 * Getter of transient data object
-	 *
-	 * @returns {object} JSON object
-	 * @protected
-	 */
-	BaseController.prototype.getTransientData = function() {
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-		var oTransientData = {};
-		if (!oData.transientData[this.getType()]) {
-			oTransientData[this.getType()] = {};
-			oTransientData[this.getType()].title = this.getTitleText();
-			oTransientData[this.getType()].items = [];
-		} else {
-			oTransientData[this.getType()] = oData.transientData[this.getType()];
-		}
-		return oTransientData;
-	};
-
-	/**
-	 * Setter of transient data object
-	 *
-	 * @param {object} oDataNew contains the new data that will be set into model transientData
-	 * @protected
-	 */
-	BaseController.prototype.setTransientData = function(oDataNew) {
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-		oData.transientData[this.getType()] = oDataNew[this.getType()];
-	};
-
-	/**
-	 * Initialization of model
-	 *
-	 * @param {object} oModel of type sap.ui.model.json.JSONModel that will be used for initialization
-	 */
-	BaseController.prototype.initializeModel = function(oModel) {
-		this.setModel(oModel, "$sapuicomppersonalizationBaseController");
-		this.setTransientData(this.getTransientData());
-		this.setPersistentData(this.getPersistentData());
-	};
-
-	BaseController.prototype.getColumnMap = function(bOnlyValid) {
-		return bOnlyValid ? this.getColumnHelper().getColumnMapOfValidColumnKeys(this.getType(), this.getIgnoreColumnKeys()) : this.getColumnHelper().getColumnMap();
-	};
-
-	BaseController.prototype.createTableRestoreJson = function(aColumnKeys) {
-		this._aColumnKeys = aColumnKeys;
-		// TODO: this is not correct but the best we can do - problem is that the order in which we sort is not extractable from the table instance.
-		// Consider to log error if more that one sort criteria
-		this.setPersistentDataRestore(this._getTable2JsonRestore(aColumnKeys));
-	};
-
-	BaseController.prototype.getTableRestoreJson = function() {
-		return Util.copy(this.getPersistentDataRestore());
-	};
-
-	/**
-	 * only keep a columnItem if key is available in table
-	 */
-	BaseController.prototype.reducePersistentModel = function() {
-		var oTable = this.getTable();
-		if (!oTable) {
-			return;
-		}
-
-		var aItemsReduced = [];
-		var oPersistentData = this.getPersistentData();
-		oPersistentData[this.getType()][this.getItemType()].forEach(function(oItem) {
-			if (this._aColumnKeys.indexOf(oItem.columnKey) > -1) {
-				aItemsReduced.push(oItem);
+	BaseController.prototype.checkConsistencyOfIgnoreColumnKeys = function() {
+		var oColumnKey2ColumnMap = this.getColumnMap();
+		this.getIgnoreColumnKeys().some(function(sColumnKey) {
+			if (oColumnKey2ColumnMap[sColumnKey] && oColumnKey2ColumnMap[sColumnKey].getVisible()) {
+				throw "The provided 'ignoreColumnKeys' for '" + this.getType() + "' are inconsistent. No columns specified as ignored is allowed to be visible.";
 			}
 		}, this);
-		oPersistentData[this.getType()][this.getItemType()] = aItemsReduced;
-		this.setPersistentData(oPersistentData);
+	};
+
+	BaseController.prototype.initializeInternalModel = function(oModel) {
+		// 'controlDataInitial' is equivalent to the metadata
+		// 'controlDataBase'    table data before ignore was called
+		// 'controlData'        table data with visible=false for ignored(runtime data)
+		// 'controlDataReduce'  'controlData' without ignored columns, relevant only during the P13nDialog is opened
+		// 'transientData'      'controlData' without ignored columns
+		// 'ignoreData'         the sum of ignoreColumnKeys and additionalIgnoreColumnKeys
+		// 'alreadyKnownRuntimeData'
+		// 'alreadyKnownPersistentData'
+		// 'beforeOpenData'
+		// 'variantDataInitial'  'controlDataInitial' + 'variantData'
+		// 'variantData'         variant passed to controller (setPersonalizationData) - set in controller
+
+		// Create property with controlDataStructure
+		[
+			"controlDataInitial", "controlDataBase", "controlData", "alreadyKnownRuntimeData", "alreadyKnownPersistentData"
+		].forEach(function(sPropertyName) {
+			if (!oModel.getProperty("/" + sPropertyName)) {
+				oModel.setProperty("/" + sPropertyName, {});
+			}
+			oModel.setProperty("/" + sPropertyName + "/" + this.getType(), this.createControlDataStructure()[this.getType()]);
+		}, this);
+
+		// Create property with columnKeysStructure
+		[
+			"ignoreData"
+		].forEach(function(sPropertyName) {
+			if (!oModel.getProperty("/" + sPropertyName)) {
+				oModel.setProperty("/" + sPropertyName, {});
+			}
+			oModel.setProperty("/" + sPropertyName + "/" + this.getType(), this.createColumnKeysStructure()[this.getType()]);
+		}, this);
+
+		// Create property with 'undefined' value
+		[
+			"controlDataReduce", "transientData", "beforeOpenData", "variantDataInitial"
+		].forEach(function(sPropertyName) {
+			if (!oModel.getProperty("/" + sPropertyName)) {
+				oModel.setProperty("/" + sPropertyName, undefined);
+			}
+		});
+		this.setModel(oModel, "$sapuicomppersonalizationBaseController");
+	};
+	BaseController.prototype._extendPropertyWithControlDataStructure = function(sPropertyName) {
+		var oModel = this.getInternalModel();
+		if (oModel.getProperty("/" + sPropertyName)) {
+			return;
+		}
+		oModel.setProperty("/" + sPropertyName, {});
+		oModel.setProperty("/" + sPropertyName + "/" + this.getType(), this.createControlDataStructure()[this.getType()]);
+	};
+	BaseController.prototype.getInternalModel = function() {
+		return this.getModel("$sapuicomppersonalizationBaseController");
+	};
+
+	// -------------------- Calculate -----------------------------------------------------------
+
+	BaseController.prototype.calculateIgnoreData = function() {
+		var aIgnoreColumnKeysTotal = this.getIgnoreColumnKeys().concat(this.getAdditionalIgnoreColumnKeys());
+		aIgnoreColumnKeysTotal = aIgnoreColumnKeysTotal.filter(function(sColumnKey, iIndex) {
+			// Avoid duplicate columnKeys
+			return aIgnoreColumnKeysTotal.indexOf(sColumnKey) === iIndex;
+		});
+		var oJsonColumnKeys = this.createColumnKeysStructure(aIgnoreColumnKeysTotal);
+		this.setIgnoreData2Model(oJsonColumnKeys);
+	};
+	BaseController.prototype.calculateControlData = function() {
+		var oJson = Util.copy(this.getControlDataBase());
+		this._deselectIgnoreDataFromJson(oJson);
+		this.setControlData2Model(oJson);
+	};
+	BaseController.prototype.calculateControlDataReduce = function() {
+		var oJson = Util.copy(this.getControlDataBase());
+		this._removeIgnoreDataFromJson(oJson);
+		this.setControlDataReduce2Model(oJson);
+	};
+	BaseController.prototype.calculateTransientData = function(oJson) {
+		oJson = Util.copy(oJson);
+		this._removeIgnoreDataFromJson(oJson);
+		this.setTransientData2Model(oJson);
+	};
+	BaseController.prototype._removeIgnoreDataFromJson = function(oJson) {
+		if (!this.getIgnoreData()[this.getType()]) {
+			return;
+		}
+		this.getIgnoreData()[this.getType()][this.getItemType()].forEach(function(oIgnoreItem) {
+			var iIndex = Util.getIndexByKey("columnKey", oIgnoreItem.columnKey, oJson[this.getType()][this.getItemType()]);
+			if (iIndex > -1) {
+				oJson[this.getType()][this.getItemType()].splice(iIndex, 1);
+			}
+		}, this);
+	};
+	BaseController.prototype._deselectIgnoreDataFromJson = function(oJson) {
+		if (!this.getIgnoreData()[this.getType()]) {
+			return;
+		}
+		this.getIgnoreData()[this.getType()][this.getItemType()].forEach(function(oIgnoreItem) {
+			var iIndex = Util.getIndexByKey("columnKey", oIgnoreItem.columnKey, oJson[this.getType()][this.getItemType()]);
+			if (iIndex > -1) {
+				this.handleIgnore(oJson, iIndex);
+			}
+		}, this);
+	};
+
+	// -------------------- Update -----------------------------------------------------------
+
+	BaseController.prototype.updateControlDataBaseFromJson = function(oJson) {
+		// Filter out all ignored columns and update the 'controlDataBase' with the remaining columns
+		var oIgnoreData = this.getIgnoreData();
+		var oJsonCopy = Util.copy(oJson);
+		oJsonCopy[this.getType()][this.getItemType()] = oJson[this.getType()][this.getItemType()].filter(function(oItem) {
+			return Util.getIndexByKey("columnKey", oItem.columnKey, oIgnoreData[this.getType()][this.getItemType()]) < 0;
+		}, this);
+		this.setControlDataBase2Model(oJsonCopy);
+	};
+
+	// -------------------- Extend -----------------------------------------------------------
+
+	BaseController.prototype.extendControlDataInitial = function(oJson) {
+		this._extendData("controlDataInitial", oJson);
+	};
+	BaseController.prototype.extendControlDataBase = function(oJson) {
+		this._extendData("controlDataBase", oJson);
+	};
+	BaseController.prototype.extendVariantDataInitial = function(oJson) {
+		this._extendData("variantDataInitial", oJson);
+	};
+	BaseController.prototype.extendAlreadyKnownRuntimeData = function(oJson) {
+		this._extendData("alreadyKnownRuntimeData", oJson);
+	};
+	BaseController.prototype.extendAlreadyKnownPersistentData = function(oJson) {
+		this._extendData("alreadyKnownPersistentData", oJson);
+	};
+	BaseController.prototype._extendData = function(sPropertyName, oJson) {
+		if (!oJson || !oJson[this.getType()] || !this._getInternalModelData(sPropertyName)) {
+			return;
+		}
+		var oJsonCopy = Util.copy(oJson);
+		var oModel = this.getInternalModel();
+		Object.keys(oJsonCopy[this.getType()]).forEach(function(sAttribute) {
+			if (jQuery.isArray(oJsonCopy[this.getType()][sAttribute])) {
+				oJsonCopy[this.getType()][sAttribute].forEach(function(oItem) {
+					var aItems = this._getInternalModelData(sPropertyName)[this.getType()][sAttribute];
+					if (Util.getIndexByKey("columnKey", oItem.columnKey, aItems) > -1) {
+						throw "columnKey '" + oItem.columnKey + "' does already exist in internal model";
+					}
+					oModel.setProperty("/" + sPropertyName + "/" + this.getType() + "/" + sAttribute + "/" + aItems.length + "/", oItem);
+				}, this);
+				return;
+			}
+			oModel.setProperty("/" + sPropertyName + "/" + this.getType() + "/" + sAttribute + "/", oJsonCopy[this.getType()][sAttribute]);
+		}, this);
+	};
+
+	// -------------------- Setter -----------------------------------------------------------
+
+	BaseController.prototype.setControlDataInitial2Model = function(oJson) {
+		this._setModelData("controlDataInitial", oJson);
+	};
+	BaseController.prototype.setControlDataBase2Model = function(oJson) {
+		this._setModelData("controlDataBase", oJson);
+	};
+	BaseController.prototype.setControlData2Model = function(oJson) {
+		this._setModelData("controlData", oJson);
+	};
+	BaseController.prototype.setAlreadyKnownRuntimeData2Model = function(oJson) {
+		this._setModelData("alreadyKnownRuntimeData", oJson);
+	};
+	BaseController.prototype.setAlreadyKnownPersistentData2Model = function(oJson) {
+		this._setModelData("alreadyKnownPersistentData", oJson);
+	};
+	BaseController.prototype.setVariantDataInitial2Model = function(oJson) {
+		this._extendPropertyWithControlDataStructure("variantDataInitial");
+		this._setModelData("variantDataInitial", oJson);
+	};
+	BaseController.prototype.setIgnoreData2Model = function(oJson) {
+		this._setModelData("ignoreData", oJson);
+	};
+	BaseController.prototype.setControlDataReduce2Model = function(oJson) {
+		this._extendPropertyWithControlDataStructure("controlDataReduce");
+		this._setModelData("controlDataReduce", oJson);
+	};
+	BaseController.prototype.setTransientData2Model = function(oJson) {
+		this._extendPropertyWithControlDataStructure("transientData");
+		this._setModelData("transientData", oJson);
+	};
+	BaseController.prototype.setBeforeOpenData2Model = function(oJson) {
+		this._extendPropertyWithControlDataStructure("beforeOpenData");
+		this._setModelData("beforeOpenData", oJson);
+	};
+	BaseController.prototype._setModelData = function(sPropertyName, oJson) {
+		// sPropertyName is name of model property e.g. 'transientData', 'controlDataBase', 'controlData', 'controlDataReduce'
+		this.getInternalModel().setProperty("/" + sPropertyName + "/" + this.getType(), (oJson ? Util.copy(oJson)[this.getType()] : undefined));
+	};
+
+	// -------------------- Getter -----------------------------------------------------------
+
+	BaseController.prototype.getControlDataInitial = function() {
+		return this._getInternalModelData("controlDataInitial");
+	};
+	BaseController.prototype.getControlDataBase = function() {
+		return this._getInternalModelData("controlDataBase");
+	};
+	BaseController.prototype.getControlData = function() {
+		return this._getInternalModelData("controlData");
+	};
+	BaseController.prototype.getAlreadyKnownRuntimeData = function() {
+		return this._getInternalModelData("alreadyKnownRuntimeData");
+	};
+	BaseController.prototype.getAlreadyKnownPersistentData = function() {
+		return this._getInternalModelData("alreadyKnownPersistentData");
+	};
+	BaseController.prototype.getVariantDataInitial = function() {
+		return this._getInternalModelData("variantDataInitial");
+	};
+	BaseController.prototype.getIgnoreData = function() {
+		return this._getInternalModelData("ignoreData");
+	};
+	BaseController.prototype.getControlDataReduce = function() {
+		return this._getInternalModelData("controlDataReduce");
+	};
+	BaseController.prototype.getTransientData = function() {
+		return this._getInternalModelData("transientData");
+	};
+	BaseController.prototype.getBeforeOpenData = function() {
+		return this._getInternalModelData("beforeOpenData");
+	};
+	BaseController.prototype._getInternalModelData = function(sPropertyName) {
+		return this.getInternalModel().getProperty("/" + sPropertyName);
+	};
+
+	// -------------------- ------ -----------------------------------------------------------
+
+	BaseController.prototype.determineMissingColumnKeys = function(oJson) {
+		if (!oJson || !oJson[this.getType()] || !oJson[this.getType()][this.getItemType()]) {
+			return this.createColumnKeysStructure();
+		}
+		var oColumnKey2ColumnMap = this.getColumnMap();
+		var oIgnoreData = this.getIgnoreData();
+
+		// Take all missing columnKeys based on 'columnKey2ColumnMap'.
+		// Then remove columnKeys which are part of ignoreData.
+		var aMissingColumnKeys = oJson[this.getType()][this.getItemType()].filter(function(oItem) {
+			return !oColumnKey2ColumnMap[oItem.columnKey];
+		}).filter(function(oItem) {
+			return Util.getIndexByKey("columnKey", oItem.columnKey, oIgnoreData[this.getType()][this.getItemType()]) < 0;
+		}, this).map(function(oItem) {
+			return oItem.columnKey;
+		});
+		return this.createColumnKeysStructure(aMissingColumnKeys);
+	};
+
+	BaseController.prototype.extractIgnoreDataFromJson = function(oJson) {
+		if (!oJson || !oJson[this.getType()] || !oJson[this.getType()][this.getItemType()]) {
+			return null;
+		}
+		var oIgnoreData = this.getIgnoreData();
+		var oJsonIgnore = oJson[this.getType()][this.getItemType()].filter(function(oMItem) {
+			return Util.getIndexByKey("columnKey", oMItem.columnKey, oIgnoreData[this.getType()][this.getItemType()]) > -1;
+		}, this);
+		return oJsonIgnore.length ? this.createControlDataStructure(oJsonIgnore) : null;
 	};
 
 	/**
@@ -281,117 +435,99 @@ sap.ui.define([
 	 * json snapshot can later be applied to any table instance to recover all columns related infos of the "original" table TODO: This really only
 	 * works for when max 1 sort criteria is defined since otherwise potentially order of sort criteria is destroyed
 	 */
-	BaseController.prototype._getTable2Json = function() {
-	};
+	BaseController.prototype.getTable2Json = function(oJsonColumnKeys) {
+		var oJsonData = this.createControlDataStructure();
+		var oColumnKey2ColumnMap = this.getColumnMap(); // We have to include ignored fields into 'controlData'
+		var aColumnKeys = this.getColumnKeys();
 
-	BaseController.prototype._getTable2JsonRestore = function(aColumnKeys) {
-	};
-
-	BaseController.prototype.syncTable2PersistentModel = function() {
-		// first put table representation into persistentData - full json representation
-		// NOTE: This really only works for when max 1 sort criteria is defined since otherwise potentially order of sort
-		// criteria is destroyed
-		this.setPersistentData(this._getTable2Json());
-
-		// NOTE: we leave persistentData in this form though for persistence we have too much data (compared to what we need to persist); reason is
-		// that we wish to expose this data in the UI.
-	};
-
-	BaseController.prototype.syncTable2TransientModel = function() {
-	};
-
-	BaseController.prototype.getPanel = function() {
-	};
-
-	/**
-	 * hook to apply made changes. The "oPayload" object can be used by subclasses.
-	 *
-	 * @param {object} oPayload is an object that contains additional data, which can be filled by the connected panels
-	 */
-	BaseController.prototype.onAfterSubmit = function(oPayload) {
-		this.syncJsonModel2Table(this.getModel("$sapuicomppersonalizationBaseController").getData().persistentData);
-	};
-
-	/**
-	 * This method is called from Controller after Reset button was executed. This method is a base implementation and it is optional to re-implement
-	 * it in the specific sub-controller
-	 *
-	 * @param {object} oPayload is an object that contains additional data, which can be filled by the connected panels
-	 */
-	BaseController.prototype.onAfterReset = function(oPayload) {
-	};
-
-	BaseController.prototype.syncJsonModel2Table = function(oJsonModel) {
-	};
-
-	/**
-	 * Operations on sorting are processed sometime directly at the table and sometime not. In case that something has been changed via
-	 * Personalization Dialog the consumer of the Personalization Dialog has to apply sorting at the table. In case that sorting has been changed via
-	 * user interaction at table, the change is instantly applied at the table.
-	 *
-	 * @param {object} oPersistentDataBase JSON object
-	 * @param {object} oPersistentDataCompare JSON object
-	 */
-	BaseController.prototype.getChangeType = function(oPersistentDataBase, oPersistentDataCompare) {
-	};
-
-	/**
-	 * Result is XOR based difference = oPersistentDataBase - oPersistentDataCompare
-	 *
-	 * @param {object} oPersistentDataBase JSON object.
-	 * @param {object} oPersistentDataCompare JSON object. Note: if sortItems is [] then it means that all sortItems have been deleted
-	 */
-	BaseController.prototype.getChangeData = function(oPersistentDataBase, oPersistentDataCompare) {
-	};
-
-	/**
-	 * @param {object} oPersistentDataBase: JSON object to which different properties from JSON oPersistentDataCompare are added
-	 * @param {object} oPersistentDataCompare: JSON object from where the different properties are added to oPersistentDataBase. Note: if sortItems is []
-	 *        then it means that all sortItems have been deleted
-	 */
-	BaseController.prototype.getUnionData = function(oPersistentDataBase, oPersistentDataCompare) {
-	};
-
-	BaseController.prototype.determineNeededColumnKeys = function(oPersistentData) {
-		var oResult = {};
-		oResult[this.getType()] = [];
-		var aIgnoreColumnKeys = this.getIgnoreColumnKeys();
-		var aNeededColumnKeys = [];
-
-		// TODO: make it nicer
-		// oPersistentData is array of columnKeys
-		if (oPersistentData instanceof Array) {
-			oPersistentData.forEach(function(sColumnKey) {
-				if (aIgnoreColumnKeys.indexOf(sColumnKey) > -1) {
-					return;
-				}
-				aNeededColumnKeys.push(sColumnKey);
-			});
-			oResult[this.getType()] = aNeededColumnKeys;
-			return oResult;
-		}
-
-		// oPersistentData is JSON object of xxxItems
-		if (!oPersistentData || !oPersistentData[this.getType()] || !oPersistentData[this.getType()][this.getItemType()]) {
-			return oResult;
-		}
-		oPersistentData[this.getType()][this.getItemType()].forEach(function(oModelColumn) {
-			if (aIgnoreColumnKeys.indexOf(oModelColumn.columnKey) > -1) {
+		oJsonColumnKeys[this.getType()][this.getItemType()].forEach(function(oColumnKey) {
+			var oColumn = oColumnKey2ColumnMap[oColumnKey.columnKey];
+			if (!oColumn) {
+				// cf. incident 1880156806 - when a column was in a variant but this column was not in the specified columnKeys
+				// and not part of ignored then we would run into this condition - however, throwing an exception is a bit hard
+				// since existing / previous variants would then no longer be usable - therefore, we change an exception to a
+				// warning.
+				jQuery.sap.log.warning("Column with columnKey '" + oColumnKey.columnKey + "' does not exist.");
 				return;
 			}
-			aNeededColumnKeys.push(oModelColumn.columnKey);
-		});
-		oResult[this.getType()] = aNeededColumnKeys;
-		return oResult;
+			var oMItem = this.getColumn2Json(oColumn, oColumnKey.columnKey, aColumnKeys.indexOf(oColumnKey.columnKey));
+			if (oMItem) {
+				oJsonData[this.getType()][this.getItemType()].push(oMItem);
+			}
+		}, this);
+		this.getAdditionalData2Json(oJsonData, this.getTable());
+		return oJsonData;
+	};
+	BaseController.prototype.getTable2JsonTransient = function(oJsonColumnKeys) {
+		var oJsonData = this.createControlDataStructure();
+		var oColumnKey2ColumnMap = this.getColumnMap(); // We have to include ignored fields into 'controlData'
+		var sText, sTooltip;
+
+		oJsonColumnKeys[this.getType()][this.getItemType()].forEach(function(oColumnKey) {
+			var oColumn = oColumnKey2ColumnMap[oColumnKey.columnKey];
+			if (!oColumn) {
+				return;
+				// throw "Column with columnKey '" + oColumnKey.columnKey + "' does not exist.";
+			}
+			var sColumnBaseType = Util.getColumnBaseType(oColumn);
+			if (sColumnBaseType === sap.ui.comp.personalization.ColumnType.TableColumn) {
+				if (!oColumn.getLabel()) {
+					throw "The column '" + oColumnKey.columnKey + "' should have a 'label' aggregation otherwise the column can not be identified in the personalization dialog.";
+				}
+				sText = oColumn.getLabel().getText();
+				sTooltip = (oColumn.getTooltip() instanceof sap.ui.core.TooltipBase) ? oColumn.getTooltip().getTooltip_Text() : oColumn.getTooltip_Text();
+			}
+			if (sColumnBaseType === sap.ui.comp.personalization.ColumnType.ResponsiveColumn) {
+				if (!oColumn.getHeader()) {
+					throw "The column '" + oColumnKey.columnKey + "' should have a 'header' aggregation otherwise the column can not be identified in the personalization dialog.";
+				}
+				sText = oColumn.getHeader().getText();
+				sTooltip = (oColumn.getHeader().getTooltip() instanceof sap.ui.core.TooltipBase) ? oColumn.getHeader().getTooltip().getTooltip_Text() : oColumn.getHeader().getTooltip_Text();
+			}
+			if (sColumnBaseType === sap.ui.comp.personalization.ColumnType.ColumnWrapper) {
+				if (!oColumn.getLabel()) {
+					throw "The column '" + oColumnKey.columnKey + "' should have a 'label' aggregation otherwise the column can not be identified in the personalization dialog.";
+				}
+				sText = oColumn.getLabel();
+				sTooltip = (oColumn.getTooltip() instanceof sap.ui.core.TooltipBase) ? oColumn.getTooltip().getTooltip_Text() : oColumn.getTooltip_Text();
+			}
+			var oMItem = this.getColumn2JsonTransient(oColumn, oColumnKey.columnKey, sText, sTooltip);
+			if (oMItem) {
+				oJsonData[this.getType()][this.getItemType()].push(oMItem);
+			}
+		}, this);
+		Util.sortItemsByText(oJsonData[this.getType()][this.getItemType()], "text");
+		return oJsonData;
+	};
+	BaseController.prototype.getColumn2Json = function(oColumn, sColumnKey, iIndex) {
+	};
+	BaseController.prototype.getAdditionalData2Json = function(oJsonData, oTable) {
+	};
+	BaseController.prototype.getColumn2JsonTransient = function(oColumn, sColumnKey) {
+	};
+	BaseController.prototype.handleIgnore = function(oJson, iIndex) {
+	};
+	/**
+	 * In case that an ignore column has same index as another column we have to resolve this conflict situation. We do it
+	 * by moving the ignore column directly behind the other column. oJson can contain conflicting indices - to resolve these
+	 * we assume that only columnKeys of oJsonIgnore are relevant (performance optimization) and we assume that whatever index
+	 * we find in oJsonBase should be left as is. Furthermore, we assume that there are no conflicts in oJsonBase.
+	 *
+	 * @param {object} oJson
+	 * @param {object} oJsonIgnore
+	 */
+	BaseController.prototype.fixConflictWithIgnore = function(oJson, oJsonIgnore) {
 	};
 
-	/**
-	 * Cleans up before destruction.
-	 *
-	 * @private
-	 */
-	BaseController.prototype.exit = function() {
-		this._aColumnKeys = null;
+	BaseController.prototype.syncJson2Table = function(oJson) {
+	};
+	BaseController.prototype.getPanel = function() {
+	};
+	BaseController.prototype.getChangeType = function(oControlDataReduceBase, oControlDataReduceCompare) {
+	};
+	BaseController.prototype.getChangeData = function(oControlDataReduceBase, oControlDataReduceCompare) {
+	};
+	BaseController.prototype.getUnionData = function(oControlDataReduceBase, oControlDataReduceCompare) {
 	};
 
 	/* eslint-enable strict */

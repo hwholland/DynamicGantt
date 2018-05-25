@@ -6,31 +6,31 @@
     <since>1.26.0</since>
     <baseType>sap.m/P13nPanel</baseType>
     <properties>
-        <property name="containerQuery" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
+        <property group="Misc" defaultValue="false" type="sap.ui.core/boolean" name="containerQuery">
             <documentation>defines if the mediaQuery or a ContainerResize will be used for layout update. When the ConditionPanel is used on a dialog the
 property should be set to true!</documentation>
         </property>
-        <property name="layoutMode" type="sap.ui.core/string" group="Misc">
-            <documentation>can be used to control the layout behavior. Default is "" which will automatically change the layout. With "Desktop", "Table"
-or "Phone" you can set a fixed layout.</documentation>
+        <property group="Misc" type="sap.ui.core/string" name="layoutMode">
+            <documentation>can be used to control the layout behavior. Default is &quot;&quot; which will automatically change the layout. With &quot;Desktop&quot;, &quot;Table&quot;
+or &quot;Phone&quot; you can set a fixed layout.</documentation>
         </property>
     </properties>
     <events>
-        <event name="addSortItem" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="addSortItem">
             <documentation>event raised when a SortItem was added</documentation>
         </event>
-        <event name="removeSortItem" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="removeSortItem">
             <documentation>event raised when a SortItem was removed</documentation>
         </event>
-        <event name="updateSortItem" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="updateSortItem">
             <documentation>event raised when a SortItem was updated</documentation>
         </event>
     </events>
     <aggregations>
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>content for include and exclude panels</documentation>
         </aggregation>
-        <aggregation name="sortItems" type="sap.m/P13nSortItem" cardinality="0..n" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..n" type="sap.m/P13nSortItem" name="sortItems">
             <documentation>defined Sort Items</documentation>
         </aggregation>
     </aggregations>

@@ -7,13 +7,13 @@
 
 // Provides control sap.ui.vk.MapContainer.
 sap.ui.define([
-	'jquery.sap.global', './library', 'sap/ui/vk/ContainerBase', 'sap/ui/core/IconPool', 'sap/ui/vbm/lib/sapvbi', 'sap/ui/Device'
+	"jquery.sap.global", "./library", "sap/ui/vk/ContainerBase", "sap/ui/core/IconPool", "sap/ui/vbm/lib/sapvbi", "sap/ui/Device"
 ], function(jQuery, library, ContainerBase, IconPool, sapvbi, Device) {
 	"use strict";
 
 	/**
 	 * Constructor for a new MapContainer.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Abstract Constructor for a new Container.
@@ -43,6 +43,14 @@ sap.ui.define([
 				 * Controls the visibility of the home button
 				 */
 				"showHome": {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: true
+				},
+				/**
+				 * Controls the visibility of the Map Layer Select
+				 */
+				"showMapLayer": {
 					type: "boolean",
 					group: "Misc",
 					defaultValue: true
@@ -79,7 +87,7 @@ sap.ui.define([
 					type: "sap.m.ScrollContainer",
 					multiple: false,
 					visibility: "hidden"
-				} 
+				}
 			},
 			associations: {},
 			events: {}
@@ -97,6 +105,8 @@ sap.ui.define([
 	// ........................................................................//
 
 	MapContainer.prototype.init = function() {
+		this._currentText = new sap.m.Text({
+		}).addStyleClass("mapLayerSelectedText");
 		// call super init
 		ContainerBase.prototype.init.apply(this, arguments);
 
@@ -114,14 +124,13 @@ sap.ui.define([
 		});
 		// scroll container for list panel stack
 		this._oScrollCont = new sap.m.ScrollContainer({
-			height: "100%",
 			horizontal: false,
 			vertical: true,
 			focusable: false
 		});
 		this.setAggregation("scrollCont", this._oScrollCont, /* bSuppressInvalidate= */ true);
 
-		// create potential nabar buttons
+		// create potential navbar buttons
 		this._oHomeButton = new sap.m.Button({
 			icon: "sap-icon://home",
 			type: sap.m.ButtonType.Transparent,
@@ -131,7 +140,7 @@ sap.ui.define([
 		this._oRectZoomButton = new sap.m.ToggleButton({
 			icon: "sap-icon://draw-rectangle",
 			type: sap.m.ButtonType.Transparent,
-			pressed: '{rectZoom>/rectZoom}',
+			pressed: "{rectZoom>/rectZoom}",
 			tooltip: sap.ui.vk.getResourceBundle().getText("MAPCONTAINER_RECT_ZOOM")
 		}).setModel(oModel, "rectZoom");
 		this._oZoomInButton = new sap.m.Button({
@@ -163,7 +172,7 @@ sap.ui.define([
 			});
 			this._oMenuCloseButton = new sap.m.Button({
 				type: sap.m.ButtonType.Transparent,
-				icon: "sap-icon://nav-back",					
+				icon: "sap-icon://nav-back",
 				press: function() {
 					this._bSegmentedButtonSaveSelectState = true;
 					this._hideListPanelStack();
@@ -195,7 +204,7 @@ sap.ui.define([
 			// Do not allow to collapse List Panel Stack on mobile phones, since it is rendered in a side container there
 			oPanel.setCollapsible(false);
 			oPanel.setWidth("100%");
-		}		
+		}
 		this._oScrollCont.removeAllContent();
 		return this._oScrollCont.addContent(oPanel);
 	};
@@ -230,6 +239,39 @@ sap.ui.define([
 			} else {
 				this._shouldRenderListPanel = false;
 			}
+			this._isSupportingMapLayerSwitch = control instanceof sap.ui.vbm.GeoMap && !(control instanceof sap.ui.vbm.AnalyticMap);
+			if (this._isSupportingMapLayerSwitch && control.getMapConfiguration() !== null && this.getShowMapLayer()) {
+
+				var config = control.getMapConfiguration();
+				var layers = [].concat(config.MapLayerStacks);
+
+				if (layers.length > 1) {
+
+					this._box = new sap.m.HBox({}).addStyleClass("mapContainerHboxPopover");
+
+						this._popover = new sap.m.Popover({
+							enableScrolling: false,
+							placement: sap.m.PlacementType.Horizontal,
+							content: this._box,
+							showHeader: false
+						});
+
+						this._selectionMap = new sap.m.Image({
+							width: "4.7rem",
+							press: function(event) {
+								if (this._popover.isOpen()) {
+									this._popover.close();
+								} else {
+									this._popover.openBy(this._selectionMap);
+								}
+							}.bind(this)
+						}).addStyleClass("mapLayerPopoverItem");
+
+				}
+				this._shouldRenderMapLayerSwitch = true;
+			} else {
+				this._shouldRenderMapLayerSwitch = false;
+			}
 		}
 	};
 
@@ -242,6 +284,151 @@ sap.ui.define([
 
 		// call super implementation
 		ContainerBase.prototype.onAfterRendering.apply(this, arguments);
+
+		if (this.getSelectedContent() !== null) {
+			var control = this.getSelectedContent().getContent();
+			if (this._isSupportingMapLayerSwitch === true && control.getMapConfiguration()) {
+
+				var config = control.getMapConfiguration();
+				var layers = [].concat(config.MapLayerStacks);
+
+				if (layers.length > 1) {
+					layers.forEach(function(v, index) {
+
+						var verticalLayout = new sap.ui.layout.VerticalLayout({});
+
+						// Access the scene to use getPreviewImage callback
+						var scene = control.mVBIContext.GetMainScene();
+						var currentMapLayerStack = control.mVBIContext.m_MapLayerStackManager.GetMapLayerStack(v.name);
+
+						var oItem = new sap.m.Image({
+							width: "4.5rem",
+							press: function(event) {
+								this._popover.close();
+								oItem.setAlt(v.name);
+								var eventSource = event.getSource();
+								var text = eventSource.getAlt();
+								control.setRefMapLayerStack(text);
+								this._currentText.setText(v.name);
+
+								// Call GetPreviewImage with selected map layer stack and set callback image source
+								scene.GetPreviewImage(currentMapLayerStack, function(img) {
+									// Set the source of selected tile button
+									jQuery(".mapLayerPopoverItem").attr("src", img.src);
+								});
+								this._currentMapLayerStackIndex = index;
+							}.bind(this)
+						});
+
+						var oItemText = new sap.m.Text({
+							text: v.name
+						}).addStyleClass("mapLayerPopoverItemText");
+
+						oItem.addStyleClass("layerType");
+
+						// set the source of items in popover
+						scene.GetPreviewImage(currentMapLayerStack, function(img) {
+							oItem.setSrc(img.src);
+						});
+
+						// set tile of selected map layer stack on initial load
+						scene.GetPreviewImage(scene.m_MapLayerStack, function(img) {
+							jQuery(".mapLayerPopoverItem").attr("src", img.src);
+						});
+
+						var name = layers[this._currentMapLayerStackIndex || 0].name;
+						this._currentText.setText(name);
+						this._box.addItem(verticalLayout);
+
+						verticalLayout.addContent(oItem);
+						verticalLayout.addContent(oItemText);
+					}, this);
+				}
+			}
+		}
+	};
+
+	/**
+	 * Set custom item on the MapContainer toolbar.
+	 * All custom items added between selection segment button and setting button.
+	 *
+	 * @param {object}			item Item configuration object.
+	 * @param {string}			item.id Id of the item for future references.
+	 * @param {integer}			item.index Relative index of an item across all custom items.
+	 * @param {boolean}			item.visible Visibility of an item.
+	 * @param {boolean}			item.active Active item or not.
+	 * @param {string}			item.text Text of an item.
+	 * @param {string}			item.tooltip Tooltip of an item.
+	 * @param {sap.ui.core.URI}	item.icon Icon of an item.
+	 * @param {sap.ui.core.URI}	item.activeIcon Alternative icon of an item, see {@link sap.m.Button} for details.
+	 * @param {string}			item.type The {@link sap.ui.vk.MapContainerButtonType} enum.
+	 * @param {function}		item.press Callback function which is called when item gets pressed.
+
+	 * @returns {object} Item configuration object
+	 * @public
+	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	 MapContainer.prototype.setToolbarItem = function(item) {
+		if (!item || !item.id) {
+			return null;
+		}
+		var obj;
+
+		for (var i = 0; i < this._customButtons.length; ++i) {
+			if (item.id === this._customButtons[i].id) {
+				obj = this._customButtons[i];
+				obj.index = i; // update index as it may be out of sync
+				this._customButtons.splice(i, 1); // remove it now to add later
+				break;
+			}
+		}
+		if (!obj) { // new item -> use default parameters
+			obj = {
+				id: item.id,
+				visible: true,
+				active: true,
+				index: this._customButtons.length, // add to the end
+				type: sap.ui.vk.MapContainerButtonType.Click // click by default
+			};
+		}
+		// override parameters
+		if ("index" in item) {
+			obj.index = item.index;
+		}
+		if ("visible" in item) {
+			obj.visible = item.visible;
+		}
+		if ("active" in item) {
+			obj.active = item.active;
+		}
+		if ("text" in item) {
+			obj.text = item.text;
+		}
+		if ("tooltip" in item) {
+			obj.tooltip = item.tooltip;
+		}
+		if ("icon" in item) {
+			obj.icon = item.icon;
+		}
+		if ("activeIcon" in item) {
+			obj.activeIcon = item.activeIcon;
+		}
+		if ("press" in item) {
+			obj.press = item.press;
+		}
+		if ("type" in item) {
+			obj.type = item.type;
+		}
+		// normalize index
+		if (obj.index > this._customButtons.length) {
+			obj.index = this._customButtons.length;
+		} else if (obj.index < 0) {
+			obj.index = 0;
+		}
+		this._customButtons.splice(obj.index, 0, obj); // add ("back" if exists) to the array
+		this.invalidate();
+
+		return obj;
 	};
 
 	MapContainer.prototype.setSelectedContent = function(oContent) {

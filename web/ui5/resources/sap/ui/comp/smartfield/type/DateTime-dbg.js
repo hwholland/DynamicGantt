@@ -1,43 +1,41 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 /**
  * Date Time data type that supports field-control.
- * 
- * @private
+ *
  * @name sap.ui.comp.smartfield.type.DateTime
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
+ * @private
  * @since 1.28.0
  * @extends sap.ui.model.odata.type.DateTime
- * @param {sap.ui.model.odata.type.DateTime} DateTimeBase a reference to the date time implementation.
  * @returns {sap.ui.comp.smartfield.type.DateTime} the date time implementation.
  */
-sap.ui.define([	"sap/ui/model/odata/type/DateTime" ], function(DateTimeBase) {
+sap.ui.define(["sap/ui/model/odata/type/DateTime" ], function(DateTimeBase) {
 	"use strict";
 
 	/**
 	 * Constructor for a primitive type <code>Edm.DateTime</code>.
-	 * 
+	 *
 	 * @param {object} oFormatOptions format options.
 	 * @param {object} oConstraints constraints.
 	 * @private
 	 */
 	var DateTime = DateTimeBase.extend("sap.ui.comp.smartfield.type.DateTime", {
 		constructor: function(oFormatOptions, oConstraints) {
-			DateTimeBase.apply(this, [
-				oFormatOptions, oConstraints
-			]);
+			DateTimeBase.apply(this, arguments);
 			this.oFieldControl = null;
 		}
 	});
 
 	/**
 	 * Parses the given value to JavaScript <code>Date</code>.
-	 * 
+	 *
 	 * @param {string} sValue the value to be parsed; the empty string and <code>null</code> will be parsed to <code>null</code>
 	 * @param {string} sSourceType the source type (the expected type of <code>sValue</code>); must be "string".
 	 * @returns {Date} the parsed value
@@ -49,10 +47,10 @@ sap.ui.define([	"sap/ui/model/odata/type/DateTime" ], function(DateTimeBase) {
 		this.oFieldControl(sValue, sSourceType);
 		return oReturn;
 	};
-	
+
 	/**
 	 * Returns the type's name.
-	 * 
+	 *
 	 * @returns {string} the type's name
 	 * @public
 	 */

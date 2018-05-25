@@ -7,7 +7,7 @@
 
         (c) Copyright 2009-2015 SAP SE. All rights reserved
     </copyright>
-    <version>1.38.15</version>
+    <version>1.54.4</version>
 
     <documentation>SAPUI5 Visualization Toolkit.</documentation>
 
@@ -33,10 +33,12 @@
         <!-- excludes for the JSDoc -->
         <jsdoc xmlns="http://www.sap.com/ui5/buildext/jsdoc">
             <exclude name="sap.ui.vk.ve."/>
+            <exclude name="sap.ui.vk.threejs.thirdparty."/>
         </jsdoc>
         <!-- excludes for the JSCoverage -->
         <jscoverage xmlns="http://www.sap.com/ui5/buildext/jscoverage">
             <exclude name="sap.ui.vk.ve."/>
+            <exclude name="sap.ui.vk.threejs.thirdparty."/>
         </jscoverage>
 
         <documentation xmlns="http://www.sap.com/ui5/buildext/documentation"

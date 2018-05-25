@@ -8,6 +8,7 @@
 	'use strict';
 	jQuery.sap.declare("sap.apf.core.configurationFactory");
 	jQuery.sap.require("sap.apf.core.step");
+	jQuery.sap.require("sap.apf.core.hierarchicalStep");
 	jQuery.sap.require("sap.apf.core.request");
 	jQuery.sap.require("sap.apf.utils.hashtable");
 	jQuery.sap.require("sap.apf.core.binding");
@@ -21,7 +22,9 @@
 	sap.apf.core.ConfigurationFactory = function(oInject) {
 		// Private Variables and functions
 		var that = this;
-		var bConfigurationLoaded = false;
+		var metadataFacade;
+		var suppressPendingCheck = false;
+		var deferredConfigurationLoaded = jQuery.Deferred();
 		var idRegistry = new sap.apf.utils.Hashtable(oInject.instances.messageHandler);
 		var setItem = function(oItem) {
 			oInject.instances.messageHandler.check(oItem !== undefined && oItem.hasOwnProperty("id") !== false, "oItem is undefined or property 'id' is missing", sap.apf.core.constants.message.code.errorCheckConfiguration);
@@ -33,7 +36,8 @@
 		};
 		var getItemsByType = function(type) {
 			var aResults = [];
-			if (!bConfigurationLoaded) {
+
+			if (!suppressPendingCheck && deferredConfigurationLoaded.state() === 'pending')  {
 				oInject.instances.messageHandler.putMessage(oInject.instances.messageHandler.createMessageObject({ code : "5020" }));
 			}
 			if (idRegistry.getNumberOfItems() !== 0) {
@@ -46,6 +50,21 @@
 			}
 			return aResults;
 		};
+
+		function addObject(configurationObject) {
+			if (!sap.apf.core.constants.configurationObjectTypes.hasOwnProperty(configurationObject.type)) {
+				oInject.instances.messageHandler.putMessage(oInject.instances.messageHandler.createMessageObject({
+					code : "5033",
+					aParams : [ configurationObject.type ]
+				}));
+			}
+			if (configurationObject.type === sap.apf.core.constants.configurationObjectTypes.facetFilter && !(configurationObject.property)) {
+				oInject.instances.messageHandler.putMessage(oInject.instances.messageHandler.createMessageObject({
+					code : "5034"
+				}));
+			}
+			idRegistry.setItem(configurationObject.id, configurationObject);
+		}
 		function loadStep(oStep) {
 			if (oStep.type === undefined) {
 				oStep.type = "step";
@@ -136,7 +155,7 @@
 				var aSteps = category.steps;
 				oInject.instances.messageHandler.check(aSteps !== undefined && aSteps instanceof Array !== false, "steps for category " + category.id + " are missing or not an Array", sap.apf.core.constants.message.code.errorCheckConfiguration);
 				aSteps.forEach(function(step) {
-					oInject.instances.messageHandler.check(step.type && step.type === "step" && step.id, "step with wrong format assigned to category '" + category.id + "'");
+					oInject.instances.messageHandler.check(step.type && ( step.type === "step" || step.type === "hierarchicalStep" ) && step.id, "step with wrong format assigned to category '" + category.id + "'");
 					oInject.instances.messageHandler.check(that.existsConfiguration(step.id), "step with id '" + step.id + "' which is assigned to category '" + category.id + "' does not exist");
 				});
 				loadCategory(category);
@@ -178,22 +197,119 @@
 			if (oSmartFilterBar.type === undefined) {
 				oSmartFilterBar.type = 'smartFilterBar';
 			}
-			that.addObject(oSmartFilterBar);
+			addObject(oSmartFilterBar);
 		}
+
 		function loadFacetFilter(oFacetFilter) {
 			if (oFacetFilter.type === undefined) {
 				oFacetFilter.type = "facetFilter";
 			}
-			that.addObject(oFacetFilter);
+			addObject(oFacetFilter);
 		}
-		function loadFacetFilters(aFacetFilters) {
+
+		function loadFacetFiltersInDesignTime(aFacetFilters) {
 			oInject.instances.messageHandler.check(aFacetFilters !== undefined && aFacetFilters instanceof Array !== false, "Facet filter configuration is missing or not an Array", sap.apf.core.constants.message.code.errorCheckConfiguration);
 			if(aFacetFilters.length === 0) {
 				idRegistry.setItem(sap.apf.core.constants.existsEmptyFacetFilterArray, true);
+				return;
 			}
-			aFacetFilters.forEach(function(facetFilter) {
+			aFacetFilters.forEach(loadFacetFilter);
+		}
+		function loadFacetFiltersAndConvert(aFacetFilters, currentCounter, deferred, allProperties) {
+			var requestConfig, facetFilter, propertyName;
+
+			/**
+			 * the metadata is retrieved from alias, if alias exists, otherwise from property
+			 */
+			function getAliasNameIfExistsElsePropertyName(facetFilterConfig) {
+				return facetFilterConfig.alias || facetFilterConfig.property;
+			}
+			/**
+			 * checks, whether date conversion might be required. This is only the case, when a value list or preselection defaults are 
+			 * configured
+			 * @param {object} facetFilterConfig json object with a single facet filter configuration
+			 * @returns {boolean} result of inspection
+			 */
+			function valueConversionMightBeRequired(facetFilterConfig) {
+				var preselectionDefaultsExists = (facetFilterConfig.preselectionDefaults && facetFilterConfig.preselectionDefaults.length > 0);
+				var valueListExists = (facetFilterConfig.valueList && facetFilterConfig.valueList.length > 0);
+				return preselectionDefaultsExists || valueListExists;
+			}
+
+			function makeMetadataAvailableInConfigAndContinue(facetFilter, metadataProperty, aFacetFilters, currentCounter, allProperties) {
+				facetFilter.metadataProperty = metadataProperty;
 				loadFacetFilter(facetFilter);
+				loadFacetFiltersAndConvert(aFacetFilters, currentCounter, deferred, allProperties);
+			}
+
+			function convert(facetFilter, metadataProperty){
+				if(sap.apf.utils.isPropertyTypeWithDateSemantics(metadataProperty)){
+					facetFilter.preselectionDefaults = sap.apf.utils.convertDateListToInternalFormat(facetFilter.preselectionDefaults, metadataProperty);
+					facetFilter.valueList = sap.apf.utils.convertDateListToInternalFormat(facetFilter.valueList, metadataProperty);
+				}
+			}
+
+			if (currentCounter === aFacetFilters.length) {
+				deferred.resolve();
+				suppressPendingCheck = false;
+				return;
+			}
+			facetFilter = aFacetFilters[currentCounter];
+			currentCounter++;
+			propertyName = getAliasNameIfExistsElsePropertyName(facetFilter);
+			metadataFacade = metadataFacade || oInject.instances.coreApi.getMetadataFacade();
+			var metadataAvailable =  jQuery.inArray(propertyName, allProperties) > -1;
+			if (metadataAvailable && valueConversionMightBeRequired(facetFilter)) {
+
+				if (facetFilter.valueHelpRequest || facetFilter.filterResolutionRequest) {
+					if (facetFilter.valueHelpRequest) {
+						requestConfig = idRegistry.getItem(facetFilter.valueHelpRequest);
+					} else if (facetFilter.filterResolutionRequest) {
+						requestConfig = idRegistry.getItem(facetFilter.filterResolutionRequest);
+					}
+					metadataFacade.getPropertyMetadataByEntitySet(requestConfig.service, requestConfig.entityType, propertyName).done(function(metadataProperty){
+						convert(facetFilter, metadataProperty);
+						makeMetadataAvailableInConfigAndContinue(facetFilter, metadataProperty, aFacetFilters, currentCounter, allProperties);
+					});
+				} else {
+					metadataFacade.getProperty(propertyName).done(function(metadataProperty){
+						convert(facetFilter, metadataProperty);
+						makeMetadataAvailableInConfigAndContinue(facetFilter, metadataProperty, aFacetFilters, currentCounter, allProperties);
+					});
+				}
+			} else if (metadataAvailable) {
+				if (facetFilter.valueHelpRequest || facetFilter.filterResolutionRequest) {
+					if (facetFilter.valueHelpRequest) {
+						requestConfig = idRegistry.getItem(facetFilter.valueHelpRequest);
+					} else if (facetFilter.filterResolutionRequest) {
+						requestConfig = idRegistry.getItem(facetFilter.filterResolutionRequest);
+					}
+					metadataFacade.getPropertyMetadataByEntitySet(requestConfig.service, requestConfig.entityType, propertyName).done(function(metadataProperty){
+						makeMetadataAvailableInConfigAndContinue(facetFilter, metadataProperty, aFacetFilters, currentCounter, allProperties);
+					});
+				} else {
+					metadataFacade.getProperty(propertyName).done(function(metadataProperty){
+						makeMetadataAvailableInConfigAndContinue(facetFilter, metadataProperty, aFacetFilters, currentCounter, allProperties);
+					});
+				}
+			} else {
+				makeMetadataAvailableInConfigAndContinue(facetFilter, {}, aFacetFilters, currentCounter, allProperties);
+			}
+		}
+		function loadFacetFiltersAsPromise(aFacetFilters) {
+			var deferred = jQuery.Deferred();
+			metadataFacade = metadataFacade || oInject.instances.coreApi.getMetadataFacade();
+			oInject.instances.messageHandler.check(aFacetFilters !== undefined && aFacetFilters instanceof Array !== false, "Facet filter configuration is missing or not an Array", sap.apf.core.constants.message.code.errorCheckConfiguration);
+			if(aFacetFilters.length === 0) {
+				idRegistry.setItem(sap.apf.core.constants.existsEmptyFacetFilterArray, true);
+				deferred.resolve();
+				return deferred.promise();
+			}
+			suppressPendingCheck = true;
+			metadataFacade.getAllProperties(function(allProperties){
+				loadFacetFiltersAndConvert(aFacetFilters, 0, deferred, allProperties);
 			});
+			return deferred.promise();
 		}
 		function loadPredefinedRepresentationTypes(aRepresentationTypes) {
 			loadRepresentationTypes(aRepresentationTypes);
@@ -313,15 +429,15 @@
 		this.createLabel = function(oLabelConfig) {
 			return new Label(oLabelConfig, this);
 		};
-		// Public Func
 		/**
 		 * @private
 		 * @description Loads all properties of the input configuration object, which can also include custom error texts.
 		 * Note: For a request object in oConfiguration.requests, the property entityType is deprecated. Instead of entityType, the property entitySet shall be used. 
 		 * @param oConfiguration configuration object
+		 * @param {boolean} bInDesignTime indicates, that loading happens in modeler
+		 * @returns {deferred} deferredConfigurationLoaded
 		 */
-		this.loadConfig = function(oConfiguration) {
-			bConfigurationLoaded = true;
+		this.loadConfig = function(oConfiguration, bInDesignTime) {
 			idRegistry = new sap.apf.utils.Hashtable(oInject.instances.messageHandler);
 			if (oConfiguration.applicationTitle) {
 				idRegistry.setItem('applicationTitle', oConfiguration.applicationTitle);
@@ -348,7 +464,16 @@
 				loadSmartFilterBar(oConfiguration.smartFilterBar);
 			}
 			if (oConfiguration.facetFilters) {
-				loadFacetFilters(oConfiguration.facetFilters);
+				if (bInDesignTime) {
+					loadFacetFiltersInDesignTime(oConfiguration.facetFilters);
+					deferredConfigurationLoaded.resolve();
+				} else {
+					loadFacetFiltersAsPromise(oConfiguration.facetFilters).done(function(){
+						deferredConfigurationLoaded.resolve();
+					});
+				}
+			} else {
+				deferredConfigurationLoaded.resolve();
 			}
 			if (oConfiguration.navigationTargets) {
 				loadNavigationTargets(oConfiguration.navigationTargets);
@@ -356,29 +481,7 @@
 			if (oConfiguration.configHeader) {
 				loadConfigHeader(oConfiguration.configHeader);
 			}
-		};
-		/**
-		 * @private
-		 * @description Adds an object to the configuration factory
-		 * @param {object} configurationObject - Must contain valid values for 'type'-property and 'id'.
-		 * Further properties are type specific.
-		 * @returns undefined
-		 */
-		this.addObject = function(configurationObject) {
-			bConfigurationLoaded = true;
-			if (!sap.apf.core.constants.configurationObjectTypes.hasOwnProperty(configurationObject.type)) {
-				//            if (!(configurationObject.type in sap.apf.core.constants.configurationObjectTypes)) {
-				oInject.instances.messageHandler.putMessage(oInject.instances.messageHandler.createMessageObject({
-					code : "5033",
-					aParams : [ configurationObject.type ]
-				}));
-			}
-			if (configurationObject.type === sap.apf.core.constants.configurationObjectTypes.facetFilter && !(configurationObject.property)) {
-				oInject.instances.messageHandler.putMessage(oInject.instances.messageHandler.createMessageObject({
-					code : "5034"
-				}));
-			}
-			idRegistry.setItem(configurationObject.id, configurationObject);
+			return deferredConfigurationLoaded;
 		};
 		/**
 		 * @private
@@ -417,7 +520,7 @@
 		 * @returns Array of navigation targets
 		 */
 		this.getNavigationTargets = function() {
-			var navigationTargets = getItemsByType("navigationTarget", true);
+			var navigationTargets = getItemsByType("navigationTarget");
 			return jQuery.extend(true, [], navigationTargets);
 		};
 		/**
@@ -427,8 +530,9 @@
 		 * @returns Array of objects
 		 */
 		this.getStepTemplates = function() {
-			var aItems = getItemsByType("step");
 			var aStepTemplates = [];
+			var aItems = getItemsByType("step");
+			aItems = jQuery.merge(aItems, getItemsByType("hierarchicalStep"));
 			aItems.forEach(function(item, stepConfig) {
 				aStepTemplates[stepConfig] = new StepTemplate(item, that);
 			});
@@ -437,13 +541,20 @@
 		/**
 		 * @private
 		 * @description Returns SmartFilterBar configuration if it exists
-		 * @returns {object | undefined} Object with SFB config if available otherwise undefined
+		 * @returns {jQuery.Deferred.promise} Promise which is resolved with SFB config if available otherwise undefined
 		 */
 		this.getSmartFilterBarConfiguration = function() {
-			var SFBConfig = getItemsByType('smartFilterBar')[0];
-			if(typeof SFBConfig === 'object' && SFBConfig.service && SFBConfig.entityType) {
-				return jQuery.extend(true, {}, SFBConfig);
-			}
+			var deferred = jQuery.Deferred();
+			var SFBConfig;
+			deferredConfigurationLoaded.done(function(){
+				SFBConfig = getItemsByType('smartFilterBar')[0];
+				if(typeof SFBConfig === 'object' && SFBConfig.service && ( SFBConfig.entityType || SFBConfig.entitySet )) {
+					deferred.resolve(jQuery.extend(true, {}, SFBConfig));
+				}else{
+					deferred.resolve();
+				}
+			});
+			return deferred.promise();
 		};
 		/**
 		 * @private
@@ -451,10 +562,15 @@
 		 * @returns Array of objects
 		 */
 		this.getFacetFilterConfigurations = function() {
-			var facetFilters = getItemsByType("facetFilter");
-			var resolvedFunction;
-			facetFilters = jQuery.extend(true, [], facetFilters);
-			facetFilters.forEach(function(facetFilter) {
+			var originalFacetFilters = getItemsByType("facetFilter");
+			var resolvedFunction, facetFilter, i;
+			var facetFilters = jQuery.extend(true, [], originalFacetFilters);
+
+			for (i = 0; i < facetFilters.length; i++){
+				facetFilter = facetFilters[i];
+				if (originalFacetFilters[i].metadataProperty && originalFacetFilters[i].metadataProperty.clone) {
+					facetFilter.metadataProperty = originalFacetFilters[i].metadataProperty.clone();
+				}
 				if (facetFilter.preselectionFunction) {
 					resolvedFunction = sap.apf.utils.extractFunctionFromModulePathString(facetFilter.preselectionFunction);
 					if (!jQuery.isFunction(resolvedFunction)) {
@@ -467,7 +583,7 @@
 						facetFilter.preselectionFunction = resolvedFunction;
 					}
 				}
-			});
+			}
 			return facetFilters;
 		};
 		/**
@@ -500,10 +616,14 @@
 		 */
 		this.createStep = function(sStepId, sRepresentationId) {
 			var oStepConfig = this.getConfigurationById(sStepId);
-			oInject.instances.messageHandler.check((oStepConfig !== undefined && oStepConfig.type === "step"), "Error - referenced object is undefined or has not type step", sap.apf.core.constants.message.code.errorCheckConfiguration);
+			oInject.instances.messageHandler.check((oStepConfig !== undefined && (oStepConfig.type === "step" || oStepConfig.type === "hierarchicalStep")), "Error - referenced object is undefined or has not type step", sap.apf.core.constants.message.code.errorCheckConfiguration);
 			oInject.instances.messageHandler.check(sap.apf.core.Step !== undefined, "Step must be defined ", sap.apf.core.constants.message.code.errorCheckConfiguration);
-			oInject.instances.messageHandler.check(typeof sap.apf.core.Step === "function", "Step must be Ctor function");
-			return new sap.apf.core.Step(oInject.instances.messageHandler, oStepConfig, this, sRepresentationId);
+			oInject.instances.messageHandler.check(typeof sap.apf.core.Step === "function", "Step must be constructor function");
+			if(oStepConfig.type === 'hierarchicalStep'){
+				oInject.instances.messageHandler.check(typeof sap.apf.core.HierarchicalStep === "function", "HierarchicalStep must be constructor function");
+				return new sap.apf.core.HierarchicalStep(oInject.instances.messageHandler, oStepConfig, this, sRepresentationId, oInject.instances.coreApi);
+			}
+			return new sap.apf.core.Step(oInject.instances.messageHandler, oStepConfig, this, sRepresentationId, oInject.instances.coreApi);
 		};
 		/**
 		 * @private
@@ -539,10 +659,6 @@
 			}
 			var oMessageObject;
 			var oRequestConfig;
-			function getUniqueId() {
-				var date = new Date();
-				return Math.random() * date.getTime();
-			}
 			if (typeof request === "string") {
 				oRequestConfig = that.getConfigurationById(request);
 				if (!(oRequestConfig !== undefined && oRequestConfig.type === "request")) {
@@ -557,8 +673,12 @@
 				oRequestConfig = request;
 				oInject.instances.messageHandler.check(oRequestConfig.type && oRequestConfig.type === "request" && oRequestConfig.service && oRequestConfig.entityType, 'Wrong request configuration when creating a new request');
 				if (!oRequestConfig.id) {
-					oRequestConfig.id = getUniqueId();
-					setItem(oRequestConfig);
+					oMessageObject = oInject.instances.messageHandler.createMessageObject({
+						code : "5004",
+						aParameters : [ request ]
+					});
+					oInject.instances.messageHandler.putMessage(oMessageObject);
+					return undefined;
 				}
 			}
 			return new ((oInject && oInject.constructors && oInject.constructors.Request) || sap.apf.core.Request)(oInject, oRequestConfig);

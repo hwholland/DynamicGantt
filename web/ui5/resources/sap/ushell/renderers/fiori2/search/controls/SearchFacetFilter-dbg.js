@@ -1,19 +1,13 @@
-/* global sap */
-/* global alert */
-/* global jQuery */
-/* global $, my */
-
-(function() {
+/* global sap, alert, jQuery, $, my */
+sap.ui.define([
+    "sap/ushell/renderers/fiori2/search/controls/SearchFacet",
+    "sap/ushell/renderers/fiori2/search/controls/SearchFacetTabBar",
+    "sap/ushell/renderers/fiori2/search/controls/SearchFacetBarChart",
+    "sap/ushell/renderers/fiori2/search/controls/SearchFacetPieChart",
+    "sap/ushell/renderers/fiori2/search/controls/SearchFacetDialog",
+    "sap/ushell/renderers/fiori2/search/SearchFacetDialogModel"
+], function() {
     "use strict";
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.controls.SearchFacet");
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.controls.SearchFacetTabBar");
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.controls.SearchFacetBarChart");
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.controls.SearchFacetPieChart");
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.controls.SearchFacetDialog");
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.SearchFacetDialogModel");
-
-
-
 
     sap.ushell.renderers.fiori2.search.controls.SearchFacetTabBar.extend('my.IconTabBar', {
         renderer: 'sap.ushell.renderers.fiori2.search.controls.SearchFacetTabBarRenderer',
@@ -43,7 +37,7 @@
     });
 
 
-    sap.ui.core.Control.extend('sap.ushell.renderers.fiori2.search.controls.SearchFacetFilter', {
+    return sap.ui.core.Control.extend('sap.ushell.renderers.fiori2.search.controls.SearchFacetFilter', {
         metadata: {
             properties: {
                 title: "string"
@@ -118,24 +112,25 @@
                     // since UI5 reuses the showMore link control, we have to traverse the DOM
                     // to find our facets dimension:
                     var facet = sap.ui.getCore().byId($($(this.getDomRef()).closest(".sapUshellSearchFacet")[0]).attr("id"));
-                    var oFacetDialogModel = new sap.ushell.renderers.fiori2.search.SearchFacetDialogModel();
-                    oFacetDialogModel.setData(oControl.getModel().getData());
-                    //                    oFacetDialogModel.facetDialogCall().done(function() {
-                    oFacetDialogModel.prepareFacetList();
-                    var dimension = null;
-                    if (facet && facet.getBindingContext() && facet.getBindingContext().getObject() && facet.getBindingContext().getObject().dimension) {
-                        dimension = facet.getBindingContext().getObject().dimension;
-                    }
-                    var oDialog = new sap.ushell.renderers.fiori2.search.controls.SearchFacetDialog({
-                        selectedAttribute: dimension
+                    var oFacetDialogModel = new sap.ushell.renderers.fiori2.search.SearchFacetDialogModel(oControl.getModel());
+                    oFacetDialogModel.initBusinessObjSearch().then(function() {
+                        oFacetDialogModel.setData(oControl.getModel().getData());
+                        oFacetDialogModel.sinaNext = oControl.getModel().sinaNext;
+                        oFacetDialogModel.prepareFacetList();
+                        var dimension = null;
+                        if (facet && facet.getBindingContext() && facet.getBindingContext().getObject() && facet.getBindingContext().getObject().dimension) {
+                            dimension = facet.getBindingContext().getObject().dimension;
+                        }
+                        var oDialog = new sap.ushell.renderers.fiori2.search.controls.SearchFacetDialog({
+                            selectedAttribute: dimension
+                        });
+                        oDialog.setModel(oFacetDialogModel);
+                        oDialog.setModel(oControl.getModel(), 'searchModel');
+                        oDialog.open();
+                        //referece to page, so that dialog can be destroy in onExit()
+                        var oPage = oControl.getParent().getParent().getParent().getParent();
+                        oPage.oFacetDialog = oDialog;
                     });
-                    oDialog.setModel(oFacetDialogModel);
-                    oDialog.setModel(oControl.getModel(), 'searchModel');
-                    oDialog.open();
-                    //referece to page, so that dialog can be destroy in onExit()
-                    var oPage = oControl.getParent().getParent().getParent().getParent();
-                    oPage.oFacetDialog = oDialog;
-                    //                    });
                 };
             }
 
@@ -168,7 +163,7 @@
                                 path: '/uiFilter/dataSource'
                             }],
                             formatter: function(datasource) {
-                                return datasource.getType().toLowerCase() !== "category";
+                                return datasource.type !== this.getModel().sinaNext.DataSourceType.Category;
                             }
                         }
                     });
@@ -199,7 +194,8 @@
             }
 
             //show all filters button
-            if (oControl.getFacets().length > 1 || oControl.getModel().getDataSource().type === 'BusinessObject') {
+            if (oControl.getFacets().length > 1 ||
+                (oControl.getModel().getDataSource() && oControl.getModel().getDataSource().type === 'BusinessObject')) {
                 oRm.write("<div>");
                 oControl.showAllBtn = new sap.m.Button({
                     text: "{showAllFilters}",
@@ -233,4 +229,4 @@
 
     });
 
-})();
+});

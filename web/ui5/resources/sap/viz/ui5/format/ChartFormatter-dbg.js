@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 
@@ -46,99 +46,229 @@ sap.ui.define(['sap/ui/core/format/NumberFormat',
      */
     ChartFormatter.DefaultPattern = {
         /**
-         * Short integer e.g. 234M
+         *
+         * type: Integer
+         *
+         * style: "short"
+         *
+         * e.g. 234M
          * @public
          */
         SHORTINTEGER: "ShortInteger", 
         /**
-         * Standard integer e.g. 234,234,234
+         *
+         * type: Integer
+         *
+         * style: "standard"
+         *
+         * e.g. 234234234
          * @public
          */
         STANDARDINTEGER: "StandardInteger",
         /**
-         * Standard float e.g. 234,234.234
+         *
+         * type: Float
+         *
+         * style: "short"
+         *
+         * e.g. 2.3M
+         * @public
+         */
+        SHORTFLOAT: "ShortFloat",
+        /**
+         * type: Float
+         *
+         * style: "short"
+         *
+         * maxFractionDigits: 2
+         *
+         * e.g. 2.34234234 is formatted as 2.34
+         * @public
+         */
+        SHORTFLOAT_MFD2: "ShortFloat_MFD2",
+        /**
+         *
+         * type: Float
+         *
+         * style: "standard"
+         *
+         * e.g. 234,234.234
          * @public
          */
         STANDARDFLOAT: "StandardFloat",
         /**
-         * Long float e.g. 2.34234234 million
+         * type: Float
+         *
+         * style: "long"
+         *
+         * e.g. 2.3 million
          * @public
          */
-        LONGFLOAT: "LongFloat", 
+        LONGFLOAT: "LongFloat",
         /**
-         * Percentage e.g. 0.0234 is formatted as 2.34%
+         * type: Percentage
+         *
+         * style: "standard"
+         *
+         * e.g. 0.0234234 is formatted as 2.34234%
          * @public
          */
-        PERCENT: "Percent", 
+        STANDARDPERCENT: "StandardPercent",
         /**
-         * Currency e.g. 234234.234 is formatted as 234,234.23
+         * type: Percentage
+         *
+         * style: "standard"
+         *
+         * maxFractionDigits: 2
+         *
+         * e.g. 0.0234234 is formatted as 2.34%
          * @public
+         */
+        STANDARDPERCENT_MFD2: "StandardPercent_MFD2",
+        /**
+         * type: Percentage
+         *
+         * style: "standard"
+         *
+         * e.g. 0.0234 is formatted as 2.34%
+         * @public
+         * @deprecated Since version 1.48.0.
+         */
+        PERCENT: "Percent",
+        /**
+         * type: Currency
+         *
+         * style: "standard"
+         *
+         * e.g. 234234.234 is formatted as 234,234.23
+         * @public
+         */
+        STANDARDCURRENCY: "StandardCurrency",
+        /**
+         * type: Currency
+         *
+         * style: "standard"
+         *
+         * e.g. 234234.234 is formatted as 234,234.23
+         * @public
+         * @deprecated Since version 1.48.0.
          */
         CURRENCY: "Currency",
         // In first version only support below date format
         /**
-         * Medium year e.g. 2015
+         * Medium year
+         *
+         * e.g. 2015
          * @public
          */
-        MEDIUMYEAR: "MediumYear", 
+        MEDIUMYEAR: "MediumYear",
         /**
-         * Quarter e.g. Q3
+         * Medium quarter
+         *
+         * e.g. Q3
          * @public
+         */
+        MEDIUMQUARTER: "MediumQuarter",
+        /**
+         * Quarter
+         *
+         * e.g. Q3
+         * @public
+         * @deprecated Since version 1.48.0.
          */
         QUARTER: "Quarter", 
         /**
-         * Medium month e.g. Aug
+         * Medium month
+         *
+         * e.g. Aug
          * @public
          */
-        MEDIUMMONTH: "MediumMonth", 
+        MEDIUMMONTH: "MediumMonth",
         /**
-         * Week e.g. CW35
+         * Medium week
+         * 
+         * e.g. CW35
          * @public
+         */
+        MEDIUMWEEK: "MediumWeek",
+        /**
+         * Week
+         *
+         * e.g. CW35
+         * @public
+         * @deprecated Since version 1.48.0.
          */
         WEEK: "Week",
         /**
-         * Medium day e.g. 01
+         * Medium day
+         *
+         * e.g. 01
          * @public
          */
         MEDIUMDAY: "MediumDay",
         /**
-         * Medium hour e.g. 18
+         * Medium hour
+         *
+         * e.g. 18
          * @public
          */
         MEDIUMHOUR: "MediumHour", 
         /**
-         * Medium minute e.g. 18
+         * Medium minute
+         *
+         * e.g. 18
          * @public
          */
         MEDIUMMINUTE: "MediumMinute", 
         /**
-         * Medium second e.g. 59
+         * Medium second
+         *
+         * e.g. 59
          * @public
          */
-        MEDIUMSECOND: "MediumSecond", 
+        MEDIUMSECOND: "MediumSecond",
         /**
-         * Format pattern for combination of year, month, and day e.g. Aug 28, 2015
+         * Medium format pattern for combination of year, month, and day
+         *
+         * e.g. Aug 28, 2015
          * @public
          */
-        YEARMONTHDAY: "YearMonthDay", 
+        MEDIUMYEARMONTHDAY: "MediumYearMonthDay", 
         /**
-         * Binary file size. 1 Kibibyte = 1024 Byte
+         * Format pattern for combination of year, month, and day
+         *
+         * e.g. Aug 28, 2015
+         * @public
+         * @deprecated Since version 1.48.0.
+         */
+        YEARMONTHDAY: "YearMonthDay",
+        /**
+         * Binary file size
+         *
+         * e.g. 1 Kibibyte = 1024 Byte
          * @public
          */
         BINARYFILESIZE: "BinaryFileSize",
         /**
-         * Decimal file size. e.g. 1 Kilobyte = 1000 Byte
+         * Decimal file size
+         *
+         * e.g. 1 Kilobyte = 1000 Byte
          * @public
          */
-        DECIMALFILESIZE: "DecimalFileSize", 
+        DECIMALFILESIZE: "DecimalFileSize"
     };
 
     ChartFormatter.prototype._updatePatternTable = function () {
         this.formatFunctions["ShortInteger"] = this._getShortIntegerFormatter();
         this.formatFunctions["StandardInteger"] = this._getStandardIntegerFormatter();
+        this.formatFunctions["ShortFloat"] = this._getShortFloatFormatter();
+        this.formatFunctions["ShortFloat_MFD2"] = this._getShortFloatMFD2Formatter();
         this.formatFunctions["StandardFloat"] = this._getStandardFloatFormatter();
         this.formatFunctions["LongFloat"] = this._getLongFloatFormatter();
+        this.formatFunctions["StandardPercent"] = this._getStandardPercentFormatter();
+        this.formatFunctions["StandardPercent_MFD2"] = this._getStandardPercentMFD2Formatter();
         this.formatFunctions["Percent"] = this._getPercentFormatter();
+        this.formatFunctions["StandardCurrency"] = this._getStandardCurrencyFormatter();
         this.formatFunctions["Currency"] = this._getCurrencyFormatter();
         this.formatFunctions["MediumYear"] = this._getMediumYearFormatter();
         this.formatFunctions["MediumMonth"] = this._getMediumMonthFormatter();
@@ -200,12 +330,22 @@ sap.ui.define(['sap/ui/core/format/NumberFormat',
     };
 
     ChartFormatter.prototype._getStandardIntegerFormatter = function () {
-        var numberFormatter = NumberFormat.getIntegerInstance({style: 'Standard'});
+        var numberFormatter = NumberFormat.getIntegerInstance({style: 'standard'});
+        return numberFormatter.format.bind(numberFormatter);
+    };
+
+    ChartFormatter.prototype._getShortFloatFormatter = function () {
+        var numberFormatter = NumberFormat.getFloatInstance({style: 'short'});
+        return numberFormatter.format.bind(numberFormatter);
+    };
+
+    ChartFormatter.prototype._getShortFloatMFD2Formatter = function () {
+        var numberFormatter = NumberFormat.getFloatInstance({style: 'short', maxFractionDigits: 2});
         return numberFormatter.format.bind(numberFormatter);
     };
 
     ChartFormatter.prototype._getStandardFloatFormatter = function () {
-        var numberFormatter = NumberFormat.getFloatInstance({style: 'Standard'});
+        var numberFormatter = NumberFormat.getFloatInstance({style: 'standard'});
         return numberFormatter.format.bind(numberFormatter);
     };
 
@@ -215,12 +355,27 @@ sap.ui.define(['sap/ui/core/format/NumberFormat',
     };
 
     ChartFormatter.prototype._getPercentFormatter = function () {
-        var numberFormatter = NumberFormat.getPercentInstance({style: 'precent'});
+        var numberFormatter = NumberFormat.getPercentInstance({style: 'standard'});
+        return numberFormatter.format.bind(numberFormatter);
+    };
+
+    ChartFormatter.prototype._getStandardPercentFormatter = function () {
+        var numberFormatter = NumberFormat.getPercentInstance({style: 'standard'});
+        return numberFormatter.format.bind(numberFormatter);
+    };
+
+    ChartFormatter.prototype._getStandardPercentMFD2Formatter = function () {
+        var numberFormatter = NumberFormat.getPercentInstance({style: 'standard', maxFractionDigits:2});
         return numberFormatter.format.bind(numberFormatter);
     };
 
     ChartFormatter.prototype._getCurrencyFormatter = function () {
-        var numberFormatter = NumberFormat.getCurrencyInstance({style: 'currency'});
+        var numberFormatter = NumberFormat.getCurrencyInstance({style: 'standard'});
+        return numberFormatter.format.bind(numberFormatter);
+    };
+
+    ChartFormatter.prototype._getStandardCurrencyFormatter = function () {
+        var numberFormatter = NumberFormat.getCurrencyInstance({style: 'standard'});
         return numberFormatter.format.bind(numberFormatter);
     };
 

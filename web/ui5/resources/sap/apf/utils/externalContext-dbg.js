@@ -25,10 +25,8 @@ sap.apf.utils.ExternalContext = function(inject) {
 	var smartBusinessEvaluationId = inject.instances.startParameter.getEvaluationId();
 	var xAppStateId = inject.instances.startParameter.getXappStateId();
 	var msgH = inject.instances.messageHandler;
-	var requestUrl;
-	var configurationProperties;
-	var smartBusinessConfig;
 	var externalContext = this;
+	var ajax = inject.functions.ajax;
 	/**
 	 * @private
 	 * @function
@@ -40,6 +38,21 @@ sap.apf.utils.ExternalContext = function(inject) {
 	 */
 	this.getCombinedContext = function() {
 		if (xAppStateId) { //For the moment, only handling of either SmartBusiness or X-APP-STATE is required and therefore supported
+			resolveContextFromXAppState();
+		} else if (smartBusinessEvaluationId) {
+			resolveContextFromBusinessEvaluationId();
+		} else {
+			deferredContext.resolve(new sap.apf.core.utils.Filter(msgH));
+		}
+		return deferredContext.promise();
+
+		function normalizeFilter(filter) {
+			if (filter.levelOperator === sap.apf.core.constants.BooleFilterOperators.OR) {
+				return new sap.apf.core.utils.Filter(msgH, filter);
+			}
+			return filter;
+		}
+		function resolveContextFromXAppState() {
 			sap.ushell.Container.getService("CrossApplicationNavigation").getAppState(inject.instances.component, xAppStateId).done(function(appContainer) {
 				var containerData = appContainer.getData();
 				if (containerData && containerData.sapApfCumulativeFilter) {
@@ -49,60 +62,64 @@ sap.apf.utils.ExternalContext = function(inject) {
 				} else {
 					deferredContext.resolve(new sap.apf.core.utils.Filter(msgH));
 				}
+			}).fail(function(){
+				var msgObject = msgH.createMessageObject({ code : 5045, aParameters : [xAppStateId]});
+				msgH.putMessage(msgObject);
 			});
-		} else if (smartBusinessEvaluationId) {
-			configurationProperties = inject.functions.getConfigurationProperties();
-			smartBusinessConfig = configurationProperties && configurationProperties.smartBusiness && configurationProperties.smartBusiness.runtime;
-			if (smartBusinessConfig && smartBusinessConfig.service) {
-				requestUrl = smartBusinessConfig.service + "/EVALUATIONS('" + smartBusinessEvaluationId + "')/FILTERS?$format=json";
-				jQuery.ajax({
-					url : requestUrl,
-					success : function(data) {
-						var property;
-						var msgH = inject.instances.messageHandler;
-						var orFilter;
-						var andFilter = new sap.apf.core.utils.Filter(msgH);
-						var filtersForConjuction = [];
-						var termsPerProperty = {};
-						data.d.results.forEach(collectTermsPerProperty);
-						for(property in termsPerProperty) {
-							if (termsPerProperty.hasOwnProperty(property)) {
-								orFilter = new sap.apf.core.utils.Filter(msgH);
-								termsPerProperty[property].forEach(combineTermsPerProperty);
-								filtersForConjuction.push(orFilter);
-							}
-						}
-						filtersForConjuction.forEach(combineDifferentProperties);
-						deferredContext.resolve(normalizeFilter(andFilter));
-
-						function collectTermsPerProperty(sbFilter) {
-							if (!termsPerProperty[sbFilter.NAME]) {
-								termsPerProperty[sbFilter.NAME] = [];
-							}
-							termsPerProperty[sbFilter.NAME].push(new sap.apf.core.utils.Filter(msgH, sbFilter.NAME, sbFilter.OPERATOR, sbFilter.VALUE_1, sbFilter.VALUE_2));
-						}
-						function combineTermsPerProperty(filter) {
-							orFilter.addOr(filter);
-						}
-						function combineDifferentProperties(filter) {
-							andFilter.addAnd(filter);
-						}
-					},
-					error : function(jqXHR, textStatus, errorThrown) {
-					}
-				});
-			} else {
-				deferredContext.resolve(new sap.apf.core.utils.Filter(msgH));
-			}
-		} else {
-			deferredContext.resolve(new sap.apf.core.utils.Filter(msgH));
 		}
-		return deferredContext.promise();
-		function normalizeFilter(filter) {
-			if (filter.levelOperator === sap.apf.core.constants.BooleFilterOperators.OR) {
-				return new sap.apf.core.utils.Filter(msgH, filter);
-			}
-			return filter;
+
+		function resolveContextFromBusinessEvaluationId() {
+			inject.functions.getConfigurationProperties().done(function(configurationProperties){
+
+				var smartBusinessConfig = configurationProperties && configurationProperties.smartBusiness && configurationProperties.smartBusiness.runtime;
+				if (smartBusinessConfig && smartBusinessConfig.service) {
+					var requestUrl = smartBusinessConfig.service + "/EVALUATIONS('" + smartBusinessEvaluationId + "')/FILTERS?$format=json";
+					ajax({
+						url : requestUrl,
+						success : function(data) {
+							var property;
+							var orFilter;
+							var andFilter = new sap.apf.core.utils.Filter(msgH);
+							var filtersForConjuction = [];
+							var termsPerProperty = {};
+							data.d.results.forEach(collectTermsPerProperty);
+							for(property in termsPerProperty) {
+								if (termsPerProperty.hasOwnProperty(property)) {
+									orFilter = new sap.apf.core.utils.Filter(msgH);
+									termsPerProperty[property].forEach(combineTermsPerProperty);
+									filtersForConjuction.push(orFilter);
+								}
+							}
+							filtersForConjuction.forEach(combineDifferentProperties);
+							deferredContext.resolve(normalizeFilter(andFilter));
+
+							function collectTermsPerProperty(sbFilter) {
+								if (!termsPerProperty[sbFilter.NAME]) {
+									termsPerProperty[sbFilter.NAME] = [];
+								}
+								termsPerProperty[sbFilter.NAME].push(new sap.apf.core.utils.Filter(msgH, sbFilter.NAME, sbFilter.OPERATOR, sbFilter.VALUE_1, sbFilter.VALUE_2));
+							}
+							function combineTermsPerProperty(filter) {
+								orFilter.addOr(filter);
+							}
+							function combineDifferentProperties(filter) {
+								andFilter.addAnd(filter);
+							}
+						},
+						error : function(jqXHR, textStatus, errorThrown, messageObject) {
+							var msgObject = msgH.createMessageObject({ code : 5043, aParameters : [smartBusinessEvaluationId, textStatus]});
+							if (messageObject) {
+								msgObject.setPrevious(messageObject);
+							}
+							msgH.putMessage(msgObject);
+						}
+					});
+
+				}  else {
+					var msgObject = msgH.createMessageObject({ code : 5044, aParameters : [smartBusinessEvaluationId]});
+					msgH.putMessage(msgObject);
+				}
+			});
 		}
 	};
 	/**
@@ -111,11 +128,18 @@ sap.apf.utils.ExternalContext = function(inject) {
 	 * @name sap.apf.utils.ExternalContext#convertParameterObject
 	 * @param {object} parameterObject - contains two properties PropertyName and PropertyValue
 	 * @description Returns a filterTerm instance {@link sap.apf.core.utils.FilterTerm} representing an equality of the property with the value, returns null for invalid input
-	 * @returns {sap.apf.core.utils.FilterTerm | null}
+	 * @returns {sap.apf.core.utils.FilterTerm}
 	 */
 	this.convertParameterObject = function(parameterObject){
+		var msgObject;
 		if (!parameterObject.PropertyName || parameterObject.PropertyValue === undefined || parameterObject.PropertyValue === null){
-			return null; //error case
+
+			if (!parameterObject.PropertyName) {
+				msgObject = msgH.createMessageObject({ code : 5046, aParameters : [xAppStateId]});
+			} else  {
+				msgObject = msgH.createMessageObject({ code : 5047, aParameters : [xAppStateId, parameterObject.PropertyName]});
+			} 
+			msgH.putMessage(msgObject);
 		}
 		return new sap.apf.core.utils.FilterTerm(msgH, parameterObject.PropertyName, sap.apf.core.constants.FilterOperators.EQ, parameterObject.PropertyValue);
 	};
@@ -131,15 +155,19 @@ sap.apf.utils.ExternalContext = function(inject) {
 		var externalContext = this;
 		var filter = null;
 		var i;
+		var msgObject;
 		if (!selectOption.PropertyName || !selectOption.Ranges || !(jQuery.isArray(selectOption.Ranges))){
-			return null; //error case
+
+			if (!selectOption.PropertyName) {
+				msgObject = msgH.createMessageObject({ code : 5048, aParameters : [xAppStateId]});
+			} else {
+				msgObject = msgH.createMessageObject({ code : 5049, aParameters : [xAppStateId, selectOption.PropertyName]});
+			}
+			msgH.putMessage(msgObject);
 		}
 		filter = new sap.apf.core.utils.Filter(msgH);
 		for (i = 0; i < selectOption.Ranges.length; i++) {
 			var converted = externalContext.convertRange(selectOption.Ranges[i], selectOption.PropertyName);
-			if (!converted){
-				return null; //error case
-			}
 			filter.addOr(converted);
 		}
 		return filter;
@@ -155,11 +183,32 @@ sap.apf.utils.ExternalContext = function(inject) {
 	 * @returns {sap.apf.core.utils.FilterTerm | null}
 	 */
 	this.convertRange = function(rangeObject, propertyName){
+		var msgObject, low, option, split;
 		if ( rangeObject.Sign != 'I'){
-			return null; //error case
+			msgObject = msgH.createMessageObject({ code : 5050, aParameters : [xAppStateId, propertyName]});
+			msgH.putMessage(msgObject);
 		}
 		if ( rangeObject.Option === 'BT' && (rangeObject.High === undefined || rangeObject.High === null)){
-			return null; //error case: BT requires High
+			msgObject = msgH.createMessageObject({ code : 5051, aParameters : [xAppStateId, propertyName]});
+			msgH.putMessage(msgObject);
+		}
+		if ( rangeObject.Option === 'CP'){
+			split = rangeObject.Low.split("\*");
+			if (split.length > 3 || (split.length === 3 && (split[0].length !== 0 || split[2].length !== 0)) || split.length === 1) {
+				msgObject = msgH.createMessageObject({ code : 5069, aParameters : [xAppStateId, propertyName]});
+				msgH.putMessage(msgObject);
+			}
+			if( rangeObject.Low.indexOf("*") === 0 && rangeObject.Low.lastIndexOf("*") === rangeObject.Low.length-1){
+				low = rangeObject.Low.substr(1, rangeObject.Low.lastIndexOf("*") - 1);
+				option = 'Contains';
+			} else if( rangeObject.Low.indexOf("*") === 0) {
+				low = rangeObject.Low.substr(1, rangeObject.Low.length - 1);
+				option = 'EndsWith';
+			} else if (rangeObject.Low.lastIndexOf("*") === rangeObject.Low.length-1){
+				low = rangeObject.Low.substring(0, rangeObject.Low.indexOf("*"));
+				option = 'StartsWith';
+			}
+			return new sap.apf.core.utils.FilterTerm(msgH, propertyName, option, low, rangeObject.High);
 		}
 		return new sap.apf.core.utils.FilterTerm(msgH, propertyName, rangeObject.Option, rangeObject.Low, rangeObject.High);
 	};
@@ -188,18 +237,12 @@ sap.apf.utils.ExternalContext = function(inject) {
 		if (selectionVariant.Parameters){
 			for (i = 0; i < selectionVariant.Parameters.length; i++) {
 				var convertedParameter = externalContext.convertParameterObject(selectionVariant.Parameters[i]);
-				if (!convertedParameter){
-					return new sap.apf.core.utils.Filter(msgH); //error case
-				}
 				filter.addAnd(convertedParameter);
 			}
 		}
 		if(selectionVariant.SelectOptions){
 			for (i = 0; i < selectionVariant.SelectOptions.length; i++) {
 				var convertedSelectOptions = externalContext.convertSelectOption(selectionVariant.SelectOptions[i]);
-				if (!convertedSelectOptions){
-					return new sap.apf.core.utils.Filter(msgH); //error case
-				}
 				filter.addAnd(convertedSelectOptions);
 			}
 		}

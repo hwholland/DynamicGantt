@@ -7,8 +7,8 @@
 
 // Provides control sap.ui.vk.Viewport.
 sap.ui.define([
-	"jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/core/ResizeHandler", "./Loco", "./ViewportHandler", "./Messages"
-], function(jQuery, library, Control, ResizeHandler, Loco, ViewportHandler, Messages) {
+	"jquery.sap.global", "./library", "sap/ui/core/Control", "sap/ui/core/ResizeHandler", "./Loco", "./ViewportHandler", "./Messages", "./ContentConnector"
+], function(jQuery, library, Control, ResizeHandler, Loco, ViewportHandler, Messages, ContentConnector) {
 	"use strict";
 
 	/**
@@ -24,7 +24,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.vk.NativeViewport
@@ -46,8 +46,26 @@ sap.ui.define([
 				}
 			},
 			publicMethods: [
-				"beginGesture", "endGesture", "pan", "rotate", "zoom", "tap", "queueCommand", "getViewInfo", "setViewInfo", "loadUrl"
+				"beginGesture",
+				"endGesture",
+				"getViewInfo",
+				"loadUrl",
+				"pan",
+				"queueCommand",
+				"rotate",
+				"setViewInfo",
+				"tap",
+				"zoom"
 			],
+			associations: {
+				/**
+				 * An association to the <code>ContentConnector</code> instance that manages content resources.
+				 */
+				contentConnector: {
+					type: "sap.ui.vk.ContentConnector",
+					multiple: false
+				}
+			},
 			events: {
 				/**
 				 * Raised when the display size of the image in the Native Viewport changes.
@@ -78,15 +96,14 @@ sap.ui.define([
 	});
 
 	NativeViewport.prototype.init = function() {
-		this._messages = new Messages();
 		if (Control.prototype.init) {
-			Control.prototype.init(this);
+			Control.prototype.init.call(this);
 		}
 
 		this._canvas = null;
 		this._canvas = document.createElement("div");
-		//When we are doing the position calculations, we always assume this element is adding children
-		//to its left, which is not the case in RTL mode. This is why we are setting the alignment to be "left".
+		// When we are doing the position calculations, we always assume this element is adding children
+		// to its left, which is not the case in RTL mode. This is why we are setting the alignment to be "left".
 		this._canvas.style.textAlign = "left";
 
 		this._canvas.id = jQuery.sap.uid();
@@ -113,9 +130,11 @@ sap.ui.define([
 
 		this._s4BestFit = 0;
 
-		this._update = function () {};
+		this._update = function() {};
 
-		this._svgid = this.getId() +  "-svg";
+		this._svgid = this.getId() + "-svg";
+
+		this._doBestFitAfterResize = false;
 	};
 
 	NativeViewport.prototype.exit = function() {
@@ -127,7 +146,7 @@ sap.ui.define([
 			this._resizeListenerId = null;
 		}
 		if (Control.prototype.exit) {
-			Control.prototype.exit.apply(this);
+			Control.prototype.exit.call(this);
 		}
 	};
 
@@ -143,17 +162,11 @@ sap.ui.define([
 			var domRef = this.getDomRef();
 			domRef.appendChild(this._canvas);
 			this._resizeListenerId = ResizeHandler.register(this, this._handleResize.bind(this));
-			this._bestFit();
-			this._handleResize({
-				size: {
-					width: domRef.clientWidth,
-					height: domRef.clientHeight
-				}
-			});
 		}
 	};
 
 	/**
+	 * @param {object} event Event broadcast by the {sap.ui.core.ResizeHandler}
 	 * @private
 	 */
 	NativeViewport.prototype._handleResize = function(event) {
@@ -161,7 +174,14 @@ sap.ui.define([
 			oldSize: event.oldSize,
 			size: event.size
 		});
+
+		if (this._doBestFitAfterResize) {
+			this._doBestFitAfterResize = false;
+			this._bestFit();
+		}
+
 		this._update();
+
 	};
 
 	/**
@@ -234,14 +254,14 @@ sap.ui.define([
 	 * @private
 	 */
 	NativeViewport.prototype._bestFit = function() {
-		if (this._canvas.children[0] && this._canvas.children[0].getBoundingClientRect().width && this._canvas.children[0].getBoundingClientRect().height) {
-			//Zoom to best fit
+		if (this._canvas.children[0] && this._canvas.children[0].getBoundingClientRect()) {
+			// Zoom to best fit
 			var widthParentChildRatio = this._canvas.clientWidth / this._canvas.children[0].getBoundingClientRect().width,
 				heightParentChildRatio = this._canvas.clientHeight / this._canvas.children[0].getBoundingClientRect().height,
 				scale = widthParentChildRatio < heightParentChildRatio ? widthParentChildRatio : heightParentChildRatio;
 			this.zoom(scale);
 
-			//Getting the image and nativeViewport dimensions so we can center the image
+			// Getting the image and nativeViewport dimensions so we can center the image
 			var offsetLeft = jQuery(this._canvas.children[0]).position().left - jQuery(this._canvas).position().left,
 				offsetTop = jQuery(this._canvas.children[0]).position().top - jQuery(this._canvas).position().top,
 				imageWidth = this._canvas.children[0].getBoundingClientRect().width,
@@ -249,10 +269,13 @@ sap.ui.define([
 				viewportWidth = this._canvas.getBoundingClientRect().width,
 				viewportHeight = this._canvas.getBoundingClientRect().height;
 
-			//Center horizontally and vertically
+			// Center horizontally and vertically
 			var deltaX = (viewportWidth - imageWidth) / 2 - offsetLeft,
 				deltaY = (viewportHeight - imageHeight) / 2 - offsetTop;
 			this.pan(deltaX, deltaY);
+
+			// saving the scale used for best fit
+			this._s4BestFit = this._s;
 		}
 	};
 
@@ -266,6 +289,7 @@ sap.ui.define([
 	 * @param {array} resourceType: an array of type of resources to load.
 	 * @return {sap.ui.vk.NativeViewport} this
 	 * @public
+	 * @deprecated Since version 1.50.0.
 	 */
 	NativeViewport.prototype.loadUrl = function(url, onload, onerror, onprogress, resourceType) {
 
@@ -277,8 +301,8 @@ sap.ui.define([
 			this._reset();
 
 			this._svg = document.createElement("object");
-			this._svg.setAttribute("type","image/svg+xml");
-			this._svg.setAttribute("data",url);
+			this._svg.setAttribute("type", "image/svg+xml");
+			this._svg.setAttribute("data", url);
 			this._svg.setAttribute("id", this._svgid);
 			this._svg.setAttribute("class", "SVGImage");
 			this._canvas.appendChild(this._svg);
@@ -294,20 +318,25 @@ sap.ui.define([
 			this._svg.style.visibility = "hidden";
 			this._svg.onload = function() {
 				setTimeout(function() {
-					this._imageW = jQuery("#" + this._svgid).width();
-					this._imageH = jQuery("#" + this._svgid).height();
+					this._imageW = this._svg.getBoundingClientRect().width;
+					this._imageH = this._svg.getBoundingClientRect().height;
 					this._s = 1;
 					this._update = this._updateSVG.bind(this);
 					this._bestFit();
 					onload();
+					// we want the onload event to be triggered only initially
+					this._svg.onload = undefined;
 				}.bind(this), 0);
 			}.bind(this);
 
 			this._svg.src = url;
 
 			this._svg.onerror = function() {
-				jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(this._messages.messages.VIT1.summary), this._messages.messages.VIT1.code, "sap.ui.vk.NativeViewport");
+				jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(Messages.VIT1.summary), Messages.VIT1.code, "sap.ui.vk.NativeViewport");
 				onerror();
+				if (this._svg.parentNode === this._canvas) {
+					this._canvas.removeChild(this._svg);
+				}
 			}.bind(this);
 
 			return this;
@@ -338,16 +367,16 @@ sap.ui.define([
 			}.bind(this);
 
 			this._img.onerror = function() {
-				jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(this._messages.messages.VIT2.summary), this._messages.messages.VIT2.code, "sap.ui.vk.NativeViewport");
+				jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(Messages.VIT2.summary), Messages.VIT2.code, "sap.ui.vk.NativeViewport");
 				onerror();
-			}.bind(this);
+			};
 
 			this._img.src = url;
 
 			return this;
 
 		} else {
-			jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(this._messages.messages.VIT3.summary), this._messages.messages.VIT3.code, "sap.ui.vk.NativeViewport");
+			jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(Messages.VIT3.summary), Messages.VIT3.code, "sap.ui.vk.NativeViewport");
 			onerror();
 		}
 	};
@@ -359,21 +388,21 @@ sap.ui.define([
 		}
 		this._reset();
 
-			//We need the svg to be in a div container because SVGS
-			//do not handle the offset properties properly.
-			//These properties will be deprecated by the browser vendors.
+			// We need the svg to be in a div container because SVGS
+			// do not handle the offset properties properly.
+			// These properties will be deprecated by the browser vendors.
 			this._svgError = document.createElement("div");
 			this._svgError.className = "svgErrorContainer";
 
-			this._svgErrorElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-				this._svgErrorElement.setAttribute('width', '550px');
-				this._svgErrorElement.setAttribute('height', '512px');
-				this._svgErrorElement.setAttribute('viewBox', "-244 -244 512 512");
-				this._svgErrorElement.setAttribute('enable-background', "new -244 -244 512 512");
+			this._svgErrorElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+				this._svgErrorElement.setAttribute("width", "550px");
+				this._svgErrorElement.setAttribute("height", "512px");
+				this._svgErrorElement.setAttribute("viewBox", "-244 -244 512 512");
+				this._svgErrorElement.setAttribute("enable-background", "new -244 -244 512 512");
 				this._svgErrorElement.setAttribute("id", "SVGError");
 
-			var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-				rect.setAttribute("fill","#FFFFFF");
+			var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+				rect.setAttribute("fill", "#FFFFFF");
 				rect.setAttribute("x", "-244");
 				rect.setAttribute("y", "-244");
 				rect.setAttribute("width", "512");
@@ -381,55 +410,55 @@ sap.ui.define([
 				rect.setAttribute("opacity", "0.1");
 				this._svgErrorElement.appendChild(rect);
 
-			var pathCircle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			var pathCircle = document.createElementNS("http://www.w3.org/2000/svg", "path");
 				pathCircle.setAttribute("fill", "#474747");
 				pathCircle.setAttribute("d", "M12.833,89.742c-70.781,0-128.366-57.584-128.366-128.366c0-70.781,57.584-128.365,128.366-128.365 s128.365,57.584,128.365,128.365C141.198,32.158,83.614,89.742,12.833,89.742z M12.833-146.989 c-59.753,0-108.366,48.612-108.366,108.365c0,59.752,48.613,108.366,108.366,108.366S121.198,21.129 121.198-38.624 C121.198-98.376,72.586-146.989,12.833-146.989z");
-				pathCircle.setAttribute("opacity","0.3");
+				pathCircle.setAttribute("opacity", "0.3");
 				this._svgErrorElement.appendChild(pathCircle);
 
-			var rectExclamation = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-				rectExclamation.setAttribute("fill","#474747");
+			var rectExclamation = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+				rectExclamation.setAttribute("fill", "#474747");
 				rectExclamation.setAttribute("x", "-2.167");
 				rectExclamation.setAttribute("y", "-120.847");
 				rectExclamation.setAttribute("width", "30");
 				rectExclamation.setAttribute("height", "119.447");
-				rectExclamation.setAttribute("fill","#474747");
-				rectExclamation.setAttribute("opacity","0.3");
+				rectExclamation.setAttribute("fill", "#474747");
+				rectExclamation.setAttribute("opacity", "0.3");
 				this._svgErrorElement.appendChild(rectExclamation);
 
-			var rectExclamationCircle = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-				rectExclamationCircle.setAttribute("fill","#474747");
+			var rectExclamationCircle = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+				rectExclamationCircle.setAttribute("fill", "#474747");
 				rectExclamationCircle.setAttribute("x", "-2.167");
 				rectExclamationCircle.setAttribute("y", "13.6");
 				rectExclamationCircle.setAttribute("width", "30");
 				rectExclamationCircle.setAttribute("height", "30");
-				rectExclamationCircle.setAttribute("opacity","0.3");
+				rectExclamationCircle.setAttribute("opacity", "0.3");
 				this._svgErrorElement.appendChild(rectExclamationCircle);
 
-			var pathCircleOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			var pathCircleOverlay = document.createElementNS("http://www.w3.org/2000/svg", "path");
 				pathCircleOverlay.setAttribute("fill", "#474747");
 				pathCircleOverlay.setAttribute("d", "M10.833,87.33c-70.781,0-128.366-57.584-128.366-128.365c0-70.781,57.584-128.365,128.366-128.365 s128.365,57.584,128.365,128.365C139.198,29.746,81.614,87.33,10.833,87.33z M10.833-149.4 c-59.753,0-108.366,48.612-108.366,108.365S-48.92,67.33,10.833,67.33S119.198,18.718,119.198-41.035S70.586-149.4,10.833-149.4z");
 				this._svgErrorElement.appendChild(pathCircleOverlay);
 
-			var rectExclamationOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-				rectExclamationOverlay.setAttribute("fill","#474747");
+			var rectExclamationOverlay = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+				rectExclamationOverlay.setAttribute("fill", "#474747");
 				rectExclamationOverlay.setAttribute("x", "-4.167");
 				rectExclamationOverlay.setAttribute("y", "-123.259");
 				rectExclamationOverlay.setAttribute("width", "30");
 				rectExclamationOverlay.setAttribute("height", "119.447");
-				rectExclamationOverlay.setAttribute("fill","#474747");
+				rectExclamationOverlay.setAttribute("fill", "#474747");
 				this._svgErrorElement.appendChild(rectExclamationOverlay);
 
-			var rectExclamationCircleOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-				rectExclamationCircleOverlay.setAttribute("fill","#474747");
+			var rectExclamationCircleOverlay = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+				rectExclamationCircleOverlay.setAttribute("fill", "#474747");
 				rectExclamationCircleOverlay.setAttribute("x", "-4.167");
 				rectExclamationCircleOverlay.setAttribute("y", "11.188");
 				rectExclamationCircleOverlay.setAttribute("width", "30");
 				rectExclamationCircleOverlay.setAttribute("height", "30");
-				rectExclamationCircleOverlay.setAttribute("fill","#474747");
+				rectExclamationCircleOverlay.setAttribute("fill", "#474747");
 				this._svgErrorElement.appendChild(rectExclamationCircleOverlay);
 
-			var textOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+			var textOverlay = document.createElementNS("http://www.w3.org/2000/svg", "text");
 				textOverlay.setAttribute("id", "textError");
 				textOverlay.setAttribute("left", "auto");
 				textOverlay.setAttribute("right", "auto");
@@ -437,9 +466,9 @@ sap.ui.define([
 				textOverlay.setAttribute("x", "10");
 				textOverlay.setAttribute("display", "block");
 				textOverlay.setAttribute("text-anchor", "middle");
-				textOverlay.setAttribute("fill","#474747");
-				textOverlay.setAttribute('style','font-family:Arial');
-				textOverlay.setAttribute('font-size','32');
+				textOverlay.setAttribute("fill", "#474747");
+				textOverlay.setAttribute("style", "font-family:Arial");
+				textOverlay.setAttribute("font-size", "32");
 				textOverlay.textContent = textContent ? textContent : sap.ui.vk.getResourceBundle().getText("VIEWPORT_MESSAGEUNSUPPORTEDFILEFORMAT");
 				this._svgErrorElement.appendChild(textOverlay);
 
@@ -448,16 +477,13 @@ sap.ui.define([
 				this._imageW = this._errorImageWidth;
 				this._imageH = this._errorImageHeight;
 				this._update = this._updateError.bind(this);
+				this._doBestFitAfterResize = true;
 
 				setTimeout(function() {
 					this._bestFit();
 				}.bind(this), 0);
 
-				setTimeout(function() {
-					this._bestFit();
-				}.bind(this), 0);
-
-				jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(this._messages.messages.VIT4.summary), this._messages.messages.VIT4.code, "sap.ui.vk.NativeViewport");
+				jQuery.sap.log.error(sap.ui.vk.getResourceBundle().getText(Messages.VIT4.summary), Messages.VIT4.code, "sap.ui.vk.NativeViewport");
 
 				return this;
 		};
@@ -473,7 +499,6 @@ sap.ui.define([
 	NativeViewport.prototype.beginGesture = function(x, y) {
 		this._gx = (x - this._canvas.clientWidth / 2 - this._x) / this._s;
 		this._gy = (y - this._canvas.clientHeight / 2 - this._y) / this._s;
-
 		return this;
 	};
 
@@ -535,6 +560,18 @@ sap.ui.define([
 		return this;
 	};
 
+	NativeViewport.prototype._getZoomInLimit = function() {
+		return 500;
+	};
+
+	NativeViewport.prototype._getZoomOutLimit = function() {
+		return (this.getLimitZoomOut()) ? this._s4BestFit * 0.25 : 0.0001;
+	};
+
+	NativeViewport.prototype._getZoomFactor = function() {
+		return this._s;
+	};
+
 	/**
 	 * Performs a <code>zoom</code> gesture to zoom in or out on the beginGesture coordinate.
 	 *
@@ -549,12 +586,16 @@ sap.ui.define([
 
 		// limit zoom out to a quarter of best fit if limiting is active
 		var newScale = this._s * z;
-		var zoomOutLimit = (this.getLimitZoomOut()) ? this._s4BestFit * 0.25 : 0;
-		if (newScale > zoomOutLimit) {
+		var zoomOutLimit = this._getZoomOutLimit();
+		var zoomInLimit = this._getZoomInLimit();
+		if ((newScale > zoomOutLimit) && (newScale < zoomInLimit)){
 			this._s = newScale;
-		} else {
+		} else if (newScale < zoomInLimit) {
 			z = zoomOutLimit / this._s;
 			this._s = zoomOutLimit;
+		} else {
+			z = zoomInLimit / this._s;
+			this._s = zoomInLimit;
 		}
 
 		var gxn = this._gx * this._s;
@@ -639,6 +680,94 @@ sap.ui.define([
 		return this;
 	};
 
+	/**
+	 * It retrieves information about the current virtual native viewport.
+	 * The information can used for making calculations when restoring Redlining elements.
+	 * @returns {object} outputSize The information in this object:
+	 <ul>
+		<li><b>left</b> - The x coordinate of the top-left corner of the virtual native viewport</li>
+		<li><b>top</b> - The y coordinate of the top-left corner of the virtual native viewport</li>
+		<li><b>sideLength</b> - The side length of the virtual native viewport</li>
+	 </ul>
+	 * @public
+	 */
+	NativeViewport.prototype.getOutputSize = function() {
+		var cameraInfo = this.getViewInfo().camera,
+			boundingClientRect = this.getDomRef().getBoundingClientRect();
+		// x and y coordinates are showing the position of the top-left
+		// corner of the virtual viewport within the NativeViewport.
+		// Because the getViewInfo method considers the center of the viewport (0,0),
+		// we have to divide the width and height by 2 and add the current x (or y) position.
+		return {
+			left: boundingClientRect.width / 2 + cameraInfo[4],
+			top: boundingClientRect.height / 2 + cameraInfo[5],
+			sideLength: this._canvas.children[0].getBoundingClientRect().width
+		};
+	};
+
+	////////////////////////////////////////////////////////////////////////
+	// Content connector handling begins.
+
+	NativeViewport.prototype._onAfterUpdateContentConnector = function() {
+		this._setImage(this._contentConnector.getContent());
+	};
+
+	NativeViewport.prototype._onBeforeClearContentConnector = function() {
+		this._setImage(null);
+	};
+
+	NativeViewport.prototype._handleContentReplaced = function(event) {
+		this._setImage(event.getParameter("newContent"));
+	};
+
+	NativeViewport.prototype._setImage = function(image) {
+		while (this._canvas.lastChild) {
+			this._canvas.removeChild(this._canvas.lastChild);
+		}
+		this._reset();
+		if (image instanceof HTMLObjectElement) {
+			this._svg = image;
+			this._svg.setAttribute("id", this._svgid);
+			this._canvas.appendChild(this._svg);
+
+			var svgCover = document.createElement("div");
+			this._canvas.appendChild(svgCover);
+			svgCover.style.position = "absolute";
+			svgCover.style.top = 0;
+			svgCover.style.left = 0;
+			svgCover.style.height = "100%";
+			svgCover.style.width = "100%";
+
+
+			this._svg.onload = function() {
+
+				this._svg.onload = null;
+				jQuery.sap.delayedCall(0, this, function() {
+					this._imageW = this._svg.getBoundingClientRect().width;
+					this._imageH = this._svg.getBoundingClientRect().height;
+					this._s = 1;
+					this._update = this._updateSVG.bind(this);
+					this._bestFit();
+				});
+
+			}.bind(this);
+
+		} else if (image instanceof HTMLImageElement) {
+			this._img = image;
+			this._canvas.appendChild(this._img);
+
+			jQuery.sap.delayedCall(0, this, function() {
+				this._imageW = this._img.width;
+				this._imageH = this._img.height;
+				this._update = this._updateIMG.bind(this);
+				this._bestFit();
+			});
+		}
+	};
+
+	// Content connector handling ends.
+	////////////////////////////////////////////////////////////////////////
+
 	////////////////////////////////////////////////////////////////////////
 	// Keyboard handling begins.
 
@@ -693,6 +822,7 @@ sap.ui.define([
 	// Keyboard handling ends.
 	////////////////////////////////////////////////////////////////////////
 
+	ContentConnector.injectMethodsIntoClass(NativeViewport);
 
 	return NativeViewport;
 

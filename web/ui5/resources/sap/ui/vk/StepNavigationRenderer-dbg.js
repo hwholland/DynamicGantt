@@ -32,7 +32,7 @@ sap.ui.define([
 		if (!control.getVisible()) {
 		return;
 		}
-		
+
 		if (control.getShowToolbar() || control.getShowThumbnails) {
 			var oWidth = control.getWidth() !== "auto" ? control.getWidth() : "100%";
 			var oHeight = control.getHeight() !== "auto" ? control.getHeight() : "auto";
@@ -63,11 +63,11 @@ sap.ui.define([
 		}
 
 	};
-	
-	StepNavigationRenderer._renderScrollerDiv = function (rm, control) {
+
+	StepNavigationRenderer._renderScrollerDiv = function(rm, control) {
 		rm.renderControl(control.getAggregation("thumbnailsContainer"));
 	};
-	
+
 	return StepNavigationRenderer;
 
 }, /* bExport= */ true);

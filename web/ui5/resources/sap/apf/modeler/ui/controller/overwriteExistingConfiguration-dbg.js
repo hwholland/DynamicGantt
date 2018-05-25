@@ -7,7 +7,7 @@
 jQuery.sap.require("sap.apf.modeler.ui.utils.nullObjectChecker");
 sap.ui.define([ "sap/ui/core/mvc/Controller" ], function(Controller) {
 	"use strict";
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
+	var nullObjectChecker = sap.apf.modeler.ui.utils.nullObjectChecker;
 	return Controller.extend("sap.apf.modeler.ui.controller.overwriteExistingConfiguration", {
 		setOverwriteConfirmationDialogText : function(oTextReader) {
 			sap.ui.core.Fragment.byId("idOverwriteConfirmationFragment", "idOverwriteConfirmationDialog").setTitle(oTextReader("configAlreadyExists"));
@@ -20,7 +20,7 @@ sap.ui.define([ "sap/ui/core/mvc/Controller" ], function(Controller) {
 			sap.ui.core.Fragment.byId("idOverwriteConfirmationFragment", "idCancelButton").setText(oTextReader("cancel"));
 		},
 		handleOkButtonPress : function() {
-			var oController = this, bSelectedButton, oNewConfigTitleInput, oOverwriteDialog, callbackOverwrite, callbackCreateNew;
+			var bSelectedButton, oNewConfigTitleInput, oOverwriteDialog, callbackOverwrite, callbackCreateNew;
 			oOverwriteDialog = sap.ui.core.Fragment.byId("idOverwriteConfirmationFragment", "idOverwriteConfirmationDialog");
 			callbackOverwrite = oOverwriteDialog.getCustomData()[0].getValue().callbackOverwrite;
 			callbackCreateNew = oOverwriteDialog.getCustomData()[0].getValue().callbackCreateNew;
@@ -38,11 +38,10 @@ sap.ui.define([ "sap/ui/core/mvc/Controller" ], function(Controller) {
 			}
 		},
 		handleCancelOfOverwriteDialog : function() {
-			var oController = this;
 			sap.ui.core.Fragment.byId("idOverwriteConfirmationFragment", "idOverwriteConfirmationDialog").destroy();
 		},
 		handleChangeForOverwriteConfigOptions : function() {
-			var oController = this, bSelectedButton;
+			var bSelectedButton;
 			bSelectedButton = sap.ui.core.Fragment.byId("idOverwriteConfirmationFragment", "idOverwriteConfigRadioGroup").getSelectedButton();
 			if (bSelectedButton === sap.ui.core.Fragment.byId("idOverwriteConfirmationFragment", "idDoNotOverwriteConfig")) {
 				sap.ui.core.Fragment.byId("idOverwriteConfirmationFragment", "idNewConfigTitleLayout").setVisible(true);

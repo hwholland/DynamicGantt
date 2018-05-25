@@ -1,12 +1,11 @@
 {
-  "_version": "1.2.0",
+  "_version": "1.9.0",
   "sap.app": {
-    "_version": "1.2.0",
     "id": "sap.makit",
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.38.33"
+      "version": "1.54.3"
     },
     "title": "Mobile Chart controls based on the Sybase MAKIT charting lib.",
     "description": "Mobile Chart controls based on the Sybase MAKIT charting lib.",
@@ -14,7 +13,6 @@
     "offline": true
   },
   "sap.ui": {
-    "_version": "1.1.0",
     "technology": "UI5",
     "supportedThemes": [
       "base",
@@ -22,14 +20,16 @@
     ]
   },
   "sap.ui5": {
-    "_version": "1.1.0",
     "dependencies": {
-      "minUI5Version": "1.38",
+      "minUI5Version": "1.54",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.38.33"
+          "minVersion": "1.54.3"
         }
       }
+    },
+    "library": {
+      "i18n": "messagebundle.properties"
     }
   }
 }

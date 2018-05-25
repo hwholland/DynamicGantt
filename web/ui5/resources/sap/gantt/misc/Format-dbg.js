@@ -5,7 +5,8 @@
 	
  */
 sap.ui.define([
-	"sap/ui/core/format/DateFormat"
+	"sap/ui/core/format/DateFormat",
+	"sap/ui/thirdparty/d3"
 ], function (DateFormat) {
 	"use strict";
 
@@ -66,13 +67,15 @@ sap.ui.define([
 	 */
 
 	Format.dateToAbapTimestamp = function (oDate) {
-		
-		return "" + oDate.getFullYear() +
-		(oDate.getMonth() < 9 ? "0" : "") + (oDate.getMonth() + 1) +
-		(oDate.getDate() < 10 ? "0" : "") + oDate.getDate() +
-		(oDate.getHours() < 10 ? "0" : "") + oDate.getHours() +
-		(oDate.getMinutes() < 10 ? "0" : "") + oDate.getMinutes() +
-		(oDate.getSeconds() < 10 ? "0" : "") + oDate.getSeconds();
+		if (oDate) {
+			return "" + oDate.getFullYear() +
+			(oDate.getMonth() < 9 ? "0" : "") + (oDate.getMonth() + 1) +
+			(oDate.getDate() < 10 ? "0" : "") + oDate.getDate() +
+			(oDate.getHours() < 10 ? "0" : "") + oDate.getHours() +
+			(oDate.getMinutes() < 10 ? "0" : "") + oDate.getMinutes() +
+			(oDate.getSeconds() < 10 ? "0" : "") + oDate.getSeconds();
+		}
+		return "";
 	};
 	
 	
@@ -91,8 +94,72 @@ sap.ui.define([
 		return sLabel;
 
 	};
-	
-	
+
+	/**
+	 * Converts a relative time object into an absolute time object. Use this method only in relative time axis mode.
+	 *
+	 * @param {int} iIntervalDays difference in the day segment between the target time and base time
+	 * @param {int} iIntervalHours difference in the hour segment between the target time and base time
+	 * @param {int} iIntervalMinutes difference in the minute segment between the target time and base time
+	 * @param {int} iIntervalSeconds difference in the second segment between the target time and base time
+	 * @return {Date} converted absolute time object
+	 * @static
+	 * @public
+	 */
+
+	Format.relativeTimeToAbsolutTime = function (iIntervalDays, iIntervalHours, iIntervalMinutes, iIntervalSeconds) {
+		iIntervalDays = iIntervalDays !== undefined ? iIntervalDays : 0;
+		iIntervalHours = iIntervalHours !== undefined ? iIntervalHours : 0;
+		iIntervalMinutes = iIntervalMinutes !== undefined ? iIntervalMinutes : 0;
+		iIntervalSeconds = iIntervalSeconds !== undefined ? iIntervalSeconds : 0;
+
+		var oBaseTime = this.abapTimestampToDate("20120101000000");
+		var oTargetTime = new Date();
+		oTargetTime.setTime(oBaseTime.getTime() + iIntervalSeconds * 1000 + iIntervalMinutes * 60 * 1000 + iIntervalHours * 3600 * 1000 + iIntervalDays * 24 * 3600 * 1000);
+
+		return oTargetTime;
+	};
+
+	/**
+	 * Converts an absolute time object into a relative time object, which contains the following properties:
+	 *  {
+			intervalDays: * difference in the day segment between the target time and base time*,
+			intervalHours: * difference in the hour segment between the target time and base time*,
+			intervalMinutes: * difference in the minute segment between the target time and base time*,
+			intervalSecond: * difference in the segment segment between the target time and base time*
+		}
+	 * Use this method only in relative time axis mode.
+	 *
+	 * @param {Date} oTime the absolute time object will be converted
+	 * @return {object} relative time information object
+	 * @static
+	 * @public
+	 */
+
+	Format.absolutTimeToRelativeTime = function (oTime) {
+		var oBaseTime = this.abapTimestampToDate("20120101000000");
+		var iMiliseciondInterval = oTime.getTime() - oBaseTime.getTime();
+
+		var iIntervalDays = Math.floor(iMiliseciondInterval / (24 * 3600 * 1000));
+		var iRemainder = iMiliseciondInterval % (24 * 3600 * 1000);
+
+		var iIntervalHours = Math.floor(iRemainder / (3600 * 1000));
+		iRemainder = iRemainder % (3600 * 1000);
+
+		var iIntervalMinutes = Math.floor(iRemainder / (60 * 1000));
+		iRemainder = iRemainder % (60 * 1000);
+
+		var iIntervalSeconds = Math.floor(iRemainder / 1000);
+
+		var oResult = {
+			intervalDays: iIntervalDays,
+			intervalHours: iIntervalHours,
+			intervalMinutes: iIntervalMinutes,
+			intervalSecond: iIntervalSeconds
+		};
+
+		return oResult;
+	};
 
 	Format._convertUTCToLocalTime = function (sTimeStamp, oLocale) {
 
@@ -100,7 +167,7 @@ sap.ui.define([
 		//code is from axistime.js
 		var timeZoneOffset = 0;
 		if (oLocale && oLocale.getUtcdiff()) {
-			var format = d3.time.format("%Y%m%d%H%M%S");
+			var format = this.getTimeStampFormatter();
 			timeZoneOffset = Math.round((format.parse("20000101" + oLocale.getUtcdiff()).getTime() - format.parse("20000101000000").getTime()) / 1000);
 			if (oLocale.getUtcsign() === "-") {
 				timeZoneOffset = -timeZoneOffset;
@@ -123,24 +190,8 @@ sap.ui.define([
 		return localDate;
 	};
 
-	//private function
-	Format.creatTimeLabel = function (oZoomStrategyConfig, oDate){
-		var oFormatOptions = {
-			pattern : oZoomStrategyConfig.format,
-			format: oZoomStrategyConfig.pattern,
-			style: oZoomStrategyConfig.style,
-			calendarType: oZoomStrategyConfig.calendarType
-		};
-
-		var oFormat;
-		if (oZoomStrategyConfig.locale){
-			oFormat = DateFormat.getDateTimeInstance(oFormatOptions, new sap.ui.core.Locale(oZoomStrategyConfig.locale));
-		} else {
-			var sLanguage = sap.ui.getCore().getConfiguration().getLanguage().toLowerCase();
-			oFormat = DateFormat.getDateTimeInstance(oFormatOptions, new sap.ui.core.Locale(sLanguage));
-		}
-
-		return oFormat.format(oDate);
+	Format.getTimeStampFormatter = function(){
+		return d3.time.format("%Y%m%d%H%M%S");
 	};
 
 	return Format;

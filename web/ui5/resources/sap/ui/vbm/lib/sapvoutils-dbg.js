@@ -431,7 +431,7 @@ VBI.NodeProperty = function(dat, name, pnp, ctx) {
 	this.m_DTN = ctx.m_DataTypeProvider.FindTypeNodeFromPath(this.m_Path);
 
 	// determine the real responsible node parent.............................//
-	var tmp = this;
+	var tmp = this; // eslint-disable-line consistent-this
 	while ((tmp = tmp.m_PNP)) {
 		if (ctx.m_DataTypeProvider.isParentOf(tmp.m_DTN, this.m_DTN)) {
 			// adjust the path..................................................//
@@ -580,7 +580,7 @@ VBI.AttributeProperty = function(dat, name, pnp, ctx, def) {
 		this.m_DTA = ctx.m_DataTypeProvider.FindTypeAttributeFromPath(this.m_AbsBind);
 
 		// determine the real parent node and the relative the binding path....//
-		var tmp = this;
+		var tmp = this; // eslint-disable-line consistent-this
 		while ((tmp = tmp.m_PNP)) {
 			if (ctx.m_DataTypeProvider.isParentOf(tmp.m_DTN, this.m_DTA)) {
 				// adjust the path...............................................//

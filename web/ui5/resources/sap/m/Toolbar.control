@@ -30,53 +30,53 @@ between the &lt;code&gt;Toolbar&lt;/code&gt; items (for example, to to push an i
     <since>1.16</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="width" type="sap.ui.core/CSSSize" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/CSSSize" name="width">
             <documentation>Defines the width of the control.
 By default, Toolbar is a block element. If the width is not explicitly set, the control will assume its natural size.</documentation>
         </property>
-        <property name="active" type="sap.ui.core/boolean" defaultValue="false" group="Behavior">
+        <property group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="active">
             <documentation>Indicates that the whole toolbar is clickable. The Press event is fired only if Active is set to true.
 Note: This property should be used when there are no interactive controls inside the toolbar and the toolbar itself is meant to be interactive.</documentation>
         </property>
-        <property name="enabled" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabled">
             <documentation>Sets the enabled property of all controls defined in the content aggregation.
 Note: This property does not apply to the toolbar itself, but rather to its items.</documentation>
         </property>
-        <property name="height" type="sap.ui.core/CSSSize" defaultValue="" group="Appearance">
+        <property group="Appearance" defaultValue="" type="sap.ui.core/CSSSize" name="height">
             <documentation>Defines the height of the control. By default, the &lt;code&gt;height&lt;/code&gt;
 property depends on the used theme and the &lt;code&gt;design&lt;/code&gt; property.
 
 &lt;b&gt;Note:&lt;/b&gt; It is not recommended to use this property if the
 &lt;code&gt;sapMTBHeader-CTX&lt;/code&gt; class is used</documentation>
         </property>
-        <property name="design" type="sap.m/ToolbarDesign" defaultValue="Auto" group="Appearance" since="1.16.8">
+        <property since="1.16.8" group="Appearance" defaultValue="Auto" type="sap.m/ToolbarDesign" name="design">
             <documentation>Defines the toolbar design.
 
 &lt;b&gt;Note:&lt;/b&gt; Design settings are theme-dependent. They also determine the default height of the toolbar.</documentation>
         </property>
-        <property name="style" type="sap.m/ToolbarStyle" defaultValue="Standard" group="Appearance" since="1.54">
+        <property since="1.54" group="Appearance" defaultValue="Standard" type="sap.m/ToolbarStyle" name="style">
             <documentation>Defines the visual style of the &lt;code&gt;Toolbar&lt;/code&gt;.
 
 &lt;b&gt;Note:&lt;/b&gt; The visual styles are theme-dependent.</documentation>
         </property>
     </properties>
     <events>
-        <event name="press" allowPreventDefault="false">
-            <documentation>Fired when the user clicks on the toolbar, if the Active property is set to "true".</documentation>
+        <event allowPreventDefault="false" name="press">
+            <documentation>Fired when the user clicks on the toolbar, if the Active property is set to &quot;true&quot;.</documentation>
             <parameters>
-                <parameter name="srcControl" type="sap.ui.core/Control">
+                <parameter type="sap.ui.core/Control" name="srcControl">
                     <documentation>The toolbar item that was pressed</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations default="content">
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>The content of the toolbar.</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n">
+        <association cardinality="0..n" type="sap.ui.core/Control" name="ariaLabelledBy">
             <documentation>Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).</documentation>
         </association>
     </associations>

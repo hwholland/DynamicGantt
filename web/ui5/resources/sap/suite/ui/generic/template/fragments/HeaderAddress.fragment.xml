@@ -3,6 +3,7 @@
 						 xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
 
 	<VBox id="header::{path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getStableIdPartFromFacet'}::ContactAddress"
+		  visible="{= ${path: 'headerFacet>com.sap.vocabularies.UI.v1.Hidden'} ? ${path: 'headerFacet>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getBindingForHiddenPath'} : true}"
 		  displayInline="true" binding="{parts: [{path: 'headerFacet>Target'}, {path: 'entitySet>'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getNavigationPathWithExpand'}"
 		  class="sapSmartTemplatesObjectPageHeaderAddress">
 		<template:if test="{headerFacet>Label}">

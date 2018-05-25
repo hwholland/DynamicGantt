@@ -3,9 +3,9 @@
  *
  * (c) Copyright 2012-2014 SAP SE. All rights reserved
  */
-jQuery.sap.require("sap.apf.modeler.ui.utils.textPoolHelper");
 jQuery.sap.require("sap.apf.modeler.ui.utils.nullObjectChecker");
 jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
+jQuery.sap.require('sap.apf.modeler.ui.utils.textPoolHelper');
 /**
 * @class configuration
 * @memberOf sap.apf.modeler.ui.controller
@@ -15,21 +15,22 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 (function() {
 	"use strict";
 	var viewValidatorForConfig, oTextReader, oApplicationHandler, oConfigurationHandler, oConfigurationEditor, oParams, oConfiguration;
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
+	var nullObjectChecker = sap.apf.modeler.ui.utils.nullObjectChecker;
 	//Sets static texts in UI
 	function _setDisplayText(oController) {
-		oController.byId("idConfigurationBasicData").setTitle(oTextReader("configurationData"));
+		oController.byId("idConfigurationBasicData").setText(oTextReader("configurationData"));
 		oController.byId("idConfigTitleLabel").setText(oTextReader("configTitle"));
 		oController.byId("idConfigTitle").setPlaceholder(oTextReader("newConfiguration"));
 		oController.byId("idConfigurationIdLabel").setText(oTextReader("configurationId"));
 		oController.byId("idSemanticObjectLabel").setText(oTextReader("semanticObject"));
 		oController.byId("idNoOfCategoriesLabel").setText(oTextReader("noOfCategories"));
 		oController.byId("idNoOfStepsLabel").setText(oTextReader("noOfSteps"));
-		oController.byId("idFilterTypeData").setTitle(oTextReader("filterType"));
+		oController.byId("idFilterTypeData").setText(oTextReader("filterType"));
 		oController.byId("idFilterTypeLabel").setText(oTextReader("type"));
-		oController.byId("smartFilterBar").setText(oTextReader("smartFilter"));
-		oController.byId("facetFilter").setText(oTextReader("facetFilterType"));
-		oController.byId("none").setText(oTextReader("none"));
+		oController.byId("smartFilterBar").setText(oTextReader("smartFilterBar"));
+		oController.byId("facetFilter").setText(oTextReader("configuredFilters"));
+		oController.byId("none").setText(oTextReader("noFilters"));
+		oController.byId("idAriaPropertyForFilterRadioGp").setText(oTextReader("type"));
 	}
 	// sets the total categories
 	function _setTotalCategories(oController) {
@@ -96,8 +97,9 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 	function _updateApplicationTitle(oController, sConfigTitle) {
 		var oTextPool = oConfigurationHandler.getTextPool();
 		var oTranslationFormat = sap.apf.modeler.ui.utils.TranslationFormatMap.APPLICATION_TITLE;
-		var sApplicationTitleId = oTextPool.setText(sConfigTitle, oTranslationFormat);
-		oConfigurationEditor.setApplicationTitle(sApplicationTitleId);
+		oTextPool.setTextAsPromise(sConfigTitle, oTranslationFormat).done(function(sApplicationTitleId){
+			oConfigurationEditor.setApplicationTitle(sApplicationTitleId);
+		});		
 	}
 	// Updates the tree node (configuration) with given configuration title
 	function _updateTreeNodeOnConfigurationChange(oController, sConfigTitle, sConfigId) {
@@ -165,7 +167,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		handleChangeDetailValue : function() {
 			var oController = this;
 			var sConfigTitle = oController.byId("idConfigTitle").getValue().trim();
-			var configObj, oController = this;
+			var configObj;
 			if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(sConfigTitle)) {
 				configObj = {
 					AnalyticalConfigurationName : sConfigTitle
@@ -210,7 +212,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 			oController.getView().getViewData().updateTree(); // Updates the tree structure according to chosen filter option type
 			sap.ui.core.Fragment.byId("idFilterOptionChangeFragment", "idDialogWithTwoButtons").destroy();
 		},
-		handleEndButtonDialogWithTwoButtons : function() {
+		handleCancel : function() {
 			var oController = this;
 			_setFilterOptionType(oController);
 			sap.ui.core.Fragment.byId("idFilterOptionChangeFragment", "idDialogWithTwoButtons").destroy();

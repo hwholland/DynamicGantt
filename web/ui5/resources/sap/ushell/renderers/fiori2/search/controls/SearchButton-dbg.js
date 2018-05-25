@@ -1,8 +1,9 @@
 /* global jQuery, sap, window */
-(function() {
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper',
+    'sap/m/Button'
+], function(SearchHelper) {
     "use strict";
-
-    jQuery.sap.require('sap.m.Button');
 
     sap.m.Button.extend('sap.ushell.renderers.fiori2.search.controls.SearchButton', {
 
@@ -15,7 +16,7 @@
                         path: "/initializingObjSearch"
                     }],
                     formatter: function(initializingObjSearch) {
-                        return !sap.ushell.renderers.fiori2.search.SearchHelper.isSearchAppActive() || !initializingObjSearch;
+                        return !SearchHelper.isSearchAppActive() || !initializingObjSearch;
                     }
                 }
             }, options);
@@ -27,4 +28,4 @@
 
     });
 
-})();
+});

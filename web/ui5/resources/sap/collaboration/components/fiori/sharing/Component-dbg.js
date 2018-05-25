@@ -1,5 +1,7 @@
 /*!
- * @copyright@
+ * SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
  */
 
 jQuery.sap.require("sap.collaboration.library");
@@ -14,13 +16,13 @@ jQuery.sap.require("sap.m.MessageBox");
 * @since version 1.16
 * @constructor
 * @param {sap.ui.core.URI} [oDataServiceUrl] The OData service URL needed for the share component, the default value is "/sap/opu/odata/sap/SM_INTEGRATION_SRV"
-* @param {JSON object} [object] A JSON object passed to the share component. This object contains the following properties:
+* @param {object} [object] A JSON object passed to the share component. This object contains the following properties:
 * 		<ul>
 *  			<li>id (optional): is the object Id to be shared in SAP Jam, i.e a URL that navigates back to the same object in the application</li>
 *  			<li>display (optional): is a UI5 control to be displayed in the component UI</li>
 * 			<li>share (optional): is a note that will be displayed in the component UI and shared to SAP Jam too</li>
 * 		</ul>
-* @param {JSON object} [externalObject]  A Business Object such as an Opportunity, Sales Order, Account, etc. from the back-end that will be shared as a Featured External Object in a Group in Jam.
+* @param {object} [externalObject]  A Business Object such as an Opportunity, Sales Order, Account, etc. from the back-end that will be shared as a Featured External Object in a Group in Jam.
 * <code>
 * <ul>
 * 	<li>{string} appContext: The application context. Example: "CRM", "SD", etc.</li>

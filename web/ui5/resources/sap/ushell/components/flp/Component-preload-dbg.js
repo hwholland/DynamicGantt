@@ -1,8 +1,8 @@
 jQuery.sap.registerPreloadedModules({
-"name":"sap/ushell/components/flp/Component-preload",
+"name":"Component-preload",
 "version":"2.0",
 "modules":{
-	"sap/ushell/components/flp/ActionMode.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+	"sap/ushell/components/flp/ActionMode.js":function(){// ${copyright}
 /**
  * @fileOverview
  * Tile action mode implementation.
@@ -27,7 +27,7 @@ jQuery.sap.registerPreloadedModules({
  *  - Deactivation handler
  *  - Rendering tile action menu
  *
- * @version 1.38.26
+ * @version ${version}
  */
 /**
  * @namespace
@@ -37,13 +37,11 @@ jQuery.sap.registerPreloadedModules({
  * @since 1.26.0
  * @private
  */
-(function () {
-    "use strict";
+sap.ui.define([], function() {
+	"use strict";
 
     /*global jQuery, sap, window, hasher, $ */
     /*jslint nomen: true */
-    jQuery.sap.declare("sap.ushell.components.flp.ActionMode");
-
     /**
      * Constructor function
      * Creates action mode activation buttons:
@@ -74,31 +72,48 @@ jQuery.sap.registerPreloadedModules({
     * - Changes the appearance of the floating activation button
     */
     ActionMode.prototype.activate = function () {
-        var oFloatingActionButton,
-            oTileActionsButton;
+        var oTileActionsButton;
 
-        jQuery.sap.require("sap.m.MessageToast");
-        sap.m.MessageToast.show(sap.ushell.resources.i18n.getText("actionModeActivated"), {duration: 4000});
         this.oModel.setProperty('/tileActionModeActive', true);
         this.aOrigHiddenGroupsIds = sap.ushell.utils.getCurrentHiddenGroupIds(this.oModel);
-
-        // Change floating button display
-        oFloatingActionButton = sap.ui.getCore().byId("floatingActionBtn");
-        if (oFloatingActionButton) {
-            oFloatingActionButton.addStyleClass("sapUshellActive");
-            oFloatingActionButton.setTooltip(sap.ushell.resources.i18n.getText("deactivateActionMode"));
-        }
+        var oDashboardGroups = sap.ui.getCore().byId("dashboardGroups");
+        oDashboardGroups.addLinksToUnselectedGroups();
 
         // Change action mode button display in the user actions menu
         oTileActionsButton = sap.ui.getCore().byId("ActionModeBtn");
         if (oTileActionsButton) {
-            oTileActionsButton.setText(sap.ushell.resources.i18n.getText("exitPersonalizationMode"));
+            oTileActionsButton.setTooltip(sap.ushell.resources.i18n.getText("exitEditMode"));
+            oTileActionsButton.setText(sap.ushell.resources.i18n.getText("exitEditMode"));
+            if(oTileActionsButton.data("isShellHeader")){
+                oTileActionsButton.setSelected(true);
+            }
         }
         this.oEventBus.publish('launchpad', 'actionModeActive');
     };
 
     ActionMode.prototype.scrollToViewPoint = function () {
-        window.setTimeout(jQuery.proxy(this.oEventBus.publish, this.oEventBus, "launchpad", "scrollToFirstVisibleGroup", this.viewPoint), 0);
+        var oData = this.viewPoint;
+        oData.restoreLastFocusedTile = true;
+
+        // if we switch from edit mode to non-edit mode
+        if (!this.oModel.getProperty('/tileActionModeActive')) {
+
+            // if before me switch to non-edit mode we were focused on the TileContainer header
+            // we need to restore focus such as the tile that will be focused will belong to this group
+            var jqLastFocusedHeader = jQuery(".sapUshellTileContainerHeader[tabindex=0]");
+            if (jqLastFocusedHeader && jqLastFocusedHeader.length > 0) {
+                var jqTileContainer = jqLastFocusedHeader[0].closest('.sapUshellTileContainer');
+                if (jqTileContainer) {
+
+                    // adding the focused header tile-container ID
+                    oData.restoreLastFocusedTileContainerById = jqTileContainer.id;
+                }
+            }
+
+        }
+
+        oData.iDuration = 0;
+        window.setTimeout(jQuery.proxy(this.oEventBus.publish, this.oEventBus, "launchpad", "scrollToGroup", oData), 0);
     };
 
     /**
@@ -115,33 +130,32 @@ jQuery.sap.registerPreloadedModules({
      */
     ActionMode.prototype.deactivate = function () {
         var tileActionsMenu = sap.ui.getCore().byId("TileActions"),
-            oTileActionsButton,
-            oFloatingActionButton;
+            oTileActionsButton;
 
         this.oModel.setProperty('/tileActionModeActive', false);
         this.oEventBus.publish("launchpad", 'actionModeInactive', this.aOrigHiddenGroupsIds);
         if (tileActionsMenu !== undefined) {
             tileActionsMenu.destroy();
         }
-
-        // Change floating button display
-        oFloatingActionButton = sap.ui.getCore().byId("floatingActionBtn");
-        if (oFloatingActionButton) {
-            oFloatingActionButton.removeStyleClass("sapUshellActive");
-            oFloatingActionButton.setTooltip(sap.ushell.resources.i18n.getText("activateActionMode"));
-        }
-
+        sap.ui.require(['sap/m/MessageToast'],
+            function (MessageToast) {
+                MessageToast.show(sap.ushell.resources.i18n.getText("savedChanges"), {duration: 4000});
+            });
         // Change action mode button display in the user actions menu
         oTileActionsButton = sap.ui.getCore().byId("ActionModeBtn");
         if (oTileActionsButton) {
-            oTileActionsButton.setTooltip(sap.ushell.resources.i18n.getText("activateActionMode"));
-            oTileActionsButton.setText(sap.ushell.resources.i18n.getText("activateActionMode"));
+            oTileActionsButton.setTooltip(sap.ushell.resources.i18n.getText("activateEditMode"));
+            oTileActionsButton.setText(sap.ushell.resources.i18n.getText("activateEditMode"));
+            if(oTileActionsButton.data("isShellHeader")) {
+                oTileActionsButton.setSelected(false);
+            }
         }
     };
 
     ActionMode.prototype.toggleActionMode = function (oModel, sSource, dashboardGroups) {
         var bTileActionModeActive = oModel.getProperty('/tileActionModeActive');
         var currentGroupIndex = oModel.getProperty('/topGroupInViewPortIndex');
+        var sHomePageGroupDisplay = oModel.getProperty("/homePageGroupDisplay");
         if (!dashboardGroups) {
             dashboardGroups = [];
         }
@@ -151,9 +165,13 @@ jQuery.sap.registerPreloadedModules({
 
         var currentGroup = visibleGroups[currentGroupIndex];
         if (currentGroup) {
-            //49 - height of "+add group"
             var editModelDelta = bTileActionModeActive ? -49 : 49;
-            var groupScrolled = document.getElementById("sapUshellDashboardPage-cont").scrollTop - currentGroup.getDomRef().offsetTop;
+            var domRef = (sHomePageGroupDisplay === "tabs") ? dashboardGroups[0].getDomRef() : currentGroup.getDomRef();
+            var iSkipScrollTo = 0;
+            if (domRef) {
+                iSkipScrollTo = domRef.offsetTop;
+            }
+            var groupScrolled = document.getElementById("sapUshellDashboardPage-cont").scrollTop - iSkipScrollTo;
             this.viewPoint = {
                 group: visibleGroups[currentGroupIndex],
                 fromTop: groupScrolled + editModelDelta
@@ -193,9 +211,9 @@ jQuery.sap.registerPreloadedModules({
     *
     * @param oEvent Event object of the tile click action
     */
-    ActionMode.prototype._openActionsMenu = function (oEvent, oTilePressed) {
+    ActionMode.prototype._openActionsMenu = function (oEvent, oView) {
         var that = this,
-            oTileControl = oTilePressed || oEvent.getSource(),
+            oTileControl = oView ? oView : oEvent.getSource(),
             launchPageServ =  sap.ushell.Container.getService("LaunchPage"),
             aActions = [],
             oActionSheet = sap.ui.getCore().byId("TileActions"),
@@ -219,7 +237,7 @@ jQuery.sap.registerPreloadedModules({
         coverDiv.addClass("sapUshellTileActionLayerDivSelected");
         if (oActionSheet === undefined) {
             oActionSheet = new sap.m.ActionSheet("TileActions", {
-                placement: sap.m.PlacementType.Auto,
+                placement: sap.m.PlacementType.Bottom,
                 afterClose: function () {
                     $(".sapUshellTileActionLayerDivSelected").removeClass("sapUshellTileActionLayerDivSelected");
                     var oEventBus = sap.ui.getCore().getEventBus();
@@ -248,7 +266,7 @@ jQuery.sap.registerPreloadedModules({
                 // The press handler of a button (representing a single action) in a tile's action sheet
                 fnHandleActionPress = function (oAction) {
                     return function () {
-                        that._handleActionPress(oAction);
+                        that._handleActionPress(oAction, oTileControl);
                     };
                 }(oAction);
                 oButton = new sap.m.Button({
@@ -261,11 +279,20 @@ jQuery.sap.registerPreloadedModules({
             /*eslint-enable no-loop-func*/
             /*eslint-enable wrap-iife*/
         }
-        actionSheetIconInEditMode = oEvent.getSource().getActionSheetIcon();
+        actionSheetIconInEditMode = oEvent.getSource().getActionSheetIcon ? oEvent.getSource().getActionSheetIcon() : undefined;
+        //For tiles - actions menu is opened by "more" icon, for links, there is an action button
+        //Which cannot be controlled by FLP code.
+        //In case of link, we first try to access the "more" button and open an action sheet by it.
+        //Otherwise the action sheet will not be located under the "more" button and other weird things will happen.
         if (actionSheetIconInEditMode) {
             oActionSheet.openBy(actionSheetIconInEditMode);
         } else {
-            oActionSheet.openBy(oEvent.getSource());
+            var oMoreAction = sap.ui.getCore().byId(oEvent.getSource().getId() + "-action-more");
+            if (oMoreAction) {
+                oActionSheet.openBy(oMoreAction);
+            } else {
+                oActionSheet.openBy(oEvent.getSource());
+            }
         }
     };
 
@@ -279,9 +306,9 @@ jQuery.sap.registerPreloadedModules({
      *               2. A "targetUrl" property that includes either a hash part of a full URL.
      *                  In this case the action (chosen by the user) is launched by navigating to the URL
      */
-    ActionMode.prototype._handleActionPress = function (oAction) {
+    ActionMode.prototype._handleActionPress = function (oAction, oTileControl) {
         if (oAction.press) {
-            oAction.press.call();
+            oAction.press.call(oAction, oTileControl);
         } else if (oAction.targetURL) {
             if (oAction.targetURL.indexOf("#") === 0) {
                 hasher.setHash(oAction.targetURL);
@@ -289,21 +316,625 @@ jQuery.sap.registerPreloadedModules({
                 window.open(oAction.targetURL, '_blank');
             }
         } else {
-            sap.m.MessageToast.show("No Action");
+            sap.ui.require(['sap/m/MessageToast'],
+                function (MessageToast) {
+                    MessageToast.show("No Action");
+                });
         }
     };
 
-    sap.ushell.components.flp.ActionMode = new ActionMode();
-}());
+	return new ActionMode();
+
+}, /* bExport= */ true);
 },
-	"sap/ushell/components/flp/Component.js":'// Copyright (c) 2009-2014 SAP SE, All Rights Reserved\njQuery.sap.declare("sap.ushell.components.flp.Component");\nif (!window[\'sap-ui-debug\']) {\n    try {\n        jQuery.sap.require(\'sap.fiori.flp-controls\');\n    } catch (e) {\n        jQuery.sap.log.warning(\'flp-controls failed to load: \' + e.message);\n    }\n}\njQuery.sap.require("sap.ui.core.UIComponent");\njQuery.sap.require("sap.ushell.components.flp.CustomRouter");\n/* global hasher */\njQuery.sap.require("sap.ushell.components.flp.ComponentKeysHandler");\n\nsap.ui.core.UIComponent.extend("sap.ushell.components.flp.Component", {\n\n    metadata: {\n        routing : {\n            config: {\n                viewType: "JS",\n                controlAggregation : "pages",\n                controlId : "navContainerFlp",\n                clearAggregation: false,\n                routerClass : sap.ushell.components.flp.CustomRouter\n            },\n            targets: {\n                appFinder: {\n                    viewName : "sap.ushell.components.flp.launchpad.appfinder.AppFinder"\n                },\n                home: {\n                    viewName : "sap.ushell.components.flp.launchpad.dashboard.DashboardContent"\n                }\n            },\n            routes : [\n                {\n                    name : "home",\n                    target: \'home\',\n                    pattern : "home"\n                }\n            ]\n        },\n\n        version: "1.38.26",\n\n        library: "sap.ushell.components.flp",\n\n        dependencies: {\n            libs: ["sap.m"]\n        },\n        config: {\n            semanticObject: \'Shell\',\n            action: \'home\',\n            title: sap.ushell.resources.i18n.getText("homeBtn_tooltip"),\n            fullWidth: true,\n            hideLightBackground: true,\n            compactContentDensity: true,\n            cozyContentDensity: true\n        }\n    },\n\n    parseOldCatalogParams: function (sUrl) {\n        "use strict";\n        var mParameters = jQuery.sap.getUriParameters(sUrl).mParams,\n            sValue;\n        for (var sKey in mParameters) {\n            if (mParameters.hasOwnProperty(sKey)) {\n                sValue = mParameters[sKey][0];\n                mParameters[sKey] = sValue.indexOf(\'/\') !== -1 ? encodeURIComponent(sValue) : sValue;\n            }\n        }\n        return mParameters;\n    },\n\n    handleNavigationFilter: function (sNewHash) {\n        "use strict";\n        var oShellHash =  sap.ushell.Container.getService("URLParsing").parseShellHash(sNewHash);\n        if (oShellHash && oShellHash.semanticObject === \'shell\' && oShellHash.action === \'catalog\') {\n            var mParameters = this.parseOldCatalogParams(sNewHash);\n            setTimeout(function () {\n                this.getRouter().navTo(\'appFinder\', {\'menu\': \'catalog\', filters : JSON.stringify(mParameters)});\n            }.bind(this), 0);\n            return this.oShellNavigation.NavigationFilterStatus.Abandon;\n        }\n        return this.oShellNavigation.NavigationFilterStatus.Continue;\n    },\n\n    createContent: function () {\n        "use strict";\n        this.oRouter = this.getRouter();\n        this.oModel = new sap.ui.model.json.JSONModel({\n            groups : [],\n            animationRendered : false,\n            tagFiltering: true,\n            catalogSelection: true,\n            tileActionModeEnabled: false,\n            tileActionModeActive: false,\n            isInDrag: false,\n            rtl: sap.ui.getCore().getConfiguration().getRTL(),\n            personalization: true,\n            editTitle: false,\n            tagList : [],\n            selectedTags : [],\n            userPreferences : {\n                entries : []\n            },\n            enableNotificationsPreview: false,\n            previewNotificationItems: []\n        });\n\n        this.oModel.setSizeLimit(10000); // override default of 100 UI elements on list bindings\n        this.setModel(this.oModel);\n        this.oConfig = this.getComponentData().config;\n        //check the personalization flag in the Component configuration and in the Renderer configuration\n        this.oShellConfig = sap.ushell.renderers.fiori2.RendererExtensions.getConfiguration();\n        var bPersonalizationActive = (this.oConfig && (this.oConfig.enablePersonalization || this.oConfig.enablePersonalization === undefined))\n            && (this.oShellConfig && this.oShellConfig.enablePersonalization || this.oShellConfig.enablePersonalization === undefined);\n        //the catalog route should be added only if personalization is active\n        if (bPersonalizationActive) {\n            this.oRouter.addRoute({\n                name : "catalog",\n                target: \'appFinder\',\n                pattern : "catalog/:filters:"\n            });\n            this.oRouter.addRoute({\n                name : "appFinder",\n                target: \'appFinder\',\n                pattern : "appFinder/{menu}/:filters:"\n            });\n        }\n        //add the "all" route after the catalog route was added\n        this.oRouter.addRoute({\n            name : "all",\n            target: \'home\',\n            pattern : ":all*:"\n        });\n        this._setConfigurationToModel(this.oConfig);\n        jQuery.sap.require("sap.ushell.components.flp.launchpad.DashboardManager");\n        this.oDashboardManager = new sap.ushell.components.flp.launchpad.DashboardManager("dashboardMgr", {\n            model : this.oModel,\n            config : this.oConfig,\n            router : this.oRouter\n        });\n\n        jQuery.sap.require("sap.ushell.resources");\n        this.setModel(sap.ushell.resources.i18nModel, "i18n");\n\n        var oNavContainer,\n            mediaQ = window.matchMedia("(min-width: 800px)"),\n            handleMedia = function (mq) {\n                this.oModel.setProperty("/isPhoneWidth", !mq.matches);\n            }.bind(this);\n        if (mediaQ.addListener) {// condition check if mediaMatch supported(Not supported on IE9)\n            mediaQ.addListener(handleMedia);\n            handleMedia(mediaQ);\n        }\n\n        sap.ui.getCore().getEventBus().subscribe("launchpad", "togglePane", this._createAndAddGroupList, this);\n        sap.ui.getCore().getEventBus().subscribe("sap.ushell.services.UsageAnalytics", "usageAnalyticsStarted", function () {\n            jQuery.sap.require("sap.ushell.components.flp.FLPAnalytics");\n        });\n\n        this.bContactSupportEnabled = sap.ushell.Container.getService("SupportTicket").isEnabled();\n        if (this.bContactSupportEnabled) {\n            jQuery.sap.require("sap.ushell.UserActivityLog");\n            sap.ushell.UserActivityLog.activate();\n        }\n        oNavContainer = this.initNavContainer();\n\n        this.setInitialConfiguration();\n\n        this.oShellNavigation = sap.ushell.Container.getService("ShellNavigation");\n        this.oShellNavigation.registerNavigationFilter(jQuery.proxy(this.handleNavigationFilter, this));\n        //handle direct navigation with the old catalog intent format\n        var sHash = hasher.getHash();\n        var oShellHash =  sap.ushell.Container.getService("URLParsing").parseShellHash(sHash);\n        if (oShellHash && oShellHash.semanticObject === \'shell\' && oShellHash.action === \'catalog\') {\n            var mParameters = this.parseOldCatalogParams(sHash);\n            var oComponentConfig = this.getMetadata().getConfig();\n            this.oShellNavigation.toExternal({\n                target: {\n                    semanticObject: oComponentConfig.semanticObject,\n                    action: oComponentConfig.action\n                }\n            });\n            this.getRouter().navTo(\'appFinder\', {\'menu\': \'catalog\', filters : JSON.stringify(mParameters)});\n        }\n\n        return oNavContainer;\n    },\n\n    _createAndAddGroupList: function (sChannel, sEventName, oData) {\n        "use strict";\n        if (oData.currentContent && (oData.currentContent.indexOf(\'groupList\') !== -1 || !oData.currentContent.length)) {\n            var oConfig = this.oConfig,\n                oGroupListData = this.runAsOwner(function () {\n                    return this.oDashboardManager.getGroupListView(oConfig);\n                }.bind(this));\n\n            if (!oGroupListData.alreadyCreated) {\n                oGroupListData.groupList.setModel(this.oModel);\n                oGroupListData.groupList.setModel(sap.ushell.resources.i18nModel, "i18n");\n                sap.ushell.renderers.fiori2.RendererExtensions.setLeftPaneContent(oGroupListData.groupList, "home");\n            }\n        }\n    },\n\n    _setConfigurationToModel : function (oConfig) {\n        "use strict";\n        var oModel = this.oModel,\n            tileActionModeEnabled,\n            oRendererConfig = sap.ushell.Container.getRenderer(\'fiori2\').getModelConfiguration(),\n            bEnableNotificationsUI = oRendererConfig.enableNotificationsUI,\n            bNotificationServiceEnabled = sap.ushell.Container.getService("Notifications").isEnabled(),\n            oDevice = sap.ui.Device,\n            bEligibleDeviceForPreview = oDevice.system.desktop || sap.ui.Device.system.tablet || sap.ui.Device.system.combi;\n\n        if (oConfig) {\n            if (oConfig.enableNotificationsPreview !== undefined) {\n                this.oModel.setProperty("/configEnableNotificationsPreview", oConfig.enableNotificationsPreview);\n            }\n            if (oConfig.enableNotificationsPreview && bEnableNotificationsUI && bNotificationServiceEnabled  && bEligibleDeviceForPreview) {\n                this.oModel.setProperty("/enableNotificationsPreview", true);\n            }\n            if (oConfig.enablePersonalization !== undefined && this.oShellConfig.enablePersonalization !== undefined) {\n                oModel.setProperty("/personalization", oConfig.enablePersonalization && this.oShellConfig.enablePersonalization);\n            } else if (oConfig.enablePersonalization !== undefined) {\n                oModel.setProperty("/personalization", oConfig.enablePersonalization);\n            } else if (this.oShellConfig.enablePersonalization !== undefined) {\n                oModel.setProperty("/personalization", this.oShellConfig.enablePersonalization);\n            }\n            if (oConfig.enableTagFiltering !== undefined) {\n                oModel.setProperty("/tagFiltering", oConfig.enableTagFiltering);\n            }\n            if (oConfig.enableLockedGroupsCompactLayout !== undefined) {\n                oModel.setProperty("/enableLockedGroupsCompactLayout", oConfig.enableLockedGroupsCompactLayout);\n            }\n            if (oConfig.enableCatalogSelection !== undefined) {\n                oModel.setProperty("/catalogSelection", oConfig.enableCatalogSelection);\n            }\n            if (oConfig.enableSearchFiltering !== undefined) {\n                oModel.setProperty("/searchFiltering", oConfig.enableSearchFiltering);\n            }\n            if (oConfig.enableTilesOpacity !== undefined) {\n                oModel.setProperty("/tilesOpacity", oConfig.enableTilesOpacity);\n            }\n            if (oConfig.enableDragIndicator !== undefined) {\n                oModel.setProperty("/enableDragIndicator", oConfig.enableDragIndicator);\n            }\n            tileActionModeEnabled = false;\n\n            if (oConfig.enableActionModeMenuButton !== undefined) {\n                oModel.setProperty("/actionModeMenuButtonEnabled", oConfig.enableActionModeMenuButton);\n                tileActionModeEnabled = oConfig.enableActionModeMenuButton;\n            } else {\n                oModel.setProperty("/actionModeMenuButtonEnabled", true);\n            }\n            if (oConfig.enableRenameLockedGroup !== undefined) {\n                oModel.setProperty("/enableRenameLockedGroup", oConfig.enableRenameLockedGroup);\n            } else {\n                oModel.setProperty("/enableRenameLockedGroup", false);\n            }\n\n            if (oConfig.enableActionModeFloatingButton !== undefined) {\n                oModel.setProperty("/actionModeFloatingButtonEnabled", oConfig.enableActionModeFloatingButton);\n                tileActionModeEnabled = tileActionModeEnabled || oConfig.enableActionModeFloatingButton;\n            } else {\n                oModel.setProperty("/actionModeFloatingButtonEnabled", true);\n            }\n            oModel.setProperty("/tileActionModeEnabled", tileActionModeEnabled);\n            if (oConfig.enableTileActionsIcon !== undefined) {\n                //Available only for desktop\n                oModel.setProperty("/tileActionsIconEnabled", sap.ui.Device.system.desktop ? oConfig.enableTileActionsIcon : false);\n            }\n            if (oConfig.enableHideGroups !== undefined) {\n                oModel.setProperty("/enableHideGroups", oConfig.enableHideGroups);\n            }\n            // check for title\n            if (oConfig.title) {\n                oModel.setProperty("/title", oConfig.title);\n            }\n            if (oConfig.enableEasyAccess !== undefined) {\n                oModel.setProperty("/enableEasyAccess", oConfig.enableEasyAccess)\n            }\n            if (oConfig.sapMenuServiceUrl !== undefined) {\n                oModel.setProperty("/sapMenuServiceUrl", oConfig.sapMenuServiceUrl)\n            }\n            if (oConfig.userMenuServiceUrl !== undefined) {\n                oModel.setProperty("/userMenuServiceUrl", oConfig.userMenuServiceUrl)\n            }\n            if (oConfig.easyAccessNumbersOfLevels !== undefined) {\n                oModel.setProperty("/easyAccessNumbersOfLevels", oConfig.easyAccessNumbersOfLevels)\n            }\n\n            // xRay enablement configuration\n            oModel.setProperty("/enableHelp", !!this.oShellConfig.enableHelp);\n            oModel.setProperty("/disableSortedLockedGroups", !!oConfig.disableSortedLockedGroups);\n\n        }\n    },\n\n    initNavContainer: function (oController) {\n        "use strict";\n        var oNavContainer = new sap.m.NavContainer({\n            id: "navContainerFlp",\n            defaultTransitionName: \'show\'\n        });\n\n        return oNavContainer;\n    },\n\n    setInitialConfiguration: function() {\n        "use strict";\n        this.oRouter.initialize();\n\n        // set keyboard navigation handler\n        sap.ushell.components.flp.ComponentKeysHandler.init(this.oModel, this.oRouter);\n        sap.ushell.renderers.fiori2.AccessKeysHandler.registerAppKeysHandler(sap.ushell.components.flp.ComponentKeysHandler.handleFocusOnMe);\n        var translationBundle = sap.ushell.resources.i18n,\n            aShortcutsDescriptions = [];\n\n        aShortcutsDescriptions.push({text: "Alt+H", description: translationBundle.getText("actionHomePage")});\n\n        if (this.oModel.getProperty("/personalization")) {\n            aShortcutsDescriptions.push({text: "Alt+C", description: translationBundle.getText("actionAppFinder")});\n        }\n\n        sap.ushell.renderers.fiori2.AccessKeysHandler.registerAppShortcuts(sap.ushell.components.flp.ComponentKeysHandler.handleShortcuts, aShortcutsDescriptions);\n        sap.ui.getCore().getEventBus().publish("launchpad", "initialConfigurationSet");\n    },\n\n    exit : function () {\n        "use strict";\n        this.oDashboardManager.destroy();\n    }\n});\n',
-	"sap/ushell/components/flp/ComponentKeysHandler.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+	"sap/ushell/components/flp/Component.js":function(){// ${copyright}
+sap.ui.define(['sap/ushell/components/flp/launchpad/DashboardManager', 'sap/ushell/resources', 'sap/ui/core/UIComponent', 'sap/ushell/components/flp/ComponentKeysHandler', 'sap/ushell/components/flp/CustomRouter'], function (DashboardManager, resources, UIComponent, ComponentKeysHandler, CustomRouter) {
+    return UIComponent.extend("sap.ushell.components.flp.Component", {
+
+        metadata: {
+            routing : {
+                config: {
+                    viewType: "JS",
+                    controlAggregation : "pages",
+                    controlId : "navContainerFlp",
+                    clearAggregation: false,
+                    routerClass : CustomRouter
+                },
+                targets: {
+                    appFinder: {
+                        viewName : "sap.ushell.components.flp.launchpad.appfinder.AppFinder"
+                    },
+                    home: {
+                        viewName : "sap.ushell.components.flp.launchpad.dashboard.DashboardContent"
+                    }
+                },
+                routes : [
+                    {
+                        name : "home",
+                        target: 'home',
+                        pattern : "home"
+                    }
+                ]
+            },
+
+            version: "${version}",
+
+            library: "sap.ushell.components.flp",
+
+            dependencies: {
+                libs: ["sap.m"]
+            },
+            config: {
+                semanticObject: 'Shell',
+                action: 'home',
+                title: resources.i18n.getText("homeBtn_tooltip"),
+                fullWidth: true,
+                hideLightBackground: true
+            }
+        },
+        PERS_KEY: "flp.settings.FlpSettings",
+
+        parseOldCatalogParams: function (sUrl) {
+            "use strict";
+            var mParameters = jQuery.sap.getUriParameters(sUrl).mParams,
+                sValue,
+                sKey;
+
+            for (sKey in mParameters) {
+                if (mParameters.hasOwnProperty(sKey)) {
+                    sValue = mParameters[sKey][0];
+                    mParameters[sKey] = sValue.indexOf('/') !== -1 ? encodeURIComponent(sValue) : sValue;
+                }
+            }
+            return mParameters;
+        },
+
+        handleNavigationFilter: function (sNewHash) {
+            "use strict";
+            var oShellHash =  sap.ushell.Container.getService("URLParsing").parseShellHash(sNewHash),
+                mParameters;
+
+            if (oShellHash && oShellHash.semanticObject === 'shell' && oShellHash.action === 'catalog') {
+                mParameters = this.parseOldCatalogParams(sNewHash);
+                setTimeout(function () {
+                    this.getRouter().navTo('appFinder', {'menu': 'catalog', filters : JSON.stringify(mParameters)});
+                }.bind(this), 0);
+                return this.oShellNavigation.NavigationFilterStatus.Abandon;
+            }
+            return this.oShellNavigation.NavigationFilterStatus.Continue;
+        },
+
+        createContent: function () {
+            "use strict";
+            this.oRouter = this.getRouter();
+            this.oModel = new sap.ui.model.json.JSONModel({
+                animationMode: 'full',
+                groups : [],
+                animationRendered : false,
+                tagFiltering: true,
+                searchFiltering: true,
+                catalogSelection: true,
+                tileActionModeEnabled: false,
+                tileActionModeActive: false,
+                isInDrag: false,
+                rtl: sap.ui.getCore().getConfiguration().getRTL(),
+                personalization: true,
+                editTitle: false,
+                tagList : [],
+                selectedTags : [],
+                userPreferences : {
+                    entries : []
+                },
+                enableNotificationsPreview: false,
+                previewNotificationItems: [],
+                viewPortState: sap.ushell.Container.getRenderer('fiori2').getCurrentViewportState(),
+                draggedTileLinkPersonalizationSupported: true
+            });
+            this.bCoreResourcesLoaded = !!jQuery.sap.isDeclared('sap.fiori.core-ext-light', true);
+
+            // Subscribe to the event published by Notification settings UI
+            //   after the user enables or disables notification preview
+            sap.ui.getCore().getEventBus().subscribe("sap.ushell.services.Notifications", "enablePreviewNotificationChanged", this.updateNotificationConfiguration, this);
+            sap.ui.getCore().getEventBus().subscribe("sap.ushell.services.UsageAnalytics", "usageAnalyticsStarted", function () {
+                sap.ui.require(["sap/ushell/components/flp/FLPAnalytics"]);
+            });
+            sap.ui.getCore().getEventBus().subscribe("sap.ushell", "coreResourcesFullyLoaded", function(){
+                this.bCoreResourcesLoaded = true;
+                this.updateNotificationConfiguration();
+            }, this);
+
+            this.oModel.setSizeLimit(10000); // override default of 100 UI elements on list bindings
+            this.setModel(this.oModel);
+            this.oConfig = this.getComponentData().config;
+            //check the personalization flag in the Component configuration and in the Renderer configuration
+            this.oShellConfig = sap.ushell.renderers.fiori2.RendererExtensions.getConfiguration();
+            sap.ui.getCore().getEventBus().subscribe('launchpad', 'afterSwitchState', this._handleShellViewPortSateChange, this);
+
+            var oNavContainer,
+                mediaQ,
+                handleMedia,
+                sHash,
+                oShellHash,
+                mParameters,
+                oComponentConfig,
+                bPersonalizationActive = (this.oConfig && (this.oConfig.enablePersonalization || this.oConfig.enablePersonalization === undefined))
+                    && (this.oShellConfig && this.oShellConfig.enablePersonalization || this.oShellConfig.enablePersonalization === undefined);
+
+            //the catalog route should be added only if personalization is active
+            if (bPersonalizationActive) {
+                this.oRouter.addRoute({
+                    name : "catalog",
+                    target: 'appFinder',
+                    pattern : "catalog/:filters:"
+                });
+                this.oRouter.addRoute({
+                    name : "appFinder",
+                    target: 'appFinder',
+                    pattern : "appFinder/{menu}/:filters:"
+                });
+            }
+            //add the "all" route after the catalog route was added
+            this.oRouter.addRoute({
+                name : "all",
+                target: 'home',
+                pattern : ":all*:"
+            });
+            this._setConfigurationToModel(this.oConfig);
+
+            //TODO: Please remove all 'NewDashboardManager' references after complete alignment!
+            var oDashboardMgrData = {
+                model : this.oModel,
+                config : this.oConfig,
+                router : this.oRouter
+            };
+            this.oDashboardManager = new DashboardManager("dashboardMgr",oDashboardMgrData);
+            this.setModel(resources.i18nModel, "i18n");
+
+            mediaQ = window.matchMedia("(min-width: 800px)");
+            handleMedia = function (mq) {
+                this.oModel.setProperty("/isPhoneWidth", !mq.matches);
+            }.bind(this);
+            if (mediaQ.addListener) {// condition check if mediaMatch supported(Not supported on IE9)
+                mediaQ.addListener(handleMedia);
+                handleMedia(mediaQ);
+            }
+
+            sap.ui.getCore().getEventBus().subscribe("launchpad", "togglePane", this._createAndAddGroupList, this);
+
+            this.bContactSupportEnabled = sap.ushell.Container.getService("SupportTicket").isEnabled();
+            if (this.bContactSupportEnabled) {
+                jQuery.sap.require("sap.ushell.UserActivityLog");
+                sap.ushell.UserActivityLog.activate();
+            }
+            oNavContainer = this.initNavContainer();
+
+            this.setInitialConfiguration();
+
+            this.oShellNavigation = sap.ushell.Container.getService("ShellNavigation");
+            this.oShellNavigation.registerNavigationFilter(jQuery.proxy(this.handleNavigationFilter, this));
+
+            //handle direct navigation with the old catalog intent format
+            sHash = hasher.getHash();
+            oShellHash =  sap.ushell.Container.getService("URLParsing").parseShellHash(sHash);
+            if (oShellHash && oShellHash.semanticObject === 'shell' && oShellHash.action === 'catalog') {
+                mParameters = this.parseOldCatalogParams(sHash);
+                oComponentConfig = this.getMetadata().getConfig();
+                this.oShellNavigation.toExternal({
+                    target: {
+                        semanticObject: oComponentConfig.semanticObject,
+                        action: oComponentConfig.action
+                    }
+                });
+                this.getRouter().navTo('appFinder', {'menu': 'catalog', filters : JSON.stringify(mParameters)});
+            }
+
+            if (this.oConfig.enableHomePageSettings !== false) {
+                sap.ui.getCore().getEventBus().subscribe("launchpad", "Settings", this._addFlpSettings, this);
+            }
+
+            return oNavContainer;
+        },
+
+        _createAndAddGroupList: function (sChannel, sEventName, oData) {
+            "use strict";
+            if (oData.currentContent && (oData.currentContent.indexOf('groupList') !== -1 || !oData.currentContent.length)) {
+                var oConfig = this.oConfig,
+                    oGroupListData = this.runAsOwner(function () {
+                        return this.oDashboardManager.getGroupListView(oConfig);
+                    }.bind(this));
+
+                if (!oGroupListData.alreadyCreated) {
+                    oGroupListData.groupList.setModel(this.oModel);
+                    oGroupListData.groupList.setModel(resources.i18nModel, "i18n");
+                    sap.ushell.renderers.fiori2.RendererExtensions.setLeftPaneContent(oGroupListData.groupList, "home");
+                }
+            }
+        },
+
+        _setConfigurationToModel : function (oConfig) {
+            "use strict";
+            var oModel = this.oModel,
+                tileActionModeEnabled,
+                oRendererConfig = sap.ushell.Container.getRenderer('fiori2').getModelConfiguration();
+
+            this.updateNotificationConfiguration();
+
+            if (oConfig) {
+                if (oConfig.enablePersonalization !== undefined && this.oShellConfig.enablePersonalization !== undefined) {
+                    oModel.setProperty("/personalization", oConfig.enablePersonalization && this.oShellConfig.enablePersonalization);
+                } else if (oConfig.enablePersonalization !== undefined) {
+                    oModel.setProperty("/personalization", oConfig.enablePersonalization);
+                } else if (this.oShellConfig.enablePersonalization !== undefined) {
+                    oModel.setProperty("/personalization", this.oShellConfig.enablePersonalization);
+                }
+
+                if (oConfig.optimizeTileLoadingThreshold !== undefined) {
+                    oModel.setProperty("/OptimizeTileLoadingThreshold", oConfig.optimizeTileLoadingThreshold);
+                }
+                if (oConfig.segments !== undefined) {
+                    oModel.setProperty("/segments", oConfig.segments);
+                }
+                if (oConfig.initialStateNotificationsPreview !== undefined) {
+                    oModel.setProperty("/enableNotificationsPreview", oConfig.initialStateNotificationsPreview);
+                }
+
+                if (oConfig.enableLockedGroupsCompactLayout !== undefined) {
+                    oModel.setProperty("/enableLockedGroupsCompactLayout", oConfig.enableLockedGroupsCompactLayout);
+                }
+                if (oConfig.enableCatalogSelection !== undefined) {
+                    oModel.setProperty("/catalogSelection", oConfig.enableCatalogSelection);
+                }
+                if (oConfig.enableTilesOpacity !== undefined) {
+                    oModel.setProperty("/tilesOpacity", oConfig.enableTilesOpacity);
+                }
+                if (oConfig.enableDragIndicator !== undefined) {
+                    oModel.setProperty("/enableDragIndicator", oConfig.enableDragIndicator);
+                }
+                tileActionModeEnabled = false;
+                if (oConfig.enableActionModeMenuButton !== undefined) {
+                    oModel.setProperty("/actionModeMenuButtonEnabled", oConfig.enableActionModeMenuButton);
+                    tileActionModeEnabled = oConfig.enableActionModeMenuButton;
+                }
+                if (oConfig.enableRenameLockedGroup !== undefined) {
+                    oModel.setProperty("/enableRenameLockedGroup", oConfig.enableRenameLockedGroup);
+                } else {
+                    oModel.setProperty("/enableRenameLockedGroup", false);
+                }
+
+                if (oConfig.enableActionModeFloatingButton !== undefined) {
+                    oModel.setProperty("/actionModeFloatingButtonEnabled", oConfig.enableActionModeFloatingButton);
+                    tileActionModeEnabled = tileActionModeEnabled || oConfig.enableActionModeFloatingButton;
+                }
+                oModel.setProperty("/tileActionModeEnabled", tileActionModeEnabled);
+                if (oConfig.enableTileActionsIcon !== undefined) {
+                    //Available only for desktop
+                    oModel.setProperty("/tileActionsIconEnabled", sap.ui.Device.system.desktop ? oConfig.enableTileActionsIcon : false);
+                }
+                if (oConfig.enableHideGroups !== undefined) {
+                    oModel.setProperty("/enableHideGroups", oConfig.enableHideGroups);
+                }
+                // check for title
+                if (oConfig.title) {
+                    oModel.setProperty("/title", oConfig.title);
+                }
+
+                /** Easy Access Menues configuration Flags**/
+                // if 'enableEasyAccess' is supplied but is false
+                if (oConfig.enableEasyAccess != undefined && !oConfig.enableEasyAccess) {
+                    oModel.setProperty("/enableEasyAccessSAPMenu", oConfig.enableEasyAccess);
+                    oModel.setProperty("/enableEasyAccessUserMenu", oConfig.enableEasyAccess);
+                    oModel.setProperty("/enableEasyAccessUserMenuSearch", oConfig.enableEasyAccess);
+                    oModel.setProperty("/enableEasyAccessSAPMenuSearch", oConfig.enableEasyAccess);
+                } else {
+                    // else 'enableEasyAccess' not supplied, OR, it is true
+
+                    // (1) check 'enableEasyAccessSAPMenu'
+                    // if parameter is supplied (regardless to its value)
+                    if (oConfig.enableEasyAccessSAPMenu !== undefined) {
+
+                        // set its value
+                        oModel.setProperty("/enableEasyAccessSAPMenu", oConfig.enableEasyAccessSAPMenu);
+
+                        // in case 'enableEasyAccessSAPMenu' supplied but is false, we force 'enableEasyAccessSAPMenuSearch' to be false
+                        if (!oConfig.enableEasyAccessSAPMenu) {
+                            oModel.setProperty("/enableEasyAccessSAPMenuSearch", false);
+                        } else {
+                            // if 'enableEasyAccessSAPMenu' supplied and true, we set the 'enableEasyAccessSAPMenuSearch' (and if not supplied default is true)
+                            if (oConfig.enableEasyAccessSAPMenuSearch !== undefined) {
+                                oModel.setProperty("/enableEasyAccessSAPMenuSearch", oConfig.enableEasyAccessSAPMenuSearch);
+                            } else {
+                                // else 'enableEasyAccessSAPMenu' not supplied - default is true
+                                oModel.setProperty("/enableEasyAccessSAPMenuSearch", true);
+                            }
+                        }
+                    } else {
+                        // else 'enableEasyAccessSAPMenu' is not defined. so we set its value to be enableEasyAccess as a fall back
+                        oModel.setProperty("/enableEasyAccessSAPMenu", oConfig.enableEasyAccess);
+
+                        // now we need to see if the 'enableEasyAccessSAPMenuSearch' was suppled or not
+                        // if 'enableEasyAccessSAPMenu' supplied and true, we set the 'enableEasyAccessSAPMenuSearch' (and if not supplied default is true)
+                        if (oConfig.enableEasyAccessSAPMenuSearch !== undefined) {
+                            oModel.setProperty("/enableEasyAccessSAPMenuSearch", oConfig.enableEasyAccessSAPMenuSearch);
+                        } else {
+                            oModel.setProperty("/enableEasyAccessSAPMenuSearch", oConfig.enableEasyAccess);
+                        }
+                    }
+
+
+                    // (2) check 'enableEasyAccessUserMenu'
+                    // if parameter is supplied (regardless to its value)
+                    if (oConfig.enableEasyAccessUserMenu !== undefined) {
+
+                        // set its value
+                        oModel.setProperty("/enableEasyAccessUserMenu", oConfig.enableEasyAccessUserMenu);
+
+                        // in case 'enableEasyAccessUserMenu' supplied but is false, we force 'enableEasyAccessUserMenuSearch' to be false
+                        if (!oConfig.enableEasyAccessUserMenu) {
+                            oModel.setProperty("/enableEasyAccessUserMenuSearch", false);
+                        } else {
+                            // if 'enableEasyAccessUserMenu' supplied and true, we set the 'enableEasyAccessUserMenu' (and if not supplied default is true)
+                            if (oConfig.enableEasyAccessUserMenuSearch !== undefined) {
+                                oModel.setProperty("/enableEasyAccessUserMenuSearch", oConfig.enableEasyAccessUserMenuSearch);
+                            } else {
+                                // else 'enableEasyAccessUserMenu' not supplied - default is true
+                                oModel.setProperty("/enableEasyAccessUserMenuSearch", true);
+                            }
+                        }
+                    } else {
+                        // else 'enableEasyAccessUserMenu' is not defined. so we set its value to be enableEasyAccess as a fall back
+                        oModel.setProperty("/enableEasyAccessUserMenu", oConfig.enableEasyAccess);
+
+                        // now we need to see if the 'enableEasyAccessSAPMenuSearch' was suppled or not
+                        // if 'enableEasyAccessSAPMenu' supplied and true, we set the 'enableEasyAccessSAPMenuSearch' (and if not supplied default is true)
+                        if (oConfig.enableEasyAccessUserMenuSearch !== undefined) {
+                            oModel.setProperty("/enableEasyAccessUserMenuSearch", oConfig.enableEasyAccessUserMenuSearch);
+                        } else {
+                            oModel.setProperty("/enableEasyAccessUserMenuSearch", oConfig.enableEasyAccess);
+                        }
+                    }
+                }
+
+                /** Catalog Search **/
+                // old flag support 'enableSearchFiltering' & new flag 'enableCatalogSearch'
+                if (oConfig.enableSearchFiltering !== undefined) {
+                    oModel.setProperty("/searchFiltering", oConfig.enableSearchFiltering);
+                } else if (oConfig.enableCatalogSearch !== undefined) {
+                    oModel.setProperty("/searchFiltering", oConfig.enableCatalogSearch);
+                } else {
+                    // deafult is true
+                    oModel.setProperty("/searchFiltering", true);
+                }
+
+                /** Catalog Search Tags**/
+                // old flag support 'enableTagFiltering' & new flag 'enableCatalogTagFilter'
+                if (oConfig.enableTagFiltering !== undefined) {
+                    oModel.setProperty("/tagFiltering", oConfig.enableTagFiltering);
+                } else  if (oConfig.enableCatalogTagFilter !== undefined) {
+                    oModel.setProperty("/tagFiltering", oConfig.enableCatalogTagFilter);
+                } else {
+                    // deafult is true
+                    oModel.setProperty("/tagFiltering", true);
+                }
+
+                if (oConfig.sapMenuServiceUrl !== undefined) {
+                    oModel.setProperty("/sapMenuServiceUrl", oConfig.sapMenuServiceUrl);
+                }
+                if (oConfig.userMenuServiceUrl !== undefined) {
+                    oModel.setProperty("/userMenuServiceUrl", oConfig.userMenuServiceUrl);
+                }
+                if (oConfig.easyAccessNumbersOfLevels !== undefined) {
+                    oModel.setProperty("/easyAccessNumbersOfLevels", oConfig.easyAccessNumbersOfLevels);
+                }
+
+                // Unless explicitly turned off, enable home page settings.
+                var oDisplayPromise = oConfig.enableHomePageSettings !== false ?
+                    this._getCurrentHomePageGroupDisplay() : jQuery.Deferred().resolve();
+
+                oDisplayPromise.done(function(sDisplay) {
+                    sDisplay = sDisplay || oConfig.homePageGroupDisplay;
+
+                    if (sDisplay !== undefined) {
+                        oModel.setProperty("/homePageGroupDisplay", sDisplay);
+                    }
+                });
+
+                // xRay enablement configuration
+                oModel.setProperty("/enableHelp", !!this.oShellConfig.enableHelp);
+                oModel.setProperty("/disableSortedLockedGroups", !!oConfig.disableSortedLockedGroups);
+
+                // enable/disable animations
+                if (oRendererConfig.animationMode) {
+                    oModel.setProperty("/animationMode", oRendererConfig.animationMode);
+                }
+            }
+        },
+
+        initNavContainer: function (oController) {
+            "use strict";
+            var oNavContainer = new sap.m.NavContainer({
+                id: "navContainerFlp",
+                defaultTransitionName: 'show'
+            });
+
+            return oNavContainer;
+        },
+
+        setInitialConfiguration: function () {
+            "use strict";
+            this.oRouter.initialize();
+
+            //no need to enable accessibility feature on phone devices
+            if (!sap.ui.Device.system.phone) {
+                // set keyboard navigation handler
+                ComponentKeysHandler.init(this.oModel, this.oRouter);
+                sap.ushell.renderers.fiori2.AccessKeysHandler.registerAppKeysHandler(ComponentKeysHandler.handleFocusOnMe);
+                var translationBundle = resources.i18n,
+                    aShortcutsDescriptions = [];
+
+                aShortcutsDescriptions.push({text: "Alt+H", description: translationBundle.getText("hotkeyHomePage")});
+
+                if (this.oModel.getProperty("/personalization")) {
+                    aShortcutsDescriptions.push({text: "Alt+A", description: translationBundle.getText("hotkeyAppFinder")});
+                    aShortcutsDescriptions.push({text: "Ctrl+Enter", description: translationBundle.getText("hotkeySaveEditing")});
+                }
+
+                sap.ushell.renderers.fiori2.AccessKeysHandler.registerAppShortcuts(ComponentKeysHandler.handleShortcuts, aShortcutsDescriptions);
+
+            }
+            sap.ui.getCore().getEventBus().publish("launchpad", "initialConfigurationSet");
+        },
+
+        _handleShellViewPortSateChange: function (sNameSpace, sEventName, oEventData) {
+            "use strict";
+            var sCurrentShellViewportState = oEventData ? oEventData.getParameter('to') : '';
+
+            this.oModel.setProperty('/viewPortState', sCurrentShellViewportState);
+        },
+
+        /**
+         * Handler for the use-case in which the user enables or disables notifications preview in the notification settings UI.
+         * In this case the value of enableNotificationsPreview needs to be re-calculated, considering the choice of the user
+         */
+        updateNotificationConfiguration: function (sChannelId, sEventId, oData) {
+            "use strict";
+            var that = this,
+                oRendererConfig = sap.ushell.Container.getRenderer('fiori2').getModelConfiguration(),
+                oDevice = sap.ui.Device,
+                bEnableNotificationsUI = oRendererConfig.enableNotificationsUI,
+                bNotificationServiceEnabled = sap.ushell.Container.getService("Notifications").isEnabled(),
+                bNotificationSupportedAppState = oRendererConfig.appState !== "embedded" && oRendererConfig.appState !== "headerless" && oRendererConfig.appState !== "merged" && oRendererConfig.appState !== "standalone",
+                oDevice = sap.ui.Device,
+                bUserPreviewNotificationEnabled = true,
+                bPreviewNotificationEnabledConfig = true,
+                oNotificationUserFlagsPromise,
+                bEligibleDeviceForPreview = oDevice.system.desktop || sap.ui.Device.system.tablet || sap.ui.Device.system.combi;
+
+            if (!this.bCoreResourcesLoaded){
+                return;
+            }
+
+            if (bNotificationServiceEnabled === true) {
+                // Getting user settings flags from Notifications service and settings the model with the preview (user) enabling flag
+                oNotificationUserFlagsPromise = sap.ushell.Container.getService("Notifications").getUserSettingsFlags();
+
+                oNotificationUserFlagsPromise.done(function (oNotificationUserFlags) {
+                    bUserPreviewNotificationEnabled = oNotificationUserFlags.previewNotificationEnabled;
+                    that.oModel.setProperty("/userEnableNotificationsPreview", bUserPreviewNotificationEnabled);
+
+                    that.oModel.setProperty("/configEnableNotificationsPreview", bPreviewNotificationEnabledConfig);
+
+                    if (bPreviewNotificationEnabledConfig && bEnableNotificationsUI && bNotificationServiceEnabled &&
+                        bEligibleDeviceForPreview && bNotificationSupportedAppState) {
+                        that.oModel.setProperty("/enableNotificationsPreview", bUserPreviewNotificationEnabled);
+                    }
+                });
+            }
+        },
+
+        _addFlpSettings: function () {
+            "use strict";
+
+            // Add FLP settings only once.
+            if (this.bFlpSettingsAdded){
+                return;
+            }
+
+            var oRenderer = sap.ushell.Container.getRenderer("fiori2"),
+                oResourceBundle = resources.i18n,
+                that = this;
+
+            var flpSettingsView;
+
+            var oEntry = {
+                title: oResourceBundle.getText('FlpSettings_entry_title'),
+                entryHelpID: "flpSettingsEntry",
+                value: function () {
+                    return jQuery.Deferred().resolve(" ");
+                },
+                content: function () {
+                    flpSettingsView = sap.ui.xmlview({
+                        viewName: "sap.ushell.components.flp.settings.FlpSettings",
+                        viewData: {
+                            initialDisplayMode: that.oModel.getProperty("/homePageGroupDisplay") || "scroll"
+                        }
+                    });
+                    return jQuery.Deferred().resolve(flpSettingsView);
+                },
+                onSave: function () {
+                    var sDisplay = flpSettingsView.getController().onSave();
+
+                    // save anchor bar mode in personalization
+                    var oDeferred = that._getPersonalizer("homePageGroupDisplay")
+                        .setPersData(sDisplay);
+
+                    // Log failure if occurs.
+                    oDeferred.fail(function (error) {
+                        jQuery.sap.log.error(
+                            "Failed to save the anchor bar mode in personalization", error,
+                            "sap.ushell.components.flp.settings.FlpSettings");
+                    });
+
+                    that.oModel.setProperty("/homePageGroupDisplay", sDisplay);
+                    return jQuery.Deferred().resolve();
+                },
+                onCancel: function () {
+                    return jQuery.Deferred().resolve();
+                },
+                icon: "sap-icon://home"
+            };
+
+            oRenderer.addUserPreferencesEntry(oEntry);
+            this.bFlpSettingsAdded = true;
+        },
+
+        _getCurrentHomePageGroupDisplay: function () {
+            'use strict';
+
+            var dfdPers = this._getPersonalizer('homePageGroupDisplay').getPersData();
+
+            dfdPers.fail(function (error) {
+                jQuery.sap.log.error(
+                    "Failed to load anchor bar state from the personalization", error,
+                    "sap.ushell.components.flp.settings.FlpSettings");
+            });
+
+            return dfdPers;
+        },
+
+        _getPersonalizer: function (sItem) {
+            "use strict";
+            var oPersonalizationService = sap.ushell.Container.getService("Personalization");
+            var oComponent = sap.ui.core.Component.getOwnerComponentFor(this);
+            var oScope = {
+                keyCategory: oPersonalizationService.constants.keyCategory.FIXED_KEY,
+                writeFrequency: oPersonalizationService.constants.writeFrequency.LOW,
+                clientStorageAllowed: true
+            };
+
+            var oPersId = {
+                container: this.PERS_KEY,
+                item: sItem
+            };
+
+            return oPersonalizationService.getPersonalizer(oPersId, oScope, oComponent);
+        },
+
+        exit : function () {
+            "use strict";
+            sap.ui.getCore().getEventBus().unsubscribe('launchpad', 'shellViewStateChanged', this._handleShellViewPortSateChange, this);
+            this.oDashboardManager.destroy();
+        }
+    });
+
+});
+},
+	"sap/ushell/components/flp/ComponentKeysHandler.js":function(){// ${copyright}
 
 /* eslint-disable no-cond-assign */
 
-(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.components.flp.ComponentKeysHandler");
+sap.ui.define(['sap/ushell/ui/launchpad/AccessibilityCustomData'],
+	function(AccessibilityCustomData) {
+	"use strict";
 
     var componentKeysHandler = function () {
         this.aTileWrapperClasses = ['.sapUshellTile', '.sapUshellLinkTile'];
@@ -312,12 +943,41 @@ jQuery.sap.registerPreloadedModules({
     componentKeysHandler.prototype = {
         keyCodes: jQuery.sap.KeyCodes,
 
+        // this static member represents tab-index 0 for the tile-to-focus on
+        // (see setTileFocus method)
+        tileFocusCustomData : new AccessibilityCustomData({
+            key: "tabindex",
+            value: "0",
+            writeToDom: true
+        }),
+
         handleCatalogKey: function () {
             this.oRouter.navTo("appFinder", {'menu': 'catalog'});
         },
 
         handleHomepageKey: function () {
             this.oRouter.navTo("home");
+            //close MeAre or notifications view if opened
+            var oMeAreaButton = sap.ui.getCore().byId("meAreaHeaderButton");
+            if (oMeAreaButton && oMeAreaButton.getSelected()) {
+                oMeAreaButton.firePress();
+                return;
+            }
+            var oNotificationsButton = sap.ui.getCore().byId("NotificationsCountButton");
+            if (oNotificationsButton && oNotificationsButton.getSelected()) {
+                oNotificationsButton.firePress();
+            }
+        },
+
+        handleDoneEditMode: function () {
+            var bIsActionsModeActive = this.oModel.getProperty('/tileActionModeActive');
+
+            if (bIsActionsModeActive) {
+                var oDoneButton = sap.ui.getCore().byId("sapUshellDashboardFooterDoneBtn");
+                if (oDoneButton) {
+                    oDoneButton.firePress();
+                }
+            }
         },
 
         getNumberOfTileInRow: function (pageName, bIsLink) {
@@ -335,40 +995,76 @@ jQuery.sap.registerPreloadedModules({
             return numberTilesInRow;
         },
 
-        goToTileContainer: function (keyup, bGoToFirstTileInSelectedGroup) {
+        goToTileContainer: function (keyup) {
             var bIsActionsModeActive = this.oModel.getProperty('/tileActionModeActive');
 
             if (bIsActionsModeActive) {
-                sap.ushell.components.flp.ComponentKeysHandler.goToFirstVisibleTileContainer();
+                ComponentKeysHandler.goToFirstVisibleTileContainer();
             } else {
-                sap.ushell.components.flp.ComponentKeysHandler.goToEdgeTile('first', bGoToFirstTileInSelectedGroup);
+                ComponentKeysHandler.goToLastVisitedTile();
             }
             return true;
         },
 
-        goToEdgeTile: function (selector, bGoToFirstOrLastTileInSelectedGroup) {
-            var jqTileContainers = jQuery('#dashboardGroups').find('.sapUshellTileContainer:visible'),
-                topGroupInViewPortIndex = this.oModel.getProperty("/topGroupInViewPortIndex"),
-                tileContainer = jqTileContainers.get(topGroupInViewPortIndex),
-                tileToSelect = jQuery(tileContainer).find('.sapUshellTile:visible')[selector](),
-                lastVisitedTile = jQuery("div.sapUshellTile:visible[tabindex='0']"),
-                lastVisitedLink = jQuery("div.sapUshellLinkTile:visible[tabindex='0']");
+        /*  Go to last visited tile.
+            In general, FLP should remember last focused tile, and refocus it when tabbing into the tiles container.
+            There are cases where there is no-last focused tile, and in those cases a default behavior will be applied,
+            that is, selecting the first tile.
 
-            if (!tileToSelect.length && !lastVisitedTile.length && !lastVisitedLink.length) {
+            In addition this method also recieves 2 parameters;
+            - jqTileContainerToLookUnder
+            - bLookForLastVisitedInSameGroup
+
+            in case a tile container supplied :
+                the fallback (choosing first tile) will be made on this container instead of the first container
+
+            in case bLookForLastVisitedInSameGroup is supplied and true :
+                this means we search for the last focused tile only in the supplied tile container and not entire tile-containers
+
+         */
+        goToLastVisitedTile: function (jqTileContainerToLookUnder, bLookForLastVisitedInSameGroup) {
+
+            var jqTileContainers = jQuery('#dashboardGroups').find('.sapUshellTileContainer:visible'),
+                topGroupInViewPortIndex = this.oModel.getProperty("/topGroupInViewPortIndex");
+
+            // resolving and setting the tile-container under which we will look
+            var jqTileContainer = jqTileContainerToLookUnder || jQuery(jqTileContainers.get(topGroupInViewPortIndex));
+
+            // setting the default tile to select - under the resolved-tile container
+            var defaultTileToSelect = jqTileContainer.find('.sapUshellTile:visible')["first"](),
+                lastVisitedTile,lastVisitedLink;
+
+
+            // in case we were supplied with both a tile-container to look under, and a flag which states that we must
+            // focus a tile under the same group (and not overall groups which may happen)
+            if (jqTileContainer && bLookForLastVisitedInSameGroup) {
+
+                // we look for the last visited items under the supplied tile-container
+                lastVisitedTile = jqTileContainer.find(".sapUshellTile:visible[tabindex='0']");
+                lastVisitedLink = jqTileContainer.find(".sapMGTLineMode:visible[tabindex='0']");
+            } else {
+
+                // we look for the last visited items under all containers
+                lastVisitedTile = jQuery(".sapUshellTile:visible[tabindex='0']");
+                lastVisitedLink = jQuery(".sapMGTLineMode:visible[tabindex='0']");
+            }
+
+
+            if (!defaultTileToSelect.length && !lastVisitedTile.length && !lastVisitedLink.length) {
                 return false;
             }
 
-            if (lastVisitedTile.length && !bGoToFirstOrLastTileInSelectedGroup) {
+            if (lastVisitedTile.length) {
                 this.setTileFocus(lastVisitedTile);
                 return true;
             }
 
-            if (lastVisitedLink.length && !bGoToFirstOrLastTileInSelectedGroup) {
+            if (lastVisitedLink.length) {
                 this.setTileFocus(lastVisitedLink);
                 return true;
             }
 
-            this.setTileFocus(tileToSelect);
+            this.setTileFocus(defaultTileToSelect);
             return true;
         },
 
@@ -385,105 +1081,195 @@ jQuery.sap.registerPreloadedModules({
         },
 
         goToFirstTileOfSiblingGroup: function (selector, e) {
+            // Prevent page scrolling.
             e.preventDefault();
+
+            // Get current group container.
             var currentGroup = jQuery(document.activeElement).closest(".sapUshellDashboardGroupsContainerItem");
-            if (!currentGroup.length) {
-                return;
-            }
-            var nextGroup = currentGroup[selector + "All"](".sapUshellDashboardGroupsContainerItem:has(.sapUshellTile:visible):not(.sapUshellCloneArea)");
-            var tileSelector = 'first';
+            if (!currentGroup.length) return;
+
+            // get next group container.
+            var tileSelector = 'first',
+                nextGroup = currentGroup[selector + "All"](
+                    ".sapUshellDashboardGroupsContainerItem:has(.sapUshellTile:visible):not(.sapUshellCloneArea)");
+
             if (!nextGroup.length) {
                 nextGroup = currentGroup;
                 tileSelector = ( selector === "next" ) ? 'last' : 'first';
             } else {
                 nextGroup = nextGroup.first();
             }
-            var jqTileToSelect = nextGroup.find(".sapUshellTile:visible")[tileSelector]();
-            this.moveScrollDashboard(jqTileToSelect);
 
+            // scroll next group into view.
+            var jqTileToSelect = nextGroup.find(".sapUshellTile:visible")[tileSelector]();
+
+            this.moveScrollDashboard(jqTileToSelect);
             return false;
         },
 
-        goToFirstTileOfSiblingGroupInCatalog: function (selector, e) {
-            e.preventDefault();
-            var jqTileContainer = this.getFocusOnTile(jQuery(document.activeElement));
-            if (!jqTileContainer) {
-                return;
+        animateTileMoveInGroup: function (group, firstTile, secondTile) {
+            var deferred = jQuery.Deferred();
+            sap.ushell.Layout.initGroupDragMode(group);
+            var tiles = group.getTiles().slice();
+            var firstTileIndex = tiles.indexOf(firstTile);
+            var secondTileIndex = tiles.indexOf(secondTile);
+            //insert the first tile in the seconde tile index
+            tiles.splice(secondTileIndex, 1, firstTile);
+            //insert the second tile in the first tile index
+            tiles.splice(firstTileIndex, 1, secondTile);
+
+            var currentGroupMatrix = sap.ushell.Layout.organizeGroup(tiles);
+            setTimeout(function () {
+                sap.ushell.Layout.renderLayoutGroup(group, currentGroupMatrix);
+            }, 0);
+            setTimeout(function () {
+                sap.ushell.Layout.endDragMode();
+                deferred.resolve();
+            }, 300);
+            return deferred.promise();
+        },
+        _getTileMode: function (tile) {
+            return tile.getMode ? tile.getMode() : 'ContentMode';
+        },
+
+        _moveTileInGroup: function (group, firstTile, secondTile, direction) {
+            var firstTileMode = this._getTileMode(firstTile),
+                secondTileMode = this._getTileMode(secondTile),
+                oEventBus = sap.ui.getCore().getEventBus();
+            if (firstTileMode === secondTileMode) {
+                oEventBus.publish("launchpad", "movetile", this._getTileMoveInfo({group: group, dstGroup: group, firstTile: firstTile, secondTile: secondTile}));
+            } else {
+                oEventBus.publish("launchpad", "convertTile", this._getTileConvertInfo({group: group, firstTile: firstTile, secondTile: secondTile, direction: direction}));
             }
-
-            var jqTileToFocus;
-
-            if (selector == "next") {
-                var isLastGroup = jqTileContainer.nextAll("h3").length ? false : true;
-                if (!isLastGroup) {
-                    jqTileToFocus = jqTileContainer.nextAll("h3").first().nextAll().filter(":visible").first();
-                } else {
-                    jqTileToFocus = jqTileContainer.nextAll(".sapUshellTile").last();
+        },
+        _getDestinationTileIndex: function (moveInfo) {
+            var groupModelObj = moveInfo.group.getBindingContext().getObject(),
+                tileIndex,
+                groupTiles = moveInfo.dstGroup ? this._getGroupTiles(moveInfo.dstGroup, moveInfo.secondTile) : this._getGroupTiles(moveInfo.group, moveInfo.secondTile),
+                firstTileMode = moveInfo.firstTile.getMode ? moveInfo.firstTile.getMode() : 'ContentMode',
+                secondTileMode = moveInfo.secondTile.getMode ? moveInfo.secondTile.getMode() : 'ContentMode',
+                changedArea = firstTileMode !== secondTileMode;
+            if (changedArea || moveInfo.dstGroup !== moveInfo.group) {
+                if (moveInfo.direction && (moveInfo.direction === "left" || moveInfo.direction === "up")) {
+                    tileIndex = groupTiles.length;
+                } else if (moveInfo.direction) {
+                    tileIndex = 0;
                 }
             } else {
-                var isFirstGroup = jqTileContainer.prevAll("h3").length === 1 ? true : false;
-                if (!isFirstGroup) {
-                    jqTileToFocus = jQuery(jqTileContainer.prevAll("h3")[1]).next();
+                if (secondTileMode === 'LineMode') {
+                    tileIndex = moveInfo.secondTile.getBindingContext()? groupModelObj.links.indexOf(moveInfo.secondTile.getBindingContext().getObject()) : 0;
                 } else {
-                    jqTileToFocus = jqTileContainer.prevAll("h3").last().next();
+                    tileIndex  = moveInfo.secondTile.getBindingContext()? groupModelObj.tiles.indexOf(moveInfo.secondTile.getBindingContext().getObject()) : 0;
                 }
             }
 
-            this.setTileFocus(jqTileToFocus);
-            this.moveScrollCatalog(jqTileToFocus);
-
-            return false;
+            return tileIndex;
         },
 
-        moveTileInGroup: function (group, firstTile, secondTile) {
-            if (this.oModel.getProperty("/personalization")) {
-                var groupModelObj = group.getBindingContext().getObject();
-                var firstTileIndex = groupModelObj.tiles.indexOf(firstTile.getBindingContext().getObject());
-                var secondTileIndex = groupModelObj.tiles.indexOf(secondTile.getBindingContext().getObject());
-                var firstTileModelObj = groupModelObj.tiles.splice(firstTileIndex, 1);
-                groupModelObj.tiles.splice(secondTileIndex, 0, firstTileModelObj[0]);
-                var groupPath = group.getBindingContext().getPath();
-                group.getModel().setProperty(groupPath, groupModelObj);
+        moveTileInGroup: function (group, firstTile, secondTile, direction) {
+            var firstTileMode = this._getTileMode(firstTile),
+                secondTileMode = this._getTileMode(secondTile);
+            document.activeElement.blur(); //this will prevent tile move from interruption, focus will be returned after action
+            if (sap.ushell.Layout.isAnimationsEnabled() && (firstTileMode === secondTileMode)) {
+                this.animateTileMoveInGroup(group, firstTile, secondTile, direction).then(function () {
+                    this._moveTileInGroup(group, firstTile, secondTile, direction);
+                }.bind(this));
+            } else {
+                this._moveTileInGroup(group, firstTile, secondTile, direction);
             }
         },
 
-        moveTileToDifferentGroup: function (sourceGroup, destGroup, curTile, direction) {
-            if (this.oModel.getProperty("/personalization")) {
-                if (sourceGroup.getIsGroupLocked() || destGroup.getIsGroupLocked()) {
-                    return;
-                }
-                var sourceGroupModelObj = sourceGroup.getBindingContext().getObject();
-                var destGroupModelObj = destGroup.getBindingContext().getObject();
-                var tileIndex = sourceGroupModelObj.tiles.indexOf(curTile.getBindingContext().getObject());
-                //removing tile from source group & add tile to destination group
-                if (direction === "left" || direction === "up" || direction === "down") {
-                    destGroupModelObj.tiles.push(sourceGroupModelObj.tiles[tileIndex]);
-                }
-                if (direction === "right") {
-                    destGroupModelObj.tiles.splice(0, 0, sourceGroupModelObj.tiles[tileIndex]);
-                }
-                sourceGroupModelObj.tiles.splice(tileIndex, 1);
+        animateMoveTileToDifferentGroup: function (sourceGroup, destGroup, curTile, direction) {
+            var deferred = jQuery.Deferred();
+            sap.ushell.Layout.initGroupDragMode(sourceGroup);
+            sap.ushell.Layout.initGroupDragMode(destGroup);
+            var srcTiles = sourceGroup.getTiles().slice();
+            var dstTiles = destGroup.getTiles().slice();
+            var tileIndex = srcTiles.indexOf(curTile);
 
-                //update model
-                var groupPath1 = destGroup.getBindingContext().getPath();
-                destGroup.getModel().setProperty(groupPath1, destGroupModelObj);
+            if (direction === "left" || direction === "up") {
+                dstTiles.push(srcTiles.splice(tileIndex, 1)[0]);
+            }
+            if (direction === "right" || direction === "down") {
+                dstTiles.unshift(srcTiles.splice(tileIndex, 1)[0]);
+            }
+            var srcGroupMatrix = sap.ushell.Layout.organizeGroup(srcTiles);
+            var dstGroupMatrix = sap.ushell.Layout.organizeGroup(dstTiles);
 
-                var groupPath2 = sourceGroup.getBindingContext().getPath();
-                sourceGroup.getModel().setProperty(groupPath2, sourceGroupModelObj);
+            //clone tile to dashboardGroups, hide real one, and animate it to further place
+            var tilePosInMatrix = sap.ushell.Layout.getTilePositionInMatrix(curTile, dstGroupMatrix);
+            var destGroupRect = destGroup.getDomRef().querySelector(".sapUshellInner").getBoundingClientRect();
+            var tileTranslateOffset = sap.ushell.Layout.calcTranslate(tilePosInMatrix.row, tilePosInMatrix.col);
+            var futureTileRectLeft = destGroupRect.left + tileTranslateOffset.x; //tile future rect position
+            var futureTileRectTop = destGroupRect.top + tileTranslateOffset.y;  //in destination group
+            var jqDashboardGroups = jQuery("#dashboardGroups");
+            var DGroupsRect = jqDashboardGroups.get(0).getBoundingClientRect();
+            var curTileRect = curTile.getDomRef().getBoundingClientRect();
+            var curTileY = (-DGroupsRect.top) + curTileRect.top;
+            var curTileX = (-DGroupsRect.left) + curTileRect.left;
+            var futureTileY = (-DGroupsRect.top) + futureTileRectTop;
+            var futureTileX = (-DGroupsRect.left) + futureTileRectLeft;
+            jqDashboardGroups.css("position", "relative");
+            var jqFirstTileClone = curTile.$().clone().removeAttr("id data-sap-ui").css({
+                "transform": "translate3d(" + curTileX + "px, " + curTileY + "px, 0px)",
+                "list-style-type": "none",
+                "transition": "transform 0.3s cubic-bezier(0.46, 0, 0.44, 1)",
+                position: "absolute",
+                left: 0,
+                top: 0
+            });
+            jqDashboardGroups.append(jqFirstTileClone);
+            curTile.$().css("visibility", "hidden");
+            jqFirstTileClone.height();
+            jqFirstTileClone.css("transform", "translate3d(" + futureTileX + "px, " + futureTileY + "px, 0px)");
 
-                var groupTiles = destGroup.getTiles();
+            setTimeout(function () {
+                sap.ushell.Layout.renderLayoutGroup(sourceGroup, srcGroupMatrix);
+                sap.ushell.Layout.renderLayoutGroup(destGroup, dstGroupMatrix);
+            });
+            setTimeout(function () {
+                sap.ushell.Layout.endDragMode();
+                jqFirstTileClone.remove();
+                jqDashboardGroups.removeAttr("style");
+                deferred.resolve();
+            }, 300);
+            return deferred.promise();
+        },
 
-                if (direction === "left" || direction === "up" || direction === "down") {
-                    return groupTiles[groupTiles.length - 1];
+        _moveTileToDifferentGroup: function (sourceGroup, destGroup, curTile, nextTile, direction) {
+                var tileMoveInfo = this._getTileMoveInfo({group: sourceGroup, dstGroup: destGroup, firstTile: curTile, secondTile: nextTile, direction: direction}),
+                    tileConvertInfo = this._getTileConvertInfo({group: sourceGroup, dstGroup: destGroup, firstTile: curTile, secondTile: nextTile, direction: direction}),
+                    oEventBus = sap.ui.getCore().getEventBus(),
+                    firstTileMode= curTile.getMode ? curTile.getMode() : "ContentMode",
+                    secondTileMode = nextTile.getMode ? nextTile.getMode() : 'ContentMode';
+                if (firstTileMode === secondTileMode) {
+                    oEventBus.publish("launchpad", "movetile", tileMoveInfo);
                 } else {
-                    return groupTiles[0];
+                    oEventBus.publish("launchpad", "convertTile", tileConvertInfo);
                 }
+
+        },
+
+        moveTileToDifferentGroup:function (sourceGroup, destGroup, curTile, nextTile,  direction) {
+            var firstTileMode = this._getTileMode(curTile),
+                secondTileMode = this._getTileMode(nextTile);
+
+            document.activeElement.blur(); //this will prevent tile move from interruption, focus will be returned after action
+            if (sap.ushell.Layout.isAnimationsEnabled() && (secondTileMode === firstTileMode)) {
+                this.animateMoveTileToDifferentGroup(sourceGroup, destGroup, curTile, nextTile, direction).then(function() {
+                    this._moveTileToDifferentGroup(sourceGroup, destGroup, curTile, nextTile, direction);
+                }.bind(this));
+            } else {
+                this._moveTileToDifferentGroup(sourceGroup, destGroup, curTile, nextTile, direction);
             }
         },
 
         moveTile: function (direction) {
             var jqDashboard = jQuery(".sapUshellDashboardView"),
-                dashboardView = sap.ui.getCore().byId(jqDashboard.attr("id"));
+                dashboardView = sap.ui.getCore().byId(jqDashboard.attr("id")),
+                oPageBuilderService = sap.ushell.Container.getService("LaunchPage"),
+                oTile,
+                bIsLinkPersonalizationSupported;
             dashboardView.getModel().setProperty('/isInDrag', true);
             setTimeout(function () {
                 dashboardView.getModel().setProperty('/isInDrag', false);
@@ -494,30 +1280,180 @@ jQuery.sap.registerPreloadedModules({
                 if (!info || info.group.getProperty('isGroupLocked')) {
                     return;
                 }
-
+                oTile = info.curTile.getBindingContext().getObject().object;
+                bIsLinkPersonalizationSupported = oPageBuilderService.isLinkPersonalizationSupported(oTile);
                 var bMoveTile = true,
                     bIsActionsModeActive,
-                    nextTile = this.getNextTile(direction, info, bIsActionsModeActive, bMoveTile);
+                    nextTile = this.getNextTile(direction, info, bIsActionsModeActive, bMoveTile, !bIsLinkPersonalizationSupported);
 
                 if (!nextTile) {
                     return;
-                } else {
+                }  else {
                     var nextTileGroup = nextTile.getParent();
                 }
 
                 if (nextTileGroup === info.group) {
-                    this.moveTileInGroup(info.group, info.curTile, nextTile);
+                    this.moveTileInGroup(info.group, info.curTile, nextTile, direction);
                 } else {
-                    nextTile = this.moveTileToDifferentGroup(info.group, nextTileGroup, info.curTile, direction);
+                    this.moveTileToDifferentGroup(info.group, nextTileGroup, info.curTile, nextTile, direction);
                 }
-
-                setTimeout(function () {//setTimeout because we have to wait until the asynchronous "moveTile" flow ends
-                    if (nextTile) {
-                        this.setTileFocus(jQuery(nextTile.getDomRef()));
-                    }
-                }.bind(this), 100);
             }
         },
+
+        _getTileMoveInfo: function (moveInfo) {
+            var firstTileMode = moveInfo.firstTile.getMode ? moveInfo.firstTile.getMode() : 'ContentMode',
+                secondTileIndex = this._getDestinationTileIndex(moveInfo),
+                jqDashboard = jQuery(".sapUshellDashboardView"),
+                dashboardView = sap.ui.getCore().byId(jqDashboard.attr("id")),
+                dashboardController = dashboardView.getController(),
+                tileUuid = dashboardController._getTileUuid(moveInfo.firstTile),
+                groupTiles = moveInfo.dstGroup ? this._getGroupTiles(moveInfo.dstGroup, moveInfo.secondTile) : this._getGroupTiles(moveInfo.group, moveInfo.secondTile),
+                oGroup = moveInfo.dstGroup ? moveInfo.dstGroup : moveInfo.group,
+                oTileMoveInfo;
+            oTileMoveInfo = {
+                    sTileId: tileUuid,
+                    sToItems: firstTileMode === 'LineMode' ? 'links' : 'tiles',
+                    sFromItems: firstTileMode === 'LineMode' ? 'links' : 'tiles',
+                    sTileType: firstTileMode === 'LineMode' ? 'link' : 'tile',
+                    toGroupId: oGroup.getGroupId ? oGroup.getGroupId() : oGroup.groupId,
+                    toIndex: secondTileIndex,
+                    callBack: function (oTile) {
+                        setTimeout(function() {
+                            this.setTileFocus(jQuery(oTile.getDomRef()));
+                        }.bind(this), 100);
+                    }.bind(this)
+                };
+            return oTileMoveInfo;
+        },
+        _getGroupTiles: function (oGroup, oTile) {
+            var tileMode = this._getTileMode(oTile);
+            return tileMode === 'LineMode' ? oGroup.getLinks() : oGroup.getTiles();
+
+        },
+        _getTileConvertInfo: function (moveInfo) {
+            var oDstGroup = moveInfo.dstGroup ? moveInfo.dstGroup : moveInfo.group,
+                secondTileIndex = this._getDestinationTileIndex(moveInfo),
+                oTileConvertInfo = {
+                    toGroupId: oDstGroup.getGroupId ? oDstGroup.getGroupId() : oDstGroup.groupId,
+                    toIndex: secondTileIndex,
+                    tile: moveInfo.firstTile,
+                    srcGroupId: moveInfo.group.getGroupId ? moveInfo.group.getGroupId() : moveInfo.group.groupId,
+                    longDrop: false,
+                    callBack: function (oTile) {
+                        setTimeout(function() {
+                            this.setTileFocus(jQuery(oTile.getDomRef()));
+                        }.bind(this), 100);
+                    }.bind(this)
+                };
+            return oTileConvertInfo;
+        },
+
+        _findClosestTile: function (direction, tiles, curTile) {
+            var jqCurHelpers;
+            //this part of code responsible for links accessibility
+            //links could be in wrapped state, it means that link will be braked down to second line,
+            //when in happens bouncingRectangle of such link will return us height of 2 lines, and width of 100%, which could not be used for calculations.
+            //to handle cases with wrapped links we have to use special API for them, which return "Helpers", div's which represent every string of link
+            //and give us real sizes of strings belonged to link
+            //currently we don't have API for that, so we just use jQuery to get them, when API will be submitted it has to be changed.
+            if (curTile.getMode && curTile.getMode() === "LineMode" && (jqCurHelpers = curTile.$().find(".sapMGTLineStyleHelper"))) {
+                if (jqCurHelpers.length === 1) {
+                    var curTileRect = jqCurHelpers.get(0).getBoundingClientRect();
+                } else if (direction === "down"){
+                    var curTileRect = jqCurHelpers.get(jqCurHelpers.length - 1).getBoundingClientRect();
+                } else if (direction === "up") {
+                    var curTileRect = jqCurHelpers.get(0).getBoundingClientRect();
+                }
+            } else {
+                var curTileRect = (curTile instanceof HTMLElement) ? curTile.getBoundingClientRect() : curTile.getDomRef().getBoundingClientRect();
+            }
+            var curCenter = curTileRect.right - ((curTileRect.right - curTileRect.left) / 2);
+            if (curTile.getMode && curTile.getMode() === "LineMode") {
+                var multilineLink = curTile.$().height() > parseInt(curTile.$().css("line-height"), 10);
+                if (multilineLink) {
+                    //when link is wrapped down key select closest last tile, and otherwise.
+                    curCenter = (direction === "down") ? curTileRect.right : curTileRect.left;
+                }
+            }
+
+            var curTileIndex = tiles.indexOf(curTile);
+            var step = direction === "down" ? 1 : -1;
+            var nextTile, closestTile, rowTop;
+            var minDiff = Infinity;
+            for (var i = curTileIndex + step; !nextTile; i += step) {
+                var tile = tiles[i];
+                if (!tile) {
+                    break;
+                }
+                //this part of code responsible for links accessibility
+                //please read explanation for wrapped links above.
+                var jqHelpers;
+                if (tile.getMode && tile.getMode() === "LineMode" && (jqHelpers = tile.$().find(".sapMGTLineStyleHelper"))) {
+                    if (jqHelpers.length === 1) {
+                        var tileRect = jqHelpers.get(0).getBoundingClientRect();
+                    } else if (direction === "down"){
+                        for (var i = 0; i < jqHelpers.length; i++) {
+                            if (curTileRect.bottom < jqHelpers.get(i).getBoundingClientRect().bottom) {
+                                var tileRect = jqHelpers.get(i).getBoundingClientRect();
+                                break;
+                            }
+                        }
+                    } else if (direction === "up"){
+                        for (var i = jqHelpers.length-1; i >= 0; i--) {
+                            if (curTileRect.top > jqHelpers.get(i).getBoundingClientRect().top) {
+                                var tileRect = jqHelpers.get(i).getBoundingClientRect();
+                                break;
+                            }
+                        }
+                    }
+
+                } else {
+                    var tileRect = (tile instanceof HTMLElement) ? tile.getBoundingClientRect() : tile.getDomRef().getBoundingClientRect();
+                }
+
+                if (direction === "down" && curTileRect.bottom >= tileRect.bottom) {
+                    continue;
+                }
+                if (direction === "up" && curTileRect.top <= tileRect.top) {
+                    continue;
+                }
+                if (closestTile && rowTop != tileRect.top) {
+                    nextTile = closestTile;
+                    break;
+                }
+                rowTop = tileRect.top;
+                var lDiff =  Math.abs(tileRect.left - curCenter);
+                var rDiff =  Math.abs(tileRect.right - curCenter);
+                var tileDiff =  lDiff > rDiff ? rDiff : lDiff;
+                if (minDiff > tileDiff) {
+                    minDiff = tileDiff;
+                    closestTile = tile;
+                    rowTop = tileRect.top;
+                } else {
+                    nextTile = closestTile;
+                }
+            }
+
+            return nextTile || closestTile;
+        },
+
+        getNextUpDownTileWithScreenPosition: function (direction, info, bMoveTile, bPreventTileConvert) {
+            var groupTiles = !(bPreventTileConvert && bMoveTile) ? info.tiles.concat(info.links) : info.tiles;
+            if (!groupTiles.length) {
+                groupTiles.push(info.group.oPlusTile)
+            }
+            var nextGroup = this.getNextGroup(direction, info);
+            if (nextGroup) {
+                var nextGroupTiles = !(bPreventTileConvert && bMoveTile) ? nextGroup.getTiles().concat(nextGroup.getLinks()) : nextGroup.getTiles();
+                if (!nextGroupTiles.length) {
+                    nextGroupTiles.push(nextGroup.oPlusTile);
+                }
+            }
+            nextGroupTiles = nextGroupTiles ? nextGroupTiles : [];
+            var allTiles = direction === "down" ? groupTiles.concat(nextGroupTiles) : nextGroupTiles.concat(groupTiles);
+            return this._findClosestTile(direction, allTiles, info.curTile);
+        },
+
 
         getNextUpDownTileWithLayout: function (direction, info, bMoveTile) {
             var nextTile, nextGroup;
@@ -528,17 +1464,11 @@ jQuery.sap.registerPreloadedModules({
             var aLinks = info.group.getLinks();
             var layoutMatrix = sap.ushell.Layout.organizeGroup(info.curTile.isLink ? info.links : info.tiles, info.curTile.isLink);
             var tPos = sap.ushell.Layout.getTilePositionInMatrix(info.curTile, layoutMatrix);
-            var bIsLastLineFull = this.isLastLineFull(layoutMatrix);
-            var bIsActionsModeActive = this.oModel.getProperty('/tileActionModeActive');
             if (!tPos && !isEmptyGroup && !bIsPlusTile) {
                 return;
             }
             //Handle the case in which the user has reached the last line of the currently navigated tile aggregation (whether it's a regular tile aggregation or link).
             if (!layoutMatrix[tPos.row + nDirection]) {
-                //Handle the case in which the last line within the tileContainer has only Plus Tile
-                if (bIsActionsModeActive && !bIsGroupLocked && !bIsPlusTile && bIsLastLineFull && direction === "down") {
-                    return info.group.oPlusTile;
-                }
                 //Handle the case in which the focus is on one of the tiles in the last row and the tile container contains links.
                 if (!info.curTile.isLink && aLinks.length && direction === 'down') {
                     // In case actionMode is active
@@ -548,7 +1478,7 @@ jQuery.sap.registerPreloadedModules({
                 }
                 //Handle the case in which the focus is on one of the links in the fist row and the direction is 'up'.
                 if (info.curTile.isLink && info.tiles.length && direction === 'up') {
-                    return info.tiles[0];
+                    return info.tiles[info.tiles.length - 1];
                 }
                 tPos = isEmptyGroup || bIsPlusTile ? {row: 0, col: 0} : tPos;
                 nextGroup = this.getNextGroup(direction, info);
@@ -585,25 +1515,37 @@ jQuery.sap.registerPreloadedModules({
         _isNextTileLink: function (aTileAggregation) {
             if (aTileAggregation && aTileAggregation.length) {
                 var jqFirstTileInAgg = jQuery(aTileAggregation[0].getDomRef());
-                return jqFirstTileInAgg.hasClass("sapUshellLinkTile");
+                return jqFirstTileInAgg.hasClass("sapUshellLinkTile") || jqFirstTileInAgg.hasClass("sapMGTLineMode");
             }
             return false;
         },
 
-        _getAggregationToFocusInNextGroup: function (nextGroup, direction) {
-            if (direction === "down" || direction === "right") {
+        _getAggregationToFocusInNextGroup: function (nextGroup, direction, bMoveTile, bPreventTileConvert) {
+            var getTilesItems = function () {
                 if (nextGroup.getTiles().length) {
                     return nextGroup.getShowPlaceholder() ? [].concat(nextGroup.getTiles(), nextGroup.oPlusTile) : nextGroup.getTiles();
                 }
+            };
+
+            var getTilesLinks = function () {
                 if (nextGroup.getLinks().length) {
-                    return nextGroup.getLinks();
+                    return !(bPreventTileConvert && bMoveTile) ? nextGroup.getLinks() : undefined;
                 }
-            } else if (direction === "up" || direction === "left") {
-                if (nextGroup.getLinks().length) {
-                    return nextGroup.getLinks();
+            };
+
+
+            var bIsRTL = sap.ui.getCore().getConfiguration().getRTL();
+            if (bIsRTL) {
+                if (direction === "down" || direction === "left") {
+                    return getTilesItems() || getTilesLinks();
+                } else if (direction === "up" || direction === "right") {
+                    return getTilesLinks() || getTilesItems();
                 }
-                if (nextGroup.getTiles().length) {
-                    return nextGroup.getShowPlaceholder() ? [].concat(nextGroup.getTiles(), nextGroup.oPlusTile) : nextGroup.getTiles();
+            } else {
+                if (direction === "down" || direction === "right") {
+                    return getTilesItems() || getTilesLinks();
+                } else if (direction === "up" || direction === "left") {
+                    return  getTilesLinks() || getTilesItems();
                 }
             }
         },
@@ -639,55 +1581,13 @@ jQuery.sap.registerPreloadedModules({
             return layoutMatrix[newRow][column];
         },
 
-        getNextTile: function (direction, info, bIsActionsModeActive, bMoveTile) {
+        getNextTile: function (direction, info, bIsActionsModeActive, bMoveTile, bPreventTileConvert) {
             var nextTile,
-                currentTileRow,
-                nearTilesArr,
-                startIndex,
-                tileElement,
-                leftOffset,
-                width,
-                leftAndWidth,
-                origTileLeftOffset,
                 nRTL = sap.ui.getCore().getConfiguration().getRTL() ? -1 : 1,
-                isEmptyGroup = !info.tiles.length,
                 nDirection = direction === "right" ? 1 : -1;
 
             if (info.pageName === 'catalog') { // In catalog mode
-                if (direction == 'right' || direction == 'left') {
-                    nextTile = !isEmptyGroup ? info.tiles[info.curTileIndex + ( nRTL * nDirection )] : undefined;
-                    return nextTile;
-                }
-
-                if (info.curTileIndex === '0' && direction === 'up') {
-                    return undefined;
-                }
-
-                currentTileRow = this.whichTileRow(info.curTileIndex, info);
-                origTileLeftOffset = parseFloat(info.curTile.getDomRef().offsetLeft);
-                if (direction == "down") {
-                    nearTilesArr = info.tiles.slice(info.curTileIndex + 1, info.curTileIndex + (info.sizeOfLine * 2));
-                } else {
-                    startIndex = (startIndex > 0) ? startIndex : 0;
-                    nearTilesArr = info.tiles.slice(startIndex, info.curTileIndex).reverse();
-                }
-                for (var i = 0, length = nearTilesArr.length; i < length; i++) {
-                    tileElement = nearTilesArr[i].getDomRef();
-                    leftOffset = parseFloat(tileElement.offsetLeft);
-                    width = parseFloat(tileElement.offsetWidth);
-                    leftAndWidth = leftOffset + width;
-
-                    if (leftOffset <= origTileLeftOffset && leftAndWidth >= origTileLeftOffset) {
-                        nextTile = nearTilesArr[i];
-
-                        return nextTile;
-                    }
-                }
-
-                if (this.nextRowIsShorter(direction, currentTileRow, info)) {
-                    nextTile = this.getNextTileInShorterRow(direction, currentTileRow, info);
-                    return nextTile;
-                }
+                nextTile = this.getNextTileInCatalog(info, direction);
                 // In dashboard mode
             } else {
                 if (direction === "left" || direction === "right") {
@@ -703,11 +1603,20 @@ jQuery.sap.registerPreloadedModules({
                     if (nextTile) {
                         return nextTile;
                     }
-                    if (direction === "right" && !info.curTile.isLink && info.links.length && !bMoveTile) {
-                        return info.links[0];
-                    }
-                    if (direction === "left" && info.curTile.isLink && info.tiles.length) {
-                        return info.group.getShowPlaceholder() ? info.group.oPlusTile : info.tiles[info.tiles.length - 1];
+                    if (nRTL == 1) {
+                        if (direction === "right" && !info.curTile.isLink && info.links.length && !bPreventTileConvert) {
+                            return info.links[0];
+                        }
+                        if (direction === "left" && info.curTile.isLink && info.tiles.length) {
+                            return info.group.getShowPlaceholder() ? info.group.oPlusTile : info.tiles[info.tiles.length - 1];
+                        }
+                    } else {
+                        if (direction === "left" && !info.curTile.isLink && info.links.length && !bPreventTileConvert) {
+                            return info.links[0];
+                        }
+                        if (direction === "right" && info.curTile.isLink && info.tiles.length) {
+                            return info.group.getShowPlaceholder() ? info.group.oPlusTile : info.tiles[info.tiles.length - 1];
+                        }
                     }
 
                     // if next tile wasn't exist in the current group need to look on next one
@@ -715,7 +1624,7 @@ jQuery.sap.registerPreloadedModules({
                     if (!nextGroup) {
                         return;
                     } else {
-                        var nextGroupTiles = this._getAggregationToFocusInNextGroup(nextGroup, direction);
+                        var nextGroupTiles = this._getAggregationToFocusInNextGroup(nextGroup, direction, bMoveTile, bPreventTileConvert);
                         if (nextGroupTiles && nextGroupTiles.length) {
                             var last = nextGroupTiles.length - 1;
                             if (direction === "right") {
@@ -730,10 +1639,58 @@ jQuery.sap.registerPreloadedModules({
                 }
 
                 if (direction === "down" || direction === "up") {
-                    nextTile = this.getNextUpDownTileWithLayout(direction, info, bMoveTile);
+                    nextTile = this.getNextUpDownTileWithScreenPosition(direction, info, bMoveTile, bPreventTileConvert);
                 }
             }
             return nextTile;
+        },
+        getNextTileInCatalog: function (info, direction) {
+            var nextTile,
+                currentTileRow,
+                nearTilesArr,
+                startIndex,
+                tileElement,
+                leftOffset,
+                width,
+                leftAndWidth,
+                origTileLeftOffset,
+                nRTL = sap.ui.getCore().getConfiguration().getRTL() ? -1 : 1,
+                isEmptyGroup = !info.tiles.length,
+                nDirection = direction === "right" ? 1 : -1;
+            if (direction == 'right' || direction == 'left') {
+                nextTile = !isEmptyGroup ? info.tiles[info.curTileIndex + ( nRTL * nDirection )] : undefined;
+                return nextTile;
+            }
+
+            if (info.curTileIndex === '0' && direction === 'up') {
+                return undefined;
+            }
+
+            currentTileRow = this.whichTileRow(info.curTileIndex, info);
+            origTileLeftOffset = parseFloat(info.curTile.getDomRef().offsetLeft);
+            if (direction == "down") {
+                nearTilesArr = info.tiles.slice(info.curTileIndex + 1, info.curTileIndex + (info.sizeOfLine * 2));
+            } else {
+                startIndex = (startIndex > 0) ? startIndex : 0;
+                nearTilesArr = info.tiles.slice(startIndex, info.curTileIndex).reverse();
+            }
+            for (var i = 0, length = nearTilesArr.length; i < length; i++) {
+                tileElement = nearTilesArr[i].getDomRef();
+                leftOffset = parseFloat(tileElement.offsetLeft);
+                width = parseFloat(tileElement.offsetWidth);
+                leftAndWidth = leftOffset + width;
+
+                if (leftOffset <= origTileLeftOffset && leftAndWidth >= origTileLeftOffset) {
+                    nextTile = nearTilesArr[i];
+
+                    return nextTile;
+                }
+            }
+
+            if (this.nextRowIsShorter(direction, currentTileRow, info)) {
+                nextTile = this.getNextTileInShorterRow(direction, currentTileRow, info);
+                return nextTile;
+            }
         },
 
         getNextTileInShorterRow: function (direction, currentRow, info) {
@@ -806,29 +1763,26 @@ jQuery.sap.registerPreloadedModules({
             if (!jqTile.length) {
                 return;
             }
+            if (!jqTile.hasClass("sapUshellTile") && !jqTile.hasClass("sapUshellLinkTile")) {
+                jqTile = jqTile.closest(".sapUshellTile, .sapUshellLinkTile");
+            }
             var curTile = sap.ui.getCore().byId(jqTile.attr('id'));
-            var group = curTile.getParent();
+            var jqQroup = jqTile.closest(".sapUshellTileContainer");
+            var group = sap.ui.getCore().byId(jqQroup.attr('id'));
             var rowsData;
             var tiles;
             var links;
             if (!group.getTiles) {
+                curTile = group;
                 group = group.getParent();
             }
-            curTile.isLink = jqTile.hasClass('sapUshellLinkTile');
-            if (pageName == "catalog") {
-                rowsData = this.getCatalogLayoutData();
-                tiles = [];
-                var jqTiles = jQuery('#catalogTiles').find('.sapUshellTile:visible');
-                for (var i = 0; i < jqTiles.length; i++) {
-                    tiles.push(sap.ui.getCore().byId(jqTiles[i].id));
-                }
-            } else {
-                if (group.getTiles) {
-                    tiles = group.getTiles();
-                    links = group.getLinks();
-                    if (group.getShowPlaceholder() && !curTile.isLink) {
-                        tiles.push(group.oPlusTile);
-                    }
+            curTile.isLink = jqTile.hasClass('sapUshellLinkTile') || jqTile.hasClass('sapMGTLineMode');
+
+            if (group.getTiles) {
+                tiles = group.getTiles();
+                links = group.getLinks();
+                if (group.getShowPlaceholder() && !curTile.isLink) {
+                    tiles.push(group.oPlusTile);
                 }
             }
 
@@ -843,33 +1797,6 @@ jQuery.sap.registerPreloadedModules({
                 group: group,
                 rowsData: rowsData
             };
-        },
-
-        getCatalogLayoutData: function () {
-            var jqCatalogContiner = jQuery('#catalogTiles .sapUshellInner').children(':visible'),
-                maxTilesInLine = this.getNumberOfTileInRow('catalog'),
-                rowsIndex = [],
-                countTiles = 0;
-
-            for (var i = 1; i < jqCatalogContiner.length; i++) {
-
-                if (jQuery(jqCatalogContiner[i]).hasClass("sapUshellTile")) {
-                    countTiles++;
-                }
-                if (jQuery(jqCatalogContiner[i]).hasClass("sapUshellHeaderTile")) {
-                    rowsIndex.push(countTiles);
-                    countTiles = 0;
-                }
-                if (countTiles >= maxTilesInLine) {
-                    rowsIndex.push(countTiles);
-                    countTiles = 0;
-                }
-            }
-            if (countTiles > 0) {
-                rowsIndex.push(countTiles);
-            }
-
-            return rowsIndex;
         },
 
         whichTileRow: function (id, info) {
@@ -915,7 +1842,7 @@ jQuery.sap.registerPreloadedModules({
                     //Thus the next arrow down navigation should be to the descending Tile Container.
                     if (jqFirstTileInTileContainer.length) {
                         var tile = jQuery(jqFirstTileInTileContainer);
-                        this.scrollToTileAndSetFocus(tile, pageName);
+                        this.moveScrollDashboard(tile);
 
                     } else {
                         this._goToNextTileContainer(jqTileContainerElement, direction);
@@ -1077,7 +2004,7 @@ jQuery.sap.registerPreloadedModules({
                     bIsSameTileContainer = jqCurrentTileContainer.length && jqNextTileContainer.length && (jqCurrentTileContainer.attr('id') === jqNextTileContainer.attr('id'));
                     if (bIsSameTileContainer) {
                         var tile = jQuery(nextTile.getDomRef());
-                        this.scrollToTileAndSetFocus(tile, pageName);
+                        this.moveScrollDashboard(tile);
                     } else {
                         if (direction === 'down' || direction === 'right') {
                             if (!this._goToTileContainerAfterContent(jqCurrentTileContainer)) {
@@ -1094,18 +2021,6 @@ jQuery.sap.registerPreloadedModules({
                 }
             } else if (nextTile) {
                 var tile = jQuery(nextTile.getDomRef());
-                this.scrollToTileAndSetFocus(tile, pageName);
-            }
-        },
-
-        scrollToTileAndSetFocus: function (tile, pageName) {
-            var tileBottom = tile.offset().top + tile.height();
-            if (pageName === "catalog") {
-                var offset = (tileBottom - jQuery("body").height()) - jQuery("#catalogTilesPage").offset().top + 200;
-                jQuery('#catalogTilesPage section').animate({scrollTop: offset}, 0, function () {
-                    this.setTileFocus(tile);
-                }.bind(this));
-            } else {
                 this.moveScrollDashboard(tile);
             }
         },
@@ -1125,10 +2040,20 @@ jQuery.sap.registerPreloadedModules({
                 nextTile = info.group.oPlusTile;
             }
             if (nextTile) {
-                this.setTileFocus(jQuery(nextTile.getDomRef()));
+                if (!info.curTile.isLink) {
+                    this.setTileFocus(jQuery(nextTile.getDomRef()));
+                }
                 setTimeout(function (group, nextTileUuid) {
                     var tiles = group.getTiles();
                     if (!tiles.length) {
+                        if (info.links.length && info.curTile.isLink) {
+                            nextTile = this.getNextTile("right", info);
+                            if (!nextTile || (nextTile && nextTile.getParent() != info.group)) {
+                                nextTile = info.curTile;
+                            }
+                            this.setTileFocus(jQuery(nextTile.getDomRef()));
+                            return;
+                        }
                         if (info.group.getProperty('defaultGroup')) {
                             var nextGroup = this.getNextGroup("right", info);
                             nextTile = nextGroup.getTiles()[0] || nextGroup.oPlusTile;
@@ -1194,26 +2119,50 @@ jQuery.sap.registerPreloadedModules({
 
                 jqFocusables = jqTile.find('[tabindex]');
                 if (bIsInCatalog) {
-                    var handler = sap.ushell.components.flp.ComponentKeysHandler;
+                    var handler = ComponentKeysHandler;
                     handler.setFocusOnCatalogTile(jqFocusables.eq(0));
                 }
             }
 
             //remove tablindex from all tiles
             jQuery(".sapUshellTile").attr("tabindex", -1);
+            jQuery(".sapMGTLineMode").attr("tabindex", -1);
             jQuery(".sapUshellLinkTile").attr("tabindex", -1);
             jqTile.attr("tabindex", 0);
-            var jqLoadingDialog = jQuery("#loadingDialog")[0];
+            var jqLoadingDialog = jQuery("#Fiori2LoadingDialog")[0];
             if (!jqLoadingDialog || jqLoadingDialog.style.visibility === "hidden") {
+
+                // on ABAP - link is wrapped by Div - so we take the first child which is span
+                if (jqTile.prop("tagName") === "DIV" && jQuery(jqTile).hasClass("sapUshellLinkTile") && jqTile.getMode == undefined){
+                    jqTile = jqTile.find("a").length ? jqTile.find("a")[0] : jqTile;
+                }
                 jqTile.focus();
+
+                // setting a custom data on the Tile control object, so it would be kept after re-rendering
+                // (e.g. switching edit mode/non edit mode scenario for example)
+                var oTile;
+                if (jqTile[0] && jqTile[0].id) {
+                    var oTile = sap.ui.getCore().byId(jqTile[0].id);
+
+                    // as we always set the static member created which represents tab-index 0 for the tile-to-focus on
+                    // we gain the consistency which ensures us only one tile will have tab-index 0
+                    // as setting the same instance of a different tile removes it from its previous parent
+                    var customDataParent = this.tileFocusCustomData.getParent && this.tileFocusCustomData.getParent();
+                    if (customDataParent) {
+                        customDataParent.removeAggregation("customData", this.tileFocusCustomData, true);
+                    }
+
+                    if (oTile && sap.ui.getCore().byId(oTile.getId()) && this.tileFocusCustomData && sap.ui.getCore().byId(this.tileFocusCustomData.getId())) {
+                        oTile.addAggregation("customData", this.tileFocusCustomData, true);
+                    }
+                }
             }
         },
 
         setFocusOnCatalogTile: function(jqTile){
             var oPrevFirsTile = jQuery(".sapUshellTile[tabindex=0]"),
                 aAllTileFocusableElements,
-                aVisibleTiles,
-                jqParentTile;
+                aVisibleTiles;
 
             if (oPrevFirsTile.length) {
                 //remove tabindex attribute to all tile's elements in TAB cycle if exists
@@ -1223,19 +2172,18 @@ jQuery.sap.registerPreloadedModules({
             }
 
             if (!jqTile){
-                aVisibleTiles = jQuery(".sapUshellTile:visible");
+                aVisibleTiles = jQuery(".sapUshellTile:visible,.sapUshellAppBox:visible");
                 if (aVisibleTiles.length) {
-                    jqParentTile = jQuery(aVisibleTiles[0]);
-                    jqTile = jqParentTile.find('[tabindex], a').eq(0);
+                    jqTile = jQuery(aVisibleTiles[0]);
                 } else {
                     return;
                 }
             }
 
             //add tabindex attribute to all tile's elements in TAB cycle
-            jqTile.closest(".sapUshellTile").attr("tabindex", 0);
             jqTile.attr("tabindex", 0);
-            jqTile.closest(".sapUshellTile").find("button").attr("tabindex", 0);
+            jqTile.find("button").attr("tabindex", 0);
+            jqTile.focus();
         },
 
         moveScrollDashboard: function (jqTileSelected) {
@@ -1245,13 +2193,6 @@ jQuery.sap.registerPreloadedModules({
             jQuery('#sapUshellDashboardPage section').stop().animate({scrollTop: iY}, 0, function () {
                 this.setTileFocus(jqTileSelected);
             }.bind(this));
-        },
-
-        moveScrollCatalog: function (jqTileSelected) {
-            var jqDashboardPageCont = jQuery("#catalogTilesPage-cont");
-            var iTopSpacing = jQuery('#shell-hdr').height() + jQuery('.sapMPageHeader').height() + (parseInt(jQuery('.sapMPanelHdr').css('margin-top'), 10) * 2);
-            var iY = jqTileSelected.offset().top + jqDashboardPageCont.scrollTop() - iTopSpacing;
-            sap.ui.getCore().byId("catalogTilesPage").scrollTo(iY, 200);
         },
 
         moveGroupFromDashboard: function(direction, jqGroup) {
@@ -1323,11 +2264,6 @@ jQuery.sap.registerPreloadedModules({
             }
         },
 
-        upDownButtonsHandler: function (direction, pageName) {
-            var jqFocused = jQuery(document.activeElement);
-
-            this.goFromFocusedTile(direction, jqFocused, pageName);
-        },
         arrowsButtonsHandler: function (direction, e) {
 
             var jqFocused = jQuery(document.activeElement),
@@ -1349,6 +2285,15 @@ jQuery.sap.registerPreloadedModules({
             }
         },
 
+        _preventBrowserDefaultScrollingBehavior: function (oEvent) {
+            //prevent browser event ctrl+up/down from scrolling page
+            //created by user `keydown` native event needs to be cancelled so browser will not make default action, which is scroll.
+            //Instead we clone same event and dispatch it programmatic, so all handlers expecting to this event will still work
+            oEvent.preventDefault();
+            oEvent.stopPropagation();
+            oEvent.stopImmediatePropagation();
+        },
+
         handleAnchorNavigationItemsArrowKeys: function(direction) {
             var anchorItems = jQuery(".sapUshellAnchorItem:visible"),
                 jqFocused = jQuery(document.activeElement),
@@ -1360,16 +2305,62 @@ jQuery.sap.registerPreloadedModules({
                 direction = direction === 'left' ? 'right' : 'left';
             }
 
-            if (direction === "left" || direction === "down") {
+            if (direction === "left" || direction === "up") {
                 if (indexOfFocusedItem > 0) {
                     nextElement = anchorItems.get(indexOfFocusedItem - 1);
                 }
-            } else if (direction === "right" || direction === "up") {
+            } else if (direction === "right" || direction === "down") {
                 if (indexOfFocusedItem < anchorItems.length - 1) {
                     nextElement = anchorItems.get(indexOfFocusedItem + 1);
                 }
             }
-            jQuery(nextElement).focus();
+
+            this.setAnchorItemFocus(jQuery(nextElement));
+        },
+
+        setAnchorItemFocus: function(jqAnchorItem) {
+            //remove tablindex from all tiles
+            jQuery(".sapUshellAnchorItem").attr("tabindex", -1);
+            jqAnchorItem.attr("tabindex", 0);
+            jqAnchorItem.focus();
+        },
+
+        appFinderHomeEndButtonsHandler: function (direction, keyup) {
+            keyup.preventDefault();
+            var aVisibleCatalogEntries = jQuery(".sapUshellTile:visible,.sapUshellAppBox:visible"),
+                jqCurrentFocus = jQuery(document.activeElement),
+                jqFocusElement;
+            if (aVisibleCatalogEntries.length) {
+                if (direction === "home") {
+                    jqFocusElement = jQuery(aVisibleCatalogEntries.get(0));
+                }
+                if (direction === "end") {
+                    jqFocusElement = jQuery(aVisibleCatalogEntries.get(aVisibleCatalogEntries.length - 1));
+                }
+            }
+            if (jqFocusElement) {
+                this.appFinderFocusAppBox(jqCurrentFocus, jqFocusElement);
+            }
+        },
+
+        appFinderPageUpDownButtonsHandler: function (direction, keyup) {
+            keyup.preventDefault();
+            var jqFocused = jQuery(document.activeElement);
+            var jqCatalogContainer = jQuery(jqFocused.parents()[2]);
+
+            var nextCatalog = this.getNextCatalog(direction, jqCatalogContainer);
+            if (nextCatalog) {
+                var nextCatalogEnrtiesList = nextCatalog.find("li"),
+                    firstEntryInNextCatalog = jQuery(nextCatalogEnrtiesList.get(0));
+            }
+            if (firstEntryInNextCatalog.length) {
+                this.appFinderFocusAppBox(jqFocused, firstEntryInNextCatalog);
+            } else if (direction === "down"){
+                //find last element in current catalog
+                var currentCatalogEntries = jqCatalogContainer.find("li"),
+                    lastEntryInCurrentCatalog = jQuery(currentCatalogEntries.get(currentCatalogEntries.length - 1));
+                this.appFinderFocusAppBox(jqFocused, lastEntryInCurrentCatalog);
+            }
         },
 
         homeEndButtonsHandler: function (selector, e) {
@@ -1378,11 +2369,10 @@ jQuery.sap.registerPreloadedModules({
 
             if (jqFocused.hasClass("sapUshellAnchorItem")) {
                 e.preventDefault();
-                var jqAnchorItemToSelect = jQuery(".sapUshellAnchorItem:visible:" + selector);
-                jqAnchorItemToSelect.focus();
+                this.setAnchorItemFocus(jQuery(".sapUshellAnchorItem:visible:" + selector));
                 return;
             }
-            if (jqFocused.hasClass("sapUshellTile") && (jqFocused.closest("#dashboardGroups").length || jqFocused.closest("#catalogTiles").length)) {
+            if (jqFocused.hasClass("sapUshellTile") && jqFocused.closest("#dashboardGroups").length) {
                 e.preventDefault();
                 if (e.ctrlKey === true) {
                     tileToSelect = jQuery(".sapUshellTile:visible:not('.sapUshellPlusTile')")[selector]();
@@ -1407,12 +2397,11 @@ jQuery.sap.registerPreloadedModules({
             }
         },
 
-        ctrlPlusArrowKeyButtonsHandler: function (selector) {
+        ctrlPlusArrowKeyButtonsHandler: function (direction) {
             var jqElement,
-                jqFocused = jQuery(document.activeElement),
-                bFocusElementIsLink = jQuery(jqFocused).hasClass('sapUshellLinkTile');
-            if (!bFocusElementIsLink && (jqElement = this.getFocusOnTile(jqFocused))) {
-                this.moveTile(selector);
+                jqFocused = jQuery(document.activeElement);
+            if ((jqElement = this.getFocusOnTile(jqFocused))) {
+                this.moveTile(direction);
                 return;
             }
             if (jqElement = this.getFocusTileContainerHeader(jqFocused)) {
@@ -1422,7 +2411,7 @@ jQuery.sap.registerPreloadedModules({
                 if (jqFocusGroupContentElement.hasClass('sapUshellTileContainerDefault') || jqFocusGroupContentElement.hasClass('sapUshellTileContainerLocked')) {
                     return;
                 } else {
-                    this.moveGroupFromDashboard(selector, jqElement);
+                    this.moveGroupFromDashboard(direction, jqElement);
                 }
             }
         },
@@ -1446,24 +2435,17 @@ jQuery.sap.registerPreloadedModules({
             }
         },
 
-        goToFirstCatalogTile: function () {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
-            handler.setTileFocus(firstTile);
-        },
-
-        goToFirstCatalogHeaderItem: function () {
-            var nextElement = jQuery("#catalogTilesPage header button")[0];
-            nextElement.focus();
-        },
-
         goToFirstAnchorNavigationItem: function () {
-            var jqElement = jQuery(".sapUshellAnchorItem:visible:first");
-            jqElement.focus();
+            this.setAnchorItemFocus(jQuery(".sapUshellAnchorItem:visible:first"));
+        },
+
+        goToSelectedAnchorNavigationItem: function () {
+            this.setAnchorItemFocus(jQuery(".sapUshellAnchorItemSelected"));
+            return jQuery(document.activeElement).hasClass("sapUshellAnchorItemSelected");
         },
 
         handleFocusOnMe: function(keyup, bFocusPassedFirstTime) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler,
+            var handler = ComponentKeysHandler,
                 oNavContainerFlp = sap.ui.getCore().byId('navContainerFlp'),
                 oCurrentPage = oNavContainerFlp.getCurrentPage(),
                 oCurrentViewName = oCurrentPage.getViewName();
@@ -1473,9 +2455,17 @@ jQuery.sap.registerPreloadedModules({
                 // we got the focus from the shell
                 if (bFocusPassedFirstTime) {
                     if (keyup.shiftKey) {
-                        handler.goToTileContainer(keyup);
+                        var floatingFooterDoneBtn = jQuery("#sapUshellDashboardFooterDoneBtn:visible");
+                        if (floatingFooterDoneBtn.length) {
+                            floatingFooterDoneBtn.focus();
+                        } else {
+                            handler.goToTileContainer(keyup);
+                        }
                     } else {
-                        handler.goToFirstAnchorNavigationItem();
+                        if (!handler.goToSelectedAnchorNavigationItem()) {
+                            //when focus on anchor bar failed, we pass it to tile
+                            ComponentKeysHandler.goToLastVisitedTile()
+                        }
                     }
                 } else {
                     handler.mainKeydownHandler(keyup);
@@ -1485,27 +2475,22 @@ jQuery.sap.registerPreloadedModules({
 
             //we in appFinder
             if (oCurrentViewName == "sap.ushell.components.flp.launchpad.appfinder.AppFinder") {
-                //if appFinder handled keyDown, no need to pass it to other functions
-                if (handler.appFinderKeydownHandler(keyup, bFocusPassedFirstTime)) {
-                    return;
-                }
-
-                var menuName = oCurrentPage.getController().getCurrentMenuName();
-                //we are in catalog
-                if (menuName === "catalog") {
-                    // we got the focus from the shell
-                    if (bFocusPassedFirstTime) {
-                        if (keyup.shiftKey) {
-                            handler.goToFirstCatalogTile();
+                // we got the focus from the shell
+                if (bFocusPassedFirstTime) {
+                    //forward navigation
+                    if (!keyup.shiftKey) {
+                        var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                        if (openCloseSplitAppButton && openCloseSplitAppButton.getVisible()) {
+                            openCloseSplitAppButton.focus();
                         } else {
-                            handler.goToFirstCatalogHeaderItem();
+                            handler.appFinderFocusMenuButtons(keyup);
                         }
-                    } else {
-                        handler.mainKeydownHandler(keyup);
-                        handler.catalogKeydownHandler(keyup);
+                    } else { //backwards navigation
+                        handler.setFocusOnCatalogTile();
                     }
                 } else {
-                    handler.easyAccessKeydownHandler(keyup);
+                    handler.mainKeydownHandler(keyup);
+                    handler.appFinderKeydownHandler(keyup);
                 }
             }
         },
@@ -1523,11 +2508,11 @@ jQuery.sap.registerPreloadedModules({
         },
 
         handleShortcuts: function (oEvent) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
+            var handler = ComponentKeysHandler;
 
             if (oEvent.altKey) {
                 switch (String.fromCharCode(oEvent.keyCode)) {
-                    case 'C':
+                    case 'A':
                         if (handler.oModel.getProperty("/personalization")) {
                             handler.handleCatalogKey();
                         }
@@ -1536,6 +2521,10 @@ jQuery.sap.registerPreloadedModules({
                         handler.handleHomepageKey();
                         break;
                 }
+            }
+            // ctrl + Enter
+            if (oEvent.ctrlKey && oEvent.keyCode === 13) {
+                handler.handleDoneEditMode();
             }
         },
 
@@ -1555,28 +2544,35 @@ jQuery.sap.registerPreloadedModules({
             }
         },
 
-        catalogKeydownHandler: function (keyup) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            var pageName = "catalog";
-            switch (keyup.keyCode) {
-                case handler.keyCodes.ARROW_UP: //Up
-                    handler.upDownButtonsHandler("up", pageName);
-                    break;
-                case handler.keyCodes.ARROW_DOWN: //Down
-                    handler.upDownButtonsHandler("down", pageName);
-                    break;
-                case handler.keyCodes.ARROW_RIGHT: // Right ->
-                    handler.goFromFocusedTile("right","",pageName);
-                    break;
-                case handler.keyCodes.ARROW_LEFT: // Left <-
-                    handler.goFromFocusedTile("left","",pageName);
-                    break;
-                case handler.keyCodes.PAGE_UP: //Page Up button
-                    handler.goToFirstTileOfSiblingGroupInCatalog('prev', keyup);
-                    break;
-                case handler.keyCodes.PAGE_DOWN: //Page Down
-                    handler.goToFirstTileOfSiblingGroupInCatalog('next', keyup);
-                    break;
+        appFinderKeydownHandler: function (keyup) {
+            var handler = ComponentKeysHandler;
+            if (keyup.srcElement.id != "appFinderSearch-I") {
+                switch (keyup.keyCode) {
+                    case handler.keyCodes.ARROW_UP: //Up
+                        handler.appFinderUpDownHandler("up", keyup);
+                        break;
+                    case handler.keyCodes.ARROW_DOWN: //Down
+                        handler.appFinderUpDownHandler("down", keyup);
+                        break;
+                    case handler.keyCodes.ARROW_RIGHT: // Right ->
+                        handler.appFinderRightLeftHandler("right", keyup);
+                        break;
+                    case handler.keyCodes.ARROW_LEFT: // Left <-
+                        handler.appFinderRightLeftHandler("left", keyup);
+                        break;
+                    case handler.keyCodes.PAGE_UP: //Page Up button
+                        handler.appFinderPageUpDownButtonsHandler('up', keyup);
+                        break;
+                    case handler.keyCodes.PAGE_DOWN: //Page Down
+                        handler.appFinderPageUpDownButtonsHandler('down', keyup);
+                        break;
+                    case handler.keyCodes.HOME:
+                        handler.appFinderHomeEndButtonsHandler("home", keyup);
+                        break;
+                    case handler.keyCodes.END:
+                        handler.appFinderHomeEndButtonsHandler("end", keyup);
+                        break;
+                }
             }
         },
 
@@ -1586,102 +2582,107 @@ jQuery.sap.registerPreloadedModules({
             jqNextAppBox.attr("tabindex", "0").focus();
         },
 
-        appFinderKeydownHandler: function (keyup, bFocusPassedFirstTime) {
-            if (!bFocusPassedFirstTime) {
-                return;
-            }
+        appFinderFocusMenuButtons: function (keyup) {
             var buttons = jQuery("#catalog, #userMenu, #sapMenu").filter("[tabindex=0]");
             if (buttons.length) {
                 buttons.eq(0).focus();
+                keyup.preventDefault();
                 return true;
+            } else {
+                return false;
             }
+
         },
 
-        easyAccessRightLeftHandler: function (direction, keyup) {
+        appFinderUpDownHandler: function (direction, keyup) {
             keyup.preventDefault();
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            var siblingDirection = direction == "right" ? "next" : "prev";
+
             var jqFocused = jQuery(document.activeElement);
-            if (!jqFocused.hasClass("sapUshellAppBox")) {
+            if (!jqFocused.is(".sapUshellAppBox, .sapUshellTile")) {
                 return;
             }
-            var nextAppBox = jqFocused.parent()[siblingDirection]();
-            if (nextAppBox.length) {
-                handler.appFinderFocusAppBox(jqFocused, nextAppBox.children());
+            var jqCatalogContainer = jQuery(jqFocused.parents()[2]);
+            var catalogEnrtiesList = jqCatalogContainer.find("li.sapUshellAppBox, li.sapUshellTile"),
+                aCatalogEnrties = jQuery.makeArray(catalogEnrtiesList),
+                aNextCatalogEnrties = [];
+
+            var nextCatalog = this.getNextCatalog(direction, jqCatalogContainer);
+            if (nextCatalog) {
+                var nextCatalogEnrtiesList = nextCatalog.find("li.sapUshellAppBox, li.sapUshellTile"),
+                    aNextCatalogEnrties = jQuery.makeArray(nextCatalogEnrtiesList);
             }
+            var allCatalogEntries = direction === "down" ? aCatalogEnrties.concat(aNextCatalogEnrties) : aNextCatalogEnrties.concat(aCatalogEnrties);
+
+            var jqNextFocused = jQuery(this._findClosestTile(direction, allCatalogEntries, jqFocused.get(0)));
+            this.appFinderFocusAppBox(jqFocused, jqNextFocused);
         },
 
-        easyAccessUpDownHandler: function (direction, keyup) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            keyup.preventDefault();
-            var focused = document.activeElement;
-            var jqFocused = jQuery(document.activeElement);
-            if (!jqFocused.hasClass("sapUshellAppBox")) {
+        getNextCatalog: function (direction, currentCatalog) {
+            var nextCatalog;
+
+            if (direction === "down") {
+                nextCatalog = currentCatalog.next();
+            }
+            if (direction === "up") {
+                nextCatalog = currentCatalog.prev();
+            }
+
+            if (!nextCatalog) {
                 return;
             }
-            var focusedRect = focused.getBoundingClientRect();
-            var appBoxList = [].slice.call(document.querySelectorAll(".sapUshellAppBox"));
-            if (direction == "up") {
-                appBoxList.reverse();
+
+            return nextCatalog;
+        },
+
+        appFinderRightLeftHandler: function (direction, keyup) {
+            keyup.preventDefault();
+            var jqFocused = jQuery(document.activeElement);
+            if (!jqFocused.is(".sapUshellAppBox, .sapUshellTile")) {
+                return;
             }
-            appBoxList.splice(0, appBoxList.indexOf(focused) + 1);
-            var nextAppBox;
-            for (var i = 0; i < appBoxList.length; i++) {
-                var rect = appBoxList[i].getBoundingClientRect();
-                var horizontalIntersection = (rect.left < focusedRect.right && rect.right > focusedRect.left);
-                if (horizontalIntersection) {
-                    nextAppBox = appBoxList[i];
-                    break;
+            var jqCatalogContainer = jQuery(jqFocused.parents()[2]);
+            var aCatalogItems = jqCatalogContainer.find("li.sapUshellAppBox, li.sapUshellTile");
+            var indexOfCurrentItem = aCatalogItems.index(jqFocused);
+            var indexOfNextItem = direction === "right" ? indexOfCurrentItem + 1 : indexOfCurrentItem - 1,
+                jqNextFocused;
+
+            //same catalog
+            if (indexOfNextItem >= 0 && indexOfNextItem < aCatalogItems.length) {
+                //set Focus on the next entry
+                jqNextFocused = jQuery(aCatalogItems[indexOfNextItem]);
+            } else if (indexOfNextItem < 0) {
+            //prev catalog
+                //TODO:
+                var nextCatalog = this.getNextCatalog("up", jqCatalogContainer);
+                if (nextCatalog) {
+                    var nextCatalogEnrtiesList = nextCatalog.find("li.sapUshellAppBox, li.sapUshellTile");
+
+                    if (nextCatalogEnrtiesList.length) {
+                        jqNextFocused = jQuery(nextCatalogEnrtiesList.get(nextCatalogEnrtiesList.length - 1));
+                    } else {
+                        return;
+                    }
+                }
+            } else if (indexOfNextItem === aCatalogItems.length) {
+            //next catalog
+                //TODO:
+                var nextCatalog = this.getNextCatalog("down", jqCatalogContainer);
+                if (nextCatalog) {
+                    var nextCatalogEnrtiesList = nextCatalog.find("li");
+
+                    if (nextCatalogEnrtiesList.length) {
+                        jqNextFocused = jQuery(nextCatalogEnrtiesList.get(0));
+                    } else {
+                        return;
+                    }
                 }
             }
-            if (nextAppBox) {
-                handler.appFinderFocusAppBox(jqFocused, jQuery(nextAppBox));
-            }
-        },
 
-        easyAccessHomeEndHandler: function (direction, keyup) {
-            keyup.preventDefault();
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            var siblingDirection = direction == "home" ? "first" : "last";
-            var jqFocused = jQuery(document.activeElement);
-            if (!jqFocused.hasClass("sapUshellAppBox")) {
-                return;
-            }
-            var nextAppBox = jqFocused.parent().parent().children()[siblingDirection]().children();
-            if (jqFocused == nextAppBox) {
-                return;
-            }
-            handler.appFinderFocusAppBox(jqFocused, jQuery(nextAppBox));
-        },
-
-        easyAccessKeydownHandler: function (keyup) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
-            switch (keyup.keyCode) {
-                case handler.keyCodes.ARROW_UP:
-                    handler.easyAccessUpDownHandler("up", keyup);
-                    break;
-                case handler.keyCodes.ARROW_DOWN:
-                    handler.easyAccessUpDownHandler("down", keyup);
-                    break;
-                case handler.keyCodes.ARROW_RIGHT:
-                    handler.easyAccessRightLeftHandler("right", keyup);
-                    break;
-                case handler.keyCodes.ARROW_LEFT:
-                    handler.easyAccessRightLeftHandler("left", keyup);
-                    break;
-                case handler.keyCodes.HOME:
-                case handler.keyCodes.PAGE_UP:
-                    handler.easyAccessHomeEndHandler("home", keyup);
-                    break;
-                case handler.keyCodes.END:
-                case handler.keyCodes.PAGE_DOWN:
-                    handler.easyAccessHomeEndHandler("end", keyup);
-                    break;
-            }
+            this.appFinderFocusAppBox(jqFocused, jqNextFocused);
         },
 
         dashboardKeydownHandler: function (keyup) {
-            var handler = sap.ushell.components.flp.ComponentKeysHandler;
+            var handler = ComponentKeysHandler;
             switch (keyup.keyCode) {
                 case handler.keyCodes.F2:
                     handler.renameGroup();
@@ -1697,6 +2698,7 @@ jQuery.sap.registerPreloadedModules({
                     break;
                 case handler.keyCodes.ARROW_UP: //Up
                     if (keyup.ctrlKey === true) {
+                        handler._preventBrowserDefaultScrollingBehavior(keyup);
                         handler.ctrlPlusArrowKeyButtonsHandler("up");
                     } else {
                         handler.arrowsButtonsHandler("up", keyup);
@@ -1704,6 +2706,7 @@ jQuery.sap.registerPreloadedModules({
                     break;
                 case handler.keyCodes.ARROW_DOWN: //Down
                     if (keyup.ctrlKey === true) {
+                        handler._preventBrowserDefaultScrollingBehavior(keyup);
                         handler.ctrlPlusArrowKeyButtonsHandler("down");
                     } else {
                         handler.arrowsButtonsHandler("down", keyup);
@@ -1740,14 +2743,16 @@ jQuery.sap.registerPreloadedModules({
         }
     };
 
-    sap.ushell.components.flp.ComponentKeysHandler = new componentKeysHandler();
-}());
-},
-	"sap/ushell/components/flp/CustomRouter.js":function(){(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.components.flp.CustomRouter");
+    var ComponentKeysHandler = new componentKeysHandler();
 
-    sap.ui.core.routing.Router.extend("sap.ushell.components.flp.CustomRouter", {
+    return ComponentKeysHandler
+
+}, /* bExport= */ true);
+},
+	"sap/ushell/components/flp/CustomRouter.js":function(){sap.ui.define(function() {
+	"use strict";
+
+    var CustomRouter = sap.ui.core.routing.Router.extend("sap.ushell.components.flp.CustomRouter", {
 
         constructor : function() {
             sap.ui.core.routing.Router.apply(this, arguments);
@@ -1771,15 +2776,21 @@ jQuery.sap.registerPreloadedModules({
                 oTargetControl = sap.ui.getCore().byId(mParameters.config.controlId);
             var result = this.getTarget(mParameters.config.target).display();
             oTargetControl.to(result.oTargetParent);
+            setTimeout(function () {
+                sap.ui.getCore().getEventBus().publish("launchpad", "launchpadCustomRouterRouteMatched");
+            }, 0);
         }
     });
-})();
-},
-	"sap/ushell/components/flp/FLPAnalytics.js":function(){(function () {
-    "use strict";
-    /*global jQuery, sap, hasher */
-    jQuery.sap.declare("sap.ushell.components.flp.FLPAnalytics");
 
+
+	return CustomRouter;
+
+});
+},
+	"sap/ushell/components/flp/FLPAnalytics.js":function(){sap.ui.define(function() {
+	"use strict";
+
+    /*global jQuery, sap, hasher */
     /**
      * Manage UsageAnalytics event logging as a result of FLP user flows
      */
@@ -1852,7 +2863,6 @@ jQuery.sap.registerPreloadedModules({
             sap.ushell.Container.getService("UsageAnalytics").logCustomEvent("FLP: Application Launch point", "Homepage", []);
             break;
         case 'dashboardTileLinkClick':
-            window.swa.custom1 = {ref: oData.targetHash.substr(1)};
             sap.ushell.Container.getService("UsageAnalytics").logCustomEvent("FLP: Application Launch point", "Tile Group Link", []);
             break;
         default:
@@ -1907,17 +2917,239 @@ jQuery.sap.registerPreloadedModules({
     aObservedLaunchpadActions.forEach(function (item, i, arr) {
         oEventBus.subscribe("launchpad", item, handleAction, that);
     });
-})();
-},
-	"sap/ushell/components/flp/launchpad/DashboardManager.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
-    /*global jQuery, sap, document, $, setTimeout, window */
+
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/DashboardLoadingManager.js":function(){// @copyright@
+
+sap.ui.define(["sap/ui/base/EventProvider", 'sap/ushell/ui/launchpad/TileState'], function(EventProvider, TileState) {
+	"use strict";
+
+    /*global jQuery, sap, document, setTimeout, window */
     /*jslint plusplus: true, nomen: true, bitwise: true */
 
-    jQuery.sap.declare("sap.ushell.components.flp.launchpad.DashboardManager");
-    jQuery.sap.require("sap.ushell.services.Message");
+    var DashboardLoadingManager = EventProvider.extend("sap.ushell.components.flp.launchpad.DashboardLoadingManager", {
+        metadata: {
+            publicMethods: []
+        },
+        constructor: function (sId, mSettings) {
+            var oEventBus = sap.ui.getCore().getEventBus();
+
+            this.currentVisibleTiles = [];
+            this.oBusyIndicatorTiles = {};
+            this.oActiveDynamicTiles = {};
+            this.oResolvedTiles = {};
+            this.oInProgressTiles = {};
+            this.oDashboardManager = mSettings.oDashboardManager;
+
+            oEventBus.subscribe("launchpad", "visibleTilesChanged", this._onVisibilityChanged, this);
+            oEventBus.subscribe("launchpad", "refresTiles", this._refreshTiles, this);
+            oEventBus.subscribe("launchpad", "setTilesNoVisibility", this._setTilesNoVisibility, this);
+            oEventBus.subscribe("launchpad", "onHiddenTab", this._setTilesNoVisibility, this);
+
+        },
+        _onVisibilityChanged: function (sChannelId, sEventId, aVisibleTiles) {
+            this.currentVisibleTiles = aVisibleTiles;
+            if (this.oDashboardManager.isBlindLoading()) {
+                this.manageTilesView();
+            }
+            this.manageBusyIndicatorTiles();
+            this.manageDynamicTiles();
+        },
+        manageDynamicTiles: function () {
+            var oVisObj;
+            jQuery.sap.measure.average("DashboardLoadingManagerActiveDynamicTile", "Manage Active Dynamic Tiles", "FLP_SHELL");
+
+            var launchPageService = sap.ushell.Container.getService("LaunchPage"),
+                oKey,
+                iVisibleTileIndex,
+                oNewActiveDynamicTiles = {},
+                oCloneActiveTiles = jQuery.extend(true, {}, {}, this.oActiveDynamicTiles);
+
+            //handle old dynamic tiles (that not exist in the visible tile that will be handle next in loop
+            for (var index = 0; index < this.currentVisibleTiles.length; index++) {
+                var oVisTile = this.currentVisibleTiles[index];
+                if (!oVisTile.bIsExtanded) {
+                    delete oCloneActiveTiles[oVisTile.oTile.uuid];
+                }
+            }
+
+            for (oKey in oCloneActiveTiles) {
+                var oTile = this.oActiveDynamicTiles[oKey];
+                var tileObject = oTile.object;
+                    launchPageService.setTileVisible(tileObject, false);
+
+            }
+            // handle visible  dynamic tiles
+            for (iVisibleTileIndex = 0; iVisibleTileIndex < this.currentVisibleTiles.length; iVisibleTileIndex++) {
+                oVisObj = this.currentVisibleTiles[iVisibleTileIndex];
+                if (!oVisObj.bIsExtanded) {
+                    oTile = oVisObj.oTile;
+                    //refresh only the tiles that are not part of the active dynamic tiles and handled
+                    var tileObject = oTile.object;
+                    if (this.oActiveDynamicTiles[oTile.uuid] === undefined && tileObject ) {
+                        launchPageService.setTileVisible(tileObject, true);
+                    }
+                    oNewActiveDynamicTiles[oTile.uuid] = oTile;
+                }
+            }
+
+            this.oActiveDynamicTiles = oNewActiveDynamicTiles;
+            jQuery.sap.measure.end("DashboardLoadingManagerActiveDynamicTile");
+
+        },
+        isTileViewRequestIssued: function (oTile) {
+            if (this.oInProgressTiles[oTile.uuid] == undefined && this.oResolvedTiles[oTile.uuid] == undefined) {
+                return false;
+            } else {
+                return true;
+            }
+        },
+        manageBusyIndicatorTiles: function () {
+            jQuery.sap.measure.average("DashboardLoadingManagerBusyIndicators","Manage Busy Indicators on Tiles","FLP_SHELL");
+
+            var iVisibleTileIndex,
+                oCurrentKey,
+                oCurrentTile,
+                oItherBusyIndicatorTile,
+                aRemoveBusyIndicator = [],
+                bIsInVisibleTile,
+                aAddBusyIndecator = [];
+
+            //remove busy indicators.
+            //this.oBusyIndicatorTiles - this.currentVisibleTiles
+            for (oCurrentKey in this.oBusyIndicatorTiles) {
+                bIsInVisibleTile = true;
+                oItherBusyIndicatorTile = this.oBusyIndicatorTiles[oCurrentKey];
+                if (this.oResolvedTiles[oCurrentKey] === undefined) {
+                    for (var i = 0; i < this.currentVisibleTiles.length; i++) {
+                        if (this.currentVisibleTiles[i].oTile.uuid === oItherBusyIndicatorTile.oTile.uuid) {
+                            bIsInVisibleTile = false;
+                            break;
+                        }
+                    }
+
+                    if (bIsInVisibleTile) {
+                        aRemoveBusyIndicator.push(oItherBusyIndicatorTile);
+                    }
+                }
+            }
+
+            //calculate busy indicators.
+            //this.currentVisibleTiles - this.oBusyIndicatorTiles - this.oResolvedTiles
+            for (iVisibleTileIndex = 0; iVisibleTileIndex < this.currentVisibleTiles.length; iVisibleTileIndex++) {
+                oCurrentTile = this.currentVisibleTiles[iVisibleTileIndex];
+                if (this.oBusyIndicatorTiles[oCurrentTile.oTile.uuid] === undefined && this.oResolvedTiles[oCurrentTile.oTile.uuid] === undefined) {
+                    aAddBusyIndecator.push(oCurrentTile);
+                }
+            }
+
+            //manage remove busy indicator.
+            for (iVisibleTileIndex = 0; iVisibleTileIndex < aRemoveBusyIndicator.length; iVisibleTileIndex++) {
+                oCurrentTile = aRemoveBusyIndicator[iVisibleTileIndex];
+                //set tile view to none.
+                if (oCurrentTile.oTile.content[0] && oCurrentTile.oTile.content[0].setState) {
+                    if (oCurrentTile.oTile.content[0].getState) {
+                        if (oCurrentTile.oTile.content[0].getState() !== "Failed") {
+                            oCurrentTile.oTile.content[0].setState();
+                        }
+                    } else {
+                        oCurrentTile.oTile.content[0].setState();
+                    }
+                }
+                //update this.oBusyIndicatorTiles.
+                delete this.oBusyIndicatorTiles[oCurrentTile.oTile.uuid];
+            }
+
+            //manage add busy indicator.
+            for (iVisibleTileIndex = 0; iVisibleTileIndex < aAddBusyIndecator.length; iVisibleTileIndex++) {
+                oCurrentTile = aAddBusyIndecator[iVisibleTileIndex];
+                //set tile view to busy.
+                if (oCurrentTile.oTile.content[0] && oCurrentTile.oTile.content[0].setState) {
+                    if (oCurrentTile.oTile.content[0].getState) {
+                        if (oCurrentTile.oTile.content[0].getState() !== "Failed") {
+                            oCurrentTile.oTile.content[0].setState("Loading");
+                        }
+                    } else {
+                        oCurrentTile.oTile.content[0].setState("Loading");
+                    }
+                }
+                //update this.oBusyIndicatorTiles.
+                this.oBusyIndicatorTiles[oCurrentTile.oTile.uuid] = oCurrentTile;
+            }
+
+            jQuery.sap.measure.end("DashboardLoadingManagerBusyIndicators");
+
+        },
+        setTileInProgress: function (oTile) {
+            this.oInProgressTiles[oTile.uuid] = oTile;
+        },
+        setTileResolved: function (oTile) {
+            delete this.oInProgressTiles[oTile.uuid];
+            this.oResolvedTiles[oTile.uuid] = oTile;
+
+//            var aGroups = this.oDashboardManager.oModel.getProperty("/groups");
+//            this.oDashboardManager.oModel.setProperty("/groups", aGroups);
+
+        },
+        _refreshTiles: function () {
+            var launchPageService = sap.ushell.Container.getService("LaunchPage");
+            for (var iVisibleTileIndex = 0; iVisibleTileIndex < this.currentVisibleTiles.length; iVisibleTileIndex++) {
+                var oTile = this.currentVisibleTiles[iVisibleTileIndex].oTile;
+                var tileObject = oTile.object;
+                if (tileObject) {
+                    launchPageService.setTileVisible(tileObject, true);
+                }
+            };
+        },
+        _setTilesNoVisibility: function () {
+            var launchPageService = sap.ushell.Container.getService("LaunchPage");
+            for (var iVisibleTileIndex = 0; iVisibleTileIndex < this.currentVisibleTiles.length; iVisibleTileIndex++) {
+                var oTile = this.currentVisibleTiles[iVisibleTileIndex].oTile;
+                var tileObject = oTile.object;
+                if (tileObject) {
+                    launchPageService.setTileVisible(tileObject, false);
+                }
+                delete this.oActiveDynamicTiles[oTile.uuid];
+            };
+        },
+        manageTilesView: function () {
+            //aRequestTileView = this.currentVisibleTiles - this.oInProgressTiles - this.oResolvedTiles
+            var iVisibleTileIndex,
+                oCurrentTile,
+                aRequestTileView = [];
+
+            for (iVisibleTileIndex = 0; iVisibleTileIndex < this.currentVisibleTiles.length; iVisibleTileIndex++) {
+                oCurrentTile = this.currentVisibleTiles[iVisibleTileIndex];
+
+                if (this.oInProgressTiles[oCurrentTile.oTile.uuid] == undefined && this.oResolvedTiles[oCurrentTile.oTile.uuid] == undefined) {
+                    aRequestTileView.push(oCurrentTile);
+                }
+            }
+
+            //can insert it to the for that appears just above.
+            for (iVisibleTileIndex = 0; iVisibleTileIndex < aRequestTileView.length; iVisibleTileIndex++) {
+                oCurrentTile = aRequestTileView[iVisibleTileIndex];
+
+                this.oDashboardManager.getTileView(oCurrentTile.oTile, oCurrentTile.iGroup);
+            }
+        }
+    });
+
+
+	return DashboardLoadingManager;
+
+});
+},
+	"sap/ushell/components/flp/launchpad/DashboardManager.js":function(){// ${copyright}
+
+sap.ui.define(['sap/ushell/services/Message', 'sap/ui/base/EventProvider', 'sap/ushell/ui/launchpad/TileState', "sap/ushell/components/flp/launchpad/PagingManager", "sap/ushell/components/flp/launchpad/DashboardLoadingManager"],
+	function(Message, EventProvider, TileState, PagingManager, DashboardLoadingManager) {
+	"use strict";
+
+    /*global jQuery, sap, document, $, setTimeout, window */
+    /*jslint plusplus: true, nomen: true, bitwise: true */
 
     /**
      * Return translated text. Private function in this module.
@@ -1928,26 +3160,10 @@ jQuery.sap.registerPreloadedModules({
      */
     var getLocalizedText = function (sMsgId, aParams) {
             return aParams ? sap.ushell.resources.i18n.getText(sMsgId, aParams) : sap.ushell.resources.i18n.getText(sMsgId);
-        },
-
-        /**
-         * This function returns the number of tiles which are supported on the current device in the current catalog.
-         * The catalog is identified by its title, so if several catalogs exists with the same title -
-         * the returned value is the number of the intent-supported-tiles in all of them.
-         * @param oCatalogModel
-         * @returns {Number}
-         * @private
-         */
-        getNumIntentSupportedTiles = function (oCatalogModel) {
-            var aCatalogTiles = this.oModel.getProperty('/catalogTiles'),
-                aCurrentCatalogSupportedTiles = aCatalogTiles.filter(function (oTile) {
-                    return oTile.catalog === oCatalogModel.title && oTile.isTileIntentSupported === true;
-                });
-
-            return aCurrentCatalogSupportedTiles.length;
         };
 
-    sap.ui.base.EventProvider.extend("sap.ushell.components.flp.launchpad.DashboardManager", {
+
+    var DashboardManager = EventProvider.extend("sap.ushell.components.flp.launchpad.DashboardManager", {
         metadata: {
             publicMethods: ["getModel", "getDashboardView", "loadPersonalizedGroups", "attachEvent", "detachEvent", "attachEventOnce", "createTile", "deleteCatalogTileFromGroup", "resetGroupsOnFailure", "createGroupAndSaveTile"]
         },
@@ -1974,19 +3190,27 @@ jQuery.sap.registerPreloadedModules({
             this.oSortableDeferred = $.Deferred();
             this.oSortableDeferred.resolve();
             this.aRequestQueue = [];
+            this.aPendingCatalogQueue = [];
             this.bRequestRunning = false;
             this.tagsPool = [];
+            this.skippedProcessCatalogs = 0;
             this.registerEvents();
             this.oTileCatalogToGroupsMap = {};
+            this.iTabSelected = 0;
             this.tileViewUpdateQueue = [];
             this.tileViewUpdateTimeoutID = 0;
+            this.oSegmentedTabTileViewDB = {};
             this.oPopover = null;
             this.tileUuid = null;
-            // For synchronization between group creation and moving a tile (to the new group)
-            this.oGroupCreatedDeferred = undefined;
-            this.aMoveTileCallsData = undefined;
             this.segmentsStore = [];
+            this.bIsFirstSegment = true;
+            this.iMinNumOfTilesForBlindLoading = this.oModel.getProperty("/OptimizeTileLoadingThreshold") || 100;
+            this.bIsScorllModeAccordingKPI = false;
             this.oGroupNotLockedFilter = new sap.ui.model.Filter("isGroupLocked", sap.ui.model.FilterOperator.EQ, false);
+            this.bLinkPersonalizationSupported = this.oPageBuilderService.isLinkPersonalizationSupported();
+            this.oDashboardLoadingManager = new DashboardLoadingManager("loadingManager", {
+                oDashboardManager: this
+            });
             //get 'home' view from the router
             if (this.oRouter) {
                 var oTarget = this.oRouter.getTarget('home');
@@ -1994,62 +3218,110 @@ jQuery.sap.registerPreloadedModules({
                     this.oDashboardView = oEvent.getParameter('view');
                 }.bind(this));
             }
+
+            this.oModel.bindProperty("/tileActionModeActive").attachChange(this._changeLinksScope.bind(this));
         },
 
-        createMoveActionDialog: function () {
-            var oGroupFilter = this.oGroupNotLockedFilter;
+        isBlindLoading : function () {
+            var homePageGroupDisplay = this.oModel.getProperty("/homePageGroupDisplay");
+            var bIsScorllMode = (homePageGroupDisplay === undefined || homePageGroupDisplay === "scroll") && this.bIsScorllModeAccordingKPI;
+            jQuery.sap.log.info("isBlindLoading reason IsScorllModeAccordingKPI and IsScorllMode: " + bIsScorllMode);
+            this.oModel.getProperty("/tileActionModeActive") !=undefined ? jQuery.sap.log.info("isBlindLoading reason TileActionModeActive : " + this.oModel.getProperty("/tileActionModeActive")):"";
+            return this.oModel.getProperty("/tileActionModeActive") || bIsScorllMode ;
+        },
 
-            this.moveDialog = new sap.m.SelectDialog("moveDialog", {
-                title: sap.ushell.resources.i18n.getText('moveTileDialog_title'),
-                rememberSelections: false,
-                search: function (oEvent) {
-                    var sValue = oEvent.getParameter("value"),
-                        oFilter = new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, sValue),
-                        oBinding = oEvent.getSource().getBinding("items");
-                    oBinding.filter([oFilter, oGroupFilter]);
-                },
-                contentWidth: '400px',
-                confirm: function (oEvent) {
-                    var aContexts = oEvent.getParameter("selectedContexts"),
-                        oEventBus = sap.ui.getCore().getEventBus();
-                    if (aContexts.length) {
-                        oEventBus.publish("launchpad", "moveTile", {
-                            sTileId: this.tileUuid,
-                            toGroupId: aContexts[0].getObject().groupId,
-                            toIndex: aContexts[0].getObject().tiles.length,
-                            source: this.moveDialog.getId()
-                        });
+        createMoveActionDialog: function (sId) {
+            var oGroupFilter = this.oGroupNotLockedFilter,
+                oMoveDialog = new sap.m.SelectDialog(sId, {
+                    title: sap.ushell.resources.i18n.getText('moveTileDialog_title'),
+                    rememberSelections: false,
+                    search: function (oEvent) {
+                        var sValue = oEvent.getParameter("value"),
+                            oFilter = new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, sValue),
+                            oBinding = oEvent.getSource().getBinding("items");
+                        oBinding.filter([oFilter, oGroupFilter]);
+                    },
+                    contentWidth: '400px',
+                    contentHeight:"auto",
+                    confirm: function (oEvent) {
+                        var aContexts = oEvent.getParameter("selectedContexts");
+                        this.publishMoveActionEvents(oEvent, aContexts, "move" + this.tileType);
 
-                        oEventBus.publish("launchpad", "scrollToGroup", {
-                            groupId: aContexts[0].getObject().groupId,
-                            groupChanged: false,
-                            focus: false
-                        });
-
+                    }.bind(this),
+                    cancel: function () {
+                        var oCurrentlyFocusedTile = jQuery('.sapUshellTile[tabindex="0"]')[0];
+                        if (oCurrentlyFocusedTile) {
+                            oCurrentlyFocusedTile.focus();
+                        }
+                    },
+                    items: {
+                        path: "/groups",
+                        filters: [oGroupFilter],
+                        template: new sap.m.StandardListItem({
+                            title: "{title}"
+                        })
                     }
-                }.bind(this),
-                cancel: function () {
-                    var oCurrentlyFocusedTile = jQuery('.sapUshellTile[tabindex="0"]')[0];
-                    if (oCurrentlyFocusedTile) {
-                        oCurrentlyFocusedTile.focus();
+                });
+            return oMoveDialog;
+        },
+
+        publishMoveActionEvents: function (oEvent, aContexts, sMoveAction) {
+            var oEventBus = sap.ui.getCore().getEventBus();
+            if (aContexts.length) {
+              var stileType = this.tileType === "link" ? "links" : "tiles";
+                oEventBus.publish("launchpad", sMoveAction, {
+                    sTileId: this.tileUuid,
+                    sToItems: stileType,
+                    sFromItems: stileType,
+                    sTileType: stileType,
+                    toGroupId: aContexts[0].getObject().groupId,
+                    toIndex: aContexts[0].getObject()[this.tileType === "link" ? "links" : "tiles"].length,
+                    source: oEvent.getSource().getId()
+                });
+
+
+                oEventBus.publish("launchpad", "scrollToGroup", {
+                    groupId: aContexts[0].getObject().groupId,
+                    groupChanged: false,
+                    focus: false
+                });
+
+            }
+        },
+
+        _changeLinksScope: function (oEvent) {
+            var that = this;
+            if (this.bLinkPersonalizationSupported) {
+                var bIsTileActionModeActive = oEvent.getSource().getValue();
+                this.oModel.getProperty("/groups").forEach(function (oGroup, index) {
+                    if (!oGroup.isGroupLocked) {
+                        that._changeGroupLinksScope(oGroup, bIsTileActionModeActive ? 'Actions' : 'Display');
                     }
-                },
-                items: {
-                    path: "/groups",
-                    filters: [oGroupFilter],
-                    template: new sap.m.StandardListItem({
-                        title: "{title}"
-                    })
-                }
+                });
+            }
+        },
+
+        _changeGroupLinksScope: function (oGroup, scope) {
+            var that = this;
+
+            oGroup.links.forEach(function (oLink, index) {
+                that._changeLinkScope(oLink.content[0], scope);
             });
+        },
 
-            this.moveDialog.setModel(this.oModel);
+        _changeLinkScope: function (oLink, scope) {
+            var oLinkView = oLink.getScope ? oLink : oLink.getContent()[0];//hack for demo content
+
+            //if LinkPersonalization is supported by platform, then the link must support personalization
+            if (this.bLinkPersonalizationSupported && oLinkView.setScope) {
+                oLinkView.setScope(scope);
+            }
         },
 
         registerEvents: function () {
-            var oEventBus = sap.ui.getCore().getEventBus(),
-                that = this;
+            var oEventBus = sap.ui.getCore().getEventBus();
             oEventBus.subscribe("launchpad", "addBookmarkTile", this._createBookmark, this);
+            oEventBus.subscribe("launchpad", "tabSelected", this.getSegmentTabContentViews, this);
             oEventBus.subscribe("sap.ushell.services.Bookmark", "bookmarkTileAdded", this._addBookmarkToModel, this);
             oEventBus.subscribe("sap.ushell.services.Bookmark", "catalogTileAdded", this._refreshGroupInModel, this);
             oEventBus.subscribe("sap.ushell.services.Bookmark", "bookmarkTileDeleted", this.loadPersonalizedGroups, this);
@@ -2061,38 +3333,89 @@ jQuery.sap.registerPreloadedModules({
             oEventBus.subscribe("launchpad", "changeGroupTitle", this._changeGroupTitle, this);
             oEventBus.subscribe("launchpad", "moveGroup", this._moveGroup, this);
             oEventBus.subscribe("launchpad", "deleteTile", this._deleteTile, this);
-            oEventBus.subscribe("launchpad", "moveTile", this._moveTile, this);
+            oEventBus.subscribe("launchpad", "movetile", this._moveTile, this);
+            oEventBus.subscribe("launchpad", "movelink", this._moveLink, this);
             oEventBus.subscribe("launchpad", "sortableStart", this._sortableStart, this);
             oEventBus.subscribe("launchpad", "sortableStop", this._sortableStop, this);
             oEventBus.subscribe("renderCatalog", this.loadAllCatalogs, this);
             oEventBus.subscribe("showCatalog", this.updateTilesAssociation, this);
             oEventBus.subscribe("launchpad", "dashboardModelContentLoaded", this._modelLoaded, this);
+            oEventBus.subscribe("launchpad", "convertTile", this._convertTile, this);
 
             //add Remove action for all tiles
-            this.oPageBuilderService.registerTileActionsProvider(function (oTile) {
+            this.oPageBuilderService.registerTileActionsProvider(this._addFLPActionsToTile.bind(this));
+        },
 
-//  This check had been removed, as in the ActionMode._openActionsMenu we have a check if the related group is a locked group
-//  then we do not show any action. This is the current bahviour as the Action of Tile-Settings is added by the tiles themselves
-//  (Dynamin/StaticTile.controller.doInit) and they are not aware of the group being locked, so we do the check in one central place.
-//
-//                var oModelTile = that.getModelTileById(that.oPageBuilderService.getTileId(oTile));
-//                if (oModelTile.isLocked) {
-//                    return;
-//                }
+        _addFLPActionsToTile: function (oTile) {
+            var bLinkPersonalizationSupportedForTile = this.bLinkPersonalizationSupported && this.oPageBuilderService.isLinkPersonalizationSupported(oTile),
+                aActions = [];
 
-                jQuery.sap.require("sap.m.MessageBox");
-                return [{
-                    text: sap.ushell.resources.i18n.getText('moveTileDialog_action'),
-                    press: function (oEvent) {
-                        that.tileUuid = that.getModelTileById(that.oPageBuilderService.getTileId(oTile)).uuid;
-                        if (!that.moveDialog) {
-                            that.createMoveActionDialog();
+            aActions.push(this._getMoveTileAction(oTile));
+
+            if (bLinkPersonalizationSupportedForTile) {
+                aActions.push(this._getConvertTileAction(oTile));
+            }
+
+            return aActions;
+        },
+
+        _getConvertTileAction: function (oTile) {
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                that = this,
+                sTileType = that.oPageBuilderService.getTileType(oTile);
+            return {
+                //Convert Tile action
+                text: sTileType === 'link' ? sap.ushell.resources.i18n.getText('ConvertToTile') : sap.ushell.resources.i18n.getText('ConvertToLink'), //TODO: verify strings with Michael
+                press: function (oSourceTile) {
+                    oEventBus.publish("launchpad", "convertTile", oSourceTile);
+                }
+            };
+        },
+
+        _getMoveTileAction: function (oTile) {
+            var that = this;
+            return {
+                //Move Tile action
+                text: sap.ushell.resources.i18n.getText('moveTileDialog_action'),
+                press: function () {
+                    that.tileType = that.oPageBuilderService.getTileType(oTile);
+                    that.tileUuid = that.getModelTileById(that.oPageBuilderService.getTileId(oTile), that.tileType === "link" ? "links" : "tiles").uuid;
+                    var oMoveDialog =  that.tileType === "tile" ? that.moveTileDialog : that.moveLinkDialog;
+                    if (that.tileType === "tile" || (that.tileType === "link")) {
+                        if (!oMoveDialog) {
+                            oMoveDialog = that.createMoveActionDialog("move" + that.tileType + "Dialog");
+                            oMoveDialog.setModel(that.oModel);
+                            if (that.tileType === "tile") {
+                                that.moveTileDialog = oMoveDialog;
+                            } else {
+                                that.moveLinkDialog = oMoveDialog;
+                            }
+                        } else {
+                            oMoveDialog.getBinding("items").filter([that.oGroupNotLockedFilter]);
                         }
-                        that.moveDialog.getBinding("items").filter([that.oGroupNotLockedFilter]);
-                        that.moveDialog.open();
-                    }
-                }];
-            });
+                        oMoveDialog.open();
+                     }
+                }
+            };
+        },
+
+        _handleTileAppearanceAnimation: function (oSourceTile) {
+            if (!oSourceTile) {
+               return;
+            }
+            var pfx = ["webkit", ""];
+            function PrefixedEvent(element, type) {
+                for (var i = 0; i < pfx.length; i++) {
+                    type = type.toLowerCase();
+                    oSourceTile.attachBrowserEvent(pfx[i]+type, function (oEvent) {
+                        if (oEvent.originalEvent && oEvent.originalEvent.animationName === "sapUshellTileEntranceAnimation") {
+                            oSourceTile.removeStyleClass("sapUshellTileEntrance")
+                        }
+                    }, false);
+                }
+            }
+            PrefixedEvent(oSourceTile, "AnimationEnd");
+            oSourceTile.addStyleClass("sapUshellTileEntrance");
         },
 
         destroy: function () {
@@ -2106,7 +3429,8 @@ jQuery.sap.registerPreloadedModules({
             oEventBus.unsubscribe("launchpad", "changeGroupTitle", this._changeGroupTitle, this);
             oEventBus.unsubscribe("launchpad", "moveGroup", this._moveGroup, this);
             oEventBus.unsubscribe("launchpad", "deleteTile", this._deleteTile, this);
-            oEventBus.unsubscribe("launchpad", "moveTile", this._moveTile, this);
+            oEventBus.unsubscribe("launchpad", "movetile", this._moveTile, this);
+            oEventBus.unsubscribe("launchpad", "movelink", this._moveLink, this);
             oEventBus.unsubscribe("launchpad", "sortableStart", this._sortableStart, this);
             oEventBus.unsubscribe("launchpad", "sortableStop", this._sortableStop, this);
             oEventBus.unsubscribe("renderCatalog", this.loadAllCatalogs, this);
@@ -2164,8 +3488,8 @@ jQuery.sap.registerPreloadedModules({
         /**
          * Add a bookmark to a dashboard group.
          * If no group is specified then the bookmark is added to th edefault group.
-         * This function will be called also if an application used the bookmark service directly to add a bookmark. 
-         * the bookmark service publishes an event so that we will be able to update the model. 
+         * This function will be called also if an application used the bookmark service directly to add a bookmark.
+         * the bookmark service publishes an event so that we will be able to update the model.
          * This method doesn't display a success toast since the application should show success or failure messages
          */
         _addBookmarkToModel: function (sChannelId, sEventId, oData) {
@@ -2205,6 +3529,7 @@ jQuery.sap.registerPreloadedModules({
             srvc = this.oPageBuilderService;
             sTileType = srvc.getTileType(oTile);
             newTile = this._getTileModel(oTile, srvc.isGroupLocked(oGroup), sTileType, this._addModelToTileViewUpdateQueue);
+            this.getTileView(newTile);
             indexOfGroup = this._getIndexOfGroupByObject(oGroup);
             targetGroup = this.oModel.getProperty("/groups/" + indexOfGroup);
 
@@ -2339,12 +3664,13 @@ jQuery.sap.registerPreloadedModules({
             var nGroupIndex = null,
                 aGroups = this.oModel.getProperty("/groups"),
                 sGroupId = this.oPageBuilderService.getGroupId(oGroup);
-            aGroups.forEach(function (oModelGroup, nIndex) {
+            aGroups.every(function (oModelGroup, nIndex) {
                 var sCurrentGroupId = this.oPageBuilderService.getGroupId(oModelGroup.object);
                 if (sCurrentGroupId === sGroupId) {
                     nGroupIndex = nIndex;
                     return false;
                 }
+                return true;
             }.bind(this));
             return nGroupIndex;
         },
@@ -2356,23 +3682,31 @@ jQuery.sap.registerPreloadedModules({
         _getPathOfTile: function (sTileId) {
             var aGroups = this.oModel.getProperty("/groups"),
                 nResGroupIndex = null,
-                nResTileIndex = null;
-
-            jQuery.each(aGroups, function (nGroupIndex, oGroup) {
-                jQuery.each(oGroup.tiles, function (nTileIndex, oTile) {
+                nResTileIndex = null,
+                sType,
+                fnEqual = function (nTileIndex, oTile) {
                     if (oTile.uuid === sTileId) {
-                        nResGroupIndex = nGroupIndex;
                         nResTileIndex = nTileIndex;
                         return false;
                     }
-                });
+                }
 
-                if (nResGroupIndex !== null) {
+            jQuery.each(aGroups, function (nGroupIndex, oGroup) {
+                jQuery.each(oGroup.tiles, fnEqual);
+                if (nResTileIndex !== null) {
+                    nResGroupIndex = nGroupIndex;
+                    sType = "tiles";
+                    return false;
+                }
+                jQuery.each(oGroup.links, fnEqual);
+                if (nResTileIndex !== null) {
+                    nResGroupIndex = nGroupIndex;
+                    sType = "links";
                     return false;
                 }
             });
 
-            return nResGroupIndex !== null ? "/groups/" + nResGroupIndex + "/tiles/" + nResTileIndex : null;
+            return nResGroupIndex !== null ? "/groups/" + nResGroupIndex + "/" + sType + "/" + nResTileIndex : null;
         },
 
         // see http://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another
@@ -2490,8 +3824,15 @@ jQuery.sap.registerPreloadedModules({
                     this.oModel.setProperty("/groups/" + nGroupIndex + "/sortable", true);
 
                     oGroupControl = sap.ui.getCore().byId('dashboardGroups').getGroupControlByGroupId(sGroupId);
+
+                    if (oGroupControl.getBindingContext().getObject().links && oGroupControl.getBindingContext().getObject().links.length && !oGroupControl.getIsGroupLocked()) {
+                        this._changeGroupLinksScope(oGroupControl.getBindingContext().getObject(), this.oModel.getProperty("/tileActionModeActive") ? sap.m.GenericTileScope.Actions : sap.m.GenericTileScope.Display);
+                    }
+
                     if (oGroupControl) {
                         oGroupControl.rerender();
+                        this.updateTilesAssociation();
+                        sap.ushell.utils.handleTilesVisibility();
                     }
 
                 }, this, sGroupId, oGroup)));
@@ -2669,20 +4010,18 @@ jQuery.sap.registerPreloadedModules({
                 // Add the group in the backend.
                 this._addRequest($.proxy(function () {
                     try {
-                        this.oGroupCreatedDeferred = new jQuery.Deferred();
-
                         if (nGroupIndex === aGroups.length - 1) {
                             oResultPromise = this.oPageBuilderService.addGroup(sNewTitle, nGroupIndex);
-
                             oResultPromise.done(this._handleAfterSortable($.proxy(function (sGroupId, oNewGroup) {
-                                nGroupIndex = this._getIndexOfGroup(sGroupId);
-                                this._createGroupUpdate(sGroupId, nGroupIndex, oNewGroup);
+                                var nGroupIndex = this._getIndexOfGroup(sGroupId);
+                                this._loadGroup(nGroupIndex, oNewGroup);
                                 sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
                                     that.analyticsConstants.PERSONALIZATION,
                                     that.analyticsConstants.RENAME_GROUP,
                                     [sOldTitle, sNewTitle, sGroupId]
                                 );
                             }, this, sGroupId)));
+
                             oResultPromise.fail(this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_create_group_msg")));
                             oResultPromise.always($.proxy(this._checkRequestQueue, this));
                         } else {
@@ -2691,14 +4030,15 @@ jQuery.sap.registerPreloadedModules({
                                 oResultPromise = this.oPageBuilderService.addGroupAt(sNewTitle, nGroupOrgIndex);
 
                                 oResultPromise.done(this._handleAfterSortable($.proxy(function (sGroupId, oNewGroup) {
-                                    nGroupIndex = this._getIndexOfGroup(sGroupId);
-                                    this._createGroupUpdate(sGroupId, nGroupIndex, oNewGroup);
+                                    var nGroupIndex = this._getIndexOfGroup(sGroupId);
+                                    this._loadGroup(nGroupIndex, oNewGroup);
                                     sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
                                         that.analyticsConstants.PERSONALIZATION,
                                         that.analyticsConstants.RENAME_GROUP,
                                         [sOldTitle, sNewTitle, sGroupId]
                                     );
                                 }, this, sGroupId)));
+
                                 oResultPromise.fail(this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_create_group_msg")));
                                 oResultPromise.always($.proxy(this._checkRequestQueue, this));
                             }.bind(this));
@@ -2734,17 +4074,10 @@ jQuery.sap.registerPreloadedModules({
                         this.oModel.setProperty(sGroupPath + "/title", sOldTitle);
                         this._requestFailed();
                     }, this, sGroupId)));
-                }, this));
-                if (oResultPromise) {
-                    oResultPromise.always($.proxy(this._checkRequestQueue, this));
-                }
-            }
-        },
 
-        _createGroupUpdate : function (sGroupId, nGroupIndex, oNewGroup) {
-            nGroupIndex = this._getIndexOfGroup(sGroupId);
-            this._loadGroup(nGroupIndex, oNewGroup);
-            this.oGroupCreatedDeferred.resolve();
+                    oResultPromise.always($.proxy(this._checkRequestQueue, this));
+                }, this));
+            }
         },
 
         createTile: function (oData) {
@@ -2758,7 +4091,6 @@ jQuery.sap.registerPreloadedModules({
                 oBus;
 
             //publish event for UserActivityLog
-            oBus = sap.ui.getCore().getEventBus();
             oBus = sap.ui.getCore().getEventBus();
             $.proxy(oBus.publish, oBus, "launchpad", "addTile", {
                 catalogTileContext: oCatalogTileContext,
@@ -2808,24 +4140,15 @@ jQuery.sap.registerPreloadedModules({
         },
 
         createGroup: function (title) {
-            var deferred = jQuery.Deferred(),
-                oGroup,
-                aGroups,
-                sGroupId,
-                index,
-                oResultPromise,
-                nGroupIndex,
-                oContext,
-                oResponseData;
-
+            var deferred = jQuery.Deferred();
             if (!sap.ushell.utils.validHash(title)) {
                 return deferred.reject({status: 0, action: 'createNewGroup'});
             }
 
-            oGroup = this._getGroupModel(null, false, true);
-            aGroups = this.oModel.getProperty("/groups");
-            sGroupId = oGroup.groupId;
-            index = aGroups.length;
+            var oGroup = this._getGroupModel(null, false, true);
+            var aGroups = this.oModel.getProperty("/groups");
+            var sGroupId = oGroup.groupId;
+            var index = aGroups.length;
             if (index > 0) {
                 aGroups[index - 1].isLastGroup = false;
             }
@@ -2838,22 +4161,22 @@ jQuery.sap.registerPreloadedModules({
             // Create new group
             this._addRequest(function (title) {
                 try {
-                    oResultPromise = this.oPageBuilderService.addGroup(title);
+                    var oResultPromise = this.oPageBuilderService.addGroup(title);
                 } catch (err) {
                     this._resetGroupsOnFailure("fail_to_create_group_msg");
                     return;
                 }
 
                 oResultPromise.done(this._handleAfterSortable(function (sGroupId, oNewGroup) {
-                    nGroupIndex = this._getIndexOfGroup(sGroupId);
+                    var nGroupIndex = this._getIndexOfGroup(sGroupId);
                     this._loadGroup(nGroupIndex, oNewGroup);
-                    oContext = new sap.ui.model.Context(this.oModel, "/groups/" + nGroupIndex);
+                    var oContext = new sap.ui.model.Context(this.oModel, "/groups/" + nGroupIndex);
                     deferred.resolve(oContext);
                 }.bind(this, sGroupId)));
 
                 oResultPromise.fail(function (data) {
                     this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_create_group_msg"));
-                    oResponseData = {group: data.group, status: 0, action: 'createNewGroup'}; // 0 - failure
+                    var oResponseData = {group: data.group, status: 0, action: 'createNewGroup'}; // 0 - failure
                     deferred.resolve(oResponseData); // 0 - failure
                 }.bind(this));
 
@@ -2897,15 +4220,16 @@ jQuery.sap.registerPreloadedModules({
         _deleteTile: function (sChannelId, sEventId, oData) {
             var that = this,
                 sTileId = oData.tileId || oData.originalTileId,
-                aGroups = this.oModel.getProperty("/groups");
+                aGroups = this.oModel.getProperty("/groups"),
+                sItems = oData.items || 'tiles';
 
             jQuery.each(aGroups, function (nGroupIndex, oGroup) {
                 var bFoundFlag = false;
-                jQuery.each(oGroup.tiles, function (nTileIndex, oTmpTile) {
+                jQuery.each(oGroup[sItems], function (nTileIndex, oTmpTile) {
                     if (oTmpTile.uuid === sTileId || oTmpTile.originalTileId === sTileId) {
                         // Remove tile from group.
-                        that._destroyTileModel("/groups/" + nGroupIndex + "/tiles/" + nTileIndex);
-                        var oTile = oGroup.tiles.splice(nTileIndex, 1)[0],
+                        that._destroyTileModel("/groups/" + nGroupIndex + "/" + sItems + "/" + nTileIndex);
+                        var oTile = oGroup[sItems].splice(nTileIndex, 1)[0],
                             oResultPromise,
                             sTileName = sap.ushell.Container.getService("LaunchPage").getTileTitle(oTile.object),
                             sCatalogTileId = sap.ushell.Container.getService("LaunchPage").getCatalogTileId(oTile.object),
@@ -2925,11 +4249,7 @@ jQuery.sap.registerPreloadedModules({
 
                             oResultPromise.done(that._handleAfterSortable(function () {
 
-                                if (sTileName) {
-                                    that._showLocalizedMessage("tile_deleted_msg", [sTileName, oGroup.title]);
-                                } else {
-                                    that._showLocalizedMessage("tile_deleted_msg", [sTileName, oGroup.title]);
-                                }
+                                that._showLocalizedMessage("tile_deleted_msg", [sTileName, oGroup.title]);
                                 sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
                                     that.analyticsConstants.PERSONALIZATION,
                                     that.analyticsConstants.DELETE_TILE,
@@ -3014,191 +4334,60 @@ jQuery.sap.registerPreloadedModules({
 
             // Wait for all of the delete requests before resolving the deferred
             jQuery.when.apply(jQuery, aDeleteTilePromises).
-                done(
-                    function (result) {
-                        var bSuccess = true,
-                            index = 0,
-                            promisesLength = aDeleteTilePromises.length;
+            done(
+                function (result) {
+                    var bSuccess = true,
+                        index = 0,
+                        promisesLength = aDeleteTilePromises.length;
 
-                        // Check if at least one deleteTilePromises has failure status
-                        for (index; index < promisesLength; index++) {
-                            if (!result.status) {
-                                bSuccess = false;
-                                break;
-                            }
+                    // Check if at least one deleteTilePromises has failure status
+                    for (index; index < promisesLength; index++) {
+                        if (!result.status) {
+                            bSuccess = false;
+                            break;
                         }
-                        if (bSuccess) {
-                            // that.oModel.setProperty("/groups/" + iGroupIndex + "/tiles/", oGroup.tiles);
-                            that.oModel.setProperty("/groups/" + iGroupIndex, oGroup);
-                        }
-                        deferred.resolve({group: oGroup, status: bSuccess, action: 'remove'});
                     }
-                );
+                    if (bSuccess) {
+                        // that.oModel.setProperty("/groups/" + iGroupIndex + "/tiles/", oGroup.tiles);
+                        that.oModel.setProperty("/groups/" + iGroupIndex, oGroup);
+                    }
+                    deferred.resolve({group: oGroup, status: bSuccess, action: 'remove'});
+                }
+            );
             return deferred.promise();
         },
-
-        /*
-         * oData should have the following parameters:
-         * fromGroupId
-         * toGroupId
-         * fromIndex
-         * toIndex can be null => append as last tile in group
-         */
-        _moveTile : function (sChannelId, sEventId, oData) {
-            var nNewIndex = oData.toIndex,
-                sNewGroupId = oData.toGroupId,
-                sTileId = oData.sTileId,
-                sSource = oData.source,
-                oTile,
-                nTileIndex,
-                oOldGroup,
-                nOldGroupIndex,
-                oNewGroup,
-                nNewGroupIndex,
-                aGroups = this.oModel.getProperty("/groups"),
-                oSourceGroup,
-                oTargetGroup,
-                personalization,
-                index,
-                oMoveTileTempObj;
-
-            jQuery.each(aGroups, function (nTmpGroupIndex, oTmpGroup) {
-                var bFoundFlag = false;
-                jQuery.each(oTmpGroup.tiles, function (nTmpTileIndex, oTmpTile) {
-                    if (oTmpTile.uuid === sTileId) {
-                        oTile = oTmpTile;
-                        nTileIndex = nTmpTileIndex;
-                        oOldGroup = oTmpGroup;
-                        nOldGroupIndex = nTmpGroupIndex;
-                        bFoundFlag = true;
-                        return false;
-                    }
-                });
-                if (bFoundFlag) {
-                    return false;
-                }
-            });
-            jQuery.each(aGroups, function (nTmpGroupIndex, oTmpGroup) {
-                if (oTmpGroup.groupId === sNewGroupId) {
-                    oNewGroup = oTmpGroup;
-                    nNewGroupIndex = nTmpGroupIndex;
-                }
-            });
-
-            //When moving a tile to the group it is already in using the move dialog, there is no change
-            if (oOldGroup.groupId == oNewGroup.groupId && (sSource === "moveDialog" || nNewIndex === null)) {
-                return;
-            }
-
-            // When a tile is dragged into an empty group, the Plus-Tiles in the empty list cause
-            // the new index to be off by one, i.e. 1 instead of 0, which causes an error.
-            // This is a generic check which sanitizes the values if necessary.
-            if (nNewIndex && nNewIndex > oNewGroup.tiles.length) {
-                nNewIndex = oNewGroup.tiles.length;
-            }
-
-            if (oOldGroup.groupId === sNewGroupId) {
-                if (nNewIndex === null || nNewIndex === undefined) {
-                    // moved over group list to same group
-                    oOldGroup.tiles.splice(nTileIndex, 1);
-                    // Tile is appended. Set index accordingly.
-                    nNewIndex = oOldGroup.tiles.length;
-                    // append as last item
-                    oOldGroup.tiles.push(oTile);
-                } else {
-                    nNewIndex = this._adjustTileIndex(nNewIndex, oTile, oOldGroup);
-                    this._moveInArray(oOldGroup.tiles, nTileIndex, nNewIndex);
-                }
-
-                this.oModel.setProperty("/groups/" + nOldGroupIndex + "/tiles", oOldGroup.tiles);
-            } else {
-                // remove from old group
-                personalization = this.oModel.getProperty("/personalization");
-                oOldGroup.tiles.splice(nTileIndex, 1);
-                oOldGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oOldGroup, personalization);
-                this.oModel.setProperty("/groups/" + nOldGroupIndex + "/tiles", oOldGroup.tiles);
-
-                // add to new group
-                if (nNewIndex === null || nNewIndex === undefined) {
-                    // Tile is appended. Set index accordingly.
-                    nNewIndex = oNewGroup.tiles.length;
-                    // append as last item
-                    oNewGroup.tiles.push(oTile);
-                } else {
-                    nNewIndex = this._adjustTileIndex(nNewIndex, oTile, oNewGroup);
-                    oNewGroup.tiles.splice(nNewIndex, 0, oTile);
-                }
-                oNewGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oNewGroup, personalization);
-                this.oModel.setProperty("/groups/" + nNewGroupIndex + "/tiles", oNewGroup.tiles);
-            }
-
-            // Re-calculate the visibility of the Tiles
-            sap.ushell.utils.handleTilesVisibility();
-
-            // change in backend
-            oSourceGroup = this.oModel.getProperty("/groups/" + nOldGroupIndex).object;
-            oTargetGroup = this.oModel.getProperty("/groups/" + nNewGroupIndex).object;
-
-            // If the tile is moved immidiately after a new group was created - then the group object from the beckand might not arrived yet,
-            // in this case oTargetGroup is undefined, so we would like to wait until the process of group creation is completed
-            if (!oTargetGroup && this.oGroupCreatedDeferred && this.oGroupCreatedDeferred.state() === "pending") {
-
-                if (this.aMoveTileCallsData === undefined) {
-                    this.aMoveTileCallsData = [];
-                }
-                // Add the moveTile request to the requests array
-                this.aMoveTileCallsData.push({
-                    sTileId : sTileId,
-                    oTile : oTile,
-                    nTileIndex : nTileIndex,
-                    nNNewIndex : nNewIndex,
-                    oSourceGroup : oSourceGroup,
-                    nNewGroupIndex : nNewGroupIndex
-                });
-
-                if (this.aMoveTileCallsData.length > 1) {
-                    return;
-                }
-
-                // The new group was successfully created: target group object (oTargetGroup) is now available,
-                // and this._moveTileRequest is called for each moveTile request that was kept in aMoveTileCallsData
-                this.oGroupCreatedDeferred.promise().done(function () {
-                    if (this.aMoveTileCallsData !== undefined && this.aMoveTileCallsData.length > 0) {
-                        oTargetGroup = this.oModel.getProperty("/groups/" + nNewGroupIndex).object;
-
-                        // For each movetile request in the array - issue a call _moveTileRequest
-                        for (index = 0; index < this.aMoveTileCallsData.length; index++) {
-                            oMoveTileTempObj = this.aMoveTileCallsData[index];
-                            this._moveTileRequest(
-                                oMoveTileTempObj.sTileId,
-                                oMoveTileTempObj.oTile,
-                                oMoveTileTempObj.nTileIndex,
-                                oMoveTileTempObj.nNewIndex,
-                                oMoveTileTempObj.oSourceGroup,
-                                oMoveTileTempObj.nNewGroupIndex,
-                                oTargetGroup,
-                                true
-                            );
-                        }
-                        this.aMoveTileCallsData = undefined;
-                        this.oGroupCreatedDeferred = undefined;
-                    }
-                }.bind(this));
-            } else {
-                this._moveTileRequest(sTileId, oTile, nTileIndex, nNewIndex, oSourceGroup, nNewGroupIndex, oTargetGroup, false);
+        _getGroupIndex: function (sId) {
+            var aGroups = this.oModel.getProperty("/groups"),
+                oGroupInfo = this._getNewGroupInfo(aGroups, sId);
+            if (oGroupInfo) {
+                return oGroupInfo.newGroupIndex;
             }
         },
+        _convertTile: function (sChannelId, sEventId, oData) {
+            var oSourceTile = oData.tile ? oData.tile : oData,//temp solution - i should change all calls for convert to support oData obj
+                nGroupIndex = oData.srcGroupId ? this._getGroupIndex(oData.srcGroupId) : undefined,
+                oGroup = oData.srcGroupId ? this.oModel.getProperty("/groups/" + nGroupIndex) : oSourceTile.getParent().getBindingContext().getObject(),//please humafy this
+                aTileBindingContext = oSourceTile.getBindingContext().sPath.split("/"),
+                oTile = oSourceTile.getBindingContext().getObject(),
+                sType = aTileBindingContext[aTileBindingContext.length - 2],
+                sTileId = oTile.uuid,
+                curTileIndex = parseInt(aTileBindingContext[aTileBindingContext.length - 1],10),
+                newTileIndex = oData.toIndex !== undefined ? oData.toIndex : undefined,
+                oResultPromise,
+                bActionMode = this.oModel.getProperty("/tileActionModeActive"),
+                newGroupIndex = oData.toGroupId ? this._getGroupIndex(oData.toGroupId) : oGroup.index,
+                oDstGroup =  oData.toGroupId ? this.oModel.getProperty("/groups/" + newGroupIndex) : oGroup;
 
-        _moveTileRequest : function (sTileId, oTile, nTileIndex, nNewIndex, oSourceGroup, nNewGroupIndex, oTargetGroup, bInGroupCreation) {
-            var oResultPromise,
-                sTilePath,
-                oldViewContent,
-                srvc = sap.ushell.Container.getService("LaunchPage"),
-                aUsageAnalyticsCustomProps;
+            var oIndexInfo =  this._getIndexForConvert(sType, curTileIndex, newTileIndex, oGroup, oDstGroup),
+                sourceInfo = {
+                  "tileIndex": curTileIndex,
+                  "groupIndex": nGroupIndex,
+                  "group": oGroup
+                };
 
             this._addRequest($.proxy(function () {
                 try {
-                    oResultPromise = this.oPageBuilderService.moveTile(oTile.object, nTileIndex, nNewIndex, oSourceGroup, oTargetGroup);
+                    oResultPromise = this.oPageBuilderService.moveTile(oTile.object, oIndexInfo.tileIndex, oIndexInfo.newTileIndex, oGroup.object, oDstGroup.object, sType === "links" ? "tile" : "link");
                 } catch (err) {
                     this._resetGroupsOnFailure("fail_to_move_tile_msg");
                     return;
@@ -3209,67 +4398,325 @@ jQuery.sap.registerPreloadedModules({
                 // (see in DashboardContent.view
                 oTile.tileIsBeingMoved = true;
 
+                //we call to _handleAfterSortable to handle the case in which convertTile is called by dragAndDrop flow
                 oResultPromise.done(this._handleAfterSortable($.proxy(function (sTileId, oTargetTile) {
-
-                    aUsageAnalyticsCustomProps = [
-                        srvc.getTileTitle(oTile.object),
-                        srvc.getGroupTitle(oSourceGroup),
-                        srvc.getGroupTitle(oTargetGroup),
-                        sTileId];
-
-                    sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
-                        this.analyticsConstants.PERSONALIZATION,
-                        this.analyticsConstants.MOVE_TILE,
-                        aUsageAnalyticsCustomProps
-                    );
-
-                    sTilePath = this._getPathOfTile(sTileId);
+                    var sTilePath = this._getPathOfTile(sTileId);
 
                     // If we cannot find the tile, it might have been deleted -> Check!
                     if (sTilePath) {
-                        // Update the model with the new tile object and new Id.
-                        this.oModel.setProperty(sTilePath + "/object", oTargetTile);
-                        this.oModel.setProperty(sTilePath + "/originalTileId", this.oPageBuilderService.getTileId(oTargetTile));
-
+                        this._checkRequestQueue();
                         // get the target-tile view and align the Model for consistency
                         this.oPageBuilderService.getTileView(oTargetTile).done(function (oView) {
-                            // get the old view from tile's model
-                            oldViewContent = this.oModel.getProperty(sTilePath + "/content");
-                            // first we set new view
-                            this.oModel.setProperty(sTilePath + "/content", [oView]);
-                            //now we destroy the old view
-                            if (oldViewContent && oldViewContent[0]) {
-                                oldViewContent[0].destroy();
+                            if (sType === "tiles") {//it means we convert to link
+                              this._attachLinkPressHandlers(oView);
+                              this._addDraggableAttribute(oView);
+                              this._changeLinkScope(oView, bActionMode && sType !== 'links' ? 'Actions' : 'Display');
                             }
-                            // reset the move-scenario flag
-                            this.oModel.setProperty(sTilePath + "/tileIsBeingMoved", false);
+                            var dstGroupInfo = {
+                              "tileIndex": newTileIndex,
+                              "groupIndex": newGroupIndex,
+                              "group": oDstGroup
+                            },
+                            tileInfo = {
+                              "tile": oTile,
+                              "view": oView,
+                              "type": sType,
+                              "tileObj": oTargetTile
+                            };
+
+                            this.replaceTileViewAfterConvert(sourceInfo, dstGroupInfo, tileInfo);
+                            this.updateTilesAssociation();
+                            sap.ushell.utils.handleTilesVisibility();
+                            if (oData.callBack) {
+                              oData.callBack(oView);
+                            }
                         }.bind(this));
                     }
-                    // If the tile was moved to a new created group (while it was created) -
-                    // then _loadGroup needs to be called after the action is complete
-                    // in order to update the groups content with the new tile
-                    if (bInGroupCreation) {
-                        this._loadGroup(nNewGroupIndex, oTargetGroup);
-                    }
-
-                    //recalculate the associated groups for catalog tiles
-                    this.updateTilesAssociation();
-
                 }, this, sTileId)));
+
                 oResultPromise.fail(this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_move_tile_msg")));
-                oResultPromise.always($.proxy(this._checkRequestQueue, this));
             }, this));
         },
 
+        replaceTileViewAfterConvert: function (oSourceInfo, oDstInfo, oTileInfo) {
+            // get the old view from tile's model
+            var oTile = oTileInfo.tile,
+                oldViewContent = oTile.content;
+                // first we set new view, new tile object and new Id. And reset the move-scenario flag
+                oTile.tileIsBeingMoved = false;
+                oTile.content = [oTileInfo.view];
+                oTile.object = oTileInfo.tileObj;
+                oTile.originalTileId = this.oPageBuilderService.getTileId(oTileInfo.tileObj);
+
+            //fix the tile position in the model and insert the converted tile\link to the group
+            oSourceInfo.group[oTileInfo.type].splice(oSourceInfo.tileIndex, 1);
+            if (oDstInfo.tileIndex !== undefined) {
+              oDstInfo.group[oTileInfo.type === "tiles" ? "links" : "tiles"].splice(oDstInfo.tileIndex, 0, oTile);
+            } else {
+              oDstInfo.group[oTileInfo.type === "tiles" ? "links" : "tiles"].push(oTile);
+            }
+
+            this.oModel.setProperty("/groups/" + oDstInfo.groupIndex , oDstInfo.group);
+            this.oModel.setProperty("/groups/" + oSourceInfo.groupIndex , oSourceInfo.group);
+
+            //handle animation
+            if (oTileInfo.type === "links") {
+                this._handleTileAppearanceAnimation(oTile.content[0].getParent());
+            } else {
+                this._handleTileAppearanceAnimation(oTile.content[0]);
+            }
+
+            if (oldViewContent && oldViewContent[0]) {
+                oldViewContent[0].destroy();
+            }
+        },
+        /*
+        * sType: the type of the tile(lineMode/ContentMode) befor the convert action
+        */
+        _getIndexForConvert: function (sType, curTileIndex, newTileIndexInShellModel, oGroup, oDstGroup) {
+            var nNewTileIndex;
+            if (sType === "tiles") {
+                //If we convert ContentMode-tile to link then we want to enter the new link to the end of the array or to provided newTileIndex
+                if (newTileIndexInShellModel !== undefined) {
+                  nNewTileIndex = oDstGroup[sType].length + newTileIndexInShellModel;
+                } else {
+                  nNewTileIndex = oDstGroup[sType].length + oDstGroup["links"].length;
+                }
+                if (oGroup.groupId === oDstGroup.groupId) {
+                    nNewTileIndex--;
+                }
+            } else {
+                //If we convert link to ContentMode-tile then we want to enter the new tile after the the last ContentMode-tile
+                nNewTileIndex = newTileIndexInShellModel ? newTileIndexInShellModel : oGroup['tiles'].length;
+                curTileIndex += oGroup["tiles"].length;
+            }
+            return {"tileIndex": curTileIndex, "newTileIndex": nNewTileIndex};
+        },
+        _getIndexForMove: function (sType, curTileIndex, newTileIndexInShellModel, oDstGroup, oSourceGroup) {
+          var nNewTileIndex;
+          if (sType === "tiles") {
+              //case move tile
+              nNewTileIndex = newTileIndexInShellModel !== undefined ? newTileIndexInShellModel : oDstGroup[sType].length;
+          } else {
+              //case move link
+              if (newTileIndexInShellModel !== undefined) {
+                nNewTileIndex = oDstGroup["tiles"].length + newTileIndexInShellModel;
+              } else {
+                nNewTileIndex = oDstGroup["tiles"].length + oDstGroup["links"].length;
+              }
+              curTileIndex +=  oSourceGroup["tiles"].length;
+          }
+          return {"tileIndex": curTileIndex, "newTileIndex": nNewTileIndex};
+        },
+
+        _moveLink: function (sChannelId, sEventId, oData) {
+            this._moveTile(sChannelId, sEventId, oData);
+        },
+
+        _getTileInfo: function (aGroups, sTileId, sItems) {
+            var oTileInfo;
+            jQuery.each(aGroups, function (nTmpGroupIndex, oTmpGroup) {
+                var bFoundFlag = false;
+                jQuery.each(oTmpGroup[sItems], function (nTmpTileIndex, oTmpTile) {
+                    if (oTmpTile.uuid === sTileId) {
+                        //the order is oTile, nTileIndex, oOldGroup, nOldGroupIndex
+                        oTileInfo = {"oTile": oTmpTile, "tileIndex": nTmpTileIndex, "oGroup": oTmpGroup, "groupIndex": nTmpGroupIndex};
+                        bFoundFlag = true;
+                        return false;
+                    }
+                });
+                return !bFoundFlag;
+            });
+            return oTileInfo;
+        },
+
+        _getNewGroupInfo: function (aGroups, sNewGroupId) {//should be concidered to improve by inserting the logic into _getTileInfo function
+            var oNewGroupInfo;
+            jQuery.each(aGroups, function (nTmpGroupIndex, oTmpGroup) {
+                if (oTmpGroup.groupId === sNewGroupId) {
+                    //order is oNewGroup, nNewGroupIndex
+                    oNewGroupInfo = {"oNewGroup" : oTmpGroup, "newGroupIndex": nTmpGroupIndex};
+                }
+            });
+            return oNewGroupInfo;
+        },
+
+
+         /*
+          * oData should have the following parameters:
+          * fromGroupId
+          * toGroupId
+          * fromIndex
+          * toIndex can be null => append as last tile in group
+          */
+         _moveTile: function (sChannelId, sEventId, oData) {
+             var nNewIndex = oData.toIndex,
+                 sNewGroupId = oData.toGroupId,
+                 sTileId = oData.sTileId,
+                 sSource = oData.source,
+                 sType = oData.sTileType === "tiles" || oData.sTileType === "tile" ? "tile" : "link",
+                 sToItems = oData.sToItems,
+                 sFromItems = oData.sFromItems,
+                 srvc = sap.ushell.Container.getService("LaunchPage"),
+                 bActionMode = this.oModel.getProperty("/tileActionModeActive"),
+                 aGroups = this.oModel.getProperty("/groups"),
+                 oSourceGroup,
+                 oTargetGroup,
+                 oResultPromise,
+                 personalization,
+                 oTileInfo,
+                 oGroupInfo,
+                 oIndexInfo = {};
+
+             oTileInfo = this._getTileInfo(aGroups, sTileId, sFromItems);
+             oGroupInfo = this._getNewGroupInfo(aGroups, sNewGroupId);
+
+             //When moving a tile to the group it is already in using the move dialog, there is no change
+             if (oTileInfo.oGroup.groupId == oGroupInfo.oNewGroup.groupId && (sSource === "movetileDialog" || nNewIndex === null || sSource === "movelinkDialog")) {
+                 return;
+             }
+             if (sType === "link") {
+                 oTileInfo.oTile.content[0].addStyleClass("sapUshellZeroOpacity");
+             }
+
+             // When a tile is dragged into an empty group, the Plus-Tiles in the empty list cause
+             // the new index to be off by one, i.e. 1 instead of 0, which causes an error.
+             // This is a generic check which sanitizes the values if necessary.
+             if (sType === "tile" && sToItems === 'tiles') {
+                 if (nNewIndex && nNewIndex > oGroupInfo.oNewGroup[sToItems].length) {
+                     nNewIndex = oGroupInfo.oNewGroup[sToItems].length;
+                 }
+             }
+             if (oTileInfo.oGroup.groupId === sNewGroupId && sToItems === sFromItems) {
+                 if (nNewIndex === null || nNewIndex === undefined) {
+                     // moved over group list to same group
+                     oTileInfo.oGroup[sToItems].splice(oTileInfo.tileIndex, 1);
+                     // Tile is appended. Set index accordingly.
+                     nNewIndex = oTileInfo.oGroup[sToItems].length;
+                     // append as last item
+                     oTileInfo.oGroup[sToItems].push(oTileInfo.oTile);
+                 } else {
+                     nNewIndex = this._adjustTileIndex(nNewIndex, oTileInfo.oTile, oTileInfo.oGroup, sToItems);
+                     this._moveInArray(oTileInfo.oGroup[sToItems], oTileInfo.tileIndex, nNewIndex);
+                 }
+
+                 this.oModel.setProperty("/groups/" + oTileInfo.groupIndex + "/" + sToItems, oTileInfo.oGroup[sToItems]);
+             } else {
+                 // remove from old group
+                 personalization = this.oModel.getProperty("/personalization");
+                 oTileInfo.oGroup[sFromItems].splice(oTileInfo.tileIndex, 1);
+                 oTileInfo.oGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oTileInfo.oGroup, personalization);
+                 this.oModel.setProperty("/groups/" + oTileInfo.groupIndex + "/" + sFromItems, oTileInfo.oGroup[sFromItems]);
+
+                 // add to new group
+                 if (nNewIndex === null || nNewIndex === undefined) {
+                     // Tile is appended. Set index accordingly.
+                     nNewIndex = oGroupInfo.oNewGroup[sToItems].length;
+                     // append as last item
+                     oGroupInfo.oNewGroup[sToItems].push(oTileInfo.oTile);
+                 } else {
+                     nNewIndex = this._adjustTileIndex(nNewIndex, oTileInfo.oTile, oGroupInfo.oNewGroup, sToItems);
+                     oGroupInfo.oNewGroup[sToItems].splice(nNewIndex, 0, oTileInfo.oTile);
+                 }
+                 oGroupInfo.oNewGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oGroupInfo.oNewGroup, personalization);
+                 this.oModel.setProperty("/groups/" + oGroupInfo.newGroupIndex + "/" + sToItems, oGroupInfo.oNewGroup[sToItems]);
+             }
+
+             //recalculate the associated groups for catalog tiles
+             this.updateTilesAssociation();
+             // Re-calculate the visibility of the Tiles
+             sap.ushell.utils.handleTilesVisibility();
+
+
+             // change in backend
+             oSourceGroup = this.oModel.getProperty("/groups/" + oTileInfo.groupIndex);
+             oTargetGroup = this.oModel.getProperty("/groups/" + oGroupInfo.newGroupIndex);
+             oIndexInfo =  this._getIndexForMove(sFromItems, oTileInfo.tileIndex, nNewIndex, oGroupInfo.oNewGroup, oSourceGroup);
+
+             this._addRequest($.proxy(function () {
+                 try {
+                     oResultPromise = this.oPageBuilderService.moveTile(oTileInfo.oTile.object, oIndexInfo.tileIndex, oIndexInfo.newTileIndex, oSourceGroup.object, oTargetGroup.object, sType);
+                 } catch (err) {
+                     this._resetGroupsOnFailure("fail_to_move_tile_msg");
+                     return;
+                 }
+
+                 // Putting a special flag on the Tile's object
+                 // this enables us to disable opening the tile's action until it has been updated from the backend
+                 // (see in DashboardContent.view
+                 oTileInfo.oTile.tileIsBeingMoved = true;
+
+                 oResultPromise.done(this._handleAfterSortable($.proxy(function (sTileId, oTargetTile) {
+                     var sTilePath,
+                         aUsageAnalyticsCustomProps = [
+                             srvc.getTileTitle(oTileInfo.oTile.object),
+                             srvc.getGroupTitle(oSourceGroup.object),
+                             srvc.getGroupTitle(oTargetGroup.object),
+                             sTileId];
+
+                     sap.ushell.Container.getService("UsageAnalytics").logCustomEvent(
+                         this.analyticsConstants.PERSONALIZATION,
+                         this.analyticsConstants.MOVE_TILE,
+                         aUsageAnalyticsCustomProps
+                     );
+                     sTilePath = this._getPathOfTile(sTileId);
+
+                     // If we cannot find the tile, it might have been deleted -> Check!
+                     if (sTilePath) {
+                         // Update the model with the new tile object and new Id.
+                         this.oModel.setProperty(sTilePath + "/object", oTargetTile);
+                         this.oModel.setProperty(sTilePath + "/originalTileId", this.oPageBuilderService.getTileId(oTargetTile));
+
+                         this._checkRequestQueue();
+                         // get the target-tile view and align the Model for consistency
+                         this.oPageBuilderService.getTileView(oTargetTile).done(function (oView) {
+                             // get the old view from tile's model
+                             var oldViewContent = this.oModel.getProperty(sTilePath + "/content");
+
+                             // first we set new view
+                             if (sToItems === 'links') {
+                                 this._changeLinkScope(oView, bActionMode ? "Actions" : "Display");
+                                 this._attachLinkPressHandlers(oView);
+                                 this._addDraggableAttribute(oView);
+                                 this._handleTileAppearanceAnimation(oView);
+                                 oTileInfo.oTile.content = [oView];
+                                 this.oModel.setProperty(sTilePath, jQuery.extend({}, oTileInfo.oTile));
+                                 this.oModel.setProperty("/groups/" + oGroupInfo.newGroupIndex + "/" + sToItems, this.oModel.getProperty("/groups/" + oGroupInfo.newGroupIndex + "/" + sToItems));
+                             } else {
+                                 this.oModel.setProperty(sTilePath + "/content", [oView]);
+                             }
+
+                             //now we destroy the old view
+                             if (oldViewContent && oldViewContent[0]) {
+                                var origOnAfterRendering = oView.onAfterRendering;
+                                oView.onAfterRendering = function () {
+                                    origOnAfterRendering.apply(this);
+                                    oldViewContent[0].destroy();
+                                    oView.onAfterRendering = origOnAfterRendering;
+                                }
+                             }
+                             // reset the move-scenario flag
+                             this.oModel.setProperty(sTilePath + "/tileIsBeingMoved", false);
+                             if (oData.callBack) {
+                               oData.callBack(oView);
+                             }
+                         }.bind(this));
+                     }
+                 }, this, sTileId)));
+
+                 oResultPromise.fail(this._handleAfterSortable(this._resetGroupsOnFailureHelper("fail_to_move_tile_msg")));
+             }, this));
+         },
+
         // Adjust the moved-tile new index according to the visible+hidden tiles
-        _adjustTileIndex: function (newLocationIndex, oTile, newGroup) {
+        _adjustTileIndex: function (newLocationIndex, oTile, newGroup, sItems) {
             var visibleCounter = 0,
                 bIsTileIncluded = false,
                 i = 0;
             // In order to get the new index, count all tiles (visible+hidden) up to the new index received from the UI.
-            for (i = 0; i < newGroup.tiles.length && visibleCounter < newLocationIndex; i++) {
-                if (newGroup.tiles[i].isTileIntentSupported) {
-                    if (newGroup.tiles[i] === oTile) {
+            for (i = 0; i < newGroup[sItems].length && visibleCounter < newLocationIndex; i++) {
+                if (newGroup[sItems][i].isTileIntentSupported) {
+                    if (newGroup[sItems][i] === oTile) {
                         bIsTileIncluded = true;
                     } else {
                         visibleCounter++;
@@ -3327,19 +4774,35 @@ jQuery.sap.registerPreloadedModules({
                 this._destroyAllTileModels("/catalogTiles");
                 // Clear existing Catalog items
                 this.oModel.setProperty("/catalogs", []);
-                this.oModel.setProperty("/catalogTiles", []);
+                this.oModel.setProperty("/catalogSearchEntity", {
+                    appBoxes: [],
+                    customTiles: []
+                });
 
                 // Array of promise objects that are generated inside addCatalogToModel (the "progress" function of getCatalogs)
                 this.aPromises = [];
 
+                jQuery.sap.measure.start("FLP:DashboardManager.GetCatalogsRequest", "GetCatalogsRequest","FLP");
+
+                jQuery.sap.measure.start("FLP:DashboardManager.getCatalogTiles", "getCatalogTiles","FLP");
+                jQuery.sap.measure.pause("FLP:DashboardManager.getCatalogTiles");
+
+                jQuery.sap.measure.start("FLP:DashboardManager.BuildCatalogModelWithRendering", "BuildCatalogModelWithRendering","FLP");
+                jQuery.sap.measure.pause("FLP:DashboardManager.BuildCatalogModelWithRendering");
+
                 // Trigger loading of catalogs
                 sap.ushell.Container.getService("LaunchPage").getCatalogs()
-                    // There's a need to make sure that onDoneLoadingCatalogs is called only after all catalogs are loaded
-                    // (i.e. all calls to addCatalogToModel are finished).
-                    // For this, all the promise objects that are generated inside addCatalogToModel are generated into this.aPromises,
-                    // and jQuery.when calls onDoneLoadingCatalogs only after all the promises are resolved
+                // There's a need to make sure that onDoneLoadingCatalogs is called only after all catalogs are loaded
+                // (i.e. all calls to addCatalogToModel are finished).
+                // For this, all the promise objects that are generated inside addCatalogToModel are generated into this.aPromises,
+                // and jQuery.when calls onDoneLoadingCatalogs only after all the promises are resolved
                     .done(function (catalogs) {
-                        jQuery.when.apply(jQuery, this.aPromises).then(this.onDoneLoadingCatalogs(catalogs));
+                        jQuery.sap.measure.end("FLP:DashboardManager.GetCatalogsRequest");
+                        jQuery.sap.measure.end("FLP:DashboardManager.getCatalogTiles");
+
+                        jQuery.when.apply(jQuery, this.aPromises).then(function () {
+                            that.onDoneLoadingCatalogs(catalogs);
+                        });
                         setDoneCBForGroups();
                     }.bind(this))
                     //in case of a severe error, show an error message
@@ -3353,26 +4816,100 @@ jQuery.sap.registerPreloadedModules({
             }
         },
 
+
         updateCatalogTilesToGroupsMap: function () {
-            var catalogTiles = this.getModel().getProperty("/catalogTiles"),
-                tile,
+            var aCatalog = this.getModel().getProperty("/catalogs"),
                 index,
                 tileId,
                 associatedGrps,
                 aGroups,
-                srvc = sap.ushell.Container.getService("LaunchPage");
+                aCatalogCustom,
+                aCatalogAppboxes,
+                aCatalogCustomIndex,
+                aCatalogAppboxesIndex,
+                oAppBoxTile,
+                oCustomTile,
+            srvc = sap.ushell.Container.getService("LaunchPage");
             // if the catalogTile model doesn't exist, it will be updated in some time later
-            if (catalogTiles) {
-                for (index = 0; index < catalogTiles.length; index++) {
-                    tile = catalogTiles[index];
-                    tileId = encodeURIComponent(srvc.getCatalogTileId(tile.src));
-                    associatedGrps = this.getModel().getProperty("/catalogTiles/" + index + "/associatedGroups");
-                    aGroups = this.oTileCatalogToGroupsMap[tileId];
-                    associatedGrps = aGroups ? aGroups : [];
-                    catalogTiles[index].associatedGroups = associatedGrps;
+            if (aCatalog) {
+                for (index = 0; index < aCatalog.length; index++) {
+                    aCatalogAppboxes = aCatalog[index].appBoxes;
+
+                    if (aCatalogAppboxes) {
+                        //Iterate over all the appBoxes.
+                        for (aCatalogAppboxesIndex = 0; aCatalogAppboxesIndex < aCatalogAppboxes.length; aCatalogAppboxesIndex++) {
+                            oAppBoxTile = aCatalogAppboxes[aCatalogAppboxesIndex];
+                            tileId = encodeURIComponent(srvc.getCatalogTileId(oAppBoxTile.src));
+                            //Get the mapping of the associated groups map.
+                            aGroups = this.oTileCatalogToGroupsMap[tileId];
+                            associatedGrps = aGroups ? aGroups : [];
+                            oAppBoxTile.associatedGroups = associatedGrps;
+                        }
+                    }
+
+                    aCatalogCustom = aCatalog[index].customTiles;
+
+                    if (aCatalogCustom) {
+                        //Iterate over all the appBoxes.
+                        for (aCatalogCustomIndex = 0; aCatalogCustomIndex < aCatalogCustom.length; aCatalogCustomIndex++) {
+                            oCustomTile = aCatalogCustom[aCatalogCustomIndex];
+                            tileId = encodeURIComponent(srvc.getCatalogTileId(oCustomTile.src));
+                            //Get the mapping of the associated groups map.
+                            aGroups = this.oTileCatalogToGroupsMap[tileId];
+                            associatedGrps = aGroups ? aGroups : [];
+                            oCustomTile.associatedGroups = associatedGrps;
+                        }
+                    }
                 }
             }
-            this.getModel().setProperty("/catalogTiles", catalogTiles);
+            this.getModel().setProperty("/catalogs", aCatalog);
+        },
+
+
+        _getIsIntentSupported: function (oCatalogTile) {
+            var srvc = sap.ushell.Container.getService("LaunchPage"),
+                bIsIntentSupported = !!(srvc.isTileIntentSupported(oCatalogTile));
+            return bIsIntentSupported;
+
+        },
+
+
+        _getIsAppBox: function (oCatalogTile) {
+            if(!sap.ushell.Container){
+                return false;
+            }
+            var srvc = sap.ushell.Container.getService("LaunchPage"),
+                bIsAppBox = !!(srvc.getCatalogTileTargetURL(oCatalogTile) && (srvc.getCatalogTilePreviewTitle(oCatalogTile) || srvc.getCatalogTilePreviewSubtitle(oCatalogTile)));
+            return bIsAppBox;
+
+        },
+
+        createCatalogAppBoxes: function (oCatalogTile,bGetTileKeyWords) {
+            var srvc = sap.ushell.Container.getService("LaunchPage"),
+                catalogTileId = encodeURIComponent(srvc.getCatalogTileId(oCatalogTile)),
+                associatedGrps = this.oTileCatalogToGroupsMap[catalogTileId] || [],
+                tileTags = srvc.getCatalogTileTags(oCatalogTile) || [];
+
+            if (tileTags.length > 0) {
+                this.tagsPool = this.tagsPool.concat(tileTags);
+            }
+            var sNavigationMode = undefined; //defualt value
+            if(oCatalogTile.tileResolutionResult){
+                sNavigationMode = oCatalogTile.tileResolutionResult.navigationMode;
+            }
+
+            return {
+                id: catalogTileId,
+                associatedGroups: associatedGrps,
+                src: oCatalogTile,
+                title: srvc.getCatalogTilePreviewTitle(oCatalogTile),
+                subtitle: srvc.getCatalogTilePreviewSubtitle(oCatalogTile),
+                icon: srvc.getCatalogTilePreviewIcon(oCatalogTile),
+                keywords: bGetTileKeyWords ? (srvc.getCatalogTileKeywords(oCatalogTile) || []).join(',') : [],
+                tags: tileTags,
+                navigationMode: sNavigationMode,
+                url: srvc.getCatalogTileTargetURL(oCatalogTile)
+            };
         },
 
         /**
@@ -3383,102 +4920,176 @@ jQuery.sap.registerPreloadedModules({
          *
          *  @param {object} catalog
          */
-        addCatalogToModel: function (oCatalog) {
-            var aCurrentCatalogs = this.oModel.getProperty('/catalogs'),
-                srvc = sap.ushell.Container.getService("LaunchPage"),
-                sCatalogId = srvc.getCatalogId(oCatalog),
-                bCatalogExist = false,
-                oCatalogModel,
-                oPromise;
 
-            // Check if the catalog already exist in the model, or catalog with similar title
-            aCurrentCatalogs.forEach(function (oCat) {
-                if (oCat.id === sCatalogId) {
-                    bCatalogExist = true;
+        /**TODOs: We want to remove the catalogTiles.
+         *
+         * Align to the Data structure according to the wiki.
+         * I have updated it abit.
+         *
+         * catalogs : [
+         catalog: {
+                    title: srvc.getCatalogTitle(oCatalog),
+                    id: srvc.getCatalogId(oCatalog),
+                    numIntentSupportedTiles: 0,
+                    "static": false,
+                    customTiles: [
+                        the notmal tile model.
+                    ],
+                    appBoxes: [
+                        {
+                            title: ,
+                            subtitle: ,
+                            icon: ,
+                            url: ,
+                            catalogIndex:
+                        }
+                    ],
+                    numberOfCustomTiles: 0,
+                    numberOfAppBoxs: 0
                 }
-            });
+         ]
 
-            if (!bCatalogExist) {
+         Also We can simplify TileContainer to support Flat List. with no headers.
+         TileContainer to support one level indexing visible (true / false).
+         */
+
+        addCatalogToModel: function (oCatalog) {
+            var srvc = sap.ushell.Container.getService("LaunchPage"),
                 oCatalogModel = {
                     title: srvc.getCatalogTitle(oCatalog),
                     id: srvc.getCatalogId(oCatalog),
-                    "static": false,
-                    tiles: [],
-                    numberOfTiles: 0
-                };
-                oPromise = srvc.getCatalogTiles(oCatalog);
-                this.aPromises.push(oPromise);
+                    numberTilesSupportedOnCurrectDevice: 0,
+                    static: false,
+                    customTiles: [],
+                    appBoxes: []
+                },
+                oPromise;
 
-                oPromise.done(function (aTiles) {
-                    //if this catalog has no tiles we do not need to add it to the model
-                    if (!aTiles.length) {
+            jQuery.sap.measure.resume("FLP:DashboardManager.getCatalogTiles");
+
+            oPromise = srvc.getCatalogTiles(oCatalog);
+            this.aPromises.push(oPromise);
+
+            oPromise.done(function (oCatalogEntry) {
+                jQuery.sap.measure.pause("FLP:DashboardManager.getCatalogTiles");
+
+                //if this catalog has no tiles we do not need to add it to the model
+                    if (!oCatalogEntry.length) {
                         return;
                     }
-                    var oCatalogData = {
-                            catalog: oCatalogModel.title,
-                            id: oCatalogModel.id,
-                            index: aCurrentCatalogs.length,
-                            numberOfExistingTiles: 0
-                        },
-                        updateModelSynchronized;
+                    this.aPendingCatalogQueue.push({
+                        oCatalogEntry: oCatalogEntry,
+                        oCatalogModel: oCatalogModel
+                    });
 
-                    // In order to make sure that only one catalog is updated in the model at a given time -
-                    //  the part of adding a catalog (+ catalog tiles) to the model is synchronized
-                    updateModelSynchronized = function () {
+                    // Check if another catalog is currently being put in the model, allow max of 10 skipped catalog processing.
+                    if (this.skippedProcessCatalogs < 10) {
+                        clearTimeout(this.oprocessCatalogsTimer);
+                        this.skippedProcessCatalogs++;
+                        this.oprocessCatalogsTimer = setTimeout(function () {
+                            this.processPendingCatalogs();
+                            if (this.oModel.getProperty("/tagFiltering") === true) {
+                                this.getTagList();
+                            }
+                        }.bind(this), 20);
+                    }
+                }.bind(this)
+            ).fail(this._showLocalizedErrorHelper("fail_to_load_catalog_tiles_msg")
+            );
+        },
+        loadCustomTilesKeyWords: function () {
+          var fn;
+          if (this.aFnToGetTileView) {
+            while (this.aFnToGetTileView.length > 0) {
+              fn = this.aFnToGetTileView.pop();
+              fn();
+            }
+          }
+        },
+        processPendingCatalogs: function () {
+            var that = this,
+                aCurrentCatalogs = this.oModel.getProperty('/catalogs'),
+                oPendingCatalogEntry,
+                oCatalogEntry,
+                oCatalogModel,
+                oExistingCatalogInModel,
+                bIsNewCatalog,
+                oCatalogSearchObject,
+                oCatalogObject,
+                oCatalogTileNew,
+                oEventBus = sap.ui.getCore().getEventBus(),
+                oAppBoxNew,
+                aAllEntryInCatalogMaster = this.oModel.getProperty('/masterCatalogs') || [{
+                    title: getLocalizedText("all")
+                }];
+            jQuery.sap.measure.resume("FLP:DashboardManager.BuildCatalogModelWithRendering");
 
-                        // Check if another catalog is currently being put in the model
-                        if (!this.oModel.getProperty('/isCatalogInUpdate')) {
+            //reset skippedProcessCatalogs counter
+            this.skippedProcessCatalogs = 0;
+            // Check if a catalog with the given title already exists in the model.
+            while (this.aPendingCatalogQueue.length > 0) {
+                    oPendingCatalogEntry = this.aPendingCatalogQueue.shift(),
+                    oCatalogEntry = oPendingCatalogEntry.oCatalogEntry,
+                    oCatalogModel = oPendingCatalogEntry.oCatalogModel,
+                    oExistingCatalogInModel = this.searchModelCatalogByTitle(oCatalogModel.title),
+                    oCatalogSearchObject = this.oModel.getProperty('/catalogSearchEntity');
 
-                            this.oModel.setProperty('/isCatalogInUpdate', true);
+                if (oExistingCatalogInModel.result) {
+                    oCatalogObject = this.oModel.getProperty('/catalogs')[oExistingCatalogInModel.indexOfPreviousInstanceInModel];
+                    bIsNewCatalog = false;
+                } else {
+                    bIsNewCatalog = true;
+                    oCatalogObject = oCatalogModel;
+                }
 
-                            // Check if a catalog with the given title already exists in the model.
-                            var oExistingCatalogInModel = this.searchModelCatalogByTitle(oCatalogModel.title),
-                                aCatalogs;
-
-                            // If a catalog with similar title already exists in the model:
-                            //  - Update the object catalogData before it is passed to setCatalogTiles
-                            //  - Update the relevant catalog in the model with the updated amount of tiles it now has
-                            if (oExistingCatalogInModel.result) {
-
-                                // Update /catalogTiles
-                                oCatalogData.index = oExistingCatalogInModel.indexOfPreviousInstanceInModel;
-                                oCatalogData.numberOfExistingTiles = oExistingCatalogInModel.numOfTilesInCatalog;
-                                this.setCatalogTiles("/catalogTiles", true, oCatalogData, aTiles);
-
-                                // Update /catalogs
-                                aCatalogs = this.oModel.getProperty('/catalogs');
-                                oCatalog = aCatalogs[oExistingCatalogInModel.indexOfPreviousInstanceInModel];
-                                oCatalog.numIntentSupportedTiles = getNumIntentSupportedTiles.call(this, oCatalogModel);
-                                oCatalog.numberOfTiles = oExistingCatalogInModel.numOfTilesInCatalog + aTiles.length;
-                                aCurrentCatalogs[oExistingCatalogInModel.indexOfPreviousInstanceInModel] = oCatalog;
-
-                            } else {
-                                this.setCatalogTiles("/catalogTiles", true, oCatalogData, aTiles);
-                                oCatalogModel.numIntentSupportedTiles = getNumIntentSupportedTiles.call(this, oCatalogModel);
-
-                                oCatalogModel.numberOfTiles = aTiles.length;
-                                aCurrentCatalogs.push(oCatalogModel);
+                oCatalogEntry.forEach(function (oCatalogEntry, iCatalogEntryIndex) {
+                    //Do not add Item if no intent supported
+                    if (this._getIsIntentSupported(oCatalogEntry)) {
+                        if (this._getIsAppBox(oCatalogEntry)) {
+                            oAppBoxNew = this.createCatalogAppBoxes(oCatalogEntry,true);
+                            oCatalogObject.appBoxes.push(oAppBoxNew);
+                            oCatalogSearchObject.appBoxes.push(oAppBoxNew);
+                        } else {
+                            oCatalogTileNew = this.createCatalogTiles(oCatalogEntry);
+                            oCatalogObject.customTiles.push(oCatalogTileNew);
+                            //add the getTileView to an array of functions that will be executed once the caatalog finishs to load
+                            //we need this array in order to call geTileView for all customTiles. see incident: ******
+                            if (!this.aFnToGetTileView) {
+                              this.aFnToGetTileView = [];
                             }
 
-                            this.oModel.setProperty('/catalogs', aCurrentCatalogs);
+                            this.aFnToGetTileView.push((function (oCatalogEntry) {
+                              return function () {
+                                var oCatalogTileNew = that.createCatalogTiles(oCatalogEntry, true);
+                                oCatalogSearchObject.customTiles.push(oCatalogTileNew);
+                              };
+                            })(oCatalogEntry));
+                          }
+                    }
+                }.bind(this));
 
-                            // Update the model with the catalog - finished
-                            this.oModel.setProperty('/isCatalogInUpdate', false);
-                            return;
-                        }
-                        setTimeout(updateModelSynchronized, 50);
-                    }.bind(this);
+                //Update model just if catalog has tiles or appbox.
+                if (oCatalogObject.appBoxes.length > 0 || oCatalogObject.customTiles.length > 0) {
+                    if (bIsNewCatalog) {
+                        aCurrentCatalogs.push(oCatalogModel);
+                        aAllEntryInCatalogMaster.push({
+                            title: oCatalogModel.title
+                        });
 
-                    // Call the synchronized catalog update function
-                    updateModelSynchronized();
-
-                }.bind(this)
-                    ).fail(this._showLocalizedErrorHelper("fail_to_load_catalog_tiles_msg")
-                    );
+                    }
+                }
             }
+
+            //this.oModel.setProperty('/catalogSearchEntity', oCatalogSearchObject);
+            this.oModel.setProperty('/masterCatalogs', aAllEntryInCatalogMaster);
+            this.oModel.setProperty('/catalogs', aCurrentCatalogs);
+            oEventBus.publish("launchpad", "afterCatalogSegment");
+
+            jQuery.sap.measure.pause("FLP:DashboardManager.BuildCatalogModelWithRendering");
+
         },
 
-        /**
+            /**
          * check if a catalog with the given title already exists in the model.
          *
          *  @param {string} catalogTitle
@@ -3525,6 +5136,10 @@ jQuery.sap.registerPreloadedModules({
                 oTag,
                 sorted;
 
+            if (this.oModel.getProperty("/tagList") && this.oModel.getProperty("/tagList").length > 0) {
+                this.tagsPool.concat(this.oModel.getProperty("/tagList"))
+            }
+
             for (ind = 0; ind < this.tagsPool.length; ind++) {
                 oTag = this.tagsPool[ind];
                 if (indexedTags[oTag]) {
@@ -3543,10 +5158,6 @@ jQuery.sap.registerPreloadedModules({
                 return b.occ - a.occ;
             });
 
-            if (sorted.length === 0) {
-                this.oModel.setProperty("/tagFiltering", false);
-            }
-
             if (maxTags) {
                 this.oModel.setProperty("/tagList", sorted.slice(0, maxTags));
             } else {
@@ -3558,74 +5169,74 @@ jQuery.sap.registerPreloadedModules({
             if (!aCatalogs.length) {
                 this.oModel.setProperty("/catalogsNoDataText", sap.ushell.resources.i18n.getText('noCatalogs'));
             }
+
+            //Publish event catalog finished loading.
+            var oEventBus = sap.ui.getCore().getEventBus();
+            oEventBus.publish("launchpad", "catalogContentLoaded");
+
             var srvc = sap.ushell.Container.getService("LaunchPage"),
                 aLoadedCatalogs = aCatalogs.filter(function (oCatalog) {
-                    return !srvc.getCatalogError(oCatalog);
-                }),
-                aCurrentCatalogs;
+                    var sCatalogError = srvc.getCatalogError(oCatalog);
+                    if (sCatalogError) {
+                        jQuery.sap.log.error(
+                            "A catalog could not be loaded",
+                            sCatalogError,
+                            "sap.ushell.components.flp.launchpad.DashboardManager"
+                        );
+                    }
+                    return !sCatalogError;
+                });
+                //aCurrentCatalogs;
             //check if some of the catalogs failed to load
             if (aLoadedCatalogs.length !== aCatalogs.length) {
                 this._showLocalizedError("partialCatalogFail");
             }
 
-            // Check if filtering catalog tiles by tags is enabled
-            if (this.oModel.getProperty("/tagFiltering") === true) {
-                //create the tags menu
-                this.getTagList();
-            }
-
-            aCurrentCatalogs = this.oModel.getProperty('/catalogs');
-            //filter out the "Loading Catalogs..." menu item if exists
-            if (aCurrentCatalogs[0] && aCurrentCatalogs[0].title === sap.ushell.resources.i18n.getText('catalogsLoading')) {
-                aCurrentCatalogs.splice(0, 1);
-            }
-            //create the "All" static entry for the catalogSelect menu
-            aCurrentCatalogs.splice(0, 0, {
-                title: getLocalizedText("catalogSelect_initial_selection"),
-                "static": true,
-                tiles: [],
-                numIntentSupportedTiles: -1//only in order to present this option in the Catalog.view (dropdown menu)since there is a filter there on this property
-            });
-            this.oModel.setProperty('/catalogs', aCurrentCatalogs);
+            /*            aCurrentCatalogs = this.oModel.getProperty('/catalogs');
+             //filter out the "Loading Catalogs..." menu item if exists
+             if (aCurrentCatalogs[0] && aCurrentCatalogs[0].title === sap.ushell.resources.i18n.getText('catalogsLoading')) {
+             aCurrentCatalogs.splice(0, 1);
+             }
+             /*            //create the "All" static entry for the catalogSelect menu
+             aCurrentCatalogs.splice(0, 0, {
+             title: getLocalizedText("catalogSelect_initial_selection"),
+             "static": true,
+             tiles: [],
+             numIntentSupportedTiles: -1//only in order to present this option in the Catalog.view (dropdown menu)since there is a filter there on this property
+             });
+             this.oModel.setProperty('/catalogs', aCurrentCatalogs);*/
             sap.ushell.utils.handleTilesVisibility();
         },
 
-        setCatalogTiles: function (sPath, bAppend, oData, aCatalogTiles) {
+        createCatalogTiles: function (oCatalogTile, bGetTileKeyWords) {
             var srvc = sap.ushell.Container.getService("LaunchPage"),
-                aUpdatedCatalogTiles = $.map(
-                    aCatalogTiles,
-                    function (oCatalogTile, iTile) {
-                        var tileView,
-                            catalogTileId = encodeURIComponent(srvc.getCatalogTileId(oCatalogTile)),
-                            associatedGrps = this.oTileCatalogToGroupsMap[catalogTileId] || [],
-                            tileTags = srvc.getCatalogTileTags(oCatalogTile) || [];
+                tileView,
+                catalogTileId = encodeURIComponent(srvc.getCatalogTileId(oCatalogTile)),
+                associatedGrps = this.oTileCatalogToGroupsMap[catalogTileId] || [],
+                tileTags = srvc.getCatalogTileTags(oCatalogTile) || [];
 
-                        if (tileTags.length > 0) {
-                            this.tagsPool = this.tagsPool.concat(tileTags);
-                        }
+            if (tileTags.length > 0) {
+                this.tagsPool = this.tagsPool.concat(tileTags);
+            }
 
-                        // getCatalogTileView must be called before getCatalogTileKeywords
-                        tileView = srvc.getCatalogTileView(oCatalogTile);
-
-                        return {
-                            associatedGroups: associatedGrps,
-                            src: oCatalogTile,
-                            catalog: oData.catalog,
-                            catalogIndex: this.calculateCatalogTileIndex(oData.index, oData.numberOfExistingTiles, iTile),
-                            catalogId: oData.id,
-                            title: srvc.getCatalogTileTitle(oCatalogTile),
-                            tags: tileTags,
-                            keywords: (srvc.getCatalogTileKeywords(oCatalogTile) || []).join(','), // getCatalogTileView must be called BEFORE
-                            id: catalogTileId,
-                            size: srvc.getCatalogTileSize(oCatalogTile),
-                            content: [tileView],
-                            isTileIntentSupported: srvc.isTileIntentSupported(oCatalogTile)
-                        };
-                    }.bind(this)
-                );
-
-            // Fill tile info for current catalog
-            this.oModel.setProperty(sPath, $.merge((bAppend && this.oModel.getProperty(sPath)) || [], aUpdatedCatalogTiles));
+            tileView = new TileState({state: "Loading"});
+            if (bGetTileKeyWords) {
+              srvc.getCatalogTileView(oCatalogTile);
+            }
+            return {
+                associatedGroups: associatedGrps,
+                src: oCatalogTile,
+                catalog: oCatalogTile.title,
+                catalogId: oCatalogTile.id,
+                title: srvc.getCatalogTileTitle(oCatalogTile),
+                tags: tileTags,
+                keywords: bGetTileKeyWords ? (srvc.getCatalogTileKeywords(oCatalogTile) || []).join(',') : [],
+                id: catalogTileId,
+                size: srvc.getCatalogTileSize(oCatalogTile),
+                content: [tileView],
+                isTileIntentSupported: srvc.isTileIntentSupported(oCatalogTile),
+                tileType: oCatalogTile.tileType
+            };
         },
 
         /**
@@ -3683,7 +5294,7 @@ jQuery.sap.registerPreloadedModules({
          *      The message type (optional)
          */
         _showLocalizedMessage: function (sMsgId, oParams, iType) {
-            sap.ushell.Container.getService("Message").show(iType || sap.ushell.services.Message.Type.INFO, getLocalizedText(sMsgId, oParams), oParams);
+            sap.ushell.Container.getService("Message").show(iType || Message.Type.INFO, getLocalizedText(sMsgId, oParams), oParams);
         },
         /**
          * Shows a localized error message in the Message-Toast.
@@ -3694,7 +5305,7 @@ jQuery.sap.registerPreloadedModules({
          *
          */
         _showLocalizedError: function (sMsgId, oParams) {
-            this._showLocalizedMessage(sMsgId, oParams, sap.ushell.services.Message.Type.ERROR);
+            this._showLocalizedMessage(sMsgId, oParams, Message.Type.ERROR);
         },
 
         /**
@@ -3757,9 +5368,10 @@ jQuery.sap.registerPreloadedModules({
                 oSegGroup = segment[segIndex];
                 groupIndex = oSegGroup.index;
                 oGrp = aGroups[groupIndex];
-                oGrp.isRendered = true;
-                oGrp.tiles = oGrp.tiles.concat(oSegGroup.tiles);
-                oGrp.links = oGrp.links.concat(oSegGroup.links);
+                if (oGrp) {
+                    oGrp.isRendered = true;
+                    oGrp.tiles = oGrp.tiles.concat(oSegGroup.tiles);
+                    oGrp.links = oGrp.links.concat(oSegGroup.links);                }
             }
 
             return aGroups;
@@ -3774,6 +5386,7 @@ jQuery.sap.registerPreloadedModules({
             fnCreateFlatGroupClone = function (oGroup) {
                 var clnGroup = jQuery.extend({}, oGroup);
                 clnGroup.tiles = [];
+                clnGroup.pendingLinks = [];
                 clnGroup.links = [];
                 return clnGroup;
             };
@@ -3798,15 +5411,16 @@ jQuery.sap.registerPreloadedModules({
                 tempGroup,
                 splitObjectIndex,
                 splitObject,
-                splitObjects = ["tiles", "links"],
+                splitObjects = ["tiles", "pendingLinks"],
                 objectBUCost = 1,
                 fnCreateFlatGroupClone,
+                bIsTabsMode = (this.oModel.getProperty("/homePageGroupDisplay") && this.oModel.getProperty("/homePageGroupDisplay") === 'tabs'),
                 grp;
 
             fnCreateFlatGroupClone = function (oGroup) {
                 var clnGroup = jQuery.extend({}, oGroup);
                 clnGroup.tiles = [];
-                clnGroup.links = [];
+                clnGroup.pendingLinks = [];
                 return clnGroup;
             };
 
@@ -3817,25 +5431,44 @@ jQuery.sap.registerPreloadedModules({
 
                 for (splitObjectIndex = 0; splitObjectIndex < splitObjects.length; splitObjectIndex++) {
                     splitObject = splitObjects[splitObjectIndex];
-                    objectBUCost = this.PagingManager.getSizeofSupportedElementInUnits(splitObject === 'links' ? 'link' : 'tile');
+                    objectBUCost = this.PagingManager.getSizeofSupportedElementInUnits(splitObject === 'pendingLinks' ? 'link' : 'tile');
                     for (tileIndex = 0; tileIndex < grp[splitObject].length; tileIndex++) {
                         if (pendingBU <= 0) {
                             pendingBU = allocatedBU;
                             if (tempSegment) {
+                                if (bIsTabsMode) {
+                                    tempSegment.iGroupIndex = grpsIndex;
+                                }
+
                                 this.segmentsStore.push(tempSegment);
                             }
                             tempGroup = fnCreateFlatGroupClone(grp);
+                            tempGroup.links = [];
                             tempSegment = [];
                             tempSegment.push(tempGroup);
                         }
                         tempGroup[splitObject].push(grp[splitObject][tileIndex]);
-                        pendingBU -= objectBUCost;
+                        if (grp[splitObject][tileIndex].isTileIntentSupported) {
+                            pendingBU -= objectBUCost;
+                        }
+                    }
+                }
+
+                //In case tab mode no cross groups segments for Tabs mode
+                if (bIsTabsMode) {
+                    if (tempSegment) {
+                        tempSegment.iGroupIndex = grpsIndex;
+                        this.segmentsStore.push(tempSegment);
+                        tempSegment = [];
                     }
                 }
             }
 
             if (tempSegment) {
-                this.segmentsStore.push(tempSegment);
+                //in tabs mode last segment will be saved alreay by the code above.
+                if (!bIsTabsMode) {
+                    this.segmentsStore.push(tempSegment);
+                }
             }
         },
 
@@ -3848,8 +5481,24 @@ jQuery.sap.registerPreloadedModules({
             if (this.segmentsStore.length > 0) {
                 groupSegment = this.segmentsStore.shift();
                 groupIndex = groupSegment[0].index;
-                tileIndex = modelGroups[groupIndex].tiles.length +  modelGroups[groupIndex].links.length;
+                tileIndex = modelGroups[groupIndex].tiles.length +  modelGroups[groupIndex].pendingLinks.length;
 
+                if (this.isBlindLoading() === false) {
+                    if (this.oModel.getProperty("/homePageGroupDisplay") && this.oModel.getProperty("/homePageGroupDisplay") === 'tabs') {
+                        if (groupSegment.iGroupIndex === this.iTabSelected) {
+                            //this is the current tab, display the tile views.
+                            this.getSegmentContentViews(groupSegment);
+                        } else {
+                            //store segment for use when tab is clicked.
+                            if (!this.oSegmentedTabTileViewDB[groupSegment.iGroupIndex]) {
+                                this.oSegmentedTabTileViewDB[groupSegment.iGroupIndex] = [];
+                            }
+                            this.oSegmentedTabTileViewDB[groupSegment.iGroupIndex].push(groupSegment);
+                        }
+                    } else {
+                        this.getSegmentContentViews(groupSegment);
+                    }
+                }
                 modelGroups = this._bindSegment(modelGroups, groupSegment);
 
                 this.oModel.setProperty('/groups', modelGroups);
@@ -3862,6 +5511,53 @@ jQuery.sap.registerPreloadedModules({
                 sap.ushell.utils.handleTilesVisibility();
                 oEventBus.publish("launchpad", "dashboardModelContentLoaded");
             }
+        },
+
+        getSegmentContentViews: function (groupSegment) {
+            var nGroupSegmentIndex, nTilesIndex, oSegnmentGrp, oSegmentTile;
+
+            for (nGroupSegmentIndex = 0; nGroupSegmentIndex < groupSegment.length; nGroupSegmentIndex++) {
+                oSegnmentGrp = groupSegment[nGroupSegmentIndex];
+                for(nTilesIndex = 0; nTilesIndex < oSegnmentGrp.tiles.length; nTilesIndex++) {
+                    oSegmentTile = oSegnmentGrp.tiles[nTilesIndex];
+                    if (oSegmentTile.isTileIntentSupported) {
+                        this.getTileView(oSegmentTile);
+                    }
+                }
+
+                for(nTilesIndex = 0; nTilesIndex < oSegnmentGrp.links.length; nTilesIndex++) {
+                    oSegmentTile = oSegnmentGrp.links[nTilesIndex];
+                    if (oSegmentTile.isTileIntentSupported) {
+                        this.getTileView(oSegmentTile, oSegnmentGrp.index);
+                    }
+                }
+
+            }
+        },
+
+        getSegmentTabContentViews: function (sChannelId, sEventId, iProcessTileViewSegmentsForGroup) {
+            var  nTilesIndex,  oSegmentTile,
+                iSegmentsGroup = iProcessTileViewSegmentsForGroup.iSelectedGroup,
+                oGroup;
+
+                oGroup = this.oModel.getProperty("/groups/" + iSegmentsGroup);
+
+                for (nTilesIndex = 0; nTilesIndex < oGroup.tiles.length; nTilesIndex++) {
+                    oSegmentTile = oGroup.tiles[nTilesIndex];
+
+                    if (oSegmentTile.isTileIntentSupported) {
+                        this.getTileView(oSegmentTile);
+                    }
+                }
+
+                for (nTilesIndex = 0; nTilesIndex < oGroup.links.length; nTilesIndex++) {
+                    oSegmentTile = oGroup.links[nTilesIndex];
+                    if (oSegmentTile.isTileIntentSupported) {
+                        this.getTileView(oSegmentTile, iSegmentsGroup);
+                    }
+                }
+
+                this.oSegmentedTabTileViewDB[iSegmentsGroup] = [];
         },
 
         /**
@@ -3881,10 +5577,22 @@ jQuery.sap.registerPreloadedModules({
         },
 
         _handleSegment: function () {
+            var oConfigurationSegments = this.oModel.getProperty("/segments"),
+                iInterval = this.bIsFirstSegment? 400: 100;
+
+            if (oConfigurationSegments && oConfigurationSegments.interval) {
+                if (!this.bIsFirstSegment || !oConfigurationSegments.firstInterval) {
+                    iInterval = oConfigurationSegments.interval;
+                } else {
+                    iInterval = oConfigurationSegments.firstInterval;
+                }
+            }
+
             clearTimeout(this.oSegmentTimer);
             this.oSegmentTimer = setTimeout(function () {
+                this.bIsFirstSegment = false;
                 this._processSegment(this.oModel.getProperty('/groups'));
-            }.bind(this), 100);
+            }.bind(this), iInterval);
 
         },
 
@@ -3895,8 +5603,13 @@ jQuery.sap.registerPreloadedModules({
          */
         loadGroupsFromArray: function (aGroups) {
             var that = this;
-
+            jQuery.sap.flpmeasure.end(0, "Service: Get Data for Dashboard");
+            jQuery.sap.flpmeasure.start(0, "Process & render the first segment/tiles", 4);
+            //For Performance debug only, enabled only when URL parameter sap-flp-perf activated
+            jQuery.sap.measure.start("FLP:DashboardManager.loadGroupsFromArray", "loadGroupsFromArray","FLP");
+            jQuery.sap.measure.start("FLP:DashboardManager.getDefaultGroup", "getDefaultGroup","FLP");
             this.oPageBuilderService.getDefaultGroup().done(function (oDefaultGroup) {
+                jQuery.sap.measure.end("FLP:DashboardManager.getDefaultGroup");
                 // In case the user has no groups
                 if (aGroups.length == 0 && oDefaultGroup == undefined) {
                     return;
@@ -3911,6 +5624,7 @@ jQuery.sap.registerPreloadedModules({
                     oGroup,
                     isLocked,
                     groupLength,
+                    iSelectedGroup,
                     modelGroupsLength,
                     segmentSize,
                     linkBUSize,
@@ -3919,7 +5633,11 @@ jQuery.sap.registerPreloadedModules({
                     allocatedBaseUnits = 0,
                     numSeg = 0,
                     groupModel,
-                    numberOfTilesAndLinks = 0;
+                    numberOfTilesAndLinks = 0,
+                    oDashboardView,
+                    totalVisibleTileLinks = 0,
+                    oDashboardGroupsBox,
+                    oConfigurationSegments = that.oModel.getProperty("/segments");
 
                 // remove default group from array
                 aGroups.splice(indexOfDefaultGroup, 1);
@@ -3961,32 +5679,41 @@ jQuery.sap.registerPreloadedModules({
 
 
                 if (!that.PagingManager) {
-                    jQuery.sap.require("sap.ushell.components.flp.launchpad.PagingManager");
-                    that.PagingManager = new sap.ushell.components.flp.launchpad.PagingManager('dashboardPaging', {
-                        supportedElements: {
-                            tile : {className: 'sapUshellTile'},
-                            link : {className: 'sapUshellLinkTile'}
-                        },
-                        containerHeight: window.innerHeight,
-                        containerWidth: window.innerWidth
-                    });
+                    that.PagingManager = new PagingManager('dashboardPaging', {
+                            supportedElements: {
+                                tile : {className: 'sapUshellTile'},
+                                link : {className: 'sapUshellLinkTile'}
+                            },
+                            containerHeight: window.innerHeight,
+                            containerWidth: window.innerWidth
+                        });
+                    }
 
-                    //just the first time
                     if (that.PagingManager.currentPageIndex === 0) {
                         that.PagingManager.moveToNextPage();
                         allocatedBaseUnits = that.PagingManager._calcElementsPerPage();
                     }
-                }
+                    linkBUSize = that.PagingManager.getSizeofSupportedElementInUnits('link');
+                    tileBUSize = that.PagingManager.getSizeofSupportedElementInUnits('tile');
 
-                linkBUSize = that.PagingManager.getSizeofSupportedElementInUnits('link');
-                tileBUSize = that.PagingManager.getSizeofSupportedElementInUnits('tile');
+                jQuery.sap.measure.start("FLP:DashboardManager._getGroupModel", "_getGroupModel","FLP");
 
                 for (i = 0; i < groupLength; ++i) {
                     oNewGroupModel = that._getGroupModel(aGroups[i], i === numOfLockedGroup, i === groupLength - 1);
                     oNewGroupModel.index = i;
                     numberOfTilesAndLinks += oNewGroupModel.tiles.length * tileBUSize + oNewGroupModel.links.length * linkBUSize;
+                    if (oNewGroupModel.isGroupVisible) {
+                        //Hidden tilesAndLinks not calculate for the bIsScorllModeAccordingKPI
+                        totalVisibleTileLinks += oNewGroupModel.tiles.length * tileBUSize + oNewGroupModel.links.length * linkBUSize;
+                    }
+                    // Check if blind loading should be activated
+                    that.bIsScorllModeAccordingKPI = totalVisibleTileLinks > that.iMinNumOfTilesForBlindLoading * tileBUSize;
+
                     aNewGroups.push(oNewGroupModel);
                 }
+                that.oModel.setProperty("/iSelectedGroup", iSelectedGroup);
+
+                jQuery.sap.measure.end("FLP:DashboardManager._getGroupModel");
 
                 if (sap.ui.Device.system.desktop) {
                     numSeg = numberOfSegments.desktop;
@@ -3996,24 +5723,57 @@ jQuery.sap.registerPreloadedModules({
                     numSeg = numberOfSegments.phone;
                 }
 
-                segmentSize = (numberOfTilesAndLinks - allocatedBaseUnits) / numSeg;
+                //we are override the size of segments according to the configuration
+                if (oConfigurationSegments && (oConfigurationSegments.size || oConfigurationSegments.firstSegmentSize)) {
+                    if (oConfigurationSegments.firstSegmentSize != undefined) {
+                        allocatedBaseUnits = oConfigurationSegments.firstSegmentSize * tileBUSize;
+                    }
 
-                //make sure segment size is not less then 14 BU.
-                if (segmentSize < 14) {
-                    segmentSize = 14;
+                    if (oConfigurationSegments.size != undefined) {
+                        segmentSize = oConfigurationSegments.size  * tileBUSize;
+                        numSeg = parseInt((numberOfTilesAndLinks - allocatedBaseUnits) / segmentSize, 10) + 1;
+                    } else {
+                        segmentSize = (numberOfTilesAndLinks - allocatedBaseUnits) / numSeg;
+                    }
+                } else {
+                    segmentSize = (numberOfTilesAndLinks - allocatedBaseUnits) / numSeg;
+
+                    //make sure segment size is not less then 14 BU.
+                    if (segmentSize < 14) {
+                        segmentSize = 14;
+                    }
                 }
 
                 groupModel = that.createGroupsModelFrame(aNewGroups, that.oModel.getProperty("/personalization"));
                 that._splitGroups(segmentSize, aNewGroups, allocatedBaseUnits);
+                jQuery.sap.measure.start("FLP:DashboardManager._processSegment", "_processSegment","FLP");
                 that._processSegment(groupModel);
-                that.oModel.setProperty("/groups/length", groupModel.length);
 
+                for (var i = 0; i < groupModel.length; i++) {
+                    if (groupModel[i].isGroupVisible && groupModel[i].visibilityModes[0]) {
+                        that.oModel.setProperty("/groups/" + i + "/isGroupSelected", true);
+                        that.oModel.setProperty("/iSelectedGroup", i);
+                        that.iTabSelected = i;
+                        break;
+                    }
+                }
+                if (that.oModel.getProperty("/homePageGroupDisplay") && that.oModel.getProperty("/homePageGroupDisplay") === 'tabs') {
+                    oDashboardView = that.getDashboardView();
+                    oDashboardGroupsBox = oDashboardView.oDashboardGroupsBox;
+                    oDashboardGroupsBox.getBinding('groups').filter([oDashboardView.oFilterSelectedGroup]);
+                }
+
+                jQuery.sap.measure.end("FLP:DashboardManager._processSegment");
+                that.oModel.setProperty("/groups/length", groupModel.length);
                 if (that.oModel.getProperty('/currentState/stateName') === "catalog") {
                     // update the catalogTile's groups mapping, and update the catalogTile
                     // model if nedded only when in the catalog flow
-                    that.mapCatalogTilesToGroups();
-                    that.updateCatalogTilesToGroupsMap();
+                    //that.mapCatalogTilesToGroups();
+                    //that.updateCatalogTilesToGroupsMap();
+                    //this.getModel().setProperty("/catalogTiles", []);
                 }
+                jQuery.sap.measure.end("FLP:DashboardManager.loadGroupsFromArray");
+                jQuery.sap.flpmeasure.end(0, "Process & render the first segment/tiles");
             }).fail(that._resetGroupsOnFailureHelper("fail_to_get_default_group_msg"));
         },
 
@@ -4055,7 +5815,6 @@ jQuery.sap.registerPreloadedModules({
                 i,
                 isSortable,
                 oModel = this.getModel();
-
             isSortable = oModel.getProperty("/personalization");
 
             // in a new group scenario we create the group as null at first.
@@ -4076,6 +5835,17 @@ jQuery.sap.registerPreloadedModules({
                 }
             }
 
+            /*
+            In case we have pending links (links that their view is not set yet), we cannot
+            render the exising ones, but wait for the all first.
+            this is due to the fact that we do not have link wrapper and therefore changes
+            to the links view do not trigger the control rerender or calling the factory method
+            to get the updated link.
+            therefore we create a new array for the pending links and once all links would
+            updated in the model we will set the links group parameter.
+             */
+//            var bHasPendingLinks = this._hasPendingLinks(aModelLinks);
+
             return {
                 title: (bDefault && getLocalizedText("my_group")) ||
                 (oGroup && srvc.getGroupTitle(oGroup)) || (oData && oData.title) ||
@@ -4083,6 +5853,7 @@ jQuery.sap.registerPreloadedModules({
                 object: oGroup,
                 groupId: jQuery.sap.uid(),
                 links: aModelLinks,
+                pendingLinks: [],
                 tiles: aModelTiles,
                 isDefaultGroup: bDefault || false,
                 editMode: !oGroup /*&& isStateHome*/,
@@ -4093,8 +5864,18 @@ jQuery.sap.registerPreloadedModules({
                 isGroupVisible: !oGroup || srvc.isGroupVisible(oGroup),
                 isEnabled: !bDefault, //Currently only default groups is considered as locked
                 isLastGroup: bLast || false,
-                isRendered: oData ? !!oData.isRendered : false
+                isRendered: oData ? !!oData.isRendered : false,
+                isGroupSelected: false
             };
+        },
+
+        _hasPendingLinks: function(aModelLinks){
+            for (var i = 0; i < aModelLinks.length; i++){
+                if (aModelLinks[i].content[0] === undefined){
+                    return true;
+                }
+            }
+            return false;
         },
 
         _addTileToGroup: function (sGroupPath, oTile) {
@@ -4108,6 +5889,7 @@ jQuery.sap.registerPreloadedModules({
             var isGroupLocked = this.oModel.getProperty(sGroupPath + "/isGroupLocked"),
                 personalization = this.oModel.getProperty("/personalization");
             oGroup.tiles[iNumTiles] = this._getTileModel(oTile, isGroupLocked, sTileType, this._addModelToTileViewUpdateQueue);
+            this.getTileView(oGroup.tiles[iNumTiles]);
             oGroup.visibilityModes = sap.ushell.utils.calcVisibilityModes(oGroup, personalization);
             this._updateModelWithTileView(oGroup.index, iNumTiles);
             this.oModel.setProperty(sGroupPath, oGroup);
@@ -4147,16 +5929,60 @@ jQuery.sap.registerPreloadedModules({
             }, 50);
         },
 
-        _updateModelWithTilesViews: function (startGroup, startTile) {
-            var aGroups = this.oModel.getProperty("/groups"),
-                aTiles,
-                aLinks,
-                oTileModel,
+
+        _updateGroupModelWithTilesViews: function(aTiles, startTile, handledUpdatesIndex, isLink){
+            var oTileModel,
                 oUpdatedTile,
                 sSize,
                 bLong,
+                stTile = startTile || 0;
+
+            for (var j = stTile; j < aTiles.length; j = j + 1) {
+                //group tiles loop - get the tile model
+                oTileModel = aTiles[j];
+                for (var q = 0; q < this.tileViewUpdateQueue.length; q++) {
+                    //updated tiles view queue loop - check if the current tile was updated
+                    oUpdatedTile = this.tileViewUpdateQueue[q];
+                    if (oTileModel.uuid == oUpdatedTile.uuid) {
+                        //mark tileViewUpdate index for removal oUpdatedTile from tileViewUpdateQueue.
+                        handledUpdatesIndex.push(q);
+                        if (oUpdatedTile.view) {
+                            /*
+                             if view is provided then we destroy the current content
+                             (TileState control) and set the tile view
+                             In case of link we do not have a loading link therefor we don't destroy it
+                             */
+                            if (isLink){
+
+                                oTileModel.content = [oUpdatedTile.view];
+                            } else {
+                                oTileModel.content[0].destroy();
+                                oTileModel.content = [oUpdatedTile.view];
+                            }
+                            this.oDashboardLoadingManager.setTileResolved(oTileModel);
+
+                            /*
+                             in some cases tile size can be different then the initial value
+                             therefore we read and set the size again
+                             */
+                            sSize = this.oPageBuilderService.getTileSize(oTileModel.object);
+                            bLong = ((sSize !== null) && (sSize === "1x2")) || false;
+                            if (oTileModel['long'] !== bLong) {
+                                oTileModel['long'] = bLong;
+                            }
+                        } else {
+                            //some error on getTileView, therefore we set the state to 'Failed'
+                            oTileModel.content[0].setState("Failed");
+                        }
+                        break;
+                    }
+                }
+            }
+        },
+
+        _updateModelWithTilesViews: function (startGroup, startTile) {
+            var aGroups = this.oModel.getProperty("/groups"),
                 stGroup = startGroup || 0,
-                stTile = startTile || 0,
                 handledUpdatesIndex = [];
 
             if (!aGroups || this.tileViewUpdateQueue.length === 0) {
@@ -4169,43 +5995,19 @@ jQuery.sap.registerPreloadedModules({
              */
             for (var i = stGroup; i < aGroups.length; i = i + 1) {
                 //group loop - get the groups tiles
-                aTiles = aGroups[i].tiles;
-                aLinks = aGroups[i].links;
-                aTiles = aTiles.concat(aLinks);
-
-                for (var j = stTile; j < aTiles.length; j = j + 1) {
-                    //group tiles loop - get the tile model
-                    oTileModel = aTiles[j];
-                    for (var q = 0; q < this.tileViewUpdateQueue.length; q++) {
-                        //updated tiles view queue loop - check if the current tile was updated
-                        oUpdatedTile = this.tileViewUpdateQueue[q];
-                        if (oTileModel.uuid == oUpdatedTile.uuid) {
-                            //mark tileViewUpdate index for removal oUpdatedTile from tileViewUpdateQueue.
-                            handledUpdatesIndex.push(q);
-                            if (oUpdatedTile.view) {
-                                /*
-                                 if view is provided then we destroy the current content
-                                 (TileState control) and set the tile view
-                                 */
-                                oTileModel.content[0].destroy();
-                                oTileModel.content = [oUpdatedTile.view];
-                                /*
-                                 in some cases tile size can be different then the initial value
-                                 therefore we read and set the size again
-                                 */
-                                sSize = this.oPageBuilderService.getTileSize(oTileModel.object);
-                                bLong = ((sSize !== null) && (sSize === "1x2")) || false;
-                                if (oTileModel['long'] !== bLong) {
-                                    oTileModel['long'] = bLong;
-                                }
-                            } else {
-                                //some error on getTileView, therefore we set the state to 'Failed'
-                                oTileModel.content[0].setState("Failed");
-                            }
-                            break;
+                this._updateGroupModelWithTilesViews(aGroups[i].tiles, startTile, handledUpdatesIndex);
+                if (aGroups[i].links){
+                    this._updateGroupModelWithTilesViews(aGroups[i].links, startTile, handledUpdatesIndex, true);
+                    if (aGroups[i].pendingLinks.length > 0){
+                        if (!aGroups[i].links) {
+                            aGroups[i].links = [];
                         }
+                        aGroups[i].links = aGroups[i].links.concat(aGroups[i].pendingLinks);
+                        aGroups[i].pendingLinks = [];
                     }
                 }
+
+//                this.oModel.setProperty("/groups/" + i, aGroups[i]);
             }
 
             //clear the handled updates from the tempTileViewUpdateQueue and set the model
@@ -4220,105 +6022,226 @@ jQuery.sap.registerPreloadedModules({
             this.oModel.setProperty("/groups", aGroups);
         },
 
-        getModelTileById: function (sId) {
+        getModelTileById: function (sId, sItems) {
             var aGroups = this.oModel.getProperty('/groups'),
-                oModelTile;
-            aGroups.forEach(function (oGroup) {
-                oGroup.tiles.forEach(function (oTile) {
+                oModelTile,
+                bFound = false;
+            aGroups.every(function (oGroup, index) {
+                oGroup[sItems].every(function (oTile, index) {
                     if (oTile.uuid === sId || oTile.originalTileId === sId) {
                         oModelTile = oTile;
-                        return;
+                        bFound = true;
                     }
+                    return !bFound;
                 });
+                return !bFound;
             });
             return oModelTile;
         },
+        _addDraggableAttribute: function (oView) {
+            if (this.isIeHtml5DnD()) { //should be sap.ushell.Container.getService("LaunchPage").isLinkPersonalizationSupported(oTile)
+                oView.addEventDelegate({
+                   onAfterRendering: function() {
+                       this.$().attr("draggable","true");
+                   }.bind(oView)
+                });
+            }
+        },
 
-        _getTileModel: function (oTile, isGroupLocked, sTileType, fUpdateModel) {
-            var srvc = this.oPageBuilderService,
-                sTileUUID = jQuery.sap.uid(),
-                oTileView,
+        _attachLinkPressHandlers: function (oView) {
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                oTileView = oView.attachPress ? oView : oView.getContent()[0]; // a hack to support demoContent
+            oTileView.attachPress(function(oEvent){
+                var bTileBeingMoved = oView.getBindingContext().getObject().tileIsBeingMoved;
+                if (!bTileBeingMoved && this.getScope && this.getScope() === "Actions") {
+                    switch (oEvent.getParameters().action) {
+                        case "Press":
+                            sap.ushell.components.flp.ActionMode._openActionsMenu(oEvent, oView);
+                            break;
+                        case "Remove":
+                            var tileUuid = oView.getBindingContext().getObject().uuid;
+                            oEventBus.publish("launchpad", "deleteTile", {tileId: tileUuid, items: 'links'});
+                            break;
+                    }
+                } else {
+                    sap.ui.getCore().getEventBus().publish("launchpad", "dashboardTileLinkClick");
+                }
+            });
+        },
+
+        getTileView: function (oTile, iGroup) {
+            var oDfd,
                 that = this,
-                oDfd,
-                oTileModelData,
-                fUpdateModelWithView;
+                srvc = this.oPageBuilderService,
+                sMode,
+                aGroups,
+                oGroupLinks,
+                fUpdateModelWithView = this._addModelToTileViewUpdateQueue,
+                oTileView,
+                bNeedRefreshLinks = false,
+                sTileUUID = oTile.uuid;
 
-            this.sTileType = sTileType;
-
-            // first we set visibility of tile to false
-            // before we get the tile's model etc.
-            srvc.setTileVisible(oTile, false);
-
-            oDfd = srvc.getTileView(oTile);
+            var fh = jQuery.sap.flpmeasure.startFunc(0, "Service + model binding and rendering for all tile-Views", 5, "getTileView", oTile.object);
+            if (that.oDashboardLoadingManager.isTileViewRequestIssued(oTile)) {
+                //no need to get tile view, it was alreay issued.
+                return;
+            }
+            this.oDashboardLoadingManager.setTileInProgress(oTile);
+            srvc.setTileVisible(oTile.object, false);
+            oDfd = srvc.getTileView(oTile.object);
 
             /*
              register done and fail handlers for the getTileView API.
              */
             oDfd.done(function (oView) {
-                oTileView = oView;
-                if (fUpdateModelWithView) {
-                    //call to the '_addModelToTileViewUpdateQueue' with uuid and view
-                    fUpdateModelWithView.apply(that, [sTileUUID, oTileView]);
-                    that._handleSegment();
+                //setting the value of the target when the view is valid and make sure it is not custom tile
+                if (oView.oController && oView.oController.navigationTargetUrl && !oTile.isCustomTile) {
+                    oTile.target = oView.oController.navigationTargetUrl;
                 }
-            });
-            oDfd.fail(function () {
-                if (fUpdateModelWithView) {
-                    //call to the '_addModelToTileViewUpdateQueue' with uuid and no view to indicate failure
-                    fUpdateModelWithView.apply(that, [sTileUUID]);
-                    that._handleSegment();
+                oTileView = oView;
+                //in CDM content, the tils view should have this function
+                if(oTileView.getComponentInstance){
+                    jQuery.sap.measure.average("FLP:getComponentInstance", "get info for navMode", "FLP1");
+                    var oCompData = oTileView.getComponentInstance().getComponentData();
+                    if(oCompData && oCompData.properties){
+                        oTile.navigationMode = oCompData.properties.navigationMode;
+                    }
+                    jQuery.sap.measure.end("FLP:getComponentInstance");
+                }
+                that.oDashboardLoadingManager.setTileResolved(oTile);
+                sMode = oView.getMode ? oView.getMode() : "ContentMode";
+                if (that.bLinkPersonalizationSupported && sMode === "LineMode") { //If the tileType is link and the personalization is supported by the platform, the the link must support personalization
+                    that._attachLinkPressHandlers(oTileView);
+                    that._addDraggableAttribute(oTileView);
+
+                    if (iGroup != undefined) {
+                        aGroups = that.oModel.getProperty("/groups");
+
+                        if (aGroups[iGroup]) {
+                            oTile.content = [oTileView];
+                            oGroupLinks = that.oModel.getProperty("/groups/" + iGroup + "/links");
+                            that.oModel.setProperty("/groups/" + iGroup + "/links", []);
+                            that.oModel.setProperty("/groups/" + iGroup + "/links", oGroupLinks);
+                        }
+                    }
                 } else {
-                    jQuery.sap.require('sap.ushell.ui.launchpad.TileState');
-                    // in case call is synchronise we set the view with 'TileState' control with 'Failed' status
-                    if (that.sTileType === "link") {
-                        oTileView = new sap.m.Link({text: sap.ushell.resources.i18n.getText('cannotLoadTile')});
+                    if (that.isBlindLoading()) {
+                        if (oTile.content.length > 0) {
+                            oTile.content[0].destroy();
+                        }
+                        oTile.content = [oTileView];
+                        if(iGroup != undefined){
+                            var oGroup = that.oModel.getProperty("/groups/" + iGroup);
+                            that.oModel.setProperty("/groups/" + iGroup, oGroup);
+                        }
+                }
+                }
+
+                if (that.isBlindLoading()) {
+                    /*
+                     in some cases tile size can be different then the initial value
+                     therefore we read and set the size again
+                     */
+                    var sSize = that.oPageBuilderService.getTileSize(oTile.object);
+                    var bLong = ((sSize !== null) && (sSize === "1x2")) || false;
+                    if (oTile['long'] !== bLong) {
+                        oTile['long'] = bLong;
+                    }
+                } else {
+                    if (sMode === "LineMode") {
+                        oTile.content = [oTileView];
+
+                        if (bNeedRefreshLinks) {
+                            oGroupLinks = that.oModel.getProperty("/groups/" + iGroup + "/links");
+                            that.oModel.setProperty("/groups/" + iGroup + "/links", []);
+                            that.oModel.setProperty("/groups/" + iGroup + "/links", oGroupLinks);
+                        }
+                    } else if (oTile.content.length === 0) {
+                         oTile.content = [oTileView];
                     } else {
-                        oTileView = new sap.ushell.ui.launchpad.TileState({state: "Failed"});
+                        fUpdateModelWithView.apply(that, [sTileUUID, oTileView]);
+                        that._updateModelWithTileView(0,0);
                     }
                 }
+                jQuery.sap.flpmeasure.endFunc(0, "Service + model binding and rendering for all tile-Views", fh);
+            });
+            oDfd.fail(function () {
+                if (that.sTileType === "link") {
+                    // in case call is synchronise we set the view with 'TileState' control with 'Failed' status
+                    if (!this.bLinkPersonalizationSupported) {
+                        oTileView = new TileState({state: "Failed"});
+                    } else {
+                        var LaunchPage = sap.ushell.Container.getService("LaunchPage");
+                        var subHeader = LaunchPage.getCatalogTilePreviewSubtitle(oTile);
+                        subHeader = (!subHeader || !subHeader.length) ? undefined : subHeader;
+                        var header = LaunchPage.getCatalogTilePreviewTitle(oTile);
+                        header = ((!header || !header.length) && !subHeader) ? sap.ushell.resources.i18n.getText('cannotLoadLinkInformation') : header;
+                        oTileView =  new sap.m.GenericTile({
+                            mode: "LineMode",
+                            state: "Failed",
+                            header: header,
+                            subheader: subHeader
+                        });
+                    }
+                } else {
+                    oTileView = new TileState({state: "Failed"});
+                }
+
+                    oTile.content = [oTileView];
             });
 
-            /*
-             in case getTileView is asynchronous we set the 'fUpdateModelWithView' to handle the view
-             update, and create a 'Loading' TileState control as the tile view
-             */
             if (!oTileView) {
-                fUpdateModelWithView = fUpdateModel ? fUpdateModel : this._addModelToTileViewUpdateQueue;
-                jQuery.sap.require('sap.ushell.ui.launchpad.TileState');
-                oTileView = new sap.ushell.ui.launchpad.TileState({state: "Loading"});
-            }
+                if (srvc.getTileType(oTile.object) === "link") {
+                    bNeedRefreshLinks = true;
+                    oTileView = new sap.m.GenericTile({
+                        mode: "LineMode"
+                    });
+                } else {
+                    oTileView = new TileState();
+                }
+                    oTile.content = [oTileView];
+                }
+        },
+        _getTileModel: function (oTile, isGroupLocked, sTileType, fUpdateModel) {
+            var srvc = this.oPageBuilderService,
+                sTileUUID = jQuery.sap.uid(),
+                oTileView,
+                oTileModelData;
 
+            this.sTileType = sTileType;
+
+            var sSize = srvc.getTileSize(oTile);
+
+            var aLinks = [];
             if (sTileType === "link") {
-                oTileModelData = {
-                    "object": oTile,
-                    "originalTileId": srvc.getTileId(oTile),
-                    "uuid": sTileUUID,
-                    "tileCatalogId": encodeURIComponent(srvc.getCatalogTileId(oTile)),
-                    "content": [oTileView],
-                    "target": srvc.getTileTarget(oTile) || "",
-                    "debugInfo": srvc.getTileDebugInfo(oTile),
-                    "isTileIntentSupported": srvc.isTileIntentSupported(oTile),
-                    "isLocked": isGroupLocked
-                };
-            } else if (sTileType === "tile"){
-                var sSize = srvc.getTileSize(oTile);
-
-                oTileModelData = {
-                    "object": oTile,
-                    "originalTileId": srvc.getTileId(oTile),
-                    "uuid": sTileUUID,
-                    "tileCatalogId": encodeURIComponent(srvc.getCatalogTileId(oTile)),
-                    "content": [oTileView],
-                    "long": ((sSize !== null) && (sSize === "1x2")) || false,
-                    "target": srvc.getTileTarget(oTile) || "",
-                    "debugInfo": srvc.getTileDebugInfo(oTile),
-                    "isTileIntentSupported": srvc.isTileIntentSupported(oTile),
-                    "rgba": "",
-                    "isLocked": isGroupLocked,
-                    "showActionsIcon": this.oModel.getProperty("/tileActionsIconEnabled") || false
-                };
+                aLinks = [new sap.m.GenericTile({
+                    mode: "LineMode"
+                })];
             }
+
+            oTileModelData = {
+                "isCustomTile" : !this._getIsAppBox(oTile),
+                "object": oTile,
+                "originalTileId": srvc.getTileId(oTile),
+                "uuid": sTileUUID,
+                "tileCatalogId": encodeURIComponent(srvc.getCatalogTileId(oTile)),
+                "content": aLinks,
+                "long": ((sSize !== null) && (sSize === "1x2")) || false,
+                "target": srvc.getTileTarget(oTile) || "", // 'target' will be defined (and get a value) later on after the tile will be valid
+                "debugInfo": srvc.getTileDebugInfo(oTile),
+                "isTileIntentSupported": srvc.isTileIntentSupported(oTile),
+                "rgba": "",
+                "isLocked": isGroupLocked,
+                "showActionsIcon": this.oModel.getProperty("/tileActionsIconEnabled") || false,
+                "navigationMode": this.navigationMode
+            };
+
             return oTileModelData;
+        },
+
+        isIeHtml5DnD: function () {
+            return !!((sap.ui.Device.browser.msie || sap.ui.Device.browser.edge) && sap.ui.Device.browser.version >= 11 &&
+                        (sap.ui.Device.system.combi || sap.ui.Device.system.tablet));
         },
 
         _destroyAllGroupModels: function (oTarget) {
@@ -4366,7 +6289,11 @@ jQuery.sap.registerPreloadedModules({
                 oGroupsPromise = this.oPageBuilderService.getGroups(),
                 oDeferred = new jQuery.Deferred();
 
+            jQuery.sap.flpmeasure.start(0, "Service: Get Data for Dashboard", 4);
+            jQuery.sap.measure.start("FLP:DashboardManager.loadPersonalizedGroups", "loadPersonalizedGroups","FLP");
+
             oGroupsPromise.done(function (aGroups) {
+                jQuery.sap.measure.end("FLP:DashboardManager.loadPersonalizedGroups");
                 that.loadGroupsFromArray(aGroups);
                 oDeferred.resolve();
             });
@@ -4379,17 +6306,21 @@ jQuery.sap.registerPreloadedModules({
             return oDeferred;
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/PagingManager.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+	return DashboardManager;
+
+});
+},
+	"sap/ushell/components/flp/launchpad/PagingManager.js":function(){// ${copyright}
+
+sap.ui.define(["sap/ui/base/EventProvider"], function(EventProvider) {
+	"use strict";
+
     /*global jQuery, sap, document, setTimeout, window */
     /*jslint plusplus: true, nomen: true, bitwise: true */
 
-    jQuery.sap.declare("sap.ushell.components.flp.launchpad.PagingManager");
-    sap.ui.base.EventProvider.extend("sap.ushell.components.flp.launchpad.PagingManager", {
+    var PagingManager = EventProvider.extend("sap.ushell.components.flp.launchpad.PagingManager", {
         metadata : {
             publicMethods : ["setElementClass", "setContainerSize", "getNumberOfAllocatedElements", "moveToNextPage", "getTileHeight"]
         },
@@ -4484,76 +6415,220 @@ jQuery.sap.registerPreloadedModules({
             return elementsPerRow * elementsPerColumn;
         }
     });
-}());
+
+
+	return PagingManager;
+
+});
 },
-	"sap/ushell/components/flp/launchpad/appfinder/AppFinder.controller.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+	"sap/ushell/components/flp/launchpad/appfinder/AppFinder.controller.js":function(){// ${copyright}
 
-(function () {
-    "use strict";
-    /*global jQuery, sap, window */
-    /*jslint nomen: true */
+sap.ui.define(['sap/ushell/ui/launchpad/AccessibilityCustomData', 'sap/ushell/ui5service/ShellUIService'],
+    function (AccessibilityCustomData, ShellUIService) {
+        "use strict";
 
-    jQuery.sap.require("sap.ushell.ui.launchpad.AccessibilityCustomData");
+        sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.AppFinder", {
+            onInit: function () {
+                sap.ushell.Container.getRenderer("fiori2").createExtendedShellState("appFinderExtendedShellState", function () {
+                    sap.ushell.Container.getRenderer("fiori2").showHeaderItem('backBtn', true);
+                    sap.ushell.Container.getRenderer("fiori2").showHeaderItem('homeBtn', true);
+                });
+                var oView = this.getView(),
+                    oModel = oView.getModel(),
+                    showEasyAccessMenu = oView.showEasyAccessMenu;
 
-    sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.AppFinder", {
-        onInit: function () {
-            sap.ushell.Container.getRenderer("fiori2").createExtendedShellState("appFinderExtendedShellState", function () {
-                sap.ushell.Container.getRenderer("fiori2").showHeaderItem("homeBtn", true);
-                var isMobile = sap.ui.Device.system.phone;
-                sap.ushell.Container.getRenderer("fiori2").setHeaderHiding(isMobile);
-            });
-            var that = this;
-            var oView = this.getView();
-            var oModel = oView.getModel();
-            //make sure the groups are loaded
-            if (!oModel.getProperty("/groups") || oModel.getProperty("/groups").length === 0) {
-                var dashboardMgr = sap.ushell.components.flp.launchpad.getDashboardManager();
-                dashboardMgr.loadPersonalizedGroups();
-            }
-
-            var enableEasyAccess = oView.enableEasyAccess;
-            this.oRouter = this.getView().parentComponent.getRouter();
-
-            this.catalogView = sap.ui.view("catalogView", {
-                type: sap.ui.core.mvc.ViewType.JS,
-                viewName: "sap.ushell.components.flp.launchpad.appfinder.Catalog",
-                height: "100%",
-                viewData: {parentComponent: oView.parentComponent}
-            });
-            this.catalogView.addStyleClass('sapUiGlobalBackgroundColor sapUiGlobalBackgroundColorForce');
-
-            this._addViewCustomData(this.catalogView, "appFinderCatalogTitle");
-
-            this.oRouter.getRoute("catalog").attachPatternMatched(function (oEvent) {
-                that._navigateTo.apply(that,["appFinder","catalog"]);
-            });
-
-            this.oRouter.getRoute("appFinder").attachPatternMatched(function (oEvent) {
-                that._applyExtendedShellstate();
-                that._getPathAndHandleGroupContext(oEvent);
-                //in fiori 2.0 the header should be merged -> the shell header should be "App Finder"
-                if (that.oView.isFiori2) {
-                    that._updateShellHeader(that.oView.oPage.getTitle());
+                //make sure the groups are loaded
+                if (!oModel.getProperty("/groups") || oModel.getProperty("/groups").length === 0) {
+                    var dashboardMgr = sap.ushell.components.flp.launchpad.getDashboardManager();
+                    dashboardMgr.loadPersonalizedGroups();
                 }
-                if (enableEasyAccess) {
-                    that.onShow(oEvent);
-                }
-                sap.ui.getCore().getEventBus().publish("showCatalog");
-            });
 
-            if (!enableEasyAccess) {
-                // we assume that when enableEasyAccess is undefined or false, then currentMenu should be catalog
-                this.currentMenu = "catalog";
-                oView.oPage.addContent(this.catalogView);
+                // model
+                this.getView().setModel(this._getSubHeaderModel(), "subHeaderModel");
+                this.oConfig = oView.parentComponent.getComponentData().config;
+                this.catalogView = sap.ui.view("catalogView", {
+                    type: sap.ui.core.mvc.ViewType.JS,
+                    viewName: "sap.ushell.components.flp.launchpad.appfinder.Catalog",
+                    height: "100%",
+                    viewData: {
+                        parentComponent: oView.parentComponent,
+                        subHeaderModel: this._getSubHeaderModel()
+                    }
+                });
+                this.catalogView.addStyleClass('sapUiGlobalBackgroundColor sapUiGlobalBackgroundColorForce');
+                this._addViewCustomData(this.catalogView, "appFinderCatalogTitle");
+
+
+                // routing for both 'catalog' and 'appFinder' is supported and added below
+                this.oRouter = this.getView().parentComponent.getRouter();
+                this.oRouter.getRoute("catalog").attachPatternMatched(function (oEvent) {
+                    this._navigateTo.apply(this, ["appFinder", "catalog"]);
+                }.bind(this));
+                this.oRouter.getRoute("appFinder").attachPatternMatched(this._handleAppFinderNavigation.bind(this));
+
+                // setting first focus
+                if (!showEasyAccessMenu) {
+                    oView.oPage.addContent(this.catalogView);
+                    setTimeout(function () {
+                        jQuery('#catalogSelect').focus();
+                    }, 0);
+                }
+
+                // attaching a resize handler to determine is hamburger button should be visible or not in the App Finder sub header.
+                sap.ui.Device.resize.attachHandler(this._resizeHandler.bind(this));
+            },
+
+        _resizeHandler: function () {
+            // update the visibiilty of the hamburger button upon resizing
+            var bShowOpenCloseSplitAppButton = this._showOpenCloseSplitAppButton();
+
+            var bCurrentShowOpenCloseSplitAppButton = this.oSubHeaderModel.getProperty('/openCloseSplitAppButtonVisible');
+            if (bShowOpenCloseSplitAppButton != bCurrentShowOpenCloseSplitAppButton) {
+                this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonVisible', bShowOpenCloseSplitAppButton);
+
+                // in case we now show the button, then it must be foced untoggled, as the left panel closes automatically
+                if (bShowOpenCloseSplitAppButton) {
+                    this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled', false);
+                }
             }
+            // toggle class on app finder page
+            this._toggleViewWithToggleButtonClass(bShowOpenCloseSplitAppButton);
         },
 
-        _applyExtendedShellstate : function() {
+        _handleAppFinderNavigation: function (oEvent) {
+            var oView = this.getView();
+
+            this._preloadAppHandler();
+            this._getPathAndHandleGroupContext(oEvent);
+            // first create the sub header
+            oView.createSubHeader();
+            // toggle class on app finder page
+            this._toggleViewWithToggleButtonClass(this._showOpenCloseSplitAppButton());
+            if (oView.showEasyAccessMenu) {
+                // in case we need to show the easy access menu buttons
+                // update sub header accordingly (within the onShow)
+                this.onShow(oEvent);
+            } else if (oView._showSearch('catalog')) {
+                // else no easy access menu buttons
+                // update sub header accordingly
+                oView.updateSubHeader('catalog', false);
+                // we still have to adjust the view in case we do show the tags in subheader
+                this._toggleViewWithSearchAndTagsClasses('catalog');
+            }
+            sap.ui.getCore().getEventBus().publish("showCatalog");
+            sap.ui.getCore().getEventBus().publish("launchpad", "contentRendered");
+        },
+
+        _showOpenCloseSplitAppButton: function () {
+            return !sap.ui.Device.orientation.landscape || sap.ui.Device.system.phone;
+        },
+
+
+        _resetSubHeaderModel: function () {
+            this.oSubHeaderModel.setProperty('/activeMenu', null);
+
+            this.oSubHeaderModel.setProperty('/search', {
+                searchMode: false,
+                searchTerm: null
+            });
+
+            this.oSubHeaderModel.setProperty('/tag', {
+                tagMode: false,
+                selectedTags: []
+            });
+
+            this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonVisible', this._showOpenCloseSplitAppButton());
+            this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled', false);
+        },
+
+
+        _getSubHeaderModel : function () {
+            if (this.oSubHeaderModel) {
+                return this.oSubHeaderModel;
+            }
+            this.oSubHeaderModel = new sap.ui.model.json.JSONModel();
+            this._resetSubHeaderModel();
+            return this.oSubHeaderModel;
+        },
+
+        onTagsFilter : function (oEvent) {
+            var oTagsFilter = oEvent.getSource(),
+                oSubHeaderModel = oTagsFilter.getModel('subHeaderModel'),
+                aSelectedTags = oEvent.getSource().getSelectedItems(),
+                bTagsMode = aSelectedTags.length > 0,
+                oTagsData = {
+                    tagMode: bTagsMode,
+                    selectedTags: []
+                };
+
+            aSelectedTags.forEach(function (oTag, iTagIndex) {
+                oTagsData.selectedTags.push(oTag.getText());
+            });
+            oSubHeaderModel.setProperty('/activeMenu', this.getCurrentMenuName());
+            oSubHeaderModel.setProperty('/tag', oTagsData);
+
+        },
+
+        searchHandler : function (oEvent) {
+            //get all custom tile keywords
+            var dashboardMgr = sap.ushell.components.flp.launchpad.getDashboardManager();
+            dashboardMgr.loadCustomTilesKeyWords();
+
+            var sSearchTerm = oEvent.getSource().getValue();
+            if (sSearchTerm == null || oEvent.getParameter('clearButtonPressed')) {
+                return;
+            }
+
+            // take the data from the model
+            var oSearchData = this.oSubHeaderModel.getProperty('/search');
+            var sActiveMenu = this.oSubHeaderModel.getProperty('/activeMenu');
+
+            // update active menu to current
+            if (this.getCurrentMenuName() != sActiveMenu) {
+                sActiveMenu = this.getCurrentMenuName();
+            }
+            // update search mode to true - ONLY in case the handler is not invoked by the 'X' button.
+            // In case it does we do not update the search mode, it stays as it is
+            if (!oSearchData.searchMode && !oEvent.getParameter('clearButtonPressed')) {
+                oSearchData.searchMode = true;
+            }
+
+            // we are in search mode and on Phone
+            if (oSearchData.searchMode && sap.ui.Device.system.phone) {
+
+                // in case we are in phone we untoggle the toggle button when search is invoked as
+                // the detailed page of the search results is nevigated to and opened.
+                // therefore we untoggle the button of the master page
+                this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonToggled", false);
+            }
+
+            // check and update the search term
+            if (sSearchTerm != oSearchData.searchTerm) {
+                if (this.containsOnlyWhiteSpac(sSearchTerm)) {
+                    sSearchTerm = '*';
+                }
+                oSearchData.searchTerm = sSearchTerm;
+            }
+
+            // setting property once so no redundant binding updates will occur
+            this.oSubHeaderModel.setProperty("/search", oSearchData);
+            this.oSubHeaderModel.setProperty("/activeMenu", sActiveMenu);
+            this.oSubHeaderModel.refresh(true);
+        },
+
+        /**
+         * This method comes to prepare relevant modifications before loading the app.
+         * This includes;
+         *  - applying custom shell states
+         *  - setting the shell-header-title accordingly
+         **/
+        _preloadAppHandler : function() {
             setTimeout(function () {
                 if (sap.ushell.Container) {
                     sap.ushell.Container.getRenderer("fiori2").applyExtendedShellState("appFinderExtendedShellState");
                 }
-            }, 0);
+                this._updateShellHeader(this.oView.oPage.getTitle());
+            }.bind(this), 0);
         },
         getCurrentMenuName: function () {
             return this.currentMenu;
@@ -4574,19 +6649,29 @@ jQuery.sap.registerPreloadedModules({
             }
         },
 
-        getSystemsModel: function () {
+        getSystemsModels: function () {
+            var that = this;
             if (this.getSystemsPromise) {
                 return this.getSystemsPromise;
             }
 
-            var easyAccessSystemsModel = new sap.ui.model.json.JSONModel();
-            easyAccessSystemsModel.setProperty('/systemSelected', null);
-            easyAccessSystemsModel.setProperty('/systemsList', []);
+            var getSystemsDeferred = new jQuery.Deferred();
+            this.getSystemsPromise = getSystemsDeferred.promise();
 
-            this.getSystemsPromise = this.getSystems().then(function (aReturnSystems) {
-                easyAccessSystemsModel.setProperty("/systemsList", aReturnSystems);
-                return easyAccessSystemsModel;
+            var aModelPromises = ["userMenu", "sapMenu"].map(function (menuType) {
+                var systemsModel = new sap.ui.model.json.JSONModel();
+                systemsModel.setProperty("/systemSelected", null);
+                systemsModel.setProperty("/systemsList", []);
+
+                return that.getSystems(menuType).then(function (aReturnSystems) {
+                    systemsModel.setProperty("/systemsList", aReturnSystems);
+                    return systemsModel;
+                });
             });
+            jQuery.when.apply(jQuery, aModelPromises).then(function (userMenuModel, sapMenuModel) {
+                getSystemsDeferred.resolve(userMenuModel, sapMenuModel);
+            });
+
             return this.getSystemsPromise;
         },
         onSegmentButtonClick: function (oEvent) {
@@ -4608,50 +6693,155 @@ jQuery.sap.registerPreloadedModules({
             if (menu === this.getCurrentMenuName()) {
                 return;
             }
-            this.currentMenu = menu;
 
+            // update place holder string on the search input according to the showed menu
             var oView = this.getView();
-            oView.segmentedButton.setSelectedButton(menu);
-            if (menu === 'catalog') {
-                oView.oPage.removeAllContent();
-                oView.oPage.addContent(this.catalogView);
-            } else {
-                this.getSystemsModel().then(function (menu, systemsModel) {
-                    if (menu === 'userMenu') {
-                        if (!this.userMenuView) {
-                            this.userMenuView = new sap.ui.view("userMenuView", {
-                                type: sap.ui.core.mvc.ViewType.JS,
-                                viewName: "sap.ushell.components.flp.launchpad.appfinder.EasyAccess",
-                                height: "100%",
-                                viewData: {
-                                    menuName: "USER_MENU",
-                                    easyAccessSystemsModel: systemsModel,
-                                    parentComponent: oView.parentComponent
-                                }
-                            });
-                            this._addViewCustomData(this.userMenuView, "appFinderUserMenuTitle");
-                        }
-                        oView.oPage.removeAllContent();
-                        oView.oPage.addContent(this.userMenuView);
-                    } else if (menu === 'sapMenu') {
-                        if (!this.sapMenuView) {
-                            this.sapMenuView = new sap.ui.view("sapMenuView", {
-                                type: sap.ui.core.mvc.ViewType.JS,
-                                viewName: "sap.ushell.components.flp.launchpad.appfinder.EasyAccess",
-                                height: "100%",
-                                viewData: {
-                                    menuName: "SAP_MENU",
-                                    easyAccessSystemsModel: systemsModel,
-                                    parentComponent: oView.parentComponent
-                                }
-                            });
-                            this._addViewCustomData(this.sapMenuView, "appFinderSapMenuTitle");
-                        }
-                        oView.oPage.removeAllContent();
-                        oView.oPage.addContent(this.sapMenuView);
-                    }
+            oView._updateSearchWithPlaceHolder(menu);
 
-                }.bind(this, this.currentMenu));
+            this._updateCurrentMenuName(menu);
+            this.getSystemsModels().then(function (userMenuSystemsModel, sapMenuSystemsModel) {
+                var sapMenuSystemsList = sapMenuSystemsModel.getProperty("/systemsList");
+                var userMenuSystemsList = userMenuSystemsModel.getProperty("/systemsList");
+
+                // call view to remove content from page
+                oView.oPage.removeAllContent();
+
+                // in case we have systems we do want the sub header to be rendered accordingly
+                // (no systems ==> no easy access menu buttons in sub header)
+                var systemsList = (this.currentMenu === 'sapMenu' ? sapMenuSystemsList : userMenuSystemsList);
+                if (systemsList && systemsList.length) {
+                    // call view to render the sub header with easy access menus
+                    oView.updateSubHeader(this.currentMenu, true);
+                } else if (oView._showSearch(this.currentMenu)){
+                    // call view to render the sub header without easy access menus
+                    oView.updateSubHeader(this.currentMenu, false);
+                }
+
+                if (this.currentMenu === 'catalog') {
+                    // add catalog view
+                    oView.oPage.addContent(this.catalogView);
+                } else if (this.currentMenu === 'userMenu') {
+                    // add user menu view
+                    // create if first time.
+                    if (!this.userMenuView) {
+                        this.userMenuView = new sap.ui.view("userMenuView", {
+                            type: sap.ui.core.mvc.ViewType.JS,
+                            viewName: "sap.ushell.components.flp.launchpad.appfinder.EasyAccess",
+                            height: "100%",
+                            viewData: {
+                                menuName: "USER_MENU",
+                                easyAccessSystemsModel: userMenuSystemsModel,
+                                parentComponent: oView.parentComponent,
+                                subHeaderModel: this._getSubHeaderModel(),
+                                enableSearch: this.getView()._showSearch("userMenu")
+                            }
+                        });
+                        this._addViewCustomData(this.userMenuView, "appFinderUserMenuTitle");
+                    }
+                    oView.oPage.addContent(this.userMenuView);
+                } else if (this.currentMenu === 'sapMenu') {
+                    // add sap menu view
+                    // create if first time.
+                    if (!this.sapMenuView) {
+                        this.sapMenuView = new sap.ui.view("sapMenuView", {
+                            type: sap.ui.core.mvc.ViewType.JS,
+                            viewName: "sap.ushell.components.flp.launchpad.appfinder.EasyAccess",
+                            height: "100%",
+                            viewData: {
+                                menuName: "SAP_MENU",
+                                easyAccessSystemsModel: sapMenuSystemsModel,
+                                parentComponent: oView.parentComponent,
+                                subHeaderModel: this._getSubHeaderModel(),
+                                enableSearch: this.getView()._showSearch("sapMenu")
+                            }
+                        });
+                        this._addViewCustomData(this.sapMenuView, "appFinderSapMenuTitle");
+                    }
+                    oView.oPage.addContent(this.sapMenuView);
+                }
+
+                // focus is set on segmented button
+                this._setFocusToSegmentedButton(systemsList);
+
+                // SubHeader Model active-menu is updated with current menu
+                this.oSubHeaderModel.setProperty("/activeMenu", this.currentMenu);
+
+                // In case toggle button is visible (SubHeader Model toggle button toggled)
+                // then it is set to false as we switch the menu
+                if (this.oSubHeaderModel.getProperty("/openCloseSplitAppButtonVisible")) {
+                    this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonToggled", false);
+                }
+
+                this.oSubHeaderModel.refresh(true);
+            }.bind(this));
+        },
+
+        _updateCurrentMenuName: function(sMenu){
+            /**
+             * verify that the menu exist!
+             * in case one of the easy access menu is disabled and the
+             * user is navigating to the desabled menu (using some existing link)
+             * we need to make sure we will not show the disabled menu!
+             */
+            var oView = this.getView();
+
+            if (!oView.showEasyAccessMenu ||
+                (sMenu === "sapMenu" && !oView.enableEasyAccessSAPMenu) ||
+                (sMenu === "userMenu" && !oView.enableEasyAccessUserMenu)){
+                this.currentMenu = "catalog";
+            } else {
+                this.currentMenu = sMenu;
+            }
+
+            // toggle relevant classes on the App Finder page according to wether it displays search or tags in its
+            // subheader or not
+            this._toggleViewWithSearchAndTagsClasses(sMenu);
+        },
+
+        /*
+         this method sets a class on the AppFinder page to state if tags are shown or not currently
+         in the subheader.
+         The reason for it is that if tags do appear than we have a whole set of different styling to the header
+         and its behavior, so we use different css selectors
+         */
+        _toggleViewWithSearchAndTagsClasses: function(sMenu) {
+            var oView = this.getView();
+
+            if (oView._showSearch(sMenu)) {
+                oView.oPage.addStyleClass('sapUshellAppFinderSearch');
+            } else {
+                oView.oPage.removeStyleClass('sapUshellAppFinderSearch');
+            }
+
+            if (oView._showSearchTag(sMenu)) {
+                oView.oPage.addStyleClass('sapUshellAppFinderTags');
+            } else {
+                oView.oPage.removeStyleClass('sapUshellAppFinderTags');
+            }
+        },
+
+        _toggleViewWithToggleButtonClass: function(bButtonVisible) {
+            var oView = this.getView();
+            if (bButtonVisible) {
+                oView.oPage.addStyleClass('sapUshellAppFinderToggleButton');
+            } else {
+                oView.oPage.removeStyleClass('sapUshellAppFinderToggleButton');
+            }
+        },
+
+        _setFocusToSegmentedButton: function(systemsList) {
+            var oView = this.getView();
+
+            if (systemsList && systemsList.length) {
+                var sButtonId = oView.segmentedButton.getSelectedButton();
+                setTimeout(function () {
+                    jQuery("#" + sButtonId).focus();
+                }, 0);
+
+            } else {
+                setTimeout(function () {
+                    jQuery('#catalogSelect').focus();
+                }, 0);
             }
         },
 
@@ -4705,16 +6895,17 @@ jQuery.sap.registerPreloadedModules({
 
         /**
          *
+         * @param {string} sMenuType - the menu type. One of sapMenu, userMenu.
          * @returns {*} - a list of systems to show in the system selector dialog
          */
-        getSystems: function () {
+        getSystems: function (sMenuType) {
             var oDeferred = new jQuery.Deferred();
-            var systemsModel = [];
             var clientService = sap.ushell.Container.getService("ClientSideTargetResolution");
             if (!clientService) {
                 oDeferred.reject("cannot get ClientSideTargetResolution service");
             } else {
-                clientService.getEasyAccessSystems().done(function (oSystems) {
+                clientService.getEasyAccessSystems(sMenuType).done(function (oSystems) {
+                    var systemsModel = [];
                     var aSystemsID = Object.keys(oSystems);
                     for (var i = 0; i < aSystemsID.length; i++) {
                         var sCurrentsystemID = aSystemsID[i];
@@ -4735,12 +6926,12 @@ jQuery.sap.registerPreloadedModules({
         _addViewCustomData: function (oView, sTitleName) {
             var oResourceBundle = sap.ushell.resources.i18n;
 
-            oView.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+            oView.addCustomData(new AccessibilityCustomData({
                 key: "role",
-                value: "main",
+                value: "region",
                 writeToDom: true
             }));
-            oView.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+            oView.addCustomData(new AccessibilityCustomData({
                 key: "aria-label",
                 value: oResourceBundle.getText(sTitleName),
                 writeToDom: true
@@ -4748,8 +6939,7 @@ jQuery.sap.registerPreloadedModules({
         },
 
         _initializeShellUIService: function () {
-            jQuery.sap.require("sap.ushell.ui5service.ShellUIService");
-            this.oShellUIService = new sap.ushell.ui5service.ShellUIService({
+        	this.oShellUIService = new ShellUIService({
                 scopeObject: this.getOwnerComponent(),
                 scopeType: "component"
             });
@@ -4757,97 +6947,60 @@ jQuery.sap.registerPreloadedModules({
 
         _updateShellHeader: function (sTitle) {
             if (!this.oShellUIService) {
-                this._initializeShellUIService()
+                this._initializeShellUIService();
             }
             this.oShellUIService.setTitle(sTitle);
-        }
-    });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/AppFinder.view.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+            this.oShellUIService.setHierarchy([{
+                icon: 'sap-icon://home',
+                title: 'Home',
+                intent: '#'
+            }]);
+        },
 
-(function () {
+        /**
+         *
+         * @param sTerm - the input fiels
+         * @returns {boolean} - the function return true if the input field is ' ' (space)  or '    '(a few spaces)
+         * if the input field contains a not only spaces (for example 'a b')  or if it is an empty string the function should return false
+         */
+        containsOnlyWhiteSpac: function (sTerm) {
+            if (!sTerm || sTerm === "")
+                return false;
+            var sTemp = sTerm;
+            return (!sTemp.replace(/\s/g, '').length)
+        }
+
+    });
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/AppFinder.view.js":function(){// ${copyright}
+
+sap.ui.define(function () {
     "use strict";
+
     /*global jQuery, sap, jQuery */
     /*jslint nomen: true */
 
     sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.AppFinder", {
 
-        createContent: function (oController) {
-            var that = this;
-            this.addEventDelegate({
-                onAfterShow: function () {
-                    //in the App Finder the home button should be enabled
-                    //check that the home button exists, and that it is not the back button in Fiori 2.0...
-                    var oHomeBtn = sap.ui.getCore().byId('homeBtn');
-                    if (oHomeBtn && oHomeBtn.setEnabled && oHomeBtn.getTarget()) {
-                        oHomeBtn.setEnabled(true);
-                    }
-
-                },
-                onAfterHide: function () {
-                    var oHomeBtn = sap.ui.getCore().byId('homeBtn');
-                    //check that the home button exists, and that it is not the back button in Fiori 2.0...
-                    if (oHomeBtn && oHomeBtn.setEnabled && oHomeBtn.getTarget()) {
-                        oHomeBtn.setEnabled(false);
-                    }
-
-                    //since the shell heade was modified -> need to remove it
-                    if (that.isFiori2) {
-                        that.oController._updateShellHeader(undefined);
-                    }
-                }
-            });
-
+        createContent: function () {
+            this.oController = this.getController();
             this.parentComponent = sap.ui.core.Component.getOwnerComponentFor(this);
             this.setModel(this.parentComponent.getModel());
-            this.enableEasyAccess = this.getModel().getProperty("/enableEasyAccess");
-            if (this.enableEasyAccess) {
-                if (sap.ui.Device.system.phone || sap.ui.Device.system.tablet  && (!sap.ui.Device.system.combi)) {
-                    this.enableEasyAccess = false;
-                }
+            this.enableEasyAccessSAPMenu = this.getModel().getProperty("/enableEasyAccessSAPMenu");
+            this.enableEasyAccessUserMenu = this.getModel().getProperty("/enableEasyAccessUserMenu");
+
+            if ((!this.enableEasyAccessSAPMenu && !this.enableEasyAccessUserMenu) || //show only catalog in case both menus are not enabled
+                    (sap.ui.Device.system.phone || sap.ui.Device.system.tablet && (!sap.ui.Device.system.combi))) {
+                this.showEasyAccessMenu = false;
+            } else {
+                this.showEasyAccessMenu = true;
             }
             var oResourceBundle = sap.ushell.resources.i18n;
-            if (this.enableEasyAccess) {
-                this.segmentedButton = new sap.m.SegmentedButton({
-                    buttons: [
-                        new sap.m.Button("catalog", {
-                            text: oResourceBundle.getText("appFinderCatalogTitle"),
-                            press: function (oEvent) {
-                                oController.onSegmentButtonClick(oEvent);
-                            }
-                        }),
-                        new sap.m.Button('userMenu', {
-                            text: oResourceBundle.getText("appFinderUserMenuTitle"),
-                            press: function (oEvent) {
-                                oController.onSegmentButtonClick(oEvent);
-                            }
-                        }),
-                        new sap.m.Button('sapMenu', {
-                            text: oResourceBundle.getText("appFinderSapMenuTitle"),
-                            press: function (oEvent) {
-                                oController.onSegmentButtonClick(oEvent);
-                            }
-                        })]
-                });
-                var aButtons = this.segmentedButton.getButtons();
-                for (var i = 0; i < aButtons.length; i++) {
-                    var button = aButtons[i];
-                    button.addAriaLabelledBy(button.getId() + "View");
-                    button.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
-                        key: "aria-controls",
-                        value: button.getId() + "View",
-                        writeToDom: true
-                    }));
-                }
-            }
-
-            var oRenderer = sap.ushell.Container.getRenderer('fiori2');
-            this.isFiori2 = oRenderer.isFiori2();
 
             this.oPage = new sap.m.Page("appFinderPage", {
-                showHeader: this.isFiori2 ? false : true,
-                showSubHeader: this.enableEasyAccess ? true : false,
+                showHeader: false,
+                showSubHeader: false,
                 showFooter: false,
                 showNavButton: false,
                 enableScrolling: false,
@@ -4856,40 +7009,347 @@ jQuery.sap.registerPreloadedModules({
                     formatter : function (title) {
                         return !title ? oResourceBundle.getText("appFinderTitle") : oResourceBundle.getText("appFinder_group_context_title", title);
                     }
-                },
-                subHeader: this.enableEasyAccess ? new sap.m.Toolbar({
-                    justifyContent: sap.m.FlexJustifyContent.Center,
-                    content: this.segmentedButton
-                }) : undefined
+                }
             });
-//            oPage.addDelegate({
-//                onAfterRendering: function () {
-//                    //set initial focus
-//                    jQuery("#catalogTilesPage header button").attr("tabindex", -1);
-//                }
-//            });
-
             return this.oPage;
+        },
+
+        /*
+         This method checks according to the menu id if search is enabled
+         according to the configuration.
+         Empty menu id is treated as 'catalog' as when loading the appFinder if no menu
+         identified as a routing parameter then we load catalog by default
+         */
+        _showSearch: function (sMenu) {
+            var sModelProperty = "searchFiltering";
+            if (sMenu === "userMenu") {
+                sModelProperty = "enableEasyAccessUserMenuSearch";
+            } else if (sMenu === "sapMenu") {
+                sModelProperty = "enableEasyAccessSAPMenuSearch";
+            }
+
+            return this.getModel().getProperty("/" + sModelProperty);
+        },
+
+        /*
+         This method checks according to the menu id if tags is enabled
+         according to the configuration.
+         Empty menu id is treated as 'catalog' as when loading the appFinder if no menu
+         identified as a routing parameter then we load catalog by default
+         */
+        _showSearchTag: function (sMenu) {
+            if (sMenu === "userMenu" || sMenu === "sapMenu") {
+                return false;
+            }
+            return this.getModel().getProperty("/tagFiltering");
+        },
+
+        // onAfterHide: function () {
+        //     var oController = this.getController(),
+        //         bResetSearch = oController.oSubHeaderModel.getProperty("/search/searchMode") || oController.oSubHeaderModel.getProperty("/search/searchTerm");
+        //
+        //     //If searchMode is true, we need to reset the search model and term in preparation to the next entrance to the app finder
+        //     if (bResetSearch) {
+        //         // reset the model
+        //         oController._resetSubHeaderModel();
+        //         // reset the actual vlue on the search field control
+        //         this.oAppFinderSearchControl.setValue("");
+        //     }
+        // },
+
+        createSubHeader: function () {
+
+            // first time creation for the toolbar - which is the actual control of the page's sub header
+            if (!this.oToolbar) {
+                this.oToolbar = new sap.m.Toolbar("appFinderSubHeader", {
+                });
+
+                this.oToolbar.addEventDelegate({
+                    onsapskipback: function (oEvent) {
+                        oEvent.preventDefault();
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                    },
+                    onsapskipforward: function (oEvent) {
+                        var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                        if (openCloseSplitAppButton.getVisible() && !openCloseSplitAppButton.getPressed()) {
+                            oEvent.preventDefault();
+                            sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
+                        }
+                    },
+                    onAfterRendering: function () {
+                        jQuery("#catalog").attr("accesskey", "a");
+                    }
+                });
+
+                this.oToolbar.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "role",
+                    value: "heading",
+                    writeToDom: true
+                }));
+
+                this.oToolbar.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "aria-level",
+                    value: "2",
+                    writeToDom: true
+                }));
+
+                this.oToolbar.addStyleClass('sapUshellAppFinderHeader');
+                this.oPage.setSubHeader(this.oToolbar);
+                this.oPage.setShowSubHeader(true);
+            }
+
+
+            if (!this.openCloseSplitAppButton) {
+                //create toggle button for open/close the master part of the splitApp control
+                this.openCloseSplitAppButton = new sap.m.ToggleButton("openCloseButtonAppFinderSubheader", {
+                    icon: "sap-icon://menu2",
+                    visible: "{/openCloseSplitAppButtonVisible}",
+                    pressed: "{/openCloseSplitAppButtonToggled}",
+                    press: function (oEvent) {
+                        this.getController().oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled', oEvent.getSource().getPressed());
+                        this.openCloseSplitAppButton.setTooltip(oEvent.getParameter("pressed") ?
+                            sap.ushell.resources.i18n.getText("ToggleButtonHide") :
+                            sap.ushell.resources.i18n.getText("ToggleButtonShow"))
+                    }.bind(this),
+                    tooltip: sap.ushell.resources.i18n.getText("ToggleButtonShow")
+                });
+
+                this.openCloseSplitAppButton.addEventDelegate({
+                    onsaptabprevious: function (oEvent) {
+                        oEvent.preventDefault();
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                    }
+                });
+
+                this.openCloseSplitAppButton.setModel(this.getController().oSubHeaderModel);
+                this.oToolbar.addContent(this.openCloseSplitAppButton);
+            }
+        },
+
+        updateSubHeader: function (sMenu, bEasyAccess) {
+            var segmentedButtons,
+                searchControl;
+
+            // clear content from toolbar
+            this.oToolbar.removeAllContent();
+            this.oToolbar.addContent(this.openCloseSplitAppButton);
+
+            // bEasyAccess means that we need the segmented button easy access menu entries
+            if (bEasyAccess) {
+                segmentedButtons = this.createSegmentedButtons(sMenu);
+                this.oPage.addStyleClass('sapUshellAppFinderWithEasyAccess');
+                this.oToolbar.addContent(segmentedButtons);
+            }
+
+            // render the search control in the sub-header
+            if (this._showSearch(sMenu)) {
+                searchControl = this.createSearchControl(sMenu);
+                this.oToolbar.addContent(searchControl);
+            }
+            // make sure we always update the current menu when updating the sub header
+            this.getController()._updateCurrentMenuName(sMenu);
+        },
+
+        createSegmentedButtons: function (sMenu) {
+            var oController,
+                oResourceBundle,
+                segmentedButtonsArray,
+                aButtons,
+                button,
+                i;
+
+            if (this.segmentedButton) {
+                this.segmentedButton.setSelectedButton(sMenu);
+                return this.segmentedButton;
+            }
+
+            oController = this.getController();
+            oResourceBundle = sap.ushell.resources.i18n;
+            segmentedButtonsArray = [];
+            segmentedButtonsArray.push(new sap.m.Button("catalog", {
+                text: oResourceBundle.getText("appFinderCatalogTitle"),
+                press: function (oEvent) {
+                    oController.onSegmentButtonClick(oEvent);
+                }
+            }));
+            if (this.enableEasyAccessUserMenu) {
+                segmentedButtonsArray.push(new sap.m.Button('userMenu', {
+                    text: oResourceBundle.getText("appFinderUserMenuTitle"),
+                    press: function (oEvent) {
+                        oController.onSegmentButtonClick(oEvent);
+                    }
+                }));
+            }
+            if (this.enableEasyAccessSAPMenu) {
+                segmentedButtonsArray.push(new sap.m.Button('sapMenu', {
+                    text: oResourceBundle.getText("appFinderSapMenuTitle"),
+                    press: function (oEvent) {
+                        oController.onSegmentButtonClick(oEvent);
+                    }
+                }));
+            }
+            this.segmentedButton = new sap.m.SegmentedButton("appFinderSegmentedButtons", {
+                buttons: segmentedButtonsArray
+            });
+
+            this.segmentedButton.addEventDelegate({
+                onsaptabprevious: function (oEvent) {
+                    var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                    if (!openCloseSplitAppButton.getVisible()) {
+                        oEvent.preventDefault();
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                    }
+                }
+            });
+
+            this.segmentedButton.setSelectedButton(sMenu);
+            aButtons = this.segmentedButton.getButtons();
+            for (i = 0; i < aButtons.length; i++) {
+                button = aButtons[i];
+                button.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "aria-controls",
+                    value: button.getId() + "View",
+                    writeToDom: true
+                }));
+            }
+
+            return this.segmentedButton;
+        },
+
+        _handleSearch: function () {
+            // invoke the search handler on the controller
+            this.getController().searchHandler.apply(this.getController(), arguments);
+            // select text right after search executed
+            jQuery('#appFinderSearch input').select();
+        },
+
+        createSearchControl: function (sMenu) {
+            if (!this.oAppFinderSearchContainer) {
+                this.oAppFinderSearchContainer = new sap.m.FlexBox("appFinderSearchContainer");
+            }
+
+            this.oAppFinderSearchContainer.removeAllItems();
+
+            if (sMenu === 'catalog' && this._showSearchTag('catalog')) {
+                this.createTagControl();
+                this.oAppFinderSearchContainer.addItem(this.oAppFinderTagFilter);
+            }
+
+            if (!this.oAppFinderSearchControl) {
+                this.oAppFinderSearchControl = new sap.m.SearchField("appFinderSearch", {
+                    search: this._handleSearch.bind(this),
+                    value: {
+                        path: 'subHeaderModel>/search/searchTerm',
+                        mode: sap.ui.model.BindingMode.OneWay
+                    }
+                }).addStyleClass('help-id-catalogSearch');// xRay help ID;
+
+                this.oAppFinderSearchControl.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "aria-controls",
+                    value: "",
+                    writeToDom: true
+                }));
+
+                this.oAppFinderSearchControl.addEventDelegate({
+                    onsaptabnext: function (oEvent) {
+                        var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                        if (openCloseSplitAppButton.getVisible() && !openCloseSplitAppButton.getPressed()) {
+                            oEvent.preventDefault();
+                            sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                            sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
+                        }
+                    }
+                });
+            }
+            this.oAppFinderSearchContainer.addItem(this.oAppFinderSearchControl);
+
+            this._updateSearchWithPlaceHolder(sMenu);
+            return this.oAppFinderSearchContainer;
+
+        },
+
+        _updateSearchWithPlaceHolder: function (sMenu) {
+            var sSearchPlaceHolderKey = "";
+            if (sMenu === 'catalog') {
+                sSearchPlaceHolderKey = "EasyAccessMenu_SearchPlaceHolder_Catalog";
+            } else if (sMenu === 'userMenu') {
+                sSearchPlaceHolderKey = "EasyAccessMenu_SearchPlaceHolder_UserMenu";
+            } else if (sMenu === 'sapMenu') {
+                sSearchPlaceHolderKey = "EasyAccessMenu_SearchPlaceHolder_SAPMenu";
+            }
+
+            if (sSearchPlaceHolderKey && this.oAppFinderSearchControl) {
+                this.oAppFinderSearchControl.setPlaceholder(sap.ushell.resources.i18n.getText(sSearchPlaceHolderKey));
+                this.oAppFinderSearchControl.setTooltip(sap.ushell.resources.i18n.getText(sSearchPlaceHolderKey));
+            }
+        },
+
+
+
+
+        createTagControl : function () {
+            if (this.oAppFinderTagFilter) {
+                return this.oAppFinderTagFilter;
+            }
+            this.oAppFinderTagFilter = new sap.m.MultiComboBox("appFinderTagFilter", {
+                selectedKeys: {
+                    path: "subHeaderModel>/tag/selectedTags"
+                },
+                tooltip: "{i18n>catalogTilesTagfilter_tooltip}",
+                placeholder: "{i18n>catalogTilesTagfilter_HintText}",
+                visible: {
+                    path : "/tagList",
+                    formatter: function (aTagList) {
+                        return aTagList.length > 0;
+                    }
+                },
+                //Use catalogs model as a demo content until the real model is implemented
+                items : {
+                    path : "/tagList",
+                    sorter : new sap.ui.model.Sorter("tag", false, false),
+                    template : new sap.ui.core.ListItem({
+                        text : "{tag}",
+                        key : "{tag}"
+                    })
+                },
+                selectionChange : [ this.oController.onTagsFilter, this.oController ]
+            }).addStyleClass('help-id-catalogTagFilter');// xRay help ID;
+
+            return this.oAppFinderTagFilter;
         },
 
         getControllerName: function () {
             return "sap.ushell.components.flp.launchpad.appfinder.AppFinder";
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/Catalog.controller.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
-    /*global jQuery, $, sap, window */
+
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/Catalog.controller.js":function(){// ${copyright}
+
+sap.ui.define(["sap/ushell/components/flp/launchpad/PagingManager"], function(PagingManager) {
+	"use strict";
+
+    /*global jQuery, $, sap, window, hasher*/
     /*jslint nomen: true */
 
     sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.Catalog", {
-        oPopoverView: undefined,
-
+        oPopover: null,
         onInit: function () {
-            var that = this;
+            // take the sub-header model
+            this.categoryFilter = "";
+            this.oMainModel = this.oView.getModel();
+            this.oSubHeaderModel = this.oView.getModel("subHeaderModel");
+
+            var that = this,
+                oSelectedTagsBinding = this.oSubHeaderModel.bindProperty("/tag/selectedTags"),
+                oSearchModelBinding = this.oSubHeaderModel.bindProperty("/search"),
+                oTagMode = this.oSubHeaderModel.bindProperty("/tag/tagMode");
+
             sap.ui.getCore().byId("catalogSelect").addEventDelegate({
                 onBeforeRendering : this.onBeforeSelectRendering
             }, this);
@@ -4901,16 +7361,22 @@ jQuery.sap.registerPreloadedModules({
                 that.onShow(oEvent);
             });
             this.timeoutId = 0;
+
+            document.subHeaderModel = this.oSubHeaderModel;
+            document.mainModel = this.oMainModel;
+
+            oSearchModelBinding.attachChange(that.handleSearchModelChanged.bind(this));
+            oSelectedTagsBinding.attachChange(that.handleSearchModelChanged.bind(this));
+            oTagMode.attachChange(that.handleSearchModelChanged.bind(this));
+            // init listener for the toggle button bindig context
+            var oToggleButtonModelBinding = this.oSubHeaderModel.bindProperty("/openCloseSplitAppButtonToggled");
+            oToggleButtonModelBinding.attachChange(that.handleToggleButtonModelChanged.bind(this));
         },
 
         onBeforeRendering: function () {
             //Invoking loading of all catalogs here instead of 'onBeforeShow' as it improves the perceived performance.
             //Fix of incident#:1570469901
             sap.ui.getCore().getEventBus().publish("renderCatalog");
-            //set initial focus
-            setTimeout(function () {
-                jQuery('#catalogSelect').focus();
-            }, 0);
         },
 
         onAfterRendering: function () {
@@ -4920,30 +7386,24 @@ jQuery.sap.registerPreloadedModules({
                 that = this;
             //check if the catalogs were already loaded, if so, we don't need the loading message
             if (!aCurrentCatalogs.length) {
-
-                //add the loading message right after the catalog is rendered
-                oModel.setProperty('/catalogs', [{
-                    title: sap.ushell.resources.i18n.getText('catalogsLoading'),
-                    "static": true,
-                    tiles: [],
-                    numIntentSupportedTiles : -1//only in order to present this option in the Catalog.view (dropdown menu)since there is a filter there on this property
-                }]);
-                oModel.setProperty('/catalogsNoDataText', sap.ushell.resources.i18n.getText('loadingTiles'));
-
+//                oModel.setProperty('/catalogsNoDataText', sap.ushell.resources.i18n.getText('loadingTiles'));
+                //TODO daniel & eran: Add text propery on the catalog container to display the status message.
             } else if (aCurrentCatalogs[0].title != sap.ushell.resources.i18n.getText('catalogsLoading')) {
-                oModel.setProperty('/catalogsNoDataText', sap.ushell.resources.i18n.getText('noFilteredItems'));
+                //oModel.setProperty('/catalogsNoDataText', sap.ushell.resources.i18n.getText('noFilteredItems'));
             }
 
             if (!this.PagingManager) {
                 this.lastCatalogId = 0;
-                jQuery.sap.require("sap.ushell.components.flp.launchpad.PagingManager");
-                this.PagingManager = new sap.ushell.components.flp.launchpad.PagingManager('catalogPaging', {
+                this.PagingManager = new PagingManager('catalogPaging', {
                     supportedElements: {
                         tile : {className: 'sapUshellTile'}
                     },
                     containerHeight: window.innerHeight,
                     containerWidth: window.innerWidth
                 });
+
+                //we need PagingManager in CatalogContainer in order to allocate page if catalog is selected.
+                this.getView().getCatalogContainer().setPagingManager(this.PagingManager);
             }
 
             //just the first time
@@ -4951,58 +7411,19 @@ jQuery.sap.registerPreloadedModules({
                 that.allocateNextPage();
             }
 
-            jQuery("#catalogTilesPage-cont").scroll(function () {
-                var oPage = sap.ui.getCore().byId('catalogTilesPage'),
-                    scroll = oPage.getScrollDelegate(),
-                    currentPos = scroll.getScrollTop(),
-                    max = scroll.getMaxScrollTop();
-
-                if (max - currentPos <= 30 + that.PagingManager.getTileHeight()) {
-                    that.allocateNextPage();
-                }
-            });
             jQuery(window).resize(function () {
                 var windowWidth = $(window).width(),
                     windowHeight = $(window).height();
 
                 that.PagingManager.setContainerSize(windowWidth, windowHeight);
-                that.resetPageFilter();
-                that.applyTileFilters();
             });
+            that._handleAppFinderWithDocking();
+            sap.ui.getCore().getEventBus().subscribe("launchpad", "appFinderWithDocking", that._handleAppFinderWithDocking,this);
         },
 
-        onShow: function (oEvent) {
-            //if the user goes to the catalog directly (not via the dashboard)
-            //we must close the loading dialog
-            var oViewPortContainer,
-                hashTag,
-                oModel = this.getView().getModel(),
-                aCatalogTiles = oModel.getProperty("/catalogTiles") || [],
-                sDataParam = oEvent.getParameter('arguments').filters,
-                oDataParam = sDataParam ? JSON.parse(sDataParam) : sDataParam,
-                i;
-
-            // The catalog does not contain the notification preview,
-            // hence, shifting the scaled center veiwport (when moving to the right viewport) is not needed
-            oViewPortContainer = sap.ui.getCore().byId("viewPortContainer");
-            if (oViewPortContainer) {
-                oViewPortContainer.shiftCenterTransition(false);
-            }
-
-            $.extend(this.getView().getViewData(), oEvent);
-            if (this.PagingManager) {
-                this.resetPageFilter();
-            }
-
-            this.categoryFilter = (oDataParam && oDataParam.catalogSelector && oDataParam.catalogSelector) || null;
-            if (this.categoryFilter) {
-                this.categoryFilter = window.decodeURIComponent(this.categoryFilter);
-            }
-            this.searchFilter = (oDataParam && oDataParam.tileFilter && oDataParam.tileFilter) || null;
-            if (this.searchFilter) {
-                this.searchFilter = window.decodeURIComponent(this.searchFilter);
-            }
-            hashTag = (oDataParam && oDataParam.tagFilter && oDataParam.tagFilter) || "";
+        _decodeUrlFilteringParameters: function (sUrlParameters) {
+            var oUrlParameters = sUrlParameters ? JSON.parse(sUrlParameters) : sUrlParameters,
+                hashTag = (oUrlParameters && oUrlParameters.tagFilter && oUrlParameters.tagFilter) || "";
 
             if (hashTag) {
                 try {
@@ -5013,57 +7434,73 @@ jQuery.sap.registerPreloadedModules({
             } else {
                 this.tagFilter = [];
             }
-            if (this.tagFilter) {
-                oModel.setProperty("/selectedTags", this.tagFilter);
+            this.categoryFilter = (oUrlParameters && oUrlParameters.catalogSelector && oUrlParameters.catalogSelector) || this.categoryFilter;
+            if (this.categoryFilter) {
+                this.categoryFilter = window.decodeURIComponent(this.categoryFilter);
             }
-            oModel.setProperty("/showCatalogHeaders", true);
-            oModel.setProperty("/catalogSearchFilter", this.searchFilter);
-
-            for (i = 0; i < aCatalogTiles.length; i = i + 1) {
-                aCatalogTiles[i].active = false;
-            }
-
-            if (this.categoryFilter || this.searchFilter) {
-                // selected category does not work with data binding
-                // we need to rerender it manually and then set the selection
-                // see function onBeforeSelectRendering
-                sap.ui.getCore().byId("catalogSelect").rerender();
-            } else {
-                //display all
-                if (sap.ui.getCore().byId("catalogSelect")) {
-                    sap.ui.getCore().byId("catalogSelect").setSelectedItemId("");
-                }
-            }
-
-            this.oRenderingFilter = new sap.ui.model.Filter('', 'EQ', 'a');
-            this.oRenderingFilter.fnTest = function (val) {
-                if (val.catalogIndex <= this.lastCatalogId) {
-                    return true;
-                }
-
-                if (this.allocateTiles > 0) {
-                    this.lastCatalogId = val.catalogIndex;
-                    this.allocateTiles--;
-                    return true;
-                }
-
-                return false;
-            }.bind(this);
-
-            if (this.PagingManager) {
-                this.applyTileFilters();
+            this.searchFilter = (oUrlParameters && oUrlParameters.tileFilter && oUrlParameters.tileFilter) || null;
+            if (this.searchFilter) {
+                this.searchFilter = window.decodeURIComponent(this.searchFilter);
             }
         },
+
+        _applyFilters: function () {
+            if (this.categoryFilter) {
+                // If all is selected pass an empty string.
+                this.categoryFilter = sap.ushell.resources.i18n.getText('all') === this.categoryFilter ? '' : this.categoryFilter;
+                this.getView().getModel().setProperty("/categoryFilter", this.categoryFilter);
+                //According to UX definitions, if we have 'Category Filter' we shouldn't carry-on with the other filters.
+                return;
+            }
+
+
+            if (this.searchFilter && this.searchFilter.length) {
+                //Remove all asterisks from search query before applying the filter
+                this.searchFilter = this.searchFilter.replace(/\*/g, '');
+                this.oSubHeaderModel.setProperty('/search', {
+                    searchMode: true,
+                    searchTerm: this.searchFilter
+                });
+            }
+            if (this.tagFilter && this.tagFilter.length) {
+                this.oSubHeaderModel.setProperty('/tag', {
+                    tagMode: true,
+                    selectedTags: this.tagFilter
+                });
+            }
+        },
+
+        onShow: function (oEvent) {
+            //if the user goes to the catalog directly (not via the dashboard)
+            //we must close the loading dialog
+            var oViewPortContainer,
+                sUrlParameters = oEvent.getParameter('arguments').filters;
+
+            // The catalog does not contain the notification preview,
+            // hence, shifting the scaled center veiwport (when moving to the right viewport) is not needed
+            oViewPortContainer = sap.ui.getCore().byId("viewPortContainer");
+            if (oViewPortContainer) {
+                oViewPortContainer.shiftCenterTransition(false);
+            }
+
+            $.extend(this.getView().getViewData(), oEvent);
+            this._decodeUrlFilteringParameters(sUrlParameters);
+            this._applyFilters();
+        },
+
         resetPageFilter : function () {
             this.lastCatalogId = 0;
             this.allocateTiles = this.PagingManager.getNumberOfAllocatedElements();
+            this.getView().getCatalogContainer().setCategoryAllocateTiles(this.allocateTiles);
         },
+
         allocateNextPage : function () {
-            if (!this.allocateTiles || this.allocateTiles === 0) {
+            var oCatalogContainer = this.getView().getCatalogContainer();
+            if (!this.nAllocatedTiles || this.nAllocatedTiles === 0) {
                 //calculate the number of tiles in the page.
                 this.PagingManager.moveToNextPage();
                 this.allocateTiles = this.PagingManager._calcElementsPerPage();
-                this.applyTileFilters();
+                oCatalogContainer.setCategoryAllocateTiles(this.allocateTiles);
             }
         },
 
@@ -5073,12 +7510,8 @@ jQuery.sap.registerPreloadedModules({
                     return oItem.getBindingContext().getObject().title === this.categoryFilter;
                 }, this));
 
-            if (!aItems.length) {
-                aItems.push(oSelect.getItemAt(0));
-            }
-
-            if (aItems[0] && oSelect.getSelectedItemId() !== aItems[0].getId()) {
-                window.setTimeout($.proxy(oSelect.setSelectedItem, oSelect, aItems[0].getId()), 500);
+            if (!aItems.length && oSelect.getItems()[0]) {
+                aItems.push(oSelect.getItems()[0]);
             }
         },
 
@@ -5124,210 +7557,397 @@ jQuery.sap.registerPreloadedModules({
             return sGroupContext ? sGroupContext : "";
         },
 
-        applyTileFilters : function () {
-            var aFilters = [],
-                otagFilter,
-                oSearchFilter,
-                oCategoryFilter,
-                sCatalogTitle;
-            if (this.tagFilter) {
-                otagFilter = new sap.ui.model.Filter('tags', 'EQ', 'v');
-                otagFilter.fnTest = function (oTags) {
-                    var ind, filterByTag;
-                    if (this.tagFilter.length === 0) {
-                        return true;
-                    }
+        _isTagFilteringChanged: function (aSelectedTags) {
+            var bSameLength = aSelectedTags.length === this.tagFilter.length,
+                bIntersect = bSameLength;
 
-                    for (ind = 0; ind < this.tagFilter.length; ind++) {
-                        filterByTag = this.tagFilter[ind];
-                        if (oTags.indexOf(filterByTag) === -1) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }.bind(this);
-
-                aFilters.push(otagFilter);
+            //Checks whether there's a symmetric difference between the currently selected tags and those persisted in the URL.
+            if (!bIntersect) {
+                return true;
             }
-            //Remove all asterisks from search query before applying the filter
-            this.searchFilter = this.searchFilter ? this.searchFilter.replace(/\*/g, '') : this.searchFilter;
+            aSelectedTags.some(function (sTag, iIndex) {
+                bIntersect = jQuery.inArray(sTag, this.tagFilter) !== -1;
 
-            if (this.searchFilter) {
-                oSearchFilter = new sap.ui.model.Filter($.map(this.searchFilter.split(/[\s,]+/), function (v) {
-                    return (v && new sap.ui.model.Filter("keywords", sap.ui.model.FilterOperator.Contains, v)) ||
-                        (v && new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, v)) || undefined;
-                }), true);
-                aFilters.push(oSearchFilter);
-            }
-            if (this.categoryFilter) {
-                sCatalogTitle = this.categoryFilter;
+                return !bIntersect;
+            }.bind(this));
 
-                // Filtering the catalog tiles  according to catalog title (and not catalog ID)  
-                oCategoryFilter = new sap.ui.model.Filter("catalog", sap.ui.model.FilterOperator.EQ, sCatalogTitle);
-                aFilters.push(oCategoryFilter);
-            }
-            //Anyway we would like to filter out tiles which are not supported on current device
-            aFilters.push(new sap.ui.model.Filter("isTileIntentSupported", sap.ui.model.FilterOperator.EQ, true));
-
-            //Adding the page filter.
-            if (this.oRenderingFilter) {
-                aFilters.push(this.oRenderingFilter);
-            }
-
-            sap.ui.getCore().byId("catalogTiles").getBinding("tiles").filter(aFilters);
+            return bIntersect;
         },
 
-        onLiveFilter : function (oEvent) {
+        _setUrlWithTagsAndSearchTerm: function(sSearchTerm, aSelectedTags) {
+            var oUrlParameterObject = {
+                tileFilter : sSearchTerm && sSearchTerm.length ? encodeURIComponent(sSearchTerm) : '',
+                tagFilter: aSelectedTags.length ? JSON.stringify(aSelectedTags) : [],
+                targetGroup : encodeURIComponent(this.getGroupContext())
+            };
 
-            // always clear previous timeout to make sure you that if the filtering was not performed yet,
-            // you will delete the previous call and create a new updated one
-            clearTimeout(this.timeoutId);
-            var that = this,
-                sQuery = oEvent.getParameter("newValue"),
-                nDelay = 300;
+            this.getView().parentComponent.getRouter().navTo('appFinder', {
+                'menu': 'catalog',
+                'filters' : JSON.stringify(oUrlParameterObject)
+            });
+        },
 
-            this.timeoutId = setTimeout(fRunFilter, nDelay, sQuery);
 
-            function fRunFilter(sQuery) {
-                if (sQuery) {
-                    that.setSearchFilter(sQuery);
+        handleSearchModelChanged: function () {
+            var sActiveMenu = this.oSubHeaderModel.getProperty('/activeMenu'),
+                bSearchMode = this.oSubHeaderModel.getProperty('/search/searchMode'),
+                bTagMode = this.oSubHeaderModel.getProperty('/tag/tagMode'),
+                sPageName,
+                sSearchTerm = this.oSubHeaderModel.getProperty('/search/searchTerm'),
+                aSelectedTags = this.oSubHeaderModel.getProperty('/tag/selectedTags'),
+                otagFilter,
+                aFilters = [],
+                oSearchResults;
+
+            // if view ID does not contain the active menu then return
+            if (this.oView.getId().indexOf(sActiveMenu) !== -1) {
+                if (bSearchMode || bTagMode) {
+                    //cahnge the category selection to all
+                    this.oView.setCategoryFilterSelection();
+
+                    if (!this.oView.oCatalogEntrySearchContainer.getBinding("customTilesContainer")) {
+                        this.oView.oCatalogEntrySearchContainer.bindAggregation("customTilesContainer", {
+                            path : "/catalogSearchEntity/customTiles",
+                            template: this.oView.oTileTemplate,
+                            // Table rows (i.e. notification types) are sorted by type name, which is the NotificationTypeDesc field
+                            templateShareable: true
+                        });
+                    }
+
+                    if (!this.oView.oCatalogEntrySearchContainer.getBinding("appBoxesContainer")) {
+                        this.oView.oCatalogEntrySearchContainer.bindAggregation("appBoxesContainer", {
+                            path : "/catalogSearchEntity/appBoxes",
+                            template: this.oView.oAppBoxesTemplate,
+                            // Table rows (i.e. notification types) are sorted by type name, which is the NotificationTypeDesc field
+                            templateShareable: true
+                        });
+                    }
+
+                    if (aSelectedTags && aSelectedTags.length > 0) {
+                        otagFilter = new sap.ui.model.Filter('tags', 'EQ', 'v');
+                        otagFilter.fnTest = function (oTags) {
+                            var ind, filterByTag;
+                            if (aSelectedTags.length === 0) {
+                                return true;
+                            }
+
+                            for (ind = 0; ind < aSelectedTags.length; ind++) {
+                                filterByTag = aSelectedTags[ind];
+                                if (oTags.indexOf(filterByTag) === -1) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        }.bind(this);
+
+                        aFilters.push(otagFilter);
+                    }
+
+                    //Remove all asterisks from search query before applying the filter
+                    sSearchTerm = sSearchTerm ? sSearchTerm.replace(/\*/g, '') : sSearchTerm;
+
+                    if (sSearchTerm) {
+                        var aSearchTermParts = sSearchTerm.split(/[\s,]+/);
+                        //create search filter with all the parts for keywords and apply AND operator ('true' indicates that)
+                        var keywordsSearchFilter = new sap.ui.model.Filter(jQuery.map(aSearchTermParts, function (value) {
+                            return (value && new sap.ui.model.Filter("keywords", sap.ui.model.FilterOperator.Contains, value));
+                        }), true);
+
+                        //create search filter with all the parts for title and apply AND operator ('true' indicates that)
+                        var titleSearchFilter = new sap.ui.model.Filter($.map(aSearchTermParts, function (value) {
+                            return (value && new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, value));
+                        }), true);
+
+                        //create search filter with all the parts for subtitle and apply AND operator ('true' indicates that)
+                        var subtitleSearchFilter = new sap.ui.model.Filter($.map(aSearchTermParts, function (value) {
+                            return (value && new sap.ui.model.Filter("subtitle", sap.ui.model.FilterOperator.Contains, value));
+                        }), true);
+
+                        aFilters.push(keywordsSearchFilter);
+                        aFilters.push(titleSearchFilter);
+                        aFilters.push(subtitleSearchFilter);
+                    }
+
+                    this.oView.oCatalogEntrySearchContainer.getBinding("customTilesContainer").filter(aFilters);
+                    this.oView.oCatalogEntrySearchContainer.getBinding("appBoxesContainer").filter(aFilters);
+
+                    oSearchResults = this.oView.oCatalogEntrySearchContainer.getNumberResults();
+                    this.bSearchResults = (oSearchResults.nAppboxes + oSearchResults.nCustom > 0);
+
+                    this.oView.oCatalogEntrySearchContainer.setAfterHandleElements(function(oInstance) {
+                        var oNumberOfElements = oInstance.getNumberResults();
+                        this.bSearchResults = (oNumberOfElements.nAppboxes + oNumberOfElements.nCustom > 0);
+                        this.oView.splitApp.toDetail(this.getView()._calculateDetailPageId());
+                    }.bind(this));
+
+                    //It has been required by UX to set 'All Catalogs' as selected when in search/tag mode
+                    this._showHideSelectedMasterItem(false);
+
+                    // set the filtering parameters in the url.
+                    if (this._isTagFilteringChanged(aSelectedTags)) {
+                        this._setUrlWithTagsAndSearchTerm(sSearchTerm, aSelectedTags);
+                    }
                 } else {
-                    that.setSearchFilter();
+                    this._showHideSelectedMasterItem(true);
+                    this.setCategoryFilter(this.categoryFilter);
+                }
+                sPageName = this.getView()._calculateDetailPageId();
+                this.oView.splitApp.toDetail(sPageName);
+            } else {
+                //For the edge case in which we return to the catalog after exsiting search mode in the EAM.
+                this._restoreSelectedMasterItem();
+            }
+        },
+
+
+        _handleAppFinderWithDocking: function () {
+            //check if docking
+            if (jQuery(".sapUshellContainerDocked").length > 0) {
+                // 710 is the size of sap.ui.Device.system.phone
+                // 1024 docking supported only in L size.
+                if (jQuery("#mainShell").width() < 710) {
+                    if (window.innerWidth < 1024) {
+                        this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonVisible", false);
+                        this.oView.splitApp.setMode(sap.m.SplitAppMode.ShowHideMode);
+                    } else {
+                        this.oView.splitApp.setMode(sap.m.SplitAppMode.HideMode);
+                        this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonVisible", true);
+                    }
+                } else {
+                    this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonVisible", false);
+                    this.oView.splitApp.setMode(sap.m.SplitAppMode.ShowHideMode);
                 }
             }
         },
 
-        onTagsFilter : function (oEvent) {
-            var selectedItem = oEvent.getParameters("selectedItem").changedItem,
-                selected = oEvent.getParameter("selected"),
-                selectedTagsList = [],
-                selectedTag = selectedItem.getText();
 
-            if (this.tagFilter) {
-                selectedTagsList = this.tagFilter;
+        _showHideSelectedMasterItem: function (bIsVisible) {
+            var oCatalogsList = this.oView.splitApp.getMasterPage('catalogSelect'),
+                oCatalogsListSelectedItem = oCatalogsList.getSelectedItem();
+
+            if (oCatalogsListSelectedItem) {
+                oCatalogsListSelectedItem.toggleStyleClass("sapUshellHideSelectedListItem",!bIsVisible);
+            }
+        },
+
+        _restoreSelectedMasterItem: function () {
+            var oCatalogsList = this.oView.splitApp.getMasterPage('catalogSelect'),
+                oOrigSelectedListItem = sap.ui.getCore().byId(this.selectedCategoryId);
+
+            if (oOrigSelectedListItem) {
+                this.categoryFilter = oOrigSelectedListItem.getTitle();
+            }
+            oCatalogsList.setSelectedItem(oOrigSelectedListItem);
+        },
+
+        handleToggleButtonModelChanged: function () {
+            var bButtonVisible = this.oSubHeaderModel.getProperty("/openCloseSplitAppButtonVisible"),
+                bButtonToggled = this.oSubHeaderModel.getProperty("/openCloseSplitAppButtonToggled");
+
+            // if there was a change in the boolean toogled flag
+            // (this can be called via upadte to subheader model from AppFinder, in such a case we do not
+            // need to switch the views)
+            if (bButtonToggled != this.bCurrentButtonToggled) {
+
+                // for device which is not a Phone
+                if (!sap.ui.Device.system.phone) {
+
+                    if (bButtonVisible) {
+                        if (bButtonToggled && !this.oView.splitApp.isMasterShown()) {
+                            this.oView.splitApp.showMaster();
+                        } else if (this.oView.splitApp.isMasterShown()) {
+                            this.oView.splitApp.hideMaster();
+                        }
+                    }
+                } else {
+
+                    // for Phone the split app is behaving differently
+                    if (bButtonVisible) {
+                        if (bButtonToggled && !this.oView.splitApp.isMasterShown()) {
+
+                            // go to master
+                            var oCatalogSelectMaster = sap.ui.getCore().byId('catalogSelect');
+                            this.oView.splitApp.backMaster(oCatalogSelectMaster);
+
+                        } else if (this.oView.splitApp.isMasterShown()) {
+                            // calculate the relevant detailed page to nav to
+                            var oDetail = sap.ui.getCore().byId(this.getView()._calculateDetailPageId());
+                            this.oView.splitApp.toDetail(oDetail);
+                        }
+                    }
+                }
             }
 
-            if (selected) {
-                selectedTagsList.push(selectedTag);
-            } else {
-                selectedTagsList = selectedTagsList.filter(function (entry) {
-                    return entry !== selectedTag;
-                });
+            this.bCurrentButtonToggled = bButtonToggled;
+        },
+
+        _handleCatalogListItemPress: function (oEvent) {
+            this.onCategoryFilter(oEvent);
+            //eliminate the Search and Tag mode.
+            this.oSubHeaderModel.setProperty('/search/searchMode', false);
+            this.oSubHeaderModel.setProperty('/tag/tagMode', false);
+
+            // on phone, we must make sure the toggle button gets untoggled on every navigation
+            // in the master page
+            if (sap.ui.Device.system.phone || sap.ui.Device.system.tablet) {
+                this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled', !this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled'));
             }
-            this.setTagsFilter(selectedTagsList.length > 0 ? JSON.stringify(selectedTagsList) : "");
+            this.handleSearchModelChanged();
         },
 
         onCategoryFilter : function (oEvent) {
-            var oSource = oEvent.getParameter("selectedItem"),
-                oSourceContext = oSource.getBindingContext(),
-                oModel = oSourceContext.getModel();
-            if (oModel.getProperty("static", oSourceContext)) { // show all categories
+            var oMasterList = oEvent.getSource(),
+                oSelectedCatalog = oMasterList.getSelectedItem(),
+                oSelectedCatalogBindingCtx = oSelectedCatalog.getBindingContext(),
+                oModel = oSelectedCatalogBindingCtx.getModel();
+            if (oModel.getProperty("static", oSelectedCatalogBindingCtx)) { // show all categories
                 oModel.setProperty("/showCatalogHeaders", true);
                 this.setCategoryFilter();
-                this.selectedCategory = undefined;
+                this.selectedCategoryId = undefined;
+                this.categoryFilter = undefined;
             } else { // filter to category
                 oModel.setProperty("/showCatalogHeaders", false);
-                this.setCategoryFilter(window.encodeURIComponent(oSource.getBindingContext().getObject().title));
-                this.selectedCategory = oSource.getId();
+                this.setCategoryFilter(window.encodeURIComponent(oSelectedCatalog.getBindingContext().getObject().title));
+                this.categoryFilter = oSelectedCatalog.getTitle();
+                this.selectedCategoryId = oSelectedCatalog.getId();
             }
         },
 
         onTileAfterRendering : function (oEvent) {
-            var footItem = oEvent.getSource().getFootItems()[0];
-            if (footItem !== undefined) {
-                footItem.addStyleClass("sapUshellCatalogPlusIcon");
-            }
+            var jqTile = jQuery(oEvent.oSource.getDomRef()),
+                jqTileInnerTile = jqTile.find(".sapMGT");
+
+            jqTileInnerTile.attr("tabindex", "-1");
         },
 
         catalogTilePress : function (oController) {
             sap.ui.getCore().getEventBus().publish("launchpad", "catalogTileClick");
         },
 
+        onAppBoxPressed: function (oEvent) {
+            var oAppBox = oEvent.getSource(),
+                oTile = oAppBox.getBindingContext().getObject(),
+                fnPressHandler;
+            if (oEvent.mParameters.srcControl.$().closest(".sapUshellPinButton").length) {
+                return;
+            }
+
+            fnPressHandler = sap.ushell.Container.getService("LaunchPage").getAppBoxPressHandler(oTile);
+
+            if (fnPressHandler) {
+                fnPressHandler(oTile);
+            } else {
+                var sUrl = oAppBox.getProperty("url");
+                if (sUrl && sUrl.indexOf("#") === 0) {
+                    hasher.setHash(sUrl);
+                }
+                else {
+                    window.open(sUrl, '_blank');
+                }
+            }
+        },
+
+
         /**
-         * Event handler triggered when a tile footer is clicked
-         *
-         * There are two main use-cases:
-         *
-         * 1. If the catalog was opened in the context of a specific group
-         *
-         * 2. If the catalog was opened NOT in the context of a specific group. In this case the flow is:
-         *   a. Popover closing use-case:
-         *      - If the groups popover is already opened then it should be closed
-         *   b. Popover opening use-case:
-         *      - Get tile groups data
-         *      - If oPopoverView wasn't created yet - then create it
-         *      - Set the popover's view content and visibility
-         *      - Open the popover
+         * Event handler triggered if tile should be added to the default group.
          *
          * @param {sap.ui.base.Event} oEvent
          *     the event object. It is expected that the binding context of the event source points to the tile to add.
          */
-        onTileFooterClick : function (oEvent) {
-            var clickedObject = oEvent.getSource(),
-                oSourceContext = clickedObject.getBindingContext(),
-                oModel = this.getView().getModel(),
-                sGroupModelPath = oModel.getProperty("/groupContext/path");
+        onTilePinButtonClick : function (oEvent) {
+            var launchPageService = sap.ushell.Container.getService("LaunchPage");
+            var oDefaultGroupPromise = launchPageService.getDefaultGroup();
 
-            // Check if the catalog was opened in the context of a group, according to the groupContext ("/groupContext/path") in the model
-            if (sGroupModelPath) {
-                this._handleTileFooterClickInGroupContext(oSourceContext, sGroupModelPath);
+            oDefaultGroupPromise.done(function(oDefaultGroup) {
+                var clickedObject = oEvent.getSource(),
+                    oSourceContext = clickedObject.getBindingContext(),
+                    oModel = this.getView().getModel(),
+                    sGroupModelPath = oModel.getProperty("/groupContext/path");
+
+                // Check if the catalog was opened in the context of a group, according to the groupContext ("/groupContext/path") in the model
+                if (sGroupModelPath) {
+                    this._handleTileFooterClickInGroupContext(oSourceContext, sGroupModelPath);
 
                 // If the catalog wasn't opened in the context of a group - the action of clicking a catalog tile should open the groups popover
-            } else {
-                // If the popover is already opened - it should be closed
-                if ((this.oPopoverView) && (this.oPopoverView.getVisible() === true)) {
-                    this.oPopoverView.setVisible(false);
-                }
+                } else {
+                    var groupList = oModel.getProperty("/groups");
+                    var launchPageService = sap.ushell.Container.getService("LaunchPage");
+                    var catalogTile = this.getCatalogTileDataFromModel(oSourceContext);
+                    var tileGroups = catalogTile.tileData.associatedGroups;
+                    var aGroupsInitialState = [];
+                    var index = 0;
+                    var groupsData = groupList.map(function (group) {
+                        var realGroupID,
+                            selected,
+                            oTemp;
 
-                var groupList = oModel.getProperty("/groups"),
-                    launchPageService = sap.ushell.Container.getService("LaunchPage"),
-                    catalogTile = this.getCatalogTileDataFromModel(oSourceContext),
-                    tileGroups = catalogTile.tileData.associatedGroups,
-                    oGroupData = groupList.map(function (group) {
                         // Get the group's real ID
-                        var realGroupID = launchPageService.getGroupId(group.object),
-                            // Check if the group (i.e. real group ID) exists in the array of groups that contain the relevant Tile
-                            // if so - the check box that re[resents this group should be initially selected
-                            selected = !($.inArray(realGroupID, tileGroups) == -1);
-
+                        realGroupID = launchPageService.getGroupId(group.object);
+                        // Check if the group (i.e. real group ID) exists in the array of groups that contain the relevant Tile
+                        // if so - the check box that represents this group should be initially selected
+                        selected = !($.inArray(realGroupID, tileGroups) == -1);
+                        oTemp = {
+                            id: realGroupID,
+                            title: this._getGroupTitle(oDefaultGroup, group.object),
+                            selected: selected
+                        }
+                        // Add the group to the array that keeps the groups initial state
+                        // mainly whether or not the group included the relevant tile
+                        aGroupsInitialState.push(oTemp);
+                        index++;
                         return {
                             selected: selected,
                             initiallySelected: selected,
                             oGroup: group
                         };
-                    });
+                    }.bind(this));
 
-                if (this.oPopoverView === undefined) {
-                    this.oPopoverView = sap.ui.getCore().byId("groupListPopoverView");
-                    if (this.oPopoverView === undefined) {
-                        // Create popoverView, is it wasn't created yet
-                        this.oPopoverView = new sap.ui.view({
-                            id: "groupListPopoverView",
-                            type: sap.ui.core.mvc.ViewType.JS,
-                            viewName: "sap.ushell.components.flp.launchpad.appfinder.GroupListPopover",
-                            viewData: {
-                                enableHideGroups: oModel.getProperty("/enableHideGroups"),
-                                enableHelp: oModel.getProperty("/enableHelp")
-                            }
-                        });
-                        // The view is created with visibility = true by default
-                        this.oPopoverView.setVisible(false);
+                    // @TODO:Instead of the jQuery, we should maintain the state of the popover (i.e. opened/closed)
+                    // using the afterOpen and afterClose events of sap.m.ResponsivePopover
+                    var existingPopover = jQuery("#groupsPopover-popover");
+                    if(existingPopover.length === 1) {
+                        var oPopoverView = sap.ui.getCore().byId("sapUshellGroupsPopover");
+                        oPopoverView.destroy();
                     }
-                }
-                if (this.oPopoverView.getVisible() === false) {
+                    var popoverView = new sap.ui.view("sapUshellGroupsPopover", {
+                        type: sap.ui.core.mvc.ViewType.JS,
+                        viewName: "sap.ushell.components.flp.launchpad.appfinder.GroupListPopover",
+                        viewData: {
+                            groupData: groupsData,
+                            title: launchPageService.getCatalogTilePreviewTitle(oModel.getProperty(oSourceContext.sPath).src),
+                            enableHideGroups: oModel.getProperty("/enableHideGroups"),
+                            enableHelp: oModel.getProperty("/enableHelp"),
+                            sourceContext: oSourceContext,
+                            catalogModel: this.getView().getModel(),
+                            catalogController: this
 
-                    this.oPopoverView.setGroupListSingleSelection(sap.m.ListMode.MultiSelect);
-                    // Set the popover's view content and open it
-                    this.oPopoverView.setGroupsData(oGroupData);
-                    this.oPopoverView.setVisible(true);
-                    this.oPopoverView.open(clickedObject).then(this._handlePopoverResponse.bind(this, oSourceContext, catalogTile));
-                }
-            }
+
+                        }
+                    });
+                    popoverView.getController().setSelectedStart(aGroupsInitialState);
+                    popoverView.open(clickedObject).then(this._handlePopoverResponse.bind(this, oSourceContext, catalogTile));
+                    }
+            }.bind(this));
         },
-
+        _getGroupTitle: function (oDefaultGroup, oGroupObject) {
+            var oLaunchPageService = sap.ushell.Container.getService("LaunchPage"),
+                title;
+                //check if is it a default group- change title to "my home".
+                if (oLaunchPageService.getGroupId(oDefaultGroup) === oLaunchPageService.getGroupId(oGroupObject)) {
+                    title = sap.ushell.resources.i18n.getText("my_group");
+                }
+                else{
+                    title = oLaunchPageService.getGroupTitle(oGroupObject);
+                }
+                return title;
+        },
         _handlePopoverResponse: function (oSourceContext, catalogTile, responseData) {
-            var oModel = this.getView().getModel(),
-                groupList = oModel.getProperty("/groups");
+            if (!responseData.addToGroups.length && !responseData.newGroups.length && !responseData.removeFromGroups.length) {
+                return;
+            }
+
+            var oModel = this.getView().getModel();
+            var groupList = oModel.getProperty("/groups");
             var promiseList = [];
 
             responseData.addToGroups.forEach(function (group) {
@@ -5383,7 +8003,7 @@ jQuery.sap.registerPreloadedModules({
                 });
             }
 
-            oModel.setProperty("/catalogTiles/" + catalogTile.tileIndex + "/associatedGroups", tileGroupsIdList);
+            oModel.setProperty(catalogTile.bindingContextPath + "/associatedGroups", tileGroupsIdList);
             var firstAddedGroupTitle = (!!popoverResponse.addToGroups[0]) ? popoverResponse.addToGroups[0].title : "";
             if (!firstAddedGroupTitle.length && popoverResponse.newGroups.length) {
                 firstAddedGroupTitle = popoverResponse.newGroups[0];
@@ -5415,7 +8035,7 @@ jQuery.sap.registerPreloadedModules({
                 oModel = this.getView().getModel(),
                 catalogTile = this.getCatalogTileDataFromModel(oSourceContext),
                 aAssociatedGroups = catalogTile.tileData.associatedGroups,
-                oGroupModel = oModel.getProperty(sGroupModelPath), // Get the model of the group according to the group's model path (e.g. "groups/4") 
+                oGroupModel = oModel.getProperty(sGroupModelPath), // Get the model of the group according to the group's model path (e.g. "groups/4")
                 sGroupId = oLaunchPageService.getGroupId(oGroupModel.object),
                 iCatalogTileInGroup = $.inArray(sGroupId, aAssociatedGroups),
                 tileIndex = this._getCatalogTileIndexInModel(oSourceContext),
@@ -5430,12 +8050,12 @@ jQuery.sap.registerPreloadedModules({
                 return;
             }
             oModel.setProperty('/catalogTiles/' + tileIndex + '/isBeingProcessed', true);
-            // Check if this catalog tile already exist in the relevant group 
+            // Check if this catalog tile already exist in the relevant group
             if (iCatalogTileInGroup == -1) {
                 oGroupContext = new sap.ui.model.Context(oSourceContext.getModel(), sGroupModelPath);
                 oAddTilePromise = this._addTile(oSourceContext, oGroupContext);
 
-                // Function createTile of Dashboard manager always calls defferred.resolve, 
+                // Function createTile of Dashboard manager always calls defferred.resolve,
                 // and the success/failure indicator is the returned data.status
                 oAddTilePromise.done(function (data) {
                     if (data.status == 1) {
@@ -5453,7 +8073,7 @@ jQuery.sap.registerPreloadedModules({
                 groupIndex = sGroupModelPath.split('/')[2];
                 oRemoveTilePromise = this._removeTile(sTileCataogId, groupIndex);
 
-                // Function deleteCatalogTileFromGroup of Dashboard manager always calls defferred.resolve, 
+                // Function deleteCatalogTileFromGroup of Dashboard manager always calls defferred.resolve,
                 // and the success/failure indicator is the returned data.status
                 oRemoveTilePromise.done(function (data) {
                     if (data.status == 1) {
@@ -5490,7 +8110,7 @@ jQuery.sap.registerPreloadedModules({
                 aAssociatedGroups.push(sGroupId);
 
                 // Update the model of the catalog tile with the updated associatedGroups
-                oSourceContext.getModel().setProperty("/catalogTiles/" + oCatalogTileModel.tileIndex + "/associatedGroups", aAssociatedGroups);
+                oSourceContext.getModel().setProperty(oCatalogTileModel.bindingContextPath + "/associatedGroups", aAssociatedGroups);
 
                 detailedMessage = this.prepareDetailedMessage(oCatalogTileModel.tileData.title, 1, 0, oGroupModel.title, "");
 
@@ -5506,7 +8126,7 @@ jQuery.sap.registerPreloadedModules({
                 }
 
                 // Update the model of the catalog tile with the updated associatedGroups
-                oSourceContext.getModel().setProperty("/catalogTiles/" + oCatalogTileModel.tileIndex + "/associatedGroups", aAssociatedGroups);
+                oSourceContext.getModel().setProperty(oCatalogTileModel.bindingContextPath + "/associatedGroups", aAssociatedGroups);
                 detailedMessage = this.prepareDetailedMessage(oCatalogTileModel.tileData.title, 0, 1, "", oGroupModel.title);
             }
 
@@ -5641,14 +8261,14 @@ jQuery.sap.registerPreloadedModules({
          *     model context
          */
         getCatalogTileDataFromModel : function (oSourceContext) {
-            var tileIndex = this._getCatalogTileIndexInModel(oSourceContext),
+            var sBindingCtxPath = oSourceContext.getPath(),
                 oModel = oSourceContext.getModel(),
-                oTileData = oModel.getProperty("/catalogTiles/" + tileIndex);
+                oTileData = oModel.getProperty(sBindingCtxPath);
 
             // Return an object containing the Tile in the CatalogTiles Array (in the model) ,its index and whether it's in the middle of add/removal proccess.
             return {
                 tileData: oTileData,
-                tileIndex: tileIndex,
+                bindingContextPath: sBindingCtxPath,
                 isBeingProcessed: oTileData.isBeingProcessed ? true : false
             };
         },
@@ -5725,30 +8345,49 @@ jQuery.sap.registerPreloadedModules({
             });
 
             return deferred;
+        },
+
+
+        onExit:function(){
+            sap.ui.getCore().getEventBus().unsubscribe("launchpad", "appFinderWithDocking", this._handleAppFinderWithDocking,this);
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/Catalog.view.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/Catalog.view.js":function(){// ${copyright}
+
+sap.ui.define([
+		'sap/ui/core/HTML',
+		'sap/ui/core/IconPool',
+		'sap/ushell/ui/appfinder/AppBox',
+		'sap/ushell/ui/appfinder/PinButton',
+		'sap/ushell/ui/launchpad/CatalogEntryContainer',
+		'sap/ushell/ui/launchpad/CatalogTileContainer',
+		'sap/ushell/ui/launchpad/CatalogsContainer',
+		'sap/ushell/ui/launchpad/Panel',
+		'sap/ushell/ui/launchpad/Tile',
+		'sap/ushell/ui/launchpad/TileContainerUtils'
+	], function(HTML, IconPool, AppBox, PinButton, CatalogEntryContainer, CatalogTileContainer, CatalogsContainer, Panel, Tile, TileContainerUtils) {
+	"use strict";
+
     /*global jQuery, sap, $ */
     /*jslint nomen: true */
-
-    jQuery.sap.require("sap.ui.core.IconPool");
-    jQuery.sap.require("sap.ushell.ui.launchpad.Tile");
-    jQuery.sap.require("sap.ushell.ui.launchpad.CatalogTileContainer");
-    jQuery.sap.require("sap.ushell.ui.launchpad.Panel");
 
     sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.Catalog", {
 
         oController: null,
 
         createContent: function (oController) {
-            this.parentComponent = this.getViewData().parentComponent;
+            var that = this;
+
+            this.oViewData = this.getViewData();
+            this.parentComponent = this.oViewData.parentComponent;
+
             var oModel = this.parentComponent.getModel();
             this.setModel(oModel);
+            this.setModel(this.oViewData.subHeaderModel, "subHeaderModel");
             this.oController = oController;
 
             function iflong(sLong) {
@@ -5757,20 +8396,6 @@ jQuery.sap.registerPreloadedModules({
             function to_int(v) {
                 return parseInt(v, 10) || 0;
             }
-            function get_icon(aGroupsIDs, sGroupContextModelPath, sGroupContextId) {
-                var sIconName;
-
-                if (sGroupContextModelPath) {
-
-                   // If in group context - the icon is determined according to whether this catalog tile exists in the group or not   
-                    var iCatalogTileInGroup = $.inArray(sGroupContextId, aGroupsIDs);
-                    sIconName = iCatalogTileInGroup !== -1 ? "accept" : "add";
-                } else {
-                    sIconName = (aGroupsIDs && aGroupsIDs.length > 0) ? "accept" : "add";
-                }
-                return sap.ui.core.IconPool.getIconURI(sIconName);
-            }
-
             function get_tooltip(sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, sGroupContextModelPath, sGroupContextId, sGroupContextTitle) {
                 var sTooltip;
 
@@ -5785,34 +8410,81 @@ jQuery.sap.registerPreloadedModules({
                 return sTooltip;
             }
 
-            var oButton = new sap.m.Button({
-                icon : {
-                    // The "parts" array includes /groupContext/path and associatedGroups/length in order to support tile footer icon change in two cases:
-                    //  1. When the catalog is in the context of a group, and the user navigates back to the dashboard  
-                    //      and then opens the catalog again, but this time not in a context of a group.
-                    //      In this case the footer icons should be changed  and the trigger is the change in /groupContext property in the model.    
-                    //  2. When the catalog is in the context of a group, and the user clicks a tile's footer.
-                    //     In this case the icon should be changed, and the trigger is the item that is added/removed to/from associatedGroups 
-                    //     (i.e. the change in the length of associatedGroups of the relevant catalog tile model)
+            var oTilePinButton  = new PinButton({
+                icon: 'sap-icon://pushpin-off',
+                selected: {
                     parts: ["associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id"],
                     formatter : function (aAssociatedGroups, associatedGroupsLength, sGroupContextModelPath, sGroupContextId) {
-                        return get_icon(aAssociatedGroups, sGroupContextModelPath, sGroupContextId);
+                        if (sGroupContextModelPath) {
+                            // If in group context - the icon is determined according to whether this catalog tile exists in the group or not
+                            var iCatalogTileInGroup = $.inArray(sGroupContextId, aAssociatedGroups);
+                            return iCatalogTileInGroup !== -1;
+                        } else {
+                            return !!associatedGroupsLength;
+                        }
                     }
                 },
                 tooltip: {
-                    parts: ["i18n>addTileToGroup", "i18n>addAssociatedTileToGroup", "associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id", "/groupContext/title"],
+                    parts: ["i18n>EasyAccessMenu_PinButton_UnToggled_Tooltip", "i18n>EasyAccessMenu_PinButton_Toggled_Tooltip", "associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id", "/groupContext/title"],
                     formatter : function (sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, associatedGroupsLength, sGroupContextModelPath, sGroupContextId, sGroupContextTitle) {
                         return get_tooltip(sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, sGroupContextModelPath, sGroupContextId, sGroupContextTitle);
                     }
                 },
-                press : [ oController.onTileFooterClick, oController ]
-            }), oTileTemplate = new sap.ushell.ui.launchpad.Tile({
-                afterRendering : [ oController.onTileAfterRendering, oController ],
+                press : [ oController.onTilePinButtonClick, oController ]
+            });
+
+            var oAppBoxPinButton  = new PinButton({
+                icon: 'sap-icon://pushpin-off',
+                selected: {
+                    parts: ["associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id"],
+                    formatter : function (aAssociatedGroups, associatedGroupsLength, sGroupContextModelPath, sGroupContextId) {
+                        if (sGroupContextModelPath) {
+                            // If in group context - the icon is determined according to whether this catalog tile exists in the group or not
+                            var iCatalogTileInGroup = $.inArray(sGroupContextId, aAssociatedGroups);
+                            return iCatalogTileInGroup !== -1;
+                        } else {
+                            return !!associatedGroupsLength;
+                        }
+                    }
+                },
+                tooltip: {
+                    parts: ["i18n>EasyAccessMenu_PinButton_UnToggled_Tooltip", "i18n>EasyAccessMenu_PinButton_Toggled_Tooltip", "associatedGroups", "associatedGroups/length", "/groupContext/path", "/groupContext/id", "/groupContext/title"],
+                    formatter : function (sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, associatedGroupsLength, sGroupContextModelPath, sGroupContextId, sGroupContextTitle) {
+                        return get_tooltip(sAddTileGroups, sAddTileToMoreGroups, aGroupsIDs, sGroupContextModelPath, sGroupContextId, sGroupContextTitle);
+                    }
+                },
+                press : [ oController.onTilePinButtonClick, oController ]
+            });
+
+            this.oAppBoxesTemplate = new AppBox({
+                title:'{title}',
+                icon:'{icon}',
+                subtitle: '{subtitle}',
+                url: '{url}',
+                navigationMode: '{navigationMode}',
+                pinButton: oAppBoxPinButton,
+                press: [ oController.onAppBoxPressed, oController ]
+            });
+
+            oAppBoxPinButton.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "tabindex",
+                value: "-1",
+                writeToDom: true
+            }));
+            oAppBoxPinButton.addStyleClass("sapUshellPinButton");
+
+            oTilePinButton.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "tabindex",
+                value: "-1",
+                writeToDom: true
+            }));
+            oTilePinButton.addStyleClass("sapUshellPinButton");
+
+            this.oTileTemplate = new Tile({
                 tileViews : {
                     path : "content",
                     factory : function (sId, oContext) { return oContext.getObject(); }
                 },
-                footItems : [oButton],
                 "long" : {
                     path : "size",
                     formatter : iflong
@@ -5822,111 +8494,58 @@ jQuery.sap.registerPreloadedModules({
                     formatter : to_int
                 },
                 tileCatalogId : "{id}",
-                press : [ oController.catalogTilePress, oController ]
-            }), tilesContainer = new sap.ushell.ui.launchpad.CatalogTileContainer("catalogTiles", {
-                showHeader : false,
-                showPlaceholder : false,
-                showGroupHeader : "{/showCatalogHeaders}",
-                noDataText: "{/catalogsNoDataText}",
-                groupHeaderLevel : sap.m.HeaderLevel.H3,
-                showNoData : true,
-                tiles : {
-                    path : "/catalogTiles",
-                    template : oTileTemplate,
-                    sorter : new sap.ui.model.Sorter("catalogIndex", false, function (oContext) {
-                        return (oContext && oContext.getProperty("catalog")) || "";
-                    })
-                },
-                afterRendering : function (oEvent) {
-                    var oModel = this.getModel(),
-                        buttons,
-                        i;
-                    //because the catalog can be loaded with a filter in the URL we also have to
-                    //check if tiles exist in the model, and not just in the UI control
-                    if (this.getTiles().length || oModel.getProperty('/catalogTiles/length')) {
-                        //Enable tiles search/filter only after tiles are rendered.
-                        //Timeout needed because of some bug in UI5 that doesn't enable control on this point.
-                        setTimeout(function () {
-                            sap.ui.getCore().byId("catalogSearch").setEnabled(true);
-                        });
-                        oModel.setProperty("/catalogsNoDataText", sap.ushell.resources.i18n.getText('noFilteredItems'));
-                        sap.ui.getCore().getEventBus().publish("launchpad", "contentRendered");
-                        if (!sap.ui.Device.os.ios) {
-                            sap.ui.getCore().getEventBus().publish("launchpad", "contentRefresh");
-                        }
-                    }
-                    jQuery.sap.byId("catalogTiles").removeAttr("tabindex", 0);
-                    jQuery.sap.byId("catalogTilesPage-intHeader-BarPH").removeAttr("tabindex", 0);
-
-                    // disable '+/v' buttons tabindex so the won't be part of the TAB cycle
-                    buttons = jQuery(".sapUshellTile button");
-                    for (i = 0; i < buttons.length; i++) {
-                        buttons[i].setAttribute("tabindex", -1);
-                    }
-                }
+                pinButton: oTilePinButton,
+                press : [ oController.catalogTilePress, oController ],
+                afterRendering: oController.onTileAfterRendering
             });
 
-            tilesContainer.addStyleClass('sapUshellCatalogTileContainer');
-            tilesContainer.addEventDelegate({
-                onsapskipback: function (oEvent) {
+            this.oCatalogSelect = new sap.m.List("catalogSelect", {
+                    visible: "{/catalogSelection}",
+                    name : "Browse",
+                    rememberSelections: true,
+                    mode: "SingleSelectMaster",
+                    // width: sap.ui.Device.system.phone ? "100%" : "17rem",
+                    items : {
+                        path : "/masterCatalogs",
+                        template : new sap.m.StandardListItem({
+                            type: "Active",
+                            title : "{title}"
+                        })
+                        /* filters: [oFilterVisibleTiles],*/
+                    },
+                    showNoData: false,
+                    itemPress: [ oController._handleCatalogListItemPress, oController ]
+                });
+                /*
+                 override original onAfterRendering as currently sap.m.Select
+                 does not support afterRendering handler in the constructor
+                 this is done to support tab order accessibility
+                 */
+
+            this.getCatalogSelect = function () {
+                return this.oCatalogSelect;
+            };
+
+            var origCatalogSelectOnAfterRendering = this.oCatalogSelect.onAfterRendering;
+            this.oCatalogSelect.addEventDelegate({
+                onsaptabnext: function (oEvent) {
                     try {
                         oEvent.preventDefault();
-                        var nextElement = jQuery("#catalogSelect");
-                        nextElement.focus();
+                        sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                        sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
+                        //var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
+                        //firstTile.focus();
                     } catch (e) {
                         // continue regardless of error
                     }
-                }
-            });
-
-            oButton.constructor.prototype.setIcon = function (v) {
-                this.setProperty("icon", v, true);          // set property, but suppress rerendering
-                if (v && this._image && this._image.setSrc) {
-                    this._image.setSrc(v);                  // set property of internal control
-                }
-                return this;
-            };
-
-            var oFilterVisibleTiles = new sap.ui.model.Filter("numIntentSupportedTiles", sap.ui.model.FilterOperator.NE, 0),
-                oCatalogSelect = new sap.m.Select("catalogSelect", {
-                    visible: "{/catalogSelection}",
-                    name : "Browse",
-                    tooltip: "{i18n>catalogSelect_tooltip}",
-                    width: "17rem",
-                    items : {
-                        path : "/catalogs",
-                        template : new sap.ui.core.ListItem({
-                            text : "{title}"
-                        }),
-                        filters: [oFilterVisibleTiles]
-                    },
-                    change : [ oController.onCategoryFilter, oController ]
-                }),
-
-            /*
-             override original onAfterRendering as currently sap.m.Select
-             does not support afterRendering handler in the constructor
-             this is done to support tab order accessibility
-             */
-                origCatalogSelectOnAfterRendering = oCatalogSelect.onAfterRendering;
-            oCatalogSelect.addEventDelegate({
+                },
                 onsapskipforward: function (oEvent) {
                     try {
                         oEvent.preventDefault();
                         sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
                         sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
-                        var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
-                        firstTile.focus();
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsaptabprevious: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
-                        var nextElement = jQuery("#catalogTilesPage header button")[0];
-                        nextElement.focus();
+                        //var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
+                        //firstTile.focus();
                     } catch (e) {
                         // continue regardless of error
                     }
@@ -5935,8 +8554,12 @@ jQuery.sap.registerPreloadedModules({
                     try {
                         oEvent.preventDefault();
                         sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
-                        var nextElement = jQuery("#catalogTilesPage header button")[0];
-                        nextElement.focus();
+                        var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                        if (openCloseSplitAppButton.getVisible()) {
+                            openCloseSplitAppButton.focus();
+                        } else {
+                            sap.ushell.components.flp.ComponentKeysHandler.appFinderFocusMenuButtons(oEvent);
+                        }
                     } catch (e) {
                         // continue regardless of error
                     }
@@ -5944,20 +8567,58 @@ jQuery.sap.registerPreloadedModules({
             });
             // if xRay is enabled
             if (oModel.getProperty("/enableHelp")) {
-                oCatalogSelect.addStyleClass('help-id-catalogCategorySelect');// xRay help ID
+                this.oCatalogSelect.addStyleClass('help-id-catalogCategorySelect');// xRay help ID
             }
-            oCatalogSelect.onAfterRendering = function () {
+
+            this.setCategoryFilterSelection = function (sSelection) {
+                var oCatalogSelection = that.getCatalogSelect(),
+                    aCatalogListItems = oCatalogSelection.getItems(),
+                    bTagMode = that.oController.oSubHeaderModel.getProperty('/tag/tagMode'),
+                    bSearchMode = that.oController.oSubHeaderModel.getProperty('/search/searchMode'),
+                    sSelected = sSelection;
+
+                if (bSearchMode || bTagMode) {
+                    oCatalogSelection.setSelectedItem();
+                } else {
+                    aCatalogListItems.forEach(function (oListItem, nIndex) {
+                        if (oListItem.getTitle() === sSelected) {
+                            oCatalogSelection.setSelectedItem(oListItem);
+                        }
+                    });
+                }
+            };
+
+            this.oCatalogSelect.onAfterRendering = function () {
+                //set the selected item.
+                var sSelected = that.oController.categoryFilter || sap.ushell.resources.i18n.getText('all');
+
+                that.setCategoryFilterSelection(sSelected);
+
                 if (origCatalogSelectOnAfterRendering) {
                     origCatalogSelectOnAfterRendering.apply(this, arguments);
                 }
-                jQuery.sap.byId("catalogSelect").attr("tabindex", 0);
+
+                if (!this.getSelectedItem()) {
+                    this.setSelectedItem(this.getItems()[0]);
+                }
+
+                //set focus on first segmented button
+                setTimeout(function() {
+                    var buttons = jQuery("#catalog, #userMenu, #sapMenu").filter("[tabindex=0]");
+                    if (buttons.length) {
+                        buttons.eq(0).focus();
+                    } else {
+                        jQuery("#catalog").focus();
+                    }
+                }, 0);
+
             };
 
             /*
              * setting followOf to false, so the popover won't close on IE.
              */
-            var origOnAfterRenderingPopover = oCatalogSelect._onAfterRenderingPopover;
-            oCatalogSelect._onAfterRenderingPopover = function () {
+            var origOnAfterRenderingPopover = this.oCatalogSelect._onAfterRenderingPopover;
+            this.oCatalogSelect._onAfterRenderingPopover = function () {
                 if (this._oPopover) {
                     this._oPopover.setFollowOf(false);
                 }
@@ -5966,161 +8627,213 @@ jQuery.sap.registerPreloadedModules({
                 }
             };
 
-            var oCatalogSearch = new sap.m.SearchField("catalogSearch", {
-                    visible: "{/searchFiltering}",
-                    tooltip: "{i18n>catalogSearch_tooltip}",
-                    width: "17rem",
-                    enabled: false, //we Disable search/filtering of tiles till they will be rendered, to avoid bugs.
-                    value: {path: "/catalogSearchFilter"},
-                    placeholder: "{i18n>search_catalog}",
-                    liveChange : [ oController.onLiveFilter, oController ]
-                }).addStyleClass("sapUshellCatalogSearch"),
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                sDeatailPageId,
+                fnUpdateMasterDetail = function () {
+                    this.splitApp.toMaster('catalogSelect','show');
+                    if (!sap.ui.Device.system.phone) {
+                        sDeatailPageId = this._calculateDetailPageId();
+                        if (sDeatailPageId != this.splitApp.getCurrentDetailPage().getId()) {
+                            this.splitApp.toDetail(sDeatailPageId);
+                        }
+                    }
+                };
 
-                /*
-                 override original onAfterRendering as currently sap.m.Select
-                 does not support afterRendering handler in the constructor,
-                 this is done to support tab order accessibility
-                */
-                origCatalogSearchOnAfterRendering = oCatalogSearch.onAfterRendering;
+            oEventBus.subscribe("launchpad", "catalogContentLoaded", function() {
+                setTimeout(fnUpdateMasterDetail.bind(this), 500);
+            }, this);
+            oEventBus.subscribe("launchpad", "afterCatalogSegment", fnUpdateMasterDetail, this);
 
-            // if xRay is enabled
-            if (oModel.getProperty("/enableHelp")) {
-                oCatalogSearch.addStyleClass('help-id-catalogSearch');// xRay help ID
-            }
-            oCatalogSearch.onAfterRendering = function () {
-                origCatalogSearchOnAfterRendering.apply(this, arguments);
-                jQuery.sap.byId("catalogSearch").find("input").attr("tabindex", 0);
-                //set as large element for F6 keyboard navigation
-                this.data("sap-ui-fastnavgroup", "true", true /*Write into DOM*/);
+            var oAccessibilityTileText = new HTML("sapUshellCatalogAccessibilityTileText", {
+                content:
+                "<div style='height: 0px; width: 0px; overflow: hidden; float: left;'>" + sap.ushell.resources.i18n.getText("tile") + "</div>"
+            });
+
+            //This renderes the catalogs.
+            var oCatalogTemplate = new CatalogEntryContainer({
+                header: "{title}",
+//                catalogSearchTerm: "{/catalogSearchFilter}",
+                customTilesContainer : {
+                    path : "customTiles",
+                    template : this.oTileTemplate,
+                    templateShareable: true
+                },
+                appBoxesContainer : {
+                    path : "appBoxes",
+                    template : this.oAppBoxesTemplate,
+                    templateShareable: true
+                }
+            });
+
+            // create message-page as invisible by default
+            this.oMessagePage = new sap.m.MessagePage({
+                visible: true,
+                showHeader: false,
+                text: sap.ushell.resources.i18n.getText('EasyAccessMenu_NoAppsToDisplayMessagePage_Text'),
+                description: ''
+            });
+
+            //This renderes the catalogs.
+            this.oCatalogsContainer = new CatalogsContainer("catalogTiles", {
+                categoryFilter: "{/categoryFilter}",
+//                categoryAllocateTiles: "{/categoryAllocateTiles}",
+                catalogs : {
+                    path: "/catalogs",
+                    templateShareable: true,
+                    template : oCatalogTemplate
+                    //here add the filter for the catalog.
+                },
+                busy: true
+            });
+
+            this.oCatalogsContainer.addStyleClass('sapUshellCatalogTileContainer');
+
+            this.oCatalogsContainer.addEventDelegate({
+                onsaptabprevious: function (oEvent) {
+                    var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader"),
+                        jqCurrentElement = jQuery(oEvent.srcControl.getDomRef());
+                    if (openCloseSplitAppButton.getVisible() && !openCloseSplitAppButton.getPressed() &&
+                        !jqCurrentElement.hasClass("sapUshellPinButton")) {
+                        oEvent.preventDefault();
+                        var appFinderSearch = sap.ui.getCore().byId("appFinderSearch");
+                        appFinderSearch.focus();
+                    }
+                },
+                onsapskipback: function (oEvent) {
+                    var openCloseSplitAppButton = sap.ui.getCore().byId("openCloseButtonAppFinderSubheader");
+                    if (openCloseSplitAppButton.getVisible() && !openCloseSplitAppButton.getPressed()) {
+                        oEvent.preventDefault();
+                        openCloseSplitAppButton.focus();
+                    }
+                }
+            });
+
+            this.oCatalogsContainer.onAfterRendering = function () {
+                var oCatalogTilesDetailedPage = sap.ui.getCore().byId('catalogTilesDetailedPage');
+                if (!this.getBusy()) {
+                    oCatalogTilesDetailedPage.setBusy(false);
+                    jQuery.sap.measure.end("FLP:AppFinderLoadingStartToEnd");
+                } else {
+                    oCatalogTilesDetailedPage.setBusy(true);
+                }
+
+                jQuery("#catalogTilesDetailedPage-cont").scroll(function () {
+                    var oPage = sap.ui.getCore().byId('catalogTilesDetailedPage'),
+                        scroll = oPage.getScrollDelegate(),
+                        currentPos = scroll.getScrollTop(),
+                        max = scroll.getMaxScrollTop();
+
+                    if (max - currentPos <= 30 + that.oController.PagingManager.getTileHeight()) {
+                        that.oController.allocateNextPage();
+                    }
+                });
+
             };
 
-            oCatalogSearch.addEventDelegate({
-                onsapskipback: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        var nextElement = jQuery("#catalogTilesPage header button")[0];
-                        nextElement.focus();
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsapskipforward: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
-                        sap.ushell.components.flp.ComponentKeysHandler.setTileFocus(firstTile);
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsaptabnext: function (oEvent) {
-                    try {
-                        if (!oCatalogTagFilter.getVisible()) {
-                            oEvent.preventDefault();
-                            var aVisibleTiles = jQuery(".sapUshellTile:visible"),
-                                jqTile = jQuery(aVisibleTiles[0]);
-                            sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
-                            jqTile.focus();
-                        }
-                    } catch (e) {
-                        // continue regardless of error
-                    }
+            this.oCatalogEntrySearchContainer = new CatalogEntryContainer({
+                header: "{i18n>results_count}"
+            });
+
+            this.oCatalogEntrySearchContainer.addStyleClass('sapUshellCatalogTileContainer');
+
+            //This renderes the catalogs.
+            this.oCatalogsSearchContainer = new CatalogsContainer("catalogSearchContainer", {
+                catalogs: [this.oCatalogEntrySearchContainer]
+            });
+
+            this.wrapCatalogsContainerInDetailPage = function (aCatalogsContainerContnet, sId) {
+                var oDetailPage1 = new sap.m.Page(sId, {
+                    showHeader : false,
+                    showFooter : false,
+                    showNavButton : false,
+                    content : [ new Panel({
+                        translucent : true,
+                        content : aCatalogsContainerContnet
+                    }).addStyleClass("sapUshellCatalogPage")]
+                });
+
+                return oDetailPage1
+            },
+
+                this.getCatalogContainer = function () {
+                    return this.oCatalogsContainer;
                 }
-            });
 
-            var oCatalogTagFilter = new sap.m.MultiComboBox("catalogTagFilter", {
-                visible: "{/tagFiltering}",
-                selectedKeys: {
-                    path: "/selectedTags",
-                    mode: sap.ui.model.BindingMode.TwoWay
-                },
-                tooltip: "{i18n>catalogTilesTagfilter_tooltip}",
-                width: "17rem",
-                placeholder: "{i18n>catalogTilesTagfilter_HintText}",
-                //Use catalogs model as a demo content until the real model is implemented
-                items : {
-                    path : "/tagList",
-                    sorter : new sap.ui.model.Sorter("tag", false, false),
-                    template : new sap.ui.core.ListItem({
-                        text : "{tag}",
-                        key : "{tag}"
-                    })
-                },
-                selectionChange : [ oController.onTagsFilter, oController ]
-            });
-
-            // if xRay is enabled
-            if (oModel.getProperty("/enableHelp")) {
-                oCatalogTagFilter.addStyleClass('help-id-catalogTagFilter');// xRay help ID
-            }
-            oCatalogTagFilter.addEventDelegate({
-                onsaptabnext: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        var aVisibleTiles = jQuery(".sapUshellTile:visible"),
-                            jqTile = jQuery(aVisibleTiles[0]);
-                        sap.ushell.components.flp.ComponentKeysHandler.setFocusOnCatalogTile();
-                        jqTile.focus();
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsapskipback: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        jQuery("#catalogSelect").focus();
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                },
-                onsapskipforward: function (oEvent) {
-                    try {
-                        oEvent.preventDefault();
-                        var firstTile = jQuery('#catalogTiles .sapUshellTile:visible:first');
-                        sap.ushell.components.flp.ComponentKeysHandler.setTileFocus(firstTile);
-                    } catch (e) {
-                        // continue regardless of error
-                    }
-                }
-            });
-
-            var oDetailPage = new sap.m.Page("catalogTilesPage", {
+            new sap.m.Page({
                 showHeader : false,
                 showFooter : false,
                 showNavButton : false,
-                content : [ new sap.ushell.ui.launchpad.Panel({
+                content : [ new Panel({
                     translucent : true,
-                    headerText : "",
-                    headerLevel : sap.m.HeaderLevel.H2,
-                    headerBar : new sap.m.Bar("catalogHeader", {
-                        translucent : true,
-                        tooltip: "{i18n>tile_catalog_header_tooltip}",
-                        contentLeft : [ oCatalogSelect, oCatalogSearch, oCatalogTagFilter]
-                    }).addStyleClass("sapUshellCatalogHeaderBar"),
-                    content : [ tilesContainer]
+                    content : [oAccessibilityTileText, this.getCatalogContainer()]
                 }).addStyleClass("sapUshellCatalogPage")]
             });
+            var oCatalogDetailedPage = this.wrapCatalogsContainerInDetailPage([oAccessibilityTileText, this.getCatalogContainer()], 'catalogTilesDetailedPage'),
+                oCatalogMessage = new sap.m.Page('catalogMessagePage', {
+                    showHeader : false,
+                    showFooter : false,
+                    showNavButton : false,
+                    content : [this.oMessagePage]
+                }),
+                oCatalogSearchPage = this.wrapCatalogsContainerInDetailPage([this.oCatalogsSearchContainer], 'catalogTilesSearchPage');
 
-            oDetailPage.addDelegate({
-                onAfterRendering: function () {
-                    //set initial focus
-                    jQuery("#catalogTilesPage header button").attr("tabindex", -1);
+            oCatalogSearchPage.addEventDelegate({
+                onAfterShow: function (oEvent) {
+                    jQuery(".sapUshellTile").find('[tabindex*=0]').attr("tabindex", -1);
+                    jQuery(".sapUshellAppBox:visible, .sapUshellTile:visible").first().attr("tabindex", 0);
                 }
             });
 
-            return oDetailPage;
+            var oSelectBusyIndicator = new sap.m.BusyIndicator('catalogSelectBusyIndicator', {size: "1rem"});
+            this.splitApp = new sap.m.SplitApp('catalogViewMasterDetail',{
+                masterPages: [oSelectBusyIndicator, this.oCatalogSelect],
+                detailPages: [oCatalogDetailedPage, oCatalogSearchPage, oCatalogMessage]
+            });
+
+            //Remove this: intended for testing porpuses.
+            document.toSearch = function () {
+                this.splitApp.toDetail('catalogTilesSearchPage');
+            }.bind(this);
+            document.toDetail = function () {
+                this.splitApp.toDetail('catalogTilesDetailedPage');
+            }.bind(this);
+            document.toMessage = function () {
+                this.splitApp.toDetail('catalogMessagePage');
+            }.bind(this);
+
+            return this.splitApp;
+        },
+
+        // calculate what is the relevant current detail page according to configuration and state of the view
+        _calculateDetailPageId: function() {
+            var oSubHeaderModel = this.getModel('subHeaderModel');
+            var bSearchMode = oSubHeaderModel.getProperty('/search/searchMode');
+            var bTagMode = oSubHeaderModel.getProperty('/tag/tagMode');
+            var aCatalogs = this.getModel().getProperty("/catalogs");
+            var sId;
+            if (bSearchMode || bTagMode) {
+                sId = this.getController().bSearchResults ? 'catalogTilesSearchPage' : 'catalogMessagePage';
+            } else if (aCatalogs && !aCatalogs.length) {
+                sId = "catalogMessagePage";
+            } else {
+                sId = "catalogTilesDetailedPage";
+            }
+            return sId;
         },
 
         getControllerName: function () {
             return "sap.ushell.components.flp.launchpad.appfinder.Catalog";
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/EasyAccess.controller.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/EasyAccess.controller.js":function(){// ${copyright}
+
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, window, OData */
     /*jslint nomen: true */
 
@@ -6128,14 +8841,17 @@ jQuery.sap.registerPreloadedModules({
 
         DEFAULT_URL : "/sap/opu/odata/UI2",
         DEFAULT_NUMBER_OF_LEVELS: 3,
+        SEARCH_RESULTS_PER_REQUEST : 100,
 
         onInit: function () {
             var that = this;
             this.translationBundle = sap.ushell.resources.i18n;
             this.oView = this.getView();
             var oEasyAccessSystemsModel = this.oView.getModel("easyAccessSystemsModel");
-            var binding = new sap.ui.model.Binding(oEasyAccessSystemsModel, "/systemSelected", oEasyAccessSystemsModel.getContext("/systemSelected"));
-            binding.attachChange(that.adjustUiOnSystemChange.bind(this));
+            //var systemSelectedBinding = new sap.ui.model.Binding(oEasyAccessSystemsModel, "/systemSelected", oEasyAccessSystemsModel.getContext("/systemSelected"));
+            var systemSelectedBinding = oEasyAccessSystemsModel.bindProperty("/systemSelected");
+            systemSelectedBinding.attachChange(that.adjustUiOnSystemChange.bind(this));
+
             this.menuName = this.oView.getViewData().menuName;
             this.systemId = null;
             this.easyAccessCache = {};
@@ -6144,11 +8860,26 @@ jQuery.sap.registerPreloadedModules({
             this.oView.hierarchyFolders.setModel(this.easyAccessModel, "easyAccess");
             this.oView.hierarchyApps.setModel(this.easyAccessModel, "easyAccess");
 
+            // take the sub-header model
+            var oSubHeaderModel = this.oView.getModel("subHeaderModel");
+
+            // init listener for the toggle button bindig context
+            var oToggleButtonModelBinding = oSubHeaderModel.bindProperty("/openCloseSplitAppButtonToggled");
+            oToggleButtonModelBinding.attachChange(that.handleToggleButtonModelChanged.bind(this));
+
+            // only in case search is enabled for this View, we init the listener on the search binding context
+            if (this.oView.getViewData().enableSearch) {
+                var oSearchModelBinding = oSubHeaderModel.bindProperty("/search");
+                oSearchModelBinding.attachChange(that.handleSearchModelChanged.bind(this));
+            }
+
             this.checkIfSystemSelectedAndLoadData();
         },
 
         onAfterRendering: function () {
-            this.oView.hierarchyApps.getController()._updateAppBoxedWithPinStatuses();
+            setTimeout(function () {
+                this.oView.hierarchyApps.getController()._updateAppBoxedWithPinStatuses();
+            }.bind(this), 0);
         },
 
         checkIfSystemSelectedAndLoadData: function () {
@@ -6179,22 +8910,207 @@ jQuery.sap.registerPreloadedModules({
             }.bind(this));
         },
 
+        handleSearch: function (searchTerm) {
+
+            var isFirstTime = !this.hierarchyAppsSearchResults;
+
+            if (isFirstTime) {
+
+                // create the Hierarchy-Apps view for search-result
+                this.hierarchyAppsSearchResults = new sap.ui.view(this.getView().getId() + "hierarchyAppsSearchResults",{
+                    type: sap.ui.core.mvc.ViewType.JS,
+                    viewName: "sap.ushell.components.flp.launchpad.appfinder.HierarchyApps",
+                    height: "100%",
+                    viewData: {
+                        easyAccessSystemsModel: this.oView.getModel("easyAccessSystemsModel"),
+                        getMoreSearchResults : this.getMoreSearchResults.bind(this)
+                    }
+                });
+
+                // set the model
+                this.easyAccessSearchResultsModel = new sap.ui.model.json.JSONModel();
+                //change the default value of the maximum number of entries which are used for list bindings
+                this.easyAccessSearchResultsModel.setSizeLimit(10000);
+                this.hierarchyAppsSearchResults.setModel(this.easyAccessSearchResultsModel, "easyAccess");
+                this.hierarchyAppsSearchResults.setBusyIndicatorDelay(this.getView().BUSY_INDICATOR_DELAY);
+                this.hierarchyAppsSearchResults.addStyleClass(" sapUshellAppsView sapMShellGlobalInnerBackground");
+                this.hierarchyAppsSearchResults.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "role",
+                    value: "region",
+                    writeToDom: true
+                }));
+                this.hierarchyAppsSearchResults.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "aria-label",
+                    value: this.oView.oResourceBundle.getText("easyAccessTileContainer"),
+                    writeToDom: true
+                }));
+            }
+
+            //reset for the paging mechanism
+            this.searchResultFrom = 0;
+            this.oView.splitApp.getCurrentDetailPage().setBusy(true);
+            this.easyAccessSearchResultsModel.setProperty("/apps", []);
+            this.easyAccessSearchResultsModel.setProperty("/total",0);
+            this._getSearchResults(searchTerm, this.searchResultFrom).then(function (response) {
+                //Solution for Internal incident #1770582955: After doing 'search' the results are comming from
+                //the backend and the 'bookmarkCount' property is not part of the properties there.
+                // Hence, we need to copy its previous content to the new results
+                response.results.forEach(function (element) {
+                    var bookmarkService = sap.ushell.Container.getService("Bookmark");
+                    bookmarkService.countBookmarks(element.url).then(function (count) {
+                        element.bookmarkCount = count;
+                    });
+                });
+
+                this.easyAccessSearchResultsModel.setProperty("/apps", response.results);
+                this.easyAccessSearchResultsModel.setProperty("/total",response.count);
+
+                this.searchResultFrom = response.results.length; //for the pagin mechanism -> update the next search results
+                if (isFirstTime) {
+                    this.oView.splitApp.addDetailPage(this.hierarchyAppsSearchResults);
+                }
+                // we must initiate an update to the result text / messagePage to rerun its formatter function
+                // which resides on the Hierarchy-Apps View
+                this.hierarchyAppsSearchResults.updateResultSetMessage(parseInt(response.count, 10), true);
+
+                this.oView.splitApp.getCurrentDetailPage().setBusy(false);
+                if (this.oView.splitApp.getCurrentDetailPage() !== this.hierarchyAppsSearchResults) {
+                    this.oView.splitApp.toDetail(this.getView().getId() + "hierarchyAppsSearchResults");
+                }
+                
+            }.bind(this), function (error) {
+                this.handleGetMenuItemsError(error);
+                this.oView.splitApp.getCurrentDetailPage().setBusy(false);
+            }.bind(this));
+
+        },
+
+        getMoreSearchResults : function () {
+            if (this.oView.splitApp.getCurrentDetailPage().setShowMoreResultsBusy) {
+                this.oView.splitApp.getCurrentDetailPage().setShowMoreResultsBusy(true)
+            }
+            var oSubHeaderModel = this.oView.getModel("subHeaderModel");
+            var sSearchTerm = oSubHeaderModel.getProperty("/search/searchTerm");
+            this._getSearchResults(sSearchTerm, this.searchResultFrom).then(function (response) {
+                var aCurrentResults = this.easyAccessSearchResultsModel.getProperty("/apps");
+                //Due to a bug -> need to copy the array by reference in order for the binding to the model will behave as expected
+                var aNewResults = aCurrentResults.slice();
+                Array.prototype.push.apply(aNewResults,response.results);
+                this.easyAccessSearchResultsModel.setProperty("/apps", aNewResults);
+                if (this.oView.splitApp.getCurrentDetailPage().setShowMoreResultsBusy) {
+                    this.oView.splitApp.getCurrentDetailPage().setShowMoreResultsBusy(false)
+                }
+                this.searchResultFrom = aNewResults.length; //for the pagin mechanism -> update the next search results
+            }.bind(this), function (error) {
+                this.handleGetMenuItemsError(error);
+                if (this.oView.splitApp.getCurrentDetailPage().setShowMoreResultsBusy) {
+                    this.oView.splitApp.getCurrentDetailPage().setShowMoreResultsBusy(true)
+                }
+            }.bind(this));
+        },
+
+        _getSearchResults: function (searchTerm, from) {
+            var oDeferred = new jQuery.Deferred();
+            var sServiceUrl = this._getODataRequestForSearchUrl(this.menuName, this.systemId, searchTerm, from);
+
+            var oRequest = {
+                requestUri: sServiceUrl
+            };
+
+            var oCallOdataServicePromise = this._callODataService(oRequest, this.handleSuccessOnReadFilterResults);
+            oCallOdataServicePromise.done(function (data) {
+                oDeferred.resolve(data);
+            });
+            oCallOdataServicePromise.fail(function(error){
+                oDeferred.reject(error);
+            });
+
+            return oDeferred.promise();
+
+        },
+
+        getSystemNameOrId: function () {
+            var oSystemSelected = this.oView.getModel("easyAccessSystemsModel").getProperty("/systemSelected");
+            if (oSystemSelected) {
+                return oSystemSelected.name || oSystemSelected.id;
+            }
+            return;
+        },
+
         adjustUiOnSystemChange: function () {
-            if (this.systemId && this.easyAccessModel.getData()) {
-                this.easyAccessCache[this.systemId] = this.easyAccessModel.getData();
+
+            var oCurrentData = this.easyAccessModel.getData();
+            // we do not put in cache empty objects
+            // if there is no data for system then we do not cache this
+            // this causes inconsistencies when looking at the data
+            if (this.systemId && oCurrentData && oCurrentData.id) {
+                this.easyAccessCache[this.systemId] = oCurrentData;
             }
 
             var oSystemSelected = this.oView.getModel("easyAccessSystemsModel").getProperty("/systemSelected");
             if (oSystemSelected) {
                 this.systemId = oSystemSelected.systemId;
                 var newData = this.easyAccessCache[this.systemId];
+
                 if (newData) {
                     this.easyAccessModel.setData(newData);
                     this.navigateHierarchy("", false);
                 } else {
                     this.oView.hierarchyFolders.setBusy(true);
+                    this.oView.hierarchyApps.setBusy(true);
                     this.loadMenuItemsFirstTime(this.menuName, oSystemSelected);
                 }
+            }
+        },
+
+        handleToggleButtonModelChanged: function () {
+            var oSubHeaderModel = this.oView.getModel("subHeaderModel");
+            var bButtonVisible = oSubHeaderModel.getProperty("/openCloseSplitAppButtonVisible");
+            var bButtonToggled = oSubHeaderModel.getProperty("/openCloseSplitAppButtonToggled");
+
+            var oSplitApp = this.getView().splitApp;
+
+            if (bButtonVisible) {
+                if (bButtonToggled && !oSplitApp.isMasterShown()) {
+                    oSplitApp.showMaster();
+                } else if (oSplitApp.isMasterShown()) {
+                    oSplitApp.hideMaster();
+                }
+            }
+        },
+
+        handleSearchModelChanged: function () {
+            var oSubHeaderModel = this.oView.getModel("subHeaderModel");
+            var sActiveMenu = oSubHeaderModel.getProperty("/activeMenu");
+
+            // if view ID does not contain the active menu then return
+            if (this.getView().getId().indexOf(sActiveMenu) === -1) {
+                return;
+            }
+
+            var sSearchTerm = oSubHeaderModel.getProperty("/search/searchTerm");
+            var bSearchMode = oSubHeaderModel.getProperty("/search/searchMode");
+
+            // make sure search mode is true && the search term is not null or undefined
+            if (bSearchMode) {
+
+                // update 'aria-controls' property of the App Finder's Search Field
+                // (This property is the first custom data of the search-field control)
+                sap.ui.getCore().byId('appFinderSearch').getCustomData()[0].setValue(this.getView().getId() + "hierarchyAppsSearchResults");
+
+                // of search term is a real value (not empty) then we perform search
+                if (sSearchTerm) {
+                    this.handleSearch(sSearchTerm);
+                }
+                // otherwise it is null/undefined/"", in such a case we will do nothing, as search mode is true
+                // so this is a search click on 'X' scenario OR empty search scenario
+            } else {
+
+                // clear the 'aria-controls' property of the App Finder's Search Field
+                sap.ui.getCore().byId('appFinderSearch').getCustomData()[0].setValue('');
+
+                // else - search mode is false, so we go back to the hierarchy apps regular view
+                this.oView.splitApp.toDetail(this.getView().getId() + "hierarchyApps");
             }
         },
 
@@ -6203,6 +9119,7 @@ jQuery.sap.registerPreloadedModules({
                 response.text = oSystem.systemName || oSystem.systemId;
                 this.easyAccessModel.setData(response);
                 this.oView.hierarchyFolders.setBusy(false);
+                this.oView.hierarchyApps.setBusy(false);
                 this.navigateHierarchy("", false);
             }.bind(this), function (error) {
                 this.handleGetMenuItemsError(error);
@@ -6212,15 +9129,17 @@ jQuery.sap.registerPreloadedModules({
         },
 
         handleGetMenuItemsError: function(error) {
-            jQuery.sap.require('sap.m.MessageBox');
             var sErrorMessage = this.getErrorMessage(error);
-            sap.m.MessageBox.error(sErrorMessage);
+            sap.ui.require(["sap/m/MessageBox"], function (MessageBox){
+                MessageBox.error(sErrorMessage);
+            });
             this.easyAccessModel.setData("");
             this.oView.hierarchyFolders.setBusy(false);
+            this.oView.hierarchyApps.setBusy(false);
         },
 
         getErrorMessage: function(error) {
-            var sMenuNameString="";
+            var sMenuNameString = "";
             if (this.menuName == "SAP_MENU") {
                 sMenuNameString = this.translationBundle.getText("easyAccessSapMenuNameParameter");
             } else if (this.menuName == "USER_MENU") {
@@ -6253,22 +9172,27 @@ jQuery.sap.registerPreloadedModules({
 
             if (menuType != "SAP_MENU" && menuType != "USER_MENU") {
                 oDeferred.reject("Invalid menuType parameter");
+                return oDeferred.promise();
             }
 
             if (typeof systemId !== "string" || systemId === "") {
                 oDeferred.reject("Invalid systemId parameter");
+                return oDeferred.promise();
             }
 
             if (typeof entityId !== "string") {
                 oDeferred.reject("Invalid entityId parameter");
+                return oDeferred.promise();
             }
 
             if (typeof entityLevel !== "number") {
                 oDeferred.reject("Invalid entityLevel parameter");
+                return oDeferred.promise();
             }
 
             if (numberOfNextLevels && typeof numberOfNextLevels !== "number") {
                 oDeferred.reject("Invalid numberOfNextLevels parameter");
+                return oDeferred.promise();
             }
 
             if (entityId == "") {
@@ -6292,7 +9216,7 @@ jQuery.sap.registerPreloadedModules({
                 requestUri: sServiceUrl
             };
 
-            var oCallOdataServicePromise = this._callODataService(oRequest, systemId, entityId ,iLevelFilter );
+            var oCallOdataServicePromise = this._callODataService(oRequest,this.handleSuccessOnReadMenuItems, {systemId: systemId, entityId: entityId ,iLevelFilter: iLevelFilter});
             oCallOdataServicePromise.done(function (data) {
                 oDeferred.resolve(data);
             });
@@ -6303,33 +9227,57 @@ jQuery.sap.registerPreloadedModules({
             return oDeferred.promise();
         },
 
-        _callODataService: function (oRequest, systemId, entityId, iLevelFilter) {
+        _callODataService: function (oRequest, fSuccessHandler, oSucceessHandlerParameters) {
 
-            jQuery.sap.require("sap.ui.thirdparty.datajs");
             var that = this;
             var oDeferred = new jQuery.Deferred();
 
-            OData.read(
-                oRequest,
+            if (!oSucceessHandlerParameters) {
+                oSucceessHandlerParameters = {};
+            }
+            sap.ui.require(["sap/ui/thirdparty/datajs"], function () {
+                OData.read(
+                    oRequest,
 
-                // Success handler
-                function (oResult, oResponseData) {
-                    if (oResult && oResult.results && oResponseData && oResponseData.statusCode === 200) {
-                        var oReturnedModel=that._oDataResultFormatter(oResult.results, systemId, entityId, iLevelFilter);
-                        oDeferred.resolve(oReturnedModel);
+                    // Success handler
+                    function (oResult, oResponseData) {
+                        if (oResult && oResult.results && oResponseData && oResponseData.statusCode === 200) {
+                            var oReturnedModel = fSuccessHandler.bind(that, oResult, oSucceessHandlerParameters)();
+                            oDeferred.resolve(oReturnedModel);
 
+                        }
+
+                    },
+
+                    //Fail handler
+                    function (oMessage) {
+                        oDeferred.reject(oMessage);
                     }
-
-                },
-
-                //Fail handler
-                function (oMessage) {
-                    oDeferred.reject(oMessage);
-                }
-            );
+                );
+            });
 
             return oDeferred.promise();
 
+        },
+
+        handleSuccessOnReadMenuItems : function (oResult, oParameters) {
+            var oReturnedModel = this._oDataResultFormatter(oResult.results, oParameters.systemId, oParameters.entityId, oParameters.iLevelFilter);
+            return oReturnedModel;
+
+        },
+
+        handleSuccessOnReadFilterResults : function (oResult) {
+            var sUpdatedUrl;
+
+            oResult.results.forEach (function (oResultItem, iIndex) {
+                sUpdatedUrl =  this._appendSystemToUrl(oResultItem, this.systemId);
+                oResultItem.url = sUpdatedUrl
+            }.bind(this));
+
+            return {
+                results: oResult.results,
+                count: oResult.__count
+            }
         },
 
         _appendSystemToUrl: function (oData, sSystemId) {
@@ -6339,7 +9287,7 @@ jQuery.sap.registerPreloadedModules({
         },
         
         _oDataResultFormatter: function (aResults, systemId, entityId, iLevelFilter) {
-            var oFoldersMap={};
+            var oFoldersMap = {};
             var oReturnedData = {};
 
             if (entityId == "") {
@@ -6365,8 +9313,8 @@ jQuery.sap.registerPreloadedModules({
                 odataResult = aResults[i];
 
                 var oParent;
-                if (odataResult.parentId=="" && odataResult.level == "01") {
-                    oParent = oFoldersMap["root"]
+                if (odataResult.level == "01") {
+                    oParent = oFoldersMap["root"];
                 } else {
                     oParent = oFoldersMap[odataResult.parentId];
                 }
@@ -6374,6 +9322,8 @@ jQuery.sap.registerPreloadedModules({
                 var oMenuItem = {
                     id : odataResult.Id,
                     text: odataResult.text,
+                    subtitle: odataResult.subtitle,
+                    icon: odataResult.icon,
                     level: parseInt(odataResult.level, 10)
                 };
                 if (odataResult.type == 'FL') {
@@ -6398,24 +9348,7 @@ jQuery.sap.registerPreloadedModules({
         },
 
         _getODataRequestUrl: function (menuType, systemId, entityId, iLevelFilter) {
-            var sServiceUrl;
-            var oModel = this.getView().getModel();
-            if (menuType == "SAP_MENU"){
-                var oSapMenuServiceUrlConfig = oModel.getProperty("/sapMenuServiceUrl");
-                if (oSapMenuServiceUrlConfig){
-                    sServiceUrl = oSapMenuServiceUrlConfig;
-                } else {
-                    sServiceUrl = this.DEFAULT_URL +"/EASY_ACCESS_MENU";
-                }
-
-            } else if (menuType == "USER_MENU"){
-                var oUserMenuServiceUrlConfig = oModel.getProperty("/userMenuServiceUrl");
-                if (oUserMenuServiceUrlConfig){
-                    sServiceUrl = oUserMenuServiceUrlConfig;
-                } else {
-                    sServiceUrl = this.DEFAULT_URL + "/USER_MENU";
-                }
-            }
+            var sServiceUrl = this._getServiceUrl(menuType);
 
             var sLevelFilter;
             if (iLevelFilter < 10) {
@@ -6426,46 +9359,110 @@ jQuery.sap.registerPreloadedModules({
 
             var entityIdFilter = "";
             if (entityId) {
+
                 // we check if the entityId is already encoded
                 // in case not (e.g. decoding it equals to the value itself) - we encode it
                 if (decodeURIComponent(entityId) === entityId) {
                     entityId = encodeURIComponent(entityId);
                 }
+
                 entityIdFilter = "('" + entityId + "')/AllChildren";
             }
 
-            return sServiceUrl = sServiceUrl + ";o=" + systemId + "/MenuItems" + entityIdFilter + "?$filter=level lt '" + sLevelFilter + "'&$orderby=level,text";
+            sServiceUrl = sServiceUrl + ";o=" + systemId + "/MenuItems" + entityIdFilter + "?$filter=level lt '" + sLevelFilter + "'&$orderby=level,text";
+            return sServiceUrl;
+        },
+
+        _getODataRequestForSearchUrl: function (menuType, systemId, sTerm, iFrom) {
+            var sServiceUrl = this._getServiceUrl(menuType);
+            var iNumOfRecords = this.SEARCH_RESULTS_PER_REQUEST;
+            var sTerm = this._removeWildCards(sTerm);
+            var iFrom = !iFrom ? 0 : iFrom;
+            sServiceUrl = sServiceUrl + ";o=" + systemId + "/MenuItems" + "?$filter=type ne 'FL' and substringof('" + sTerm + "', text) or substringof('" + sTerm + "', subtitle) or substringof('" + sTerm + "', url)&$orderby=text,subtitle,url&$inlinecount=allpages&$skip=" + iFrom + "&$top=" + iNumOfRecords;
+            return sServiceUrl;
+        },
+
+        _getServiceUrl : function (menuType) {
+            var sServiceUrl;
+            var oModel = this.getView().getModel();
+            if (menuType == "SAP_MENU"){
+                var oSapMenuServiceUrlConfig = oModel.getProperty("/sapMenuServiceUrl");
+                if (oSapMenuServiceUrlConfig){
+                    sServiceUrl = oSapMenuServiceUrlConfig;
+                } else {
+                    sServiceUrl = this.DEFAULT_URL + "/EASY_ACCESS_MENU";
+                }
+
+            } else if (menuType == "USER_MENU"){
+                var oUserMenuServiceUrlConfig = oModel.getProperty("/userMenuServiceUrl");
+                if (oUserMenuServiceUrlConfig){
+                    sServiceUrl = oUserMenuServiceUrlConfig;
+                } else {
+                    sServiceUrl = this.DEFAULT_URL + "/USER_MENU";
+                }
+            }
+            return sServiceUrl;
+        },
+
+        _removeWildCards: function (sTerm) {
+            return sTerm.replace(/\*/g , "");
         }
 
-
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/EasyAccess.view.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/EasyAccess.view.js":function(){// ${copyright}
+
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, jQuery */
     /*jslint nomen: true */
 
     sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.EasyAccess", {
 
+        BUSY_INDICATOR_DELAY: 1000,
+
         createContent: function (oController) {
+            this.oResourceBundle = sap.ushell.resources.i18n;
+
             this.setModel(this.getViewData().easyAccessSystemsModel, "easyAccessSystemsModel");
+            this.setModel(this.getViewData().subHeaderModel, "subHeaderModel");
             this.setModel(this.getViewData().parentComponent.getModel());
 
+            /*
+             * Initialize split app master view.
+             */
             this.hierarchyFolders = sap.ui.view({
                 type: sap.ui.core.mvc.ViewType.JS,
                 viewName: "sap.ushell.components.flp.launchpad.appfinder.HierarchyFolders",
                 height: "100%",
                 viewData: {
                     navigateHierarchy: this.oController.navigateHierarchy.bind(oController),
-                    easyAccessSystemsModel: this.getModel("easyAccessSystemsModel")
+                    easyAccessSystemsModel: this.getModel("easyAccessSystemsModel"),
+                    subHeaderModel: this.getModel("subHeaderModel")
                 }
             });
-            this.hierarchyFolders.addStyleClass("sapUshellHierarchyFolders");
 
-            this.hierarchyApps = new sap.ui.view({
+            this.hierarchyFolders.setBusyIndicatorDelay(this.BUSY_INDICATOR_DELAY);
+            this.hierarchyFolders.addStyleClass("sapUshellHierarchyFolders");
+            this.hierarchyFolders.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "role",
+                value: "navigation",
+                writeToDom: true
+            }));
+            this.hierarchyFolders.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "aria-label",
+                value: this.oResourceBundle.getText("easyAccessListNavigationContainer"),
+                writeToDom: true
+            }));
+
+            /*
+             * Initialize split app details view.
+             */
+            this.hierarchyApps = new sap.ui.view(this.getId() +"hierarchyApps",{
                 type: sap.ui.core.mvc.ViewType.JS,
                 viewName: "sap.ushell.components.flp.launchpad.appfinder.HierarchyApps",
                 height: "100%",
@@ -6473,64 +9470,68 @@ jQuery.sap.registerPreloadedModules({
                     navigateHierarchy: this.oController.navigateHierarchy.bind(oController)
                 }
             });
-
+            this.hierarchyApps.setBusyIndicatorDelay(this.BUSY_INDICATOR_DELAY);
             this.hierarchyApps.addStyleClass(" sapUshellAppsView sapMShellGlobalInnerBackground");
+            this.hierarchyApps.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "role",
+                value: "region",
+                writeToDom: true
+            }));
+            this.hierarchyApps.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                key: "aria-label",
+                value: this.oResourceBundle.getText("easyAccessTileContainer"),
+                writeToDom: true
+            }));
 
-            var splitApp = new sap.m.SplitApp({
+            /*
+             * Setup split app
+             */
+            this.splitApp = new sap.m.SplitApp({
                 masterPages: this.hierarchyFolders,
                 detailPages: this.hierarchyApps
             });
+            this.splitApp.setInitialMaster(this.hierarchyFolders);
+            this.splitApp.setInitialDetail(this.hierarchyApps);
 
-            splitApp.setInitialMaster(this.hierarchyFolders);
-            splitApp.setInitialDetail(this.hierarchyApps);
 
-            return splitApp;
+            return this.splitApp;
         },
 
         getControllerName: function () {
             return "sap.ushell.components.flp.launchpad.appfinder.EasyAccess";
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/GroupListPopover.controller.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/GroupListPopover.controller.js":function(){// ${copyright}
+
+sap.ui.define(function () {
+	"use strict";
+
     /*global jQuery, sap, window */
     /*jslint nomen: true */
 
     sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.GroupListPopover", {
-
         onInit: function () {
-            var oView = this.getView();
-
-            this.oPopoverModel = new sap.ui.model.json.JSONModel();
+            var oView = this.getView(),
+                groupData = oView.getViewData().groupData;
+            this.oPopoverModel = new sap.ui.model.json.JSONModel({userGroupList: groupData});
             oView.oPopover.setModel(this.oPopoverModel);
         },
 
         okButtonHandler: function (oEvent) {
-            var oView = this.getView(),
-                userGroupList = this.oPopoverModel.getProperty("/userGroupList"),
-                returnChanges;
-
-            // @TODO this handling is done here (temporarily) instead of the detachSelect (that does not work) in setGroupListSingleSelection
-            // When the popover is opened in the catalog - when a group is selected the popover should not be closed, hence the call to return
-            if ((this._isListModeMultiSelect()) && (oEvent.sId === "select")) {
-                return;
-            }
-
             oEvent.preventDefault();
             oEvent._bIsStopHandlers = true;
-
-            userGroupList = this.oPopoverModel.getProperty("/userGroupList");
+            var oView = this.getView(),
+            userGroupList = this.oPopoverModel.getProperty("/userGroupList"),
             returnChanges = {
-                addToGroups: [],
-                removeFromGroups: [],
-                newGroups: [],
-                allGroups: userGroupList
+              addToGroups: [],
+              removeFromGroups: [],
+              newGroups: [],
+              allGroups: userGroupList
             };
-
             userGroupList.forEach(function (group) {
                 if (group.selected === group.initiallySelected) {
                     return;
@@ -6548,22 +9549,167 @@ jQuery.sap.registerPreloadedModules({
             oView.deferred.resolve(returnChanges);
         },
 
-        _isListModeMultiSelect: function () {
-            var oView = this.getView();
-            return (oView.oGroupList.getMode() === sap.m.ListMode.MultiSelect);
-        },
-
-        _isListModeSingleSelectMaster: function () {
-            var oView = this.getView();
-            return (oView.oGroupList.getMode() === sap.m.ListMode.SingleSelectMaster);
-        },
-
-        _cancelButtonHandler: function (oEvent) {
-            oEvent.preventDefault();
+        _closeButtonHandler: function (oEvent) {
+            //oEvent.preventDefault();
             oEvent._bIsStopHandlers = true;
             var oView = this.getView();
             oView.oPopover.close();
             oView.deferred.reject();
+        },
+	       _createGroupAndSaveTile : function (oTileContext, newGroupName) {
+						var oDashboardManager = sap.ushell.components.flp.launchpad.getDashboardManager(),
+								deferred = jQuery.Deferred(),
+								promise = oDashboardManager.createGroupAndSaveTile( {
+										catalogTileContext : oTileContext,
+										newGroupName: newGroupName
+								});
+
+						promise.done(function (data) {
+								deferred.resolve(data);
+						});
+
+						return deferred;
+				},
+
+        /**
+         * On clicking an item in the group list (displayListItem):
+         * 1. Check if the relevant tile was added or removed to/from the associated group
+         * 2. Call the actual add/remove functionality
+         */
+        groupListItemClickHandler: function (obj) {
+            obj.oSource.setSelected(!obj.oSource.getSelected());
+            var sItemModelPath = obj.oSource.getBindingContextPath(),
+                oPopoverModel = obj.oSource.getModel(),
+                bSelected = obj.oSource.getSelected() ? true : false;
+            this.addRemoveTileFromGroup(sItemModelPath, oPopoverModel, bSelected);
+        },
+
+        getGroupsBeforeChanges : function (sPath) {
+            var oModel = this.getView().getViewData().sourceContext.oModel;
+            return oModel.getProperty(sPath +  "/associatedGroups");
+        },
+
+        getGroupsAfterChanges : function (sPath) {
+            var oGroupsPopover = sap.ui.getCore().byId("groupsPopover");
+            return oGroupsPopover.getModel().getProperty("/userGroupList");
+        },
+
+        /**
+         * Handler for checking/unchecking group item in the tile groups popover.
+         * - If the group is locked - ignore it 
+         */
+        checkboxClickHandler: function (oObjData) {
+            var oView = this.getView(),
+                sPath = oView.getViewData().sourceContext.sPath,
+                aGroupsBeforeChanges = this.getGroupsBeforeChanges(sPath),
+                aGroupsAfterChanges = this.getGroupsAfterChanges(),
+                oLaunchPageService = sap.ushell.Container.getService("LaunchPage"),
+                oPopoverModel = oObjData.oSource.getModel(),
+                bSelected = oObjData.getParameter("selected"),
+                indexBefore = 0,
+                i = 0,
+                done = false,
+                sGroupModelPath;
+
+            while (oLaunchPageService.isGroupLocked(aGroupsAfterChanges[i].oGroup.object) === true) {
+                i++;
+            }
+            for (i; i < aGroupsAfterChanges.length; i++) {
+                var existsBefore = false;
+                if (done === true) {
+                    break;
+                }
+                for (indexBefore = 0; indexBefore < aGroupsBeforeChanges.length; indexBefore++) {
+                    if (oLaunchPageService.getGroupId(aGroupsAfterChanges[i].oGroup.object) === aGroupsBeforeChanges[indexBefore]) {
+                        existsBefore = true;
+                        //check if there is a need to remove tile
+                        if (aGroupsAfterChanges[i].selected === false) {
+                            done = true;
+                            sGroupModelPath = ("/userGroupList/" + i);
+                            this.addRemoveTileFromGroup(sGroupModelPath, oPopoverModel, bSelected);
+                            break;
+                        }
+                    }
+                }
+                //Uncheck
+                if(aGroupsAfterChanges[i].selected === true && existsBefore === false) {
+                	sGroupModelPath = ("/userGroupList/" + i);
+                    //afterChanges[i].oGroup.index
+                    this.addRemoveTileFromGroup(sGroupModelPath, oPopoverModel, bSelected);
+                    break;
+                }
+            }
+        },
+
+        /**
+         * Add/remove a tile to/from a group
+         * The adding/removing action is done by calls to catalogController.
+         * The array associatedGroups in the tile's model is updated accordingly
+         */
+        addRemoveTileFromGroup: function (sItemModelPath, oPopoverModel, bToAdd) {
+
+            var that = this.getView(),
+                catalogController = this.getView().getViewData().catalogController,
+                catalogModel = this.getView().getViewData().catalogModel,
+                oTileContext = this.getView().getViewData().sourceContext,
+                groupList = catalogModel.getProperty("/groups"),
+                index = groupList.indexOf(oPopoverModel.getProperty(sItemModelPath).oGroup),
+                oGroupContext = new sap.ui.model.Context(catalogModel, "/groups/" + index),
+                launchPageService = sap.ushell.Container.getService("LaunchPage"),
+                sGroupId = launchPageService.getGroupId(catalogModel.getProperty("/groups/" + index).object);
+
+            // The tile is added to the group
+            if (bToAdd) {
+                var oAddPromise =  catalogController._addTile(oTileContext, oGroupContext);
+
+                oAddPromise.done(function (data) {
+                    var catalogTilePath = that.getViewData().sourceContext,
+                        aCurrentTileGroups = catalogModel.getProperty(catalogTilePath + "/associatedGroups");
+
+                    aCurrentTileGroups.push(sGroupId);
+                    catalogModel.setProperty(catalogTilePath + "/associatedGroups", aCurrentTileGroups );
+                })
+            }
+            // The tile is removed from the group
+            else {
+                var sTileCatalogId = oTileContext.getModel().getProperty(oTileContext.getPath()).id,
+                    oRemovePromise = catalogController._removeTile(sTileCatalogId, index);
+
+                oRemovePromise.done(function (data) {
+                    var catalogTilePath = that.getViewData().sourceContext,
+                        aCurrentTileGroups = catalogModel.getProperty(catalogTilePath + "/associatedGroups"),
+                        indexToRemove = jQuery.inArray(sGroupId, aCurrentTileGroups);
+
+                    if (indexToRemove >= 0) {
+                    	aCurrentTileGroups.splice(indexToRemove, 1);
+                    }
+                    catalogModel.setProperty(catalogTilePath + "/associatedGroups", aCurrentTileGroups);
+                })
+            }
+        },
+
+          _switchGroupsPopoverButtonPress: function () {
+              var groupsPopoverId = "groupsPopover-popover";
+              if (sap.ui.Device.system.phone) {
+                  // a different popover is used for phones
+                  groupsPopoverId = "groupsPopover-dialog";
+              }
+              if (sap.ui.getCore().byId(groupsPopoverId).getContent()[0].getId() === "newGroupNameInput") {
+					var userGroupList = this.oPopoverModel.getProperty("/userGroupList"),
+                        returnChanges = {
+                            addToGroups: [],
+		                    removeFromGroups: [],
+		                    newGroups: [],
+		                    allGroups: userGroupList
+						};
+                    if (this.getView().newGroupInput.getValue().length) {
+                        returnChanges.newGroups.push(this.getView().newGroupInput.getValue());
+                    }
+					this.getView().oPopover.close();
+					this.getView().deferred.resolve(returnChanges);
+            } else {
+                this._closeButtonHandler(this);
+            }
         },
 
         _navigateToCreateNewGroupPane: function () {
@@ -6578,32 +9724,96 @@ jQuery.sap.registerPreloadedModules({
             oView.oPopover.addContent(oView.newGroupInput);
             oView.oPopover.setCustomHeader(oView.headBarForNewGroup);
             oView.oPopover.setContentHeight("");
-            if (this._isListModeSingleSelectMaster()) {
-                this._setFooterVisibility(true);
+            setTimeout(function(){
+              oView.oPopover.getBeginButton().setText(sap.ushell.resources.i18n.getText("okDialogBtn"));
+            },0);
+            if (oView.oPopover.getEndButton()){
+                oView.oPopover.getEndButton().setVisible(true);
             }
+
+            if (
+                sap.ui.getCore().byId("groupsPopover-popover") &&
+                (sap.ui.getCore().byId("groupsPopover-popover").getContent()[0].getId() === "newGroupNameInput") && !oView.oPopover.getEndButton()
+            ){
+                oView.oPopover.setEndButton(oView._createCancelButton());
+            };
+            setTimeout(function(){
+              oView.oPopover.getEndButton().setText(sap.ushell.resources.i18n.getText("cancelBtn"));
+            },0);
+            if (oView.getViewData().singleGroupSelection){
+                this._setFooterVisibility(true);
+            };
             setTimeout(function () {
                 oView.newGroupInput.focus();
             }, 0);
         },
-
-        _afterCloseHandler: function () {
-            var oView = this.getView();
-
-            // If the popover was closed when it presented the "New Group" UI -
-            // it should get beck the group list content in order to show it the next time it is opened
-            oView.oPopover.removeAllContent();
-            oView.oPopover.addContent(oView.oGroupsContainer);
-            oView.oPopover.setTitle(sap.ushell.resources.i18n.getText("addTileToGroups_popoverTitle"));
-            oView.oPopover.setCustomHeader();
-            // It the popover is closed by clicking some area in the catalog -
-            //  the value of the visibility property remains "true", which is inconsistent with the actual visibility
-            oView.setVisible(false);
+        setSelectedStart: function (start) {
+            this.start = start;
         },
+        _afterCloseHandler: function () {
+            var oView = this.getView(),
+            catalogModel = this.getView().getViewData().catalogModel;
+            // catalog view is active. Not needed in user menu and SAP menu
+            if (catalogModel) {
+                var selectedEnd = catalogModel.getProperty(this.getView().getViewData().sourceContext + "/associatedGroups");
+                this.showToastMessage(selectedEnd, this.start);
+            }
+            oView.oGroupsContainer.destroy();
+            if (oView.headBarForNewGroup) {
+                oView.headBarForNewGroup.destroy();
+            }
+            if (oView.newGroupInput) {
+                oView.newGroupInput.destroy();
+            }
+            oView.oPopover.destroy();
+            oView.destroy();
+        },
+
+        showToastMessage: function (end, start) {
+
+                var added = 0,
+                    removed = 0,
+                    firstAddedGroupTitle,
+                    firstRemovedGroupTitle,
+                    endSelected = {};
+
+                end.forEach (function (eGroup, eIndex){
+                    endSelected[eGroup] = eGroup;//performance improve..
+                })
+                start.forEach (function (sGroup, sIndex) {
+                    if (endSelected[sGroup.id]) {
+                        if (sGroup.selected === false){
+                            added++;
+                            firstAddedGroupTitle = sGroup.title;
+                        }
+                    }
+                    else{
+                        if(sGroup.selected === true){
+                            removed++;
+                            firstRemovedGroupTitle = sGroup.title;
+                        }
+                    }
+
+                })
+
+                var message = this.getView().getViewData().catalogController.prepareDetailedMessage(this.getView().getViewData().title, added, removed, firstAddedGroupTitle, firstRemovedGroupTitle);
+                if(message){
+                    sap.m.MessageToast.show(message, {
+                        duration: 6000,// default
+                        width: "15em",
+                        my: "center bottom",
+                        at: "center bottom",
+                        of: window,
+                        offset: "0 -50",
+                        collision: "fit fit"
+                    });
+                }
+         },
 
         _backButtonHandler: function () {
             var oView = this.getView();
             oView.oPopover.removeAllContent();
-            if (this._isListModeSingleSelectMaster()) {
+            if (oView.getViewData().singleGroupSelection){
                 this._setFooterVisibility(false);
             }
 
@@ -6619,31 +9829,40 @@ jQuery.sap.registerPreloadedModules({
             oView.oPopover.setTitle(sap.ushell.resources.i18n.getText("addTileToGroups_popoverTitle"));
             oView.oPopover.setCustomHeader();
             oView.newGroupInput.setValue('');
+            if (sap.ui.getCore().byId("groupsPopover-popover") && (sap.ui.getCore().byId("groupsPopover-popover").getContent()[0].getId() != "newGroupNameInput")){
+                oView.oPopover.getEndButton().setVisible(false);
+            };
+            setTimeout(function(){
+              oView.oPopover.getBeginButton().setText(sap.ushell.resources.i18n.getText("close"));
+            },0);
         },
 
-        _setFooterVisibility: function (bVisible) {
+        _setFooterVisibility: function(bVisible){
             //as there is not public API to control the footer we get the control by its id
             //and set its visibility
             var oFooter = sap.ui.getCore().byId("groupsPopover-footer");
-            if (oFooter) {
+            if (oFooter){
                 oFooter.setVisible(bVisible);
             }
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/GroupListPopover.view.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+/*
+
+
+*/
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/GroupListPopover.view.js":function(){// ${copyright}
+
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap */
     /*jslint nomen: true */
 
-    sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.GroupListPopover", {
-        bPopoverCreated: false,
-        oPopover: undefined,
-        oGroupList: undefined,
 
+    sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.GroupListPopover", {
         /*
             view receives viewData with following structure
             {
@@ -6668,104 +9887,91 @@ jQuery.sap.registerPreloadedModules({
         createContent: function (oController) {
             this.iPopoverDataSectionHeight = 192;
             this.oGroupsContainer = this._createPopoverContainer(this.iPopoverDataSectionHeight);
+            this.oLaunchPageService = sap.ushell.Container.getService("LaunchPage");
 
-            if (!this.bPopoverCreated) {
-                this.oPopover = new sap.m.ResponsivePopover({
-                    id : "groupsPopover",
-                    placement : sap.m.PlacementType.Auto,
-                    enableScrolling : true,
-                    title: sap.ushell.resources.i18n.getText("addTileToGroups_popoverTitle"),
-                    contentWidth: '20rem',
-                    beginButton: this._createOkButton(),
-                    endButton: this._createCancelButton(),
-                    content: this.oGroupsContainer,
-                    afterClose: this.getController()._afterCloseHandler.bind(this.getController())
-                });
-                this.bPopoverCreated = true;
-                this.oPopover.setInitialFocus('newGroupItem');
-            }
-        },
+            this.oPopover = sap.ui.getCore().byId("groupsPopover") || new sap.m.ResponsivePopover({
+                id : "groupsPopover",
+                placement : "Auto",
+                title: sap.ushell.resources.i18n.getText("addTileToGroups_popoverTitle"),
+                contentWidth: '20rem',
+                beginButton: this._createCloseButton(),
+                content: this.oGroupsContainer,
+                afterClose: this.getController()._afterCloseHandler.bind(this.getController())
+            });
 
-        /**
-         * Called each time the popover is opened.
-         * Sets the popover's model with the data of the groups according to the relevant (clicked) catalog tile
-         */
-        setGroupsData: function (oGroupData) {
-            this.getController().oPopoverModel.setData({userGroupList: oGroupData});
-        },
-
-        /**
-         * Sets the selection mode of the list (i.e. Single or Multi selection)
-         */
-        setGroupListSingleSelection: function (oGroupListSelectionMode) {
-            this.oGroupList.setMode(oGroupListSelectionMode);
-            if (oGroupListSelectionMode === sap.m.ListMode.SingleSelectMaster) {
-                this.oGroupList.attachSelect(this.getController().okButtonHandler.bind(this.getController()));
-            } else {
-                // @TODO The detachSelect does not work. Instead, the handling is done temporarily in okButtonHandler
-                this.oGroupList.detachSelect(this.getController().okButtonHandler, this.getController());
-            }
+            this.oPopover.setInitialFocus('newGroupItem');
+            //return this.oPopover;
         },
 
         open: function (openByControl) {
             if (document.body.clientHeight - openByControl.getDomRef().getBoundingClientRect().bottom >= 310) {
-                this.oPopover.setPlacement(sap.m.PlacementType.Bottom);
-            } else {
-                this.oPopover.setPlacement(sap.m.PlacementType.Auto);
+                this.oPopover.setPlacement("Bottom");
             }
             this.oPopover.openBy(openByControl);
-
-            // Cleaning the popover's newGroupInput property, in case that a new group was created  in the previous time the popover was used
-            if (this.newGroupInput !== undefined) {
-                this.newGroupInput.setValue('');
-            }
-
-            if (this.oGroupList.getMode() === sap.m.ListMode.SingleSelectMaster) {
+            if (this.getViewData().singleGroupSelection) {
                 this.getController()._setFooterVisibility(false);
-            } else {
-                this.getController()._setFooterVisibility(true);
             }
             this.deferred = jQuery.Deferred();
             return this.deferred.promise();
         },
 
         _createPopoverContainer: function (iPopoverDataSectionHeight) {
-            var oPopoverContainer,
-                oTempGroupList,
-                oNewGroupItemList = this._createNewGroupUiElements();
+            var oNewGroupItemList = this._createNewGroupUiElements(),
+                oGroupList = this._createPopoverGroupList();
 
-            oTempGroupList = this._createPopoverGroupList();
-
-            oPopoverContainer = new sap.m.ScrollContainer({
-               // id: "popoverContainer",
-                horizontal : false,
-                vertical : true,
-                content: [oNewGroupItemList, oTempGroupList]
-            });
+            var popoverContainer = sap.ui.getCore().byId("popoverContainer") || new sap.m.ScrollContainer({
+                    id: "popoverContainer",
+                    horizontal : false,
+                    vertical : true,
+                    content: [oNewGroupItemList, oGroupList]
+                });
 
             if (!sap.ui.Device.system.phone) {
-                oPopoverContainer.setHeight((iPopoverDataSectionHeight - 2) + "px");
+                popoverContainer.setHeight((iPopoverDataSectionHeight - 2) + "px");
             } else {
-                oPopoverContainer.setHeight("100%");
+                popoverContainer.setHeight("100%");
             }
 
-            return oPopoverContainer;
+            return popoverContainer;
         },
 
         _createNewGroupUiElements: function () {
-            var oNewGroupItem = new sap.m.StandardListItem({
-                    id : "newGroupItem",
-                    title : sap.ushell.resources.i18n.getText("newGroup_listItemText"),
-                    type : "Navigation",
-                    press : this.getController()._navigateToCreateNewGroupPane.bind(this.getController())
-                }),
-                oNewGroupItemList = new sap.m.List({});
-
+            var oNewGroupItem = sap.ui.getCore().byId("newGroupItem") || new sap.m.StandardListItem({
+                id : "newGroupItem",
+                title : sap.ushell.resources.i18n.getText("newGroup_listItemText"),
+                type : "Navigation",
+                press : this.getController()._navigateToCreateNewGroupPane.bind(this.getController())
+            });
+            var oNewGroupItemList = new sap.m.List({});
             // if xRay is enabled
             if (this.getViewData().enableHelp) {
                 oNewGroupItem.addStyleClass('help-id-newGroupItem');// xRay help ID
             }
             oNewGroupItemList.addItem(oNewGroupItem);
+
+            oNewGroupItemList.addEventDelegate({
+                onsapdown: function (oEvent) {
+                    try {
+                        oEvent.preventDefault();
+                        oEvent._bIsStopHandlers = true;
+                        var jqFirstGroupListItem = jQuery("#popoverContainer .sapMListModeMultiSelect li, #popoverContainer .sapMListModeSingleSelectMaster li").first();
+                        jqFirstGroupListItem.focus();
+                    } catch (e) {
+                        // continue regardless of error
+                    }
+                },
+                onsaptabnext: function (oEvent) {
+                    try {
+                        oEvent.preventDefault();
+                        oEvent._bIsStopHandlers = true;
+                        var jqCloseButton = jQuery("#closeButton");
+                        jqCloseButton.focus();
+                    } catch (e) {
+                        // continue regardless of error
+                    }
+                }
+            });
+
             return oNewGroupItemList;
         },
 
@@ -6784,16 +9990,14 @@ jQuery.sap.registerPreloadedModules({
 
         _createHeadBarForNewGroup: function () {
             var oBackButton = new sap.m.Button({
-                    icon: sap.ui.core.IconPool.getIconURI("nav-back"),
-                    press : this.getController()._backButtonHandler.bind(this.getController()),
-                    tooltip : sap.ushell.resources.i18n.getText("newGroupGoBackBtn_tooltip")
-                }),
-                oHeadBar;
-
+                icon: sap.ui.core.IconPool.getIconURI("nav-back"),
+                press : this.getController()._backButtonHandler.bind(this.getController()),
+                tooltip : sap.ushell.resources.i18n.getText("newGroupGoBackBtn_tooltip")
+            });
             oBackButton.addStyleClass("sapUshellCatalogNewGroupBackButton");
 
             // new group panel's header
-            oHeadBar = new sap.m.Bar({
+            var oHeadBar = new sap.m.Bar({
                 contentLeft : [oBackButton],
                 contentMiddle : [
                     new sap.m.Label({
@@ -6809,44 +10013,50 @@ jQuery.sap.registerPreloadedModules({
         },
 
         _createPopoverGroupList: function () {
-            var oListItemTemplate = new sap.m.DisplayListItem({
-                    label : "{oGroup/title}",
-                    selected : "{selected}",
-                    tooltip: "{oGroup/title}",
-                    type: sap.m.ListType.Active
-                }),
-                that = this,
-                aUserGroupsFilters = [];
 
+            var oListItemTemplate = new sap.m.DisplayListItem({
+                label : "{oGroup/title}",
+                selected : "{selected}",
+                tooltip: "{oGroup/title}",
+                type: sap.m.ListType.Active,
+                press: this.getController().groupListItemClickHandler.bind(this.getController())
+            });
+            var aUserGroupsFilters = [];
             aUserGroupsFilters.push(new sap.ui.model.Filter("oGroup/isGroupLocked", sap.ui.model.FilterOperator.EQ, false));
             if (this.getViewData().enableHideGroups) {
                 aUserGroupsFilters.push(new sap.ui.model.Filter("oGroup/isGroupVisible", sap.ui.model.FilterOperator.EQ, true));
             }
-            //var bSingleSelection = this.getViewData().singleGroupSelection;
-            this.oGroupList = new sap.m.List("groupListId", {
-                //mode : bSingleSelection ? sap.m.ListMode.SingleSelectMaster : sap.m.ListMode.MultiSelect,
-                includeItemInSelection: true,
-                items: {
-                    path: "/userGroupList",
-                    template: oListItemTemplate,
-                    filters: aUserGroupsFilters
-                }
-            });
+            var bSingleSelection = this.getViewData().singleGroupSelection,
+             	oList = new sap.m.List({
+                    mode : bSingleSelection ? sap.m.ListMode.SingleSelectMaster : sap.m.ListMode.MultiSelect,
+                    growing: true,
+                    growingThreshold: 200,
+                    items: {
+                        path: "/userGroupList",
+                        template: oListItemTemplate,
+                        filters: aUserGroupsFilters
+                    }
+                });
 
-            this.oGroupList.addEventDelegate({
+            if (bSingleSelection){
+                oList.attachSelect(this.getController().okButtonHandler.bind(this.getController()));
+            } else {
+                // While clicking on the checkbox - Check if a group was added or removed
+                oList.attachSelectionChange(this.getController().checkboxClickHandler.bind(this.getController()));
+            }
+
+            oList.addEventDelegate({
                 //used for accessibility, so "new group" element will be a part of it
                 onsapup: function (oEvent) {
                     try {
                         oEvent.preventDefault();
-                        if (that.getView().getModel().getProperty("/groups/length")) {
-                            var jqNewGroupItem,
-                                currentFocusGroup = jQuery(":focus");
 
-                            if (currentFocusGroup.index() === 0) {   //first group in the list
-                                jqNewGroupItem = jQuery("#newGroupItem");
-                                jqNewGroupItem.focus();
-                                oEvent._bIsStopHandlers = true;
-                            }
+                        var jqNewGroupItem,
+                            currentFocusGroup = jQuery(":focus");
+                        if (currentFocusGroup.index() == 0) {   //first group in the list
+                            jqNewGroupItem = jQuery("#newGroupItem");
+                            jqNewGroupItem.focus();
+                            oEvent._bIsStopHandlers = true;
                         }
                     } catch (e) {
                         // continue regardless of error
@@ -6854,18 +10064,18 @@ jQuery.sap.registerPreloadedModules({
                     }
                 }
             });
-            return this.oGroupList;
+            return oList;
         },
 
         _createOkButton: function () {
-            var oOkBtn = new sap.m.Button({
+            var oOkBtn = new sap.m.Button( {
                 id : "okButton",
                 press : this.getController().okButtonHandler.bind(this.getController()),
                 text : sap.ushell.resources.i18n.getText("okBtn")
             });
 
             oOkBtn.addEventDelegate({
-                onsaptabprevious: function (oEvent) {
+                onsaptabprevious: function(oEvent) {
                     try {
                         oEvent.preventDefault();
                         oEvent._bIsStopHandlers = true;
@@ -6880,43 +10090,52 @@ jQuery.sap.registerPreloadedModules({
                     }
                 }
             });
-
             return oOkBtn;
         },
 
         _createCancelButton: function () {
             return new sap.m.Button({
                 id : "cancelButton",
-                press : this.getController()._cancelButtonHandler.bind(this.getController()),
+                press: this.getController()._closeButtonHandler.bind(this.getController()),
                 text : sap.ushell.resources.i18n.getText("cancelBtn")
+            });
+        },
+
+        _createCloseButton: function () {
+            return sap.ui.getCore().byId("closeButton") || new sap.m.Button({
+                id : "closeButton",
+                press: this.getController()._switchGroupsPopoverButtonPress.bind(this.getController()),
+                text : sap.ushell.resources.i18n.getText(sap.ushell.resources.i18n.getText("close"))
             });
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/HierarchyApps.controller.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ false);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/HierarchyApps.controller.js":function(){// ${copyright}
+
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, window, hasher */
     /*jslint nomen: true */
 
     sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.HierarchyApps", {
         onInit: function () {
+            var easyAccessSystemsModel = this.getView().getViewData().easyAccessSystemsModel;
+            if (easyAccessSystemsModel) {
+                this.getView().setModel(easyAccessSystemsModel,"easyAccessSystems");
+            }
         },
 
-        oPopoverView: undefined,
-
         getCrumbsData: function (path, mainModel) {
-            var pathChunks = path.split("/"),
-                newCrumbs = [],
-                sPath = pathChunks.join("/"),
-                text;
-
+            var pathChunks = path.split("/");
             pathChunks.splice(pathChunks.length - 2, 2);
+            var newCrumbs = [];
             while (pathChunks.length) {
-                sPath = pathChunks.join("/");
-                text = mainModel.getProperty(sPath + "/text");
+                var sPath = pathChunks.join("/");
+                var text = mainModel.getProperty(sPath + "/text");
                 newCrumbs.unshift({text: text, path: sPath});
                 pathChunks.splice(pathChunks.length - 2, 2);
             }
@@ -6928,15 +10147,15 @@ jQuery.sap.registerPreloadedModules({
             if (!path) {
                 path = oView.layout.getBinding("items").getPath();
             }
-            var easyAccessModel = oView.getModel("easyAccess"),
-                appsData = easyAccessModel.getProperty(path),
-                bookmarkService = sap.ushell.Container.getService("Bookmark"),
-                countPromiseList = appsData.map(function (appData) {
-                    return bookmarkService.countBookmarks(appData.url).then(function (count) {
-                        appData.bookmarkCount = count;
-                        return appData;
-                    });
+            var easyAccessModel = oView.getModel("easyAccess");
+            var appsData = easyAccessModel.getProperty(path) ? easyAccessModel.getProperty(path) : [];
+            var bookmarkService = sap.ushell.Container.getService("Bookmark");
+            var countPromiseList = appsData.map(function (appData) {
+                return bookmarkService.countBookmarks(appData.url).then(function (count) {
+                    appData.bookmarkCount = count;
+                    return appData;
                 });
+            });
             jQuery.when.apply(jQuery, countPromiseList).then(function () {
                 var appsData = Array.prototype.slice.call(arguments);
                 easyAccessModel.setProperty(path, appsData);
@@ -6949,6 +10168,14 @@ jQuery.sap.registerPreloadedModules({
             this.getView().breadcrumbs.bindProperty("currentLocationText", "easyAccess>" + path + "/text");
             var crumbsData = this.getCrumbsData(path, this.getView().getModel("easyAccess"));
             this.getView().crumbsModel.setProperty("/crumbs", crumbsData);
+
+            // when navigation in hierarchy folders had occureed and model had been updated
+            // in case no results found we hide the app-boxes layout and display a message page
+            // with relevant message
+            var aNewItems = this.getView().getModel("easyAccess").getProperty( path + '/apps');
+
+            // call to update message with length of the items, and false indicating this is not searcg results
+            this.getView().updateResultSetMessage(aNewItems.length, false);
         },
 
         onAppBoxPressed: function (oEvent) {
@@ -6965,11 +10192,11 @@ jQuery.sap.registerPreloadedModules({
             var message;
             var numberOfExistingGroups = popoverResponse.addToGroups ? popoverResponse.addToGroups.length : 0;
             var numberOfNewGroups =      popoverResponse.newGroups   ? popoverResponse.newGroups.length   : 0;
-            var totalNumberOfGroups = numberOfExistingGroups + numberOfNewGroups,
-                groupName;
+            var totalNumberOfGroups = numberOfExistingGroups + numberOfNewGroups;
 
             if (totalNumberOfGroups === 1) {
                 // determine the group's title
+                var groupName;
                 if (numberOfExistingGroups === 1) {
                     // for an existing group we have an object in the array items
                     groupName = popoverResponse.addToGroups[0].title;
@@ -6983,15 +10210,17 @@ jQuery.sap.registerPreloadedModules({
                 message = sap.ushell.resources.i18n.getText("appAddedToSeveralGroups", [app.text, totalNumberOfGroups]);
             }
 
-            sap.m.MessageToast.show(message, {
-                duration: 3000,// default
-                width: "15em",
-                my: "center bottom",
-                at: "center bottom",
-                of: window,
-                offset: "0 -50",
-                collision: "fit fit"
-            });
+            if (totalNumberOfGroups > 0) {
+                sap.m.MessageToast.show(message, {
+                    duration: 3000,// default
+                    width: "15em",
+                    my: "center bottom",
+                    at: "center bottom",
+                    of: window,
+                    offset: "0 -50",
+                    collision: "fit fit"
+                });
+            }
             return message;
         },
 
@@ -7001,10 +10230,9 @@ jQuery.sap.registerPreloadedModules({
                 sFirstErroneousAddGroup,
                 iNumberOfFailAddActions = 0,
                 bCreateNewGroupFailed = false,
-                message,
-                index;
+                message;
 
-            for (index in aErroneousActions) {
+            for (var index in aErroneousActions) {
 
                 // Get the data of the error (i.e. action name and group object).
                 // the group's value -
@@ -7016,13 +10244,13 @@ jQuery.sap.registerPreloadedModules({
                 if (sAction == 'addBookmark_ToExistingGroup') {
                     // add bookmark to EXISTING group failed
                     iNumberOfFailAddActions++;
-                    if (iNumberOfFailAddActions === 1) {
+                    if (iNumberOfFailAddActions == 1) {
                         sFirstErroneousAddGroup = group.title;
                     }
                 } else if (sAction == 'addBookmark_ToNewGroup') {
                     // add bookmark to a NEW group failed
                     iNumberOfFailAddActions++;
-                    if (iNumberOfFailAddActions === 1) {
+                    if (iNumberOfFailAddActions == 1) {
 
                         //in case of a new group we have the title and not an object
                         sFirstErroneousAddGroup = group;
@@ -7112,7 +10340,9 @@ jQuery.sap.registerPreloadedModules({
             var deferred = jQuery.Deferred(), oResponseData = {};
             var addBookmarkPromise = bookmarkService.addBookmark({
                 url: app.url,
-                title: app.text
+                title: app.text,
+                subtitle: app.subtitle,
+                icon: app.icon
             }, group.object);
 
             var action = isNewGroup ? "addBookmark_ToNewGroup" : "addBookmark_ToExistingGroup";
@@ -7129,10 +10359,8 @@ jQuery.sap.registerPreloadedModules({
         },
 
         showSaveAppPopover: function (event) {
-            var oModel = this.getView().getModel(),
-                app = event.oSource.getParent().getBinding("title").getContext().getObject(),
-                popoverPromise,
-                oGroupData;
+            var oModel = this.getView().getModel();
+            var app = event.oSource.getParent().getBinding("title").getContext().getObject();
 
             //if we in context of some dashboard group, no need to open popup
             if (!!oModel.getProperty("/groupContext").path) {
@@ -7146,7 +10374,7 @@ jQuery.sap.registerPreloadedModules({
                 return;
             }
 
-            oGroupData = oModel.getProperty("/groups").map(function (group) {
+            var groupData = oModel.getProperty("/groups").map(function (group) {
                 return {
                     selected: false,
                     initiallySelected: false,
@@ -7154,47 +10382,101 @@ jQuery.sap.registerPreloadedModules({
                 };
             });
 
-            if (this.oPopoverView === undefined) {
-                this.oPopoverView = sap.ui.getCore().byId("groupListPopoverView");
-                if (this.oPopoverView === undefined) {
-                    this.oPopoverView = new sap.ui.view({
-                        id: "groupListPopoverView",
-                        type: sap.ui.core.mvc.ViewType.JS,
-                        viewName: "sap.ushell.components.flp.launchpad.appfinder.GroupListPopover",
-                        viewData: {
-                            enableHideGroups: oModel.getProperty("/enableHideGroups"),
-                            enableHelp: oModel.getProperty("/enableHelp")
-                        }
-                    });
+            var popoverView = new sap.ui.view({
+                type: sap.ui.core.mvc.ViewType.JS,
+                viewName: "sap.ushell.components.flp.launchpad.appfinder.GroupListPopover",
+                viewData: {
+                    groupData: groupData,
+                    enableHideGroups: oModel.getProperty("/enableHideGroups"),
+                    enableHelp: oModel.getProperty("/enableHelp"),
+                    singleGroupSelection: true
                 }
-            }
-            this.oPopoverView.setGroupListSingleSelection(sap.m.ListMode.SingleSelectMaster);
-            this.oPopoverView.setGroupsData(oGroupData);
-            popoverPromise = this.oPopoverView.open(event.oSource);
-            popoverPromise.then(this._handleBookmarkAppPopoverResponse.bind(this, app));
-        }
-    });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/HierarchyApps.view.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+            });
 
-(function () {
-    "use strict";
+            var popoverPromise = popoverView.open(event.oSource);
+            popoverPromise.then(this._handleBookmarkAppPopoverResponse.bind(this, app));
+        },
+
+        resultTextFormatter: function (oSystemSelected, iTotal) {
+            var oResourceBundle = sap.ushell.resources.i18n;
+            if (oSystemSelected) {
+                var sSystem = oSystemSelected.systemName ? oSystemSelected.systemName : oSystemSelected.systemId;
+                var sResultText = "";
+                if (iTotal) {
+                    sResultText = oResourceBundle.getText('search_easy_access_results', [iTotal, sSystem]);
+                }
+
+                return sResultText;
+            }
+            return "";
+        },
+
+        showMoreResultsVisibilityFormatter: function (apps, total) {
+            if (apps && apps.length < total) {
+                return true;
+            }
+            return false;
+        },
+
+        showMoreResultsTextFormatter: function (apps, total) {
+            if (!apps || !total) {
+                return "";
+            }
+            var currentlyNumOfApps = apps.length;
+            return  sap.ushell.resources.i18n.getText('EasyAccessSearchResults_ShowMoreResults',[currentlyNumOfApps,total]);
+        }
+
+    });
+
+
+}, /* bExport= */ true);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/HierarchyApps.view.js":function(){// ${copyright}
+
+sap.ui.define(['sap/ushell/ui/appfinder/AppBox','sap/ushell/ui/appfinder/PinButton'],
+	function(AppBox, PinButton) {
+	"use strict";
+
     /*global jQuery, sap*/
     /*jslint nomen: true */
-
-    jQuery.sap.require("sap.ushell.ui.appfinder.AppBox");
 
     sap.ui.jsview("sap.ushell.components.flp.launchpad.appfinder.HierarchyApps", {
 
         createContent: function (oController) {
             this.oController = oController;
 
-            var oPinButton = new sap.m.Button({
-                icon: {
+            function getTooltip(aGroupsIDs, bookmarkCount, sGroupContextModelPath, sGroupContextId, sGroupContextTitle) {
+                var oResourceBundle = sap.ushell.resources.i18n,
+                    sTooltip;
+
+                if (sGroupContextModelPath) {
+                    var iCatalogTileInGroup = jQuery.inArray(sGroupContextId, aGroupsIDs);
+
+                    var sTooltipKey = iCatalogTileInGroup !== -1
+                        ? "removeAssociatedTileFromContextGroup"
+                        : "addAssociatedTileToContextGroup";
+
+                    sTooltip = oResourceBundle.getText(sTooltipKey, sGroupContextTitle);
+                } else {
+                    sTooltip = bookmarkCount 
+                        ? oResourceBundle.getText("EasyAccessMenu_PinButton_Toggled_Tooltip")
+                        : oResourceBundle.getText("EasyAccessMenu_PinButton_UnToggled_Tooltip");
+                }
+                return sTooltip;
+            }
+
+            var oPinButton = new PinButton({
+                icon: 'sap-icon://pushpin-off',
+                selected: {
                     path: "easyAccess>bookmarkCount",
                     formatter : function (bookmarkCount) {
-                        return (!!bookmarkCount) ? "sap-icon://accept" : "sap-icon://add";
+                        return (!!bookmarkCount);
+                    }
+                },
+                tooltip: {
+                    parts: ["associatedGroups", "easyAccess>bookmarkCount", "/groupContext/path", "/groupContext/id", "/groupContext/title"],
+                    formatter : function (aGroupsIDs, bookmarkCount, sGroupContextModelPath, sGroupContextId, sGroupContextTitle) {
+                        return getTooltip(aGroupsIDs, bookmarkCount, sGroupContextModelPath, sGroupContextId, sGroupContextTitle);
                     }
                 },
                 press: oController.showSaveAppPopover.bind(oController)
@@ -7206,9 +10488,11 @@ jQuery.sap.registerPreloadedModules({
             }));
             oPinButton.addStyleClass("sapUshellPinButton");
 
-            this.oItemTemplate = new sap.ushell.ui.appfinder.AppBox({
+            this.oItemTemplate = new AppBox({
                 title: "{easyAccess>text}",
+                subtitle: "{easyAccess>subtitle}",
                 url: "{easyAccess>url}",
+                icon: "{easyAccess>icon}",
                 pinButton: oPinButton,
                 tabindex: {
                     path: "easyAccess>text"
@@ -7221,13 +10505,15 @@ jQuery.sap.registerPreloadedModules({
                 writeToDom: true
             }));
 
-            this.layout = new sap.m.FlexBox({
+
+            this.layout = new sap.m.FlexBox(this.getId() + '_hierarchyAppsLayout',{
                 items: {
                     path: "easyAccess>/apps",
                     template: this.oItemTemplate
                 },
                 wrap: sap.m.FlexWrap.Wrap
             });
+
             this.layout.addDelegate({
                 onAfterRendering: function () {
                     var items = this.getItems();
@@ -7243,39 +10529,157 @@ jQuery.sap.registerPreloadedModules({
                 }.bind(this.layout)
             });
 
-            this.crumbsModel = new sap.ui.model.json.JSONModel({crumbs:[]});
-
-            this.linkTemplate = new sap.m.Link({
-                text: "{crumbs>text}",
-                press: function (e) {
-                    var crumbData = e.oSource.getBinding("text").getContext().getObject();
-                    this.getViewData().navigateHierarchy(crumbData.path, false);
-
-                }.bind(this)
+            // create message-page as invisible by default
+            this.oMessagePage = new sap.m.MessagePage({
+                visible: false,
+                showHeader: false,
+                text: sap.ushell.resources.i18n.getText('EasyAccessMenu_NoAppsToDisplayMessagePage_Text'),
+                description: ''
             });
 
-            this.breadcrumbs = new sap.m.Breadcrumbs({
-                links: {
-                  path: "crumbs>/crumbs",
-                  template: this.linkTemplate
-                },
-                currentLocationText: "{/text}"
-            });
 
-            this.breadcrumbs.setModel(this.crumbsModel, "crumbs");
-            return [this.breadcrumbs, this.layout];
+            var aContent = [];
+
+            // if it is not a search result view - e.g. this is a regular hierarchy Apps content view
+            if (this.getViewData() && this.getViewData().navigateHierarchy) {
+                this.crumbsModel = new sap.ui.model.json.JSONModel({crumbs:[]});
+
+                this.linkTemplate = new sap.m.Link({
+                    text: "{crumbs>text}",
+                    press: function (e) {
+                        var crumbData = e.oSource.getBinding("text").getContext().getObject();
+                        this.getViewData().navigateHierarchy(crumbData.path, false);
+
+                    }.bind(this)
+                });
+
+
+                this.breadcrumbs = new sap.m.Breadcrumbs({
+                    links: {
+                        path: "crumbs>/crumbs",
+                        template: this.linkTemplate
+                    },
+                    currentLocationText: "{/text}"
+                });
+
+                this.breadcrumbs.setModel(this.crumbsModel, "crumbs");
+                aContent.push(this.breadcrumbs);
+            } else {
+                // else we are in search results content view
+                this.resultText = new sap.m.Text({
+                    text: {
+                        parts: [
+                            {path: "easyAccessSystemsModel>/systemSelected"},
+                            {path: "easyAccess>/total"}
+                        ],
+                        formatter: oController.resultTextFormatter.bind(oController)
+                    }
+                }).addStyleClass('sapUshellEasyAccessSearchResultText');
+
+                this.resultText.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "role",
+                    value: "heading",
+                    writeToDom: true
+                }));
+                this.resultText.addCustomData(new sap.ushell.ui.launchpad.AccessibilityCustomData({
+                    key: "aria-level",
+                    value: "3",
+                    writeToDom: true
+                }));
+
+                aContent.push(this.resultText);
+
+                this.showMoreResultsLink = new sap.m.Button({
+                    text: {
+                        parts: [
+                            {path: "easyAccess>/apps"},
+                            {path: "easyAccess>/total"}
+                        ],
+                        formatter: oController.showMoreResultsTextFormatter.bind(oController)
+                    },
+                    press: this.getViewData().getMoreSearchResults,
+                    visible: {
+                        parts: [
+                            {path: "easyAccess>/apps"},
+                            {path: "easyAccess>/total"}
+                        ],
+                        formatter: oController.showMoreResultsVisibilityFormatter.bind(oController)
+                    },
+                    type: sap.m.ButtonType.Transparent
+                });
+            }
+
+            // adding the message-page
+            aContent.push(this.oMessagePage);
+            aContent.push(this.layout);
+            if (this.showMoreResultsLink) {
+                aContent.push(this.showMoreResultsLink)
+            }
+            return aContent;
         },
-        
+
+        /*
+            updates the text-field OR the messagePage according to
+            - if items exist we update the text-field, otherwise show message page
+            - if bIsSearchResults we use different text then if is not (e.g. standard empty folder navigation)
+         */
+        updateResultSetMessage: function (bItemsExist, bIsSearchResults) {
+
+            var sEmptyContentMessageKey;
+            if (bIsSearchResults) {
+                sEmptyContentMessageKey = 'noFilteredItems';
+            } else {
+                sEmptyContentMessageKey = 'EasyAccessMenu_NoAppsToDisplayMessagePage_Text';
+            }
+
+
+            // if there are items in the results
+            if (bItemsExist) {
+
+                // if this is search results --> update the result-text which we display at the top of page
+                // when there are results
+                if (bIsSearchResults) {
+                    this.resultText.updateProperty('text');
+                    this.resultText.setVisible(true);
+                }
+
+                // set layout visible, hide the message page
+                this.layout.setVisible(true);
+                this.oMessagePage.setVisible(false);
+            } else {
+                // in case this is search results --> hide the result-text which we display at the top of page
+                // as there are no results. we will display the message page instaed
+                if (bIsSearchResults) {
+                    this.resultText.setVisible(false);
+                }
+
+                this.layout.setVisible(false);
+                this.oMessagePage.setVisible(true);
+
+                var sEmptyContentMessageText = sap.ushell.resources.i18n.getText(sEmptyContentMessageKey);
+                this.oMessagePage.setText(sEmptyContentMessageText);
+            }
+        },
+
+        setShowMoreResultsBusy : function (bBusy) {
+            if (this.showMoreResultsLink) {
+                this.showMoreResultsLink.setBusy(bBusy);
+            }
+        },
+
         getControllerName: function () {
             return "sap.ushell.components.flp.launchpad.appfinder.HierarchyApps";
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/HierarchyFolders.controller.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ true);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/HierarchyFolders.controller.js":function(){// ${copyright}
+
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, jQuery, sap, window */
     /*jslint nomen: true */
 
@@ -7284,6 +10688,7 @@ jQuery.sap.registerPreloadedModules({
         onInit: function () {
             this.oDialog = null;
             this.getView().setModel(this.getView().getViewData().easyAccessSystemsModel,"easyAccessSystems");
+            this.getView().setModel(this.getView().getViewData().subHeaderModel,"subHeaderModel");
             this.getSelectedSystem().then(function (oSystem) {
                 if (oSystem) {
                     this.setSystemSelected(oSystem);
@@ -7302,6 +10707,16 @@ jQuery.sap.registerPreloadedModules({
             if (this.oDialog) {
                 this.destroyDialog();
             }
+        },
+
+        onAfterRendering: function () {
+
+            // making sure that on every click anywhere on the left panel which is basically
+            // the hierarchy-folders view (this view), we invoke exit search mode (if necessary)
+            var jqThis = jQuery('#' + this.getView().getId());
+            jqThis.on("click", function(event) {
+                this.exitSearchMode();
+            }.bind(this));
         },
 
         getPersonalizer: function () {
@@ -7502,22 +10917,31 @@ jQuery.sap.registerPreloadedModules({
         systemSelectorTextFormatter : function (systemSelected) {
             if (systemSelected) {
                 if (systemSelected.systemName) {
-                    return this.getView().translationBundle.getText("easyAccessSelectSystemTextWithSystem", systemSelected.systemName);
+                    return systemSelected.systemName;
                 } else {
-                    return this.getView().translationBundle.getText("easyAccessSelectSystemTextWithSystem", systemSelected.systemId);
+                    return systemSelected.systemId;
                 }
             } else {
                 return this.getView().translationBundle.getText("easyAccessSelectSystemTextWithoutSystem");
             }
+        },
+
+        exitSearchMode : function () {
+            var oSubHeaderModel = this.getView().getModel('subHeaderModel');
+            oSubHeaderModel.setProperty('/search/searchMode', false);
+            oSubHeaderModel.refresh(true);
         }
 
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/appfinder/HierarchyFolders.view.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ true);
+},
+	"sap/ushell/components/flp/launchpad/appfinder/HierarchyFolders.view.js":function(){// ${copyright}
+
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, jQuery */
     /*jslint nomen: true */
 
@@ -7546,12 +10970,19 @@ jQuery.sap.registerPreloadedModules({
             });
 
             this.oList = new sap.m.List({
+                showSeparators: sap.m.ListSeparators.None,
                 items: {
                     path: "easyAccess>" + this.treePath + "/folders",
                     template: this.oItemTemplate
                 },
                 updateFinished: function () {
+                    var aListItems = this.getItems();
+
                     that.finishEasyAccessAnimation(true);
+                    aListItems.forEach(function (oListItem) {
+                        //UI5 Doesn't support 'space' and 'enter' press behavior alignment while it is required by UX defentions.
+                        oListItem.onsapspace = oListItem.onsapenter;
+                    });
                 },
                 noDataText: {
                     path: "easyAccessSystemsModel>/systemSelected",
@@ -7564,28 +10995,25 @@ jQuery.sap.registerPreloadedModules({
             });
 
             this.pageMenu = new sap.m.Page({
-                title: "{easyAccess>/text}",
                 showNavButton: false,
                 enableScrolling: true,
-                subHeader: new sap.m.Toolbar({
-                    design: "Info",
-                    height: "2rem",
-                    active: {
-                        path: "easyAccessSystemsModel>/systemsList",
-                        formatter: function (systemsList) {
-                            return systemsList.length > 1;
-                        }
-                    },
-                    content: [
-                        this.systemSelectorText,
-                        new sap.m.ToolbarSpacer(),
-                        new sap.ui.core.Icon({
-                            width: "2rem",
-                            src: "sap-icon://edit"
-                        })
-                    ],
-                    press: [oController.onSystemSelectionPress, oController]
-                }),
+                headerContent:  new sap.m.Bar({
+                    contentLeft: [new sap.m.Label({text: {
+                                parts: ["easyAccessSystemsModel>/systemSelected"],
+                                formatter: oController.systemSelectorTextFormatter.bind(oController)
+                            }})],
+                    contentRight: [new sap.m.Button({
+                        text: this.translationBundle.getText("action_change"),
+                        type: sap.m.ButtonType.Transparent,
+                        visible: {
+                            path: "easyAccessSystemsModel>/systemsList",
+                            formatter: function (systemsList) {
+                                return systemsList.length > 1;
+                            }
+                        },
+                        press: [oController.onSystemSelectionPress, oController]
+                    })]
+                }).addStyleClass("sapUshellEasyAccessMasterPageHeader"),
                 content: this.oList
             });
 
@@ -7644,24 +11072,30 @@ jQuery.sap.registerPreloadedModules({
             this.pageMenu.setShowNavButton(bShowBack);
             this.pageMenu.setShowSubHeader(!bShowBack);
             this.prepareEasyAccessAnimation(forwardAnimation);
-            this.pageMenu.bindProperty("title", "easyAccess>" + path + "/text");
             this.oList.bindItems("easyAccess>" + path + "/folders", this.oItemTemplate);
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/dashboard/DashboardContent.controller.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ true);
+},
+	"sap/ushell/components/flp/launchpad/dashboard/DashboardContent.controller.js":function(){// ${copyright}
+
+sap.ui.define([
+    './DashboardUIActions',
+    'sap/ushell/ui/launchpad/TileContainer',
+    'sap/ushell/utils'
+],
+	function(DashboardUIActions, TileContainer, utils) {
+	"use strict";
+
     /*global jQuery, sap, setTimeout, clearTimeout, $ */
     /*jslint plusplus: true, nomen: true */
-    jQuery.sap.require("sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions");
-    jQuery.sap.require("sap.ushell.ui.launchpad.TileContainer");
     sap.ui.controller("sap.ushell.components.flp.launchpad.dashboard.DashboardContent", {
 
         onInit: function () {
             var oEventBus = sap.ui.getCore().getEventBus();
+            this.isActionModeInited = false;
 
             this.handleDashboardScroll = this._handleDashboardScroll.bind(this);
 
@@ -7669,9 +11103,11 @@ jQuery.sap.registerPreloadedModules({
             oEventBus.subscribe("launchpad", "appOpened", this._appOpenedHandler, this);
             oEventBus.subscribe("launchpad", "dashboardModelContentLoaded", this._modelLoaded, this);
             oEventBus.subscribe('launchpad', 'actionModeInactive', this._handleGroupVisibilityChanges, this);
+            oEventBus.subscribe("launchpad", 'animationModeChange', this._handleAnimationModeChange, this);
+            oEventBus.subscribe("launchpad", 'switchTabBarItem', this._handleTabBarItemPressEventHandler, this);
 
             //when the browser tab is hidden we want to stop sending requests from tiles
-            window.document.addEventListener("visibilitychange", sap.ushell.utils.handleTilesVisibility, false);
+            window.document.addEventListener("visibilitychange", utils.handleTilesVisibility, false);
             this.sViewId = "#" + this.oView.getId();
 
             //On Android 4.x, and Safari mobile in Chrome and Safari browsers sometimes we can see bug with screen rendering
@@ -7691,26 +11127,23 @@ jQuery.sap.registerPreloadedModules({
             oEventBus.unsubscribe("launchpad", "appClosed", this._resizeHandler, this);
             oEventBus.unsubscribe("launchpad", "appOpened", this._appOpenedHandler, this);
             oEventBus.unsubscribe("launchpad", "dashboardModelContentLoaded", this._modelLoaded, this);
-            window.document.removeEventListener("visibilitychange", sap.ushell.utils.handleTilesVisibility, false);
+            oEventBus.unsubscribe("launchpad", 'switchTabBarItem', this._handleTabBarItemPressEventHandler, this);
+            window.document.removeEventListener("visibilitychange", utils.handleTilesVisibility, false);
         },
 
         onAfterRendering: function () {
             var oEventBus = sap.ui.getCore().getEventBus(),
-                oView = this.getView(),
-                oDomRef = oView.getDomRef(),
-                oScrollableElement = oDomRef.getElementsByTagName('section'),
                 oModel,
                 topViewPortGroupIndex,
                 oGroup,
                 bIsInEditTitle,
                 timer;
 
-            jQuery(oScrollableElement[0]).off("scrollstop", this.handleDashboardScroll);
-            jQuery(oScrollableElement[0]).on("scrollstop", this.handleDashboardScroll);
-
             //Bind launchpad event handlers
             oEventBus.unsubscribe("launchpad", "scrollToGroup", this._scrollToGroup, this);
+            oEventBus.unsubscribe("launchpad", "scrollToGroupByName", this._scrollToGroupByName, this);
             oEventBus.subscribe("launchpad", "scrollToGroup", this._scrollToGroup, this);
+            oEventBus.subscribe("launchpad", "scrollToGroupByName", this._scrollToGroupByName, this);
             oEventBus.unsubscribe("launchpad", "scrollToFirstVisibleGroup", this._scrollToFirstVisibleGroup, this);
             oEventBus.subscribe("launchpad", "scrollToFirstVisibleGroup", this._scrollToFirstVisibleGroup, this);
 
@@ -7736,9 +11169,11 @@ jQuery.sap.registerPreloadedModules({
                 timer = setTimeout(this._resizeHandler.bind(this), 300);
             }.bind(this));
 
-            if (this.getView().getModel().getProperty("/personalization") && !sap.ushell.components.flp.ActionMode) {
-                jQuery.sap.require("sap.ushell.components.flp.ActionMode");
-                sap.ushell.components.flp.ActionMode.init(this.getView().getModel());
+            if (this.getView().getModel().getProperty("/personalization") && !this.isActionModeInited) {
+                sap.ui.require(["sap/ushell/components/flp/ActionMode"], function (ActionMode) {
+                    ActionMode.init(this.getView().getModel());
+                }.bind(this));
+                this.isActionModeInited = true;
             }
             this._updateTopGroupInModel();
         },
@@ -7758,7 +11193,16 @@ jQuery.sap.registerPreloadedModules({
             sap.ui.getCore().getEventBus().publish("launchpad", "deleteTile", oData, this);
         },
 
-        dashboardTilePress: function () {
+        dashboardTilePress: function (oEvent) {
+            var oTileControl = oEvent.getSource();
+
+            //Set focus on tile upon clicking on the tile
+            //Unless there is an input element inside tile, then leave the focus on it
+            if (oTileControl && document.activeElement.tagName !== "INPUT") {
+                if (oTileControl && sap.ui.getCore().byId(oTileControl.getId())) {
+                    sap.ushell.components.flp.ComponentKeysHandler.setTileFocus(oTileControl.$());
+                }
+            }
             sap.ui.getCore().getEventBus().publish("launchpad", "dashboardTileClick");
         },
 
@@ -7766,6 +11210,9 @@ jQuery.sap.registerPreloadedModules({
             var oModel = this.getView().getModel(),
                 topViewPortGroupIndex = this._getIndexOfTopGroupInViewPort();
 
+            var iSelectedGroupInModel = this._getModelGroupFromVisibleIndex(topViewPortGroupIndex);
+
+            oModel.setProperty('/iSelectedGroup', iSelectedGroupInModel);
             oModel.setProperty('/topGroupInViewPortIndex', topViewPortGroupIndex);
         },
 
@@ -7778,7 +11225,6 @@ jQuery.sap.registerPreloadedModules({
                 firstContainerOffset = (oOffset && oOffset.top) || 0,
                 aTileContainersTopAndBottoms = [],
                 nScrollTop = oScrollableElement[0].scrollTop,
-                viewPortTop,
                 topGroupIndex = 0;
 
             // In some weird corner cases, those may not be defined -> bail out.
@@ -7792,8 +11238,8 @@ jQuery.sap.registerPreloadedModules({
                     aTileContainersTopAndBottoms.push([nContainerTopPos, nContainerTopPos + jQuery(this).parent().height()]);
                 }
             });
+            var viewPortTop = nScrollTop + firstContainerOffset;
 
-            viewPortTop = nScrollTop + firstContainerOffset;
             jQuery.each(aTileContainersTopAndBottoms, function (index, currentTileContainerTopAndBottom) {
                 var currentTileContainerTop = currentTileContainerTopAndBottom[0],
                     currentTileContainerBottom = currentTileContainerTopAndBottom[1];
@@ -7808,25 +11254,42 @@ jQuery.sap.registerPreloadedModules({
         },
 
         _handleDashboardScroll: function () {
-            var oView = this.getView();
-            //sCurrentViewPortState = oRenderer.getCurrentViewportState();
+            var oView = this.getView(),
+                oModel = oView.getModel(),
+                nDelay = 400;
 
-            this._updateTopGroupInModel();
-            sap.ushell.utils.handleTilesVisibility();
+            var sHomePageGroupDisplay = oModel.getProperty("/homePageGroupDisplay"),
+                bEnableAnchorBar = sHomePageGroupDisplay !== "tabs",
+                bTileActionModeActive = oModel.getProperty("/tileActionModeActive");
 
-            //close anchor popover if it is open
-            oView.oAnchorNavigationBar.closeOverflowPopup();
+            // We want to set tiles visibility only after the user finished the scrolling.
+            // In IE this event is thrown also after scroll direction change, so we wait 1 second to
+            // determine whether scrolling was ended completely or not
+            function fHandleTilesVisibility() {
+                utils.handleTilesVisibility();
+            }
+            clearTimeout(this.timeoutId);
+            this.timeoutId = setTimeout(fHandleTilesVisibility, nDelay);
+
+            if (!sap.ui.Device.system.phone) {
+                //close anchor popover if it is open
+                oView.oAnchorNavigationBar.closeOverflowPopup();
+            }
+
+            if (bEnableAnchorBar || bTileActionModeActive) {
+                this._updateTopGroupInModel();
+
+                //Handle scrolling for the Notifications Preview.
+                //oView._handleHeadsupNotificationsPresentation.apply(oView, [sCurrentViewPortState]);
+            }
 
             //update anchor navigation bar
             oView.oAnchorNavigationBar.reArrangeNavigationBarElements();
-
-            //Handle scrolling for the Notifications Preview.
-            //oView._handleHeadsupNotificationsPresentation.apply(oView, [sCurrentViewPortState]);
         },
 
         //Delete or Reset a given group according to the removable state.
         _handleGroupDeletion: function (oGroupBindingCtx) {
-            jQuery.sap.require('sap.m.MessageBox');
+
             var oEventBus = sap.ui.getCore().getEventBus(),
                 oGroup = oGroupBindingCtx.getObject(),
                 bIsGroupRemovable = oGroup.removable,
@@ -7834,16 +11297,22 @@ jQuery.sap.registerPreloadedModules({
                 sGroupId = oGroup.groupId,
                 oResourceBundle = sap.ushell.resources.i18n,
                 oMessageSrvc = sap.ushell.Container.getService("Message"),
-                mActions = sap.m.MessageBox.Action,
-                mCurrentAction = (bIsGroupRemovable ? mActions.DELETE : oResourceBundle.getText('ResetGroupBtn'));
+                mActions,
+                mCurrentAction,
+                oView = this.getView();
 
-            oMessageSrvc.confirm(oResourceBundle.getText(bIsGroupRemovable ? 'delete_group_msg' : 'reset_group_msg', sGroupTitle), function (oAction) {
-                if (oAction === mCurrentAction) {
-                    oEventBus.publish("launchpad", bIsGroupRemovable ? 'deleteGroup' : 'resetGroup', {
-                        groupId: sGroupId
-                    });
-                }
-            }, oResourceBundle.getText(bIsGroupRemovable ? 'delete_group' : 'reset_group'), [mCurrentAction, mActions.CANCEL]);
+            sap.ui.require(['sap/m/MessageBox'], function (MessageBox) {
+                mActions = MessageBox.Action;
+                mCurrentAction = (bIsGroupRemovable ? mActions.DELETE : oResourceBundle.getText('ResetGroupBtn'));
+                oMessageSrvc.confirm(oResourceBundle.getText(bIsGroupRemovable ? 'delete_group_msg' : 'reset_group_msg', sGroupTitle), function (oAction) {
+                    if (oAction === mCurrentAction) {
+                        oEventBus.publish("launchpad", bIsGroupRemovable ? 'deleteGroup' : 'resetGroup', {
+                            groupId: sGroupId
+                        });
+                    }
+                }, oResourceBundle.getText(bIsGroupRemovable ? 'delete_group' : 'reset_group'), [mCurrentAction, mActions.CANCEL]);
+                oView.oAnchorNavigationBar.updateVisibility();
+            });
         },
 
         _modelLoaded: function () {
@@ -7853,8 +11322,8 @@ jQuery.sap.registerPreloadedModules({
             }.bind(this));
         },
         _initializeUIActions: function () {
-            var oDashboardUIActionsModule = new sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions();
-            oDashboardUIActionsModule.initializeUIActions(this);
+            this.oDashboardUIActionsModule = new DashboardUIActions();
+            this.oDashboardUIActionsModule.initializeUIActions(this);
         },
         //force browser to repaint Body, by setting it `display` property to 'none' and to 'block' again
         _forceBrowserRerenderElement: function (element) {
@@ -7883,7 +11352,7 @@ jQuery.sap.registerPreloadedModules({
 
         _resizeHandler: function () {
             this._addBottomSpace();
-            sap.ushell.utils.handleTilesVisibility();
+            utils.handleTilesVisibility();
 
             //Layout calculation is relevant only when the dashboard is presented
             var bInDahsboard = jQuery.find("#dashboardGroups:visible").length;
@@ -7892,6 +11361,12 @@ jQuery.sap.registerPreloadedModules({
                 sap.ushell.Layout.reRenderGroupsLayout(null);
                 this._initializeUIActions();
             }
+        },
+
+        _handleAnimationModeChange: function (sChannelId, sEventId, sAnimationMode) {
+            var oModel = this.getView().getModel();
+
+            oModel.setProperty('/animationMode', sAnimationMode);
         },
 
         _appOpenedHandler: function (sChannelId, sEventId, oData) {
@@ -7905,7 +11380,7 @@ jQuery.sap.registerPreloadedModules({
             oParentComponent = this.getOwnerComponent();
             sParentName = oParentComponent.getMetadata().getComponentName();
             if (oData.additionalInformation.indexOf(sParentName) === -1) {
-                sap.ushell.utils.setTilesNoVisibility();// setting no visibility on all visible tiles
+                utils.setTilesNoVisibility();// setting no visibility on all visible tiles
                 // After an application is opened - the notification preview is not shown,
                 // hence, shifting the scaled center veiwport (when moving to the right viewport) is not needed
                 oViewPortContainer = sap.ui.getCore().byId("viewPortContainer");
@@ -7921,9 +11396,13 @@ jQuery.sap.registerPreloadedModules({
 
                 sap.ushell.components.flp.ActionMode.toggleActionMode(oModel, "Menu Item");
             }
+
+            if (this.oDashboardUIActionsModule) {
+                this.oDashboardUIActionsModule.disableAllDashboardUiAction();
+            }
         },
         _addBottomSpace: function () {
-            sap.ushell.utils.addBottomSpace();
+            utils.addBottomSpace();
         },
 
         _scrollToFirstVisibleGroup: function (sChannelId, sEventId, oData) {
@@ -7944,54 +11423,105 @@ jQuery.sap.registerPreloadedModules({
                         var iY = document.getElementById(oGroup.sId).offsetTop;
                         jQuery('.sapUshellDashboardView section').stop().animate({scrollTop: iY + fromTop}, 0);
 
-                        //on press event we need to set the group in focus
-                        if (oData.group && oData.focus) {
-                            jQuery.sap.byId(oGroup.sId).focus();
-                        }
+                        // we focus first tile automatically
+                        sap.ushell.components.flp.ComponentKeysHandler.setTileFocus(jQuery("#" + oGroup.getId() + " li").first());
 
                         return false;
                     }
                 });
-                sap.ushell.utils.addBottomSpace();
+                utils.addBottomSpace();
             }
         },
+        /**
+         * Scrolling the dashboard according to group name, in order to show a desired group
+         */
+        _scrollToGroupByName: function (sChannelId, sEventId, oData) {
+            var oGroups = this.getView().getModel().getProperty("/groups"),
+                sGroupName = oData.groupName,
+                oLaunchPageSrv = sap.ushell.Container.getService('LaunchPage');
 
+            jQuery.each(oGroups, function (nIndex, oGroup) {
+                if (oLaunchPageSrv.getGroupTitle(oGroup.object)  === sGroupName) {
+                    this._scrollToGroup(sChannelId, sEventId, {
+                        groupId: oGroup.groupId
+                    });
+                }
+            }.bind(this));
+        },
         /**
          * Scrolling the dashboard in order to show a desired group
          */
-        _scrollToGroup: function (sChannelId, sEventId, oData) {
+        _scrollToGroup: function (sChannelId, sEventId, oData, iDuration) {
             var sGroupId,
-                that = this,
-                oViewGroups = this.oView.oDashboardGroupsBox.getGroups();
+                iDuration = oData.iDuration == undefined ? 500 : oData.iDuration,
+                oView = this.getView(),
+                oModel = oView.getModel(),
+                bMinimalAnimationMode = oModel.getProperty('/animationMode') === 'minimal',
+                that = this;
 
+            if (bMinimalAnimationMode) {
+                iDuration = 0;
+            }
             if (oData.group) {
                 sGroupId = oData.group.getGroupId();
             } else {
                 // in case of scroll after deletion, the oData contains only the groupId.
                 sGroupId = oData.groupId;
             }
-
+            that.iAnimationDuration = iDuration;
             // The model flag /scrollingToGroup indicates a scroll-to-group action currently occurs,
-            if (oViewGroups) {
+            if (this.oView.oDashboardGroupsBox.getGroups()) {
+                // Calling again getGroups() because of the lazy loading mechanism
                 jQuery.each(this.oView.oDashboardGroupsBox.getGroups(), function (nIndex, oGroup) {
                     if (oGroup.getGroupId() === sGroupId) {
                         var iY;
                         setTimeout(function () {
-
                             iY = -1 * (document.getElementById('dashboardGroups').getBoundingClientRect().top) + document.getElementById(oGroup.sId).getBoundingClientRect().top;
-                            iY += 49; // don't display group header after scroll. Group header will be visible in the anchor bar
-                            jQuery('.sapUshellDashboardView section').stop().animate({scrollTop: iY}, 500);
+                            var groupHeaderHeight = jQuery(document.getElementById(oGroup.sId)).find(".sapUshellTileContainerHeader").height();
+                            var groupBeforeContentHeight = jQuery(document.getElementById(oGroup.sId)).find(".sapUshellTileContainerBeforeContent").height();
+                            var bIsActionsModeActive = oGroup.getModel().getProperty('/tileActionModeActive');
+                            // don't display group header after scroll in non edit mode. Group header will be visible in the anchor bar
+                            // check if group header is visible, and only then scroll additional 3rem to hide it
+                            // in edit mode hide the before content + 0.5rem padding
+                            iY = groupHeaderHeight > 0 && !bIsActionsModeActive ? iY + 48 : iY + groupBeforeContentHeight + 8;
+                            jQuery('.sapUshellDashboardView section').stop().animate({scrollTop: iY}, that.iAnimationDuration,
+                            function() {
+                                // set first tile focus on animation end
+                                if (oData.groupChanged) {
+                                    if (!oData.restoreLastFocusedTile) {
+                                        // set focus on the first tile of the group we scrolled to
+                                        sap.ushell.components.flp.ComponentKeysHandler.setTileFocus(jQuery("#" + oGroup.getId() + " li").first());
+                                    }
+                                }
+
+                                // regardless to group change - if we need to restore last focused tile we must do so.
+                                if (oData.restoreLastFocusedTile){
+
+                                    var sTileContainerSelector = "#" + oGroup.getId();
+                                    var bLookForLastVisitedInSameGroup = false;
+
+                                    // if we need to restore focus on a specific tile-container (rather then current group)
+                                    // then we supply the tile container and set true to bLookForLastVisitedInSameGroup (see goToLastVisitedTile method)
+                                    if (oData.restoreLastFocusedTileContainerById) {
+                                        sTileContainerSelector = "#" + oData.restoreLastFocusedTileContainerById;
+                                        bLookForLastVisitedInSameGroup = true;
+                                    }
+
+                                    sap.ushell.components.flp.ComponentKeysHandler.goToLastVisitedTile(jQuery(sTileContainerSelector), bLookForLastVisitedInSameGroup);
+                                }
+
+                            });
                             if (oData.isInEditTitle) {
                                 oGroup.setEditMode(true);
                             }
-                        }, 300);
+                        }, 0);
 
                         //fix bottom space, if this a deletion scenario the 'oData.groupId' will return true
                         if (oData.groupId || oData.groupChanged) {
                             that._addBottomSpace();
                         }
                         // Recalculate tiles visibility
-                        sap.ushell.utils.handleTilesVisibility();
+                        utils.handleTilesVisibility();
                         return false;
                     }
                 });
@@ -8006,15 +11536,45 @@ jQuery.sap.registerPreloadedModules({
          * @private
          */
         _handleDrop: function (event, ui) {
-           
-            var tileMoveInfo = sap.ushell.Layout.getLayoutEngine().layoutEndCallback(),
+            var oLayout = sap.ushell.Layout.getLayoutEngine(),
+                tileMoveInfo = oLayout.layoutEndCallback(),
+                bIsShortDrop = !tileMoveInfo.dstArea,
                 oEventBus = sap.ui.getCore().getEventBus(),
                 noRefreshSrc,
-                noRefreshDst;
+                noRefreshDst,
+                sTileUuid,
+                oDeferred = jQuery.Deferred(),
+                oView = this.getView(),
+                oModel = oView.getModel(),
+                bTabMode = oModel.getProperty('/homePageGroupDisplay') && oModel.getProperty('/homePageGroupDisplay') === 'tabs',
+                bEditMode = oModel.getProperty('/tileActionModeActive'),
+                bIsShortDropToLocked = true,
+                ieHtml5DnD = !!(oModel.getProperty("/personalization") && (sap.ui.Device.browser.msie || sap.ui.Device.browser.edge) && sap.ui.Device.browser.version >= 11 &&
+                (sap.ui.Device.system.combi || sap.ui.Device.system.tablet)),
+                oPageBuilderService = sap.ushell.Container.getService("LaunchPage"),
+                oTile = tileMoveInfo.tile.getBindingContext().getObject().object,
+                bIsLinkPersonalizationSupported = oPageBuilderService.isLinkPersonalizationSupported(oTile);
 
-            if (!tileMoveInfo.tileMovedFlag) {
+            sap.ushell.Layout.getLayoutEngine()._toggleAnchorItemHighlighting(false);
+            //Short drop to a locked group
+            if (tileMoveInfo.dstGroup) {
+                var dstGroupBindingContext = tileMoveInfo.dstGroup.getBindingContext(),
+                    isDestGroupLocked = dstGroupBindingContext.getProperty(dstGroupBindingContext.sPath).isGroupLocked;
+                bIsShortDropToLocked = bIsShortDrop && isDestGroupLocked;
+            }
+
+            if (!tileMoveInfo.tileMovedFlag || (ieHtml5DnD && oLayout.isTabBarCollision()) || bIsShortDropToLocked || (!bIsLinkPersonalizationSupported && tileMoveInfo.dstArea === 'links')) {
+                oEventBus.publish("launchpad", "sortableStop");
                 return; //tile was not moved
             }
+
+            //If we are in EditMode and the target group has no links (empty links area) and the anchor bar isn't in tabs mode,
+            //then we continue as tile was not moved.
+            if (!bEditMode && !bTabMode && tileMoveInfo.dstArea === "links" && !tileMoveInfo.dstGroupData.getLinks().length) {
+                oEventBus.publish("launchpad", "sortableStop");
+                return; //tile was not moved
+            }
+
             noRefreshSrc = true;
             noRefreshDst = true; //Default - suppress re-rendering after drop
             //if src and destination groups differ - refresh src and dest groups
@@ -8025,23 +11585,265 @@ jQuery.sap.registerPreloadedModules({
             } else if (tileMoveInfo.tile !== tileMoveInfo.dstGroup.getTiles()[tileMoveInfo.dstTileIndex]) {
                 noRefreshDst = false;
             }
-            tileMoveInfo.srcGroup.removeAggregation('tiles', tileMoveInfo.tile, noRefreshSrc);
-            tileMoveInfo.dstGroup.insertAggregation('tiles', tileMoveInfo.tile, tileMoveInfo.dstTileIndex, noRefreshDst);
 
-            oEventBus.publish("launchpad", "moveTile", {
-                sTileId: tileMoveInfo.tile.getUuid(),
-                toGroupId: tileMoveInfo.dstGroup.getGroupId(),
-                toIndex: tileMoveInfo.dstTileIndex
-            });
+            sTileUuid = this._getTileUuid(tileMoveInfo.tile);
+            if (tileMoveInfo.srcGroup && tileMoveInfo.srcGroup.removeAggregation && tileMoveInfo.srcArea) {
+                tileMoveInfo.srcGroup.removeAggregation('tiles', tileMoveInfo.tile, noRefreshSrc);
+            }
 
+            // If this is Tab Bar use-case, and the action is "long" Drag&Drop of a tile on a tab (group):
+            // the destination group (whose aggregation needs to be updated) is not in the dashboard, unless the drag is to the same group.
+            // Instead - the publish of movetile event will update the group in the model
+            var bSameDropArea = tileMoveInfo.dstGroupData && tileMoveInfo.dstGroupData.insertAggregation && tileMoveInfo.dstArea === tileMoveInfo.srcArea;
+
+            //Handles two scenarios - 1. Same group drop - tile to tile/link to link 2. Long drop - tile to tile/link to link
+            if (bSameDropArea) {
+                tileMoveInfo.tile.sParentAggregationName = tileMoveInfo.dstArea;//"tiles"
+                tileMoveInfo.dstGroupData.insertAggregation(tileMoveInfo.dstArea, tileMoveInfo.tile, tileMoveInfo.dstTileIndex, noRefreshDst);
+
+                this._showDropToastMessage(tileMoveInfo);
+
+                oDeferred = this._handleSameTypeDrop(tileMoveInfo, sTileUuid, bSameDropArea);
+
+            //Handles three scenarios - 1. Short drop 2. Same group - tile to link/link to tile 3. Long drop - tile to link/link to tile
+            } else {
+                this._showDropToastMessage(tileMoveInfo);
+
+                if (bIsShortDrop) {
+                    oDeferred = this._handleShortDrop(tileMoveInfo, sTileUuid, bSameDropArea);
+                } else {
+                    oDeferred = this._handleConvertDrop(tileMoveInfo, bSameDropArea, ui);
+                }
+            }
+
+            if (this.getView().getModel()) {
+                this.getView().getModel().setProperty('/draggedTileLinkPersonalizationSupported', true);
+            }
             oEventBus.publish("launchpad", "sortableStop");
+            return oDeferred.promise();
         },
-        _handleAnchorItemPress: function (oEvent) {
-            this._scrollToGroup("launchpad", "scrollToGroup", {
-                group: oEvent.getParameter('group'),
-                groupChanged: false,
-                focus: (oEvent.getParameter("action") === "sapenter")
+
+        _showDropToastMessage: function (tileMoveInfo) {
+            var sTileTitle = this._getTileTitle(tileMoveInfo),
+                sDestGroupName = tileMoveInfo.dstGroup.getHeaderText ? tileMoveInfo.dstGroup.getHeaderText() : tileMoveInfo.dstGroup.getTitle(),
+                sToastStaticText = sap.ushell.resources.i18n.getText('added_tile_to_group'),
+                sToastMessageText = sTileTitle + ' ' + sToastStaticText + ' ' + sDestGroupName,
+                toGroupId = tileMoveInfo.dstGroupData.getGroupId ? tileMoveInfo.dstGroupData.getGroupId() : tileMoveInfo.dstGroupData.groupId,
+                srcGroupId = tileMoveInfo.srcGroup.getGroupId ? tileMoveInfo.srcGroup.getGroupId() : tileMoveInfo.srcGroup.groupId;
+
+            if (toGroupId !== srcGroupId) {
+                sap.m.MessageToast.show(sap.ushell.resources.i18n.getText(sToastMessageText));
+            }
+        },
+
+        _handleSameTypeDrop: function (tileMoveInfo, sTileUuid, bSameDropArea) {
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                oDeferred = jQuery.Deferred();
+            tileMoveInfo.tile._getBindingContext().oModel.setProperty(tileMoveInfo.tile._getBindingContext().sPath + '/draggedInTabBarToSourceGroup', false);
+            oEventBus.publish("launchpad", "movetile", {
+                sTileId: sTileUuid,
+                sToItems: tileMoveInfo.dstArea ? tileMoveInfo.dstArea : "tiles",
+                sFromItems: tileMoveInfo.srcArea ? tileMoveInfo.srcArea : "tiles",
+                sTileType: tileMoveInfo.dstArea ? tileMoveInfo.dstArea.substr(0, tileMoveInfo.dstArea.length - 1) : undefined,
+                toGroupId: tileMoveInfo.dstGroupData.getGroupId ? tileMoveInfo.dstGroupData.getGroupId() : tileMoveInfo.dstGroupData.groupId,
+                toIndex: tileMoveInfo.dstTileIndex,
+                longDrop: bSameDropArea,
+                callBack: function () {
+                    oDeferred.resolve();
+                }
             });
+            return oDeferred.promise();
+        },
+
+        _handleShortDrop: function (tileMoveInfo, sTileUuid, bSameDropArea) {
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                oDeferred = jQuery.Deferred();
+            oEventBus.publish("launchpad", "movetile", {
+                sTileId: sTileUuid,
+                sToItems: tileMoveInfo.srcArea || "tiles",
+                sFromItems: tileMoveInfo.srcArea || "tiles",
+                sTileType: tileMoveInfo.srcArea ? tileMoveInfo.srcArea.substr(0, tileMoveInfo.srcArea.length - 1) : undefined,
+                toGroupId: tileMoveInfo.dstGroupData.getGroupId ? tileMoveInfo.dstGroupData.getGroupId() : tileMoveInfo.dstGroupData.groupId,
+                toIndex: tileMoveInfo.dstTileIndex,
+                longDrop: bSameDropArea,
+                callBack: function () {
+                    oDeferred.resolve();
+                }
+            });
+            return oDeferred.promise();
+        },
+
+        _handleConvertDrop: function (tileMoveInfo, bSameDropArea, ui) {
+            var oEventBus = sap.ui.getCore().getEventBus(),
+                oDeferred = jQuery.Deferred();
+            oEventBus.publish("launchpad", "convertTile", {
+                toGroupId: tileMoveInfo.dstGroupData.getGroupId ? tileMoveInfo.dstGroupData.getGroupId() : tileMoveInfo.dstGroupData.groupId,
+                toIndex: tileMoveInfo.dstTileIndex,
+                tile: sap.ui.getCore().byId(ui.id),
+                srcGroupId: tileMoveInfo.srcGroup.getGroupId ? tileMoveInfo.srcGroup.getGroupId() : tileMoveInfo.srcGroup.groupId,
+                longDrop: bSameDropArea,
+                callBack: function () {
+                    oDeferred.resolve();
+                }
+            });
+            return oDeferred.promise();
+        },
+
+        _getTileTitle: function (oTileMoveInfo) {
+            var oModel = this.getView().getModel(),
+                sBindingCtxPath = oTileMoveInfo.tile.getBindingContext().getPath(),
+                oTileChipObj = oModel.getProperty(sBindingCtxPath).object,
+                sTileTitle = sap.ushell.Container.getService('LaunchPage').getTileTitle(oTileChipObj);
+
+            return sTileTitle;
+        },
+
+        _getTileUuid: function (oTileObject) {
+            var sType = oTileObject.getMode ? oTileObject.getMode() : 'ContentMode',
+                sTileUuid;
+
+            if (sType === 'LineMode') {
+                sTileUuid = oTileObject.getUuid ? oTileObject.getUuid() : oTileObject.getBindingContext().getObject().uuid;
+            } else {
+                sTileUuid = oTileObject.getUuid ? oTileObject.getUuid() : oTileObject.getBindingContext().getObject().getParent().getUuid();
+            }
+
+            return sTileUuid;
+        },
+
+        _handleDrag: function (event, ui) {
+          var tileDragInfo = sap.ushell.Layout.getLayoutEngine().layoutEndCallback(),
+              oPageBuilderService = sap.ushell.Container.getService("LaunchPage"),
+              oTile = tileDragInfo.tile.getBindingContext().getObject().object,
+              bIsLinkPersonalizationSupported = oPageBuilderService.isLinkPersonalizationSupported(oTile),
+              oView = this.getView(),
+              oModel = oView.getModel();
+
+          if (oModel) {
+              oModel.setProperty('/draggedTileLinkPersonalizationSupported', bIsLinkPersonalizationSupported);
+          }
+        },
+
+        _handleTabBarItemPressEventHandler : function (sChannelId, sEventId, oData) {
+        	var oView = this.getView(),
+                oModel = oView.getModel(),
+                aGroups = oModel.getProperty("/groups"),
+                iGroupIndex = oData.iGroupIndex;
+
+        	// first reset the isGroupSelected property for all groups.
+            for (var i = 0; i < aGroups.length; i++) {
+                oModel.setProperty("/groups/" + i + "/isGroupSelected", false);
+            }
+            // set the selected group (for the model update we use the original index)
+            oModel.setProperty("/groups/" + iGroupIndex + "/isGroupSelected", true);
+
+            this._handleTabBarItemPress(sChannelId, sEventId, iGroupIndex);
+        },
+
+        _handleTabBarItemPress: function (sChannelId, sEventId, iGroupIndex, oEvent) {
+        	var oView = this.getView(),
+                // Fix the selected group index not to include the hidden groups.
+                selectedGroupIndex,
+                fixedIndex,
+                i;
+
+        	if (oEvent) {
+        		selectedGroupIndex = oEvent.getParameter("group").getIndex();
+        	} else {
+        		selectedGroupIndex = iGroupIndex;
+        	}
+
+            sap.ui.getCore().getEventBus().publish("launchpad", "tabSelected", { iSelectedGroup: selectedGroupIndex });
+
+            fixedIndex = this._getVisibleGroupIndex(selectedGroupIndex);
+
+            // apply the filter
+            oView.oDashboardGroupsBox.removeLinksFromUnselectedGroups();
+            oView.oDashboardGroupsBox.getBinding("groups").filter([oView.oFilterSelectedGroup]);
+            // change the anchor bar selection
+            oView.oAnchorNavigationBar.setSelectedItemIndex(fixedIndex);
+            oView.oAnchorNavigationBar.reArrangeNavigationBarElements();
+            // change tiles visibility of the new selected group
+            setTimeout(function () {
+                sap.ushell.utils.handleTilesVisibility();
+            }, 0);
+        },
+
+        _getVisibleGroupIndex: function(selectedGroupIndex){
+            var aGroups = this.getView().getModel().getProperty("/groups");
+            var iHiddenGroupsCount = 0;
+
+            // Go through the groups that are located before the selected group
+            for (var i = 0; i < selectedGroupIndex; i++) {
+                if (!aGroups[i].isGroupVisible || !aGroups[i].visibilityModes[0]) {
+                    // Count all groups that are not visible in non-edit mode
+                    iHiddenGroupsCount++;
+                }
+            }
+
+            return selectedGroupIndex - iHiddenGroupsCount;
+        },
+
+        _getModelGroupFromVisibleIndex: function(selectedGroupIndex){
+            var aGroups = this.getView().getModel().getProperty("/groups"),
+                iVisGroupsCount = 0;
+
+            for (var i = 0; i < aGroups.length; i++) {
+                if (aGroups[i].isGroupVisible && aGroups[i].visibilityModes[0]) {
+                    // Count all groups that are not visible in non-edit mode
+                    iVisGroupsCount++;
+
+                    if (iVisGroupsCount > selectedGroupIndex){
+                        return i;
+                    }
+                }
+            }
+
+            return 0;
+
+        },
+
+        _handleAnchorItemPress: function (oEvent) {
+            var oView = this.getView(),
+                oModel = oView.getModel(),
+                iSelectedGroup = oModel.getProperty("/iSelectedGroup"),
+                aGroups,
+                i;
+
+            //press on item could also be fired from overflow popup, but it will not have "manualPress" parameter
+            if (sap.ui.Device.system.phone && oEvent.getParameter("manualPress")) {
+                oEvent.oSource.openOverflowPopup();
+            }
+
+            if (iSelectedGroup !== undefined) {
+                oModel.setProperty("/groups/" + iSelectedGroup + "/isGroupSelected", false);
+            }
+
+            // set the selected group (for the model update we use the original index)
+            oModel.setProperty("/groups/" + oEvent.getParameter("group").getIndex() + "/isGroupSelected", true);
+            oModel.setProperty("/iSelectedGroup", oEvent.getParameter("group").getIndex());
+
+            // if tabs
+            if (oModel.getProperty("/homePageGroupDisplay") && oModel.getProperty("/homePageGroupDisplay") === "tabs" && !oModel.getProperty("/tileActionModeActive")) {
+            	this._handleTabBarItemPress(undefined, undefined, undefined, oEvent);
+
+            // else scroll or edit mode
+            } else {
+                // reset the filter
+
+                if (!oModel.getProperty("/tileActionModeActive")) {
+                    oView.oDashboardGroupsBox.getBinding("groups").filter([new sap.ui.model.Filter("isGroupVisible", sap.ui.model.FilterOperator.EQ, true)]);
+                } else {
+                    oView.oDashboardGroupsBox.getBinding("groups").filter([]);
+                }
+
+                // scroll to selected group
+                this._scrollToGroup("launchpad", "scrollToGroup", {
+                    group: oEvent.getParameter('group'),
+                    groupChanged: true,
+                    focus: (oEvent.getParameter("action") === "sapenter")
+                });
+            }
         },
         _addGroupHandler: function (oData) {
             var index,
@@ -8055,7 +11857,7 @@ jQuery.sap.registerPreloadedModules({
             }
 
             sap.ui.getCore().getEventBus().publish("launchpad", "createGroupAt", {
-                title: sap.ushell.resources.i18n.getText("new_group_name"),
+                title: "",
                 location: index,
                 isRendered: true
             });
@@ -8156,11 +11958,11 @@ jQuery.sap.registerPreloadedModules({
 
                 // Create new notification items, and store only their Id
                 for (i = 0; i < aNewNotifications.length; i++) {
-                    oNotificationItem = new sap.m.NotificationListItem({
+                    oNotificationItem = new sap.m.NotificationListItem ({
                         hideShowMoreButton: true,
-                        description: aNewNotifications[i].SensitiveText,
-                        title: aNewNotifications[i].Text,
-                        datetime: sap.ushell.utils.formatDate(aNewNotifications[i].CreatedAt),
+                        title:  aNewNotifications[i].SensitiveText ? aNewNotifications[i].SensitiveText : aNewNotifications[i].Text,
+                        description:aNewNotifications[i].SubTitle ,
+                        datetime: utils.formatDate(aNewNotifications[i].CreatedAt),
                         priority: sap.ui.core.Priority[aNewNotifications[i].Priority.charAt(0) + aNewNotifications[i].Priority.substr(1).toLowerCase()],
                         press: function (oEvent) {
                             var sNotificationPathInModel = this.getBindingContext().getPath(),
@@ -8172,7 +11974,7 @@ jQuery.sap.registerPreloadedModules({
                                 aParameters = oNotificationModelEntry.NavigationTargetParams,
                                 sNotificationId = oNotificationModelEntry.originalItemId,
                                 oNotificationsService = sap.ushell.Container.getService("Notifications");
-                            sap.ushell.utils.toExternalWithParameters(sSemanticObject, sAction, aParameters);
+                            utils.toExternalWithParameters(sSemanticObject, sAction, aParameters);
                             var oPromise = oNotificationsService.markRead(sNotificationId);
                             oPromise.fail(function () {
                                 sap.ushell.Container.getService('Message').error(sap.ushell.resources.i18n.getText('notificationsFailedMarkRead'));
@@ -8207,13 +12009,7 @@ jQuery.sap.registerPreloadedModules({
                             });
                         }
 
-                    });
-
-                    //TODO temporary Cozy/Compact implementation for SAPPHIRE
-                    if (sap.ui.Device.system.desktop) {
-                        oNotificationItem.removeStyleClass('sapUiSizeCozy');
-                        oNotificationItem.addStyleClass('sapUiSizeCompact');
-                    }//no need for "else", Cozy is the default mode
+                    }).addStyleClass("sapUshellNotificationsListItem");
 
                     aNewNotificationsIds.push({
                         previewItemId: oNotificationItem.getId(),
@@ -8245,7 +12041,10 @@ jQuery.sap.registerPreloadedModules({
                 // The For loop counts backwards since the aNewNotifications has the most recent object in index 0
                 //  and we would like to be the last that is put in previewNotificationItems
                 for (index = aNewNotificationsIds.length - 1; index > -1; index--) {
-                    if (aRecentNotificationsArray.length === iRequiredNotificationsNumber) {
+
+                    // there may be temporary situation where the recent-array size is larger then the max allowed number
+                    // as the redundant notifications are popped out using time-out of one second
+                    if (aRecentNotificationsArray.length >= iRequiredNotificationsNumber) {
                         setTimeout(function () {
                             aRecentNotificationsArray.pop();
                             that.getView().getModel().setProperty("/previewNotificationItems", aRecentNotificationsArray);
@@ -8278,15 +12077,17 @@ jQuery.sap.registerPreloadedModules({
         _changeGroupVisibility: function (oGroupBindingCtx) {
             var sBindingCtxPath = oGroupBindingCtx.getPath(),
                 oModel = oGroupBindingCtx.getModel(),
-                bGroupVisibilityState = oModel.getProperty(sBindingCtxPath + '/isGroupVisible');
+                bGroupVisibilityState = oModel.getProperty(sBindingCtxPath + '/isGroupVisible'),
+                oView = this.getView();
             oModel.setProperty(sBindingCtxPath + '/isGroupVisible', !bGroupVisibilityState);
+            oView.oAnchorNavigationBar.updateVisibility();
         },
 
         //Persist the group visibility changes (hidden groups) in the back-end upon deactivation of the Actions Mode.
         _handleGroupVisibilityChanges: function (sChannelId, sEventId, aOrigHiddenGroupsIds) {
             var oLaunchPageSrv = sap.ushell.Container.getService('LaunchPage'),
                 oModel = this.getView().getModel(),
-                aCurrentHiddenGroupsIds = sap.ushell.utils.getCurrentHiddenGroupIds(oModel),
+                aCurrentHiddenGroupsIds = utils.getCurrentHiddenGroupIds(oModel),
                 bSameLength = aCurrentHiddenGroupsIds.length === aOrigHiddenGroupsIds.length,
                 bIntersect = bSameLength,
                 oPromise;
@@ -8305,7 +12106,6 @@ jQuery.sap.registerPreloadedModules({
                 oPromise = oLaunchPageSrv.hideGroups(aCurrentHiddenGroupsIds);
                 oPromise.done(function () {
                     oModel.updateBindings('groups');
-                    this._handleToastMessage(aCurrentHiddenGroupsIds.length);
                 }.bind(this));
                 oPromise.fail(function () {
                     var msgService = sap.ushell.Container.getService('Message');
@@ -8315,47 +12115,113 @@ jQuery.sap.registerPreloadedModules({
             }
         },
 
-        _handleToastMessage: function (numOfHiddenGroups) {
-            var sMsg = '';
-            if (typeof numOfHiddenGroups === undefined) {
-                return;
+        _updateShellHeader: function () {
+            if (!this.oShellUIService) {
+                this._initializeShellUIService();
+            } else {
+                // As the Dashboard is currently the default page for the Shell, we call set title and set hierarchy with no value
+                // so the default value will be set
+                this.oShellUIService.setTitle();
+                this.oShellUIService.setHierarchy();
             }
-            if (numOfHiddenGroups === 0) {  //All groups are visible on your home page
-                sMsg = sap.ushell.resources.i18n.getText('hideGroups_none');
-            } else if (numOfHiddenGroups === 1) {//1 group is hidden on your home page
-                sMsg = sap.ushell.resources.i18n.getText('hideGroups_single');
-            } else {//{0} groups are hidden on your home page
-                sMsg = sap.ushell.resources.i18n.getText('hideGroups_multiple', numOfHiddenGroups);
+
+        },
+
+        _initializeShellUIService: function () {
+            return sap.ui.require(["sap/ushell/ui5service/ShellUIService"], function (ShellUIService) {
+                this.oShellUIService = new ShellUIService({
+                    scopeObject: this.getOwnerComponent(),
+                    scopeType: "component"
+                });
+                // As the Dashboard is currently the default page for the Shell, we call set title and set hierarchy with no value
+                // so the default value will be set
+                this.oShellUIService.setTitle();
+                this.oShellUIService.setHierarchy();
+                return this.oShellUIService;
+            }.bind(this));
+        },
+
+        _deactivateActionModeInTabsState : function () {
+            var oView = this.getView(),
+                oModel = oView.getModel();
+            // First reset the isGroupSelected property for all groups.
+            var aGroups = oModel.getProperty("/groups");
+            for (var i = 0; i < aGroups.length; i++) {
+                oModel.setProperty("/groups/" + i + "/isGroupSelected", false);
             }
-            sap.ushell.Container.getService('Message').show(sap.ushell.services.Message.Type.INFO, sMsg);
+
+            var selectedIndex = oView.oAnchorNavigationBar.getSelectedItemIndex();
+
+            var iHiddenGroupsCount = 0;
+            // If the selected group is a hidden group, go to the first visible group
+            if (!this._isGroupVisible(selectedIndex)) {
+                for (var i = 0; i < aGroups.length; i++) {
+                    if (!this._isGroupVisible(i)) {
+                        iHiddenGroupsCount++;
+                    } else {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                // Count all hidden groups that are located before the selected group
+                for (var i = 0; i < selectedIndex; i++) {
+                    if (!this._isGroupVisible(i)) {
+                        iHiddenGroupsCount++;
+                    }
+                }
+            }
+
+            // Fix the selected index not to include the hidden groups
+            var fixedIndex = selectedIndex - iHiddenGroupsCount;
+            // Change the anchor bar selection
+            oView.oAnchorNavigationBar.adjustItemSelection(fixedIndex);
+            oView.oAnchorNavigationBar.setSelectedItemIndex(fixedIndex);
+
+            // Set the selected group and then filter
+            oModel.setProperty("/groups/" + selectedIndex + "/isGroupSelected", true);
+            oView.oDashboardGroupsBox.removeLinksFromAllGroups();
+
+            var sGroupsMode = oModel.getProperty('/homePageGroupDisplay');
+            if (sGroupsMode && sGroupsMode === "tabs") {
+                oView.oDashboardGroupsBox.getBinding("groups").filter([oView.oFilterSelectedGroup]);
+            }
+        },
+
+        _isGroupVisible : function (groupIndex) {
+            var aGroups = this.getView().getModel().getProperty("/groups");
+            return (aGroups[groupIndex].isGroupVisible && aGroups[groupIndex].visibilityModes[0]);
         }
     });
-}());
+
+
+}, /* bExport= */ false);
 },
-	"sap/ushell/components/flp/launchpad/dashboard/DashboardContent.view.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+	"sap/ushell/components/flp/launchpad/dashboard/DashboardContent.view.js":function(){// ${copyright}
 /**
  * @fileOverview The Fiori launchpad main view.<br>
  * The view is of type <code>sap.ui.jsview</code> that includes a <code>sap.m.page</code>
  * with a header of type <code>sap.ushell.ui.launchpad.AnchorNavigationBar</code>
  * and content of type <code>sap.ushell.ui.launchpad.DashboardGroupsContainer</code>.
  *
- * @version 1.38.26
+ * @version ${version}
  * @name sap.ushell.components.flp.launchpad.dashboard.DashboardContent.view
  * @private
  */
-(function () {
-    "use strict";
+sap.ui.define([
+		'sap/ushell/Layout',
+		'./DashboardGroupsBox',
+		'sap/ushell/override',
+		'sap/ushell/resources',
+		'sap/ushell/ui/launchpad/AnchorItem',
+		'sap/ushell/ui/launchpad/Tile',
+		'sap/ushell/ui/launchpad/TileContainer',
+		'sap/ushell/ui/shell/RightFloatingContainer'
+	], function(Layout, DashboardGroupsBox, override, resources, AnchorItem, Tile, TileContainer, RightFloatingContainer) {
+	"use strict";
+
     /*global jQuery, sap, document, self */
     /*jslint plusplus: true, nomen: true, vars: true */
-
-    jQuery.sap.require("sap.ushell.components.flp.launchpad.dashboard.DashboardGroupsBox");
-    jQuery.sap.require("sap.ushell.ui.launchpad.TileContainer");
-    jQuery.sap.require("sap.ushell.ui.launchpad.Tile");
-    jQuery.sap.require("sap.ushell.override");
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.require("sap.ushell.Layout");
-    jQuery.sap.require("sap.ushell.ui.launchpad.AnchorItem");
-    jQuery.sap.require("sap.ushell.ui.shell.RightFloatingContainer");
 
     sap.ui.jsview("sap.ushell.components.flp.launchpad.dashboard.DashboardContent", {
 
@@ -8367,50 +12233,58 @@ jQuery.sap.registerPreloadedModules({
          */
         createContent: function (oController) {
             var oDashboardGroupsBoxModule,
-                that = this,
                 oViewPortContainer = sap.ui.getCore().byId("viewPortContainer"),
-                bConfigEnableNotificationsPreview;
+                bConfigEnableNotificationsPreview,
+                oDashboardManager = sap.ushell.components.flp.launchpad.getDashboardManager ? sap.ushell.components.flp.launchpad.getDashboardManager() : undefined,
+                that = this;
 
             this.isTouch = sap.ui.Device.system.combi ? false : (sap.ui.Device.system.phone || sap.ui.Device.system.tablet);
             this.isCombi = sap.ui.Device.system.combi;
             this.parentComponent = sap.ui.core.Component.getOwnerComponentFor(this);
             this.oModel = this.parentComponent.getModel();
             this.addStyleClass("sapUshellDashboardView");
-            this.ieHtml5DnD = !!(this.oModel.getProperty("/personalization") && (sap.ui.Device.browser.msie || sap.ui.Device.browser.edge) && sap.ui.Device.browser.version >= 11 &&
-            (sap.ui.Device.system.combi || sap.ui.Device.system.tablet));
+            this.ieHtml5DnD = this.oModel.getProperty("/personalization") && oDashboardManager && oDashboardManager.isIeHtml5DnD();
 
             sap.ui.getCore().getEventBus().subscribe("launchpad", "contentRendered", this._onAfterDashboardShow, this);
             sap.ui.getCore().getEventBus().subscribe("launchpad", "initialConfigurationSet", this._onAfterDashboardShow, this);
+            sap.ui.getCore().getEventBus().subscribe("launchpad", 'actionModeInactive', this._handleEditModeChange, this);
+            sap.ui.getCore().getEventBus().subscribe("launchpad", 'actionModeActive', this._handleEditModeChange, this);
+            sap.ui.getCore().getEventBus().subscribe("sap.ushell.services.Notifications", "enablePreviewNotificationChanged", this._enablePreviewNotificationChanged, this);
+            sap.ui.getCore().getEventBus().subscribe("sap.ushell", "coreResourcesFullyLoaded", this._enableAnchorBarOverflowAndCreateFooter, this);
+
+
             sap.ui.getCore().byId('navContainerFlp').attachAfterNavigate(this.onAfterNavigate, this);
 
             this.addEventDelegate({
                 onBeforeFirstShow: function () {
                     var oDashboardManager = sap.ushell.components.flp.launchpad.getDashboardManager();
                     oDashboardManager.loadPersonalizedGroups();
-                    that.onAfterNavigate();
-                },
+                    this.onAfterNavigate();
+                }.bind(this),
                 onAfterShow: function () {
                     //in case we came back from the catalog, and groups were added to home page
-                    that.getController()._addBottomSpace();
-                    var oRenderer = sap.ushell.Container.getRenderer('fiori2');
-
-                    oRenderer.showRightFloatingContainer(false);
-                },
+                    this.getController()._addBottomSpace();
+                    //Removed untill the shellModel will know how to handle the viewport, This is causeing the notifications not to appear when in the meArea.
+//                    sap.ushell.Container.getRenderer('fiori2').showRightFloatingContainer(false);
+                    // call to update shell header title
+                    this.getController()._updateShellHeader();
+                    this._onAfterDashboardShow();
+                }.bind(this),
                 onAfterHide: function (evt) {
                 }
             });
 
-            // Create that AnchorNavigationBar object - the header of the dashboard page 
+            // Create that AnchorNavigationBar object - the header of the dashboard page
             this.oAnchorNavigationBar = this._getAnchorNavigationBar(oController);
 
-            oDashboardGroupsBoxModule = new sap.ushell.components.flp.launchpad.dashboard.DashboardGroupsBox();
+            oDashboardGroupsBoxModule = new DashboardGroupsBox();
             // Create the DashboardGroupsBox object that contains groups and tiles
             this.oDashboardGroupsBox = oDashboardGroupsBoxModule.createGroupsBox(oController, this.oModel);
 
-            // If NotificationsPreview is enabled by configuration - then shifting the scaled center viewPort (when moving ot he right viewport) is also enabled.
+            // If NotificationsPreview is enabled by configuration and by the user - then shifting the scaled center viewPort (when moving ot he right viewport) is also enabled.
             // When notification preview in rendered  the dashboard is smaller in width,
             // hence, when it is being scaled it also needs to be shifted in order to "compensate" for the area of the notifications preview
-            bConfigEnableNotificationsPreview = this.oModel.getProperty('/configEnableNotificationsPreview');
+            bConfigEnableNotificationsPreview = this._previewNotificationEnabled();
             if (oViewPortContainer) {
                 oViewPortContainer.shiftCenterTransitionEnabled(bConfigEnableNotificationsPreview);
             }
@@ -8430,41 +12304,86 @@ jQuery.sap.registerPreloadedModules({
                 }, this));
             };
 
-            this.oPreviewNotificationsContainerPlaceholder = new sap.ushell.ui.shell.RightFloatingContainer({
+            this.oPreviewNotificationsContainerPlaceholder = new RightFloatingContainer({
                 id: 'notifications-preview-container-placeholder',
                 visible: {
                     path: '/enableNotificationsPreview',
-                    formatter: this._handleNotificationsPreviewVisibility.bind(this)
+                    formatter: function (bVisible) {
+                        return that._handleNotificationsPreviewVisibility.apply(that, [bVisible]);
+                    }
                 }
             }).addStyleClass('sapUshellPreviewNotificationsConainer');
-            this.oPreviewNotificationsContainer = new sap.ushell.ui.shell.RightFloatingContainer({
+            this.oPreviewNotificationsContainer = new RightFloatingContainer({
                 id: 'notifications-preview-container',
-                top: 5.5,
+                top: 4,
                 right: '1rem',
+                actAsPreviewContainer: true,
                 floatingContainerItems: {
                     path: "/previewNotificationItems",
                     factory: function (functionId, oContext) {
                         return sap.ui.getCore().byId(oContext.getObject().previewItemId);
-                    }},
+                    }
+                },
+                insertItemsWithAnimation: {
+                    path: '/animationMode',
+                    formatter: function (sAnimationMode) {
+                        return sAnimationMode !== 'minimal';
+                    }
+                },
                 visible: {
                     path: '/enableNotificationsPreview',
                     formatter: this._handleNotificationsPreviewVisibility.bind(this)
                 }
             }).addStyleClass('sapContrastPlus')
-            .addStyleClass('sapContrast');
+                .addStyleClass('sapContrast');
             this.oPreviewNotificationsContainer.updateAggregation = fnUpdateAggregation;
+
+            this.oFilterSelectedGroup = new sap.ui.model.Filter("isGroupSelected", sap.ui.model.FilterOperator.EQ, true);
+
+            this.oFooter =  new sap.m.Bar('sapUshellDashboardFooter', {
+                    visible: {
+                        parts: ['/tileActionModeActive', '/viewPortState'],
+                        formatter: function (bActionModeActive, sCurrentViewPortState) {
+                            return bActionModeActive && sCurrentViewPortState === 'Center';
+                        }
+                    },
+                    contentRight:[new sap.m.ToolbarSpacer()]
+
+            });
 
             this.oPage = new sap.m.Page('sapUshellDashboardPage', {
                 customHeader: this.oAnchorNavigationBar,
+                floatingFooter: true,
+                footer: this.oFooter,
                 content: [
-                    this.oDashboardGroupsBox,
-                    this.oPreviewNotificationsContainerPlaceholder,
-                    this.oPreviewNotificationsContainer
+                    this.oDashboardGroupsBox
                 ]
             });
 
+            var fOrigAfterRendering = this.oPage.onAfterRendering;
+            this.oPage.onAfterRendering = function () {
+                if (fOrigAfterRendering) {
+                    fOrigAfterRendering.apply(this, arguments);
+                }
+                var oDomRef = this.getDomRef(),
+                    oScrollableElement = oDomRef.getElementsByTagName('section');
+
+                jQuery(oScrollableElement[0]).off("scrollstop", oController.handleDashboardScroll);
+                jQuery(oScrollableElement[0]).on("scrollstop", oController.handleDashboardScroll);
+            };
+
+            //we need to make sure that core ext is loaded to avoid additional requests for resorces
+            //therefore we check if core ext is already loaded, if not we will disable the oveflow button
+            //till it will be loaded
+            if (!!jQuery.sap.isDeclared('sap.fiori.core-ext-light', true)){
+                this._enableAnchorBarOverflowAndCreateFooter();
+            }
+
+
             return [
-                this.oPage
+                this.oPage,
+                this.oPreviewNotificationsContainerPlaceholder,
+                this.oPreviewNotificationsContainer
             ];
         },
 
@@ -8520,7 +12439,7 @@ jQuery.sap.registerPreloadedModules({
         },
 
         _getAnchorItemTemplate: function () {
-            var oAnchorItemTemplate = new sap.ushell.ui.launchpad.AnchorItem({
+            var oAnchorItemTemplate = new AnchorItem({
                 index : "{index}",
                 title: "{title}",
                 groupId: "{groupId}",
@@ -8535,6 +12454,13 @@ jQuery.sap.registerPreloadedModules({
                             return false;
                         }
                         return isGroupVisible || tileActionModeActive;
+                    }
+                },
+                locked: "{isGroupLocked}",
+                isGroupDisabled: {
+                    parts: ['isGroupLocked', '/isInDrag', '/homePageGroupDisplay'],
+                    formatter: function (bIsGroupLocked, bIsInDrag, sAnchorbarMode) {
+                        return bIsGroupLocked && bIsInDrag && sAnchorbarMode === 'tabs';
                     }
                 },
                 afterRendering : this._fOnAfterAnchorBarRenderingHandler
@@ -8552,10 +12478,14 @@ jQuery.sap.registerPreloadedModules({
                     groups: {
                         path: "/groups",
                         template: oAnchorItemTemplate
-                    }
+                    },
+                    overflowEnabled: false //we will enable the overflow once coreExt will be loaded!!!
                 });
             oAnchorNavigationBar = this._extendAnchorNavigationBar(oAnchorNavigationBar);
             oAnchorNavigationBar.addStyleClass("sapContrastPlus");
+            oAnchorItemTemplate.attachBrowserEvent("focus", function () {
+                oAnchorNavigationBar.setNavigationBarItemsVisibility();
+            });
             return oAnchorNavigationBar;
         },
 
@@ -8596,8 +12526,9 @@ jQuery.sap.registerPreloadedModules({
                         var jqElement = jQuery(".sapUshellAnchorItem:visible:first");
                         if (!jqElement.length) {
                             sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                        } else {
+                            sap.ushell.components.flp.ComponentKeysHandler.goToSelectedAnchorNavigationItem();
                         }
-                        jqElement.focus();
                     }
                 },
                 onsapenter: function (oEvent) {
@@ -8620,90 +12551,165 @@ jQuery.sap.registerPreloadedModules({
         },
 
         _createActionModeMenuButton : function () {
-            var oTileActionsButton = sap.ushell.Container.getRenderer("fiori2").addActionButton("sap.ushell.ui.launchpad.ActionItem", {
-                id: "ActionModeBtn",
-                text: sap.ushell.resources.i18n.getText("activateActionMode"),
-                icon: 'sap-icon://edit',
-                press: function () {
-                    var dashboardGroups = this.oDashboardGroupsBox.getGroups();
-                    sap.ushell.components.flp.ActionMode.toggleActionMode(this.oModel, "Menu Item", dashboardGroups);
-                }.bind(this)
-            }, false, true);
-            // if xRay is enabled
-            if (this.oModel.getProperty("/enableHelp")) {
-                oTileActionsButton.addStyleClass('help-id-ActionModeBtn');// xRay help ID
+            var that = this,
+                oAddActionButtonParameters = {},
+                oActionButtonPromise,
+                oActionButtonObjectData = {
+                    id: "ActionModeBtn",
+                    text: resources.i18n.getText("activateEditMode"),
+                    icon: 'sap-icon://edit',
+                    press: function () {
+                        this.oDashboardGroupsBox.getBinding("groups").filter([]);
+                        var dashboardGroups = this.oDashboardGroupsBox.getGroups();
+                        sap.ushell.components.flp.ActionMode.toggleActionMode(this.oModel, "Menu Item", dashboardGroups);
+                        this.oAnchorNavigationBar.updateVisibility();
+                        var view = sap.ui.getCore().byId('viewPortContainer');
+                        if(view.getCurrentState() !=  "Center"){
+                            sap.ui.getCore().byId("viewPortContainer").switchState("Center");
+                        }
+                        if (this.oModel.getProperty("/homePageGroupDisplay")) {
+                            if (this.oModel.getProperty("/tileActionModeActive")) { // To edit mode
+                                if (this.oModel.getProperty("/homePageGroupDisplay") === "tabs") {
+//                                    this.oDashboardGroupsBox.removeLinksFromUnselectedGroups();
+                                    this.oDashboardGroupsBox.getBinding("groups").filter([]);
+                                    // find the selected group
+                                    var aGroups = this.oModel.getProperty("/groups"),
+                                        selectedGroup;
+                                    for (var i = 0; i < aGroups.length; i++) {
+                                        if (aGroups[i].isGroupSelected) {
+                                            selectedGroup = i;
+                                            break;
+                                        }
+                                    }
+                                    // scroll to selected group
+                                    this.getController()._scrollToGroup("launchpad", "scrollToGroup", {
+                                        group: {
+                                            getGroupId: function () {
+                                                return aGroups[selectedGroup].groupId
+                                            }
+                                        },
+                                        groupChanged: false,
+                                        focus: true
+                                    });
+                                } else {
+                                    this.oDashboardGroupsBox.getBinding("groups").filter([]);
+                                }
+                            } else { // To non-edit mode
+                                this.getController()._deactivateActionModeInTabsState();
+                            }
+                        }
+                    }.bind(this)
+                };
+            //in case the edit home page button was moved to the shell header, it was already created as an icon only in shell.model.js so it will be shown immidiatly in the header.
+            //only here we have access to the text and press method
+            this.oTileActionsButton = sap.ui.getCore().byId(oActionButtonObjectData.id);
+            if(this.oTileActionsButton && this.oTileActionsButton.data("isShellHeader")){
+                jQuery.sap.measure.start("FLP:DashboardContent,view._createActionModeMenuButton", "attach press and text to edit home page button","FLP");
+                this.oTileActionsButton.setTooltip(oActionButtonObjectData.text);
+                this.oTileActionsButton.setText(oActionButtonObjectData.text);
+                this.oTileActionsButton.attachPress(oActionButtonObjectData.press);
+                jQuery.sap.measure.end("FLP:DashboardContent,view._createActionModeMenuButton");
             }
-            sap.ushell.Container.getRenderer("fiori2").showActionButton(oTileActionsButton.getId(), true);
+            else{
+                oAddActionButtonParameters.controlType = "sap.ushell.ui.launchpad.ActionItem";
+                oAddActionButtonParameters.oControlProperties = oActionButtonObjectData;
+                oAddActionButtonParameters.bIsVisible = true;
+                oAddActionButtonParameters.bCurrentState = true;
+
+                oAddActionButtonParameters.controlType = "sap.ushell.ui.launchpad.ActionItem";
+                oAddActionButtonParameters.oControlProperties = oActionButtonObjectData;
+                oAddActionButtonParameters.bIsVisible = true;
+                oAddActionButtonParameters.bCurrentState = true;
+
+                oActionButtonPromise = sap.ushell.Container.getRenderer("fiori2").addUserAction(oAddActionButtonParameters).done(function (oActionButton) {
+                    that.oTileActionsButton = oActionButton;
+                    // if xRay is enabled
+                    if (that.oModel.getProperty("/enableHelp")) {
+                        that.oTileActionsButton.addStyleClass('help-id-ActionModeBtn');// xRay help ID
+                    }
+                });
+            }
         },
 
-        _createFloatingActionButton : function () {
-            var oFloatingActionButton = sap.ushell.Container.getRenderer("fiori2").addFloatingActionButton("sap.ushell.ui.shell.ShellFloatingAction", {
-                id: "floatingActionBtn",
-                icon: 'sap-icon://edit',
-                press: function (oEvent) {
+        _handleEditModeChange: function () {
+            if (this.oTileActionsButton) {
+                this.oTileActionsButton.toggleStyleClass('sapUshellAcionItemActive');
+            }
+        },
+
+        _enablePreviewNotificationChanged: function (sChannelId, sEventId, oData) {
+            this.oModel.setProperty("/userEnableNotificationsPreview", oData.bPreviewEnabled);
+        },
+
+        /**
+         * In order to minimize core-min we delay the footer creation and enabling anchorBar overflow
+         * till core-ext file will be loaded.
+         * This is done so Popover, OverflowToolbal, List and other controls will bondled with core-ext
+         * and not core-min
+         */
+        _enableAnchorBarOverflowAndCreateFooter: function (sChannelId, sEventId, oData) {
+            if (this.oDoneBtn){
+                return;
+            }
+
+            this.oAnchorNavigationBar.setOverflowEnabled(true);
+
+            this.oDoneBtn = new sap.m.Button('sapUshellDashboardFooterDoneBtn', {
+                type: sap.m.ButtonType.Emphasized,
+                text : resources.i18n.getText("closeEditMode"),
+                tooltip: resources.i18n.getText("doneBtnTooltip"),
+                press: function () {
+                    jQuery("#sapUshellDashboardPage .sapUshellAnchorNavigationBarSqueezed").toggleClass("sapUshellAnchorBarEditMode");
                     var dashboardGroups = this.oDashboardGroupsBox.getGroups();
-                    sap.ushell.components.flp.ActionMode.toggleActionMode(this.oModel, "Floating Button", dashboardGroups);
-                    sap.ushell.Layout.reRenderGroupsLayout(null);
-                }.bind(this),
-                tooltip: sap.ushell.resources.i18n.getText("activateActionMode")
-            }, false, true);
-
-            oFloatingActionButton.data("sap-ui-fastnavgroup", "true", true); // Write into DOM
-            oFloatingActionButton.addEventDelegate({
-
-                onsapskipback: function (oEvent) {
+                    sap.ushell.components.flp.ActionMode.toggleActionMode(this.oModel, "Menu Item", dashboardGroups);
+                    this.oAnchorNavigationBar.updateVisibility();
+                    if (this.oModel.getProperty("/homePageGroupDisplay") && this.oModel.getProperty("/homePageGroupDisplay") === "tabs") {
+                        this.getController()._deactivateActionModeInTabsState();
+                    }
+                }.bind(this)
+            });
+            this.oDoneBtn.addEventDelegate({
+                onsapskipforward: function(oEvent) {
                     oEvent.preventDefault();
-                    sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
                 },
-
-                onsaptabprevious: function (oEvent) {
+                onsapskipback: function(oEvent) {
                     oEvent.preventDefault();
-                    sap.ushell.renderers.fiori2.AccessKeysHandler.bFocusOnShell = false;
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                    sap.ushell.components.flp.ComponentKeysHandler.goToFirstVisibleTileContainer();
+                },
+                onsaptabprevious: function(oEvent) {
+                    oEvent.preventDefault();
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                    sap.ushell.components.flp.ComponentKeysHandler.goToFirstVisibleTileContainer();
+                },
+                onsaptabnext: function(oEvent) {
+                    oEvent.preventDefault();
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
                 }
             });
 
-            // if xRay is enabled
-            if (this.oModel.getProperty("/enableHelp")) {
-                oFloatingActionButton.addStyleClass('help-id-floatingActionBtn');// xRay help ID
-            }
+            this.oFooter.addContentRight(this.oDoneBtn);
+        },
 
-            sap.ushell.Container.getRenderer("fiori2").showFloatingActionButton(oFloatingActionButton.getId(), true);
+        /**
+         * Returns a boolean value indicating whether notifications preview is enabled by the configuration and by the user
+         */
+        _previewNotificationEnabled: function () {
+            var bConfigEnableNotificationsPreview = this.oModel.getProperty("/configEnableNotificationsPreview"),
+                bUserEnableNotificationsPreview = this.oModel.getProperty("/userEnableNotificationsPreview");
 
+            return (bConfigEnableNotificationsPreview && bUserEnableNotificationsPreview);
         },
 
         _createActionButtons : function () {
-            var bEnablePersonalization = this.oModel.getProperty("/personalization"),
-                that = this;
+            var bEnablePersonalization = this.oModel.getProperty("/personalization");
             // Create action mode button in the user actions menu
-            if (this.oModel.getProperty("/actionModeMenuButtonEnabled") && bEnablePersonalization) {
-                this._createActionModeMenuButton();
-            }
-
-            var oConfig = sap.ushell.Container.getRenderer('fiori2').getModelConfiguration(),
-                bMeAreaEnabled = oConfig.enableMeArea;
-
-            // Create floating action mode button
-            if (this.oModel.getProperty("/actionModeFloatingButtonEnabled") && bEnablePersonalization && !bMeAreaEnabled) {
-                this._createFloatingActionButton();
-            }
-
-            //handle open catalog
             if (bEnablePersonalization) {
-                this.oOpenCatalogItem = sap.ushell.Container.getRenderer("fiori2").addActionButton("sap.ushell.ui.launchpad.ActionItem", {
-                    id: "openCatalogBtn",
-                    text: sap.ushell.resources.i18n.getText("open_appFinder"),
-                    icon: 'sap-icon://sys-find',
-                    actionType: bMeAreaEnabled ? 'action' : 'default',
-                    press: function () {
-                        that.parentComponent.getRouter().navTo('appFinder', {'menu': 'catalog'});
-                        var viewPortContainer = sap.ui.getCore().byId('viewPortContainer');
-                        viewPortContainer.switchState("Center");
-                    }
-                }, true, true);
-
-                // if xRay is enabled
-                if (this.oModel.getProperty("/enableHelp")) {
-                    this.oOpenCatalogItem.addStyleClass('help-id-openCatalogActionItem');// xRay help ID
+                if (this.oModel.getProperty("/actionModeMenuButtonEnabled")) {
+                    this._createActionModeMenuButton();
                 }
             }
         },
@@ -8713,29 +12719,36 @@ jQuery.sap.registerPreloadedModules({
                 oCurrentViewName = oNavContainerFlp ? oNavContainerFlp.getCurrentPage().getViewName() : undefined,
                 bInDashboard = oCurrentViewName == "sap.ushell.components.flp.launchpad.dashboard.DashboardContent",
                 oRenderer = sap.ushell.Container.getRenderer("fiori2"),
-                that = this;
-
-            bInDashboard = bInDashboard && sap.ui.getCore().byId('shell') &&
-                sap.ui.getCore().byId('shell').getModel() && sap.ui.getCore().byId('shell').getModel().getProperty("/currentState/stateName") == "home";
-
+                editHomePageBtn = sap.ui.getCore().byId("ActionModeBtn");
+            //need to show the edit home page button if it is in the shellheader
+            if( editHomePageBtn){
+                if(editHomePageBtn.data){
+                    if(editHomePageBtn.data("isShellHeader")){
+                        editHomePageBtn.setVisible(true);
+                    }
+                }
+            }
+            //toggle the overflow container in the me area
+            if(oRenderer.toggleOverFlowActions){
+                oRenderer.toggleOverFlowActions();
+            }
             if (bInDashboard) {
                 oRenderer.createExtendedShellState("dashboardExtendedShellState", function () {
                     this._createActionButtons();
                     oRenderer.setHeaderHiding(false);
+
+                    if (!sap.ui.Device.system.phone) {
+                        oRenderer.showRightFloatingContainer(false);
+                    }
                 }.bind(this));
+
+                this.oAnchorNavigationBar.updateVisibility();
 
                 this.getController()._setCenterViewPortShift();
 
                 //Add action menu items
                 this._addActionModeButtonsToDashboard();
 
-                // set the focus to anchorSelectedItem group
-                var visibleGroups = that.oAnchorNavigationBar.getVisibleGroups(),
-                    anchorSelectedItemIndex = that.oAnchorNavigationBar.getSelectedItemIndex(),
-                    anchorItemToFocus = visibleGroups[anchorSelectedItemIndex];
-                if (anchorItemToFocus) {
-                    jQuery(anchorItemToFocus.getDomRef()).focus();
-                }
                 setTimeout(function () {
                     if (sap.ushell.Container) {
                         oRenderer.applyExtendedShellState("dashboardExtendedShellState");
@@ -8746,6 +12759,13 @@ jQuery.sap.registerPreloadedModules({
                     this.oAnchorNavigationBar.setNavigationBarItemsVisibility();
                     this.oAnchorNavigationBar.adjustItemSelection(this.oAnchorNavigationBar.getSelectedItemIndex());
                 }
+
+                // in rare timing cases the activeElement is undefined thus causing an exception
+                if (document.activeElement && document.activeElement.tagName === "BODY") {
+                    //set focus back to the shell header
+                    sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell();
+                }
+
             }
         },
 
@@ -8788,8 +12808,20 @@ jQuery.sap.registerPreloadedModules({
                     sap.ushell.utils.refreshTiles();
                     var iTopGroupInViewPortIndex = this.oModel.getProperty('/topGroupInViewPortIndex'),
                         jqTopGroupInViewPort = jQuery(aJqTileContainers[iTopGroupInViewPortIndex]),
+                        jqLastFocusedTile = aJqTileContainers.find("li[class*='sapUshellTile']li[tabindex=0]"),
                         jqFirstTile = jqTopGroupInViewPort.find('.sapUshellTile:first'),
-                        jqElementToFocus = jqFirstTile.length ? jqFirstTile : jQuery("#configBtn");
+                        jqElementToFocus;
+
+                    // if we have a last focused element - this is the element to focus
+                    if (jqLastFocusedTile.length) {
+                        jqElementToFocus = jqLastFocusedTile;
+                    // if we do not have a last focused element - see if we have a tile (first of a group) to focus on
+                    } else if (jqFirstTile.length) {
+                        jqElementToFocus = jqFirstTile;
+                    // no tiles exist - focus on config button
+                    } else {
+                        jqElementToFocus = jQuery("#configBtn");
+                    }
 
                     // The ViewPortContainer needs to be notified whether Preview of NotificationsPreview is enabled or not,
                     //  since it has effect on the transition of the scaled center viewPort when switching to the right viewport
@@ -8798,9 +12830,10 @@ jQuery.sap.registerPreloadedModules({
                     if (oViewPortContainer) {
                         oViewPortContainer.shiftCenterTransition(bPreviewNotificationsActive);
                     }
-                    setTimeout(function () {
+
+                    setTimeout(function() {
                         jqElementToFocus.focus();
-                    }, 1000);
+                    }, 0);
                 }
                 this.onAfterNavigate();
             }
@@ -8818,37 +12851,46 @@ jQuery.sap.registerPreloadedModules({
         },
 
         exit: function () {
+            if (this.oAnchorNavigationBar) {
+                this.oAnchorNavigationBar.handleExit();
+            }
+            if (this.oTileActionsButton) {
+                this.oTileActionsButton.destroy();
+            }
             sap.ui.core.mvc.View.prototype.exit.apply(this, arguments);
             sap.ui.getCore().getEventBus().unsubscribe("launchpad", "contentRendered", this._onAfterDashboardShow, this);
             sap.ui.getCore().getEventBus().unsubscribe("launchpad", "initialConfigurationSet", this._onAfterDashboardShow, this);
+            sap.ui.getCore().getEventBus().unsubscribe("launchpad", 'actionModeInactive', this._handleEditModeChange, this);
+            sap.ui.getCore().getEventBus().unsubscribe("launchpad", 'actionModeActive', this._handleEditModeChange, this);
+            sap.ui.getCore().getEventBus().unsubscribe("sap.ushell", "coreResourcesFullyLoaded", this._enableAnchorBarOverflowAndCreateFooter, this);
             if (this.bSubscribedToViewportStateSwitch) {
                 sap.ui.getCore().getEventBus().unsubscribe("launchpad", "afterSwitchState", this._handleViewportStateSwitch, this);
                 this.bSubscribedToViewportStateSwitch = false;
             }
         }
     });
-}());
+
+
+}, /* bExport= */ false);
 },
-	"sap/ushell/components/flp/launchpad/dashboard/DashboardGroupsBox.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+	"sap/ushell/components/flp/launchpad/dashboard/DashboardGroupsBox.js":function(){// ${copyright}
 /**
  * @fileOverview A module that is responsible for creating the groups part (i.e. box) of the dashboard.<br>
  * Extends <code>sap.ui.base.Object</code><br>
  * Exposes the public function <code>createGroupsBox</code>
  * @see sap.ushell.components.flp.launchpad.dashboard.DashboardContent.view
  *
- * @version 1.38.26
+ * @version ${version}
  * @name sap.ushell.components.flp.launchpad.dashboard.DashboardGroupsBox
  * @since 1.35.0
  * @private
  */
-(function () {
-    "use strict";
+sap.ui.define (["sap/ushell/ui/launchpad/AccessibilityCustomData", "sap/ui/base/Object", "sap/ushell/ui/launchpad/DashboardGroupsContainer"], function(AccessibilityCustomData, baseObject, DashboardGroupsContainer) {
+	"use strict";
 
     /*global jQuery, sap, window */
     /*jslint nomen: true */
-    jQuery.sap.declare("sap.ushell.components.flp.launchpad.dashboard.DashboardGroupsBox");
-
-    sap.ui.base.Object.extend("sap.ushell.components.flp.launchpad.dashboard.DashboardGroupsBox", {
+    var DashboardGroupsBox = baseObject.extend("sap.ushell.components.flp.launchpad.dashboard.DashboardGroupsBox", {
         metadata: {
             publicMethods: ["createGroupsBox"]
         },
@@ -8862,13 +12904,37 @@ jQuery.sap.registerPreloadedModules({
             this.oController = undefined;
             this.oGroupsContainer = undefined;
             this.bTileContainersContentAdded = false;
+            this.isLinkPersonalizationSupported = sap.ushell.Container.getService("LaunchPage").isLinkPersonalizationSupported();
 
             sap.ui.getCore().getEventBus().subscribe("launchpad", "actionModeActive", this._addTileContainersContent, this);
+            sap.ui.getCore().getEventBus().subscribe("launchpad", "GroupHeaderVisibility", this._updateGroupHeaderVisibility, this);
         },
         destroy: function () {
             sap.ui.getCore().getEventBus().unsubscribe("launchpad", "actionModeActive", this._addTileContainersContent, this);
+            sap.ui.getCore().getEventBus().unsubscribe("launchpad", "GroupHeaderVisibility", this._updateGroupHeaderVisibility, this);
             sap.ushell.components.flp.launchpad.dashboard.getDashboardGroupsBox = undefined;
         },
+
+        calculateFilter: function () {
+            // get the homeGroupDisplayMode and do the filter accordingly
+            var filters = [];
+            var oFilter;
+            var sGroupsMode = this.oModel.getProperty('/homePageGroupDisplay'),
+                bEditMode = this.oModel.getProperty("/tileActionModeActive");
+      
+            if (!bEditMode) {
+                if (sGroupsMode && sGroupsMode === "tabs"){
+                    oFilter = new sap.ui.model.Filter("isGroupSelected", sap.ui.model.FilterOperator.EQ, true);
+
+                }else{
+                    oFilter = new sap.ui.model.Filter("isGroupVisible", sap.ui.model.FilterOperator.EQ, true);
+                }
+                filters.push(oFilter);
+            }
+
+            return filters;
+        },
+
         /**
          * Creating the groups part (i.e. box) of the dashboard
          */
@@ -8877,7 +12943,6 @@ jQuery.sap.registerPreloadedModules({
             var that = this,
                 fAfterLayoutInit,
                 fGroupsContainerAfterRenderingHandler,
-                oLoadingDialog,
                 oTilesContainerTemplate = this._getTileContainerTemplate(oController, oModel),
                 fnEnableLockedGroupCompactLayout = function () {
                     return that.oModel.getProperty('/enableLockedGroupsCompactLayout') && !that.oModel.getProperty('/tileActionModeActive');
@@ -8917,17 +12982,14 @@ jQuery.sap.registerPreloadedModules({
             };
 
             fGroupsContainerAfterRenderingHandler = function () {
-                //first time scroll to first group, don't want to see title
-                var jqFirstVisibleGroup = document.querySelectorAll(".sapUshellTileContainer:not(.sapUshellHidden) .sapUshellInner")[0];
-                if (!!jqFirstVisibleGroup) {
-                    var scrollToFirstGroup = -1 * (document.getElementById('dashboardGroups').getBoundingClientRect().top) + jqFirstVisibleGroup.getBoundingClientRect().top;
-                    jQuery('.sapUshellDashboardView section').scrollTop(scrollToFirstGroup - 7);
-                }
 
                 if (!sap.ushell.Layout.isInited) {
                     sap.ushell.Layout.init({
                         getGroups: this.getGroups.bind(this),
-                        isLockedGroupsCompactLayoutEnabled: fnEnableLockedGroupCompactLayout
+                        getAllGroups: that.getAllGroupsFromModel.bind(that),
+                        isTabBarActive: that.isTabBarActive.bind(that),
+                        isLockedGroupsCompactLayoutEnabled: fnEnableLockedGroupCompactLayout,
+                        animationsEnabled: (that.oModel.getProperty('/animationMode') === 'full')
                     }).done(fAfterLayoutInit);
 
                     //when media is changed we need to rerender Layout
@@ -8951,8 +13013,6 @@ jQuery.sap.registerPreloadedModules({
                     sap.ui.getCore().getEventBus().publish("launchpad", "contentRendered");
                     sap.ui.getCore().getEventBus().publish("launchpad", "contentRefresh");
 
-                    oLoadingDialog = sap.ui.getCore().byId("loadingDialog");
-                    oLoadingDialog.closeLoadingScreen();
                     oController._addBottomSpace();
 
                     //Tile opacity is enabled by default, therefore we handle tile opacity in all cases except
@@ -8962,23 +13022,35 @@ jQuery.sap.registerPreloadedModules({
                     }
                 }
 
+                this.getBinding("groups").filter(that.calculateFilter());
+
                 //Recheck tiles visibility on first load, and make visible tiles active
                 try {
                     sap.ushell.utils.handleTilesVisibility();
                 } catch (e) {
                     //nothing has to be done
                 }
+
             };
 
-            jQuery.sap.require("sap.ushell.ui.launchpad.DashboardGroupsContainer");
-            this.oGroupsContainer = new sap.ushell.ui.launchpad.DashboardGroupsContainer("dashboardGroups", {
+            this.isTabBarActive = function () {
+                return this.oModel.getProperty("/homePageGroupDisplay") === "tabs";
+            };
+
+            this.oModel = oModel;
+            var filters = this.calculateFilter();
+
+            this.oGroupsContainer = new DashboardGroupsContainer("dashboardGroups", {
                 accessibilityLabel : sap.ushell.resources.i18n.getText("DashboardGroups_label"),
                 groups : {
+                    filters: filters,
                     path: "/groups",
                     template : oTilesContainerTemplate
                 },
+                displayMode: "{/homePageGroupDisplay}",
                 afterRendering : fGroupsContainerAfterRenderingHandler
             });
+
 
             this.oGroupsContainer.addEventDelegate({
                 onsapskipback: function (oEvent) {
@@ -8988,19 +13060,106 @@ jQuery.sap.registerPreloadedModules({
                     var jqElement = jQuery(".sapUshellAnchorItem:visible:first");
                     if (!jqElement.length) {
                         sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                    } else {
+                        sap.ushell.components.flp.ComponentKeysHandler.goToSelectedAnchorNavigationItem();
                     }
-                    jqElement.focus();
                 },
                 onsapskipforward: function (oEvent) {
                     oEvent.preventDefault();
-                    sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
-                    sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                    var floatingFooterDoneBtn = jQuery("#sapUshellDashboardFooterDoneBtn:visible");
+                    if (floatingFooterDoneBtn.length) {
+                        floatingFooterDoneBtn.focus();
+                    } else {
+                        // if co-pilot exists and we came from tile - need to focus on copilot - otherwise - on mearea
+                        if(jQuery("#sapUshellFloatingContainerWrapper:visible").length == 1 &&  (oEvent.originalEvent.srcElement.id) != ""){
+                            sap.ui.getCore().getEventBus().publish("launchpad", "shellFloatingContainerIsAccessible" );
+                        }else{
+                            sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                            sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                        }
+                    }
                 },
                 onsaptabnext: function (oEvent) {
-                    if (!that.oModel.getProperty("/tileActionModeActive") || !document.activeElement.closest(".sapUshellTileContainerHeader")) {
+                    if (that.oModel.getProperty("/tileActionModeActive")) {
+                        var jqClosestHeader = jQuery(document.activeElement).closest(".sapUshellTileContainerHeader");
+                        if (!jqClosestHeader || jqClosestHeader.length === 0) {
+                            oEvent.preventDefault();
+                            var floatingFooterDoneBtn = jQuery("#sapUshellDashboardFooterDoneBtn:visible");
+                            if (floatingFooterDoneBtn.length) {
+                                floatingFooterDoneBtn.focus();
+                            }
+                        } else {
+                            /*
+                                We are inside the header.
+                                ONLY focused element is last before the tiles-list we call to set focus on tiles list.
+                                otherwise - let the browser handle it.
+                              */
+
+                            // if we have tiles in this container
+                            var jqCurrentTileContainer = jQuery(document.activeElement).closest(".sapUshellTileContainer");
+
+                            //inside header we can be on 2 section elements - title OR delete/reset button (in case exist)
+                            //check if we are on the title itself
+                            var isCurrentElementTitle = jQuery(document.activeElement).hasClass("sapUshellContainerTitle");
+
+                            //  search for actions inside the header title element
+                            var jqChildActions = jqCurrentTileContainer.find('.sapUshellHeaderActionButton');
+
+                            // check if actions exist on header title element
+                            var isActionsExistOnTitleElement = jqChildActions && jqChildActions.length > 0;
+
+                            // check if the current element is the last action in the header-title element
+                            var isCurrentElementLastAction = false;
+                            if (isActionsExistOnTitleElement) {
+                                isCurrentElementLastAction = document.activeElement.id === jqChildActions.last()[0].id;
+                            }
+
+                            /*
+                             In the cases of:
+                             - current element is the title itself, and there are no actions on header title
+                             - current element is an action of the header title, and it is the last action
+
+                             We tab into the tiles-container and enforce focusing the last focused tile in this group
+                             (fallback will be selecting the first tile on the group)
+                             */
+                            if ((isCurrentElementTitle && !isActionsExistOnTitleElement) ||
+                                (isCurrentElementLastAction)) {
+
+                                oEvent.preventDefault();
+
+                                // check for items (tiles/links) we can focus on
+                                var bHasItemsToFocusOn =  jqCurrentTileContainer.find(".sapUshellTile:visible, sapUshellLink:visible").length > 0;
+
+                                // as we inside the header, additional tab requires us to focus last visited tile on the current container
+                                // if we have tiles/links to focus on - do it
+                                if (bHasItemsToFocusOn) {
+                                    sap.ushell.components.flp.ComponentKeysHandler.goToLastVisitedTile(jqCurrentTileContainer, true);
+                                } else {
+
+                                    // else - focus on Done button (same as F6 from tiles)
+                                    var floatingFooterDoneBtn = jQuery("#sapUshellDashboardFooterDoneBtn:visible");
+                                    if (floatingFooterDoneBtn.length) {
+                                        floatingFooterDoneBtn.focus();
+                                    } else {
+                                        // if co-pilot exists and we came from tile - need to focus on copilot - otherwise - on mearea
+                                        if(jQuery("#sapUshellFloatingContainerWrapper:visible").length == 1 &&  (oEvent.originalEvent.srcElement.id) != ""){
+                                            sap.ui.getCore().getEventBus().publish("launchpad", "shellFloatingContainerIsAccessible");
+                                        }else{
+                                            sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                                            sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
                         oEvent.preventDefault();
-                        sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
-                        sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                        if(jQuery("#sapUshellFloatingContainerWrapper:visible").length == 1 &&  (oEvent.originalEvent.srcElement.id) != ""){
+                            sap.ui.getCore().getEventBus().publish("launchpad", "shellFloatingContainerIsAccessible");
+                        }else{
+                            sap.ushell.renderers.fiori2.AccessKeysHandler.setIsFocusHandledByAnotherHandler(true);
+                            sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
+                        }
                     }
                 },
                 onsaptabprevious: function (oEvent) {
@@ -9010,19 +13169,45 @@ jQuery.sap.registerPreloadedModules({
                         oEvent.preventDefault();
                         var jqElement = jQuery(".sapUshellAnchorItem:visible:first"),
                             jqOverflowElement = jQuery(".sapUshellAnchorItemOverFlow");
-                        if (!jqOverflowElement && !jqElement.length) {
+                        if (!jqElement.length) {
                             sap.ushell.renderers.fiori2.AccessKeysHandler.sendFocusBackToShell(oEvent);
                         }
                         if (jqOverflowElement.hasClass("sapUshellShellHidden")) {
-                            jqElement.focus();
+                            sap.ushell.components.flp.ComponentKeysHandler.goToSelectedAnchorNavigationItem();
                         } else {
                             jqOverflowElement.find("button").focus();
+                        }
+                        // only in case we in edit mode
+                    } else if (that.oModel.getProperty("/tileActionModeActive")) {
+                        var jqActiveElement = jQuery(document.activeElement);
+
+                        // only in case focus is on a tile we need custom behavior upon shift-tab
+                        // otherwise let the browser handle it
+                        if (jqActiveElement.hasClass('sapUshellTile')) {
+                            oEvent.preventDefault();
+
+                            // take reference to current tile container
+                            var jqCurrentTileContainer = jqActiveElement.closest(".sapUshellTileContainer");
+
+                            //  search for actions inside the header title element
+                            var jqLastAction = jqCurrentTileContainer.find('.sapUshellHeaderActionButton:visible').last();
+
+                            // check if actions exist on header title element
+                            // if there are actions of tile container header - focus on last one
+                            if (jqLastAction.length > 0) {
+                                jqLastAction.focus();
+                            } else {
+                                // else focus on title
+                                jqCurrentTileContainer.find('.sapUshellContainerTitle').focus();
+                            }
                         }
                     }
                 }
             });
-            this.oModel = oModel;
             return this.oGroupsContainer;
+        },
+        getAllGroupsFromModel : function () {
+            return this.oModel.getProperty("/groups");
         },
 
         /**
@@ -9033,6 +13218,51 @@ jQuery.sap.registerPreloadedModules({
             var that = this,
                 oTilesContainerTemplate = new sap.ushell.ui.launchpad.TileContainer({
                     headerText: "{title}",
+                    showDragIndicator: {
+                        parts: ['/tileActionModeActive', '/enableDragIndicator'],
+                        formatter: function (bIsActionModeActive, bDragIndicator) {
+                            return bIsActionModeActive && bDragIndicator && !this.getIsGroupLocked() && !this.getDefaultGroup();
+                        }
+                    },
+                    showEmptyLinksArea: {
+                        parts: ['/tileActionModeActive', 'links/length',  "isGroupLocked", '/isInDrag', '/homePageGroupDisplay'],
+                        formatter: function (tileActionModeActive, numOfLinks, isGroupLocked, bIsInDrag, sAnchorbarMode) {
+                            if (numOfLinks) {
+                                return true;
+                            } else if (isGroupLocked) {
+                                return false;
+                            } else {
+                                return tileActionModeActive || bIsInDrag && sAnchorbarMode === 'tabs';
+                            }
+                        }
+                    },
+                    showMobileActions: {
+                        parts: ['/tileActionModeActive'],
+                        formatter: function (bIsActionModeActive) {
+                            return bIsActionModeActive && !this.getDefaultGroup();
+                        }
+                    },
+                    showIcon: {
+                        parts: ['/isInDrag', '/tileActionModeActive'],
+                        formatter: function (bIsInDrag, bIsActionModeActive) {
+                            return (this.getIsGroupLocked() && (bIsInDrag || bIsActionModeActive));
+                        }
+                    },
+                    deluminate: {
+                        parts: ['/isInDrag'],
+                        formatter: function (bIsInDrag) {
+                            //  return oEvent.oSource.getIsGroupLocked() && bIsInDrag;
+                            return this.getIsGroupLocked() && bIsInDrag;
+                        }
+                    },
+                    transformationError: {
+                        parts: ['/isInDrag', '/draggedTileLinkPersonalizationSupported'],
+                        formatter: function (bIsInDrag, bDraggedTileLinkPersonalizationSupported) {
+                            return bIsInDrag && !bDraggedTileLinkPersonalizationSupported;
+                        }
+
+                    },
+                    showBackground: '{/tileActionModeActive}',
                     tooltip: "{title}",
                     tileActionModeActive: '{/tileActionModeActive}',
                     ieHtml5DnD: oController.getView().ieHtml5DnD,
@@ -9041,13 +13271,21 @@ jQuery.sap.registerPreloadedModules({
                     defaultGroup: "{isDefaultGroup}",
                     isLastGroup: "{isLastGroup}",
                     isGroupLocked: "{isGroupLocked}",
+                    isGroupSelected: "{isGroupSelected}",
                     showHeader: true,
                     editMode: "{editMode}",
+                    supportLinkPersonalization: this.isLinkPersonalizationSupported,
                     titleChange: function (oEvent) {
                         sap.ui.getCore().getEventBus().publish("launchpad", "changeGroupTitle", {
                             groupId: oEvent.getSource().getGroupId(),
                             newTitle: oEvent.getParameter("newTitle")
                         });
+                    },
+                    showEmptyLinksAreaPlaceHolder: {
+                        parts: ['links/length', '/isInDrag', '/homePageGroupDisplay'],
+                        formatter: function (numOfLinks, bIsInDrag, sAnchorbarMode) {
+                            return bIsInDrag && sAnchorbarMode === 'tabs' && !numOfLinks;
+                        }
                     },
                     showPlaceholder: {
                         parts: ["/tileActionModeActive", "tiles/length"],
@@ -9065,9 +13303,19 @@ jQuery.sap.registerPreloadedModules({
                             return isGroupVisible || tileActionModeActive;
                         }
                     },
+                    hidden: {
+                        parts: ['/tileActionModeActive', 'isGroupVisible'],
+                        formatter: function (bIsActionModeActive, bIsGroupVisible) {
+                            return bIsActionModeActive && !bIsGroupVisible;
+                        }
+                    },
                     links: this._getLinkTemplate(),
                     tiles: this._getTileTemplate(),
                     add: /*oController._addTileContainer,*/ function (oEvent) {
+                        //Fix internal incident #1780370222 2017
+                        if (document.toDetail) {
+                            document.toDetail();
+                        }
                         that.oController.getView().parentComponent.getRouter().navTo('appFinder', {
                             'menu': 'catalog',
                             filters: JSON.stringify({
@@ -9081,117 +13329,118 @@ jQuery.sap.registerPreloadedModules({
         },
         _getLinkTemplate : function () {
             var oFilter = new sap.ui.model.Filter("isTileIntentSupported", sap.ui.model.FilterOperator.EQ, true);
-            return {
-                path: "links",
-                templateShareable: true,
-                template: new sap.ushell.ui.launchpad.LinkTileWrapper({
-                    uuid: "{uuid}",
-                    tileCatalogId: "{tileCatalogId}",
-                    target: "{target}",
-                    isLocked: "{isLocked}",
-                    tileActionModeActive: "{/tileActionModeActive}",
-                    animationRendered: false,
-                    debugInfo: "{debugInfo}",
-                    ieHtml5DnD: this.oController.getView().ieHtml5DnD,
-                    tileViews: {
-                        path: "content",
-                        factory: function (sId, oContext) {
-                            return oContext.getObject();
+
+            if (!this.isLinkPersonalizationSupported) {
+                return {
+                    path: "links",
+                    templateShareable: true,
+                    template: new sap.ushell.ui.launchpad.LinkTileWrapper({
+                        uuid: "{uuid}",
+                        tileCatalogId: "{tileCatalogId}",
+                        target: "{target}",
+                        isLocked: "{isLocked}",
+                        tileActionModeActive: "{/tileActionModeActive}",
+                        animationRendered: false,
+                        debugInfo: "{debugInfo}",
+                        ieHtml5DnD: this.oController.getView().ieHtml5DnD,
+                        tileViews: {
+                            path: "content",
+                            factory: function (sId, oContext) {
+                                return oContext.getObject();
+                            }
+                        },
+                        afterRendering: function (oEvent) {
+                            var jqHrefElement = jQuery(this.getDomRef().getElementsByTagName("a"));
+                            // Remove tabindex from links
+                            //  so that the focus will not be automatically set on the focusable link when returning to the launchpad
+                            jqHrefElement.attr("tabindex", -1);
                         }
+                    }),
+                    filters: [oFilter]
+                };
+            } else {
+                return {
+                    path: "links",
+                    factory: function (sId, oContext) {
+                        return oContext.getObject().content[0];
                     },
-                    afterRendering: function (oEvent) {
-                     var jqHrefElement = jQuery(this.getDomRef().getElementsByTagName("a"));
-                    // Remove tabindex from links
-                    //  so that the focus will not be automatically set on the focusable link when returning to the launchpad
-                    jqHrefElement.attr("tabindex", -1);
-                    }
-                }),
-                filters: [oFilter]
-            };
+                    filters: [oFilter]
+                };
+            }
         },
         _getTileTemplate : function () {
             var oFilter = new sap.ui.model.Filter("isTileIntentSupported", sap.ui.model.FilterOperator.EQ, true);
+            var oTile = new sap.ushell.ui.launchpad.Tile({
+                "long": "{long}",
+                // The model flag draggedInTabBarToSourceGroup was set for the tile in when it was dragged on TabBar between groups
+                isDraggedInTabBarToSourceGroup: "{draggedInTabBarToSourceGroup}",
+                uuid: "{uuid}",
+                        tileCatalogId: "{tileCatalogId}",
+                            isCustomTile : "{isCustomTile}",
+                            target: "{target}",
+                            isLocked: "{isLocked}",
+                            navigationMode: "{navigationMode}",
+                            tileActionModeActive: "{/tileActionModeActive}",
+                            showActionsIcon: "{showActionsIcon}",
+                            rgba: "{rgba}",
+                            animationRendered: false,
+                            debugInfo: "{debugInfo}",
+                            ieHtml5DnD: this.oController.getView().ieHtml5DnD,
+                            afterRendering: function (oEvent) {
+                            var oContext = oEvent.getSource().getBindingContext(),
+                                oTileModel;
+                            if (oContext) {
+                                oTileModel = oContext.getObject();
+                                sap.ui.getCore().getEventBus().publish("launchpad", "tileRendered", {
+                                    tileId: oTileModel.originalTileId,
+                                    tileDomElementId: oEvent.getSource().getId()
+                                });
+                    }
+                },
+                tileViews: {
+                    path: "content",
+                    factory: function (sId, oContext) {
+                        return oContext.getObject();
+                    }
+                },
+                coverDivPress: function (oEvent) {
+                    // if this tile had just been moved and the move itself did not finish refreshing the tile's view
+                    // we do not open the actions menu to avoid inconsistencies
+                    if (!oEvent.oSource.getBindingContext().getObject().tileIsBeingMoved) {
+                        sap.ushell.components.flp.ActionMode._openActionsMenu(oEvent);
+                    }
+                },
+                showActions: function (oEvent) {
+                    sap.ushell.components.flp.ActionMode._openActionsMenu(oEvent);
+                },
+                deletePress: function (oEvent) {
+                    var oTileControl =  oEvent.getSource(), oTile = oTileControl.getBindingContext().getObject().object,
+                        oData = {originalTileId : sap.ushell.Container.getService("LaunchPage").getTileId(oTile)};
+
+                    sap.ui.getCore().getEventBus().publish("launchpad", "deleteTile", oData, this);
+                },// TODO Call this controller function: this.oController._dashboardDeleteTileHandler,
+                press : [ this.oController.dashboardTilePress, this.oController ]
+            });
+            var oViewPortContainer = sap.ui.getCore().byId("viewPortContainer");
+            oTile.addEventDelegate({
+                onclick: function (oEvent) {
+                    jQuery.sap.measure.start("FLP:DashboardGroupsBox.onclick", "Click on tile", "FLP");
+                    jQuery.sap.measure.start("FLP:OpenApplicationonClick", "Open Application", "FLP");
+                    function endTileMeasurement(){
+                        jQuery.sap.measure.end("FLP:DashboardGroupsBox.onclick");
+                        oViewPortContainer.detachAfterNavigate(endTileMeasurement);
+                    }
+                    oViewPortContainer.attachAfterNavigate(endTileMeasurement);
+                }
+            });
             return {
                 path: "tiles",
                 templateShareable: true,
-                template: new sap.ushell.ui.launchpad.Tile({
-                    "long": "{long}",
-                    uuid: "{uuid}",
-                    tileCatalogId: "{tileCatalogId}",
-                    target: "{target}",
-                    isLocked: "{isLocked}",
-                    tileActionModeActive: "{/tileActionModeActive}",
-                    showActionsIcon: "{showActionsIcon}",
-                    rgba: "{rgba}",
-                    animationRendered: false,
-                    debugInfo: "{debugInfo}",
-                    ieHtml5DnD: this.oController.getView().ieHtml5DnD,
-                    afterRendering: function (oEvent) {
-                        var oContext = oEvent.getSource().getBindingContext(),
-                            oTileModel;
-                        if (oContext) {
-                            oTileModel = oContext.getObject();
-                            sap.ui.getCore().getEventBus().publish("launchpad", "tileRendered", {
-                                tileId: oTileModel.originalTileId,
-                                tileDomElementId: oEvent.getSource().getId()
-                            });
-                        }
-                    },
-                    tileViews: {
-                        path: "content",
-                        factory: function (sId, oContext) {
-                            return oContext.getObject();
-                        }
-                    },
-                    coverDivPress: function (oEvent) {
-                        // if this tile had just been moved and the move itself did not finish refreshing the tile's view
-                        // we do not open the actions menu to avoid inconsistencies
-                        if (!oEvent.oSource.getBindingContext().getObject().tileIsBeingMoved) {
-                            sap.ushell.components.flp.ActionMode._openActionsMenu(oEvent);
-                        }
-                    },
-                    showActions: function (oEvent) {
-                        sap.ushell.components.flp.ActionMode._openActionsMenu(oEvent);
-                    },
-                    deletePress: function (oEvent) {
-                        var oTileControl =  oEvent.getSource(), oTile = oTileControl.getBindingContext().getObject().object,
-                            oData = {originalTileId : sap.ushell.Container.getService("LaunchPage").getTileId(oTile)};
-
-                        sap.ui.getCore().getEventBus().publish("launchpad", "deleteTile", oData, this);
-                    },// TODO Call this controller function: this.oController._dashboardDeleteTileHandler,
-                    press : [ this.oController.dashboardTilePress, this.oController ]
-                }),
+                template: oTile,
                 filters: [oFilter]
             };
         },
         _tileContainerAfterRenderingHandler : function (oEvent) {
-            oEvent.oSource.bindProperty("showBackground", "/tileActionModeActive");
-            oEvent.oSource.bindProperty("showDragIndicator", {
-                parts: ['/tileActionModeActive', '/enableDragIndicator'],
-                formatter: function (bIsActionModeActive, bDragIndicator) {
-                    return bIsActionModeActive && bDragIndicator && !this.getIsGroupLocked() && !this.getDefaultGroup();
-                }
-            });
-            oEvent.oSource.bindProperty("showMobileActions", {
-                parts: ['/tileActionModeActive'],
-                formatter: function (bIsActionModeActive) {
-                    return bIsActionModeActive && !this.getDefaultGroup();
-                }
-            });
-            oEvent.oSource.bindProperty("showIcon", {
-                parts: ['/isInDrag', '/tileActionModeActive'],
-                formatter: function (bIsInDrag, bIsActionModeActive) {
-                    return (this.getIsGroupLocked() && (bIsInDrag || bIsActionModeActive));
-                }
-            });
-            oEvent.oSource.bindProperty("deluminate", {
-                parts: ['/isInDrag'],
-                formatter: function (bIsInDrag) {
-                  //  return oEvent.oSource.getIsGroupLocked() && bIsInDrag;
-                    return this.getIsGroupLocked() && bIsInDrag;
-                }
-            });
-
             if (this.bTileContainersContentAdded && !oEvent.oSource.getBeforeContent().length) {
                 var aGroups = oEvent.oSource.getModel().getProperty("/groups"),
                     i;
@@ -9203,6 +13452,38 @@ jQuery.sap.registerPreloadedModules({
                 }
                 this._addTileContainerContent(i);
             }
+            // in order to set groups again to their right position after closing edit mode, we will need to re-render
+            // the groups layout. We need it for the Locked Groups Compact Layout feature
+            sap.ushell.Layout.reRenderGroupsLayout(null);
+
+            this._updateFirstGroupHeaderVisibility(
+                oEvent.oSource.getProperty('tileActionModeActive'),
+                oEvent.oSource.getModel().getProperty('/homePageGroupDisplay') !== "tabs");
+        },
+        _updateGroupHeaderVisibility: function (oA, oB, oGroup) {
+            this._updateFirstGroupHeaderVisibility(
+                oGroup.group.getModel().getProperty("/tileActionModeActive"),
+                this.oModel.getProperty("/homePageGroupDisplay") !== "tabs");
+        },
+        _updateFirstGroupHeaderVisibility: function (bIsEditMode, bEnableAnchorBar) {
+            var aGroups = this.oGroupsContainer.getGroups(),
+                iFirstVisible = undefined,
+                iVisibleGroups = 0;
+
+            for (var i = 0; i < aGroups.length; i++) {
+                if (aGroups[i].getProperty("visible")) {
+                    iVisibleGroups++;
+
+                    if (iFirstVisible === undefined) {
+                        iFirstVisible = i;
+                    } else {
+                        aGroups[i].setShowGroupHeader(bIsEditMode || bEnableAnchorBar);
+                    }
+                }
+            }
+
+            if (iFirstVisible !== undefined)
+                aGroups[iFirstVisible].setShowGroupHeader(bIsEditMode || (iVisibleGroups == 1 && bEnableAnchorBar));
         },
         _addTileContainersContent : function () {
             if (!this.bTileContainersContentAdded) {
@@ -9223,7 +13504,19 @@ jQuery.sap.registerPreloadedModules({
 
                 oGroup.addBeforeContent(this._getBeforeContent(this.oController, sBindingCtxPath));
                 oGroup.addAfterContent(this._getAfterContent(this.oController, sBindingCtxPath));
-                oGroup.addHeaderAction(this._getHeaderAction(this.oController, sBindingCtxPath));
+                sap.ui.require(["sap/ushell/ui/launchpad/GroupHeaderActions"], function (GroupHeaderActions) {
+                    var oHeaderAction = new GroupHeaderActions({
+                        content : this._getHeaderActions(),
+                        tileActionModeActive: {
+                            parts: ['/tileActionModeActive', sBindingCtxPath + 'isDefaultGroup'],
+                            formatter: function (bIsActionModeActive, bIsDefaultGroup) {
+                                return bIsActionModeActive && !bIsDefaultGroup;
+                            }
+                        },
+                        isOverflow: '{/isPhoneWidth}'
+                    }).addStyleClass("sapUshellOverlayGroupActionPanel");
+                    oGroup.addHeaderAction(oHeaderAction);
+                }.bind(this));
             }
         },
         _getBeforeContent : function (oController) {
@@ -9242,7 +13535,6 @@ jQuery.sap.registerPreloadedModules({
                         return !isEditTitle;
                     }
                 },
-                type: sap.m.ButtonType.Transparent,
                 press : [ this.oController._addGroupHandler]
             }).addStyleClass("sapUshellAddGroupButton");
 
@@ -9272,7 +13564,6 @@ jQuery.sap.registerPreloadedModules({
                         return !isEditTitle;
                     }
                 },
-                type: sap.m.ButtonType.Transparent,
                 press : [ this.oController._addGroupHandler]
             }).addStyleClass("sapUshellAddGroupButton");
 
@@ -9290,12 +13581,11 @@ jQuery.sap.registerPreloadedModules({
                     path: 'isGroupVisible',
                     formatter: function (bIsGroupVisible) {
                         if (sap.ui.Device.system.phone) {
-                            this.setIcon("sap-icon://edit");
+                            this.setIcon(bIsGroupVisible ? "sap-icon://hide" : "sap-icon://show");
                         }
                         return sap.ushell.resources.i18n.getText(bIsGroupVisible ? 'HideGroupBtn' : 'ShowGroupBtn');
                     }
                 },
-                type: sap.m.ButtonType.Transparent,
                 visible: {
                     parts: ['/tileActionModeActive', '/enableHideGroups', 'isGroupLocked', 'isDefaultGroup'],
                     formatter: function (bIsActionModeActive, bIsHideGroupsEnabled, bIsGroupLocked, bIsDefaultGroup) {
@@ -9323,7 +13613,6 @@ jQuery.sap.registerPreloadedModules({
                         return sap.ushell.resources.i18n.getText(bIsRemovable ? 'DeleteGroupBtn' : 'ResetGroupBtn');
                     }
                 },
-                type: sap.m.ButtonType.Transparent,
                 visible: {
                     parts: ['/tileActionModeActive', 'isDefaultGroup'],
                     formatter: function (bIsActionModeActive, bIsDefaultGroup) {
@@ -9344,20 +13633,6 @@ jQuery.sap.registerPreloadedModules({
             }).addStyleClass("sapUshellHeaderActionButton");
             return [oShowHideBtn, oDeleteBtn];
         },
-        _getHeaderAction : function (oController, sBindingCtxPath) {
-            jQuery.sap.require("sap.ushell.ui.launchpad.GroupHeaderActions");
-
-            return new sap.ushell.ui.launchpad.GroupHeaderActions({
-                content : this._getHeaderActions(),
-                tileActionModeActive: {
-                    parts: ['/tileActionModeActive', sBindingCtxPath + 'isDefaultGroup'],
-                    formatter: function (bIsActionModeActive, bIsDefaultGroup) {
-                        return bIsActionModeActive && !bIsDefaultGroup;
-                    }
-                },
-                isOverflow: '{/isPhoneWidth}'
-            }).addStyleClass("sapUshellOverlayGroupActionPanel");
-        },
         _hidePlusTile : function (plusTileDomRef) {
             if (plusTileDomRef) {
                 plusTileDomRef.className += " sapUshellHidePlusTile";
@@ -9369,30 +13644,35 @@ jQuery.sap.registerPreloadedModules({
             }
         }
     });
-}());
+
+
+	return DashboardGroupsBox;
+
+});
 },
-	"sap/ushell/components/flp/launchpad/dashboard/DashboardUIActions.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+	"sap/ushell/components/flp/launchpad/dashboard/DashboardUIActions.js":function(){// ${copyright}
 /**
  * @fileOverview A module that is responsible for initializing the dashboard UIActions (i.e. drag and drop) of groups and tiles.<br>
  * Extends <code>sap.ui.base.Object</code><br>
  * Exposes the public function <code>initializeUIActions</code>
- * @version 1.38.26
+ * @version ${version}
  * @name sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions
  *
  * @since 1.35.0
  * @private
  */
-(function () {
-    "use strict";
+sap.ui.define(["sap/ui/base/Object"], function(baseObject) {
+	"use strict";
 
     /*global jQuery, sap, window */
     /*jslint nomen: true */
-    jQuery.sap.declare("sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions");
-    sap.ui.base.Object.extend("sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions", {
+    var DashboardUIActions = baseObject.extend("sap.ushell.components.flp.launchpad.dashboard.DashboardUIActions", {
         metadata: {
             publicMethods: ["initializeUIActions"]
         },
         constructor: function (sId, mSettings) {
+        	this.aTabBarItemsLocation = [];
+
             // Make this class only available once
             if (sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions && sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions()) {
                 return sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions();
@@ -9400,6 +13680,7 @@ jQuery.sap.registerPreloadedModules({
             sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions = jQuery.sap.getter(this.getInterface());
 
             this.oTileUIActions = undefined;
+            this.oLinkUIActions = undefined;
             this.oGroupUIActions = undefined;
             this.oController = undefined;
             this.UIActionsInitialized = false;
@@ -9414,6 +13695,7 @@ jQuery.sap.registerPreloadedModules({
             sap.ushell.components.flp.launchpad.dashboard.getDashboardUIActions = undefined;
             this.oGroupUIActions = null;
             this.oTileUIActions = null;
+            this.oLinkUIActions = null;
         },
         /**
          * Creating UIAction objects for tiles and groups in order to allow dashboard drag and drop actions
@@ -9426,6 +13708,12 @@ jQuery.sap.registerPreloadedModules({
          */
         initializeUIActions : function (oController) {
             this.oController = oController;
+            // If TabBar mode active - calculate TabBar items position
+            if(oController.getView().getModel().getProperty("/homePageGroupDisplay") === "tabs") {
+            	this._fillTabBarItemsArray();
+            }
+
+            var isLinkPersonalizationSupported = sap.ushell.Container ? sap.ushell.Container.getService("LaunchPage").isLinkPersonalizationSupported() : null;
 
             var sDashboardGroupsWrapperId = oController.getView().sDashboardGroupsWrapperId,
                 bActionModeActive,
@@ -9435,15 +13723,33 @@ jQuery.sap.registerPreloadedModules({
                 oCommonUIActionsDataForWin8 = {
                     containerSelector: '#dashboardGroups',
                     wrapperSelector: sDashboardGroupsWrapperId ? "#" + sDashboardGroupsWrapperId : undefined, // The id of the <section> that wraps dashboardGroups div: #__page0-cont
-                    rootSelector : "#dashboardGroups"
+                    rootSelector : "#shell"
                 },
-                // Object that contains the common attributed required of the creation of oTileUIActions and oGroupUIActions, including Win8 attributes 
+                // Object that contains the common attributed required of the creation of oTileUIActions and oGroupUIActions, including Win8 attributes
                 oCommonUIActionsData = jQuery.extend(true, {}, oCommonUIActionsDataForWin8, {
                     switchModeDelay: 1000,
                     isTouch: oController.getView().isTouch,
                     isCombi: oController.getView().isCombi,
                     debug: false
                 }),
+                oLinkUIActionsData = {
+                    draggableSelector: ".sapUshellLinkTile",
+                    placeHolderClass: "sapUshellLinkTile-placeholder",
+                    cloneClass: "sapUshellLinkTile-clone",
+                    startCallback: this._handleTileUIStart.bind(this),
+                    endCallback: this._handleLinkDrop.bind(this),
+                    dragCallback: this._handleStartDragTile.bind(this),
+                    onBeforeCreateClone: this._onBeforeCreateLinkClone.bind(this),
+                    dragAndScrollCallback: this._handleTileDragMove.bind(this),
+                    endDragAndScrollCallback: this._handleTileDragAndScrollContinuation.bind(this),
+                    moveTolerance: oController.getView().isTouch || oController.getView().isCombi ? 10 : 3,
+                    isLayoutEngine: true,
+                    disabledDraggableSelector: 'sapUshellLockedTile',//check licked links
+                    onDragStartUIHandler: this._markDisableGroups.bind(this),
+                    onDragEndUIHandler: this._endUIHandler.bind(this),
+                    offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width(),
+                    defaultMouseMoveHandler: function(){}
+                },
                 oTileUIActionsData = {
                     draggableSelector: ".sapUshellTile",
                     draggableSelectorExclude: ".sapUshellPlusTile",
@@ -9455,12 +13761,14 @@ jQuery.sap.registerPreloadedModules({
                     endCallback: this._handleTileDrop.bind(this),
                     dragCallback: this._handleStartDragTile.bind(this),
                     dragAndScrollCallback: this._handleTileDragMove.bind(this),
+                    endDragAndScrollCallback: this._handleTileDragAndScrollContinuation.bind(this),
                     moveTolerance: oController.getView().isTouch || oController.getView().isCombi ? 10 : 3,
                     isLayoutEngine: true,
                     disabledDraggableSelector: 'sapUshellLockedTile',
                     onDragStartUIHandler: this._markDisableGroups.bind(this),
-                    onDragEndUIHandler: this._unmarkDisableGroups.bind(this),
-                    offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width()
+                    onDragEndUIHandler: this._endUIHandler.bind(this),
+                    offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width(),
+                    defaultMouseMoveHandler: function(){}
                 },
                 oGroupUIActionsData = {
                     draggableSelector: ".sapUshellDashboardGroupsContainerItem:not(.sapUshellDisableDragAndDrop)",
@@ -9477,18 +13785,33 @@ jQuery.sap.registerPreloadedModules({
                     draggableElement: ".sapUshellTileContainerHeader"
                 },
                 oWin8TileUIActionsData = {
+                    type: "tiles",
                     draggableSelector: ".sapUshellTile",
                     placeHolderClass : "sapUshellTile-placeholder",
+                    cloneClass: "sapUshellTile-clone",
                     startCallback : this._handleTileUIStart.bind(this),
                     endCallback : this._handleTileDrop.bind(this),
                     dragCallback : this._handleStartDragTile.bind(this),
                     dragAndScrollCallback : this._handleTileDragMove.bind(this),
                     onDragStartUIHandler : this._markDisableGroups.bind(this),
-                    onDragEndUIHandler : this._unmarkDisableGroups.bind(this),
+                    onDragEndUIHandler : this._endUIHandler.bind(this),
+                    offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width()
+                },
+                oWin8LinkUIActionsData = {
+                    type: "links",
+                    draggableSelector: ".sapUshellLinkTile",
+                    placeHolderClass: "sapUshellLinkTile-placeholder",
+                    startCallback: this._handleTileUIStart.bind(this),
+                    endCallback: this._handleLinkDrop.bind(this),
+                    dragCallback: this._handleStartDragTile.bind(this),
+                    dragAndScrollCallback: this._handleTileDragMove.bind(this),
+                    onBeforeCreateClone: this._onBeforeCreateLinkClone.bind(this),
+                    onDragStartUIHandler: this._markDisableGroups.bind(this),
+                    onDragEndUIHandler: this._endUIHandler.bind(this),
                     offsetLeft: bRightToLeft ? jQuery(".sapUshellViewPortLeft").width() : -jQuery(".sapUshellViewPortLeft").width()
                 },
                 oWin8GroupUIActionsData = {
-                    forGroups: true,
+                    type: "groups",
                     draggableSelector: ".sapUshellTileContainerHeader",
                     placeHolderClass : "sapUshellDashboardGroupsContainerItem-placeholder",
                     _publishAsync: oController._publishAsync
@@ -9497,27 +13820,41 @@ jQuery.sap.registerPreloadedModules({
             // Creating the sap.ushell.UIActions objects for tiles and groups
             if (oController.getView().oDashboardGroupsBox.getGroups().length) {
                 if (oController.getView().getModel().getProperty("/personalization")) {
-                    if (!oController.getView().ieHtml5DnD) {
-                        jQuery.sap.require('sap.ushell.UIActions');
-                        // Disable the previous instances of UIActions
-                        this._disableTileUIActions();
-                        this._disableGroupUIActions();
 
-                        // Create and enable tiles UIActions
-                        this.oTileUIActions = new sap.ushell.UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oTileUIActionsData)).enable();
-                        // Create groups UIActions, enabling happens according to ActionMode
-                        this.oGroupUIActions = new sap.ushell.UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oGroupUIActionsData));
-                        bActionModeActive = oController.getView().getModel().getProperty("/tileActionModeActive");
-                        if (bActionModeActive) {
-                            this.oGroupUIActions.enable();
-                        }
+
+                    if (!oController.getView().ieHtml5DnD) {
+                        sap.ui.require(['sap/ushell/UIActions'], function (UIActions) {
+                            // Disable the previous instances of UIActions
+                            this._disableTileUIActions();
+                            this._disableGroupUIActions();
+                            this._disableLinkUIActions();
+
+                            // Create and enable tiles UIActions
+                            this.oTileUIActions = new UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oTileUIActionsData)).enable();
+                            // Create groups UIActions, enabling happens according to ActionMode
+                            this.oGroupUIActions = new UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oGroupUIActionsData));
+
+                            if(isLinkPersonalizationSupported) {
+                                this.oLinkUIActions = new UIActions(jQuery.extend(true, {}, oCommonUIActionsData, oLinkUIActionsData)).enable();
+                            }
+
+                            bActionModeActive = oController.getView().getModel().getProperty("/tileActionModeActive");
+                            if (bActionModeActive) {
+                                this.oGroupUIActions.enable();
+                            }
+                        }.bind(this));
+
                     } else {
-                        jQuery.sap.require('sap.ushell.UIActionsWin8');
-                        this._disableTileUIActions();
-                        this._disableGroupUIActions();
-                        // Create and enable tiles and groups UIActions
-                        this.oTileUIActions = sap.ushell.UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8TileUIActionsData)).enable();
-                        this.oGroupUIActions = sap.ushell.UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8GroupUIActionsData)).enable();
+                        sap.ui.require(['sap/ushell/UIActionsWin8'], function (UIActionsWin8) {
+                            this._disableTileUIActions();
+                            this._disableGroupUIActions();
+                            this._disableLinkUIActions();
+                            // Create and enable tiles and groups UIActions
+                            this.oTileUIActions = UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8TileUIActionsData)).enable();
+                            this.oLinkUIActions = UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8LinkUIActionsData)).enable();
+                            this.oGroupUIActions = UIActionsWin8.getInstance(jQuery.extend(true, {}, oCommonUIActionsDataForWin8, oWin8GroupUIActionsData)).enable();
+                        }.bind(this));
+
                     }
                 }
             }
@@ -9527,11 +13864,22 @@ jQuery.sap.registerPreloadedModules({
                 this.oGroupUIActions.enable();
             }
         },
+
+        disableAllDashboardUiAction: function () {
+            this._disableTileUIActions();
+            this._disableLinkUIActions();
+            this._disableGroupUIActions();
+
+        },
         _disableTileUIActions : function () {
             if (this.oTileUIActions) {
                 this.oTileUIActions.disable();
-                //this.oTileUIActions = null;
             }
+        },
+        _disableLinkUIActions : function () {
+          if (this.oLinkUIActions) {
+              this.oLinkUIActions.disable();
+          }
         },
         _disableGroupUIActions : function () {
             if (this.oGroupUIActions) {
@@ -9543,18 +13891,64 @@ jQuery.sap.registerPreloadedModules({
        // ****************************************************************************************
        // *************************** Tile UIActions functions - Begin ***************************
 
-        _handleTileDragMove : function (cfg) {
-            if (!cfg.isScrolling) {
-                sap.ushell.Layout.getLayoutEngine().moveDraggable(cfg.moveX, cfg.moveY);
-            }
+        _handleTileDragMove : function (cfg) {
+            if (!cfg.isScrolling) {
+                sap.ushell.Layout.getLayoutEngine().moveDraggable(cfg.moveX, cfg.moveY, this.aTabBarItemsLocation);
+            }
         },
+
+        _handleTileDragAndScrollContinuation : function (moveY) {
+            var iAnchorBarHeight = jQuery("#anchorNavigationBar").height(),
+                oAnchorBarOffset = jQuery("#anchorNavigationBar").offset(),
+                iAnchorBarOffsetTop = oAnchorBarOffset.top;
+
+            if (moveY < iAnchorBarOffsetTop) {
+                sap.ushell.Layout.getLayoutEngine()._cancelLongDropTimmer();
+            }
+            return sap.ushell.Layout.getLayoutEngine()._isTabBarCollision(moveY);
+        },
+
+        _fillTabBarItemsArray: function () {
+            var aItems = jQuery(".sapUshellAnchorItem"),
+                iLength = aItems.length,
+                index,
+                iBasicWidthUnit = 10,
+                iTempIndex = 0,
+                aTabBarItemsBasic = [],
+                oItem,
+                oItemMeasures,
+                oItemWidth,
+                iNumOfBasicUnits;
+
+            for (index = 0; index < iLength; index++) {
+                oItem = aItems[index];
+                oItemMeasures = oItem.getBoundingClientRect();
+
+                aTabBarItemsBasic[index] = oItemMeasures.width;
+            }
+            for (index = 0; index < iLength; index++) {
+                oItemWidth = aTabBarItemsBasic[index];
+                if (oItemWidth === 0) {
+                    continue;
+                }
+                iNumOfBasicUnits = Math.round(oItemWidth / iBasicWidthUnit);
+                for (var iTempIndex_ = iTempIndex; iTempIndex_ < iTempIndex + iNumOfBasicUnits; iTempIndex_++) {
+            		this.aTabBarItemsLocation[iTempIndex_] = index;
+				}
+            	iTempIndex = iTempIndex_;
+        	}
+        },
+
         _handleTileUIStart : function (evt, ui) {
             if ((sap.ui.Device.browser.msie) &&
                     ((navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints > 0))) {
                 //Remove title so tooltip will not be displayed while dragging tile (IE10 and above)
                 this.titleElement = ui.querySelector("[title]");
-                this.titleElement.setAttribute("data-title", this.titleElement.getAttribute("title"));
-                this.titleElement.removeAttribute("title");
+                if (this.titleElement) {
+                    //it solves issue with IE and android, when browsers automatically show tooltip
+                    this.titleElement.setAttribute("data-title", this.titleElement.getAttribute("title"));
+                    this.titleElement.removeAttribute("title");
+                }
             }
         },
         _changeTileDragAndDropAnimate : function (evt, ui) {
@@ -9595,12 +13989,8 @@ jQuery.sap.registerPreloadedModules({
                 oClonedTile.stop(true, false).animate({left: tileLeftOffset, top: iTileTopOffset}, {duration: 250}, {easing: "swing"});
             }
         },
-       /**
-        *
-        * @param ui : tile DOM reference
-        * @private
-        */
-        _handleStartDragTile : function (evt, tileElement) {
+
+        _preventTextSelection: function () {
             //Prevent selection of text on tiles and groups
             if (window.getSelection) {
                 var selection = window.getSelection();
@@ -9611,24 +14001,158 @@ jQuery.sap.registerPreloadedModules({
                     // continue regardless of error
                 }
             }
+        },
+
+       /**
+        *
+        * @param ui : tile DOM reference
+        * @private
+        */
+        _handleStartDragTile : function (evt, tileElement) {
+        	var selection,
+                oTabBarDraggedTile;
+
+           this._preventTextSelection();
+
             sap.ushell.Layout.getLayoutEngine().layoutStartCallback(tileElement);
+            if (sap.ushell.Layout.isAnimationsEnabled()) {
+                sap.ushell.Layout.initDragMode();
+            }
             //Prevent the tile to be launched after drop
             jQuery(tileElement).find("a").removeAttr('href');
-            this.placeHolderElement = jQuery(".sapUshellTile-placeholder");
+            this.oController._handleDrag.call(this.oController, evt, tileElement);
             sap.ui.getCore().getEventBus().publish("launchpad", "sortableStart");
+        },
+        _onBeforeCreateLinkClone: function (evt, LinkElement) {
+            //we need to save the link bounding rects before uiactions.js create a clone because after it oLink.getBoundingRects will return zero offsets
+            sap.ushell.Layout.getLayoutEngine().saveLinkBoundingRects(LinkElement);
+        },
+        _handleLinkDrop : function (evt, tileElement, oAdditionalParams) {
+          var deferred = jQuery.Deferred(),
+              oPromise;
+
+          if (sap.ushell.Layout.isTabBarActive()) {
+              sap.ushell.Layout.tabBarTileDropped();
+          }
+          if (sap.ushell.Layout.isAnimationsEnabled() && oAdditionalParams && oAdditionalParams.clone) {
+              jQuery(oAdditionalParams.clone).animate({
+                  opacity: 0
+              }, 100, function() {
+                // Animation complete.
+              });
+          }
+          if ((sap.ui.Device.browser.msie) &&
+              ((navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints > 0)) && this.titleElement) {
+              //it solves issue with IE and android, when browsers automatically show tooltip
+              this.titleElement.setAttribute("title", this.titleElement.getAttribute("data-title"));//check if we need this
+          }
+          if (sap.ui.Device.desktop) {
+              jQuery('body').removeClass("sapUshellDisableUserSelect");//check if we need this
+          }
+          if (sap.ushell.Layout.getLayoutEngine().isLinkIntersected() || sap.ushell.Layout.getLayoutEngine().isOriginalAreaChanged()) {
+            oPromise = this.oController._handleDrop.call(this.oController, evt, tileElement);
+          }
+
+          if (oPromise) {
+              oPromise.then(function () {
+                  jQuery('#dashboardGroups .sapUshellHidePlusTile').removeClass('sapUshellHidePlusTile');
+                  setTimeout(function () {
+                      deferred.resolve();
+                  }.bind(this), 300);
+              });
+          } else {
+              setTimeout(function () {
+                  deferred.resolve();
+              }.bind(this), 0);
+          }
+
+          return deferred.promise();
         },
         /**
         *
         * @param ui : tile DOM reference
         * @private
         */
-        _handleTileDrop : function (evt, tileElement) {
-            jQuery('#dashboardGroups .sapUshellHidePlusTile').removeClass('sapUshellHidePlusTile');
-            if ((sap.ui.Device.browser.msie) &&
-                    ((navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints > 0))) {
-                this.titleElement.setAttribute("title", this.titleElement.getAttribute("data-title"));
+        _handleTileDrop : function (evt, tileElement, oAdditionalParams) {
+            if (sap.ushell.Layout.getLayoutEngine().isOriginalAreaChanged()) {
+              return this._handleTileToLinkDrop(evt, tileElement, oAdditionalParams);
+            } else {
+              return this._handleTileToTileDrop(evt, tileElement, oAdditionalParams);
             }
-            this.oController._handleDrop.call(this.oController, evt, tileElement);
+        },
+        _handleTileToLinkDrop : function (evt, tileElement, oAdditionalParams) {
+          return this._handleLinkDrop(evt, tileElement, oAdditionalParams);
+        },
+        _handleTileToTileDrop : function (evt, tileElement, oAdditionalParams) {
+            var jqClone,
+                oHoveredTabBarItem,
+                oTabBarDraggedTile,
+                handleTileDropInternal = function (evt, tileElement) {
+                    if (sap.ushell.Layout.isAnimationsEnabled()) {
+                        sap.ushell.Layout.endDragMode();
+                    }
+                    jQuery('#dashboardGroups .sapUshellHidePlusTile').removeClass('sapUshellHidePlusTile');
+                    if ((sap.ui.Device.browser.msie) &&
+                        ((navigator.msMaxTouchPoints > 0) || (navigator.maxTouchPoints > 0)) && this.titleElement) {
+                        //it solves issue with IE and android, when browsers automatically show tooltip
+                        this.titleElement.setAttribute("title", this.titleElement.getAttribute("data-title"));
+                    }
+                    this.oController._handleDrop.call(this.oController, evt, tileElement);
+                    if (sap.ui.Device.desktop) {
+                        jQuery('body').removeClass("sapUshellDisableUserSelect");
+                    }
+                },
+
+                oHoveredTabBarItem = jQuery(".sapUshellTabBarHoverOn");
+            oHoveredTabBarItem.removeClass("sapUshellTabBarHoverOn");
+
+            oTabBarDraggedTile = jQuery(".sapUshellTileDragOpacity");
+            oTabBarDraggedTile.removeClass("sapUshellTileDragOpacity");
+
+            if (sap.ushell.Layout.isTabBarActive()) {
+                sap.ushell.Layout.tabBarTileDropped();
+            }
+
+            // In tab bar mode, when the tile is dropped on an anchor tab bar item.
+            // In this case the tile should not flow back to the source group
+            if (sap.ushell.Layout.isTabBarActive() &&  sap.ushell.Layout.isOnTabBarElement()) {
+
+                if (oAdditionalParams && oAdditionalParams.clone) {
+                    var oDeferred = jQuery.Deferred();
+                    jqClone = jQuery(oAdditionalParams.clone);
+                    jqClone.css("display","none");
+                    setTimeout(function () {
+                        oDeferred.resolve();
+                        handleTileDropInternal.call(this, evt, tileElement);
+                    }.bind(this), 300);
+                    return oDeferred.promise();
+                } else {
+                    handleTileDropInternal.apply(this, arguments);
+                }
+            }
+
+            if (sap.ushell.Layout.isAnimationsEnabled() && oAdditionalParams && oAdditionalParams.clone) {
+                var deferred = jQuery.Deferred();
+                jqClone = jQuery(oAdditionalParams.clone);
+                var cloneRect = oAdditionalParams.clone.getBoundingClientRect();
+                var placeholderRect = tileElement.getBoundingClientRect();
+                var splittedTransform = jqClone.css("transform").split(",");
+                var diffY = placeholderRect.top - cloneRect.top;
+                var diffX = placeholderRect.left - cloneRect.left;
+                var translateX = parseInt(splittedTransform[4], 10) + diffX;
+                var translateY = parseInt(splittedTransform[5], 10) + diffY;
+                jqClone.css({
+                    "transform": "translate3d(" + translateX + "px, " + translateY + "px, 0px)",
+                    "transition": "transform 0.3s cubic-bezier(0.46, 0, 0.44, 1)"
+                });
+                setTimeout(function () {
+                    deferred.resolve();
+                    handleTileDropInternal.call(this, evt, tileElement);
+                }.bind(this), 300);
+                return deferred.promise();
+            } else {
+                handleTileDropInternal.apply(this, arguments);
+            }
         },
         _getTileTopOffset : function (oTile, position, dashboardScrollTop) {
             var i = 0,
@@ -9645,7 +14169,10 @@ jQuery.sap.registerPreloadedModules({
             }
         },
         //once d&d ends, restore locked groups appearance and remove locked icons and grayscale
-        _unmarkDisableGroups : function () {
+        _endUIHandler : function () {
+            if (sap.ushell.Layout.isAnimationsEnabled()) {
+                sap.ushell.Layout.endDragMode();
+            }
             if (this.oController.getView().getModel()) {
                 this.oController.getView().getModel().setProperty('/isInDrag', false);
             }
@@ -9656,6 +14183,9 @@ jQuery.sap.registerPreloadedModules({
 
         _handleGroupStartDrag : function (evt, ui) {
             this.oTileUIActions.disable();
+            if(this.oLinkUIActions) {
+              this.oLinkUIActions.disable();
+            }
             var groupContainerClone = jQuery(".sapUshellDashboardGroupsContainerItem-clone"),
                 groupContainerCloneTitle = groupContainerClone.find(".sapUshellContainerTitle"),
                 titleHeight = groupContainerCloneTitle.height(),
@@ -9675,7 +14205,7 @@ jQuery.sap.registerPreloadedModules({
                 jQuery(".sapUshellTileContainerBeforeContent").addClass("sapUshellTileContainerHidden");
             } else {
                 jQuery(".sapUshellTilesContainer-sortable").addClass("sapUshellTileContainerRemoveContent");
-                jQuery(".sapUshellLinksContainer").addClass("sapUshellTileContainerRemoveContent");
+                jQuery(".sapUshellLineModeContainer, .sapUshellLinksContainer").addClass("sapUshellTileContainerRemoveContent");
                 jQuery(".sapUshellTileContainerBeforeContent").addClass("sapUshellTileContainerRemoveContent");
                 jQuery(".sapUshellContainerHeaderActions").addClass("sapUshellTileContainerHidden");
             }
@@ -9727,11 +14257,14 @@ jQuery.sap.registerPreloadedModules({
                 jQuery(".sapUshellTileContainerBeforeContent").removeClass("sapUshellTileContainerRemoveContent");
                 jQuery(".sapUshellTileContainerAfterContent").removeClass("sapUshellTileContainerRemoveContent");
                 jQuery(".sapUshellTilesContainer-sortable").removeClass("sapUshellTileContainerRemoveContent");
-                jQuery(".sapUshellLinksContainer").removeClass("sapUshellTileContainerRemoveContent");
+                jQuery(".sapUshellLineModeContainer, .sapUshellLinksContainer").removeClass("sapUshellTileContainerRemoveContent");
             }, 0);
 
             window.setTimeout(jQuery.proxy(oBus.publish, oBus, "launchpad", "scrollToGroup", oData), 1);
             this.oTileUIActions.enable();
+            if (this.oLinkUIActions) {
+              this.oLinkUIActions.enable();
+            }
         },
         _handleGroupMoved : function (evt, ui) {
             var fromIndex = ui.item.startPos,
@@ -9755,12 +14288,17 @@ jQuery.sap.registerPreloadedModules({
             this.oController = oController;
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/group_list/GroupList.controller.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+	return DashboardUIActions;
+
+});
+},
+	"sap/ushell/components/flp/launchpad/group_list/GroupList.controller.js":function(){// ${copyright}
+
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, console, window, $ */
     /*jslint plusplus: true, nomen: true*/
 
@@ -9857,17 +14395,18 @@ jQuery.sap.registerPreloadedModules({
             window.setTimeout($.proxy(oBus.publish, oBus, sChannelId, sEventId, oData), 1);
         }
     });
-}());
-},
-	"sap/ushell/components/flp/launchpad/group_list/GroupList.view.js":function(){// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
+
+}, /* bExport= */ true);
+},
+	"sap/ushell/components/flp/launchpad/group_list/GroupList.view.js":function(){// ${copyright}
+
+sap.ui.define(['sap/ui/core/IconPool','sap/ushell/ui/launchpad/GroupListItem', 'sap/ushell/override'],
+	function(IconPool, GroupListItem, override) {
+	"use strict";
+
     /*global jQuery, sap, document */
     /*jslint plusplus: true, nomen: true */
-
-    jQuery.sap.require("sap.ushell.ui.launchpad.GroupListItem");
-    jQuery.sap.require("sap.ui.core.IconPool");
 
     sap.ui.jsview("sap.ushell.components.flp.launchpad.group_list.GroupList", {
         createContent: function (oController) {
@@ -9910,8 +14449,7 @@ jQuery.sap.registerPreloadedModules({
 
                 that.oController.handleScroll();
             };
-            jQuery.sap.require("sap.ushell.override");
-            this.oGroupList.updateItems = sap.ushell.override.updateAggregatesFactory("items");
+            this.oGroupList.updateItems = override.updateAggregatesFactory("items");
 
             if (this.getViewData().enablePersonalization === undefined || this.getViewData().enablePersonalization !== false) {
                 this.oActionList = new sap.m.List({
@@ -9973,7 +14511,7 @@ jQuery.sap.registerPreloadedModules({
                 jQuery(this.getDomRef()).attr("tabindex", "0");
             };
 
-            return new sap.ushell.ui.launchpad.GroupListItem({
+            return new GroupListItem({
                 index : "{index}",
                 title : "{title}",
                 tooltip : "{title}",
@@ -10002,6 +14540,67 @@ jQuery.sap.registerPreloadedModules({
             return "sap.ushell.components.flp.launchpad.group_list.GroupList";
         }
     });
-}());
-}
+
+
+}, /* bExport= */ true);
+},
+	"sap/ushell/components/flp/settings/FlpSettings.controller.js":function(){// ${copyright}
+
+sap.ui.define([
+    "sap/ui/core/mvc/Controller"
+], function (Controller) {
+    "use strict";
+
+    return Controller.extend("sap.ushell.components.flp.settings.FlpSettings", {
+
+        /* enum */ DISPLAY_MODES: { 
+            'scroll': 0, 'tabs': 1,
+        
+            getName: function (iValue) {
+                return Object.keys(this)[iValue];
+            }
+        },
+
+        onInit: function () {
+            // Set configuration.
+            this.oConfModel = new sap.ui.model.json.JSONModel({});
+
+            this.oConfModel.setData({
+                isRTL: sap.ui.getCore().getConfiguration().getRTL(),
+                flexAlignItems: sap.ui.Device.system.phone ? 'Stretch' : 'Start',
+                textAlign: sap.ui.Device.system.phone ? 'Begin' : 'End',
+                textDirection: sap.ui.Device.system.phone ? 'Column' : 'Row',
+                labelWidth: sap.ui.Device.system.phone ? "auto" : "12rem"
+            });
+
+            this.getView().setModel(this.oConfModel, "config");
+
+            // Set translation.
+            var oResourceModel = new sap.ui.model.resource.ResourceModel({
+                bundleUrl: jQuery.sap.getModulePath(
+                    "sap.ushell.renderers.fiori2.resources.resources",
+                    ".properties"
+                )
+            });
+
+            this.getView().setModel(oResourceModel, "i18n");
+
+            // Set initial group display mode.
+            var initModeName = this.getView().getViewData().initialDisplayMode;
+            this.iCurrentMode = this.DISPLAY_MODES[initModeName] || this.DISPLAY_MODES.scroll;
+        },
+
+        onBeforeRendering: function () {
+            this.oConfModel.setProperty("/displayMode", this.iCurrentMode);
+        },
+
+        onSave: function() {
+            this.iCurrentMode = this.oConfModel.getProperty("/displayMode");
+            return this.DISPLAY_MODES.getName(this.iCurrentMode);
+        }
+    });
+});
+
+},
+	"sap/ushell/components/flp/settings/FlpSettings.view.xml":'<View controllerName="sap.ushell.components.flp.settings.FlpSettings"\n      width="100%"\n      xmlns:m="sap.m">\n\n    <m:VBox visible="true" class="sapUiSmallMargin">\n        <m:items>\n            <m:HBox>\n                <m:items>\n                    <m:Label text="{i18n>AnchorBarLabel}:"\n                             class="sapUshellFlpSettingsLabel"\n                             width="{config>/labelWidth}"\n                             textAlign="{config>/textAlign}"/>\n\n                    <m:VBox>\n                        <m:items>\n                            <m:RadioButtonGroup selectedIndex="{config>/displayMode}">\n                                <m:buttons>\n                                    <m:RadioButton text="{i18n>anchorBarScrollMode}" class="sapUshellAnchorBarScrollMode"/>\n                                    <m:RadioButton text="{i18n>anchorBarTabMode}" class="sapUshellAnchorBarTabsMode"/>\n                                </m:buttons>\n                            </m:RadioButtonGroup>\n                            <m:VBox class ="sapUshellFlpSettingsDescriptionBorder">\n                                <m:items>\n                                    <m:Text text="{i18n>homePageGroupDisplayDescriptionText}" class="sapUshellFlpSettingsDescription" />\n                                    <!-- second paragraph will be shown only if the user has edit option for his dashboard -->\n                                    <m:Text text="{i18n>homePageGroupDisplayDescriptionText_secondParagraph}"\n                                            class="sapUshellFlpSettingsDescription"\n                                            visible="false"/>\n                                </m:items>\n                            </m:VBox>\n                        </m:items>\n                    </m:VBox>\n                </m:items>\n            </m:HBox>\n        </m:items>\n    </m:VBox>\n</View>'
 }});

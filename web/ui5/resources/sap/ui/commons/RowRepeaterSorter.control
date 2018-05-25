@@ -7,13 +7,13 @@
     <deprecation since="1.38">Instead, use the &lt;code&gt;sap.ui.table.Table&lt;/code&gt; control.</deprecation>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="text">
             <documentation>The sorter title if needed for display.</documentation>
         </property>
-        <property name="icon" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="icon">
             <documentation>The sorter icon if needed for display.</documentation>
         </property>
-        <property name="sorter" type="sap.ui.core/object" group="Data">
+        <property group="Data" type="sap.ui.core/object" name="sorter">
             <documentation>The sorter object.</documentation>
         </property>
     </properties>

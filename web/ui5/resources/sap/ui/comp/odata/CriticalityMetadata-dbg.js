@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // --------------------------------------------------------------------------------------------
@@ -67,11 +68,11 @@ sap.ui.define([], function() {
 		},
 
 		/**
-		 * Get whether the UI5 icon should be shown based on Annotation UI.CriticalityRepresentationType
+		 * Determines whether an icon is shown based on the annotation UI.CriticalityRepresentationType.
 		 * 
 		 * @public
-		 * @param {string} sType - The Annotation criticality type vaue
-		 * @returns {boolean} false if icon has to be hidden
+		 * @param {string} sType - The value of the UI.CriticalityRepresentationType annotation
+		 * @returns {boolean} false (if criticality icon is not shown)
 		 */
 		getShowCriticalityIcon: function(sType) {
 			return sType === "com.sap.vocabularies.UI.v1.CriticalityRepresentationType/WithoutIcon" ? false : true;

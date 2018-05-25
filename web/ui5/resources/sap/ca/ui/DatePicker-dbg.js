@@ -54,7 +54,7 @@ jQuery.sap.require("sap.m.InputBase");
  * Allows end users to interact with dates.
  * Entries can directly be written in, or selected from a calendar pad.
  * @extends sap.m.InputBase
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

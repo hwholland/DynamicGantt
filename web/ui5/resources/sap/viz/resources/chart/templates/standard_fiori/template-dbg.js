@@ -59,6 +59,7 @@
 
     var legend = {
         legend: {
+            selectionFeedback: true,
             drawingEffect: "normal",
             title: {
                 visible: false
@@ -84,9 +85,15 @@
             marker: {
                 hoverOnlyMode : false
             },
-            dataLabel:{
+            dataLabel: {
+                distance: 0,
+                line: {
+                    color: "#e5e5e5",
+                    visible: false
+                },
                 style:{
-                    color: null
+                    colorRange:"outside",
+                    color: "#000000"
                 }
             },
             gridline: {
@@ -94,7 +101,8 @@
                     unhighlightAxis: false,
                     color: "#666666"
                 }
-            }
+            },
+            radius: 0.33,
         }
     };
     
@@ -140,7 +148,8 @@
             dataPointStyleMode: "override",
             dataLabel:{
                 style:{
-                    color: null
+                    colorRange:"outside",
+                    color: "#000000"
                 }
             },
             dataPoint: {
@@ -315,7 +324,16 @@
         xAxis: axis
     });
 
-    var pieEffect = merge(legend, plotArea, interaction);
+    var pieEffect = merge(legend, plotArea, interaction, {
+        plotArea: {
+            dataLabel: {
+                type: "percentage"
+            },
+            alignment:{
+                vertical: "center"
+            }
+        }
+    });
 
     var pieWithDepthEffect = pieEffect;
 
@@ -393,13 +411,32 @@
         }
     });
     
-    var treemapEffect = {
+    var vizTreemapEffect = {
         legend: {
             title: {
                 visible: true
             }
+        },
+        plotArea:{
+            dataLabel:{
+                style:{
+                    colorRange:"outside",
+                    color: "#000000"
+                }
+            } 
         }
     };
+
+    var infoTreemapEffect = merge(legend,{
+        plotArea:{
+            dataLabel:{
+                style:{
+                    colorRange:"outside",
+                    color: "#000000"
+                }
+            } 
+        }
+    });
     
     var datapointColorEffect = {
         plotArea : {
@@ -413,7 +450,22 @@
         }
     };
 
-    var waterfallLinkLine = {plotArea:{linkline:{size:2}}}
+    var waterfallLinkLine = {plotArea:{linkline:{size:2}}};
+
+    var waterfallLegend= {
+        legend: {
+            visible: true,
+            title: {
+                visible: true
+            },
+            label: {
+                text: {
+                    negativeValue: '< 0',
+                    positiveValue: '> 0'
+                }
+            }
+        }
+    };
     
     var waterfallEffect =  infoWaterfall( merge(verticalbarEffect, datapointColorEffect));
     
@@ -428,6 +480,16 @@
             gap : {
                 barSpacing : 0.5,
                 groupSpacing : 0.65
+            }
+        }
+    };
+
+    var gapSpacingPeriodicWaterfall = {
+        plotArea : {
+            gap : {
+                innerGroupSpacing : 0,
+                barSpacing : 0.5,
+                groupSpacing : 1
             }
         }
     };
@@ -472,7 +534,7 @@
             }),
             'viz/combination': combinationEffect,
             'viz/horizontal_combination': horizontalcombinationEffect,
-            'viz/dual_combination': dualcombinationEffect,
+            'viz/dual_combination':dualcombinationEffect,
             'viz/dual_horizontal_combination': dualhorizontalcombinationEffect,
             'viz/boxplot': merge(base, {
                 yAxis: merge(axis, hideAxisLine, verticalGridline),
@@ -544,6 +606,7 @@
                 }
             },
             'viz/heatmap': {
+              
                 legend: {
                     title: {
                         visible: true
@@ -562,7 +625,7 @@
                     color: axisColor
                 }
             },
-            'viz/treemap': treemapEffect,
+            'viz/treemap': vizTreemapEffect,
             'viz/mekko': mekkoEffect,
             'viz/100_mekko': mekkoEffect,
             'viz/horizontal_mekko': horizontalmekkoEffect,
@@ -580,11 +643,13 @@
 
             'info/column': merge(gapSpacing, info(verticalbarEffect)),
             'info/timeseries_column': merge(gapSpacing, infoTime(verticalbarEffect)),
+            'info/timeseries_stacked_column': merge(gapSpacing, infoTime(verticalbarEffect)),
+            'info/timeseries_100_stacked_column': merge(gapSpacing, infoTime(verticalbarEffect)),
             'info/bar': merge(gapSpacing, horizontalCategoryAxisEffect, info(barEffect)),
             'info/line': info(lineEffect),
-            "info/timeseries_line": infoTime(lineEffect),
+            "info/timeseries_line": infoTimeLine(lineEffect),
             "info/timeseries_combination": merge(gapSpacing,infoTime(combinationEffect)),
-            "info/dual_timeseries_combination": merge(gapSpacing,infoDual(infoTime(combinationEffect))),
+            "info/dual_timeseries_combination": merge(gapSpacing,infoDualTime(dualcombinationEffect)),
             'info/pie': info(pieEffect),
             'info/donut': info(pieEffect),
             'info/scatter': infoBubble(bubbleEffect),
@@ -599,6 +664,7 @@
             'info/100_horizontal_mekko': merge(horizontalCategoryAxisEffect, infoMekko(stackedbarEffect)),
             'info/combination': merge(gapSpacing, info(combinationEffect)),
             'info/stacked_combination': merge(gapSpacing, info(combinationEffect)),
+            'info/dual_combination': merge(gapSpacing, infoDual(dualcombinationEffect)),
             'info/dual_stacked_combination': merge(gapSpacing, infoDual(dualcombinationEffect)),
             'info/dual_column': merge(gapSpacing, infoDual(dualverticalbarEffect)),
             'info/dual_line': infoDual(duallineEffect),
@@ -609,8 +675,28 @@
             'info/dual_horizontal_line': merge(horizontalCategoryAxisEffect, infoDual(dualhorizontallineEffect)),
             'info/horizontal_combination': merge(gapSpacing, horizontalCategoryAxisEffect, info(horizontalcombinationEffect)),
             'info/horizontal_stacked_combination': merge(gapSpacing, horizontalCategoryAxisEffect, info(horizontalcombinationEffect)),
+            'info/dual_horizontal_combination': merge(gapSpacing, horizontalCategoryAxisEffect, infoDual(dualhorizontalcombinationEffect)),
             'info/dual_horizontal_stacked_combination': merge(gapSpacing, horizontalCategoryAxisEffect, infoDual(dualhorizontalcombinationEffect)),
-            'info/treemap': info(treemapEffect),
+            'info/treemap': merge(info(infoTreemapEffect), {
+                interaction: {
+                    deselected: {
+                        opacity: 0.6
+                    },
+                    selected: {
+                        stroke: {
+                            width: 2,
+                            color: "#666666"
+                        }
+                    },
+                    hover: {
+                        stroke: {
+                            width: 2,
+                            color: "#666666"
+                        }
+                    }
+                }
+            }),
+            'info/timeseries_waterfall':merge(gapSpacingPeriodicWaterfall, infoTime(waterfallEffect)),
             'info/waterfall':merge(gapSpacing, info(waterfallEffect)),
             'info/stacked_waterfall' : merge(gapSpacing, info(stackedwaterfallEffect)),
             'info/horizontal_waterfall': merge(horizontalCategoryAxisEffect, gapSpacing, info(horizontalwaterfallEffect)),
@@ -626,15 +712,22 @@
                     layout:{
                         maxWidth : 0.5
                     }
+                },
+                valueAxis: {
+                    layout: {
+                        position: 'bottom'
+                    }
                 }
             }),
+            'info/timeseries_bullet': infoTime(info(bulletEffect)),
             'info/vertical_bullet': info(bulletEffect),
-            'info/heatmap': merge(defaultInfoOpts, {
+            'info/heatmap': merge(defaultInfoOpts, legend, {
                 plotArea: {
-                    dataLabel: {
-                        style: {
-                            color: null
-                        }                        
+                   dataLabel:{
+                        style:{
+                            colorRange:"outside",
+                            color: "#000000"
+                        }
                     },
                     dimensionLabel: {
                         style: {
@@ -663,18 +756,18 @@
                 },
                 interaction: {
                     deselected: {
-                        opacity: "sapUiChartDataPointNotSelectedBackgroundOpacity"
+                        opacity: 0.6
                     },
                     selected: {
                         stroke: {
                             width: 2,
-                            color: "sapUiChartDataPointBorderHoverSelectedColor"
+                            color: "#666666"
                         }
                     },
                     hover: {
                         stroke: {
                             width: 2,
-                            color: "sapUiChartDataPointBorderHoverSelectedColor"
+                            color: "#666666"
                         }
                     }
                 }
@@ -720,15 +813,18 @@
                 }];
             });
             var dualChartTypes = [
+                "info/dual_combination",
                 "info/dual_stacked_combination",
                 "info/dual_column",
                 "info/dual_line",
                 "info/dual_bar",
                 "info/dual_horizontal_line",
+                "info/dual_horizontal_combination",
                 "info/dual_horizontal_stacked_combination",
                 "info/dual_stacked_bar",
                 "info/100_dual_stacked_bar",
                 "info/dual_stacked_column",
+                "info/dual_timeseries_combination",
                 "info/100_dual_stacked_column"
             ];
             dualChartTypes.forEach(function(e) {
@@ -737,7 +833,7 @@
                     "palette": [plotAreaDual.plotArea.primaryValuesColorPalette, plotAreaDual.plotArea.secondaryValuesColorPalette]
                 }];
             });
-            var heatmap = ['info/heatmap'];
+            var heatmap = ['info/heatmap', "info/treemap"];
             heatmap.forEach(function(e) {
                 obj[e] = [{
                     feed: "color",
@@ -779,11 +875,18 @@
         var ret = info(obj);
         ret.timeAxis = ret.categoryAxis;
         delete ret.categoryAxis;
+        return ret;
+    }
+
+    function infoTimeLine(obj){
+        var ret = info(obj);
+        ret.timeAxis = ret.categoryAxis;
+        delete ret.categoryAxis;
 
         ret = merge(ret, {
-            timeAxis : {
-                interval : {
-                    unit : 'minlevel'
+            plotArea : {
+                window : {
+                    start: 'firstDataPoint'
                 }
             }
         });
@@ -804,6 +907,13 @@
         delete ret.valueAxis2.color;
         general(ret);
         ret = merge(ret, defaultInfoOpts);
+        return ret;
+    }
+
+    function infoDualTime(obj) {
+        var ret = infoTime(obj);
+        ret = merge(ret, background);
+        ret = infoDual(ret);
         return ret;
     }
 
@@ -865,7 +975,7 @@
     }
 
     function infoWaterfall(obj) {
-        var ret = merge(obj, waterfallLinkLine);
+        var ret = merge(obj, waterfallLinkLine, waterfallLegend);
         ret = merge(ret, defaultInfoOpts);
         return ret;
     }

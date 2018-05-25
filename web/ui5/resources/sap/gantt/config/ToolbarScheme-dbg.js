@@ -19,7 +19,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -34,40 +34,64 @@ sap.ui.define([
 				key: {type: "string", defaultValue: null},
 				/**
 				 * Toolbar group for selecting a source
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ToolbarGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				sourceSelect: {type: "sap.gantt.config.ToolbarGroup", defaultValue: null},
+				sourceSelect: {type: "object", defaultValue: null},
+				/**
+				 * Toolbar group for bird eye
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.BirdEyeGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
+				 */
+				birdEye: {type: "object", defaultValue: null},
 				/**
 				 * Toolbar group for the Gantt chart layout
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.LayoutGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				layout: {type: "sap.gantt.config.LayoutGroup", defaultValue: null},
+				layout: {type: "object", defaultValue: null},
 				/**
 				 * Toolbar group for custom toolbar items
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ToolbarGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				customToolbarItems: {type: "sap.gantt.config.ToolbarGroup", defaultValue: null},
+				customToolbarItems: {type: "object", defaultValue: null},
 				/**
 				 * Toolbar group for expanding a chart
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ExpandChartGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				expandChart: {type: "sap.gantt.config.ExpandChartGroup", defaultValue: null},
+				expandChart: {type: "object", defaultValue: null},
 				/**
 				 * Toolbar group for expanding nodes of a tree table
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ToolbarGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				expandTree: {type: "sap.gantt.config.ToolbarGroup", defaultValue: null},
+				expandTree: {type: "object", defaultValue: null},
 				/**
 				 * Toolbar group for the time zoom
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ToolbarGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				timeZoom: {type: "sap.gantt.config.ToolbarGroup", defaultValue: null},
+				timeZoom: {type: "object", defaultValue: null},
 				/**
 				 * Toolbar group for legend
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ToolbarGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				legend: {type: "sap.gantt.config.ToolbarGroup", defaultValue: null},
+				legend: {type: "object", defaultValue: null},
 				/**
 				 * See {@link sap.gantt.config.SettingGroup}
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.SettingGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				settings: {type: "sap.gantt.config.SettingGroup", defaultValue: null},
+				settings: {type: "object", defaultValue: null},
 				/**
 				 * See {@link sap.gantt.config.ModeGroup}
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ModeGroup</code>. 
+				 * Otherwise some properties you set may not function properly.
 				 */
-				mode: {type: "sap.gantt.config.ModeGroup", defaultValue: null},
+				mode: {type: "object", defaultValue: null},
 				/**
 				 * Toolbar design. See {@link sap.m.ToolbarDesign}
 				 */
@@ -75,6 +99,19 @@ sap.ui.define([
 			}
 		}
 	});
+	
+	ToolbarScheme.prototype.setTimeZoom = function(oTimeZoom) {
+		//for backward compatibility, oTimeZoom could be instance of sap.gantt.config.ToolbarGroup
+		//if so, we need to convert it to sap.gantt.config.TimeZoomGroup
+		var oTemp = oTimeZoom;
+		if (!(oTemp instanceof sap.gantt.config.TimeZoomGroup)) {
+			oTemp = new sap.gantt.config.TimeZoomGroup();
+			oTemp.setOverflowPriority(oTimeZoom.getOverflowPriority());
+			oTemp.setPosition(oTimeZoom.getPosition());
+		}
+		this.setProperty("timeZoom", oTemp);
+		return this;
+	};
 	
 	return ToolbarScheme;
 }, true);

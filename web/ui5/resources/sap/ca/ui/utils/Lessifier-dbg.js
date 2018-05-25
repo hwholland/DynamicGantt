@@ -72,26 +72,22 @@ sap.ca.ui.utils.Lessifier.lessifyCSS = function(sModuleName, sCssPath, bTrueLess
 		// but take care of declared variables
 		// IMPROVE: Invalid less is not yet detected and might still lead to app crashes.
 		sLessStylesheet = stylesheetText.replace(/@([a-zA-Z0-9\-_]*)/g, function (match, compare) {
-			var bChecked = false;
 			var parameterValue;
 			// check if this is a declared one and simply return it
 			if (params.indexOf(compare) != -1){
-				bChecked = true;
 				return match;
 			}
 			// if this is a parameter that has not been declared lets get it from the API
-			if (!bChecked) {
-				parameterValue = sap.ui.core.theming.Parameters.get(compare);
-				if (parameterValue == null) {
-					// if less processing is enabled a real color dummy string needs to be written back
-					if (bTrueLess){
-						jQuery.sap.log.error("The parameter @" + compare + " was replaced by a dummy value due to missing reference!");
-						return sap.ca.ui.utils.Lessifier.DEFAULT_COLOR;
-					// otherwise we can safely return the parameter.
-					} else {
-						jQuery.sap.log.warning("The parameter @" + compare + " was not found via API call!");
-						return "@" + compare;
-					}
+			parameterValue = sap.ui.core.theming.Parameters.get(compare);
+			if (parameterValue == null) {
+				// if less processing is enabled a real color dummy string needs to be written back
+				if (bTrueLess){
+					jQuery.sap.log.error("The parameter @" + compare + " was replaced by a dummy value due to missing reference!");
+					return sap.ca.ui.utils.Lessifier.DEFAULT_COLOR;
+				// otherwise we can safely return the parameter.
+				} else {
+					jQuery.sap.log.warning("The parameter @" + compare + " was not found via API call!");
+					return "@" + compare;
 				}
 			}
 			return parameterValue;

@@ -12,14 +12,6 @@ sap.ui.define([
 	"use strict";
 
 	var ShapeInRow = Drawer.extend("sap.gantt.drawer.ShapeInRow", {
-
-		/**
-		 * Constructor of ShapInRow
-		 */
-		constructor: function() {
-			// for fewer normalize color value purpose only
-			this._mValueColors = {};
-		}
 	});
 
 	/*
@@ -36,15 +28,49 @@ sap.ui.define([
 			aShapeTopG = aSvgNode.append("g")
 				.classed(oShape.getId() + "-top", true);
 		}
+		if (sap.ui.getCore().byId(oShape.getId()).getMetadata().getName() === "sap.gantt.shape.cal.Calendar") {
+			aShapeTopG.classed("sapGanttChartCalendar", true);
+		}
 		// bind data to row g
-		var aRowG = aShapeTopG.selectAll("." + oShape.getId() + "-row")
+		var sRowClassId = oShape.getId() + "-row";
+		var aRowG = aShapeTopG.selectAll("." + sRowClassId)
 			.data(oShape.dataSet);
 		aRowG.enter().append("g")
-			.classed(oShape.getId() + "-row", true);
+			.classed(sRowClassId, true);
+		aRowG.attr("data-sap-gantt-row-id", function(d) {
+			return d.objectInfoRef.id;
+		});
 		aRowG.exit().remove();
 		// draw
 		if (!aRowG.empty()) {
 			this._recursiveDraw(aRowG, oShape);
+		}
+	};
+	
+	//particular for resizing to draw shadow in resizing process
+	ShapeInRow.prototype.drawResizeShadow = function (aSvgNode, oShadowShape, oAxisTime, oAxisOrdinal, oStatusSet) {
+		// temp save param
+		this._oAxisTime = oAxisTime;
+		this._oAxisOrdinal = oAxisOrdinal;
+		this._oStatusSet = oStatusSet;
+		
+		if (oShadowShape) {
+			//create a resizing shadow g
+			var aResizingShadowG = aSvgNode.select(".resizingShadow");
+			if (aResizingShadowG.empty()) {
+				aResizingShadowG = aSvgNode.append("g")
+					.classed("resizingShadow", true);
+			}
+			var aResizeShapeG = aResizingShadowG.select("." + oShadowShape.getId() + "-resize");
+			if (aResizeShapeG.empty()) {
+				aResizeShapeG = aResizingShadowG.append("g").classed(oShadowShape.getId() + "-resize", true);
+			}
+			var aRealShapeG = aResizeShapeG.data(oShadowShape.dataSet);
+			aRealShapeG.exit().remove();
+			// draw shadow
+			if (!aRealShapeG.empty()) {
+				this._recursiveDraw(aRealShapeG, oShadowShape);
+			}
 		}
 	};
 
@@ -164,9 +190,19 @@ sap.ui.define([
 			case "circle":
 				this._drawCircle(aShape, oShape);
 				break;
+			case "defs":
+				this._drawDefinitions(aShape, oShape);
+				break;
 			default:
 				break;
 		}
+
+		if (oShape.getParent() === null) {
+			// If the shape is not wrapped inside a group tag, then add the data attribute
+			// otherwise only set the attribute on group element
+			this.addDataAttributes(aShape);
+		}
+
 	};
 
 	ShapeInRow.prototype._drawGroup = function (aShape, oShape) {
@@ -222,12 +258,7 @@ sap.ui.define([
 				return oShape.getAriaLabel(d, fFindObjectInfo(this, oShape));
 			})
 			.attr("style", function (d){
-				var ObjectInfo = fFindObjectInfo(this, oShape);
-				return "stroke: " + that.determineValue("stroke", oShape, d, this) + ";" +
-					"stroke-width: " + oShape.getStrokeWidth(d, ObjectInfo) + ";" + 
-					"stroke-dasharray: " + oShape.getStrokeDasharray(d, ObjectInfo) + ";" +
-					"fill-opacity: " + oShape.getFillOpacity(d, ObjectInfo) + ";" +
-					"stroke-opacity: " + oShape.getStrokeOpacity(d, ObjectInfo);
+				return oShape.getStyle(d, fFindObjectInfo(this, oShape));
 			});
 
 		aShape.exit().remove();
@@ -280,13 +311,7 @@ sap.ui.define([
 				return oShape.getAriaLabel(d, fFindObjectInfo(this, oShape));
 			})
 			.attr("style", function (d){
-				var ObjectInfo = fFindObjectInfo(this, oShape);
-				return "fill: " + that.determineValue("fill", oShape, d, this) + ";" +
-					"stroke: " + that.determineValue("stroke", oShape, d, this) + ";" +
-					"stroke-width: " + oShape.getStrokeWidth(d, ObjectInfo) + ";" + 
-					"stroke-dasharray: " + oShape.getStrokeDasharray(d, ObjectInfo) + ";" +
-					"fill-opacity: " + oShape.getFillOpacity(d, ObjectInfo) + ";" +
-					"stroke-opacity: " + oShape.getStrokeOpacity(d, ObjectInfo);
+				return oShape.getStyle(d, fFindObjectInfo(this, oShape));
 			});
 
 		aShape.exit().remove();
@@ -319,12 +344,7 @@ sap.ui.define([
 				return oShape.getTransform(d, fFindObjectInfo(this, oShape));
 			})
 			.attr("style", function (d){
-				var ObjectInfo = fFindObjectInfo(this, oShape);
-				return "font-size: " + oShape.getFontSize(d, ObjectInfo) + "px;" +
-					"fill: " + that.determineValue("fill", oShape, d, this) + ";" +
-					"font-family: " + oShape.getFontFamily(d, ObjectInfo) + ";" +
-					"stroke: " + that.determineValue("stroke", oShape, d, this) + ";" +
-					"stroke-width: " + oShape.getStrokeWidth(d, ObjectInfo);
+				return oShape.getStyle(d, fFindObjectInfo(this, oShape));
 			})
 			.text(function (d) {
 				return oShape.getText(d, fFindObjectInfo(this, oShape));
@@ -348,7 +368,7 @@ sap.ui.define([
 		var nTextLength = oSelf.node().getComputedTextLength();
 
 		if (nTextLength > nTruncateWidth) { // truncate needed
-			var sText = oSelf.text(),
+			var sText = oSelf.text().trim(),
 				nTargetLength,
 				bEllipsisAppear;
 
@@ -362,7 +382,7 @@ sap.ui.define([
 
 			// truncate
 			var nTruncatCount = this._getTextTruncatCountByBinarySearch(oSelf, nTextLength, nTargetLength, sText);
-			sText = sText.slice(0, nTruncatCount);
+			sText = sText.slice(0, nTruncatCount).trim();
 			oSelf.text(sText);
 			// add ellipsis if determined to be needed
 			if (bEllipsisAppear) {
@@ -378,7 +398,6 @@ sap.ui.define([
 					.text("...")
 					.attr("textLength", nEllipsisWidth)
 					.attr("lengthAdjust", "spacingAndGlyphs");
-				
 				}
 			}
 		}
@@ -482,16 +501,7 @@ sap.ui.define([
 				return oShape.getAriaLabel(d, fFindObjectInfo(this, oShape));
 			})
 			.attr("style", function (d){
-				var ObjectInfo = fFindObjectInfo(this, oShape);
-				var sStyle = "fill:"  + that.determineValue("fill", oShape, d, this) + ";" +
-					"stroke: " + that.determineValue("stroke", oShape, d, this) + ";" +
-					"stroke-width: " + oShape.getStrokeWidth(d, ObjectInfo) + ";" + 
-					"stroke-dasharray: " + oShape.getStrokeDasharray(d, ObjectInfo);
-				if (oShape.getIsClosed(d, ObjectInfo)) {
-					sStyle = sStyle + "; fill-opacity: " + oShape.getFillOpacity(d, ObjectInfo) + ";" +
-					"stroke-opacity: " + oShape.getStrokeOpacity(d, ObjectInfo);
-				}
-				return sStyle;
+				return oShape.getStyle(d, fFindObjectInfo(this, oShape));
 			});
 
 		aShape.exit().remove();
@@ -579,11 +589,7 @@ sap.ui.define([
 				return oShape.getAriaLabel(d, fFindObjectInfo(this, oShape));
 			})
 			.attr("style", function (d){
-				var ObjectInfo = fFindObjectInfo(this, oShape);
-				return "fill:"  + that.determineValue("fill", oShape, d, this) + ";" +
-					"fill-opacity: " + oShape.getFillOpacity(d, ObjectInfo) + ";" +
-					"stroke: " + that.determineValue("stroke", oShape, d, this) + ";" +
-					"stroke-width: " + oShape.getStrokeWidth(d, ObjectInfo);
+				return oShape.getStyle(d, fFindObjectInfo(this, oShape));
 			});
 
 		aShape.exit().remove();
@@ -611,11 +617,7 @@ sap.ui.define([
 				return oShape.getAriaLabel(d, fFindObjectInfo(this, oShape));
 			})
 			.attr("style", function (d){
-				var ObjectInfo = fFindObjectInfo(this, oShape);
-				return "fill:"  + that.determineValue("fill", oShape, d, this) + ";" +
-					"fill-opacity: " + oShape.getFillOpacity(d, ObjectInfo) + ";" +
-					"stroke: " + that.determineValue("stroke", oShape, d, this) + ";" +
-					"stroke-width: " + oShape.getStrokeWidth(d, ObjectInfo);
+				return oShape.getStyle(d, fFindObjectInfo(this, oShape));
 			});
 
 		aShape.exit().remove();
@@ -650,12 +652,22 @@ sap.ui.define([
 				return oShape.getR(d, fFindObjectInfo(this, oShape));
 			})
 			.attr("style", function (d){
-				var ObjectInfo = fFindObjectInfo(this, oShape);
-				return "fill:"  + that.determineValue("fill", oShape, d, this) + ";" +
-					"fill-opacity: " + oShape.getFillOpacity(d, ObjectInfo) + ";" +
-					"stroke: " + that.determineValue("stroke", oShape, d, this) + ";" +
-					"stroke-width: " + oShape.getStrokeWidth(d, ObjectInfo);
+				return oShape.getStyle(d, fFindObjectInfo(this, oShape));
 			});
+
+		aShape.exit().remove();
+	};
+
+	ShapeInRow.prototype._drawDefinitions = function(aShape, oShape) {
+		var fFindObjectInfo = this._findObjectInfo;
+		aShape.enter().append("defs")
+		.classed(oShape.getId(), true);
+		aShape.each(function(d, i){
+			jQuery(this).empty();
+			var sHtml = oShape.getContent(d, fFindObjectInfo(this));
+			var sXML = "<svg xmlns='" + d3.ns.prefix.svg + "'>" + sHtml + "</svg>";
+			this.appendChild(jQuery(sXML)[0].firstChild);
+		}); 
 
 		aShape.exit().remove();
 	};
@@ -666,23 +678,24 @@ sap.ui.define([
 		var aShape = aGroup.selectAll("." + oShape.getId() + ".hasTitle");
 		aShape.select("title").remove();
 		aShape.insert("title", ":first-child")
-				.each(function (d) {
-					var oSelf = d3.select(this);
-					oSelf.selectAll("tspan").remove();
-					// IE11 doesn't render '\n' newline characters in svg tooltip, here we use tag <tspan> elements as a solution
-					// besides, IE11 renders consecutive <tspan> elements with style 'display:block' with double line spacing, 
-					// so the style is applied to every other element
-					if (sap.ui.Device.browser.msie) {
-						var aLines = oShape.getTitle(d, fFindObjectInfo(this, oShape)).split("\n");
-						for (var i = 0; i < aLines.length; i++) {
-							oSelf.append("tspan")
-								.classed("sapGanttTooltipLine", true)
-								.text(aLines[i]);
-						}
-					} else {
-						oSelf.text(oShape.getTitle(d, fFindObjectInfo(this, oShape)));
+			.each(function (d) {
+				var oSelf = d3.select(this);
+				oSelf.selectAll("tspan").remove();
+				
+				// IE11 doesn't render '\n' newline characters in svg tooltip, here we use tag <tspan> elements as a solution
+				// besides, IE11 renders consecutive <tspan> elements with style 'display:block' with double line spacing, 
+				// so the style is applied to every other element
+				if (sap.ui.Device.browser.msie) {
+					var aLines = oShape.getTitle(d, fFindObjectInfo(this, oShape)).split("\n");
+					for(var i = 0; i < aLines.length; i++) {
+						oSelf.append("tspan")
+							.classed("sapGanttTooltipLine", true)
+							.text(aLines[i]);
 					}
-				});
+				} else {
+					oSelf.text(oShape.getTitle(d, fFindObjectInfo(this, oShape)));
+				}
+			});
 	};
 
 	ShapeInRow.prototype._findObjectInfo = function (oNode, oShape, isSelectedShape) {
@@ -693,22 +706,20 @@ sap.ui.define([
 		return oTargetNode.__data__.objectInfoRef;
 	};
 
-	ShapeInRow.prototype.determineValue = function(sAttr, oShape, d, oNode) {
-		if (oNode !== null && typeof oNode === "object") {
-				var sAttrValue = null;
-				if (sAttr === "fill") {
-					sAttrValue = oShape.getFill(d, this._findObjectInfo(oNode, oShape));
-				} else if (sAttr === "stroke") {
-					sAttrValue = oShape.getStroke(d, this._findObjectInfo(oNode, oShape));
-				}
-				var sFoundColor = this._mValueColors[sAttrValue];
-				if (sAttrValue && !sFoundColor) {
-					// if attribute has value but no paint server value
-					sFoundColor = sap.gantt.ValueSVGPaintServer.normalize(sAttrValue);
-					this._mValueColors[sAttrValue] = sFoundColor;
-				}
-				return sFoundColor;
-		}
+	/**
+	 * Add DataSet attribute on the Shape DOM element for quick reference.
+	 * 
+	 * If consumer doesn't specify the id <b>reserved keyword</b> in their data, use
+	 * jQuery.sap.uid() instead
+	 * 
+	 * @param {object} oShape D3 DOM element
+	 * @private
+	 */
+	ShapeInRow.prototype.addDataAttributes = function(oShape) {
+		oShape.attr("data-sap-gantt-shape-id", function(d){
+			//the'__id__' is a reference to the real index attribute of user's data, which is generated in Utility generateRowUid
+			return d.__id__; 
+		});
 	};
 
 	ShapeInRow.prototype.destroySvg = function (aSvgNode, oShape) {};

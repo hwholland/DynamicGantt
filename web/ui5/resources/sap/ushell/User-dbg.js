@@ -1,15 +1,13 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The <code>sap.ushell.User</code> object with related functions.
  */
 
-(function () {
+sap.ui.define(['./utils'],
+    function(utils) {
     "use strict";
+
     /*global jQuery, sap, URI */
-    jQuery.sap.declare("sap.ushell.User");
-
-    jQuery.sap.require("sap.ushell.utils");
-
     // "private" methods (static) without need to access properties -------------
 
     /**
@@ -62,7 +60,7 @@
      *    the result of the startup service call
      * @since 1.15.0
      */
-    sap.ushell.User = function (oContainerAdapterConfig) {
+    var User = function (oContainerAdapterConfig) {
         // actually the parameter contains the container adapter config
         var aChangedProperties = [],
             oBootTheme,
@@ -171,6 +169,7 @@
         this.setImage = function (sUserImageURI) {
             oContainerAdapterConfig.image = sUserImageURI;
             oEventProvider.fireEvent('onSetImage', sUserImageURI);
+
         };
 
         /**
@@ -199,6 +198,18 @@
         };
 
         /**
+         * Returns <code>true</code> if language is personalized for this user.
+         * If not - the user takes the language from the browser
+         *
+         * @returns {boolean}
+         *   <code>true</code> if language is personalized for this user
+         * @since 1.48.0
+         */
+        this.isLanguagePersonalized = function () {
+            return oContainerAdapterConfig.isLanguagePersonalized === true;
+        };
+
+        /**
          * Returns this user's current theme.
          *
          * @param {string} [sThemeFormat]
@@ -216,23 +227,43 @@
          * @since 1.15.0
          */
         this.getTheme = function (sThemeFormat) {
-            if (sThemeFormat === sap.ushell.User.prototype.constants.themeFormat.ORIGINAL_THEME) {
+            if (sThemeFormat === User.prototype.constants.themeFormat.ORIGINAL_THEME) {
                 return oCurrentTheme.originalTheme.theme;
             }
-            if (sThemeFormat === sap.ushell.User.prototype.constants.themeFormat.THEME_NAME_PLUS_URL) {
+            if (sThemeFormat === User.prototype.constants.themeFormat.THEME_NAME_PLUS_URL) {
                 return oCurrentTheme.theme + (oCurrentTheme.locationPath ? "@" + oCurrentTheme.locationOrigin + oCurrentTheme.locationPath : "");
             }
-            if (sThemeFormat === sap.ushell.User.prototype.constants.themeFormat.NWBC) {
+            if (sThemeFormat === User.prototype.constants.themeFormat.NWBC) {
                 if (isSapTheme(oCurrentTheme.theme)) {
                     return oCurrentTheme.theme;
                         // the theme is fetched from the system the web content is served
                 } else {
-                   return this.getTheme(sap.ushell.User.prototype.constants.themeFormat.THEME_NAME_PLUS_URL);
+                   return this.getTheme(User.prototype.constants.themeFormat.THEME_NAME_PLUS_URL);
                        // custom themes are there only on the front-end server
                 }
             }
             return oCurrentTheme.theme; //to stay compatible
         };
+
+        /** Returns for this user's and the theme sTheme its theme root
+         *
+         * @param {string} [sTheme]
+         * for compatibility reason an empty object is returned if no
+         * theme range is defined
+         * @returns {string}
+         * the theme root for the given theme
+         * @since 1.50.0
+         *
+         */
+        this.getThemeRoot = function( sTheme ) {
+            if (oContainerAdapterConfig.ranges && oContainerAdapterConfig.ranges.theme &&
+                oContainerAdapterConfig.ranges.theme[sTheme] &&
+                oContainerAdapterConfig.ranges.theme[sTheme].themeRoot ) {
+                   return oContainerAdapterConfig.ranges.theme[sTheme].themeRoot
+            } else {
+                return "";
+            }
+        }
 
         /**
          * Sets this user's selected theme and applies it.
@@ -242,7 +273,9 @@
          * - <SAP theme> (starts with sap_)
          *   Theme will be loaded from the standard UI5 theme path from the front-end server
          * - <custom theme> (does not start with sap_)
-         *   Theme will be loaded from the standard custom theme path (system theme root)
+         *   If root is supplied explicitly in
+         *   oContainerAdapterConfig.ranges.theme[].themeRoot, it will be used.
+         *   theme will be loaded from the standard custom theme path (system theme root)
          *   from the front-end server
          * - <theme name>@<theme path>
          *   Theme will be loaded from the supplied path from the front-end server
@@ -262,24 +295,47 @@
                 jQuery.sap.log.error(sErrorMsg);
                 throw new Error(sErrorMsg);
             }
+
             oCurrentTheme = this._amendTheme({
                 theme: sNewTheme,
-                root: ""
+                root: this.getThemeRoot(sNewTheme)
             }, oSystemTheme);
             if (sNewTheme !== oNextStartupTheme.originalTheme.theme) {
-                this.setChangedProperties("THEME", oNextStartupTheme.originalTheme.theme, sNewTheme);
+                this.setChangedProperties({
+                    propertyName: "theme",
+                    name: "THEME"
+                }, oNextStartupTheme.originalTheme.theme, sNewTheme);
                 oNextStartupTheme = oCurrentTheme;
             }
             // oCurrentTheme is set completely -> apply the theme
             if (oCurrentTheme.suppliedRoot) {
                 sap.ui.getCore().applyTheme(oCurrentTheme.theme, oCurrentTheme.suppliedRoot + "/UI5/");
-                    // the supplied path is the first choice
+                // the supplied path is the first choice
             } else if (oCurrentTheme.path) {
                 sap.ui.getCore().applyTheme(oCurrentTheme.theme, oCurrentTheme.path + "/UI5/");
-                    // second choice is the ammended path
+                // second choice is the ammended path
             } else {
                 sap.ui.getCore().applyTheme(oCurrentTheme.theme);
-                    // sap_ theme from the front-end server
+                // sap_ theme from the front-end server
+            }
+        };
+
+        /**
+         * Sets this user's selected language and applies it.
+         * Also the language is prepared to be stored as next start language on the front-end server.
+         * The save itself has to be triggered by method updateUserPreferences of the UserInfo service.
+         *
+         * @param {string} sNewLanguage
+         *   The theme to be applied
+         * @since 1.46.0
+         */
+        this.setLanguage = function (sNewLanguage) {
+            if (sNewLanguage) {
+                this.setChangedProperties({
+                    propertyName: "language",
+                    name: "LANGUAGE"
+                }, oContainerAdapterConfig.language, sNewLanguage);
+                oContainerAdapterConfig.language = sNewLanguage;
             }
         };
 
@@ -359,7 +415,10 @@
                 jQuery.sap.log.error(sErrorMsg);
                 throw new Error(sErrorMsg);
             }
-            this.setChangedProperties("CONTENT_DENSITY", oContainerAdapterConfig.contentDensity, sContentDensity);// test that setChangedProperties is called if it is allowed to change contentDensity
+            this.setChangedProperties({
+                propertyName: "contentDensity",
+                name: "CONTENT_DENSITY"
+            }, oContainerAdapterConfig.contentDensity, sContentDensity);// test that setChangedProperties is called if it is allowed to change contentDensity
             //
             oContainerAdapterConfig.contentDensity = sContentDensity;
         };
@@ -394,7 +453,7 @@
         /**
          * Updates the ChangedProperties attributes array on each setter invocation
          *
-         * @param {string} propertyName
+         * @param {object} property
          *      property to change
          * @param {string} currentValue
          *      current property value
@@ -402,8 +461,8 @@
          *      value after update of the properties is done
          * @since 1.23.0
          */
-        this.setChangedProperties = function (propertyName, currentValue, newValue) {
-            aChangedProperties.push({ name : propertyName, oldValue : currentValue, newValue : newValue });
+        this.setChangedProperties = function (property, currentValue, newValue) {
+            aChangedProperties.push({ propertyName : property.propertyName, name : property.name, oldValue : currentValue, newValue : newValue });
         };
 
         /**
@@ -420,10 +479,41 @@
         };
 
         this.setTrackUsageAnalytics = function (bTrackUsageAnalytics) {
-            this.setChangedProperties("TRACKING_USAGE_ANALYTICS", oContainerAdapterConfig.trackUsageAnalytics, bTrackUsageAnalytics);
+            this.setChangedProperties({
+                propertyName: "trackUsageAnalytics",
+                name: "TRACKING_USAGE_ANALYTICS"
+            }, oContainerAdapterConfig.trackUsageAnalytics, bTrackUsageAnalytics);
             oContainerAdapterConfig.trackUsageAnalytics = bTrackUsageAnalytics;
         };
+
+        /**
+         * Sets this user's profile image consent.
+         *
+         * @param {boolean} isImageConsent
+         *   Whether the user gives his consent to present his profile picture or not
+         *
+         */
+        this.setImageConsent = function (isImageConsent) {
+                this.setChangedProperties({
+                    propertyName: "isImageConsent",
+                    name: "ISIMAGECONSENT"
+                }, oContainerAdapterConfig.isImageConsent, isImageConsent);
+                oContainerAdapterConfig.isImageConsent = isImageConsent;
+        };
+
+        /**
+         * Returns whether the user gave his consent to show his profile picture in FLP
+         *
+         * @returns {boolean}
+         *   Whether the user gave his consent to present his profile picture or not
+         *
+         *
+         */
+        this.getImageConsent = function () {
+            return oContainerAdapterConfig.isImageConsent;
+        };
         // TO DO Would a resetChangedProperty - reset a specific property instead of the whole array -  not make more sense?
+
 
         // ------- Constructor -------
         oSystemTheme = {
@@ -475,7 +565,7 @@
      *      }
      * @private
      */
-    sap.ushell.User.prototype._amendTheme = function (oThemeInput, oSystemTheme) {
+    User.prototype._amendTheme = function (oThemeInput, oSystemTheme) {
         var oThemeResult = {},
             aThemeParts,
             oRootParts;
@@ -546,7 +636,7 @@
         return oThemeResult;
     };
 
-    sap.ushell.User.prototype.constants = {
+    User.prototype.constants = {
             /**
              * Enum for theme format.
              * @readonly
@@ -570,4 +660,8 @@
                     // for calling WDA & SAP GUI via NWBC
             }
         };
-}());
+
+
+    return User;
+
+}, /* bExport= */ true);

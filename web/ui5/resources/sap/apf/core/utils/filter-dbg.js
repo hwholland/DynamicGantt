@@ -10,6 +10,7 @@
 jQuery.sap.declare('sap.apf.core.utils.filter');
 jQuery.sap.require('sap.apf.core.utils.filterTerm');
 jQuery.sap.require('sap.apf.core.constants');
+jQuery.sap.require('sap.ui.model.Filter');
 (function() {
 	'use strict';
 	/**
@@ -505,20 +506,27 @@ jQuery.sap.require('sap.apf.core.constants');
 	sap.apf.core.utils.Filter.prototype.mapToSapUI5FilterExpression = function() {
 		var i, expression, aFilters = [];
 		if (this.leftExpr === undefined) {
-			return {};
+			return new sap.ui.model.Filter({filters: [], and: undefined});
 		}
 		if (this.restExpr.length === 0) {
 			return this.leftExpr.mapToSapUI5FilterExpression();
 		}
-		aFilters.push(this.leftExpr.mapToSapUI5FilterExpression());
+		if(!(this.leftExpr.type === "internalFilter" && this.leftExpr.isEmpty())){
+			aFilters.push(this.leftExpr.mapToSapUI5FilterExpression());
+		}
 		for(i = 0; i < this.restExpr.length; i++) {
-			aFilters.push(this.restExpr[i].mapToSapUI5FilterExpression());
+			if(!(this.restExpr[i].type === "internalFilter" && this.restExpr[i].isEmpty())){
+				aFilters.push(this.restExpr[i].mapToSapUI5FilterExpression());
+			}
 		}
 		expression = {
 				aFilters : aFilters,
 				bAnd : this.levelOperator === sap.apf.core.constants.BooleFilterOperators.AND
 		};
-		return expression;
+		var resultFilter = new sap.ui.model.Filter({filters: expression.aFilters, and: expression.bAnd});
+		// set bAnd explicitly, because boolean false is handled as undefined by sap.ui.model.Filter (this may lead to inconsistencies for apf applications)
+		resultFilter.bAnd = expression.bAnd;
+		return resultFilter;
 	};
 	/**
 	 * @description Overwrites properties and adds new properties if they are not already existing
@@ -541,27 +549,13 @@ jQuery.sap.require('sap.apf.core.constants');
 	};
 	/**
 	 * @description removes all properties from the filter, that have not been requested
-	 * @param {} requested properties: Can be a single string for a single property, a list of parameters for single properties or an array of property strings
-	 * @returns new filter object which has only the requested properties
+	 * @param {string[]} aProperties requested properties: Can be a single string for a single property, a list of parameters for single properties or an array of property strings
+	 * @returns {sap.apf.core.utils.Filter} new filter object which has only the requested properties
 	 */
-	sap.apf.core.utils.Filter.prototype.reduceToProperty = function(/* sProperty | sProperty1, sProperty2, ... | aProperty */) {
-		var aProperty = [];
-		var oProperty;
-		switch (arguments.length) {
-			case 1:
-				//noinspection JSLint
-				oProperty = arguments[0];
-				if (oProperty instanceof Array) {
-					aProperty = oProperty;
-				} else {
-					aProperty.push(oProperty);
-				}
-				break;
-			default:
-				aProperty = Array.prototype.slice.call(arguments, 0);
-		}
+	sap.apf.core.utils.Filter.prototype.restrictToProperties = function(aProperties) {
+
 		//noinspection JSLint
-		var aFilterPropertiesToBeRemoved = setAminusSetB(this.getProperties(), aProperty);
+		var aFilterPropertiesToBeRemoved = setAminusSetB(this.getProperties(), aProperties);
 		//in case all terms are removed method 'removeTermsByProperty()' returns 'undefined', so we will need the OR part:
 		return this.copy().removeTermsByProperty(aFilterPropertiesToBeRemoved) || new sap.apf.core.utils.Filter(this.messageHandler);
 		//noinspection JSLint
@@ -598,6 +592,23 @@ jQuery.sap.require('sap.apf.core.constants');
 			return true;
 		}
 		return this.leftExpr.isFilterTerm();
+	};
+	
+	/**
+	 * Returns an array with objects { propertyName : property1, value: value1}, that represent filterTerms with equal values, where the property is 
+	 * contained only once in the filter object.
+	 */
+	sap.apf.core.utils.Filter.prototype.getSingleValueTerms = function() {
+		var singleValueTerms = [];
+		var that = this;
+		var properties = this.getProperties();
+		properties.forEach(function(property){
+			var terms = that.getFilterTermsForProperty(property);
+			if (terms.length === 1 && terms[0].getOp() === sap.apf.core.constants.FilterOperators.EQ) {
+				singleValueTerms.push({ 'property' : terms[0].getProperty(), 'value': terms[0].getValue()});
+			}
+		});
+		return singleValueTerms;
 	};
 	/**
 	 * Structural traversal and application of a visitor to each node.
@@ -703,6 +714,7 @@ jQuery.sap.require('sap.apf.core.constants');
 				return propertySelectOption.Ranges;
 			}
 			function addProperty(term){
+				var op, value;
 				var ranges = getRangesOfProperty(term.getProperty());
 				if( term.getHighValue() !== undefined && term.getHighValue() !== null){
 					ranges.push({
@@ -712,10 +724,22 @@ jQuery.sap.require('sap.apf.core.constants');
 						High : term.getHighValue()
 					});
 				} else {
+					op = term.getOp();
+					value = term.getValue();
+					if (op === 'StartsWith') {
+						op = 'CP';
+						value = value + '*';
+					} else if (op === 'EndsWith') {
+						op = 'CP';
+						value = '*' + value;
+					} else if (op === 'Contains') {
+						op = 'CP';
+						value = '*' + value + '*';
+					}
 					ranges.push({
 						Sign : 'I',
-						Option : term.getOp(),
-						Low : term.getValue()
+						Option : op,
+						Low : value
 					});
 				}
 			}

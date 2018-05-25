@@ -5,9 +5,11 @@
  */
 jQuery.sap.require("sap.ui.core.delegate.ScrollEnablement");
 
-sap.ui.define(['jquery.sap.global'],
-    function(jQuery) {
+sap.ui.define(['jquery.sap.global','sap/ui/Device'],
+    function(jQuery,Device) {
         "use strict";
+
+        var _srcCard = null;
 
         var KeyboardNavigation = function (objectStream) {
             this.init(objectStream);
@@ -56,6 +58,12 @@ sap.ui.define(['jquery.sap.global'],
                 if (strIdList.length) {
                     focusedDomElement.attr("aria-labelledby", strIdList);
                 }
+
+                // Removing the labelledby property of the card when the focus is in the header area. Having focus on the card reads the header twice //
+                if (focusedDomElement.hasClass('sapOvpCardHeader')) {
+                    focusedDomElement.closest('.sapOvpObjectStreamItem').removeAttr("aria-labelledby");
+                }
+
             }
         };
 
@@ -83,7 +91,7 @@ sap.ui.define(['jquery.sap.global'],
             //If focus is on the last control inside a Item, move focus to the next control in the tab chain after the Object Stream, usually it's Close button
             if (jqTabbables.eq(jqTabbables.length - 1).is(jqFocused)) {
                 e.preventDefault();
-                this.jqElement.find(".sapOvpObjectStreamClose").focus();
+                this.jqElement.find("a.sapOvpObjectStreamHeader").focus();
             }
         };
 
@@ -99,6 +107,10 @@ sap.ui.define(['jquery.sap.global'],
             }
             if (jqFocused.hasClass("sapOvpObjectStreamClose")) {
                 e.preventDefault();
+                this.jqElement.find('a.sapOvpObjectStreamHeader').focus();
+            }
+            if (jqFocused.hasClass("sapOvpObjectStreamHeader")) {
+                e.preventDefault();
                 this.jqElement.find(".sapOvpObjectStreamItem:sapTabbable *:sapTabbable").last().focus();
                 return;
             }
@@ -111,6 +123,9 @@ sap.ui.define(['jquery.sap.global'],
             if (jqFocused.hasClass("sapOvpObjectStreamClose")) {
                 e.preventDefault();
                 this.objectStream.getParent().close();
+                if (_srcCard) {
+                    _srcCard.focus();
+                }
                 return;
             }
 
@@ -248,12 +263,10 @@ sap.ui.define(['jquery.sap.global'],
 
         var ObjectStream = sap.ui.core.Control.extend("sap.ovp.ui.ObjectStream", { metadata : {
             library : "sap.ovp",
-            properties : {
-                title: {type : "string", defaultValue: ""}
-            },
             aggregations : {
                 content: {type: "sap.ui.core.Control", multiple: true},
-                placeHolder: {type: "sap.ui.core.Control", multiple: false}
+                placeHolder: {type: "sap.ui.core.Control", multiple: false},
+                title: {type: "sap.ui.core.Control", multiple: false}
             }
         }});
 
@@ -262,7 +275,7 @@ sap.ui.define(['jquery.sap.global'],
             var that = this;
             this._closeIcon = new sap.ui.core.Icon({
                 src: "sap-icon://decline",
-                tooltip: "close"
+                tooltip: sap.ui.getCore().getLibraryResourceBundle("sap.ovp").getText("close")
             });
             this._closeIcon.addEventDelegate({
                 onclick: function () {
@@ -301,7 +314,7 @@ sap.ui.define(['jquery.sap.global'],
             var containerTransform = window.getComputedStyle(e.data.container).transform;
             e.data.container.style.transform = containerTransform;
             e.data.container.style.transition = '';
-
+            this.rtl = sap.ui.getCore().getConfiguration().getRTL();
             var transformX;
             var transformParamsArr = containerTransform.split(",");
             if (containerTransform.substr(0, 8) == "matrix3d") {
@@ -313,6 +326,9 @@ sap.ui.define(['jquery.sap.global'],
                 return;
             }
             e.data.container.style.transform = "none";
+            if (Device.browser.msie) {
+                transformX = this.rtl ? ~transformX : transformX;
+            }
             e.data.wrapper.scrollLeft += ~transformX + (e.data._direction == "left" ? -5 : 5);
             e.data._checkEdgesVisibility();
         };
@@ -349,7 +365,14 @@ sap.ui.define(['jquery.sap.global'],
                 //prevent sap.m.Dialog from stop scroll by cancelling "touchmove" on iOS
                 this.$().on("touchmove.scrollFix", function (e) {e.stopPropagation(); });
             }
-            this.$().find('.sapOvpObjectStreamItem').first().focus();
+
+            var objectStreamHeader = this.$().find('a.sapOvpObjectStreamHeader');
+            objectStreamHeader.removeAttr('aria-describedby');
+            objectStreamHeader.removeAttr('href');
+            var linkId = objectStreamHeader.attr('id');
+            objectStreamHeader.parent('div').attr('aria-labelledby', linkId);
+            objectStreamHeader.focus();
+
             if (this.keyboardNavigation) {
                 this.keyboardNavigation.destroy();
             }
@@ -361,6 +384,15 @@ sap.ui.define(['jquery.sap.global'],
                 this._oPopup.close();
             }.bind(this));
             jQuery(".sapUshellEasyScanLayout").addClass("bluredLayout");
+
+            // Code to remove the tabindex from the quick view card footer if there are no action buttons in the footer
+            var oCards = this.$().find('.sapOvpObjectStreamItem');
+            for (var i = 0; i < oCards.length; i++) {
+                var oFooter = jQuery(oCards[i]).find('.sapOvpActionFooter');
+                if (oFooter.find('button').length == 0) {
+                    oFooter.attr('tabindex', '-1');
+                }
+            }
         };
 
         ObjectStream.prototype._beforeClose = function () {
@@ -371,6 +403,11 @@ sap.ui.define(['jquery.sap.global'],
             this.jqBackground.remove();
             this.jqLeftEdge.add(this.jqRightEdge).add(this.wrapper).off(".objectStream");
             jQuery(".sapUshellEasyScanLayout").removeClass("bluredLayout");
+            /*Till sap.ui5 1.46 _oPopup was getting undefined by default on close of dialog
+            * But from sap.ui.1.47 it was not getting undefined by default,hence was not creating new dialog on
+            * call of this.open function called on click of stack card. Therefore making it undefined
+            * on call of close function*/
+            this._oPopup = undefined;
         };
 
         ObjectStream.prototype._mouseEnter = function (evt) {
@@ -394,9 +431,13 @@ sap.ui.define(['jquery.sap.global'],
             if (sap.ui.getCore().getConfiguration().getRTL() && this.scrollReverse) {
                 this.jqLeftEdge.css("opacity", rightEdgeOpacity);
                 this.jqRightEdge.css("opacity", leftEdgeOpacity);
+                //For right side arrow button set z-index to 0 as well when the opacity is 0
+                this.jqRightEdge.css("z-index", (leftEdgeOpacity === 0) ? 0 : 1);
             } else {
                 this.jqLeftEdge.css("opacity", leftEdgeOpacity);
                 this.jqRightEdge.css("opacity", rightEdgeOpacity);
+                //For right side arrow button set z-index to 0 as well when the opacity is 0
+                this.jqRightEdge.css("z-index", (rightEdgeOpacity === 0) ? 0 : 1);
             }
         };
 
@@ -411,12 +452,14 @@ sap.ui.define(['jquery.sap.global'],
             this._oPopup.oPopup.setModal(false);
         };
 
-        ObjectStream.prototype.open = function (cardWidth) {
+        ObjectStream.prototype.open = function (cardWidth, cardReference) {
             if (!this._oPopup) {
                 this._createPopup();
             }
             //save card width for after rendering
             this._cardWidth = cardWidth;
+
+            _srcCard = cardReference;
 
             //set height and width of each card on object stream
             this.setCardsSize(this._cardWidth);
@@ -425,6 +468,18 @@ sap.ui.define(['jquery.sap.global'],
         };
 
         ObjectStream.prototype.onBeforeRendering = function() {
+            /**
+             * IF an object stream's total content has more than 20 cards (Cards >20), a Placeholder Card shall be displayed at position 21.
+             * For non-quickview cards, there is no placeholder anyway.
+             */
+            var oContent = this.getBinding("content");
+            var oPlaceHolder = this.getPlaceHolder();
+            if (oContent && oContent.getLength() <= 20) {
+                this.setPlaceHolder(null);
+                if (oPlaceHolder) {
+                    oPlaceHolder.destroy();
+                }
+            }
         };
 
         ObjectStream.prototype.onAfterRendering = function() {

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.data.DimensionDefinition.
@@ -52,14 +52,23 @@ sap.ui.define(['sap/ui/core/Element','sap/viz/library'],
 			identity : {type : "string", group : "Misc", defaultValue : null},
 
 			/**
-			 * Display value for the dimension. Usually bound to some model field.
+			 * Display value for the dimension. Usually bound to some model field. It doesn't work with 'waterfallType'
 			 */
 			displayValue : {type : "any", group : "Data", defaultValue : null},
 
 			/**
 			 * Data type of the dimension as displayed in the chart. Enumeration: string, number, date. Currently only in time series chart, it is required to set data type to 'date' if this column is going to be fed on 'timeAxis'.
 			 */
-			dataType : {type : "string", group : "Misc", defaultValue : null}
+			dataType : {type : "string", group : "Misc", defaultValue : null},
+			
+			/**
+			 * <code>Sorter</code> Object of the dimension. There is a default comparator function, if no custom comparator is given. The function returns -1, 0 or 1, depending on the order of the two items and is suitable to be used as a comparator method for Array.sort. The object contains two entries: 
+			 * <ul>
+			 * <li><code>bDescending:</code>{boolean} (optional) define whether the sort order is descending. Default is false.</li>
+			 * <li><code>fnComparator:</code>{function} (optional) a user defined comparator function, which have two input values to compare. The input value is an object, which contains value and displayValue (optional).</li>   
+			 * </ul>
+			 */
+			sorter : { type : "object", defaultValue: null}
 		}
 	}});
 
@@ -89,7 +98,7 @@ sap.ui.define(['sap/ui/core/Element','sap/viz/library'],
 		if ( !(oType || fnFormatter) ) {
 			return function(oContext) {
 				return oContext.getProperty(sPath);
-			}
+			};
 		}
 
 		// else apply type and/or formatter
@@ -128,7 +137,7 @@ sap.ui.define(['sap/ui/core/Element','sap/viz/library'],
 		if ( parts.length == 1 && !(oType || fnFormatter) ) {
 			return function(oContext) {
 				return {"enableDisplayValue": true, "value": oContext.getProperty(sPath)};
-			}
+			};
 		}
 
 		// else apply type and/or formatter
@@ -145,15 +154,24 @@ sap.ui.define(['sap/ui/core/Element','sap/viz/library'],
 			return {"enableDisplayValue": true, "value": oValue};
 		};
 
-	}
+	};
 
-	DimensionDefinition.prototype.setInResult = function(bInResult) {
+	DimensionDefinition.prototype._setInResult = function(bInResult) {
 		this._bInResult = !!bInResult;
 	};
 
-	DimensionDefinition.prototype.getInResult = function() {
+	DimensionDefinition.prototype._getInResult = function() {
 		return this._bInResult;
 	};
+
+	DimensionDefinition.prototype._setTimeUnit = function (_sTimeUnit) {
+		this._sTimeUnit = _sTimeUnit;
+	};
+
+	DimensionDefinition.prototype._getTimeUnit = function() {
+		return this._sTimeUnit;
+	};
+
 	return DimensionDefinition;
 
 });

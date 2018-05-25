@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.tcm.fI.TCMFunctionImport");jQuery.sap.require("sap.uiext.inbox.tcm.fI.TCMFunctionImportMetaData");sap.ui.base.Object.extend("sap.uiext.inbox.tcm.fI.TCMFunctionImport",{constructor:function(){sap.ui.base.Object.apply(this);this.sTcmServiceURL=undefined;this.oHeaders={};this.ofIMetadata=sap.uiext.inbox.tcm.fI.TCMFunctionImportMetaData;}});
 sap.uiext.inbox.tcm.fI.TCMFunctionImport.prototype.setHeaders=function(h){this.oHeaders=h;};

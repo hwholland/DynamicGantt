@@ -82,7 +82,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * Allows you to display a list of uploaded files. You can also upload a new one, rename or delete them
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -2569,8 +2569,6 @@ sap.ca.ui.FileUpload.prototype._getIconFromMimeType = function (sVal) {
         sIcon = "sap-icon://attachment-video";
     } else if (sVal.indexOf('text') === 0) {
         sIcon = "sap-icon://attachment-text-file";
-    } else if (sVal.indexOf('audio') === 0) {
-        sIcon = "sap-icon://attachment-audio";
     } else if (sVal.indexOf('audio') === 0) {
         sIcon = "sap-icon://attachment-audio";
     } else if (sVal.indexOf('application') === 0) {

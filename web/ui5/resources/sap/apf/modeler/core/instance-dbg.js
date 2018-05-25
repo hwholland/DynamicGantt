@@ -4,24 +4,27 @@
  * (c) Copyright 2012-2014 SAP SE. All rights reserved
  */
 /*global sap, OData, jQuery*/
-jQuery.sap.declare("sap.apf.modeler.core.instance");
+jQuery.sap.declare('sap.apf.modeler.core.instance');
 (function() {
 	'use strict';
-	jQuery.sap.require("sap.ui.thirdparty.datajs");
-	jQuery.sap.require("sap.apf.utils.hashtable");
+	jQuery.sap.require('sap.ui.thirdparty.datajs');
+	jQuery.sap.require('sap.apf.utils.hashtable');
 	jQuery.sap.require('sap.apf.core.constants');
 	jQuery.sap.require('sap.apf.core.messageHandler');
 	jQuery.sap.require('sap.apf.core.sessionHandler');
 	jQuery.sap.require('sap.apf.core.representationTypes');
-	jQuery.sap.require("sap.apf.core.entityTypeMetadata");
-	jQuery.sap.require("sap.apf.core.configurationFactory");
-	jQuery.sap.require("sap.apf.core.utils.uriGenerator");
-	jQuery.sap.require("sap.apf.core.metadata");
-	jQuery.sap.require("sap.apf.core.metadataFacade");
-	jQuery.sap.require("sap.apf.core.metadataProperty");
+	jQuery.sap.require('sap.apf.core.entityTypeMetadata');
+	jQuery.sap.require('sap.apf.core.configurationFactory');
+	jQuery.sap.require('sap.apf.core.utils.uriGenerator');
+	jQuery.sap.require('sap.apf.core.metadata');
+	jQuery.sap.require('sap.apf.core.metadataFacade');
+	jQuery.sap.require('sap.apf.core.metadataProperty');
 	jQuery.sap.require('sap.apf.core.messageDefinition');
-	jQuery.sap.require("sap.apf.core.metadataFactory");
+	jQuery.sap.require('sap.apf.core.metadataFactory');
 	jQuery.sap.require('sap.apf.core.odataProxy');
+	jQuery.sap.require('sap.apf.cloudFoundry.modelerProxy');
+	jQuery.sap.require('sap.apf.cloudFoundry.ajaxHandler');
+	jQuery.sap.require('sap.apf.utils.proxyTextHandlerForLocalTexts');
 	jQuery.sap.require('sap.apf.core.ajax');
 	jQuery.sap.require('sap.apf.core.odataRequest');
 	jQuery.sap.require('sap.apf.modeler.core.messageDefinition');
@@ -30,31 +33,34 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 	jQuery.sap.require('sap.apf.modeler.core.applicationHandler');
 	jQuery.sap.require('sap.apf.modeler.core.configurationHandler');
 	jQuery.sap.require('sap.apf.modeler.core.configurationEditor');
-	jQuery.sap.require("sap.apf.modeler.core.step");
-	jQuery.sap.require("sap.apf.modeler.core.smartFilterBar");
-	jQuery.sap.require("sap.apf.modeler.core.facetFilter");
-	jQuery.sap.require("sap.apf.modeler.core.navigationTarget");
-	jQuery.sap.require("sap.apf.modeler.core.elementContainer");
-	jQuery.sap.require("sap.apf.modeler.core.representation");
-	jQuery.sap.require("sap.apf.modeler.core.configurationObjects");
-	jQuery.sap.require("sap.apf.modeler.core.elementContainer");
-	jQuery.sap.require("sap.apf.utils.parseTextPropertyFile");
-	jQuery.sap.require("sap.apf.modeler.core.lazyLoader");
-	jQuery.sap.require("sap.apf.modeler.core.registryWrapper");
-	jQuery.sap.require("sap.apf.utils.startParameter");
-	jQuery.sap.require("sap.apf.core.utils.fileExists");
-	jQuery.sap.require("sap.apf.core.utils.annotationHandler");
+	jQuery.sap.require('sap.apf.modeler.core.step');
+	jQuery.sap.require('sap.apf.modeler.core.hierarchicalStep');
+	jQuery.sap.require('sap.apf.modeler.core.smartFilterBar');
+	jQuery.sap.require('sap.apf.modeler.core.facetFilter');
+	jQuery.sap.require('sap.apf.modeler.core.navigationTarget');
+	jQuery.sap.require('sap.apf.modeler.core.elementContainer');
+	jQuery.sap.require('sap.apf.modeler.core.representation');
+	jQuery.sap.require('sap.apf.modeler.core.configurationObjects');
+	jQuery.sap.require('sap.apf.modeler.core.elementContainer');
+	jQuery.sap.require('sap.apf.utils.parseTextPropertyFile');
+	jQuery.sap.require('sap.apf.modeler.core.lazyLoader');
+	jQuery.sap.require('sap.apf.modeler.core.registryWrapper');
+	jQuery.sap.require('sap.apf.utils.startParameter');
+	jQuery.sap.require('sap.apf.core.utils.fileExists');
+	jQuery.sap.require('sap.apf.core.utils.annotationHandler');
 	/**
 	 * @class Minimal core object that provides services for error handling, access to ajax/odata and text resources
 	 * @param {object} persistenceConfiguration Configuration of the persistence service
 	 * @param {object} inject Constructors, instances and functions, that shall be used
-	 * @param {object} manifests base manifest and manifest from derived component
-	 * @param {object} manifests.manifest the manifest of the derived component
 	 */
 	sap.apf.modeler.core.Instance = function(persistenceConfiguration, inject) {
 		var that = this;
-		var ApplicationHandler, ConfigurationHandler, ConfigurationEditor, ConfigurationObjects, ConfigurationFactory, Step, SmartFilterBar, FacetFilter, 
-			NavigationTarget, Representation, ElementContainer, Hashtable, RegistryProbe, Metadata, EntityTypeMetadata, MetadataFacade, MetadataProperty, MetadataFactory, LazyLoader, StartParameter, AnnotationHandler, textHandler, messageHandler, sessionHandler, startParameter, persistenceProxy, metadataFactory, injectForFollowUp, injectMetadataFactory, injectLazyLoader, fnOdataRequestWrapper, fnLoadConfigurationHandler, lazyLoaderForApplicationHandler, lazyLoaderForConfigurationHandler, actionsPerSemanticObjectHashTable, allAvailableSemanticObjects, manifests;
+		var ApplicationHandler, AjaxHandler, ConfigurationHandler, ConfigurationEditor, ConfigurationObjects, ConfigurationFactory, Step, HierarchicalStep, SmartFilterBar, FacetFilter, 
+			NavigationTarget, Representation, ElementContainer, FileExists, Hashtable, RegistryProbe, Metadata, EntityTypeMetadata, MetadataFacade,
+			MetadataProperty, MetadataFactory, LazyLoader, StartParameter, AnnotationHandler, ProxyTextHandlerForLocalTexts, textHandler, messageHandler,
+			sessionHandler, startParameter, persistenceProxy, metadataFactory, injectForFollowUp, injectMetadataFactory, injectAjaxHandler, 
+			injectLazyLoader, fnOdataRequestWrapper, fnLoadConfigurationHandler, lazyLoaderForApplicationHandler, 
+			lazyLoaderForConfigurationHandler, actionsPerSemanticObjectHashTable, allAvailableSemanticObjects, manifests;
 		var allAvailableSemanticObjectsCallbacks = [];
 		var allAvailableSemanticObjectsMessageObject;
 		var datajs;
@@ -66,6 +72,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 		ConfigurationFactory = (inject && inject.constructors && inject.constructors.ConfigurationFactory) || sap.apf.core.ConfigurationFactory;
 		ElementContainer = (inject && inject.constructors && inject.constructors.ElementContainer) || sap.apf.modeler.core.ElementContainer;
 		Step = (inject && inject.constructors && inject.constructors.Step) || sap.apf.modeler.core.Step;
+		HierarchicalStep = (inject && inject.constructors && inject.constructors.HierarchicalStep) || sap.apf.modeler.core.HierarchicalStep;
 		SmartFilterBar = (inject && inject.constructors && inject.constructors.SmartFilterBar) || sap.apf.modeler.core.SmartFilterBar;
 		FacetFilter = (inject && inject.constructors && inject.constructors.FacetFilter) || sap.apf.modeler.core.FacetFilter;
 		NavigationTarget = (inject && inject.constructors && inject.constructors.NavigationTarget) || sap.apf.modeler.core.NavigationTarget;
@@ -80,6 +87,10 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 		MetadataFactory = (inject && inject.constructors && inject.constructors.MetadataFactory) || sap.apf.core.MetadataFactory;
 		StartParameter = (inject && inject.constructors && inject.constructors.StartParameter) || sap.apf.utils.StartParameter;
 		AnnotationHandler = (inject && inject.constructors && inject.constructors.AnnotationHandler) || sap.apf.core.utils.AnnotationHandler;
+		FileExists = (inject && inject.constructors && inject.constructors.FileExists) || sap.apf.core.utils.FileExists;
+		ProxyTextHandlerForLocalTexts = (inject && inject.constructors && inject.constructors.ProxyTextHandlerForLocalTexts)
+			|| sap.apf.utils.ProxyTextHandlerForLocalTexts;
+		AjaxHandler = (inject && inject.constructors && inject.constructors.AjaxHandler || sap.apf.cloudFoundry.AjaxHandler);
 		//instances
 		datajs = (inject && inject.instances && inject.instances.datajs) || OData;
 		if (inject && inject.constructors && inject.constructors.TextHandler) {
@@ -92,10 +103,10 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 		} else {
 			messageHandler = new sap.apf.core.MessageHandler(true);
 		}
-		messageHandler.setTextResourceHandler(textHandler);
+		messageHandler.activateOnErrorHandling(true);
 		messageHandler.loadConfig(sap.apf.core.messageDefinition);
 		messageHandler.loadConfig(sap.apf.modeler.core.messageDefinition);
-		messageHandler.activateOnErrorHandling(true);
+		messageHandler.setTextResourceHandler(textHandler);
 		//precondition for persistence proxy
 		if (inject && inject.instances && inject.instances.component) {
 			manifests = {};
@@ -109,16 +120,51 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 		this.getStartParameterFacade = function() {
 			return startParameter;
 		};
+		/**
+		 * @see sap.apf.core.ajax
+		 */
+		this.ajax = function(oSettings) {
+			var injectForAjax = jQuery.extend(true, {}, oSettings);
+			injectForAjax.functions = injectForAjax.functions || {};
+			injectForAjax.functions.getSapSystem = startParameter.getSapSystem;
+			if (inject && inject.functions && inject.functions.ajax) {
+				injectForAjax.functions.ajax = inject.functions.ajax;
+			}
+			injectForAjax.instances = { messageHandler : messageHandler };
+			return sap.apf.core.ajax(injectForAjax);
+		};
+		var proxyTextHandlerForLocalTexts = new ProxyTextHandlerForLocalTexts({ instances : { messageHandler : messageHandler }});
 		injectForFollowUp = {
+			manifests : manifests,
 			instances : {
 				messageHandler : messageHandler,
-				coreApi : this
+				coreApi : this,
+				proxyTextHandlerForLocalTexts : proxyTextHandlerForLocalTexts
 			}
 		};
+		var isUsingCloudFoundryProxy = inject && inject.functions && inject.functions.isUsingCloudFoundryProxy && inject.functions.isUsingCloudFoundryProxy();
+		if (isUsingCloudFoundryProxy) {
+			injectAjaxHandler = {
+					instances : {
+						messageHandler: messageHandler
+					},
+					functions: {
+						coreAjax : this.ajax
+					}
+			};
+
+			injectForFollowUp.instances.ajaxHandler = new AjaxHandler(injectAjaxHandler);
+		}
 		if (inject && inject.constructors && inject.constructors.PersistenceProxy) {
 			persistenceProxy = new inject.constructors.PersistenceProxy(persistenceConfiguration, injectForFollowUp);
 		} else {
-			persistenceProxy = new sap.apf.core.OdataProxy(persistenceConfiguration, injectForFollowUp);
+			if (isUsingCloudFoundryProxy) {
+				persistenceProxy = new sap.apf.cloudFoundry.modelerProxy.ModelerProxy(persistenceConfiguration, injectForFollowUp);
+			} else if (manifests && manifests.manifest["sap.apf"] && manifests.manifest["sap.apf"].activateLrep) {
+				persistenceProxy = new sap.apf.core.LayeredRepositoryProxy(persistenceConfiguration, injectForFollowUp);
+			} else {
+				persistenceProxy = new sap.apf.core.OdataProxy(persistenceConfiguration, injectForFollowUp);
+			}
 		}
 		//TODO Apply one consistent inject object concept also in sessionHandler
 		if (inject && inject.constructors && inject.constructors.SessionHandler) {
@@ -127,25 +173,16 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 			sessionHandler = new sap.apf.core.SessionHandler(injectForFollowUp);
 		}
 		//core interface
-		/**
-		 * @see sap.apf.core.ajax
-		 */
-		this.ajax = function(oSettings) {
-			var injectForAjax = jQuery.extend(true, {}, oSettings);
-			if (inject && inject.functions && inject.functions.ajax) {
-				injectForAjax.functions = { ajax : inject.functions.ajax };
-			}
-			injectForAjax.instances = { messageHandler : messageHandler };
-			return sap.apf.core.ajax(injectForAjax);
-		};
 		var injectAnnotationHandler = {
-				functions: { 
+				functions: {
+					getSapSystem : startParameter.getSapSystem,
 					getComponentNameFromManifest : sap.apf.utils.getComponentNameFromManifest,
 					getODataPath : sap.apf.core.utils.uriGenerator.getODataPath,
 					getBaseURLOfComponent : sap.apf.core.utils.uriGenerator.getBaseURLOfComponent,
 					addRelativeToAbsoluteURL : sap.apf.core.utils.uriGenerator.addRelativeToAbsoluteURL
 				},
-				instances: { fileExists : new sap.apf.core.utils.FileExists({ functions : { ajax : this.ajax }}) }
+				instances: { fileExists : new FileExists({
+					functions : { ajax : this.ajax, getSapSystem : startParameter.getSapSystem }}) }
 		};
 		var annotationHandler = new AnnotationHandler(injectAnnotationHandler);
 		//TODO Apply one consistent inject object concept also in MetadataFactory	
@@ -157,20 +194,20 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 				MetadataFacade : MetadataFacade,
 				MetadataProperty : MetadataProperty
 			},
+			functions: {
+					getServiceDocuments : function() {
+						return [ persistenceConfiguration.serviceRoot ];
+					},
+					getSapSystem : startParameter.getSapSystem
+			},
 			instances  : {
 				messageHandler : messageHandler,
 				coreApi : that,
-				configurationFactory : { // Fake configurationFactory needed for getEntityTypeMetadata()
-					getServiceDocuments : function() {
-						return [ persistenceConfiguration.serviceRoot ];
-					}
-				},
 				annotationHandler : annotationHandler
 			},
-			datajs : OData,
 			deactivateFatalError : true
 		};
-		metadataFactory = new sap.apf.core.MetadataFactory(injectMetadataFactory);
+		metadataFactory = new MetadataFactory(injectMetadataFactory);
 		// Lazy loader inject
 		injectLazyLoader = {
 			constructors : {
@@ -196,6 +233,9 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 			var oInject = {
 				instances : {
 					datajs : datajs
+				},
+				functions: {
+					getSapSystem : startParameter.getSapSystem
 				}
 			};
 			fnOdataRequestWrapper(oInject, oRequest, fnSuccess, fnError, oBatchHandler);
@@ -214,9 +254,10 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 		/**
 		 * @see sap.apf.core.MetadataFactory#getEntityTypeMetadata
 		 */
-		this.getEntityTypeMetadata = function(sAbsolutePathToServiceDocument, sEntityType) {
+		this.getEntityTypeMetadataAsPromise = function(sAbsolutePathToServiceDocument, sEntityType) {
 			return metadataFactory.getEntityTypeMetadata(sAbsolutePathToServiceDocument, sEntityType);
 		};
+		this.getEntityTypeMetadata = this.getEntityTypeMetadataAsPromise;
 		/**
 		 * @see sap.apf.core.SessionHandler#getXsrfToken
 		 */
@@ -265,14 +306,38 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 			messageHandler.setMessageCallback(fnCallback);
 		};
 		/**
-		 * imports a configuration from the lrep vendor layer.
+		 * returns true, if infrastructure supports the import of vendor content
+		 * @returns {boolean} true, if content is available
+		 */
+		this.isVendorContentAvailable = function() {
+			if (startParameter.isLrepActive() || isUsingCloudFoundryProxy) {
+				return true;
+			}
+			return false;
+		};
+		/**
+		 * imports a configuration from the vendor layer of layered repository or cloud foundry.
 		 * @param {string} applicationId
 		 * @param {string} configurationId
 		 * @param {function} callbackOverwrite callback to confirm the overwrite. This function is called with two functions as parameters:
 		 * callbackConfirmOverwrite(callbackOverwrite, callbackCreateNew). The function callbackConfirmOverwrite must call one of these two functions.
 		 * @param {function} callbackImport returns (configurationId, metadata, messageObject). In case of errors, only the message object is filled.
 		 */
-		this.importConfigurationFromLrep = function(applicationId, configurationId, callbackOverwrite, callbackImport){
+		this.importConfigurationFromVendorLayer = function(applicationId, configurationId, callbackOverwrite, callbackImport){
+			if (isUsingCloudFoundryProxy) {
+				this.getApplicationHandler(function(applicationHandler, messageObject) {
+					if (messageObject) {
+						callbackImport(undefined, undefined, messageObject);
+						return;
+					}
+					persistenceProxy.importVendorContent(applicationId, configurationId, callbackOverwrite, callbackImport, applicationHandler.registerApplicationCreatedOnServer);
+				});
+			} else {
+				importConfigurationFromLRep(applicationId, configurationId, callbackOverwrite, callbackImport);
+			}
+		};
+
+		function importConfigurationFromLRep(applicationId, configurationId, callbackOverwrite, callbackImport) {
 			var applicationText;
 			persistenceProxy.readAllConfigurationsFromVendorLayer().then(function(configurations) {
 				var key = applicationId + '.' + configurationId;
@@ -285,7 +350,6 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 				}
 				that.getApplicationHandler(callbackApplicationHandler);
 			});
-
 
 			function callbackApplicationHandler(applicationHandler, messageObject) {
 				if (messageObject) {
@@ -315,7 +379,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 				var filterLanguage = new sap.apf.core.utils.Filter(messageHandler, 'Language', 'eq', sap.apf.core.constants.developmentLanguage);
 				var filterApplication = new sap.apf.core.utils.Filter(messageHandler, 'Application', 'eq', applicationId);
 				filterApplication.addAnd(filterLanguage);
-				persistenceProxy.readCollection("texts", callbackReadTexts, undefined, undefined, filterApplication, true, {layer: "VENDOR"});
+				persistenceProxy.readCollection("texts", callbackReadTexts, undefined, undefined, filterApplication, {layer: "VENDOR"});
 			}
 
 			function callbackReadTexts (data, metadata, messageObject){
@@ -332,7 +396,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 				}
 				persistenceProxy.readEntity("configuration", callbackReadConfiguration, [ {
 					value : configurationId
-				} ], undefined, true, applicationId, {layer:"VENDOR"});
+				} ], undefined, applicationId, {layer:"VENDOR"});
 			}
 
 			function callbackReadConfiguration (data, metadata, messageObject) {
@@ -343,7 +407,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 				var configObject = JSON.parse(data.SerializedAnalyticalConfiguration);
 				importConfiguration(configObject, callbackOverwrite, callbackImport);
 			}
-		};
+		}
 		function importTexts (textElements, applicationId, callbackImport){
 			that.getApplicationHandler(callbackApplicationHandler);
 			function loadTexts(existingTexts, metadata, messageObject) {
@@ -385,7 +449,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 					var filterApplication = new sap.apf.core.utils.Filter(messageHandler, 'Application', 'eq', applicationId);
 					var filterLanguage = new sap.apf.core.utils.Filter(messageHandler, 'Language', 'eq', sap.apf.core.constants.developmentLanguage);
 					filterLanguage.addAnd(filterApplication);
-					persistenceProxy.readCollection("texts", loadTexts, undefined, undefined, filterLanguage, true);
+					persistenceProxy.readCollection("texts", loadTexts, undefined, undefined, filterLanguage);
 				}
 			}
 		}
@@ -640,7 +704,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 					entitySetName : 'texts',
 					filter : filterLanguage
 				});
-				persistenceProxy.readCollectionsInBatch(requestConfigurations, initTextPoolAndConfigurationHandler, true);
+				persistenceProxy.readCollectionsInBatch(requestConfigurations, initTextPoolAndConfigurationHandler);
 				function initTextPoolAndConfigurationHandler(data, messageObject) {
 					var textPool, injectTextPool;
 					var existingAnalyticalConfigurations;
@@ -666,7 +730,6 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 								instances : {
 									messageHandler : messageHandler,
 									persistenceProxy : persistenceProxy,
-									datajs : OData,
 									coreApi : that,
 									metadataFactory : metadataFactory
 								},
@@ -683,6 +746,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 									Representation : Representation,
 									RegistryProbe : RegistryProbe,
 									Step : Step,
+									HierarchicalStep : HierarchicalStep,
 									LazyLoader : LazyLoader
 								},
 								functions : {
@@ -801,7 +865,8 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 			if(allAvailableSemanticObjectsCallbacks.length === 1){
 				var request = {
 						requestUri : "/sap/opu/odata/UI2/INTEROP/SemanticObjects?$format=json&$select=id,text",
-						method : "GET"
+						method : "GET",
+						isSemanticObjectRequest: true
 				};
 				that.odataRequest(request, returnSemanticObjects, returnErrors);
 			}
@@ -816,9 +881,10 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 				if (oError && oError.messageObject) {
 					messageObject = oError.messageObject;
 				} else {
-					messageObject = messageHandler.createMessageObject({
+					messageHandler.createMessageObject({
 						code : "11041"
 					});
+					allAvailableSemanticObjects = [];
 				}
 				allAvailableSemanticObjectsMessageObject = messageObject;
 				allAvailableSemanticObjectsCallbacks.forEach(function(callback){
@@ -831,19 +897,19 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 		    * @function
 		    * @name sap.apf.modeler.core.instance#getSemanticActions
 		    * @description Returns all available semantic actions for given object with id and text by callback function
-		    * @param {string} semanticObject Technical name of a semantic object
-		    * @returns promise The argument of the done function is filled 
+		    * @param {string} semanticObjectID Technical name of a semantic object
+		    * @returns promise The argument of the done function is filled
 		    * with array semanticActions (tuples with property id and text of the semantic actions) and semanticObject with id and text. 
 		    * Example: { semanticActions : [  { id: "action1", text : "someDescription" }, ...], semanticObject : { id : "someId, text: "objectDescription" }}
 		    * The callback function of fail receives as argument the message object!
 		    */
-		this.getSemanticActions = function(semanticObject) {
+		this.getSemanticActions = function(semanticObjectID) {
 			var cachedSemanticActions;
 			var deferred = jQuery.Deferred();
 			if (!actionsPerSemanticObjectHashTable) {
 				actionsPerSemanticObjectHashTable = new Hashtable(messageHandler);
 			}
-			cachedSemanticActions = actionsPerSemanticObjectHashTable.getItem(semanticObject);
+			cachedSemanticActions = actionsPerSemanticObjectHashTable.getItem(semanticObjectID);
 			if (cachedSemanticActions) {
 				deferred.resolve(cachedSemanticActions);
 				return deferred.promise();
@@ -856,44 +922,55 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 					return;
 				}
 				var navigationService = sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("CrossApplicationNavigation");
-				var semanticObjectProperties;
+				var semanticObject = {
+					id : semanticObjectID,
+					text : ""
+				};
 				var i;
-				if (!navigationService) {
-					deferred.reject(messageHandler.createMessageObject({
-						code : "5038"
-					}));
-					return;
-				}
 				for(i = 0; i < semanticObjects.length; i++) {
-					if (semanticObjects[i].id === semanticObject) {
-						semanticObjectProperties = semanticObjects[i];
+					if (semanticObjects[i].id === semanticObjectID) {
+						semanticObject = semanticObjects[i];
 						break;
 					}
 				}
-				navigationService.getSemanticObjectLinks(semanticObject, undefined, true, inject.instances.component, undefined).done(function(aIntents) {
-					var semanticActions = [];
-					aIntents.forEach(function(intentDefinition) {
-						var actionWithParameters = intentDefinition.intent.split("-");
-						var action = actionWithParameters[1].split("?");
-						action = action[0].split("~");
-						semanticActions.push({
-							id : action[0],
-							text : intentDefinition.text
+				if (!navigationService) {
+					messageHandler.createMessageObject({
+						code : "5038"
+					});
+					var result = {
+						semanticObject : semanticObject,
+						semanticActions : []
+					};
+					actionsPerSemanticObjectHashTable.setItem(semanticObjectID, result);
+					deferred.resolve(result);
+				}else{
+					navigationService.getLinks({
+						semanticObject : semanticObject.id,
+						ignoreFormFactor : true,
+						ui5Component : inject.instances.component
+					}).done(function(aIntents) {
+						var semanticActions = [];
+						aIntents.forEach(function(intentDefinition) {
+							var actionWithParameters = intentDefinition.intent.split("-");
+							var action = actionWithParameters[1].split("?");
+							action = action[0].split("~");
+							semanticActions.push({
+								id : action[0],
+								text : intentDefinition.text
+							});
 						});
+						var result = {
+							semanticObject : semanticObject,
+							semanticActions : semanticActions
+						};
+						actionsPerSemanticObjectHashTable.setItem(semanticObjectID, result);
+						deferred.resolve(result);
+					}).fail(function() {
+						deferred.reject(messageHandler.createMessageObject({
+							code : "11042"
+						}));
 					});
-					actionsPerSemanticObjectHashTable.setItem(semanticObject, {
-						semanticObject : semanticObjectProperties,
-						semanticActions : semanticActions
-					});
-					deferred.resolve({
-						semanticObject : semanticObjectProperties,
-						semanticActions : semanticActions
-					});
-				}).fail(function() {
-					deferred.reject(messageHandler.createMessageObject({
-						code : "11042"
-					}));
-				});
+				}
 			}
 		};
 
@@ -902,28 +979,33 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 		    * @function
 		    * @name sap.apf.modeler.core.instance#navigateToGenericRuntime
 		    * @description Navigates to the generic runtime to exxecute the current configuration
-		    * @param {string} applicationId 
+		    * @param {string} applicationId
 		    * @param {string} configurationId
 		    * @param {function} navigationMethod to open the url
 		    */
 		this.navigateToGenericRuntime = function (applicationId, configurationId, navigationMethod){
-			var navigationService = sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("CrossApplicationNavigation");
-			var oParams = {};
-			if(that.getStartParameterFacade().isLrepActive()){
-				oParams['sap-apf-configuration-id'] = applicationId + '.' + configurationId;
-			} else {
-				oParams['sap-apf-configuration-id'] = configurationId;
+			var finalUrl;
+			if(inject && inject.exits && inject.exits.getRuntimeUrl && jQuery.isFunction(inject.exits.getRuntimeUrl)){
+				finalUrl = inject.exits.getRuntimeUrl(applicationId, configurationId);
+			} else{
+				var navigationService = sap.ushell && sap.ushell.Container && sap.ushell.Container.getService("CrossApplicationNavigation");
+				var oParams = {};
+				if(that.getStartParameterFacade().isLrepActive()){
+					oParams['sap-apf-configuration-id'] = applicationId + '.' + configurationId;
+				} else {
+					oParams['sap-apf-configuration-id'] = configurationId;
+				}
+	
+				var href = navigationService.hrefForExternal({
+					target : inject.functions.getNavigationTargetForGenericRuntime(),
+					params : oParams 
+				});
+	
+				var url = jQuery(location).attr('href');
+				var baseUrl = url.split('#')[0];
+				finalUrl = baseUrl + href;
 			}
-
-			var href = navigationService.hrefForExternal({
-				target : inject.functions.getNavigationTargetForGenericRuntime(),
-				params : oParams
-			});
-
-			var url = jQuery(location).attr('href');
-			var baseUrl = url.split('#')[0];
-
-			navigationMethod(baseUrl + href);
+			navigationMethod(finalUrl);
 		};
 		/**
 		 * reads all configuration files from vendor layer
@@ -948,6 +1030,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 					MetadataFacade : MetadataFacade,
 					MetadataProperty : MetadataProperty,
 					Step : Step,
+					HierarchicalStep : HierarchicalStep,
 					SmartFilterBar : SmartFilterBar,
 					FacetFilter : FacetFilter,
 					NavigationTarget : NavigationTarget,
@@ -956,6 +1039,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 					Hashtable : Hashtable,
 					LazyLoader : LazyLoader,
 					AnnotationHandler : AnnotationHandler,
+					ProxyTextHandlerForLocalTexts : ProxyTextHandlerForLocalTexts,
 					RegistryProbe : RegistryProbe
 				},
 				textHandler : textHandler,
@@ -966,6 +1050,7 @@ jQuery.sap.declare("sap.apf.modeler.core.instance");
 				injectForFollowUp : injectForFollowUp,
 				injectMetadataFactory : injectMetadataFactory,
 				fnOdataRequestWrapper : fnOdataRequestWrapper,
+				proxyTextHandlerForLocalTexts : proxyTextHandlerForLocalTexts,
 				ajax : this.ajax,
 				odataRequestWrapper : fnOdataRequestWrapper,
 				annotationHandler : annotationHandler

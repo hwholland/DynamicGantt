@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview This file contains miscellaneous utility functions.
  */
@@ -37,7 +37,16 @@ this.sap = this.sap || {};
 
         var oResourceBundle;
         var sConfig = oTileApi.configuration.getParameterValueAsString('tileConfiguration');
-        var oConfig = JSON.parse(sConfig || "{}");
+        try {
+            var oConfig = JSON.parse(sConfig || "{}");
+        } catch (e) {
+            jQuery.sap.log.error(
+                "Error while trying to parse tile configuration",
+                e,
+                "sap.ushell.components.tiles.utilsRT"
+            );
+            return {};
+        }
         var oUtils = sap.ushell.components.tiles.utils;
 
         oConfig.editable = true;
@@ -215,20 +224,22 @@ this.sap = this.sap || {};
             if (typeof oDynamicData.number === "string") {
                 oDynamicData.number = oDynamicData.number.trim();
             }
-
-            jQuery.sap.require("sap.ui.core.format.NumberFormat");
-            var bShouldProcessDigits = this._shouldProcessDigits(oDynamicData.number, oDynamicData.numberDigits),
-                maxCharactersInDisplayNumber = oData.display_icon_url ? 4 : 5;
-
-            if (oDynamicData.number && oDynamicData.number.length >= maxCharactersInDisplayNumber || bShouldProcessDigits) {
-                var oNormalizedNumberData = this._normalizeNumber(oDynamicData.number, maxCharactersInDisplayNumber, oDynamicData.numberFactor, oDynamicData.numberDigits);
-
-                oData.display_number_factor = oNormalizedNumberData.numberFactor;
-                oData.display_number_value = oNormalizedNumberData.displayNumber;
+            //in case the number is "" we set value to "..." (due to internal #: 1780198502)
+            if (oDynamicData.number === "") {
+                oData.display_number_value = "...";
             } else {
-                var oNForm = sap.ui.core.format.NumberFormat.getFloatInstance({maxFractionDigits: maxCharactersInDisplayNumber});
-
-                oData.display_number_value = oNForm.format(oDynamicData.number);
+                jQuery.sap.require("sap.ui.core.format.NumberFormat");
+                var bShouldProcessDigits = this._shouldProcessDigits(oDynamicData.number, oDynamicData.numberDigits),
+                maxCharactersInDisplayNumber = oData.display_icon_url ? 4 : 5;
+                
+                if (oDynamicData.number && oDynamicData.number.length >= maxCharactersInDisplayNumber || bShouldProcessDigits) {
+                    var oNormalizedNumberData = this._normalizeNumber(oDynamicData.number, maxCharactersInDisplayNumber, oDynamicData.numberFactor, oDynamicData.numberDigits);
+                    oData.display_number_factor = oNormalizedNumberData.numberFactor;
+                    oData.display_number_value = oNormalizedNumberData.displayNumber;
+                } else {
+                    var oNForm = sap.ui.core.format.NumberFormat.getFloatInstance({maxFractionDigits: maxCharactersInDisplayNumber});
+                    oData.display_number_value = oNForm.format(oDynamicData.number);
+                }
             }
         }
 
@@ -247,24 +258,33 @@ this.sap = this.sap || {};
         return oData;
     };
 
-    sap.ushell.components.tiles.utilsRT.getTileSettingsAction = function(oModel, saveSettingsCallback) {
+    sap.ushell.components.tiles.utilsRT.getTileSettingsAction = function(oModel, saveSettingsCallback, sType) {
         var oResourcesBundle = sap.ushell.components.tiles.utils.getResourceBundleModel().getResourceBundle();
         return {
-            text: oResourcesBundle.getText('tileSettingsButtonTitle'),
+            text: (!sType || sType == "tile") ? oResourcesBundle.getText('tileSettingsBtn') : oResourcesBundle.getText('linkSettingsBtn'),
             press: function() {
+
+                var oAppData = {
+                    showGroupSelection: false,
+                    title: oModel.getProperty('/config/display_title_text'),
+                    subtitle: oModel.getProperty('/config/display_subtitle_text')
+                };
+                //links and tiles settings view has different properties
+                if (!sType || sType == 'tile') {
+                    oAppData.info = oModel.getProperty('/config/display_info_text');
+                    oAppData.icon = oModel.getProperty('/config/display_icon_url');
+                    oAppData.keywords = oModel.getProperty('/config/display_search_keywords');
+                } else if (sType == 'link') {
+                    oAppData.showInfo = false;
+                    oAppData.showIcon = false;
+                    oAppData.showPreview = false;
+                }
 
                 var settingsView = sap.ui.view({
                     type: sap.ui.core.mvc.ViewType.JS,
                     viewName: "sap.ushell.ui.footerbar.SaveAsTile",
                     viewData: {
-                        appData: {
-                            showGroupSelection: false,
-                            title: oModel.getProperty('/config/display_title_text'),
-                            subtitle: oModel.getProperty('/config/display_subtitle_text'),
-                            info: oModel.getProperty('/config/display_info_text'),
-                            icon: oModel.getProperty('/config/display_icon_url'),
-                            keywords: oModel.getProperty('/config/display_search_keywords')
-                        }
+                        appData: oAppData
                     }
                 });
 
@@ -300,7 +320,7 @@ this.sap = this.sap || {};
 
                 var oDialog = new sap.m.Dialog({
                     id: 'settingsDialog',
-                    title: oResourcesBundle.getText('tileSettingsButtonTitle'),
+                    title: (!sType || sType == "tile") ? oResourcesBundle.getText('tileSettingsDialogTitle') : oResourcesBundle.getText('linkSettingsDialogTitle'),
                     contentWidth: '400px',
                     content: oSimpleForm,
                     beginButton: okButton,

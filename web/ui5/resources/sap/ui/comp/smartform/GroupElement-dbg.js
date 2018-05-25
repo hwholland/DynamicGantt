@@ -1,14 +1,25 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.smartform.GroupElement.
 sap.ui.define([
-	'jquery.sap.global', 'sap/m/Label', "sap/m/VBox", "sap/m/HBox", 'sap/ui/comp/library', 'sap/ui/core/Element', 'sap/ui/layout/form/FormElement', 'sap/ui/layout/ResponsiveFlowLayoutData', 'sap/ui/comp/smartfield/SmartLabel', 'sap/ui/comp/smartfield/SmartField', 'sap/ui/comp/smartfield/BindingUtil', 'sap/ui/comp/smartfield/Configuration', 'sap/ui/core/TooltipBase'
-], function(jQuery, Label, VBox, HBox, library, Element, FormElement, ResponsiveFlowLayoutData, SmartLabel, SmartField, BindingUtil, Configuration, TooltipBase) {
+	'jquery.sap.global', 'sap/m/Label', 'sap/ui/comp/library', 'sap/ui/core/Element',
+	'sap/ui/layout/form/FormElement', 'sap/ui/comp/smartfield/SmartLabel', 'sap/ui/comp/smartfield/SmartField'
+], function(jQuery, Label, library, Element, FormElement, SmartLabel, SmartField) {
 	"use strict";
+
+	var VBox;
+	var HBox;
+	var FlexItemData;
+	var VariantLayoutData;
+	var GridData;
+
+	// shortcut for sap.ui.comp.smartfield.ControlContextType
+	var ControlContextType = library.smartfield.ControlContextType;
 
 	/**
 	 * Constructor for a new smartform/GroupElement.
@@ -16,8 +27,7 @@ sap.ui.define([
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class A GroupElement is a combination of one label and different controls associated to this label.
-	 * @extends sap.ui.core.Control
-	 * @author Alexander Fürbach
+	 * @extends sap.ui.layout.form.FormElement
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.smartform.GroupElement
@@ -31,8 +41,14 @@ sap.ui.define([
 			properties: {
 
 				/**
-				 * Specifies whether the groups shall be rendered in a ResponsiveLayout with label on top of the group element. Each group will be
-				 * rendered in a new line.
+				 * Specifies whether the groups shall be rendered in a <code>ResponsiveLayout</code> with label on top of the group element.
+				 * Each group will be rendered in a new line.
+				 *
+				 * <b>Note:</b> If <code>Group</code> is assigned to a <code>SmartForm</code> control,
+				 * this property is inherited from the <code>SmartForm</code> control.
+				 *
+				 * So don't set it to a different value from the one in the <code>SmartForm</code> control. For performance reasons it might
+				 * make sense to set it manually to the same value as the one in the <code>SmartForm</code> control when creating the <code>GroupElement</code> element.
 				 */
 				useHorizontalLayout: {
 					type: "boolean",
@@ -42,6 +58,11 @@ sap.ui.define([
 
 				/**
 				 * Specifies the minimal size in pixels of all group elements of the form if horizontal Layout is used.
+				 *
+				 * <b>Note:</b> If <code>Group</code> is assigned to a <code>SmartForm</code> control,
+				 * this property is inherited from the <code>SmartForm</code> control. So don't set it manually.
+				 *
+				 * @deprecated Since version 1.48.0, please do not use this property as it does not have any effect on the current layout of the <code>SmartForm</code> control.
 				 */
 				horizontalLayoutGroupElementMinWidth: {
 					type: "int",
@@ -63,6 +84,11 @@ sap.ui.define([
 
 				/**
 				 * Aggregation of controls to be displayed together with a label.
+				 *
+				 * <b>Warning:</b> Do not put any layout or other container controls in here.
+				 * This could damage the visual layout, keyboard support and screen-reader support.
+				 * Only form controls are allowed. Views are also not supported.
+				 * Allowed controls implement the interface <code>sap.ui.core.IFormContent</code>.
 				 */
 				elements: {
 					type: "sap.ui.core.Control",
@@ -76,39 +102,27 @@ sap.ui.define([
 				 * The event is fired after the visibility of the control has changed.
 				 */
 				visibleChanged: {}
-			}
+			},
+			designtime: "sap/ui/comp/designtime/smartform/GroupElement.designtime"
 		},
-		_visibilityDerived: false
+		_bVisibleElements: false,
+		_bHorizontalLayoutUsed: false
 	});
 
-	/**
-	 * Initialize the control.
-	 * 
-	 * @private
-	 */
-	GroupElement.prototype.init = function() {
+	GroupElement._myVBox = undefined;
+
+	GroupElement.prototype.init = function(){
+
 		FormElement.prototype.init.apply(this, arguments);
+
+		this._oObserver.observe(this, {
+			properties: ["useHorizontalLayout", "horizontalLayoutGroupElementMinWidth", "elementForLabel"]
+		});
+
 	};
 
 	GroupElement.prototype._getFieldRelevantForLabel = function() {
-		var aField = this.getFields();
-		var aElements = [];
-		var that = this;
-
-		aField.forEach(function(oField) {
-			if (oField instanceof VBox && that.getUseHorizontalLayout()) {
-				aElements = aElements.concat(that._extractFields([
-					oField
-				]));
-			} else {
-				aElements.push(oField);
-			}
-		});
-
-		aElements = aElements.filter(function(oField) {
-			return !(oField instanceof sap.m.Label);
-		});
-
+		var aElements = this.getElements();
 		var iIndex = this.getElementForLabel();
 
 		if (aElements.length > iIndex && (aElements[iIndex] instanceof SmartField)) {
@@ -118,11 +132,8 @@ sap.ui.define([
 		return null;
 	};
 
-	GroupElement.prototype._extractFields = function(aElements, bExludeLabel) {
+	GroupElement.prototype._extractFields = function(aElements, bExcludeLabel) {
 		var aFields = [];
-		if (bExludeLabel === undefined) {
-			bExludeLabel = false;
-		}
 
 		aElements.forEach(function(oElement) {
 			if (oElement instanceof VBox || oElement instanceof HBox) {
@@ -138,202 +149,360 @@ sap.ui.define([
 			aFields = this._extractFields(aFields);
 		}
 
-		if (bExludeLabel) {
+		if (bExcludeLabel) {
 			aFields = aFields.filter(function(oField) {
-				return !(oField instanceof sap.m.Label);
+				return !(oField instanceof Label);
 			});
 		}
 
 		return aFields;
 	};
 
-	GroupElement.prototype._createLabel = function(sLabel) {
-		var oLabel = null;
-		var oInfo = null;
-		var oBindingUtil = new BindingUtil();
-		var oField = this._getFieldRelevantForLabel();
+	GroupElement.prototype.setTooltip = function(vTooltip) {
 
-		if (oField) {
-			if (oField.getShowLabel()) {
-				if (sLabel) {
-					oField.setTextLabel(sLabel);
-				}
-				oLabel = new SmartLabel();
-				if (sLabel) {
-					oLabel.setText(sLabel);
-				}
-				oLabel.setLabelFor(oField);
-			}
-		} else {
-			oInfo = this.getBindingInfo("label");
-			if (sLabel) {
-				oLabel = new Label();
-				oLabel.setText(sLabel);
-			} else if (oInfo) {
-				oLabel = new Label();
-				oLabel.bindProperty("text", oBindingUtil.toBinding(oInfo));
-			}
-		}
+		FormElement.prototype.setTooltip.apply(this, [vTooltip]);
 
-		return oLabel;
+		var oRelevantField = this._getFieldRelevantForLabel();
+		var oLabel = this._getLabel();
+		_setTooltipToLabel.call(this, oLabel, oRelevantField);
+
+		return this;
+
 	};
 
-	GroupElement.prototype.updateLabelOfFormElement = function(aInnerElements, oSourceSmartField) {
-		var oTooltip = null, bCreated = false, oRelevantField = null;
+	/*
+	 * If a <code>Label</code> control is assigned to the <code>GroupElement</code> and this
+	 * <code>Label</code> control has a tooltip, use this tooltip. (As also the text of the given
+	 * <code>Label</code> control is used.)
+	 * Otherwise use the tooltip of the <code>GroupElement</code>
+	 */
+	function _setTooltipToLabel(oLabel, oRelevantField) {
 
-		// no elements => no label
-		if (this.getElements().length === 0) {
-			this.setLabel("");
+		if (oLabel == this._oSetLabel) {
+			return;  // don't change label set from outside
 		}
 
-		oRelevantField = this._getFieldRelevantForLabel();
+		var sTooltip;
 
-		var oLabel = this._getLabel();
-
-		// check if label is created for the correct field
-		if (oLabel && oLabel._sSmartFieldId && oRelevantField && oLabel._sSmartFieldId != oRelevantField.getId()) {
-			oLabel.destroy();
-			oLabel = null;
+		if (this._oSetLabel && this._oSetLabel instanceof sap.ui.core.Control) {
+			sTooltip = _getTooltipString.call(this._oSetLabel);
 		}
 
-		if (oLabel) { // label is always an object (see setLabel)
-			if (oRelevantField && (!(oLabel instanceof SmartLabel))) {
-				oLabel = this._createLabel(oLabel.getText());
-				bCreated = true;
-			}
-		} else {
-			oLabel = this._createLabel();
-			bCreated = true;
+		if (!sTooltip) {
+			sTooltip = _getTooltipString.call(this);
 		}
 
-		if (oLabel) {
-			if (oSourceSmartField && aInnerElements && (oLabel instanceof SmartLabel)) {
-				if (oSourceSmartField === oRelevantField) {
-					oLabel.updateLabelFor(aInnerElements);
-				} else {
-					// oLabel.updateAriaLabeledBy(aInnerElements);
-				}
-			}
-
-			var oSmartField = this._getFieldRelevantForLabel();
+		if (sTooltip) {
 			if (oLabel instanceof SmartLabel) {
-				if (/* oLabel.getText() && */oSmartField && oSmartField.setTextLabel) {
-					if (oSmartField.getTextLabel()) { // if the label was implicitly created and the SF has a textLabel -> set the same a label text
-						oLabel.setText(oSmartField.getTextLabel());
-					}
-				}
-			}
-
-			oTooltip = this.getTooltip();
-			if (oTooltip) {
-				if (oLabel instanceof SmartLabel) {
-					if (oSmartField && oSmartField.setTooltipLabel) {
-						oSmartField.setTooltipLabel(oTooltip.getText());
-					}
+				if (oRelevantField && oRelevantField.setTooltipLabel) {
+					oRelevantField.setTooltipLabel(sTooltip);
 				}
 			} else {
-				oLabel.setTooltip(oTooltip);
+				oLabel.setTooltip(sTooltip);
 			}
 		}
 
-		if (bCreated) {
-			this.setLabel(oLabel);
-		}
-
-	};
+	}
 
 	GroupElement.prototype.setLabel = function(oLabel) {
 
-		var oOldLabel, oLabelNew = oLabel;
-		var aItems;
+		if (!oLabel && this._bMoveLabelToVBox) {
+			// Label is just removed as moved to VBox -> only update aggregation
+			return this.setAggregation("label", oLabel);
+		}
+
+		if (this._oSetLabel && (typeof this._oSetLabel !== "string")) {
+			this._oSetLabel.detachEvent("_change", _handleLabelChanged, this);
+		}
+
+		var oOldLabel;
+		var sOldLabel;
+		var oSmartField;
+
 		if (typeof oLabel === "string") {
-
+			// label is stored in this._oLabel
 			oOldLabel = this._getLabel();
-			if (oOldLabel && oOldLabel instanceof SmartLabel && oLabel.length > 0) {
-				oOldLabel.setText(oLabel);
-
-				oLabelNew = oOldLabel;
-
-				var oSmartField = this._getFieldRelevantForLabel();
-				if (oSmartField && oSmartField.getTextLabel && oLabel != null) {// !oSmartField.getTextLabel()) {
-					oSmartField.setTextLabel(oLabel);
-				}
-
-			} else {
-				oLabelNew = new Label({
-					text: oLabel
-				});
+			if (oOldLabel) {
+				sOldLabel = oOldLabel.getText();
 			}
+		} else if (!oLabel && this._oSetLabel) {
+			sOldLabel = this.getLabelText();
 		}
 
-		if (this.getUseHorizontalLayout()) {
-			if (this.getFields()[0] instanceof VBox) {
-				aItems = this.getFields()[0].getItems();
-				aItems.some(function(oItem) {
-					if (oItem instanceof Label) {
-						oOldLabel = oItem;
-						return true;
+		// use standard logic
+		FormElement.prototype.setLabel.apply(this, [oLabel]);
+
+		// just store given Label to access it easily
+		this._oSetLabel = oLabel;
+		_setLabelToVBox.call(this);
+
+		if (typeof oLabel === "string") {
+			// label is stored in this._oLabel
+			if (this._oLabel instanceof SmartLabel && oLabel != sOldLabel && (oLabel.length > 0 || sOldLabel.length > 0)) {
+				oSmartField = this._getFieldRelevantForLabel();
+				if (oSmartField && oLabel != null) {
+					if (oSmartField.getTextLabel) {
+						if (!oSmartField._oTextLabelSetByGroupElement) {
+							oSmartField._oTextLabelSetByGroupElement = {oldText: oSmartField.getTextLabel()};
+						}
+						oSmartField.setTextLabel(oLabel);
 					}
-				});
-
-				if (oOldLabel) {
-					oOldLabel = oLabelNew;
-				} else {
-					this.getFields()[0].insertItem(oLabelNew, 0);
 				}
-				return this;
 			}
+			if (!this._bHorizontalLayoutUsed) {
+				this.setAggregation("_label", this._oLabel, true); // use Aggregation to allow model inheritance
+			}
+			this._oLabel.isRequired = _labelIsRequired; // use GroupElements logic
+			this._oLabel.isDisplayOnly = _labelIsDisplayOnly; // use GroupElements logic
+		} else {
+			if (oLabel) {
+				if (oLabel.isRequired) {
+					oLabel.isRequired = _labelIsRequired; // use GroupElements logic
+				}
+				if (oLabel.isDisplayOnly) {
+					oLabel.isDisplayOnly = _labelIsDisplayOnly; // use GroupElements logic
+				}
+				oLabel.attachEvent("_change", _handleLabelChanged, this);
+			} else {
+				oSmartField = this._getFieldRelevantForLabel();
+				if (oSmartField) {
+					_restoreTextLabel.call(this, oSmartField, sOldLabel);
+				}
+			}
+			this.updateLabelOfFormElement(); // maybe new SmartLabel needs to be created
 		}
 
-		FormElement.prototype.setLabel.apply(this, [
-			oLabelNew
-		]);
+		return this;
+
 	};
 
-	GroupElement.prototype.setTooltip = function(oTooltip) {
-		var oTooltipNew = oTooltip;
-		if (typeof oTooltip === "string") {
-			oTooltipNew = new TooltipBase({
-				text: oTooltip
-			});
+	GroupElement.prototype.destroyLabel = function() {
+
+		var sOldLabel = this.getLabelText();
+
+		// use standard logic
+		FormElement.prototype.destroyLabel.apply(this);
+
+		delete this._oSetLabel;
+		_setLabelToVBox.call(this);
+
+		var oSmartField = this._getFieldRelevantForLabel();
+		if (oSmartField) {
+			_restoreTextLabel.call(this, oSmartField, sOldLabel);
 		}
 
-		FormElement.prototype.setTooltip.apply(this, [
-			oTooltipNew
-		]);
+		this.updateLabelOfFormElement(); // maybe new SmartLabel needs to be created
+
+		return this;
+
+	};
+
+	function _handleLabelChanged(oEvent) {
+
+		if (oEvent.getParameter("name") == "text") {
+			var oLabel = oEvent.oSource;
+			var sText = oLabel.getText();
+
+			if (this._oLabel) {
+				this._oLabel.setText(sText);
+			}
+
+			var oSmartField = this._getFieldRelevantForLabel();
+			if (oSmartField && oSmartField.getTextLabel) {
+					if (!oSmartField._oTextLabelSetByGroupElement) {
+						oSmartField._oTextLabelSetByGroupElement = {oldText: oSmartField.getTextLabel()};
+					}
+					oSmartField.setTextLabel(sText);
+			}
+		}
+
+	}
+
+	function _setLabelToVBox() {
+
+		if (!this._bHorizontalLayoutUsed) {
+			return;
+		}
+
+		var aFields = this.getFields();
+		var oOldLabel;
+
+		if (aFields.length > 0) {
+			var oVBox = this.getFields()[0];
+			if (oVBox instanceof VBox) {
+				var aItems = oVBox.getItems();
+				var oNewLabel = this._getLabel();
+				if (aItems.length > 0 && aItems[0] instanceof Label) {
+					oOldLabel = aItems[0];
+				}
+
+				this._bMoveLabelToVBox = true;
+
+				if (oOldLabel && oOldLabel != oNewLabel) {
+					oVBox.removeItem(0);
+					if (oOldLabel._bCreatedByGroupElement) {
+						// own Label
+						this.setAggregation("_label", oOldLabel, true); // use Aggregation to allow model inheritance
+					} else {
+						// Label set from outside -> back to aggregation
+						this.setAggregation("label", oOldLabel);
+					}
+				}
+				if (oNewLabel && oOldLabel != oNewLabel) {
+					oVBox.insertItem(oNewLabel, 0);
+				}
+
+				this._bMoveLabelToVBox = false;
+				_updateLabelFor.call(this);
+			}
+		}
+
+	}
+
+	function _labelIsRequired(){
+
+		if (this.getRequired && this.getRequired()) {
+			return true;
+		}
+
+		var oGroupElement = this.getParent();
+		if (oGroupElement instanceof sap.m.VBox) {
+			oGroupElement = oGroupElement.getParent();
+		}
+
+		var aFields = oGroupElement.getElements();
+
+		for ( var i = 0; i < aFields.length; i++) {
+			var oField = aFields[i];
+			if (oField.getRequired && oField.getRequired() === true &&
+					(!oField.getEditable || oField.getEditable()) &&
+					(!oField.getContextEditable || oField.getContextEditable())) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}
+
+	function _labelIsDisplayOnly(){
+
+		if (this.getDisplayOnly) {
+			if (!this.isPropertyInitial("displayOnly")) {
+				return this.getDisplayOnly();
+			}
+
+			var oGroupElement = this.getParent();
+			if (oGroupElement instanceof sap.m.VBox) {
+				oGroupElement = oGroupElement.getParent();
+			}
+			var oGroup = oGroupElement.getParent();
+
+			if (oGroup) {
+				var oForm = oGroup.getParent();
+
+				if (oForm) {
+					return !oForm.getEditable();
+				}
+			}
+		}
+
+		return false;
+
+	}
+
+
+	function _labelIsWrapping(){
+
+		// If GroupElement creates own Label, check wrapping property of original set Label
+		// use this function only for Labels created by GroupElement
+
+		var oGroupElement = this.getParent();
+		if (oGroupElement instanceof sap.m.VBox) {
+			oGroupElement = oGroupElement.getParent();
+		}
+
+		if (oGroupElement._oSetLabel && !(typeof oGroupElement._oSetLabel === "string") &&
+				oGroupElement._oSetLabel.getWrapping && !oGroupElement._oSetLabel.isPropertyInitial("wrapping")) {
+			return oGroupElement._oSetLabel.getWrapping();
+		}
+
+		return true;
+
+	}
+
+	// overwrite for case VBox is used
+	function _updateLabelFor(){
+
+		var oField = this._getFieldRelevantForLabel();
+
+		if (oField) {
+			if (this._oLabel) {
+				this._oLabel.setLabelFor(oField); // as Label is internal of FormElement, we can use original labelFor
+			}
+			return; // use SmartField logic
+		}
+
+		var aFields = this.getFields();
+		oField = aFields.length > 0 ? aFields[0] : null;
+
+		if (oField instanceof VBox) {
+			var aItems = oField.getItems();
+			if (aItems[1] instanceof HBox) {
+				oField = aItems[1].getItems()[0];
+			} else {
+				oField = aItems[1];
+			}
+		}
+
+		var oLabel = this._oLabel;
+		if (oLabel) {
+			oLabel.setLabelFor(oField); // as Label is internal of FormElement, we can use original labelFor
+		} else {
+			oLabel = this.getLabel();
+			if (oLabel instanceof sap.ui.core.Control /*might also be a string*/) {
+				oLabel.setAlternativeLabelFor(oField);
+			}
+		}
+
+	}
+
+	GroupElement.prototype.getLabel = function() {
+
+		return this._oSetLabel;
+
 	};
 
 	/**
-	 * Returns the internal Label independent whether it comes direct from GroupElement or from internal used VBox
-	 * 
+	 * Returns the internal Label independent whether it comes direct from <code>GroupElement</code> or from internal used <code>VBox</code>
+	 *
 	 * @return {object} which represents the internal Label
 	 * @private
 	 */
 	GroupElement.prototype._getLabel = function() {
-		var aElements = null, aItems = null, bResult = false;
-		var oLabel = FormElement.prototype.getLabel.apply(this);
 
-		if (!oLabel) {
-			aElements = this.getElements();
-			if (aElements && aElements.length > 0 && aElements[0] instanceof VBox) {
-				aItems = aElements[0].getItems();
-				aItems.some(function(oItem) {
-					bResult = false;
-					if (oItem instanceof Label) {
-						oLabel = oItem;
-						bResult = true;
-					}
-					return bResult;
-				});
-			}
+		if (this._oLabel) {
+			return this._oLabel;
+		} else {
+			return this._oSetLabel;
 		}
 
-		return oLabel;
+	};
+
+	// this function is used to get the rendered Label. If Label is in VBox it should not be rendered by Form
+	GroupElement.prototype.getLabelControl = function() {
+
+		if (this._bHorizontalLayoutUsed) {
+			return null;
+		} else {
+			return this._getLabel();
+		}
+
 	};
 
 	/**
 	 * Returns the text of the label.
-	 * 
+	 *
 	 * @return {string} text of the label.
 	 * @public
 	 */
@@ -348,9 +517,146 @@ sap.ui.define([
 		return sLabel;
 	};
 
+	GroupElement.prototype._createLabel = function(sLabel) {
+		var oLabel = null;
+		var oField = this._getFieldRelevantForLabel();
+
+		if (oField) {
+			if (oField.getShowLabel && oField.getShowLabel()) {
+				oLabel = new SmartLabel(oField.getId() + '-label');
+				if (sLabel) {
+					if (!oField._oTextLabelSetByGroupElement) {
+						oField._oTextLabelSetByGroupElement = {oldText: oField.getTextLabel()};
+					}
+					oField.setTextLabel(sLabel);
+					oLabel.setText(sLabel);
+				}
+				oLabel.setLabelFor(oField);
+			}
+		} else {
+			// create label with empty text too
+			oLabel = new Label();
+			oLabel.setText(sLabel);
+		}
+
+		if (oLabel) {
+			oLabel._bCreatedByGroupElement = true;
+			oLabel.isRequired = _labelIsRequired;
+			oLabel.isDisplayOnly = _labelIsDisplayOnly;
+			oLabel.isWrapping = _labelIsWrapping;
+			this._oLabel = oLabel;
+			if (!this._bHorizontalLayoutUsed) {
+				// if in VBox not needed to set parent here
+				this.setAggregation("_label", oLabel, true); // use Aggregation to allow model inheritance
+			}
+			if (this._oSetLabel && typeof this._oSetLabel !== "string") {
+				// remove assignment of unused label to field
+				this._oSetLabel.setAlternativeLabelFor(null);
+			}
+		}
+
+		return oLabel;
+	};
+
+	/*
+	 * If there is a SmartField used to determine a Label create an internal SmartLabel.
+	 * Otherwise use provided Label
+	 * If no label is provided at all create empty label - so there is always a label
+	 * If a Label was provided always use it's text, only if no Label provided use Label text of SmartField
+	 */
+	GroupElement.prototype.updateLabelOfFormElement = function() {
+		var bCreated = false, sOldText = null;
+		var aElements = this.getElements();
+
+		var oRelevantField = this._getFieldRelevantForLabel();
+		var oLabel = this._getLabel();
+		var bDestroy = false;
+
+		if (oLabel && oLabel._bCreatedByGroupElement) {
+			// check if Label is still valid
+			if (oLabel instanceof SmartLabel) {
+				// check if Label fits to SmartField
+				if (!oRelevantField || (oLabel._sSmartFieldId && oLabel._sSmartFieldId != oRelevantField.getId())) {
+					bDestroy = true;
+				}
+			} else if (oRelevantField){
+				// SmartLabel needed
+				bDestroy = true;
+			}
+
+			if (bDestroy) {
+				oLabel.destroy();
+				delete this._oLabel;
+				oLabel = null;
+				if (this._oSetLabel && !oRelevantField) {
+					// original Label exist and no SmartLabel needed -> go back to original Label
+					// go back to original Label
+					if (typeof this._oSetLabel === "string") {
+						FormElement.prototype.setLabel.apply(this, [this._oSetLabel]);
+						oLabel = this._oLabel;
+						this._oLabel.isRequired = _labelIsRequired; // use GroupElements logic
+						this._oLabel.isDisplayOnly = _labelIsDisplayOnly; // use GroupElements logic
+					} else {
+						oLabel = this._oSetLabel;
+					}
+					_setLabelToVBox.call(this);
+				}
+			}
+		} else if (oLabel && oRelevantField) {
+			// Label set from outside but SmartLabel needed
+			if (oLabel == this._oLabel) {
+				// destroy internal Label
+				oLabel.destroy();
+				delete this._oLabel;
+			}
+			oLabel = null; // don't use set Label
+		}
+
+		if (!oLabel) {
+			if (this._oSetLabel) {
+				// Label destroyed -> get text of original Label
+				if (typeof this._oSetLabel === "string") {
+					sOldText = this._oSetLabel;
+				} else {
+					sOldText = this._oSetLabel.getText();
+				}
+			} else {
+				sOldText = "";
+			}
+		}
+
+		if (!oLabel && aElements.length > 0) {
+			// new Label needed
+			oLabel = this._createLabel(sOldText);
+			bCreated = true;
+		}
+
+		if (oLabel) {
+			if (oLabel instanceof SmartLabel) {
+				if (oRelevantField && oRelevantField.setTextLabel && oRelevantField.getTextLabel()) {
+					// if the label was implicitly created and the SF has a textLabel -> set the same a label text
+					oLabel.setText(oRelevantField.getTextLabel());
+				}
+			}
+
+			_setTooltipToLabel.call(this, oLabel, oRelevantField);
+
+		}
+
+		if (bCreated) {
+			_setLabelToVBox.call(this);
+
+			if (oLabel && oLabel.setLabelFor && !(oLabel instanceof SmartLabel) && !oRelevantField && (aElements.length > 0)) {
+				oLabel.setLabelFor(aElements[0]);
+			}
+
+		}
+
+	};
+
 	/**
 	 * Setter for property editable of all smart fields in children hierarchy.
-	 * 
+	 *
 	 * @param {boolean} bEditMode new value for editable property of smart fields.
 	 * @return {sap.ui.comp.smartform.GroupElement} <code>this</code> to allow method chaining.
 	 * @public
@@ -358,22 +664,9 @@ sap.ui.define([
 	GroupElement.prototype.setEditMode = function(bEditMode) {
 
 		var aElement = this.getElements();
-		var aItem = [];
-		var that = this;
 
 		aElement.forEach(function(oElement) {
-			if (oElement instanceof VBox) {
-				aItem = that._extractFields([
-					oElement
-				]);
-				aItem.forEach(function(oItem) {
-					if (oItem instanceof SmartField) {
-						if (!(oItem.data("editable") === false)) {
-							oItem.setContextEditable(bEditMode);
-						}
-					}
-				});
-			} else if (oElement instanceof SmartField) {
+			if (oElement instanceof SmartField) {
 				if (!(oElement.data("editable") === false)) {
 					oElement.setContextEditable(bEditMode);
 				}
@@ -383,199 +676,480 @@ sap.ui.define([
 		return this;
 	};
 
-	/**
-	 * Checks whether at least one field is visible
-	 * 
-	 * @param {array} aFields contains all that fields that shall be checked
-	 * @param {boolean} bIgnoreSmartLabels defines whether SmartLabels shall be considered for visibility determination (in VBox = false)
-	 * @private
-	 */
-	GroupElement.prototype._getVisibilityOfFields = function(aFields, bIgnoreSmartLabels) {
-		var bResult = false;
-		var i = 0, iLength = 0, oField = null;
+	GroupElement.prototype.invalidateLabel = function(){
 
-		if (aFields && aFields.length) {
-			iLength = aFields.length;
-			for (i = 0; i < iLength; i++) {
-				oField = aFields[i];
-				if (oField) {
+		var oLabel = this._getLabel();
 
-					// this case shall ignore SmartLabels if they come from VBox
-					if (bIgnoreSmartLabels && oField instanceof SmartLabel) {
-						continue;
-					}
-
-					if (oField instanceof VBox) {
-						bResult = this._getVisibilityOfFields(this._extractFields([
-							oField
-						]), true);
-					} else {
-						bResult = oField.getVisible();
-					}
-				}
-
-				// break if at least one field is visible
-				if (bResult) {
-					break;
-				}
-			}
+		if (oLabel) {
+			oLabel.invalidate();
 		}
 
-		return bResult;
 	};
 
 	/**
-	 * Updates the visibility of the FormElement
-	 * 
+	 * Updates the visibility of the <code>FormElement</code>
+	 *
 	 * @private
 	 */
 	GroupElement.prototype._updateFormElementVisibility = function() {
-		var bActualVisible = this.getVisible();
-		var bVisible = false, aFields = null;
 
-		if (bActualVisible === false && this._visibilityDerived === false) {
-			return;
-		}
-
-		aFields = this.getFields();
-		if (aFields && aFields.length) {
-			bVisible = this._getVisibilityOfFields(aFields);
-		}
-
-		if (bActualVisible !== bVisible) {
-			this._visibilityDerived = true;
-			FormElement.prototype.setProperty.apply(this, [
-				'visible', bVisible
-			]);
-			this.fireVisibleChanged({
-				visible: bVisible
-			});
-			if (this.getParent()) {
-				this.getParent()._updateLineBreaks();
+		var bVisible = this.getVisibleBasedOnElements();
+		if (this._bVisibleElements !== bVisible) {
+			this._bVisibleElements = bVisible;
+			if (this.isPropertyInitial("visible")) {
+				// as property can over rule the elements settings
+				_visibilityChanged.call(this);
+				this.invalidate(); // to force re-rendering
 			}
 		}
-	};
 
-	/**
-	 * Call back method in case of editable property in SmartField was changed
-	 * 
-	 * @private
-	 */
-	GroupElement.prototype._updateFormElementEditable = function(oEvent) {
-		var oLabel = this._getLabel();
-		if (oLabel && oLabel instanceof SmartLabel) {
-			oLabel.bindRequiredPropertyToSmartField();
-		}
 	};
 
 	GroupElement.prototype._updateLayout = function() {
-		var that = this;
+
 		var oVBox = null;
 		var oHBox = null;
-		var aFields = [];
-		var aElements = [];
 		var oLayoutData = null;
+		var bUseHorizontalLayout = this.getUseHorizontalLayout();
+		var aVBoxContent;
+		var iIndex = 0;
+		var oField;
 
-		if (this.getUseHorizontalLayout()) {
-			aElements = this.getFields();
-			aFields = this._extractFields(aElements, true);
-		} else {
-			aFields = this.getFields();
+		if (bUseHorizontalLayout == this._bHorizontalLayoutUsed) {
+			// layout has not changed
+			return;
 		}
+
+		if (bUseHorizontalLayout && !_checkVBoxLoaded.call(this)) {
+			// VBox must be loaded async, perform later, if loaded
+			return;
+		}
+
+		// get Fields corresponding to old layout
+		var aElements = this.getElements();
 		var oLabel = this._getLabel();
 
-		if (this.getUseHorizontalLayout()) {
-			// keep layout data
-			if (this.getFields().length > 0 && this.getFields()[0].getLayoutData()) {
-				oLayoutData = this.getFields()[0].getLayoutData().clone();
-			}
-			this.removeAllFields();
-			if (aFields.length > 0) {
+	// as fieldsAggregation is changed while moving fields from and to VBox prevent change on observer
+		this._bNoObserverChange = true;
 
-				if (aFields.length > 1) {
-					oHBox = new HBox({
-						"items": [].concat(aFields)
-					});
+		if (bUseHorizontalLayout) {
+			if (aElements.length > 0) {
+				// insert internal layouts
+				// keep layout data
+				if (aElements[0].getLayoutData()) {
+					oLayoutData = aElements[0].getLayoutData();
+				}
+				this.removeAllFields();
+
+				if (aElements.length > 1) {
+					// HBox needed
+					for (iIndex = 0; iIndex < aElements.length; iIndex++) {
+						oField = aElements[iIndex];
+
+						if (iIndex > 0) {
+							_addLayoutDataToField.call(this, oField);
+						}
+					}
+					oHBox = _createHBox.call(this, aElements.slice(0));
 				}
 
 				if (oHBox) {
-					oVBox = new VBox({
-						"items": [].concat(oHBox)
-					});
+					aVBoxContent = [oHBox];
 				} else {
-					oVBox = new VBox({
-						"items": [].concat(aFields)
-					});
+					aVBoxContent = aElements.slice(0);
 				}
 
-				oVBox.addStyleClass("sapUiCompGroupElementVBox");
-				if (oLayoutData) {
-					oVBox.setLayoutData(oLayoutData);
-				}
+				oVBox = _createVBox.call(this, aVBoxContent, oLabel, oLayoutData);
 				this.addField(oVBox);
-			}
 
-			if (oLabel) {
-				FormElement.prototype.setLabel.apply(this, [
-					new sap.m.Label()
-				]);
-				FormElement.prototype.destroyLabel.apply(this);
-				if (oVBox) {
-					oVBox.insertItem(oLabel, 0);
+				if (oLabel) {
+					_updateLabelFor.call(this); // as FormElement.addField sets Label to VBox
 				}
 			}
-
 		} else {
+			// remove internal layouts
+			var aFields = this.getFields();
+			if (aFields[0] instanceof VBox) {
+				oVBox = aFields[0];
+				aVBoxContent = oVBox.getItems();
+				if (aElements.length > 1 && aVBoxContent.length > 0) {
+					if (oLabel) {
+						if (aVBoxContent.length > 1 && aVBoxContent[1] instanceof HBox) {
+							oHBox = aVBoxContent[1];
+						}
+					} else if (aVBoxContent[0] instanceof HBox) {
+						oHBox = aVBoxContent[0];
+					}
+					if (oHBox) {
+						oHBox.removeAllItems();
+						oHBox.destroy();
+					}
+				}
+				oVBox.removeAllItems();
+				oVBox.destroy();
+			}
 			this.removeAllFields();
-			aFields.forEach(function(oField) {
-				that.addField(oField);
+			for (iIndex = 0; iIndex < aElements.length; iIndex++) {
+				oField = aElements[iIndex];
+				_removeLayoutDataFromField.call(this, oField);
+				this.addField(oField);
+			}
+			if (oLabel) {
+				if (oLabel == this._oLabel) {
+					this.setAggregation("_label", oLabel, true); // use Aggregation to allow model inheritance
+				} else {
+					this.setAggregation("label", oLabel);
+				}
+			}
+		}
+
+		this._bHorizontalLayoutUsed = bUseHorizontalLayout;
+		this._bNoObserverChange = false;
+
+	};
+
+	function _checkVBoxLoaded() {
+
+		if ((!VBox || !HBox || !FlexItemData || !VariantLayoutData || !GridData) && !this._bVBoxRequested) {
+			VBox = sap.ui.require("sap/m/VBox");
+			HBox = sap.ui.require("sap/m/HBox");
+			FlexItemData = sap.ui.require("sap/m/FlexItemData");
+			VariantLayoutData = sap.ui.require("sap/ui/core/VariantLayoutData");
+			GridData = sap.ui.require("sap/ui/layout/GridData");
+			if (!VBox || !HBox || !FlexItemData || !VariantLayoutData || !GridData) {
+				sap.ui.require(["sap/m/VBox", "sap/m/HBox", "sap/m/FlexItemData",
+				                "sap/ui/core/VariantLayoutData", "sap/ui/layout/GridData"], _VBoxLoaded.bind(this));
+				this._bVBoxRequested = true;
+			}
+		}
+		if (VBox && HBox && FlexItemData && VariantLayoutData && GridData && !this._bVBoxRequested) {
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+
+	function _VBoxLoaded(fnVBox, fnHBox, fnFlexItemData, fnVariantLayoutData, fnGridData) {
+
+		VBox = fnVBox;
+		HBox = fnHBox;
+		FlexItemData = fnFlexItemData;
+		VariantLayoutData = fnVariantLayoutData;
+		GridData = fnGridData;
+		this._bVBoxRequested = false;
+
+		if (!this._bIsBeingDestroyed) {
+			this._updateLayout();
+		}
+
+	}
+
+	function _addLayoutDataToField(oField) {
+
+		var oLayoutData = oField.getLayoutData();
+		if (oLayoutData) {
+			if (oLayoutData.getStyleClass && !oLayoutData.getStyleClass()) {
+				oLayoutData.setStyleClass("sapUiCompGroupElementHBoxPadding");
+			}
+		} else {
+			oLayoutData = new sap.m.FlexItemData({
+				styleClass: "sapUiCompGroupElementHBoxPadding"
+			});
+			oLayoutData._bCreatedByGroupElement = true;
+			oField.setLayoutData(oLayoutData);
+		}
+
+	}
+
+	function _removeLayoutDataFromField(oField) {
+
+		var oLayoutData = oField.getLayoutData();
+		if (oLayoutData) {
+			if (oLayoutData._bCreatedByGroupElement) {
+				oLayoutData.destroy();
+			} else if (oLayoutData.getStyleClass && oLayoutData.getStyleClass() == "sapUiCompGroupElementHBoxPadding") {
+				oLayoutData.setStyleClass();
+			}
+		}
+
+	}
+
+	function _createVBox(aFields, oLabel, oLayoutData) {
+
+		if (!GroupElement._myVBox) {
+			// use own VBox to have a valid Form content
+			GroupElement._myVBox = VBox.extend("SmartFormVBox", {
+				metadata: {
+					interfaces : ["sap.ui.core.IFormContent"]
+				},
+				enhanceAccessibilityState: _enhanceAccessibilityStateVBox,
+				renderer: "sap.m.VBoxRenderer"
 			});
 		}
 
-	};
+		this._bMoveLabelToVBox = true;
 
-	/**
-	 * Sets the given value for the given property
-	 * 
-	 * @param {string} sPropertyName name of the property to set
-	 * @param {any} oValue value to set the property to
-	 * @public
+		var aContent = aFields.slice(0);
+		if (oLabel) {
+			aContent.splice(0, 0, oLabel);
+		}
+
+		var oVBox = new GroupElement._myVBox( this.getId() + "--VBox", {
+			"items": aContent
+		});
+
+		this._bMoveLabelToVBox = false;
+
+		oVBox.addStyleClass("sapUiCompGroupElementVBox");
+		oVBox._oGroupElement = this;
+
+		if (oLayoutData &&
+				(oLayoutData instanceof GridData || oLayoutData instanceof VariantLayoutData ||
+				 oLayoutData.getMetadata().getName() == "sap.ui.layout.ResponsiveFlowLayoutData")) {
+			// clone original LayoutData and don't remove them from Field
+			// only clone LayoutData relevant for Form
+			oVBox.setLayoutData(oLayoutData.clone());
+		}
+
+		_updateVBoxGridDataSpan.call(this, oVBox); // get Spans from SmartForms Layout
+
+		return oVBox;
+
+	}
+
+	function _createHBox(aContent) {
+
+		var oHBox = new HBox( this.getId() + "--HBox", {
+			"items": aContent
+		});
+
+		oHBox._oGroupElement = this;
+		oHBox.enhanceAccessibilityState = _enhanceAccessibilityStateVBox;
+
+		return oHBox;
+
+	}
+
+	function _enhanceAccessibilityStateVBox(oElement, mAriaProps) {
+
+		var oLabel = this._oGroupElement._getLabel();
+		if (oLabel && oLabel != oElement && !(oElement instanceof HBox)) {
+
+			var sLabelledBy = mAriaProps["labelledby"];
+			if (!sLabelledBy) {
+				sLabelledBy = oLabel.getId();
+			} else {
+				var aLabels = sLabelledBy.split(" ");
+				if (jQuery.inArray(oLabel.getId(), aLabels) < 0) {
+					aLabels.splice(0, 0, oLabel.getId());
+					sLabelledBy = aLabels.join(" ");
+				}
+			}
+			mAriaProps["labelledby"] = sLabelledBy;
+
+		}
+
+		return mAriaProps;
+
+	}
+
+	/*
+	 * gets the Span data from the SmartForm to create and update the gridData of the VBox
 	 */
-	GroupElement.prototype.setProperty = function(sPropertyName, oValue) {
-		FormElement.prototype.setProperty.apply(this, [
-			sPropertyName, oValue
-		]);
+	GroupElement.prototype._updateGridDataSpan = function() {
 
-		if (sPropertyName === 'visible') {
-			this._visibilityDerived = false;
-			this._updateFormElementVisibility();
+		if (!this._bHorizontalLayoutUsed) {
+			return;
+		}
+
+		var aFields = this.getFields();
+		if (aFields.length > 0) {
+			var oVBox = aFields[0];
+			if (oVBox instanceof VBox) {
+				_updateVBoxGridDataSpan.call(this, oVBox);
+			}
 		}
 
 	};
 
+	function _updateVBoxGridDataSpan(oVBox) {
+
+		var oGroup = this.getParent();
+		if (!oGroup || !oGroup.addGroupElement) {
+			return;
+		}
+
+		var oSmartForm = oGroup.getParent();
+		while (oSmartForm && !oSmartForm.addGroup && oSmartForm.getParent) {
+			// could be Form and Panel
+			oSmartForm = oSmartForm.getParent();
+		}
+
+		if (!oSmartForm) {
+			return;
+		}
+
+		var sSpan = "";
+		var oLayout = oSmartForm.getLayout();
+
+		if (oLayout) {
+			sSpan = oLayout.getGridDataSpan();
+		}
+
+		var oLayoutData = oVBox.getLayoutData();
+		var oNewLayoutData;
+
+		if (oLayoutData) {
+			if (!(oLayoutData instanceof GridData) && !(oLayoutData instanceof VariantLayoutData) && sSpan) {
+				oNewLayoutData = new GridData({
+					span: sSpan
+				});
+				oNewLayoutData._bFromGroupElement = true;
+				var oVariantLayout = new VariantLayoutData({
+					multipleLayoutData: [oLayoutData, oNewLayoutData]
+				});
+				oVariantLayout._bFromGroupElement = true;
+				oVBox.setLayoutData(oVariantLayout);
+			} else if (oLayoutData instanceof GridData) {
+				if (oLayoutData._bFromGroupElement) {
+					// only update own GridData
+					if (!sSpan) {
+						oLayoutData.destroy();
+					} else {
+						oLayoutData.setSpan(sSpan);
+					}
+				}
+			} else if (oLayoutData instanceof VariantLayoutData) {
+				var bFound = false;
+				oLayoutData.getMultipleLayoutData().forEach(function(oLayoutData) {
+					if (oLayoutData instanceof GridData) {
+						bFound = true;
+						if (oLayoutData._bFromGroupElement) {
+							// only update own GridData
+							if (!sSpan) {
+								oLayoutData.destroy();
+							} else {
+								oLayoutData.setSpan(sSpan);
+							}
+						}
+					}
+				});
+				if (!bFound && sSpan) {
+					oNewLayoutData = new GridData({
+						span: sSpan
+					});
+					oNewLayoutData._bFromGroupElement = true;
+					oLayoutData.addMultipleLayoutData(oNewLayoutData);
+				}
+				if (oLayoutData._bFromGroupElement && oLayoutData.getMultipleLayoutData().length == 1) {
+					oNewLayoutData = oLayoutData.getMultipleLayoutData()[0];
+					oVBox.setLayoutData(oNewLayoutData);
+					oLayoutData.destroy();
+				}
+			}
+		} else if (sSpan) {
+			oNewLayoutData = new GridData({
+				span: sSpan
+			});
+			oNewLayoutData._bFromGroupElement = true;
+			oVBox.setLayoutData(oNewLayoutData);
+		}
+
+		var aElements = this.getElements();
+		for (var i = 0; i < aElements.length; i++) {
+			var oElement = aElements[i];
+			if (oElement && oElement.setControlContext) {
+				if (sSpan) {
+					oElement.setControlContext(ControlContextType.SmartFormGrid);
+				} else {
+					oElement.setControlContext(ControlContextType.Form);
+				}
+			}
+		}
+
+	}
+
+	GroupElement.prototype._setLinebreak = function(bLineBreakXL, bLineBreakL, bLineBreakM, bLineBreakS) {
+
+		if (!this._bHorizontalLayoutUsed) {
+			return;
+		}
+
+		var aFields = this.getFields();
+		if (aFields.length > 0) {
+			var oVBox = aFields[0];
+			if (!(oVBox instanceof VBox)) {
+				return;
+			}
+
+			var oLayoutData = oVBox.getLayoutData();
+
+			if (oLayoutData) {
+				// LayoutData must be created by _updateVBoxGridDataSpan
+				if (oLayoutData instanceof VariantLayoutData) {
+					var aLayoutData = oLayoutData.getMultipleLayoutData();
+					for (var i = 0; i < aLayoutData.length; i++) {
+						oLayoutData = aLayoutData[i];
+						if (oLayoutData instanceof GridData) {
+							oLayoutData.setLinebreakXL(bLineBreakXL);
+							oLayoutData.setLinebreakL(bLineBreakL);
+							oLayoutData.setLinebreakM(bLineBreakM);
+							oLayoutData.setLinebreakS(bLineBreakS);
+						}
+					}
+				} else {
+					oLayoutData.setLinebreakXL(bLineBreakXL);
+					oLayoutData.setLinebreakL(bLineBreakL);
+					oLayoutData.setLinebreakM(bLineBreakM);
+					oLayoutData.setLinebreakS(bLineBreakS);
+				}
+			}
+		}
+
+	};
+
+	// do not use observer, as change from default to same value will not be recognized
 	GroupElement.prototype.setVisible = function(bVisible) {
-		this._visibilityDerived = false;
-		FormElement.prototype.setProperty.apply(this, [
-			'visible', bVisible
-		]);
-		this._updateFormElementVisibility();
+
+		var bLastVisible = this.isVisible();
+
+		FormElement.prototype.setVisible.apply(this, arguments);
+
+		if (bLastVisible != bVisible) {
+			_visibilityChanged.call(this);
+		}
+
+		return this;
+
 	};
 
-	GroupElement.prototype.setUseHorizontalLayout = function(bValue) {
-		this.setProperty("useHorizontalLayout", bValue);
+	GroupElement.prototype.isVisible = function(){
 
-		this._updateLayout();
+		if (this.isPropertyInitial("visible")) {
+			// use visibility based on elements
+			return this._bVisibleElements;
+		} else {
+			// visible is set -> retutn it
+			return this.getVisible();
+		}
+
 	};
 
-	GroupElement.prototype.setHorizontalLayoutGroupElementMinWidth = function(nValue) {
-		this.setProperty("horizontalLayoutGroupElementMinWidth", nValue);
+	function _visibilityChanged() {
 
-		this._updateLayout();
-	};
+		this.fireVisibleChanged({
+			visible: this.isVisible()
+		});
+		if (this.getParent()) {
+			this.getParent()._updateLineBreaks();
+		}
+
+	}
 
 	/**
 	 * Returns the from element.
-	 * 
+	 *
 	 * @return {sap.ui.layout.form.FormElement} the form element.
 	 * @public
 	 */
@@ -583,156 +1157,626 @@ sap.ui.define([
 		return this;
 	};
 
-	/**
-	 * Adds some control into the aggregation <code>elements</code>
-	 * 
-	 * @param {sap.ui.core.Control} oElement the control to add.
-	 * @public
-	 */
 	GroupElement.prototype.addElement = function(oElement) {
-		var that = this;
-		if (oElement.getEditable) {
-			if (!oElement.getEditable()) {
-				oElement.data("editable", false);
+
+		if (!oElement) {
+			return this;
+		}
+
+		// as "elements" aggregation is not used, at least validate it
+		oElement = this.validateAggregation("elements", oElement, /* multiple */ true);
+
+		_enhanceField.call(this, oElement);
+
+		var sLabelSmartFieldId;
+		if (this._oLabel && this._oLabel._bCreatedByGroupElement && this._oLabel._sSmartFieldId) {
+			sLabelSmartFieldId = this._oLabel._sSmartFieldId;
+		}
+
+		if (this._bHorizontalLayoutUsed) {
+			_addInsertFieldToVBox.call(this, oElement, undefined, true);
+		} else {
+			this.addField(oElement);
+		}
+
+		if (sLabelSmartFieldId && sLabelSmartFieldId != this._oLabel._sSmartFieldId) {
+			// as FormElement always assigns first field to Label, restore old assignment and use GroupElements logic
+			this._oLabel.setLabelFor(sLabelSmartFieldId);
+		}
+
+		this.updateLabelOfFormElement();
+		this._updateFormElementVisibility();
+
+		return this;
+	};
+
+	GroupElement.prototype.insertElement = function(oElement, iIndex) {
+
+		if (!oElement) {
+			return this;
+		}
+
+		// as "elements" aggregation is not used, at least validate it
+		oElement = this.validateAggregation("elements", oElement, /* multiple */ true);
+
+		_enhanceField.call(this, oElement);
+
+		var sLabelSmartFieldId;
+		if (this._oLabel && this._oLabel._bCreatedByGroupElement && this._oLabel._sSmartFieldId) {
+			sLabelSmartFieldId = this._oLabel._sSmartFieldId;
+		}
+
+		if (this._bHorizontalLayoutUsed) {
+			_addInsertFieldToVBox.call(this, oElement, iIndex, false);
+		} else {
+			this.insertField(oElement, iIndex);
+		}
+
+		if (sLabelSmartFieldId && sLabelSmartFieldId != this._oLabel._sSmartFieldId) {
+			// as FormElement always assigns first field to Label, restore old assignment and use GroupElements logic
+			this._oLabel.setLabelFor(sLabelSmartFieldId);
+		}
+
+		this.updateLabelOfFormElement();
+		this._updateFormElementVisibility();
+
+		return this;
+
+	};
+
+	GroupElement.prototype.getElements = function() {
+
+		var aElements;
+		var aFields;
+
+		if (this._bHorizontalLayoutUsed) {
+			aElements = this.getFields();
+			aFields = this._extractFields(aElements, true);
+		} else {
+			aFields = this.getFields();
+		}
+
+		return aFields;
+
+	};
+
+	GroupElement.prototype.indexOfElement = function(oElement) {
+
+		var iIndex = -1;
+
+		if (this._bHorizontalLayoutUsed) {
+			var aElements = this.getElements();
+			for (var i = 0; i < aElements.length; i++) {
+				if (oElement == aElements[i]) {
+					iIndex = i;
+					break;
+				}
+			}
+		} else {
+			iIndex = this.indexOfField(oElement);
+		}
+
+		return iIndex;
+
+	};
+
+	GroupElement.prototype.removeElement = function(vElement) {
+
+		var oResult;
+
+		var sLabelSmartFieldId;
+		if (this._oLabel && this._oLabel._bCreatedByGroupElement && this._oLabel._sSmartFieldId) {
+			sLabelSmartFieldId = this._oLabel._sSmartFieldId;
+		}
+
+		if (this._bHorizontalLayoutUsed) {
+			oResult = _removeFieldsFromVBox.call(this, vElement, false);
+		} else {
+			oResult = this.removeField(vElement);
+		}
+
+		if (oResult) {
+			_cleanUpField.call(this, oResult);
+		}
+
+		if (sLabelSmartFieldId && sLabelSmartFieldId != this._oLabel._sSmartFieldId) {
+			// as FormElement always assigns first field to Label, restore old assignment and use GroupElements logic
+			this._oLabel.setLabelFor(sLabelSmartFieldId);
+		}
+
+		this.updateLabelOfFormElement();
+		this._updateFormElementVisibility();
+
+		return oResult;
+
+	};
+
+	GroupElement.prototype.removeAllElements = function() {
+
+		var aResult;
+
+		if (this._bHorizontalLayoutUsed) {
+			aResult = _removeFieldsFromVBox.call(this, undefined, true);
+		} else {
+			aResult = this.removeAllFields();
+		}
+
+		if (aResult && Array.isArray(aResult)) {
+			for (var i = 0; i < aResult.length; i++) {
+				_cleanUpField.call(this, aResult[i]);
 			}
 		}
-		if (oElement.attachVisibleChanged) {
-			oElement.attachVisibleChanged(function(oEvent) {
-				that._updateFormElementVisibility();
-			});
-		}
-		if (oElement.attachContextEditableChanged) {
-			oElement.attachContextEditableChanged(function(oEvent) {
-				that._updateFormElementEditable(oEvent);
-			});
-		}
-		if (oElement.attachEditableChanged) {
-			oElement.attachEditableChanged(function(oEvent) {
-				that._updateFormElementEditable(oEvent);
-			});
-		}
-		if (oElement.attachInnerControlsCreated) {
-			oElement.attachInnerControlsCreated(function(oEvent) {
-				that._updateFormElementLabel(oEvent);
-			});
-		}
-		if (oElement.setControlContext) {
-			oElement.setControlContext(sap.ui.comp.smartfield.ControlContextType.Form);
-		}
 
-		this.addField(oElement);
 		this.updateLabelOfFormElement();
+		this._updateFormElementVisibility();
 
-		this._updateLayout();
+		return aResult;
+
 	};
+
+	GroupElement.prototype.destroyElements = function() {
+
+		if (this._bHorizontalLayoutUsed) {
+			var aFields = this.getFields();
+			if (aFields.length > 0) {
+				var oLabel = this._getLabel();
+				if (oLabel) {
+					aFields[0].removeItem(oLabel);
+					if (oLabel == this._oLabel) {
+						this.setAggregation("_label", oLabel, true); // use Aggregation to allow model inheritance
+					} else {
+						this.setAggregation("label", oLabel);
+					}
+				}
+				this.destroyFields();
+			}
+		} else {
+			this.destroyFields();
+		}
+
+		this.updateLabelOfFormElement();
+		this._updateFormElementVisibility();
+
+		return this;
+
+	};
+
+	GroupElement.prototype._observeChanges = function(oChanges){
+
+		FormElement.prototype._observeChanges.apply(this, arguments);
+
+		if (oChanges.object == this) {
+			// it's the GroupElement
+			switch (oChanges.name) {
+			case "useHorizontalLayout":
+				this._updateLayout();
+				break;
+
+			case "horizontalLayoutGroupElementMinWidth":
+				jQuery.sap.log.error("HorizontalLayoutGroupElementMinWidth is deprecated", this);
+				this._updateLayout();
+				break;
+
+			case "elementForLabel":
+				this.updateLabelOfFormElement();
+				break;
+
+			default:
+				break;
+			}
+		} else {
+			// it's some content control
+			_controlChanged.call(this, oChanges);
+		}
+
+	};
+
+	function _addInsertFieldToVBox(oField, iIndex, bAdd) {
+
+		var oLabel = this._getLabel();
+		var aFields = this.getFields();
+		var oVBox;
+		var oHBox;
+		var aItems;
+
+		if (aFields.length > 0) {
+			oVBox = aFields[0];
+		} else {
+			// is first field
+			aItems = [oField];
+
+			// keep LayoutData of first field
+			var oLayoutData = oField.getLayoutData();
+			oVBox = _createVBox.call(this, aItems, oLabel, oLayoutData);
+			this.addField(oVBox);
+			if (oLabel) {
+				_updateLabelFor.call(this); // as FormElement.addField sets Label to VBox
+			}
+			return;
+		}
+
+		if (!(oVBox instanceof VBox)) {
+			return;
+		}
+
+		aItems = oVBox.getItems();
+
+		if (oLabel) {
+			if (aItems.length > 1) {
+				oHBox = aItems[1];
+			}
+		} else if (aItems.length > 0) {
+			oHBox = aItems[0];
+		}
+
+		if (oHBox instanceof HBox) {
+			// insert field to existing HBox
+			aItems = oHBox.getItems();
+			if ((bAdd || iIndex > 0) && aItems.length > 0) {
+				_addLayoutDataToField.call(this, oField);
+			}
+			if (bAdd) {
+				oHBox.addItem(oField);
+			} else {
+				if (iIndex == 0 && aItems.length > 0) {
+					_addLayoutDataToField.call(this, aItems[0]);
+				}
+				oHBox.insertItem(oField, iIndex);
+			}
+		} else {
+			var oFirstField = oHBox;
+			aItems = [];
+			if (oFirstField) {
+				// create new HBox and add field
+				oVBox.removeItem(oFirstField);
+				if (bAdd || iIndex > 0) {
+					aItems.push(oFirstField);
+					aItems.push(oField);
+					_addLayoutDataToField.call(this, oField);
+				} else {
+					aItems.push(oField);
+					aItems.push(oFirstField);
+					_addLayoutDataToField.call(this, oFirstField);
+				}
+				oHBox = _createHBox.call(this, aItems);
+				oVBox.addItem(oHBox);
+			} else {
+				// just add field to VBox
+				oVBox.addItem(oField);
+			}
+			if (oLabel) {
+				_updateLabelFor.call(this);
+			}
+		}
+
+	}
+
+	function _enhanceField(oField) {
+
+		if (oField.getEditable) {
+			if (!oField.getEditable()) {
+				oField.data("editable", false);
+			}
+		}
+
+		this._oObserver.observe(oField, {
+			properties: ["visible"]
+		});
+		if (oField.attachInnerControlsCreated) {
+			oField.attachInnerControlsCreated(this._updateFormElementLabel, this);
+		}
+		if (oField.setControlContext) {
+			oField.setControlContext(ControlContextType.Form);
+		}
+		if (oField.getMetadata().getProperty("mandatory")) {
+			this._oObserver.observe(oField, {
+				properties: ["mandatory"]
+			});
+		}
+
+		_inheritCustomData.call(this, oField);
+
+	}
+
+	function _inheritCustomData(oField) {
+
+		if (oField instanceof SmartField) {
+			var aCustomData = this.getCustomData();
+
+			for (var i = 0; i < aCustomData.length; i++) {
+				_addCustomDataToField.call(this, oField, aCustomData[i]);
+			}
+		}
+
+	}
+
+	function _addCustomDataToField(oField, oCustomData) {
+
+		if (oField instanceof SmartField && sap.ui.comp.smartform.inheritCostomDataToFields(oCustomData)) {
+			var oNewCustomData = oCustomData.clone();
+			oNewCustomData._bFromGroupElement = true;
+			oNewCustomData._sOriginalId = oCustomData.getId();
+			oField.addCustomData(oNewCustomData);
+		}
+
+	}
+
+	function _controlChanged(oChanges) {
+
+		if (oChanges.name == "mandatory") {
+			this.invalidateLabel();
+		} else if (oChanges.name == "visible") {
+			this._updateFormElementVisibility();
+		}
+
+	}
+
+	function _removeFieldsFromVBox(vField, bAll) {
+
+		var oLabel = this._getLabel();
+		var aFields = this.getFields();
+		var oVBox;
+		var oHBox;
+		var aItems;
+		var vResult;
+		var bNoFieldLeft = false;
+		var oField;
+
+		if (aFields.length > 0) {
+			oVBox = aFields[0];
+		}
+
+		if (!(oVBox instanceof VBox)) {
+			return null;
+		}
+
+		aItems = oVBox.getItems();
+
+		if (oLabel) {
+			if (aItems.length > 1) {
+				oHBox = aItems[1];
+			}
+		} else if (aItems.length > 0) {
+			oHBox = aItems[0];
+		}
+
+		if (oHBox instanceof HBox) {
+			// remove from HBox
+			if (bAll) {
+				vResult = oHBox.removeAllItems();
+				bNoFieldLeft = true;
+			} else {
+				vResult = oHBox.removeItem(vField);
+				aItems = oHBox.getItems();
+				if (aItems.length > 0) {
+					// remove layoutData from first field (happens if first field was removed)
+					_removeLayoutDataFromField.call(this, aItems[0]);
+					if (aItems.length == 1) {
+						// only 1 field feft -> remove HBox
+						oField = aItems[0];
+						oHBox.removeAllItems();
+						oVBox.removeItem(oHBox);
+						oHBox.destroy();
+						oVBox.addItem(oField);
+					}
+				}
+			}
+		} else {
+			// remove from VBox (only 1 Field exist)
+			if (bAll) {
+				vResult = oVBox.removeAllItems();
+			} else {
+				vResult = oVBox.removeItem(vField);
+			}
+
+			if (vResult) {
+				bNoFieldLeft = true;
+			}
+		}
+
+		if (bNoFieldLeft) {
+			// remove VBox
+			if (oLabel) {
+				oVBox.removeItem(oLabel);
+				if (oLabel == this._oLabel) {
+					this.setAggregation("_label", oLabel, true); // use Aggregation to allow model inheritance
+				} else {
+					this.setAggregation("label", oLabel);
+				}
+			}
+			this.removeField(oVBox);
+			oVBox.destroy();
+		}
+
+		if (vResult) {
+			if (Array.isArray(vResult)) {
+				for (var i = 0; i < vResult.length; i++) {
+					oField = vResult[i];
+					_removeLayoutDataFromField.call(this, oField);
+				}
+			} else {
+				_removeLayoutDataFromField.call(this, vResult);
+			}
+		}
+
+		return vResult;
+
+	}
+
+	function _cleanUpField(oField) {
+
+	// how to remove ????
+//			if (oField.getEditable) {
+//				if (!oField.getEditable()) {
+//					oField.data("editable", false);
+//				}
+//			}
+
+		if (oField.detachInnerControlsCreated) {
+			oField.detachInnerControlsCreated(this._updateFormElementLabel, this);
+		}
+		if (oField.setControlContext) {
+			oField.setControlContext(ControlContextType.None);
+		}
+
+		_removeInheritedCustomData.call(this, oField);
+		_restoreTextLabel.call(this, oField, this.getLabelText());
+
+	}
+
+	function _restoreTextLabel(oField, sLabelText) {
+
+		if (oField._oTextLabelSetByGroupElement) {
+			if (oField.getTextLabel() == sLabelText) {
+				// if not changed from outside
+				oField.setTextLabel(oField._oTextLabelSetByGroupElement.oldText);
+			}
+			delete oField._oTextLabelSetByGroupElement;
+		}
+
+	}
+
+	function _removeInheritedCustomData(oField, sOriginalId) {
+
+		if (oField instanceof SmartField) {
+			var aCustomData = oField.getCustomData();
+			for (var i = 0; i < aCustomData.length; i++) {
+				var oCustomData = aCustomData[i];
+				if (oCustomData._bFromGroupElement && (!sOriginalId || sOriginalId == oCustomData._sOriginalId)) {
+					oField.removeCustomData(oCustomData);
+					oCustomData.destroy();
+				}
+			}
+		}
+
+	}
 
 	GroupElement.prototype._updateFormElementLabel = function(oEvent) {
-		var aFields = this.getFields();
-		if (aFields[0] instanceof VBox) {
-			aFields = aFields[0].getItems();
-			if (aFields[0] instanceof Label) {
-				aFields.splice(0, 1);
-			}
-		}
-		// var iIndex = this.getElementForLabel();
 
-		// if (aFields[iIndex] === oEvent.oSource) {
-		this.updateLabelOfFormElement(oEvent.getParameters(), oEvent.oSource);
-		// }
+		var oRelevantField = this._getFieldRelevantForLabel();
+		var oLabel = this._getLabel();
+		var oSmartField = oEvent.oSource;
+		var aInnerElements = oEvent.getParameters();
+
+		if (oLabel instanceof SmartLabel && oSmartField && aInnerElements && oSmartField === oRelevantField) {
+			oLabel.updateLabelFor(aInnerElements);
+		}
+
 	};
 
 	/**
-	 * Adds some customData into the aggregation <code>customData</code>. Additionally, customData is also added to the SmartField controls in the
-	 * children hierarchy.
-	 * 
-	 * @param {sap.ui.core.CustomData} oCustomData the customData to add.
-	 * @return {sap.ui.comp.smartform.GroupElement} <code>this</code> to allow method chaining.
+	 * Adds some customData into the aggregation <code>customData</code>.
+	 *
+	 * <b>Note:</b> <code>customData</code> that is used by the <code>SmartField</code> control itself
+	 * is also added to the <code>SmartField</code> controls in the children hierarchy.
+	 * Additional <code>customData</code> that is not used by the <code>SmartField</code> control
+	 * internally might not be added.
+	 *
+	 * @param {sap.ui.core.CustomData} oCustomData the customData to add; if empty, nothing is added
+	 * @return {sap.ui.comp.smartform.GroupElement} Reference to <code>this</code> to allow method chaining.
 	 * @public
 	 */
 	GroupElement.prototype.addCustomData = function(oCustomData) {
+
+		if (!oCustomData) {
+			return this;
+		}
+
 		FormElement.prototype.addCustomData.apply(this, arguments);
 
-		var aElement = this.getFields();
+		var aElements = this.getElements();
 
-		aElement.forEach(function(oElement) {
-			if (oElement instanceof SmartField) {
-				oElement.addCustomData(oCustomData.clone());
+		for (var i = 0; i < aElements.length; i++) {
+			_addCustomDataToField.call(this, aElements[i], oCustomData);
+		}
+
+		return this;
+
+	};
+
+	/**
+	 * Inserts some customData into the aggregation <code>customData</code>.
+	 *
+	 * <b>Note:</b> <code>customData</code> that is used by the <code>SmartField</code> control itself
+	 * is also added to the <code>SmartField</code> controls in the children hierarchy.
+	 * Additional <code>customData</code> that is not used by the <code>SmartField</code> control
+	 * internally might not be added.
+	 *
+	 * @param {sap.ui.core.CustomData} oCustomData the customData to insert; if empty, nothing is inserted
+	 * @param {int} iIndex the 0-based index the customData should be inserted at; for a negative value of iIndex, the customData is inserted at position 0; for a value greater than the current size of the aggregation, the customData is inserted at the last position
+	 * @return {sap.ui.comp.smartform.GroupElement} Reference to <code>this</code> to allow method chaining.
+	 * @public
+	 */
+	GroupElement.prototype.insertCustomData = function(oCustomData, iIndex) {
+
+		if (!oCustomData) {
+			return this;
+		}
+
+		FormElement.prototype.insertCustomData.apply(this, arguments);
+
+		var aElements = this.getElements();
+
+		for (var i = 0; i < aElements.length; i++) {
+			// order doesn't matter
+			_addCustomDataToField.call(this, aElements[i], oCustomData);
+		}
+
+		return this;
+
+	};
+
+	GroupElement.prototype.removeCustomData = function(vCustomData) {
+
+		var oCustomData = FormElement.prototype.removeCustomData.apply(this, arguments);
+
+		if (oCustomData) {
+			var aElements = this.getElements();
+			for (var i = 0; i < aElements.length; i++) {
+				_removeInheritedCustomData.call(this, aElements[i], oCustomData.getId());
 			}
-		});
-		return this;
-	};
-
-	/**
-	 * Inserts a control into the aggregation <code>elements</code>
-	 * 
-	 * @param {sap.ui.core.Control} oElement the control to insert into aggregation named elements.
-	 * @param {int} iIndex the 0-based index the control should be inserted at.
-	 * @return {sap.ui.comp.smartform.GroupElement} <code>this</code> to allow method chaining.
-	 * @public
-	 */
-	GroupElement.prototype.insertElement = function(oElement, iIndex) {
-		this.insertField(oElement, iIndex);
-		this.updateLabelOfFormElement();
-		return this;
-	};
-
-	/**
-	 * Getter for aggregation <code>elements</code>
-	 * 
-	 * @return {sap.ui.core.Controls[]} an array of the removed controls.
-	 * @public
-	 */
-	GroupElement.prototype.getElements = function() {
-		return this.getFields();
-	};
-
-	/**
-	 * Removes an element from the aggregation named elements.
-	 * 
-	 * @param {int|string|sap.ui.core.Control} The element to remove or its index or ID
-	 * @return {sap.ui.core.Control} The removed element or null
-	 * @public
-	 */
-	GroupElement.prototype.removeElement = function(vElement) {
-		var oResult = this.removeField(vElement);
-		this.updateLabelOfFormElement();
-		return oResult;
-	};
-
-	/**
-	 * Removes all the controls in the aggregation named elements.
-	 * 
-	 * @return {sap.ui.core.Control[]} An array of the removed elements (might be empty)
-	 * @public
-	 */
-	GroupElement.prototype.removeAllElements = function() {
-		return this.removeAllFields();
-	};
-
-	GroupElement.prototype.removeAggregation = function(sAggregationName, oObject) {
-		if (sAggregationName === "elements") {
-			return this.removeField(oObject);
-		} else {
-			return Element.prototype.removeAggregation.apply(this, arguments);
 		}
+
+		return oCustomData;
+
 	};
 
-	GroupElement.prototype.removeAllAggregation = function(sAggregationName) {
-		if (sAggregationName === "elements") {
-			return this.removeAllElements();
-		} else {
-			return Element.prototype.removeAllAggregation.apply(this, arguments);
+	GroupElement.prototype.removeAllCustomData = function() {
+
+		var aCustomData = FormElement.prototype.removeAllCustomData.apply(this, arguments);
+
+		if (aCustomData.length > 0) {
+			var aElements = this.getElements();
+			for (var i = 0; i < aElements.length; i++) {
+				_removeInheritedCustomData.call(this, aElements[i]);
+			}
 		}
+
+		return aCustomData;
+
+	};
+
+	GroupElement.prototype.destroyCustomData = function() {
+
+		FormElement.prototype.destroyCustomData.apply(this, arguments);
+
+		var aElements = this.getElements();
+		for (var i = 0; i < aElements.length; i++) {
+			_removeInheritedCustomData.call(this, aElements[i]);
+		}
+
+		return this;
+
 	};
 
 	/**
-	 * Determines the visibility of a group element based on elements
-	 * 
+	 * Determines the visibility of a <code>GroupElement</code> based on elements
+	 *
 	 * @returns {boolean} Returns true, in case one element of the group element is visible
 	 * @public
 	 */
 	GroupElement.prototype.getVisibleBasedOnElements = function() {
-		var isVisible = true;
+		var isVisible = false; // as if no element is assignet no visible element exist.
 
 		var aElements = this.getElements();
 		if (aElements && aElements.length > 0) {
@@ -743,6 +1787,123 @@ sap.ui.define([
 
 		return isVisible;
 	};
+
+	function _getTooltipString() {
+
+		var oTooltip = this.getTooltip();
+		if (!oTooltip || typeof oTooltip === "string" || oTooltip instanceof String ) {
+			return oTooltip;
+		} else {
+			return oTooltip.getText();
+		}
+	}
+
+	/*
+	 * to have the right event handlers attached to the elements and all internal label,
+	 * VBox, HBoy, LayoutData and CustomData settings we need to remove all element before
+	 * cloning, add them again afterwards and clone them manually.
+	 */
+	GroupElement.prototype.clone = function(sIdSuffix, aLocalIds){
+
+		var aElements = this.removeAllElements();
+
+		var oClone = FormElement.prototype.clone.apply(this, arguments);
+
+		for (var i = 0; i < aElements.length; i++) {
+			var oElement = aElements[i];
+			var oElementClone = oElement.clone(sIdSuffix, aLocalIds);
+			this.addElement(oElement);
+			oClone.addElement(oElementClone);
+		}
+
+		return oClone;
+
+	};
+
+	// remove "internal" FormElement functionality from API documentation
+
+	/**
+	 * Adds some field to the aggregation <code>fields</code>.
+	 *
+	 * Do not use the <code>fields</code> aggregation, use the <code>elements</code> aggregation instead.
+	 *
+	 * @param {sap.ui.core.Control} oField Field to be added
+	 * @return {sap.ui.comp.snartform.GroupElement} Reference to <code>this</code> to allow method chaining
+	 * @private
+	 * @name sap.ui.comp.smartform.GroupElement#addField
+	 * @function
+	 */
+
+	/**
+	 * Inserts a field to the aggregation <code>fields</code>.
+	 *
+	 * Do not use the <code>fields</code> aggregation, use the <code>elements</code> aggregation instead.
+	 *
+	 * @param {sap.ui.core.Control} oField Field to be added
+	 * @param {int} iIndex the 0-based index the field should be inserted at; for a negative value of iIndex, the field is inserted at position 0; for a value greater than the current size of the aggregation, the field is inserted at the last position
+	 * @return {sap.ui.comp.snartform.GroupElement} Reference to <code>this</code> to allow method chaining
+	 * @private
+	 * @name sap.ui.comp.smartform.GroupElement#insertField
+	 * @function
+	 */
+
+	/**
+	 * Gets content of aggregation <code>fields</code>.
+	 *
+	 * Do not use the <code>fields</code> aggregation, use the <code>elements</code> aggregation instead.
+	 *
+	 * @return {sap.ui.core.Control[]} array of fields
+	 * @private
+	 * @name sap.ui.comp.smartform.GroupElement#getFields
+	 * @function
+	 */
+
+	/**
+	 * Checks for the provided <code>sap.ui.core.Control</code> in the aggregation <code>fields</code>.
+	 * and returns its index if found or -1 otherwise.
+	 *
+	 * Do not use the <code>fields</code> aggregation, use the <code>elements</code> aggregation instead.
+	 *
+	 * @param {sap.ui.core.Control} oField The field whose index is looked for
+	 * @return {int} The index of the provided control in the aggregation if found, or -1 otherwise
+	 * @private
+	 * @name sap.ui.comp.smartform.GroupElement#indexOfField
+	 * @function
+	 */
+
+	/**
+	 * Removes a field from the aggregation <code>fields</code>.
+	 *
+	 * Do not use the <code>fields</code> aggregation, use the <code>elements</code> aggregation instead.
+	 *
+	 * @param {int|string|sap.ui.core.Control} vField The field to remove or its index or id
+	 * @return {sap.ui.core.Control} The removed field or null
+	 * @private
+	 * @name sap.ui.comp.smartform.GroupElement#removeField
+	 * @function
+	 */
+
+	/**
+	 * Removes all the controls from the aggregation <code>fields</code>.
+	 *
+	 * Do not use the <code>fields</code> aggregation, use the <code>elements</code> aggregation instead.
+	 *
+	 * @return {sap.ui.core.Control[]} An array of the removed elements (might be empty)
+	 * @private
+	 * @name sap.ui.comp.smartform.GroupElement#removeAllFields
+	 * @function
+	 */
+
+	/**
+	 * Destroys all the fields in the aggregation <code>fields</code>.
+	 *
+	 * Do not use the <code>fields</code> aggregation, use the <code>elements</code> aggregation instead.
+	 *
+	 * @return {sap.ui.comp.snartform.GroupElement} Reference to <code>this</code> to allow method chaining
+	 * @private
+	 * @name sap.ui.comp.smartform.GroupElement#destroyFields
+	 * @function
+	 */
 
 	return GroupElement;
 

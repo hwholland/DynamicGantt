@@ -22,13 +22,13 @@ You can move the currently selected range by clicking on it and dragging it alon
     <since>1.38</since>
     <baseType>sap.m/Slider</baseType>
     <properties>
-        <property name="value2" type="sap.ui.core/float" defaultValue="100" group="Data">
+        <property group="Data" defaultValue="100" type="sap.ui.core/float" name="value2">
             <documentation>Current second value of the slider. (Position of the second handle.)
 
 &lt;b&gt;Note:&lt;/b&gt; If the value is not in the valid range (between &lt;code&gt;min&lt;/code&gt; and &lt;code&gt;max&lt;/code&gt;) it will be changed to be in the valid range.
 If it is smaller than &lt;code&gt;value&lt;/code&gt; it will be set to the same value.</documentation>
         </property>
-        <property name="range" type="sap.ui.core/float[]" defaultValue="[0,100]" group="Data">
+        <property group="Data" defaultValue="[0,100]" type="sap.ui.core/float[]" name="range">
             <documentation>Determines the currently selected range on the slider.
 
 If the value is lower/higher than the allowed minimum/maximum, a warning message will be output to the console.</documentation>

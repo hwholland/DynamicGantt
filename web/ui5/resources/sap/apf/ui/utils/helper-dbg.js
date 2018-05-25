@@ -25,31 +25,34 @@ sap.apf.ui.utils.Helper = function(oCoreApi) {
 	*/
 	this.getRepresentationSortInfo = function(oRepresentation) {
 		var self = this;
+		var deferredRepSortInfo = jQuery.Deferred();
 		var aConsolidatedProperty = oRepresentation.parameter.dimensions.concat(oRepresentation.parameter.measures); //Consolidated array of dimension and measures
 		var aSortField = oRepresentation.parameter.orderby; // orderby fields
 		var aSortDescription = aSortField.map(function(oSortField) { //sort field descrptions for all the sort fields
 			var sSortDescription;
+			var deferred = jQuery.Deferred();
 			aConsolidatedProperty.forEach(function(oConsolidatedproperty) { //check if the property label exists in dimensions or measures
 				if (oSortField.property === oConsolidatedproperty.fieldName && oConsolidatedproperty.fieldDesc && self.oCoreApi.getTextNotHtmlEncoded(oConsolidatedproperty.fieldDesc)) { //if label for property is available in dimension/measures
 					sSortDescription = self.oCoreApi.getTextNotHtmlEncoded(oConsolidatedproperty.fieldDesc); //read sort description for properties from dimensions/measures
-					return;
+					deferred.resolve(sSortDescription);
 				}
 			});
 			if (!sSortDescription) { //read sort description for properties from metadata
-				self.oCoreApi.getMetadataFacade().getProperty(oSortField.property, function(metadata) {
+				self.oCoreApi.getMetadataFacade().getProperty(oSortField.property).done(function(metadata) {
 					if (metadata.label || metadata.name) { // metadata can have label or name
-						if(metadata.label) {
-							sSortDescription = metadata.label;
-						} else if(metadata.name) {
-							sSortDescription = metadata.name;
+						if (metadata.label) {
+							deferred.resolve(metadata.label);
+						} else if (metadata.name) {
+							deferred.resolve(metadata.name);
 						} else {
-							sSortDescription = "";
+							deferred.resolve("");
 						}
 					}
 				});
 			}
-			return sSortDescription;
+			return deferred.promise();
 		});
-		return aSortDescription.join(", "); //comma separated value of all the sort fields
+		deferredRepSortInfo.resolve(aSortDescription);
+		return deferredRepSortInfo.promise();
 	};
 };

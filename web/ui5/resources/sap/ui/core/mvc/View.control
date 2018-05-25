@@ -8,42 +8,42 @@ Introduces the relationship to a Controller, some basic visual appearance settin
 and provides lifecycle events.</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="100%" group="Dimension">
+        <property group="Dimension" defaultValue="100%" type="sap.ui.core/CSSSize" name="width">
             <documentation>The width</documentation>
         </property>
-        <property name="height" type="sap.ui.core/CSSSize" group="Dimension">
+        <property group="Dimension" type="sap.ui.core/CSSSize" name="height">
             <documentation>The height</documentation>
         </property>
-        <property name="viewName" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="viewName">
             <documentation>Name of the View</documentation>
         </property>
-        <property name="displayBlock" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
-            <documentation>Whether the CSS display should be set to "block".
-Set this to "true" if the default display "inline-block" causes a vertical scrollbar with Views that are set to 100% height.
-Do not set this to "true" if you want to display other content in the same HTML parent on either side of the View (setting to "true" may push that other content to the next/previous line).</documentation>
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="displayBlock">
+            <documentation>Whether the CSS display should be set to &quot;block&quot;.
+Set this to &quot;true&quot; if the default display &quot;inline-block&quot; causes a vertical scrollbar with Views that are set to 100% height.
+Do not set this to &quot;true&quot; if you want to display other content in the same HTML parent on either side of the View (setting to &quot;true&quot; may push that other content to the next/previous line).</documentation>
         </property>
     </properties>
     <events>
-        <event name="afterInit" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="afterInit">
             <documentation>Fired when the View has parsed the UI description and instantiated the contained controls (/control tree).</documentation>
         </event>
-        <event name="beforeExit" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="beforeExit">
             <documentation>Fired when the view has received the request to destroy itself, but before it has destroyed anything.</documentation>
         </event>
-        <event name="afterRendering" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="afterRendering">
             <documentation>Fired when the View has been (re-)rendered and its HTML is present in the DOM.</documentation>
         </event>
-        <event name="beforeRendering" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="beforeRendering">
             <documentation>Fired before this View is re-rendered. Use to unbind event handlers from HTML elements etc.</documentation>
         </event>
     </events>
     <aggregations>
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>Child Controls of the view</documentation>
         </aggregation>
     </aggregations>
     <methods>
-        <method name="getController" type="sap.ui.core/object">
+        <method type="sap.ui.core/object" name="getController">
             <documentation>Returns the view's Controller instance or null for a controller-less View.</documentation>
         </method>
     </methods>

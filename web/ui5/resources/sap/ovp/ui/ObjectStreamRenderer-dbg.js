@@ -36,10 +36,13 @@ sap.ui.define(['jquery.sap.global'],
 
             /*header*/
             oRm.write("<div");
-            oRm.addClass("sapOvpObjectStreamHeader");
-            oRm.writeAccessibilityState(undefined, {role: "heading"});
             oRm.writeClasses();
-            oRm.write(">" + oControl.getTitle() + "</div>");
+            oRm.write(">");
+            var oTitle = oControl.getTitle();
+            if (oTitle) {
+                oRm.renderControl(oTitle);
+            }
+            oRm.write("</div>");
             oRm.write('<div tabindex="0" ');
             oRm.addClass("sapOvpObjectStreamClose");
             oRm.writeAccessibilityState(undefined, {role: "button"});
@@ -62,6 +65,7 @@ sap.ui.define(['jquery.sap.global'],
 
             var aContent = oControl.getContent();
 
+            var placeHolder = oControl.getPlaceHolder();
             aContent.forEach(function(control, i) {
                 oRm.write("<div class='sapOvpObjectStreamItem' ");
                 if (i == 0) {
@@ -70,13 +74,18 @@ sap.ui.define(['jquery.sap.global'],
                     oRm.write("tabindex='-1' ");
                 }
                 oRm.writeAccessibilityState(undefined, {role: "listitem"});
-                oRm.write("aria-setsize = " + (aContent.length + 1) + " aria-posinset = " + (i + 1));
+                oRm.write("aria-label = ' '");
+                if (placeHolder) {
+                    oRm.write("aria-setsize = " + (aContent.length + 1) + " aria-posinset = " + (i + 1));
+                }
+                else {
+                    oRm.write("aria-setsize = " + (aContent.length) + " aria-posinset = " + (i + 1));
+                }
                 oRm.write(">");
                 oRm.renderControl(control);
                 oRm.write("</div>");
             });
 
-            var placeHolder = oControl.getPlaceHolder();
             if (placeHolder){
                 oRm.write("<div class='sapOvpObjectStreamItem' ");
                 if (!aContent.length) {

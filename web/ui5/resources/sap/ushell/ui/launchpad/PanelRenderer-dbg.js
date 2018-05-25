@@ -1,5 +1,6 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-jQuery.sap.declare("sap.ushell.ui.launchpad.PanelRenderer");
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(function() {
+	"use strict";
 
 /**
  * @class Panel renderer. 
@@ -7,7 +8,7 @@ jQuery.sap.declare("sap.ushell.ui.launchpad.PanelRenderer");
  * 
  * @private
  */
-sap.ushell.ui.launchpad.PanelRenderer = {
+var PanelRenderer = {
 };
 
 
@@ -17,7 +18,7 @@ sap.ushell.ui.launchpad.PanelRenderer = {
  * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
  * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
  */
-sap.ushell.ui.launchpad.PanelRenderer.render =  function(oRm, oControl) {
+PanelRenderer.render =  function(oRm, oControl) {
     // Return immediately if control is invisible
     if (!oControl.getVisible()) {
         return;
@@ -76,3 +77,8 @@ sap.ushell.ui.launchpad.PanelRenderer.render =  function(oRm, oControl) {
     oRm.write("</div>");
     oRm.write("</section>");
 };
+
+
+	return PanelRenderer;
+
+}, /* bExport= */ true);

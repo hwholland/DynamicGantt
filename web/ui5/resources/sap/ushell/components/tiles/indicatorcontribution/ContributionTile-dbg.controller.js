@@ -1,7 +1,7 @@
 jQuery.sap.require("sap.ushell.components.tiles.generic");
-
 (function () {
-    "use strict";
+	"use strict";
+
     sap.ushell.components.tiles.generic.extend("sap.ushell.components.tiles.indicatorcontribution.ContributionTile", {
         onInit :  function(){
             this.KPI_VALUE_REQUIRED = false;

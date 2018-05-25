@@ -1,11 +1,9 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 
-(function () {
-    "use strict";
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.declare("sap.ushell.ui.launchpad.CatalogTileContainerRenderer");
-    jQuery.sap.require("sap.ushell.ui.launchpad.TileContainerRenderer");
+sap.ui.define(['sap/ushell/resources','./TileContainerRenderer'],
+	function(resources, TileContainerRenderer) {
+	"use strict";
 
     /**
      * @class CatalogTileContainer renderer.
@@ -13,8 +11,12 @@
      *
      * @private
      */
-    sap.ushell.ui.launchpad.CatalogTileContainerRenderer = {};
+    var CatalogTileContainerRenderer = {};
 
-    sap.ushell.ui.launchpad.CatalogTileContainerRenderer = sap.ui.core.Renderer.extend(sap.ushell.ui.launchpad.TileContainerRenderer);
+    var CatalogTileContainerRenderer = sap.ui.core.Renderer.extend(TileContainerRenderer);
 
-}());
+
+
+	return CatalogTileContainerRenderer;
+
+}, /* bExport= */ true);

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 sap.ui.define([
     'jquery.sap.global',
@@ -31,6 +31,12 @@ function(jQuery, Control) {
 
     SubActionItemsPage.prototype.init = function() {
         this._oList = new sap.m.List({
+        });
+    };
+    
+    SubActionItemsPage.prototype.onAfterRendering = function() {
+        jQuery.sap.delayedCall(10, this, function(){
+            this._oList.focus();
         });
     };
 

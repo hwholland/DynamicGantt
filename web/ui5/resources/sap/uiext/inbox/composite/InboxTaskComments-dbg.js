@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * InboxTaskComments
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -67,16 +67,44 @@ sap.ui.core.Control.extend("sap.uiext.inbox.composite.InboxTaskComments", { meta
 
 	library : "sap.uiext.inbox",
 	properties : {
+
+		/**
+		 * Sender for the comment feeder
+		 */
 		"feederSender" : {type : "string", group : "Data", defaultValue : null},
+
+		/**
+		 * URL to the thumbnail image for the comment feeder.
+		 */
 		"feederThumbnailSrc" : {type : "sap.ui.core.URI", group : "Data", defaultValue : null},
+
+		/**
+		 * Boolean value for visibilty of comment feeder
+		 */
 		"showFeeder" : {type : "boolean", group : "Data", defaultValue : true},
+
+		/**
+		 * Boolean value for visibility of header
+		 */
 		"showHeader" : {type : "boolean", group : "Misc", defaultValue : false}
 	},
 	aggregations : {
+
+		/**
+		 * URL to the thumbnail image.
+		 */
 		"comments" : {type : "sap.uiext.inbox.composite.InboxComment", multiple : true, singularName : "comment"}, 
+
+		/**
+		 * aggregation for busy indicator
+		 */
 		"busyIndicator" : {type : "sap.uiext.inbox.composite.InboxBusyIndicator", multiple : false, visibility : "hidden"}
 	},
 	events : {
+
+		/**
+		 * Event is raised when submit on the feeder is pressed.
+		 */
 		"commentSubmit" : {}
 	}
 }});

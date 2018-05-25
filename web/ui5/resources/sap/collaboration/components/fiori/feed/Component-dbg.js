@@ -1,5 +1,7 @@
 /*!
- * @copyright@
+ * SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
  */
 
 jQuery.sap.require("sap.collaboration.library");
@@ -18,7 +20,7 @@ jQuery.sap.declare("sap.collaboration.components.fiori.feed.Component");
 * @param {sap.ui.core.URI} [oDataServiceUrl] The OData service URL needed for the Feed Component, the default value is <tt>"/sap/opu/odata/sap/SM_INTEGRATION_SRV".</tt>
 * @param {sap.collaboration.FeedType} feedType The type of feed to be displayed.
 * @param {string} [groupIds] A comma separated list of group IDs.
-* @param {JSON object} [object] A JSON object passed to the Feed component. 
+* @param {object} [object] A JSON object passed to the Feed component. 
 * It is required when the value of <tt>feedType</tt> is <tt>sap.collaboration.FeedType.object</tt> or <tt>sap.collaboration.FeedType.objectGroup</tt>.
 * This object represents business related information, such as a sales order, an opportunity, etc. It contains the following properties:
 * 		<ul>
@@ -98,12 +100,12 @@ sap.ui.core.UIComponent.extend("sap.collaboration.components.fiori.feed.Componen
 		/**
 		* Contract for passing the settings to the Component.
 		* @public
-		* @param {JSON Object} oSettings A JSON object containing the following attributes:
+		* @param {object} oSettings A JSON object containing the following attributes:
 		* 		<ul>
 		* 			<li><tt>{sap.ui.core.URI} oDataServiceUrl</tt>: The URL of the OData Service needed for the Feed Component.</li>
 		* 			<li><tt>{sap.collaboration.FeedType} feedType</tt>: The type of feed to be displayed.</li>
 		* 			<li><tt>{string} [groupIds?]</tt>: A comma separated list of Group IDs.</li>
-		* 			<li><tt>{JSON object} object</tt>: The representation of a Business Object.</li>
+		* 			<li><tt>{object} object</tt>: The representation of a Business Object.</li>
 		* 		</ul>
 		*/
 		setSettings : function(oSettings) {

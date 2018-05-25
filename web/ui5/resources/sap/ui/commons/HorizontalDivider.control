@@ -6,13 +6,13 @@
     <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="100%" group="Appearance">
+        <property group="Appearance" defaultValue="100%" type="sap.ui.core/CSSSize" name="width">
             <documentation>Defines the width of the divider.</documentation>
         </property>
-        <property name="type" type="sap.ui.commons/HorizontalDividerType" defaultValue="Area" group="Appearance">
+        <property group="Appearance" defaultValue="Area" type="sap.ui.commons/HorizontalDividerType" name="type">
             <documentation>Defines the type of the divider.</documentation>
         </property>
-        <property name="height" type="sap.ui.commons/HorizontalDividerHeight" defaultValue="Medium" group="Appearance">
+        <property group="Appearance" defaultValue="Medium" type="sap.ui.commons/HorizontalDividerHeight" name="height">
             <documentation>Defines the height of the divider.</documentation>
         </property>
     </properties>

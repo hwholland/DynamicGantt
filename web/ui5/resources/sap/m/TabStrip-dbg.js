@@ -63,7 +63,7 @@ function(
 		 * space is exceeded, a horizontal scrollbar appears.
 		 *
 		 * @extends sap.ui.core.Control
-		 * @version 1.54.5
+		 * @version 1.54.3
 		 *
 		 * @constructor
 		 * @private
@@ -1245,7 +1245,7 @@ function(
 
 		var CustomSelectRenderer = Renderer.extend(SelectRenderer);
 
-		var CustomSelect = Select.extend("sap.m.internal.TabStripSelect", {
+		var CustomSelect = Select.extend("CustomSelect", {
 			renderer: CustomSelectRenderer
 		});
 
@@ -1336,7 +1336,7 @@ function(
 			oRm.write("</li>");
 		};
 
-		var CustomSelectList = SelectList.extend("sap.m.internal.TabStripSelectList", {
+		var CustomSelectList = SelectList.extend("CustomSelectList", {
 			renderer: CustomSelectListRenderer
 		});
 

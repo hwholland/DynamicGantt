@@ -64,7 +64,7 @@ jQuery.sap.require("sap.m.Tile");
  * @class
  * Display aTile that presents an overview of a customer
  * @extends sap.m.Tile
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

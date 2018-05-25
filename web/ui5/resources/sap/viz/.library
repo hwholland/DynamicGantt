@@ -5,8 +5,8 @@
 	<vendor>SAP SE</vendor>
 	<copyright>SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved</copyright>
-	<version>1.38.33</version>
+(c) Copyright 2009-2018 SAP SE. All rights reserved</copyright>
+	<version>1.54.3</version>
 
 	<documentation>Chart controls based on the SAP BI CVOM charting library</documentation>
 
@@ -130,7 +130,7 @@
 				<license url="http://opensource.org/licenses/mit-license.php" type="MIT License" file="libs/canvg.js" />
 			</lib>
 			<lib name="RaphaelJS" displayName="RaphaelJS" homepage="http://raphaeljs.com/">
-				<license url="http://raphaeljs.com/license.html" type="MIT License" file="ui5/container/libs/common/libs/RaphaelJS/license.txt" />
+				<license url="https://github.com/DmitryBaranovskiy/raphael/blob/master/license.txt" type="MIT License" file="ui5/container/libs/common/libs/RaphaelJS/license.txt" />
 			</lib>
 			<!--  TODO add entry for libs/rgbcolor.js -->
 			<lib name="rgbcolor_static" displayName="RGBColor Static" homepage="http://www.phpied.com/rgb-color-parser-in-javascript/">

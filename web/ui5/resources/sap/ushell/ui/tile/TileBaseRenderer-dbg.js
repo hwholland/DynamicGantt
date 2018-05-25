@@ -1,18 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 
-(function () {
-    "use strict";
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.declare("sap.ushell.ui.tile.TileBaseRenderer");
+sap.ui.define(['sap/ushell/resources'],
+	function(resources) {
+	"use strict";
 
     /**
      * @name sap.ushell.ui.tile.TileBaseRenderer
      * @static
      * @private
      */
-    sap.ushell.ui.tile.TileBaseRenderer = {};
-    var translationBundle = sap.ushell.resources.i18n;
+    var TileBaseRenderer = {};
+    var translationBundle = resources.i18n;
 
     /**
      * Searches for occurrences of given searchTerms and substitutes substrings with themselves wrapped in HTML bold tag
@@ -23,7 +22,7 @@
      * 
      * @private
      */
-    sap.ushell.ui.tile.TileBaseRenderer.highlight = function (aHighlightTerms, sText) {
+    TileBaseRenderer.highlight = function (aHighlightTerms, sText) {
         var i,
             regexpHighlightTerm,
             // immediately escape string for displaying as HTML
@@ -45,7 +44,7 @@
      * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
      * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
      */
-    sap.ushell.ui.tile.TileBaseRenderer.render = function (oRm, oControl) {
+    TileBaseRenderer.render = function (oRm, oControl) {
         // is it necessary to wrap the control into a link?
         var sInfoPrefix,
             oIcon;
@@ -135,4 +134,8 @@
         // end control div element
         oRm.write("</div>");
     };
-}());
+
+
+	return TileBaseRenderer;
+
+}, /* bExport= */ true);

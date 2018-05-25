@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides enumeration sap.chart.ChartType
@@ -117,6 +117,16 @@ sap.ui.define(function() {
          * @public
          */
         DualStackedColumn: "dual_stacked_column",
+         /**
+         * Combined Column Line Chart with 2 Y-Axes
+         * @public
+         */
+        DualCombination: "dual_combination",
+         /**
+         * Horizontal Combined Bar Line Chart with 2 X-Axes
+         * @public
+         */
+        DualHorizontalCombination: "dual_horizontal_combination",
         /**
          * Combined Stacked Line Chart with 2 Y-Axes
          * @public

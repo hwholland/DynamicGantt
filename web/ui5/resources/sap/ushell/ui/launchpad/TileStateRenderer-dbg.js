@@ -1,14 +1,15 @@
 /*!
- * Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap */
-jQuery.sap.declare("sap.ushell.ui.launchpad.TileStateRenderer");
+sap.ui.define(function() {
+	"use strict";
 
 /**
  * @class TileState renderer.
  * @static
  */
-sap.ushell.ui.launchpad.TileStateRenderer = {
+var TileStateRenderer = {
 };
 
 /**
@@ -17,7 +18,7 @@ sap.ushell.ui.launchpad.TileStateRenderer = {
  * @param {sap.ui.core.RenderManager} rm the RenderManager that can be used for writing to the render output buffer
  * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
  */
-sap.ushell.ui.launchpad.TileStateRenderer.render = function (rm, oControl) {
+TileStateRenderer.render = function (rm, oControl) {
     rm.write("<div");
 
     rm.writeControlData(oControl);
@@ -75,3 +76,8 @@ sap.ushell.ui.launchpad.TileStateRenderer.render = function (rm, oControl) {
     rm.write("</div>");
     rm.write("</div>");
 };
+
+
+	return TileStateRenderer;
+
+}, /* bExport= */ true);

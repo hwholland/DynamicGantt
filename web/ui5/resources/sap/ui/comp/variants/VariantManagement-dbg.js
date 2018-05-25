@@ -1,18 +1,18 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.variants.VariantManagement.
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/Device', 'sap/ui/model/json/JSONModel', 'sap/m/SearchField', 'sap/m/RadioButton', 'sap/ui/core/TextAlign', 'sap/m/ScreenSize', 'sap/m/PopinDisplay', 'sap/m/Column', 'sap/m/Text', 'sap/m/Bar', 'sap/m/Table', 'sap/m/Page', 'sap/m/PlacementType', 'sap/m/ButtonType', 'sap/m/Toolbar', 'sap/m/ToolbarSpacer', 'sap/m/ActionSheet', 'sap/m/Button', 'sap/m/CheckBox', 'sap/m/Dialog', 'sap/m/Input', 'sap/m/Label', 'sap/m/ResponsivePopover', 'sap/m/SelectList', 'sap/ui/comp/library', 'sap/ui/comp/transport/TransportSelection', './EditableVariantItem', './VariantItem', 'sap/ui/core/Control', 'sap/ui/core/Item', 'sap/ui/core/ValueState', 'sap/ui/core/VerticalAlign', 'sap/ui/layout/HorizontalLayout', 'sap/ui/layout/Grid'
-], function(jQuery, Device, JSONModel, SearchField, RadioButton, TextAlign, ScreenSize, PopinDisplay, Column, Text, Bar, Table, Page, PlacementType, ButtonType, Toolbar, ToolbarSpacer, ActionSheet, Button, CheckBox, Dialog, Input, Label, ResponsivePopover, SelectList, library, TransportSelection, EditableVariantItem, VariantItem, Control, Item, ValueState, VerticalAlign, HorizontalLayout, Grid) {
+	'jquery.sap.global', 'sap/ui/Device', 'sap/ui/model/json/JSONModel', 'sap/m/VBox', 'sap/m/SearchField', 'sap/m/RadioButton', 'sap/ui/core/TextAlign', 'sap/m/ScreenSize', 'sap/m/PopinDisplay', 'sap/m/Column', 'sap/m/Text', 'sap/m/Bar', 'sap/m/Table', 'sap/m/Page', 'sap/m/PlacementType', 'sap/m/ButtonType', 'sap/m/OverflowToolbar', 'sap/m/OverflowToolbarLayoutData', 'sap/m/Toolbar', 'sap/m/ToolbarSpacer', 'sap/m/Button', 'sap/m/CheckBox', 'sap/m/Dialog', 'sap/m/Input', 'sap/m/Title', 'sap/m/Label', 'sap/m/ResponsivePopover', 'sap/m/SelectList', 'sap/m/ObjectIdentifier', 'sap/ui/comp/library', './EditableVariantItem', './VariantItem', 'sap/ui/core/InvisibleText', 'sap/ui/core/Control', 'sap/ui/core/Icon', 'sap/ui/core/Item', 'sap/ui/core/ValueState', 'sap/ui/core/VerticalAlign', 'sap/ui/layout/HorizontalLayout', 'sap/ui/layout/Grid'
+], function(jQuery, Device, JSONModel, VBox, SearchField, RadioButton, TextAlign, ScreenSize, PopinDisplay, Column, Text, Bar, Table, Page, PlacementType, ButtonType, OverflowToolbar, OverflowToolbarLayoutData, Toolbar, ToolbarSpacer, Button, CheckBox, Dialog, Input, Title, Label, ResponsivePopover, SelectList, ObjectIdentifier, library, EditableVariantItem, VariantItem, InvisibleText, Control, Icon, Item, ValueState, VerticalAlign, HorizontalLayout, Grid) {
 	"use strict";
 
 	/**
 	 * Constructor for a new VariantManagement.
-	 * 
 	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] Initial settings for the new control
 	 * @class The VariantManagement control can be used to manage variants, such as filter bar variants or table variants.
@@ -26,11 +26,11 @@ sap.ui.define([
 	{
 		metadata: {
 			library: "sap.ui.comp",
+			designtime: "sap/ui/comp/designtime/variants/VariantManagement.designtime",
 			properties: {
 
 				/**
 				 * Enables the setting of the initially selected variant.
-				 * 
 				 * @since 1.22.0
 				 */
 				initialSelectionKey: {
@@ -41,7 +41,6 @@ sap.ui.define([
 
 				/**
 				 * Can be set to true or false depending on whether you want to enable or disable the control.
-				 * 
 				 * @since 1.22.0
 				 */
 				enabled: {
@@ -52,7 +51,6 @@ sap.ui.define([
 
 				/**
 				 * Provides a string value to set the default variant. Used for the save dialog. Has no effect on the selected variant.
-				 * 
 				 * @since 1.22.0
 				 */
 				defaultVariantKey: {
@@ -63,7 +61,6 @@ sap.ui.define([
 
 				/**
 				 * The key of the currently selected item. Returns null if the default item list is selected.
-				 * 
 				 * @since 1.24.0
 				 */
 				selectionKey: {
@@ -74,9 +71,7 @@ sap.ui.define([
 
 				/**
 				 * Indicates that a Create Tile is visible in the Create dialog.
-				 * 
 				 * @since 1.26.0
-				 * @deprecated Since version 1.32.0.
 				 */
 				showCreateTile: {
 					type: "boolean",
@@ -86,7 +81,6 @@ sap.ui.define([
 
 				/**
 				 * Indicates that Execute on Selection is visible in the Save Variant and the Manage Variants dialogs.
-				 * 
 				 * @since 1.26.0
 				 */
 				showExecuteOnSelection: {
@@ -98,7 +92,6 @@ sap.ui.define([
 				/**
 				 * Indicates that Share is visible in the Save Variant and the Manage Variants dialogs. Share allows you to share variants with other
 				 * users.
-				 * 
 				 * @since 1.26.0
 				 */
 				showShare: {
@@ -108,8 +101,17 @@ sap.ui.define([
 				},
 
 				/**
+				 * Indicates that set as default is visible in the Save Variant and the Manage Variants dialogs.
+				 * @since 1.44.0
+				 */
+				showSetAsDefault: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: true
+				},
+
+				/**
 				 * Enables the lifecycle support. If set to true, the VariantManagement control handles the transport information for shared variants.
-				 * 
 				 * @since 1.26.0
 				 */
 				lifecycleSupport: {
@@ -120,7 +122,6 @@ sap.ui.define([
 
 				/**
 				 * Overwrites the default Standard variant title.
-				 * 
 				 * @since 1.28.0
 				 */
 				standardItemText: {
@@ -132,21 +133,41 @@ sap.ui.define([
 				/**
 				 * If set to<code>true</code>, the scenario is an industry-specific solution. This flag is only used internally in the app variant
 				 * scenarios.
-				 * 
 				 * @since 1.32.0
 				 */
 				industrySolutionMode: {
 					type: "boolean",
 					group: "Misc",
 					defaultValue: false
+				},
+
+				/**
+				 * Indicates that the 'Favorites' feature is used. Only variants marked as favorites will be displayed in the variant list.
+				 * @since 1.50.0
+				 */
+				useFavorites: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
+				},
+
+				/**
+				 * Indicates that the control is in error state. If set to <code>true</code> error message will be displayed whenever the variant is
+				 * opened.
+				 * @since 1.52.0
+				 */
+				inErrorState: {
+					type: "boolean",
+					group: "Misc",
+					defaultValue: false
 				}
+
 			},
 			defaultAggregation: "items",
 			aggregations: {
 
 				/**
-				 * Items displayed by the VariantManagement control.
-				 * 
+				 * Items displayed by the <code>VariantManagement</code> control.
 				 * @since 1.22.0
 				 * @deprecated Since version 1.26.0. Replaced by association <code>variantItems</code>
 				 */
@@ -158,8 +179,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Variant items displayed by the VariantManagement control.
-				 * 
+				 * Variant items displayed by the <code>VariantManagement</code> control.
 				 * @since 1.26.0
 				 */
 				variantItems: {
@@ -172,7 +192,6 @@ sap.ui.define([
 
 				/**
 				 * This event is fired when the Save Variant dialog is closed with OK for a variant.
-				 * 
 				 * @since 1.22.0
 				 */
 				save: {
@@ -237,7 +256,6 @@ sap.ui.define([
 
 				/**
 				 * This event is fired when users apply changes to variants in the Manage Variants dialog.
-				 * 
 				 * @since 1.22.0
 				 */
 				manage: {
@@ -274,7 +292,6 @@ sap.ui.define([
 
 				/**
 				 * This event is fired when a new variant is selected.
-				 * 
 				 * @since 1.22.0
 				 */
 				select: {
@@ -291,7 +308,6 @@ sap.ui.define([
 		},
 		/**
 		 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
-		 * 
 		 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
 		 * @param {sap.ui.core.Control} oControl an object representation of the control that should be rendered
 		 */
@@ -300,14 +316,35 @@ sap.ui.define([
 			oRm.writeControlData(oControl);
 			oRm.addClass("sapUiCompVarMngmt");
 			oRm.writeClasses();
+
+// var mAccProps = {
+// "labelledby": {
+// value: oControl.oVariantInvisbletext.getId(),
+// append: true
+// }
+// };
+//
+// oRm.writeAccessibilityState(oControl, mAccProps);
+
+			var sTooltip = oControl.oResourceBundle.getText("VARIANT_MANAGEMENT_TRIGGER_TT");
+			oRm.write(" title='" + sTooltip + "'");
+
+			// oRm.write(" tabindex='0'>");
 			oRm.write(">");
 			oRm.renderControl(oControl.oVariantLayout);
 			oRm.write("</div>");
 		}
 	});
 
-	VariantManagement.STANDARD_NAME = "STANDARD";
+	VariantManagement.STANDARD_NAME = sap.ui.comp.STANDARD_VARIANT_NAME;
 	VariantManagement.MAX_NAME_LEN = 100;
+
+	VariantManagement.FAV_COLUMN = 0;
+	VariantManagement.NAME_COLUMN = 1;
+	VariantManagement.SHARE_COLUMN = 2;
+	VariantManagement.DEF_COLUMN = 3;
+	VariantManagement.EXEC_COLUMN = 4;
+	VariantManagement.AUTHOR_COLUMN = 5;
 
 	/**
 	 * Constructs and initializes the VariantManagement control.
@@ -326,285 +363,139 @@ sap.ui.define([
 		this.bVariantItemMode = false;
 		this.oSelectedItem = null;
 		this.sNewDefaultKey = "";
-		this.bDirty = false;
 		this.bManagementTableInitialized = false;
 		this.sTransport = null;
 		this.sPackage = null;
 		this.aEvents = [];
 		this.bEventRunning = false;
-		this.bPopoverOpen = false;
 		this.oVariantSelectionPage = null;
-		this.oActions = null;
-		this.oActionSheet = null;
-		this.oActionSheetManage = null;
-		this.oActionSheetSave = null;
-		this.oActionSheetSaveAs = null;
 		this.bManualVariantKey = false;
 		this.bFireSelect = false;
 		this.bExecuteOnSelectForStandardViaXML = false;
 		this.bExecuteOnSelectForStandardByUser = null;
 		this.bSupportExecuteOnSelectOnSandardVariant = false;
+		this._bInnerControlsCreated = false;
 
 		this._isVendorLayer = false;
 
 		this.oModel = new JSONModel({
-			enabled: false
+			enabled: false,
+			selectedVariant: ""
 		});
 		this.setModel(this.oModel, "save_enablement");
 
-		this.oVariantManage = new Button(this.getId() + "-manage", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_MANAGE"),
-			enabled: false,
-			press: function() {
-				that._openVariantManagementDialog();
+		this.oVariantInvisbletext = new InvisibleText({
+			text: {
+				parts: [
+					{
+						path: 'save_enablement>/selectedVariant'
+					}, {
+						path: 'save_enablement>/enabled'
+					}
+				],
+				formatter: function(sText, bValue) {
+					if (bValue) {
+						sText = that.oResourceBundle.getText("VARIANT_MANAGEMENT_SEL_VARIANT_MOD", [
+							sText
+						]);
+					} else {
+						sText = that.oResourceBundle.getText("VARIANT_MANAGEMENT_SEL_VARIANT", [
+							sText
+						]);
+					}
+
+					return sText;
+				}
 			}
 		});
-		this.oVariantManage.addStyleClass("sapUiHideOnPhone");
 
-		this.oVariantSave = new Button(this.getId() + "-mainsave", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SAVE"),
-			press: function() {
-				var oEvent = that._createEvent("variantSavePressed", that._variantSavePressed);
-				that._addEvent(oEvent);
-			},
-			enabled: false
+		this.oVariantText = new Title(this.getId() + "-text", {
+			text: "{save_enablement>/selectedVariant}"
 		});
-		this.oVariantSave.setModel(this.oModel);
-		this.oVariantSave.addStyleClass("sapUiHideOnPhone");
 
-		this.oVariantSaveAs = new Button(this.getId() + "-saveas", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SAVEAS"),
-			press: function() {
-				that._openSaveAsDialog();
-			}
-		});
-		this.oVariantSaveAs.addStyleClass("sapUiHideOnPhone");
-
-		this.oVariantText = new Label(this.getId() + "-text");
 		this._setStandardText();
-		this.oVariantText.addStyleClass("sapUICompVarMngmtText");
-		this.oVariantText.addStyleClass("sapUICompVarMngmtEnabled");
-		this.oVariantText.addStyleClass("sapMH4Style");
+		this.oVariantText.addStyleClass("sapUICompVarMngmtClickable");
+		this.oVariantText.addStyleClass("sapUICompVarMngmtTitle");
+		this.oVariantText.addStyleClass("sapMTitleStyleH4");
 
 		if (Device.system.phone) {
+			this.oVariantText.addStyleClass("sapUICompVarMngmtTextPhoneMaxWidth");
+		} else {
 			this.oVariantText.addStyleClass("sapUICompVarMngmtTextMaxWidth");
 		}
 
-		this.oVariantModifiedText = new Label(this.getId() + "-modified", {
-			visible: false
+		this.oVariantModifiedText = new Title(this.getId() + "-modified", {
+			visible: "{save_enablement>/enabled}"
 		});
-		this.oVariantModifiedText.setText("*");// (" + this.oResourceBundle.getText("VARIANT_MANAGEMENT_MODIFIED")
-		// + ")");
-		this.oVariantModifiedText.addStyleClass("sapUICompVarMngmtText");
+		this.oVariantModifiedText.setText("*");
+		this.oVariantModifiedText.addStyleClass("sapUICompVarMngmtClickable");
 		this.oVariantModifiedText.addStyleClass("sapUICompVarMngmtModified");
-		this.oVariantModifiedText.addStyleClass("sapUICompVarMngmtEnabled");
-		this.oVariantModifiedText.addStyleClass("sapMH4Style");
+		this.oVariantModifiedText.addStyleClass("sapMTitleStyleH4");
 
 		this.oVariantPopoverTrigger = new Button(this.getId() + "-trigger", {
-			type: ButtonType.Transparent,
-			icon: "sap-icon://arrow-down",
-			press: function() {
-				that._openVariantSelection();
-			},
-			tooltip: this.oResourceBundle.getText("VARIANT_MANAGEMENT_TRIGGER_TT")
+			icon: "sap-icon://slim-arrow-down",
+			type: ButtonType.Transparent
 		});
 
+		this.oVariantPopoverTrigger.addAriaLabelledBy(this.oVariantInvisbletext);
 		this.oVariantPopoverTrigger.addStyleClass("sapUICompVarMngmtTriggerBtn");
+		this.oVariantPopoverTrigger.addStyleClass("sapMTitleStyleH4");
 
-		this.oVariantText.setLabelFor(this.oVariantPopoverTrigger);
 		this.oVariantLayout = new HorizontalLayout({
 			content: [
-				this.oVariantText, this.oVariantModifiedText, this.oVariantPopoverTrigger
+				this.oVariantText, this.oVariantModifiedText, this.oVariantPopoverTrigger, this.oVariantInvisbletext
 			]
 		});
 		this.oVariantLayout.addStyleClass("sapUICompVarMngmtLayout");
+
 		this.addDependent(this.oVariantLayout);
+	};
 
-		this.oVariantList = new SelectList(this.getId() + "-list", {
-			selectionChange: function(event) {
-				that.lastSelectedVariantKey = this.getSelectedItem().getKey();
-				that._setSelectionByKey(this.getSelectedItem().getKey());
-				that.oVariantPopOver.close();
-				that.bDirty = false;
-				that.oVariantModifiedText.setVisible(false);
-				that.oModel.setProperty("/enabled", false);
-				that.bFireSelect = true;
+	VariantManagement.prototype._columnVisibilityManagementTable = function(nIdx, bFlag) {
+
+		if (!this.bManagementTableInitialized) {
+			return;
+		}
+
+		if (this.oManagementTable) {
+			var aColumns = this.oManagementTable.getColumns();
+			if (aColumns && aColumns.length >= nIdx) {
+				aColumns[nIdx].setVisible(bFlag);
 			}
-		});
-		this.oVariantList.setNoDataText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_NODATA"));
+		}
+	};
 
-		this.oActionSheetManage = new Button({
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_MANAGE"),
-			enabled: false,
-			press: function(oEvent) {
-				that._openVariantManagementDialog();
-			}
-		});
-		this.oActionSheetSave = new Button({
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SAVE"),
-			enabled: false,
-			press: function(oEvent) {
-				var olEvent = that._createEvent("variantSavePressed", that._variantSavePressed);
-				that._addEvent(olEvent);
-			}
-		});
-		this.oActionSheetSaveAs = new Button({
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SAVEAS"),
-			press: function(oEvent) {
-				that._openSaveAsDialog();
-			}
-		});
+	VariantManagement.prototype.setUseFavorites = function(bFlag) {
+		this.setProperty("useFavorites", bFlag);
 
-		this.oActions = new Button(this.getId() + "-actions", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_ACTIONS"),
-			press: function() {
-				that._createActionSheet();
-				that.oActionSheet.openBy(this);
-			}
-		});
-		this.oActions.addStyleClass("sapUiVisibleOnlyOnPhone");
+		this._columnVisibilityManagementTable(VariantManagement.FAV_COLUMN, bFlag);
+	};
 
-		this.oSearchField = new SearchField();
-		this.oSearchField.attachLiveChange(function(oEvent) {
-			that._triggerSearch(oEvent);
-		});
+	VariantManagement.prototype.setShowShare = function(bFlag) {
+		this.setProperty("showShare", bFlag);
 
-		this._handleArrowUpDown(this.oVariantList, this.oSearchField);
+		this._columnVisibilityManagementTable(VariantManagement.SHARE_COLUMN, bFlag);
+	};
 
-		this.oVariantSelectionPage = new Page(this.getId() + "selpage", {
-			subHeader: new Toolbar({
-				content: [
-					this.oSearchField
-				]
-			}),
-			content: [
-				this.oVariantList
-			],
-			footer: new Toolbar({
-				content: [
-					new ToolbarSpacer(this.getId() + "-spacer"), this.oVariantManage, this.oVariantSave, this.oVariantSaveAs, this.oActions
-				]
-			}),
-			showSubHeader: false,
-			showNavButton: false,
-			showHeader: false
-		});
-		this.oVariantPopOver = new ResponsivePopover(this.getId() + "-popover", {
-			title: this.oResourceBundle.getText("VARIANT_MANAGEMENT_VARIANTS"),
-			contentWidth: "400px",
-			placement: PlacementType.Bottom,
-			content: [
-				this.oVariantSelectionPage
-			],
-			afterOpen: function() {
-				that.bPopoverOpen = true;
-				that._markSharedVariants();
-			},
-			afterClose: function() {
-				that.bPopoverOpen = false;
-				if (that.bFireSelect == true) {
-					that.bFireSelect = false;
-					setTimeout(function() {
-						that._fireSelectAsync();
-					}, 0);
-				}
-			},
-			contentHeight: "300px"
-		});
-		this.oVariantPopOver.addStyleClass("sapUICompVarMngmtPopover");
+	VariantManagement.prototype.setShowSetAsDefault = function(bFlag) {
+		this.setProperty("showSetAsDefault", bFlag);
 
-		/* save new dialog */
-		this.oInputName = new Input(this.getId() + "-name", {
-			liveChange: function(oEvent) {
-				/*
-				 * var sValue = this.getValue(); sValue = sValue.trim(); if (sValue === "") { this.setValueState(ValueState.Error);
-				 * this.setValueStateText(that.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_EMPTY")); that.oSaveSave.setEnabled(false); } else {
-				 * that.oSaveSave.setEnabled(!that._checkIsDuplicate(this, sValue)); }
-				 */
+		this._columnVisibilityManagementTable(VariantManagement.DEF_COLUMN, bFlag);
+	};
 
-				that._checkVariantNameConstraints(this, that.oSaveSave);
-			}
-		});
-		this.oLabelName = new Label(this.getId() + "-namelabel", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_NAME"),
-			required: true
-		});
-		this.oLabelName.setLabelFor(this.oInputName);
+	VariantManagement.prototype.setShowExecuteOnSelection = function(bFlag) {
+		this.setProperty("showExecuteOnSelection", bFlag);
 
-		this.oDefault = new CheckBox(this.getId() + "-default", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SETASDEFAULT"),
-			enabled: true,
-			visible: true,
-			width: "100%"
-		});
+		this._columnVisibilityManagementTable(VariantManagement.EXEC_COLUMN, bFlag);
+	};
 
-		this.oExecuteOnSelect = new CheckBox(this.getId() + "-execute", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_EXECUTEONSELECT"),
-			enabled: true,
-			visible: false,
-			width: "100%"
-		});
+	VariantManagement.prototype.setStandardItemText = function(sName) {
+		this.setProperty("standardItemText", sName);
 
-		this.oCreateTile = new CheckBox(this.getId() + "-tile", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_CREATETILE"),
-			enabled: true,
-			visible: false,
-			width: "100%"
-		});
-
-		this.oShare = new CheckBox(this.getId() + "-share", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SHARE"),
-			enabled: true,
-			visible: false,
-			select: function(oControlEvent) {
-				var oEvent = that._createEvent("inputfieldChange", that._handleShareSelected);
-				oEvent.args.push(oControlEvent);
-				that._addEvent(oEvent);
-			},
-			width: "100%"
-		});
-
-		this.oInputKey = new Input(this.getId() + "-key", {
-			liveChange: function(oEvent) {
-				/*
-				 * var sValue = this.getValue(); sValue = sValue.trim(); if (sValue === "") { this.setValueState(ValueState.Error);
-				 * this.setValueStateText(that.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_EMPTY")); } else {
-				 * this.setValueState(ValueState.None); this.setValueStateText(null); }
-				 */
-				that._checkVariantNameConstraints(this);
-			}
-		});
-
-		this.oLabelKey = new Label(this.getId() + "-keylabel", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_KEY"),
-			required: true
-		});
-		this.oLabelKey.setLabelFor(this.oInputKey);
-
-		this.oSaveSave = new Button(this.getId() + "-variantsave", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_OK"),
-			press: function() {
-// var oEvent = that._createEvent("variantSaveAs", that._handleVariantSaveAs);
-// that._addEvent(oEvent);
-				that._bSaveCanceled = false;
-				that._triggerSave();
-			},
-			enabled: true
-		});
-		this.oSaveDialogOptionsGrid = new Grid({
-			defaultSpan: "L6 M6 S12"
-		});
-
-		this.oManagementTable = new Table(this.getId() + "-managementTable");
-
-		this.oManagementSave = new Button(this.getId() + "-managementsave", {
-			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_OK"),
-			enabled: true,
-			press: function() {
-				var oEvent = that._createEvent("managementSave", that._handleManageSavePressed);
-				that._addEvent(oEvent);
-			}
-		});
+		var oItem = this._getSelectedItem();
+		if (!oItem || (oItem.getKey() === this.getStandardVariantKey())) {
+			this.oModel.setProperty("/selectedVariant", sName);
+		}
 
 	};
 
@@ -613,25 +504,53 @@ sap.ui.define([
 		this._addEvent(oEvent);
 	};
 
+	VariantManagement.prototype._checkNameValidity = function(oInputField, sValue, oManagementTable) {
+		var bInError = false;
+		if (oManagementTable && this._getVariantNamesAndKeys) {
+
+			var mMap = this._getVariantNamesAndKeys();
+			var aItems = oManagementTable.getItems();
+			aItems.forEach(function(oItem) {
+				var oInput = oItem.getCells()[VariantManagement.NAME_COLUMN];
+				var sKey = oItem.getKey();
+				if (oInput.getValue && mMap.hasOwnProperty(oInput.getValue()) && (mMap[oInput.getValue()] !== sKey)) {
+					oInput.setValueState(ValueState.Error);
+					oInput.setValueStateText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_DUPLICATE"));
+					bInError = true;
+				}
+			}.bind(this));
+		}
+
+		return bInError;
+	};
+
 	VariantManagement.prototype._checkVariantNameConstraints = function(oInputField, oSaveButton, oManagementTable) {
+		var bErrorUniqueName = false;
 
 		if (!oInputField) {
 			return;
 		}
 
-		var sValue = oInputField.getValue();
-		sValue = sValue.trim();
-		if (sValue === "") {
-			oInputField.setValueState(ValueState.Error);
-			oInputField.setValueStateText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_EMPTY"));
-		} else if (sValue.length > VariantManagement.MAX_NAME_LEN) {
-			oInputField.setValueState(ValueState.Error);
-			oInputField.setValueStateText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_MAX_LEN", [
-				VariantManagement.MAX_NAME_LEN
-			]));
-		} else {
-			oInputField.setValueState(ValueState.None);
-			oInputField.setValueStateText(null);
+		var sValue = oInputField.getValue().trim();
+
+		if (!this._checkIsDuplicate(oInputField, sValue, this.oManagementTable)) {
+			if (sValue === "") {
+				oInputField.setValueState(ValueState.Error);
+				oInputField.setValueStateText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_EMPTY"));
+			} else if (sValue.indexOf('{') > -1) {
+				oInputField.setValueState(ValueState.Error);
+				oInputField.setValueStateText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_NOT_ALLOWED_CHAR", [
+					"{"
+				]));
+			} else if (sValue.length > VariantManagement.MAX_NAME_LEN) {
+				oInputField.setValueState(ValueState.Error);
+				oInputField.setValueStateText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_MAX_LEN", [
+					VariantManagement.MAX_NAME_LEN
+				]));
+			} else {
+				oInputField.setValueState(ValueState.None);
+				oInputField.setValueStateText(null);
+			}
 		}
 
 		if (oSaveButton) {
@@ -640,12 +559,41 @@ sap.ui.define([
 				this._checkIsDuplicate(oInputField, sValue, oManagementTable);
 			}
 
-			if (oInputField.getValueState() === ValueState.Error) {
+			if (oManagementTable && this._getVariantNamesAndKeys) {
+				bErrorUniqueName = this._checkNameValidity(oInputField, sValue, oManagementTable);
+			}
+
+			if (bErrorUniqueName || (oInputField.getValueState() === ValueState.Error) || this._anyInErrorState(oManagementTable)) {
 				oSaveButton.setEnabled(false);
 			} else {
 				oSaveButton.setEnabled(true);
 			}
 		}
+	};
+
+	VariantManagement.prototype._anyInErrorState = function(oManagementTable, oInputField) {
+		var oItems, oInput, i;
+
+		if (oManagementTable) { //
+			oItems = oManagementTable.getItems();
+			if (oItems) {
+				for (i = 0; i < oItems.length; i++) {
+					oInput = oItems[i].getCells()[VariantManagement.NAME_COLUMN];
+
+					if (oInputField && (oInputField === oInput)) {
+						continue;
+					}
+
+					if (oInput && oInput.getValueState && (oInput.getValueState() === ValueState.Error)) {
+						if (this._checkIsDuplicate(oInput, oInput.getValue(), oManagementTable)) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
 	};
 
 	VariantManagement.prototype._checkIsDuplicate = function(oInputField, sValue, oManagementTable) {
@@ -654,7 +602,7 @@ sap.ui.define([
 
 		if (bFlag) {
 			oInputField.setValueState(ValueState.Error);
-			oInputField.setValueStateText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_DUPLICATE"));
+			oInputField.setValueStateText(this.oResourceBundle.getText(sValue ? "VARIANT_MANAGEMENT_ERROR_DUPLICATE" : "VARIANT_MANAGEMENT_ERROR_EMPTY"));
 		} else {
 			oInputField.setValueState(ValueState.None);
 			oInputField.setValueStateText(null);
@@ -676,9 +624,9 @@ sap.ui.define([
 
 		if (oManagementTable) { //
 			oItems = oManagementTable.getItems();
-			if (oItems) {
+			if (oItems && (oItems.length > 0)) {
 				for (i = 0; i < oItems.length; i++) {
-					oInput = oItems[i].getCells()[0];
+					oInput = oItems[i].getCells()[VariantManagement.NAME_COLUMN];
 
 					if (oInput === oInputField) {
 						continue;
@@ -689,32 +637,17 @@ sap.ui.define([
 							return true;
 						} else if (oInput.getText && (sValue === oInput.getText().trim())) {
 							return true;
+						} else if (oInput.getTitle && (sValue === oInput.getTitle().trim())) {
+							return true;
 						}
 					}
 				}
-			}
-		}
-
-		return false;
-	};
-
-	VariantManagement.prototype._isInErrorStateManaged = function(oInputField, oManagementTable) {
-		var oItems, oInput, i;
-
-		if (oManagementTable) { //
-			oItems = oManagementTable.getItems();
-			if (oItems) {
-				for (var i = 0; i < oItems.length; i++) {
-					var oInput = oItems[i].getCells()[0];
-
-					if (oInput === oInputField) {
-						continue;
-					}
-
-					if (oInput && oInput.getValueState && (oInput.getValueState() === ValueState.Error)) {
-						return true;
-					}
+			} else {
+				/* eslint-disable no-lonely-if */
+				if (this._isIndustrySolutionModeAndVendorLayer() && this.bManualVariantKey) {
+					return false;
 				}
+				/* eslint-enable no-lonely-if */
 			}
 		}
 
@@ -729,6 +662,9 @@ sap.ui.define([
 
 		var sText = this._determineStandardVariantName();
 		if (sText === sTrimName) {
+			if (this._isIndustrySolutionModeAndVendorLayer() && this.bManualVariantKey) {
+				return false;
+			}
 			return true;
 		}
 
@@ -741,19 +677,6 @@ sap.ui.define([
 		}
 
 		return false;
-	};
-
-	VariantManagement.prototype._createActionSheet = function() {
-
-		if (!this.oActionSheet) {
-			this.oActionSheet = new ActionSheet(this.getId() + "-actionsheet", {
-				showCancelButton: true,
-				buttons: [
-					this.oActionSheetManage, this.oActionSheetSave, this.oActionSheetSaveAs
-				],
-				placement: PlacementType.Top
-			});
-		}
 	};
 
 	VariantManagement.prototype._createSaveDialog = function() {
@@ -792,14 +715,6 @@ sap.ui.define([
 
 		if (!this.oManagementDialog) {
 			this.oManagementDialog = new Dialog(this.getId() + "-managementdialog", {
-				// contentWidth: "600px",
-				customHeader: new Bar(this.getId() + "-managementHeader", {
-					contentMiddle: [
-						new Text(this.getId() + "-managementHeaderText", {
-							text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_MANAGEDIALOG")
-						})
-					]
-				}),
 				beginButton: this.oManagementSave,
 				endButton: new Button(this.getId() + "-managementcancel", {
 					text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_CANCEL"),
@@ -822,7 +737,18 @@ sap.ui.define([
 				}
 			});
 			this.oManagementDialog.setParent(this);
-			this.oManagementDialog.addStyleClass("sapUiPopupWithPadding");
+
+			this.oManagementDialog.setTitle(this.oResourceBundle.getText("VARIANT_MANAGEMENT_MANAGEDIALOG"));
+			var oSubHeader = new Bar();
+			this.oManageDialogSearchField = new SearchField();
+
+			this.oManageDialogSearchField.attachLiveChange(function(oEvent) {
+				this._triggerSearchInManageDialog(oEvent);
+			}.bind(this));
+
+			oSubHeader.addContentRight(this.oManageDialogSearchField);
+			this.oManagementDialog.setSubHeader(oSubHeader);
+
 		}
 	};
 
@@ -831,15 +757,15 @@ sap.ui.define([
 		var sItemId = null;
 		var that = this;
 
-		oList.attachBrowserEvent("keydown", jQuery.proxy(function(e) {
+		oList.attachBrowserEvent("keydown", function(e) {
 			if (e.which === 38) { // UP
 				if (that.oVariantSelectionPage.getShowSubHeader()) {
 					sItemId = document.activeElement.id;
 				}
 			}
-		}, this));
+		});
 
-		oList.attachBrowserEvent("keyup", jQuery.proxy(function(e) {
+		oList.attachBrowserEvent("keyup", function(e) {
 			if (e.which === 38) { // UP
 				if (sItemId && (sItemId === document.activeElement.id)) {
 					var aItems = oList.getItems();
@@ -853,16 +779,16 @@ sap.ui.define([
 
 				sItemId = null;
 			}
-		}, this));
+		});
 
-		oSearch.attachBrowserEvent("keyup", jQuery.proxy(function(e) {
+		oSearch.attachBrowserEvent("keyup", function(e) {
 			if (e.which === 40) { // DOWN
 				var aItems = oList.getItems();
 				if (aItems && aItems.length > 0) {
 					aItems[0].focus();
 				}
 			}
-		}, this));
+		});
 	};
 
 	VariantManagement.prototype._triggerSearch = function(oEvent) {
@@ -919,20 +845,107 @@ sap.ui.define([
 		}
 	};
 
-	VariantManagement.prototype._restoreCompleteList = function() {
+	VariantManagement.prototype._triggerSearchInManageDialog = function(oEvent) {
+		var sValue, bNoMatch, sColumnValue = "", oCell, aCells;
+
+		if (!oEvent) {
+			return;
+		}
+
+		var parameters = oEvent.getParameters();
+		if (!parameters) {
+			return;
+		}
+
+		sValue = parameters.newValue ? parameters.newValue.toLowerCase() : "";
+
+		if (this.oManagementTable) {
+			var aVariants = this.oManagementTable.getItems();
+			aVariants.forEach(function(oRow) {
+				bNoMatch = true;
+				sColumnValue = "";
+				aCells = oRow.getCells();
+				if (aCells && aCells[VariantManagement.NAME_COLUMN]) {
+
+					oCell = aCells[VariantManagement.NAME_COLUMN];
+					if (oCell.getTitle) {
+						sColumnValue = oCell.getTitle();
+					} else if (oCell.getValue) {
+						sColumnValue = oCell.getValue();
+					}
+
+					if (sColumnValue.toLowerCase().indexOf(sValue) >= 0) {
+						bNoMatch = false;
+					}
+				}
+
+				if (bNoMatch && aCells && aCells[VariantManagement.AUTHOR_COLUMN]) {
+					oCell = aCells[VariantManagement.AUTHOR_COLUMN];
+					if (oCell.getText) {
+						sColumnValue = oCell.getText();
+						if (sColumnValue.toLowerCase().indexOf(sValue) >= 0) {
+							bNoMatch = false;
+						}
+					}
+				}
+
+				oRow.setVisible(!bNoMatch);
+
+			});
+
+		}
+
+	};
+
+	VariantManagement.prototype._considerItem = function(bIgnoreFavorites, oItem) {
+
+		if (this.getUseFavorites() && !bIgnoreFavorites) {
+
+			if (this._isIndustrySolutionModeAndVendorLayer()) {
+				return true;
+			}
+
+			if (oItem.getFavorite && oItem.getFavorite()) {
+				return true;
+			}
+
+// if (this.oSelectedVariantItemKey) {
+// if (this.oSelectedVariantItemKey === oItem.getKey()) {
+// return true;
+// }
+// } else {
+// /* eslint-disable no-lonely-if */
+// if (this.getSelectionKey() === oItem.getKey() || this.getSelectionKey() === null) {
+// return true;
+// /* eslint-enable no-lonely-if */
+// }
+// }
+
+			return false;
+
+		}
+
+		return true;
+	};
+
+	VariantManagement.prototype._restoreCompleteList = function(bIgnoreFavorites) {
 		var iCount, oItem, oItems, oVariantListItem;
-		var nOffset = 0;
+
+		this.oVariantList.destroyItems();
 
 		oVariantListItem = this.oVariantList.getItemByKey(this.getStandardVariantKey());
 		if (!oVariantListItem) {
 			oVariantListItem = this._createStandardVariantListItem();
 			if (oVariantListItem) {
-				this.oVariantList.insertItem(oVariantListItem, 0);
+				if (this._considerItem(bIgnoreFavorites, oVariantListItem)) {
+					this.oVariantList.insertItem(oVariantListItem, 0);
+				} else {
+					oVariantListItem.destroy();
+				}
 			}
 		}
 
 		if (oVariantListItem) {
-			nOffset = 1;
 			if (this.oSelectedVariantItemKey) {
 				if (this.oSelectedVariantItemKey === oVariantListItem.getKey()) {
 					this.oVariantList.setSelectedItem(oVariantListItem);
@@ -952,6 +965,10 @@ sap.ui.define([
 		for (iCount = 0; iCount < oItems.length; iCount++) {
 			oItem = oItems[iCount];
 
+			if (!this._considerItem(bIgnoreFavorites, oItem)) {
+				continue;
+			}
+
 			if (oItem.getKey() === this.getStandardVariantKey()) {
 				continue;
 			}
@@ -959,7 +976,7 @@ sap.ui.define([
 			oVariantListItem = this.oVariantList.getItemByKey(oItem.getKey());
 			if (!oVariantListItem) {
 				oVariantListItem = this._createVariantListItem(oItem, iCount);
-				this.oVariantList.insertItem(oVariantListItem, iCount + nOffset);
+				this.oVariantList.addItem(oVariantListItem);
 			}
 
 			if (this.oSelectedVariantItemKey) {
@@ -1005,23 +1022,30 @@ sap.ui.define([
 
 			oVariantListItem = new VariantItem(this.oVariantPopoverTrigger.getId() + "-item-standard", {
 				key: this.getStandardVariantKey(),
-				text: sText,
+				// text: sText, // issue with curly brackets
 				readOnly: true, // !this.getIndustrySolutionMode(),
 				executeOnSelection: this.getExecuteOnSelectForStandardVariant()
 			});
+			oVariantListItem.setText(sText);
 
 			if (this._isIndustrySolutionModeAndVendorLayer() && this.bVariantItemMode) {
 				oVariantListItem.setGlobal(true);
+				oVariantListItem.setReadOnly(false); // in vendor layer a change should be possible
 			}
 
 			if (this.getStandardVariantKey() !== this.STANDARDVARIANTKEY) {
 				oItem = this.getItemByKey(this.getStandardVariantKey());
 				if (oItem) {
 					this._setVariantListItemProperties(oItem, oVariantListItem);
-					oVariantListItem.setReadOnly(true);
+					// oVariantListItem.setReadOnly(true);
+					if (oItem.getFavorite && !oItem.getFavorite() && (this.getCurrentVariantId() === this.getStandardVariantKey())) {
+						oVariantListItem.setFavorite(true);
+					}
 				}
 			} else {
 				oVariantListItem.setAuthor("SAP");
+				oVariantListItem.setReadOnly(true); // BCP: 1880093559
+				oVariantListItem.setFavorite(this.getStandardFavorite());
 			}
 		}
 
@@ -1032,7 +1056,10 @@ sap.ui.define([
 		var oVariantListItem = new VariantItem(this.oVariantPopoverTrigger.getId() + "-item-" + iCount, {
 			key: oItem.getKey(),
 			text: oItem.getText()
+		// leads to issues if curly brackets are added
 		});
+
+		// oVariantListItem.setText(oItem.getText());
 
 		this._setVariantListItemProperties(oItem, oVariantListItem);
 
@@ -1067,6 +1094,9 @@ sap.ui.define([
 		if (oItem.getAuthor) {
 			oVariantListItem.setAuthor(oItem.getAuthor());
 		}
+		if (oItem.getFavorite) {
+			oVariantListItem.setFavorite(oItem.getFavorite());
+		}
 	};
 
 	// exit destroy all controls created in init
@@ -1075,6 +1105,10 @@ sap.ui.define([
 		if (this.oSearchField) {
 			this.oSearchField.destroy();
 			this.oSearchField = undefined;
+		}
+		if (this.oManageDialogSearchField) {
+			this.oManageDialogSearchField.destroy();
+			this.oManageDialogSearchField = undefined;
 		}
 
 		if (this.oVariantManage) {
@@ -1161,22 +1195,11 @@ sap.ui.define([
 			this.oVariantSelectionPage.destroy();
 			this.oVariantSelectionPage = undefined;
 		}
-		if (this.oActions) {
-			this.oActions.destroy();
-			this.oActions = undefined;
+		if (this.oErrorVariantPopOver) {
+			this.oErrorVariantPopOver.destroy();
+			this.oErrorVariantPopOver = undefined;
 		}
-		if (this.oActionSheetManage) {
-			this.oActionSheetManage.destroy();
-			this.oActionSheetManage = undefined;
-		}
-		if (this.oActionSheetSave) {
-			this.oActionSheetSave.destroy();
-			this.oActionSheetSave = undefined;
-		}
-		if (this.oActionSheetSaveAs) {
-			this.oActionSheetSaveAs.destroy();
-			this.oActionSheetSaveAs = undefined;
-		}
+
 		if (this.oInputKey) {
 			this.oInputKey.destroy();
 			this.oInputKey = undefined;
@@ -1184,6 +1207,11 @@ sap.ui.define([
 		if (this.oLabelKey) {
 			this.oLabelKey.destroy();
 			this.oLabelKey = undefined;
+		}
+
+		if (this.oModel) {
+			this.oModel.destroy();
+			this.oModel = undefined;
 		}
 	};
 
@@ -1193,7 +1221,6 @@ sap.ui.define([
 		this.addAggregation("items", oItem, false);
 		var _sKey = this.getInitialSelectionKey();
 		this._setSelection(oItem, _sKey);
-		this._manageButtonState();
 		this._setStandardText();
 		return this;
 	};
@@ -1205,27 +1232,23 @@ sap.ui.define([
 		this.insertAggregation("items", oItem, _iIndex);
 		var _sKey = this.getInitialSelectionKey();
 		this._setSelection(oItem, _sKey);
-		this._manageButtonState();
 		this._setStandardText();
 		return this;
 	};
 
 	VariantManagement.prototype.removeItem = function(oItem) {
-		this.removeAggregation("items", oItem);
-		this._manageButtonState();
+		oItem = this.removeAggregation("items", oItem);
 		return oItem;
 	};
 
 	VariantManagement.prototype.removeAllItems = function() {
 		var ret = this.removeAllAggregation("items");
-		this._manageButtonState();
 		this._setSelectedItem(null);
 		return ret;
 	};
 
 	VariantManagement.prototype.destroyItems = function() {
 		this.destroyAggregation("items");
-		this._manageButtonState();
 		this._setSelectedItem(null);
 		return this;
 	};
@@ -1262,7 +1285,6 @@ sap.ui.define([
 		this.addAggregation("variantItems", oVariantItem, false);
 		var _sKey = this.getInitialSelectionKey();
 		this._setSelection(oVariantItem, _sKey);
-		this._manageButtonState();
 		this._setStandardText();
 		return this;
 	};
@@ -1274,15 +1296,15 @@ sap.ui.define([
 		this.insertAggregation("variantItems", oVariantItem, _iIndex);
 		var _sKey = this.getInitialSelectionKey();
 		this._setSelection(oVariantItem, _sKey);
-		this._manageButtonState();
 		this._setStandardText();
 		return this;
 	};
 
 	VariantManagement.prototype._setSelectedItem = function(oItem) {
 		this.oSelectedItem = oItem;
-		if (oItem != null) {
-			this.oVariantText.setText(oItem.getText());
+		// when standard variant comes from SmartVariant Management texts from other languages overrule the translation of "Standard"
+		if (oItem != null && oItem.getKey() != this.getStandardVariantKey()) {
+			this._setVariantText(oItem.getText());
 		} else {
 			this._setStandardText();
 		}
@@ -1295,31 +1317,42 @@ sap.ui.define([
 	VariantManagement.prototype.setInitialSelectionKey = function(sKey) {
 		this.setProperty("initialSelectionKey", sKey, true); // do not re-render !
 		this._setSelectionByKey(sKey);
+		return this;
 	};
 
 	VariantManagement.prototype.setEnabled = function(bEnabled) {
 		this.setProperty("enabled", bEnabled, false);
-		if (this.oVariantPopoverTrigger) {
-			this.oVariantPopoverTrigger.setEnabled(bEnabled);
-		}
+
 		if (!bEnabled) {
-			this.oVariantText.removeStyleClass("sapUICompVarMngmtEnabled");
-			this.oVariantModifiedText.removeStyleClass("sapUICompVarMngmtEnabled");
+			this.oVariantText.removeStyleClass("sapUICompVarMngmtClickable");
+			this.oVariantModifiedText.removeStyleClass("sapUICompVarMngmtClickable");
 			this.oVariantText.addStyleClass("sapUICompVarMngmtDisabled");
 			this.oVariantModifiedText.addStyleClass("sapUICompVarMngmtDisabled");
+
+			// this.oVariantLayout.removeStyleClass("sapUICompVarMngmtLayout");
 		} else {
 			this.oVariantText.removeStyleClass("sapUICompVarMngmtDisabled");
 			this.oVariantModifiedText.removeStyleClass("sapUICompVarMngmtDisabled");
-			this.oVariantText.addStyleClass("sapUICompVarMngmtEnabled");
-			this.oVariantModifiedText.addStyleClass("sapUICompVarMngmtEnabled");
+			this.oVariantText.addStyleClass("sapUICompVarMngmtClickable");
+			this.oVariantModifiedText.addStyleClass("sapUICompVarMngmtClickable");
+
+			// this.oVariantLayout.addStyleClass("sapUICompVarMngmtLayout");
 		}
+		return this;
+	};
+
+	VariantManagement.prototype.getFocusDomRef = function() {
+		if (this.oVariantPopoverTrigger && this.getEnabled()) {
+			return this.oVariantPopoverTrigger.getFocusDomRef();
+		}
+
+		// return sap.ui.core.Element.prototype.getFocusDomRef.apply(this, []);
 	};
 
 	/**
-	 * The string given as "sKey" will be used to set the initial selected item of the Variant Management. If an item exists with the matching key the
-	 * item will be marked as selected If the key is set before any items are added the Variant Management will try to set the selection when the
-	 * items are added in "addItem" or "insterItem".
-	 * 
+	 * The string given as "sKey" will be used to set the initial selected item of the <code>VariantManagement</code>. If an item exists with the
+	 * matching key the item will be marked as selected If the key is set before any items are added the <code>VariantManagement</code> will try to
+	 * set the selection when the items are added in "addItem" or "insterItem".
 	 * @param {sap.ui.core.Item} oItem the Item to be compared
 	 * @param {string} sKey the string used to be compared with the item's key attribute
 	 */
@@ -1364,7 +1397,6 @@ sap.ui.define([
 
 	/**
 	 * Removes the current variant selection and resets to default value.
-	 * 
 	 * @public
 	 * @since 1.22.0
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -1376,7 +1408,6 @@ sap.ui.define([
 
 	/**
 	 * If the oControl has the ".sapUiSizeCompact" class it will be also set on the oDialog
-	 * 
 	 * @param {sap.ui.core.Control} oControl the control to be checked for compact
 	 * @param {sap.ui.core.Control} oDialog the dialog/popover to receive the compact style class
 	 */
@@ -1390,7 +1421,6 @@ sap.ui.define([
 
 	/**
 	 * If the oControl has the ".sapUiSizeCompact" the function will return true
-	 * 
 	 * @param {sap.ui.core.Control} oControl the control to be checked for compact
 	 * @returns {boolean} result
 	 */
@@ -1399,19 +1429,6 @@ sap.ui.define([
 			return true;
 		} else {
 			return false;
-		}
-	};
-
-	/**
-	 * Check and set Manage Button State
-	 */
-	VariantManagement.prototype._manageButtonState = function() {
-		if (this._getItems() && this._getItems().length > 0) {
-			this.oVariantManage.setEnabled(true);
-			this.oActionSheetManage.setEnabled(true);
-		} else {
-			this.oVariantManage.setEnabled(false);
-			this.oActionSheetManage.setEnabled(false);
 		}
 	};
 
@@ -1477,39 +1494,314 @@ sap.ui.define([
 		}
 	};
 
+	/**
+	 * Sets the dirty flag of the current variant.
+	 * @public
+	 * @param {boolean} bFlag The value indicating the dirty state of the current variant
+	 */
 	VariantManagement.prototype.currentVariantSetModified = function(bFlag) {
-		if (bFlag) {
-			if (!this.bDirty) {
-				this.oVariantModifiedText.setVisible(true);
-				this.bDirty = true;
-				this.oModel.setProperty("/enabled", true);
-			}
-		} else if (this.bDirty) {
-			this.oVariantModifiedText.setVisible(false);
-			this.bDirty = false;
-			this.oModel.setProperty("/enabled", false);
+
+		if (this.oModel) {
+			this.oModel.setProperty("/enabled", bFlag);
 		}
 	};
 
+	/**
+	 * Gets the dirty flag of the current variant.
+	 * @public
+	 * @returns {boolean} The dirty state of the current variant
+	 */
 	VariantManagement.prototype.currentVariantGetModified = function() {
-		return this.bDirty;
+		return this.oModel.getProperty("/enabled");
+	};
+
+	VariantManagement.prototype._delayedControlCreation = function() {
+		var that = this;
+
+		if (this._bInnerControlsCreated) {
+			return;
+		}
+
+		this._bInnerControlsCreated = true;
+
+		this.oVariantManage = new Button(this.getId() + "-manage", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_MANAGE"),
+			enabled: true, // FIORITECHP1-3572
+			press: function() {
+				that._openVariantManagementDialog();
+			},
+			layoutData: new OverflowToolbarLayoutData({
+				priority: sap.m.OverflowToolbarPriority.High
+			})
+		});
+
+		this.oVariantSave = new Button(this.getId() + "-mainsave", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SAVE"),
+			press: function() {
+				var oEvent = that._createEvent("variantSavePressed", that._variantSavePressed);
+				that._addEvent(oEvent);
+			},
+			enabled: false,
+			layoutData: new OverflowToolbarLayoutData({
+				priority: sap.m.OverflowToolbarPriority.Low
+			})
+		});
+		this.oVariantSave.setModel(this.oModel);
+
+		this.oVariantSaveAs = new Button(this.getId() + "-saveas", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SAVEAS"),
+			press: function() {
+				that._openSaveAsDialog();
+			},
+			layoutData: new OverflowToolbarLayoutData({
+				priority: sap.m.OverflowToolbarPriority.Low
+			})
+		});
+
+		this.oVariantList = new SelectList(this.getId() + "-list", {
+			itemPress: function(event) {
+				var sSelectionKey = null;
+				if (event && event.getParameters()) {
+					var oItemPressed = event.getParameters().item;
+					if (oItemPressed) {
+						sSelectionKey = oItemPressed.getKey();
+// if (!this.getSelectedItem() || sSelectionKey !== this.getSelectedItem().getKey()) {
+// bNewSelection = true;
+// }
+					}
+				}
+				if (sSelectionKey) {
+					that.lastSelectedVariantKey = sSelectionKey;
+					that._setSelectionByKey(sSelectionKey);
+					that.oVariantPopOver.close();
+// that.bDirty = false;
+					that.oModel.setProperty("/enabled", false);
+					that.bFireSelect = true;
+				}
+			}
+		});
+		this.oVariantList.setNoDataText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_NODATA"));
+
+		this.oSearchField = new SearchField();
+		this.oSearchField.attachLiveChange(function(oEvent) {
+			that._triggerSearch(oEvent);
+		});
+
+		this._handleArrowUpDown(this.oVariantList, this.oSearchField);
+
+		this.oVariantSelectionPage = new Page(this.getId() + "selpage", {
+			subHeader: new Toolbar({
+				content: [
+					this.oSearchField
+				]
+			}),
+			content: [
+				this.oVariantList
+			],
+			footer: new OverflowToolbar({
+				content: [
+					new ToolbarSpacer(this.getId() + "-spacer"), this.oVariantSave, this.oVariantSaveAs, this.oVariantManage
+				]
+			}),
+			showSubHeader: false,
+			showNavButton: false,
+			showHeader: false
+		});
+		this.oVariantPopOver = new ResponsivePopover(this.getId() + "-popover", {
+			title: this.oResourceBundle.getText("VARIANT_MANAGEMENT_VARIANTS"),
+			contentWidth: "400px",
+			placement: PlacementType.Bottom,
+			content: [
+				this.oVariantSelectionPage
+			],
+			afterOpen: function() {
+				that.bPopoverOpen = true;
+				that._markSharedVariants();
+			},
+			afterClose: function() {
+				if (that.bPopoverOpen) {
+					setTimeout(function() {
+						if (that.bFireSelect == true) {
+							that.bFireSelect = false;
+							that._fireSelectAsync();
+						}
+						that.bPopoverOpen = false;
+					}, 200);
+				}
+			},
+			contentHeight: "300px"
+		});
+
+		this.oVariantPopOver.setParent(this);
+
+		this.oVariantPopOver.addStyleClass("sapUICompVarMngmtPopover");
+
+		/* save new dialog */
+		this.oInputName = new Input(this.getId() + "-name", {
+			liveChange: function(oEvent) {
+				that._checkVariantNameConstraints(this, that.oSaveSave);
+			}
+		});
+		this.oLabelName = new Label(this.getId() + "-namelabel", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_NAME"),
+			required: true
+		});
+		this.oLabelName.setLabelFor(this.oInputName);
+
+		this.oDefault = new CheckBox(this.getId() + "-default", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SETASDEFAULT"),
+			enabled: true,
+			visible: true,
+			width: "100%"
+		});
+
+		this.oExecuteOnSelect = new CheckBox(this.getId() + "-execute", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_EXECUTEONSELECT"),
+			enabled: true,
+			visible: false,
+			width: "100%"
+		});
+
+		this.oCreateTile = new CheckBox(this.getId() + "-tile", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_CREATETILE"),
+			enabled: true,
+			visible: false,
+			width: "100%"
+		});
+
+		this.oShare = new CheckBox(this.getId() + "-share", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_SHARE"),
+			enabled: true,
+			visible: false,
+			select: function(oControlEvent) {
+				var oEvent = that._createEvent("inputfieldChange", that._handleShareSelected);
+				oEvent.args.push(oControlEvent);
+				that._addEvent(oEvent);
+			},
+			width: "100%"
+		});
+
+		this.oInputKey = new Input(this.getId() + "-key", {
+			liveChange: function(oEvent) {
+				that._checkVariantNameConstraints(this);
+			}
+		});
+
+		this.oLabelKey = new Label(this.getId() + "-keylabel", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_KEY"),
+			required: true
+		});
+		this.oLabelKey.setLabelFor(this.oInputKey);
+
+		this.oSaveSave = new Button(this.getId() + "-variantsave", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_OK"),
+			press: function() {
+				that._bSaveCanceled = false;
+				that._triggerSave();
+			},
+			enabled: true
+		});
+		this.oSaveDialogOptionsGrid = new Grid({
+			defaultSpan: "L12 M12 S12"
+		});
+
+		this.oManagementTable = new Table(this.getId() + "-managementTable");
+
+		this.oManagementSave = new Button(this.getId() + "-managementsave", {
+			text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_OK"),
+			enabled: true,
+			press: function() {
+				var oEvent = that._createEvent("managementSave", that._handleManageSavePressed);
+				that._addEvent(oEvent);
+			}
+		});
+
+	};
+
+	VariantManagement.prototype._openInErrorState = function() {
+		var that = this, oVBox;
+
+		if (!this.oErrorVariantPopOver) {
+
+			oVBox = new VBox({
+				fitContainer: true,
+				alignItems: sap.m.FlexAlignItems.Center,
+				items: [
+					new Icon({
+						size: "4rem",
+						color: "lightgray",
+						src: "sap-icon://message-error"
+					}), new Title({
+						titleStyle: sap.ui.core.TitleLevel.H2,
+						text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_TEXT1")
+					}), new sap.m.Text({
+						textAlign: sap.ui.core.TextAlign.Center,
+						text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_TEXT2")
+					})
+				]
+			});
+
+			oVBox.addStyleClass("sapUICompVarMngmtErrorPopover");
+
+			this.oErrorVariantPopOver = new ResponsivePopover(this.getId() + "-errorpopover", {
+				title: this.oResourceBundle.getText("VARIANT_MANAGEMENT_VARIANTS"),
+				contentWidth: "400px",
+				placement: PlacementType.Bottom,
+				content: [
+					new Page(this.getId() + "-errorselpage", {
+						showSubHeader: false,
+						showNavButton: false,
+						showHeader: false,
+						content: [
+							oVBox
+						]
+					})
+				],
+				afterOpen: function() {
+					that.bPopoverOpen = true;
+				},
+				afterClose: function() {
+					if (that.bPopoverOpen) {
+						setTimeout(function() {
+							that.bPopoverOpen = false;
+						}, 200);
+					}
+				},
+				contentHeight: "300px"
+			});
+
+			this.oErrorVariantPopOver.attachBrowserEvent("keyup", function(e) {
+				if (e.which === 32) { // UP
+					this.oErrorVariantPopOver.close();
+				}
+			}.bind(this));
+		}
+
+		if (this.bPopoverOpen) {
+			return;
+		}
+
+		this.oErrorVariantPopOver.openBy(this.oVariantLayout);
 	};
 
 	VariantManagement.prototype._openVariantSelection = function() {
-		var oItems = null;
 
-		if (this.bPopoverOpen == true) {
+		var oItems = null, oSelectedItem;
+
+		if (this.getInErrorState()) {
+			this._openInErrorState();
 			return;
 		}
-		this.bPopoverOpen = true;
 
-		this.oVariantList.destroyItems();
+		this._delayedControlCreation();
+
+		if (this.bPopoverOpen) {
+			return;
+		}
 
 		this.oVariantSave.setEnabled(false);
-		this.oActionSheetSave.setEnabled(false);
 		if (this.bVariantItemMode === false && this.getSelectionKey() !== null) {
 			this.oVariantSave.setEnabled(true);
-			this.oActionSheetSave.setEnabled(true);
 		}
 
 		oItems = this._getItems();
@@ -1522,35 +1814,57 @@ sap.ui.define([
 
 		this._restoreCompleteList();
 
-		if (this.bDirty) {
-			var oSelectedItem = this.oVariantList.getItemByKey(this.getSelectionKey());
+		if (this.currentVariantGetModified()) {
+			oSelectedItem = this.oVariantList.getItemByKey(this.getSelectionKey());
 			if (oSelectedItem) {
 				if (!oSelectedItem.getReadOnly() || (this._isIndustrySolutionModeAndVendorLayer() && (this.getStandardVariantKey() === oSelectedItem.getKey()))) {
 					this.oVariantSave.setEnabled(true);
-					this.oActionSheetSave.setEnabled(true);
 				}
 			}
 		}
 
 		this.oVariantSaveAs.setEnabled(true);
-		if (this._isIndustrySolutionModeAndVendorLayer() && (this.getStandardVariantKey() === this.getSelectionKey()) && (this.getStandardVariantKey() === this.STANDARDVARIANTKEY)) {
-			this.oVariantSaveAs.setEnabled(false);
+// if (this._isIndustrySolutionModeAndVendorLayer() && (this.getStandardVariantKey() === this.getSelectionKey()) && (this.getStandardVariantKey() ===
+// this.STANDARDVARIANTKEY)) {
+// this.oVariantSaveAs.setEnabled(false);
+// }
+
+		if (this._isIndustrySolutionModeAndVendorLayer() && this.bManualVariantKey && (this.getStandardVariantKey() === this.STANDARDVARIANTKEY)) {
+			this.oVariantSave.setEnabled(false);
+			this.oVariantSaveAs.setEnabled(true);
 		}
 
 		this._setDialogCompactStyle(this, this.oVariantPopOver);
-		this._manageButtonState();
-		this.oVariantPopOver.setInitialFocus(this.oVariantList.getSelectedItem().getId());
-		this.oVariantPopOver.openBy(this.oVariantPopoverTrigger.$("img")[0]);
+
+		oSelectedItem = this.oVariantList.getSelectedItem();
+		if (oSelectedItem) {
+			this.oVariantPopOver.setInitialFocus(oSelectedItem.getId());
+		}
+
+		this.oVariantPopOver.openBy(this.oVariantLayout);
+	};
+
+	VariantManagement.prototype.handleOpenCloseVariantPopover = function() {
+		if (!this.bPopoverOpen) {
+			this._openVariantSelection();
+		} else if (this.oVariantPopOver && this.oVariantPopOver.isOpen()) {
+			this.oVariantPopOver.close();
+		} else if (this.getInErrorState() && this.oErrorVariantPopOver && this.oErrorVariantPopOver.isOpen()) {
+			this.oErrorVariantPopOver.close();
+		}
 	};
 
 	VariantManagement.prototype.onclick = function(oEvent) {
 		if (this.getEnabled()) {
-			this._openVariantSelection();
+			if (this.oVariantPopoverTrigger && !this.bPopoverOpen) {
+				this.oVariantPopoverTrigger.focus();
+			}
+			this.handleOpenCloseVariantPopover();
 		}
 	};
 
 	VariantManagement.prototype.onkeydown = function(oEvent) {
-		if (oEvent.which === jQuery.sap.KeyCodes.F4 || oEvent.altKey === true && oEvent.which === jQuery.sap.KeyCodes.ARROW_UP || oEvent.altKey === true && oEvent.which === jQuery.sap.KeyCodes.ARROW_DOWN) {
+		if (oEvent.which === jQuery.sap.KeyCodes.F4 || oEvent.which === jQuery.sap.KeyCodes.SPACE || oEvent.altKey === true && oEvent.which === jQuery.sap.KeyCodes.ARROW_UP || oEvent.altKey === true && oEvent.which === jQuery.sap.KeyCodes.ARROW_DOWN) {
 			if (this.getEnabled()) {
 				this._openVariantSelection();
 			}
@@ -1561,12 +1875,22 @@ sap.ui.define([
 		if (this.bManagementTableInitialized) {
 			return;
 		}
+
+		var oAddColumn = new Column({
+			width: "3rem",
+			visible: this.getUseFavorites() && !this._isIndustrySolutionModeAndVendorLayer()
+		});
+
+		this.oManagementTable.addColumn(oAddColumn);
+
 		this.oManagementTable.addColumn(new Column({
 			header: new Text({
 				text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_NAME")
 			}),
 			width: "14rem"
 		}));
+
+		// if (this.getShowShare()) {
 		this.oManagementTable.addColumn(new Column({
 			header: new Text({
 				text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_VARIANTTYPE")
@@ -1574,29 +1898,36 @@ sap.ui.define([
 			width: "8rem",
 			demandPopin: true,
 			popinDisplay: PopinDisplay.Inline,
-			minScreenWidth: ScreenSize.Tablet
+			minScreenWidth: ScreenSize.Tablet,
+			visible: this.getShowShare()
 		}));
+		// }
+
+		// if (this.getShowSetAsDefault()) {
 		this.oManagementTable.addColumn(new Column({
 			header: new Text({
 				text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_DEFAULT")
 			}),
-			width: "3.5rem",
+			width: "4rem",
 			demandPopin: true,
 			popinDisplay: PopinDisplay.Inline,
-			minScreenWidth: ScreenSize.Tablet
+			minScreenWidth: ScreenSize.Tablet,
+			visible: this.getShowSetAsDefault()
 		}));
-		if (this.getShowExecuteOnSelection()) {
-			this.oManagementTable.addColumn(new Column({
-				header: new Text({
-					text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_EXECUTEONSELECT")
-				}),
-				width: "4rem",
-				hAlign: TextAlign.Center,
-				demandPopin: true,
-				popinDisplay: PopinDisplay.Inline,
-				minScreenWidth: ScreenSize.Tablet
-			}));
-		}
+		// }
+		// if (this.getShowExecuteOnSelection()) {
+		this.oManagementTable.addColumn(new Column({
+			header: new Text({
+				text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_EXECUTEONSELECT")
+			}),
+			width: "5.5rem",
+			hAlign: TextAlign.Center,
+			demandPopin: true,
+			popinDisplay: PopinDisplay.Inline,
+			minScreenWidth: "800px",
+			visible: this.getShowExecuteOnSelection()
+		}));
+		// }
 		this.oManagementTable.addColumn(new Column({
 			header: new Text({
 				text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_AUTHOR")
@@ -1604,7 +1935,7 @@ sap.ui.define([
 			width: "8rem",
 			demandPopin: true,
 			popinDisplay: PopinDisplay.Inline,
-			minScreenWidth: ScreenSize.Tablet
+			minScreenWidth: "900px"
 		}));
 		this.oManagementTable.addColumn(new Column({
 			width: "2rem",
@@ -1616,11 +1947,14 @@ sap.ui.define([
 	VariantManagement.prototype._initalizeSaveAsDialog = function() {
 		this.oSaveDialogOptionsGrid.removeAllContent();
 
+		this.oDefault.setVisible(this.getShowSetAsDefault());
 		this.oShare.setVisible(this.getShowShare());
 		this.oExecuteOnSelect.setVisible(this.getShowExecuteOnSelection());
 		this.oCreateTile.setVisible(this.getShowCreateTile());
 
-		this.oSaveDialogOptionsGrid.addContent(this.oDefault);
+		if (this.getShowSetAsDefault()) {
+			this.oSaveDialogOptionsGrid.addContent(this.oDefault);
+		}
 		if (this.getShowShare()) {
 			this.oSaveDialogOptionsGrid.addContent(this.oShare);
 		}
@@ -1632,8 +1966,17 @@ sap.ui.define([
 		}
 	};
 
-	VariantManagement.prototype.onBeforeRendering = function() {
+	VariantManagement.prototype.onAfterRendering = function() {
 
+		this.oVariantText.$().off("mouseover").on("mouseover", function() {
+			this.oVariantPopoverTrigger.addStyleClass("sapUICompVarMngmtTriggerBtnHover");
+		}.bind(this));
+		this.oVariantText.$().off("mouseout").on("mouseout", function() {
+			this.oVariantPopoverTrigger.removeStyleClass("sapUICompVarMngmtTriggerBtnHover");
+		}.bind(this));
+	};
+
+	VariantManagement.prototype.onBeforeRendering = function() {
 		var fGetMax = function(aContent) {
 			var len, maxLength = 0;
 			for (var i = 0; i < aContent.length; i++) {
@@ -1694,10 +2037,12 @@ sap.ui.define([
 			if (this.getStandardVariantKey() === this.STANDARDVARIANTKEY) {
 
 				oItem = new VariantItem({
-					text: this._determineStandardVariantName(),
+					// text: this._determineStandardVariantName(), // issues with curly brackets
 					key: this.STANDARDVARIANTKEY,
 					global: this._isIndustrySolutionModeAndVendorLayer()
 				});
+
+				oItem.setText(this._determineStandardVariantName());
 			} else {
 				oItem = this.getItemByKey(this.getStandardVariantKey());
 			}
@@ -1724,8 +2069,7 @@ sap.ui.define([
 					lifecycleTransportId: that.sTransport
 				});
 				oItem.setLifecycleTransportId(that.sTransport);
-				that.bDirty = false;
-				that.oVariantModifiedText.setVisible(false);
+				// that.bDirty = false;
 				that.oModel.setProperty("/enabled", false);
 				that._eventDone();
 			};
@@ -1743,8 +2087,6 @@ sap.ui.define([
 				key: oItem.getKey(),
 				def: bDefault
 			});
-			this.bDirty = false;
-			this.oVariantModifiedText.setVisible(false);
 			this.oModel.setProperty("/enabled", false);
 			this._eventDone();
 		}
@@ -1780,12 +2122,29 @@ sap.ui.define([
 			if (sTransport != null && sTransport.trim().length > 0) {
 				fOkay(oObject["package"], sTransport);
 			} else {
-				var oTransports = new TransportSelection();
+				var oTransports = this._getTransportSelection(); // new TransportSelection();
 				oTransports.selectTransport(oObject, _fOkay, _fError, this._checkDialogCompactStyle(oControl), oControl);
 			}
 		} else {
 			fOkay(oObject["package"], "");
 		}
+	};
+
+	VariantManagement.prototype._getTransportSelection = function() {
+		if (this.getTransportSelection) {
+			return this.getTransportSelection();
+		} else {
+			return this._getFlTransportSelection();
+		}
+	};
+
+	VariantManagement.prototype._getFlTransportSelection = function() {
+		if (!sap.ui.fl) {
+			sap.ui.getCore().loadLibrary('sap.ui.fl');
+		}
+		jQuery.sap.require("sap.ui.fl.transport.TransportSelection");
+
+		return new sap.ui.fl.transport.TransportSelection();
 	};
 
 	VariantManagement.prototype.getDefaultVariantKey = function() {
@@ -1852,6 +2211,12 @@ sap.ui.define([
 		this.oCreateTile.setSelected(false);
 		this.oExecuteOnSelect.setSelected(false);
 
+		// set variant name to Standard
+		if (this._isIndustrySolutionModeAndVendorLayer() /* && this.bManualVariantKey */) {
+			this.oInputName.setValue(this.oResourceBundle.getText("VARIANT_MANAGEMENT_STANDARD"));
+			// this.oInputName.setEnabled(false);
+		}
+
 		this._createSaveDialog();
 		this._setDialogCompactStyle(this, this.oSaveDialog);
 		this.oVariantPopOver.close();
@@ -1875,33 +2240,19 @@ sap.ui.define([
 		var sText = "";
 		var oInputField = null;
 		var that = this;
-		oInputField = oManageItem.getCells()[0];
+		oInputField = oManageItem.getCells()[VariantManagement.NAME_COLUMN];
 
 		sText = oInputField.getValue();
 		sText = sText.trim();
 		var oEditableVariantItem = oManageItem;
 		var sKey = oEditableVariantItem.getKey();
 
-// var oItem = this.oVariantList.getItemByKey(sKey);
-// if (sText.length === 0) {
-// oInputField.setValue(oItem.getText());
-// oInputField.setValueState(ValueState.None);
-// oInputField.setValueStateText(null);
-// } else {
-//
-// this._checkIsDuplicate(oInputField, sText, this.oManagementTable);
-// }
-
-		this._checkVariantNameConstraints(oInputField, this.oManagementSave);
+		this._checkVariantNameConstraints(oInputField, this.oManagementSave, this.oManagementTable);
 
 		if (oInputField.getValueState() === ValueState.Error) {
-			this.oManagementSave.setEnabled(false);
+			// this.oManagementSave.setEnabled(false);
 			this._eventDone();
 			return;
-		}
-
-		if (!this._isInErrorStateManaged(oInputField, this.oManagementTable)) {
-			this.oManagementSave.setEnabled(true);
 		}
 
 		if (this.oVariantList.getItemByKey(sKey).getText().trim() === sText) {
@@ -1931,20 +2282,22 @@ sap.ui.define([
 
 	VariantManagement.prototype._handleManageSavePressed = function() {
 		var oNewItems = this.oManagementTable.getItems();
-		var oItem;
+		var oItem, oControl;
 		var fireSelect = false;
 		var sName = "";
 		var oOriginalItem = null;
 		var iD = 0;
+		var aFavoriteChanges = [];
 
 		for (var iG = 0; iG < oNewItems.length; iG++) {
 			oItem = this.oVariantList.getItemByKey(oNewItems[iG].getKey());
-			if (oNewItems[iG].getCells()[0].getValue) {
-				sName = oNewItems[iG].getCells()[0].getValue();
+			oControl = oNewItems[iG].getCells()[VariantManagement.NAME_COLUMN];
+			if (oControl && oControl.getValue) {
+				sName = oControl.getValue();
+			} else if (oControl && oControl.getTitle) {
+				sName = oControl.getTitle();
 			}
-			if (oNewItems[iG].getCells()[0].getText) {
-				sName = oNewItems[iG].getCells()[0].getText();
-			}
+
 			sName = sName.trim();
 			if (oItem.getText() !== sName) {
 				this.aRenamedVariants.push({
@@ -1959,7 +2312,7 @@ sap.ui.define([
 				}
 
 				if (this.lastSelectedVariantKey === oItem.getKey()) {
-					this.oVariantText.setText(sName);
+					this._setVariantText(sName);
 					// BCP 1670301513
 // this.bDirty = false;
 // this.oVariantModifiedText.setVisible(false);
@@ -1967,9 +2320,36 @@ sap.ui.define([
 				}
 			}
 
-			if (this.getShowExecuteOnSelection() && oItem.getExecuteOnSelection && oItem.getExecuteOnSelection() != oNewItems[iG].getCells()[3].getSelected()) {
+			if (this.getUseFavorites() && !this._isIndustrySolutionModeAndVendorLayer()) {
+				var sKey = oNewItems[iG].getKey();
+				if (this._mFavoriteChanges && this._mFavoriteChanges[sKey] !== undefined) {
+					var bNewSelected = this._mFavoriteChanges[sKey];
+
+					if (sKey === this.STANDARDVARIANTKEY) {
+						if (this.getStandardFavorite() !== bNewSelected) {
+							aFavoriteChanges.push({
+								key: sKey,
+								visible: bNewSelected
+							});
+							this.setStandardFavorite(bNewSelected);
+						}
+					} else {
+						oOriginalItem = this.getItemByKey(oNewItems[iG].getKey());
+						if (oOriginalItem && oItem.getFavorite && (oItem.getFavorite() !== bNewSelected)) {
+							aFavoriteChanges.push({
+								key: sKey,
+								visible: bNewSelected
+							});
+							oOriginalItem.setFavorite(bNewSelected);
+						}
+					}
+
+				}
+			}
+
+			if (this.getShowExecuteOnSelection() && oItem.getExecuteOnSelection && oItem.getExecuteOnSelection() != oNewItems[iG].getCells()[VariantManagement.EXEC_COLUMN].getSelected()) {
 				// execute on selection changed
-				var bFlag = oNewItems[iG].getCells()[3].getSelected();
+				var bFlag = oNewItems[iG].getCells()[VariantManagement.EXEC_COLUMN].getSelected();
 				var oItemTmp = this.getItemByKey(oNewItems[iG].getKey());
 
 				if (!oItemTmp && (this.getSupportExecuteOnSelectOnSandardVariant() & (oNewItems[iG].getKey() === this.getStandardVariantKey()/* this.STANDARDVARIANTKEY */))) {
@@ -1997,7 +2377,6 @@ sap.ui.define([
 		if (this.oManagementDialog) {
 			this.oManagementDialog.close();
 		}
-		this._manageButtonState();
 		if (this.bVariantItemMode === false) {
 			if (this.getDefaultVariantKey() != this.sNewDefaultKey) {
 				var oItemTmpDef = null;
@@ -2020,7 +2399,10 @@ sap.ui.define([
 				}
 			}
 		}
-		this.setDefaultVariantKey(this.sNewDefaultKey);
+
+		if (this.sNewDefaultKey != this.getDefaultVariantKey()) {
+			this.setDefaultVariantKey(this.sNewDefaultKey);
+		}
 
 		for (iD = 0; iD < this.aRemovedVariants.length; iD++) {
 			oItem = this.getItemByKey(this.aRemovedVariants[iD]);
@@ -2039,7 +2421,8 @@ sap.ui.define([
 			renamed: this.aRenamedVariants,
 			deleted: this.aRemovedVariants,
 			exe: this.aExeVariants,
-			def: this.getDefaultVariantKey()
+			def: this.getDefaultVariantKey(),
+			fav: aFavoriteChanges
 		});
 
 		for (iD = 0; iD < this.aRemovedVariants.length; iD++) {
@@ -2051,11 +2434,18 @@ sap.ui.define([
 			if (this.lastSelectedVariantKey === this.aRemovedVariants[iD]) {
 				fireSelect = true;
 				this._setSelectedItem(null);
-				this.bDirty = false;
-				this.oVariantModifiedText.setVisible(false);
 				this.oModel.setProperty("/enabled", false);
 			}
 		}
+// if (!fireSelect) {
+//
+// if (this._mFavoriteChanges && (this._mFavoriteChanges[this.lastSelectedVariantKey] !== undefined) &&
+// !this._mFavoriteChanges[this.lastSelectedVariantKey]) {
+// fireSelect = true;
+// this._setSelectedItem(null);
+// this.oModel.setProperty("/enabled", false);
+// }
+// }
 
 		if (fireSelect) {
 			this.bFireSelect = true;
@@ -2126,21 +2516,45 @@ sap.ui.define([
 	};
 
 	VariantManagement.prototype._handleManageDeletePressed = function(oButton) {
+		var that = this, oStandardItem;
 
-		if (!this._isInErrorStateManaged(oButton.getParent().getCells()[0], this.oManagementTable)) {
+		var fgetStandardEntry = function() {
+			var oStandardItem = null, aItems = that.oManagementTable.getItems();
+			aItems.some(function(oEntry) {
+				if (oEntry.getKey() === that.getStandardVariantKey()) {
+					oStandardItem = oEntry;
+					return true;
+				}
+			});
+
+			return oStandardItem;
+		};
+
+		if (!this._anyInErrorState(this.oManagementTable, oButton.getParent().getCells()[VariantManagement.NAME_COLUMN])) {
 			this.oManagementSave.setEnabled(true);
 		}
 
+		oStandardItem = fgetStandardEntry();
+
 		var oItem = oButton.getParent();
 		if (oItem.getGlobal()) {
-			var that = this;
+
 			var fOkay = function(sPackage, sTransport) {
 				var sKey = oItem.getKey();
 				that.aRemovedVariants.push(sKey);
 				that.oManagementTable.removeItem(oItem);
-				if (oItem.getKey() === that.sNewDefaultKey) {
-					that.oManagementTable.getItems()[0].getCells()[2].setSelected(true);
-					that.sNewDefaultKey = that.getStandardVariantKey();
+				if (that.getShowSetAsDefault()) {
+					if ((oItem.getKey() === that.sNewDefaultKey)) {
+						if (oStandardItem) {
+							oStandardItem.getCells()[VariantManagement.DEF_COLUMN].setSelected(true);
+							oStandardItem.getCells()[VariantManagement.DEF_COLUMN].fireSelect({
+								selected: true
+							});
+						} else {
+							that.setStandardVariantKey(that.STANDARDVARIANTKEY);
+						}
+						that.sNewDefaultKey = that.getStandardVariantKey();
+					}
 				}
 				oItem.destroy();
 				var oTransportAssignment = {
@@ -2159,12 +2573,24 @@ sap.ui.define([
 		} else {
 			this.aRemovedVariants.push(oItem.getKey());
 			this.oManagementTable.removeItem(oItem);
-			if (oItem.getKey() === this.sNewDefaultKey) {
-				this.oManagementTable.getItems()[0].getCells()[2].setSelected(true);
-				this.sNewDefaultKey = this.getStandardVariantKey();
+			if (this.getShowSetAsDefault()) {
+				if (oItem.getKey() === this.sNewDefaultKey) {
+					if (oStandardItem) {
+						oStandardItem.getCells()[VariantManagement.DEF_COLUMN].setSelected(true);
+						oStandardItem.getCells()[VariantManagement.DEF_COLUMN].fireSelect({
+							selected: true
+						});
+					}
+					this.sNewDefaultKey = this.getStandardVariantKey();
+				}
 			}
 			oItem.destroy();
 			this._eventDone();
+		}
+
+		var oCancelButton = sap.ui.getCore().byId(this.getId() + "-managementcancel");
+		if (oCancelButton) {
+			oCancelButton.focus();
 		}
 	};
 
@@ -2232,20 +2658,23 @@ sap.ui.define([
 		if (this.bVariantItemMode) {
 			oItem = new VariantItem({
 				key: sKey,
-				text: sName,
+				// text: sName, issue with curly brackets
 				readOnly: false,
 				executeOnSelection: bExecuteOnSelect,
 				global: this.oShare.getSelected(),
 				lifecycleTransportId: this.sTransport,
 				lifecyclePackage: this.sPackage
 			});
+			oItem.setText(sName);
 			this.addVariantItem(oItem);
 			this._setSelectedItem(oItem);
 		} else {
 			oItem = new Item({
-				key: sKey,
-				text: sName
+				key: sKey
+			// , text: sName // issues with curly brackets
 			});
+			oItem.setText(sName);
+
 			this.addItem(oItem);
 			this._setSelectedItem(oItem);
 		}
@@ -2256,7 +2685,6 @@ sap.ui.define([
 			sPackage = this.sPackage;
 			sTransport = this.sTransport;
 		}
-		this._manageButtonState();
 		this.fireSave({
 			name: sName,
 			overwrite: false,
@@ -2268,10 +2696,22 @@ sap.ui.define([
 			lifecyclePackage: sPackage,
 			lifecycleTransportId: sTransport
 		});
-		this.bDirty = false;
-		this.oVariantModifiedText.setVisible(false);
 		this.oModel.setProperty("/enabled", false);
 		this._eventDone();
+	};
+
+	/**
+	 * Defines the internal mode. The VariantManagement is able to support two different modes:<br>
+	 * 1. the mode with standard entry displayed as 'Default' and<br>
+	 * 2. the mode with standard entry displayed as 'Standard'.<br>
+	 * The 'Default* display is the initial mode.<br>
+	 * <code>Note:</code> this method has to be executed, before any items are assigned to the VariantManagement control!
+	 * @public
+	 * @since 1.48.0
+	 * @param {boolean} bFlag defines the behavior: <code>true</code> new mode, otherwize 'old' mode.
+	 */
+	VariantManagement.prototype.setBackwardCompatibility = function(bFlag) {
+		this._setBackwardCompatibility(bFlag);
 	};
 
 	VariantManagement.prototype._setBackwardCompatibility = function(bFlag) {
@@ -2285,14 +2725,51 @@ sap.ui.define([
 		var sKey = this.getSelectionKey();
 		if (sKey === null || sKey === this.getStandardVariantKey()) {
 			if (this.bVariantItemMode == false) {
-				this.oVariantText.setText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_DEFAULT"));
+				this._setVariantText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_DEFAULT"));
 			} else {
-				this.oVariantText.setText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_STANDARD"));
+				this._setVariantText(this.oResourceBundle.getText("VARIANT_MANAGEMENT_STANDARD"));
 			}
 			if (this.getStandardItemText() !== null && this.getStandardItemText() != "") {
-				this.oVariantText.setText(this.getStandardItemText());
+				this._setVariantText(this.getStandardItemText());
 			}
 		}
+	};
+
+	VariantManagement.prototype._setVariantText = function(sText) {
+
+		var oModel, oBInfo = this.extractBindingInfo(sText), sValue = sText;
+
+		if ((typeof oBInfo === "object") && oBInfo.model && oBInfo.path) {
+			oModel = this.getModel(oBInfo.model);
+			if (oModel) {
+				sValue = oModel.getProperty(oBInfo.path);
+			}
+		}
+
+		this.oModel.setProperty("/selectedVariant", sValue);
+	};
+
+	VariantManagement.prototype._getVariantText = function(sText) {
+		return this.oModel.getProperty("/selectedVariant");
+	};
+
+	VariantManagement.prototype._updateVariantInvisibletext = function(sText, bValue) {
+		if (bValue) {
+			sText = this.oResourceBundle.getText("VARIANT_MANAGEMENT_MODIFIED", [
+				sText
+			]);
+		}
+
+		return sText;
+	};
+
+	VariantManagement.prototype._setFavoriteIcon = function(oIcon, bFlagged) {
+		oIcon.setSrc(bFlagged ? "sap-icon://favorite" : "sap-icon://unfavorite");
+		oIcon.setTooltip(this.oResourceBundle.getText(bFlagged ? "VARIANT_MANAGEMENT_FAV_DEL_TOOLTIP" : "VARIANT_MANAGEMENT_FAV_ADD_TOOLTIP"));
+	};
+
+	VariantManagement.prototype._isFavoriteSelected = function(oIcon) {
+		return oIcon.getSrc() === "sap-icon://unfavorite";
 	};
 
 	VariantManagement.prototype._openVariantManagementDialog = function() {
@@ -2307,27 +2784,18 @@ sap.ui.define([
 		var oDeleteCell;
 		var sTypeText;
 		var sTooltip;
-		var fLiveChange;
-		var fChange;
-		var fSelectRB;
-		var fSelectCB;
-		var fPress;
+		var fLiveChange, fChange, fSelectRB, fSelectCB, fSelectFav, fPress;
 
 		var that = this;
+
+		this._mFavoriteChanges = {};
 
 		this.oManagementSave.setEnabled(true);
 
 		this.oManagementTable.destroyItems();
 
 		fLiveChange = function(oControlEvent) {
-
 			that._checkVariantNameConstraints(this, that.oManagementSave, that.oManagementTable);
-/*
- * var sText = this.getValue(); sText = sText.trim(); if (sText.length === 0) { this.setValueState(ValueState.Error);
- * this.setValueStateText(that.oResourceBundle.getText("VARIANT_MANAGEMENT_ERROR_EMPTY")); that.oManagementSave.setEnabled(false); } else {
- * that._checkIsDuplicate(this, sText, that.oManagementTable); if (this.getValueState() === ValueState.Error) {
- * that.oManagementSave.setEnabled(false); } else { that.oManagementSave.setEnabled(true); } }
- */
 		};
 
 		fChange = function(oControlEvent) {
@@ -2336,10 +2804,42 @@ sap.ui.define([
 			that._addEvent(oEvent);
 		};
 
+		fSelectFav = function(oControlEvent) {
+			var bSelected = that._isFavoriteSelected(oControlEvent.oSource), oItem = this.getParent();
+			if (oItem && (that.sNewDefaultKey !== oItem.getKey())) {
+				that._mFavoriteChanges[oItem.getKey()] = bSelected;
+				that._setFavoriteIcon(oControlEvent.oSource, bSelected);
+			}
+		};
+
 		fSelectRB = function(oControlEvent) {
-			if (oControlEvent.getParameters().selected === true) {
-				var oItem = this.getParent();
-				that.sNewDefaultKey = oItem.getKey();
+			var bSelected = (oControlEvent.getParameters().selected === true), oItem = this.getParent();
+			if (oItem) {
+
+				if (bSelected) {
+					that.sNewDefaultKey = oItem.getKey();
+					that._mFavoriteChanges[oItem.getKey()] = bSelected;
+				} else {
+					if (oItem.getFavorite && that._mFavoriteChanges.hasOwnProperty(oItem.getKey()) && that._mFavoriteChanges[oItem.getKey()] !== oItem.getFavorite()) {
+						delete that._mFavoriteChanges[oItem.getKey()];
+					}
+				}
+
+				var oFavCtrl = oItem.getCells()[VariantManagement.FAV_COLUMN];
+				if (oFavCtrl && oItem.getFavorite) {
+					if (bSelected) {
+						that._setFavoriteIcon(oFavCtrl, true);
+
+					} else {
+						if (that._mFavoriteChanges[oItem.getKey()] !== undefined) {
+							that._setFavoriteIcon(oFavCtrl, that._mFavoriteChanges[oItem.getKey()]);
+						} else {
+							that._setFavoriteIcon(oFavCtrl, oItem.getFavorite() === true);
+						}
+					}
+
+					// oFavCtrl.setEditable(!bSelected);
+				}
 			}
 		};
 
@@ -2356,10 +2856,14 @@ sap.ui.define([
 			that._addEvent(oEvent);
 		};
 
+		if (this.oManageDialogSearchField) {
+			this.oManageDialogSearchField.setValue("");
+		}
+
 		this._initalizeManagementTableColumns();
 		this.sNewDefaultKey = this.getDefaultVariantKey();
 
-		this._restoreCompleteList();
+		this._restoreCompleteList(true);
 
 		if (this.oVariantList.getItems()[0].getKey() !== this.getStandardVariantKey() && this.bVariantItemMode == false) {
 			oItem = new VariantItem(this.oVariantManage.getId() + "-item-standard", {
@@ -2370,7 +2874,24 @@ sap.ui.define([
 			});
 			this.oVariantList.insertItem(oItem, 0);
 		}
+
+		if (this.getUseFavorites()) {
+
+			oItem = this.oVariantList.getItemByKey(this.getStandardVariantKey());
+			if (oItem) {
+				this.oVariantList.removeItem(oItem);
+			}
+		}
+
 		oItems = this.oVariantList.getItems();
+
+		if (this.getUseFavorites()) {
+			oItems.sort(this._compareItems);
+			if (oItem) {
+				this.oVariantList.insertItem(oItem);
+				oItems.splice(0, 0, oItem);
+			}
+		}
 		for (var iH = 0; iH < oItems.length; iH++) {
 			if (oItems[iH].getReadOnly() || oItems[iH].getLabelReadOnly()) {
 				var sOptions = oItems[iH].getAccessOptions();
@@ -2395,25 +2916,41 @@ sap.ui.define([
 				namespace: oItems[iH].getNamespace(),
 				labelReadOnly: oItems[iH].getLabelReadOnly(),
 				author: oItems[iH].getAuthor(),
+				favorite: oItems[iH].getFavorite(),
 				vAlign: VerticalAlign.Middle
 			});
+
+			// Favorites column
+			oNameCell = new Icon(this.oVariantManage.getId() + "-fav-" + iItemNo, {
+				press: fSelectFav
+			});
+			oNameCell.addStyleClass("sapUICompVarMngmtFavColor");
+			if (oItems[iH].getFavorite) {
+				this._setFavoriteIcon(oNameCell, oItems[iH].getFavorite());
+			}
+			oManageItem.addCell(oNameCell);
+
+			// name column
 			if (oItems[iH].getKey() === this.getStandardVariantKey() || oItems[iH].getReadOnly() === true || oItems[iH].getLabelReadOnly() === true) {
-				oNameCell = new Text(this.oVariantManage.getId() + "-text-" + iItemNo, {
-					text: oItems[iH].getText()
+				oNameCell = new ObjectIdentifier(this.oVariantManage.getId() + "-text-" + iItemNo, {
+				// title: oItems[iH].getText() // issue with curly brackets
 				});
-				// oNameCell.addStyleClass("sapUICompVarMngmtLbl");
+				oNameCell.setTitle(oItems[iH].getText());
+
 				if (sTooltip) {
 					oNameCell.setTooltip(sTooltip);
 				}
 			} else {
 				oNameCell = new Input(this.oVariantManage.getId() + "-input-" + iItemNo, {
-					value: oItems[iH].getText(),
 					liveChange: fLiveChange,
 					change: fChange
 				});
+
+				oNameCell.setValue(oItems[iH].getText());
 			}
 			oManageItem.addCell(oNameCell);
 
+			// if (this.getShowShare()) {
 			if (oItems[iH].getGlobal()) {
 				sTypeText = this.oResourceBundle.getText("VARIANT_MANAGEMENT_SHARED");
 			} else {
@@ -2425,41 +2962,50 @@ sap.ui.define([
 			});
 			oTypeCell.addStyleClass("sapUICompVarMngmtType");
 			oManageItem.addCell(oTypeCell);
+			// }
 
+			// if (this.getShowSetAsDefault()) {
 			oDefaultCell = new RadioButton(this.oVariantManage.getId() + "-def-" + iItemNo, {
 				groupName: this.oVariantManage.getId(),
 				select: fSelectRB
 			});
+
 			if (this.sNewDefaultKey === oItems[iH].getKey() || oItems[iH].getKey() === this.getStandardVariantKey() && this.sNewDefaultKey === "") {
 				oDefaultCell.setSelected(true);
+
+				if (oItems[iH].getFavorite) {
+					this._setFavoriteIcon(oManageItem.getCells()[0], true);
+					// oManageItem.getCells()[0].setEditable(false);
+				}
+
 			}
 			oManageItem.addCell(oDefaultCell);
+			// }
 
-			if (this.getShowExecuteOnSelection()) {
-				oExecuteCell = new CheckBox(this.oVariantManage.getId() + "-exe-" + iItemNo, {
-					selected: false,
-					enabled: false,
-					select: fSelectCB
-				});
-				if (oItems[iH].getExecuteOnSelection) {
-					if ((oItems[iH].getKey() === this.getStandardVariantKey() && this.getSupportExecuteOnSelectOnSandardVariant())) {
-						oExecuteCell.setEnabled(true);
-					} else {
-						oExecuteCell.setEnabled(!oItems[iH].getReadOnly());
-					}
-					oExecuteCell.setSelected(oItems[iH].getExecuteOnSelection());
-					if (sTooltip) {
-						oExecuteCell.setTooltip(sTooltip);
-					}
+			// if (this.getShowExecuteOnSelection()) {
+			oExecuteCell = new CheckBox(this.oVariantManage.getId() + "-exe-" + iItemNo, {
+				selected: false,
+				enabled: false,
+				select: fSelectCB
+			});
+			if (oItems[iH].getExecuteOnSelection) {
+				if ((oItems[iH].getKey() === this.getStandardVariantKey() && this.getSupportExecuteOnSelectOnSandardVariant())) {
+					oExecuteCell.setEnabled(true);
+				} else {
+					oExecuteCell.setEnabled(!oItems[iH].getReadOnly());
 				}
-				oManageItem.addCell(oExecuteCell);
+				oExecuteCell.setSelected(oItems[iH].getExecuteOnSelection());
+				if (sTooltip) {
+					oExecuteCell.setTooltip(sTooltip);
+				}
 			}
+			oManageItem.addCell(oExecuteCell);
+			// }
 
 			oTypeCell = new Text(this.oVariantManage.getId() + "-author-" + iItemNo, {
 				text: oItems[iH].getAuthor(),
 				textAlign: "Begin"
 			});
-			// oTypeCell.addStyleClass("sapUICompVarMngmtType");
 			oManageItem.addCell(oTypeCell);
 
 			oDeleteCell = new Button(this.oVariantManage.getId() + "-del-" + iItemNo, {
@@ -2469,15 +3015,21 @@ sap.ui.define([
 				press: fPress,
 				tooltip: this.oResourceBundle.getText("VARIANT_MANAGEMENT_DELETE")
 			});
-			if (oManageItem.getKey() === this.getStandardVariantKey() || (oItems[iH].getReadOnly && oItems[iH].getReadOnly())) {
+
+			this._assignColumnInfoForDeleteButton(oDeleteCell);
+
+			if (oItems[iH].getReadOnly && oItems[iH].getReadOnly()) {
 				oDeleteCell.setEnabled(false);
+
+				// FIORITECHP1-3560
+				oDeleteCell.setVisible(false);
 			}
-			oDeleteCell.addStyleClass("sapUiCompVarMngmtDel");
 			oManageItem.addCell(oDeleteCell);
 
 			this.oManagementTable.addItem(oManageItem);
 			iItemNo++;
 		}
+
 		this.aRemovedVariants = [];
 		this.aRemovedVariantTransports = [];
 		this.aRenamedVariants = [];
@@ -2492,6 +3044,22 @@ sap.ui.define([
 		}
 		this.oVariantPopOver.close();
 		this.oManagementDialog.open();
+	};
+
+	VariantManagement.prototype._assignColumnInfoForDeleteButton = function(oDeleteButton) {
+		if (!this._oInvisibleDeleteColumnName) {
+			this._oInvisibleDeleteColumnName = new InvisibleText({
+				text: this.oResourceBundle.getText("VARIANT_MANAGEMENT_ACTION_COLUMN")
+			});
+
+			this._createManagementDialog();
+			this.oManagementDialog.addContent(this._oInvisibleDeleteColumnName);
+
+		}
+
+		if (this._oInvisibleDeleteColumnName) {
+			oDeleteButton.addAriaLabelledBy(this._oInvisibleDeleteColumnName);
+		}
 	};
 
 	VariantManagement.prototype._enableManualVariantKey = function(bEnable) {
@@ -2549,6 +3117,13 @@ sap.ui.define([
 
 	VariantManagement.prototype._setVendorLayer = function(bVendorLayer) {
 		this._isVendorLayer = bVendorLayer;
+	};
+
+	VariantManagement.prototype.setStandardFavorite = function(bFavorite) {
+		this._isFavorite = bFavorite;
+	};
+	VariantManagement.prototype.getStandardFavorite = function() {
+		return this._isFavorite;
 	};
 
 	VariantManagement.prototype._isIndustrySolutionModeAndVendorLayer = function() {

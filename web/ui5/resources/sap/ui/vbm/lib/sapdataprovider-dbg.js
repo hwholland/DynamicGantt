@@ -326,7 +326,10 @@ VBI.DataTypeProvider = function() {
 
 	datatypeprovider.set = function(dat, ctx) {
 		if (dat.type && dat.name) {
-			// todo: set multiple types
+			/*
+			 * TO DO:
+			 * Set multiple types.
+			 */
 			if ((dat.type == "N")) {
 				if (jQuery.type(dat.N) == 'object') {
 					var destnode;
@@ -336,8 +339,10 @@ VBI.DataTypeProvider = function() {
 					}
 				} // else if (jQuery.type(dat.N) == 'array') {
 				// set a node type............................................//
-				// todo: set multiple nodes explicitly
-				// }
+				/*
+				 * TO DO:
+				 * Set multiple nodes explicitily.
+				 */
 			}
 		} else {
 			// data type context should be set completely.......................//
@@ -596,7 +601,7 @@ VBI.DataTypeProvider = function() {
 
 		datatypenode.GetPath = function() {
 			var names = [];
-			var node = this;
+			var node = this; // eslint-disable-line consistent-this
 			do {
 				names.splice(0, 0, node.m_Name);
 			} while ((node = node.m_Parent) && node['m_Name']);
@@ -763,9 +768,16 @@ VBI.DataProvider = function() {
 					}
 				} // else if (jQuery.type(dat.N) == 'array') {
 				// set a node type............................................//
-				// todo: set multiple nodes explicitly
+				/*
+				 * TO DO:
+				 * Set multiple nodes explicitly.
+				 */
 				// }
-			} // else if ((dat.type == "E")) { } // todo: do delta handling for elements
+			} // else if ((dat.type == "E")) { }
+			/*
+			 * TO DO:
+			 * do delta handling for elements
+			 */
 		} else {
 			// data context should be set.......................................//
 			this.clear();
@@ -1241,7 +1253,10 @@ VBI.DataProvider = function() {
 			if (dat.E) {
 				var da, de;
 				if (jQuery.type(dat.E) == 'object') {
-					// todo: load element when it is submitted as single object...//
+					/*
+					 * TO DO:
+					 * Load element when it is submitted as single object.
+					 */
 					de = datanode.InternalFindOrCreateExistingElement(dat.E, 0, kta, keymap);
 					de.m_Parent = datanode;
 
@@ -1276,7 +1291,10 @@ VBI.DataProvider = function() {
 		};
 
 		datanode.GetName = function() {
-			// todo: we can use the type for storing the name
+			/*
+			 * TO DO:
+			 * we can use the type for storing the name
+			 */
 			return this.m_Name;
 		};
 
@@ -1287,7 +1305,7 @@ VBI.DataProvider = function() {
 		datanode.SetModified = function() {
 			this.m_bModified = true; // set modified flag..................//
 
-			var p = this;
+			var p = this; // eslint-disable-line consistent-this
 			while (p.m_Parent) {
 				p = p.m_Parent;
 			}
@@ -1519,7 +1537,7 @@ VBI.DataProvider = function() {
 		SetModified: function() {
 			this.m_nModified |= 1; // set selection as modified...............//
 
-			var p = this;
+			var p = this; // eslint-disable-line consistent-this
 			while (p.m_Parent) {
 				p = p.m_Parent;
 			}
@@ -1581,7 +1599,7 @@ VBI.DataProvider = function() {
 		// events that identify the clicked instance...........................//
 		GetPath: function() {
 			var path = null;
-			var cur = this;
+			var cur = this; // eslint-disable-line consistent-this
 			while (cur) {
 				// prepend key...................................................//
 				var key = cur.GetKeyValue();
@@ -1757,7 +1775,10 @@ VBI.DataProvider = function() {
 		} else if (dta.m_Type == vt.st_string) {
 			this.m_Value = value;
 		} else {
-			// todo: support other datatypes
+			/*
+			 * TO DO:
+			 * support other datatypes
+			 */
 			this.m_Value = value;
 		}
 	};
@@ -1774,7 +1795,10 @@ VBI.DataProvider = function() {
 		},
 
 		store: function(dat) {
-			// todo: write the attribute to the object..........................//
+			/*
+			 * TO DO:
+			 * write the attribute to the object
+			 */
 		},
 
 		set: function(val) {
@@ -1792,7 +1816,7 @@ VBI.DataProvider = function() {
 		SetModified: function() {
 			this.m_bModified = true;
 
-			var p = this;
+			var p = this; // eslint-disable-line consistent-this
 			while (p.m_Parent) {
 				p = p.m_Parent;
 			}

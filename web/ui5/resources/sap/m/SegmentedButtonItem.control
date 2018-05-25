@@ -8,19 +8,19 @@ It is derived from the {@link sap.ui.core.Item}.</documentation>
     <since>1.28</since>
     <baseType>sap.ui.core/Item</baseType>
     <properties>
-        <property name="icon" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="icon">
             <documentation>The icon, which belongs to the button.
 This can be a URI to an image or an icon font URI.</documentation>
         </property>
-        <property name="visible" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="visible">
             <documentation>Whether the button should be visible on the screen. If set to false, a placeholder is rendered instead of the real button.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" group="Dimension">
+        <property group="Dimension" type="sap.ui.core/CSSSize" name="width">
             <documentation>Sets the width of the buttons.</documentation>
         </property>
     </properties>
     <events>
-        <event name="press" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="press">
             <documentation>Fires when the user clicks on an individual button.</documentation>
         </event>
     </events>

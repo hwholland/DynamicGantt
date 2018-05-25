@@ -1,8 +1,7 @@
-(function() {
-
+sap.ui.define([], function() {
     "use strict";
 
-    sap.ui.layout.FixFlex.extend("sap.ushell.renderers.fiori2.search.controls.SearchLayout", {
+    return sap.ui.layout.FixFlex.extend("sap.ushell.renderers.fiori2.search.controls.SearchLayout", {
 
         metadata: {
             properties: {
@@ -109,9 +108,9 @@
             }
 
             var handleAnimationEnd = function(event) {
-                if (event.originalEvent.propertyName === 'width') {
-                    sap.ui.getCore().getEventBus().publish("searchLayoutChanged");
-                }
+                //if (event.originalEvent.propertyName === 'width') {
+                sap.ui.getCore().getEventBus().publish("searchLayoutChanged");
+                //}
             };
 
             $searchFacets.one("transitionend", handleAnimationEnd);
@@ -126,4 +125,4 @@
 
     });
 
-})();
+});

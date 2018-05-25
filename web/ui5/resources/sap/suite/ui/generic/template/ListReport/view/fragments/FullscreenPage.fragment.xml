@@ -1,54 +1,81 @@
-<core:FragmentDefinition xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1"
-						 xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:smartlink="sap.ui.comp.navpopover"
-						 xmlns:smarttable="sap.ui.comp.smarttable" xmlns:table="sap.ui.table"
-						 xmlns:st="sap.suite.ui.generic.template"
-						 xmlns:semantic="sap.m.semantic"
-						 xmlns:ushell="sap.ushell.ui"
-						 xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
-						 xmlns:build="sap.build">
-
+<core:FragmentDefinition xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1" xmlns="sap.m" xmlns:f="sap.f"
+	xmlns:core="sap.ui.core" xmlns:st="sap.suite.ui.generic.template" xmlns:variants="sap.ui.comp.smartvariants"
+	template:require="sap.suite.ui.generic.template.ListReport.AnnotationHelper"
+	xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
 	<st:lib.FlexEnabler/>
-	<template:with path="entitySet>entityType" helper="sap.ui.model.odata.AnnotationHelper.gotoEntityType"
-				   var="entityType">
-		<semantic:FullscreenPage id="page"
-								 title="{= ${path: 'parameter>/settings/routeConfig/name'} === 'root' ? '{i18n>PAGEHEADER}' : ${path: 'entityType>sap:label'} }"
-								 showNavButton="true" navButtonPress="._templateEventHandlers.onBack"
-								 busyIndicatorDelay="0" enableScrolling="true"
-								 class="sapSmartTemplatesListReportPageOverflow"
-								 build:metadata="#pattern:ListReport;staticProp:title:Title">
-			<semantic:content>
-				<VBox fitContainer="true">
-					<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.SmartFilterBar"
-								   type="XML"/>
-					<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.SmartTable"
-								   type="XML"/>
-					<!-- Helper -->
-					<customData>
-						<core:CustomData id="idEntityTypeName" key="entityTypeName" writeToDom="false"
-										 value="{path: 'entityType>com.sap.vocabularies.UI.v1.HeaderInfo/TypeName', formatter: 'sap.ui.model.odata.AnnotationHelper.format'}"/>
-					</customData>
-				</VBox>
-			</semantic:content>
+	<template:with path="parameter>/" helper="sap.suite.ui.generic.template.ListReport.AnnotationHelper.createWorkingContext"
+		var="workingContext">
+	<template:with path="entitySet>dummy" var="chartItem">
+		<f:DynamicPage id="page" headerExpanded="{_templPriv>/listReport/isHeaderExpanded}" toggleHeaderOnTitleClick="{= (${parameter>/settings/isWorklist}) ? 'false' : 'true'}"
+			preserveHeaderStateOnScroll="{= (!(${entityType>sap:semantics} === 'aggregate') &amp;&amp; !${parameter>/settings/gridTable}) || ${device>/system/phone} ? 'false' : 'true'}"
+			showFooter="{parts: [{path: 'workingContext>lineItem'}, {path: 'parameter>/entitySet'}, {path: 'parameter>/manifest/sap.ui5/extends/extensions/sap.ui.controllerExtensions'}], formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.hasDeterminingActions'}">
+			<template:if test="{= ${parameter>/settings/variantManagementHidden} || (${parameter>/settings/isWorklist} &amp;&amp; !${parameter>/settings/smartVariantManagement})}">
+				<template:then>
+					<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.TitleVariant" type="XML"/>
+				</template:then>
+				<template:else>
+					<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.DefaultVariant" type="XML"/>
+				</template:else>
+			</template:if>
 
-           <template:if test="{= ${path: 'parameter>/settings/routeConfig/', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.isComplexTable'} }">
-				<semantic:customFooterContent>
-					<Button text="{_templPriv>/complexTable/backToMain}" type="Emphasized" press="._templateEventHandlers.onBack" />
-				</semantic:customFooterContent>
-		   </template:if>		   
+			<f:header visible="{= (!${parameter>/settings/isWorklist}) ? 'true' : 'false'}">
+				<f:DynamicPageHeader
+					pinnable="{= (!(${entityType>sap:semantics} === 'aggregate') &amp;&amp; !${parameter>/settings/gridTable}) || ${device>/system/phone} ? 'true' : 'false'}" visible="{= (!${parameter>/settings/isWorklist}) ? 'true' : 'false'}">
+					<f:content>
+						<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.SmartFilterBar" type="XML"/>
+					</f:content>
+				</f:DynamicPageHeader>
+			</f:header>
 
-			<semantic:sendEmailAction>
-				<semantic:SendEmailAction id="shareEmail" press="._templateEventHandlers.onShareEmailPress"/>
-			</semantic:sendEmailAction>
-			<semantic:shareInJamAction>
-				<semantic:ShareInJamAction id="shareInJam" visible="{_templPriv>/listReport/share/isShareInJamActive}"
-										   press="._templateEventHandlers.onShareInJamPress"/>
-			</semantic:shareInJamAction>
-			<semantic:saveAsTileAction>
-				<ushell:footerbar.AddBookmarkButton id="shareTile" title="{i18n>PAGEHEADER}"
-													tileIcon="{_templPriv>/listReport/share/bookmarkIcon}"
-													customUrl="{_templPriv>/listReport/share/bookmarkCustomUrl}"
-													serviceUrl="{_templPriv>/listReport/share/bookmarkServiceUrl}"/>
-			</semantic:saveAsTileAction>
-		</semantic:FullscreenPage>
+			<f:content>
+				<template:if test="{parameter>/settings/quickVariantSelectionX}">
+					<template:then>
+						<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.IconTabBarWithSmartTable" type="XML"/>
+					</template:then>
+				<template:else>
+					<template:with path="entitySet>dummy" var="tabItem">
+						<template:with path="workingContext>lineItemPath" helper="sap.suite.ui.generic.template.ListReport.AnnotationHelper.resolveMetaModelPath" var="tableAnnotationPath">
+							<core:Fragment fragmentName="sap.suite.ui.generic.template.ListReport.view.fragments.SmartTable" type="XML"/>
+						</template:with>
+					</template:with>
+				</template:else>
+				</template:if>
+			</f:content>
+			<f:footer>
+				<OverflowToolbar id="template::FooterToolbar">
+					<ToolbarSpacer/>
+					<template:repeat
+						list="{parameter>/manifest/sap.ui5/extends/extensions/sap.ui.controllerExtensions/sap.suite.ui.generic.template.ListReport.view.ListReport/sap.ui.generic.app}"
+						var="tmpEntitySet">
+						<template:if test="{= ${tmpEntitySet>EntitySet} === ${parameter>/entitySet} }">
+							<template:repeat list="{tmpEntitySet>Actions}" var="customaction">
+								<!-- check if determining action is not a global action-->
+								<template:if test="{=${customaction>determining} &amp;&amp; !(${customaction>global})}">
+									<Button id="{customaction>id}"
+										enabled="{path: 'customaction>', formatter: 'sap.suite.ui.generic.template.js.AnnotationHelper.getBreakoutActionEnabledKey'}"
+										text="{customaction>text}" press="{customaction>press}" type="Transparent">
+										<layoutData>
+											<OverflowToolbarLayoutData priority = "{customaction>importance}"/>
+										</layoutData>
+									</Button>
+								</template:if>
+							</template:repeat>
+						</template:if>
+					</template:repeat>
+					<template:with path="entitySet>dummy" var="facet">
+						<template:with path="workingContext>lineItemPath" helper="sap.suite.ui.generic.template.ListReport.AnnotationHelper.resolveMetaModelPath"
+							var="lineItem">
+							<template:repeat list="{lineItem>}" var="dataField">
+								<template:if
+									test="{= (${dataField>RecordType} === 'com.sap.vocabularies.UI.v1.DataFieldForAction' || ${dataField>RecordType} === 'com.sap.vocabularies.UI.v1.DataFieldForIntentBasedNavigation') &amp;&amp; ${dataField>Determining/Bool} === 'true'}">
+									<core:Fragment fragmentName="sap.suite.ui.generic.template.fragments.DeterminingButton" type="XML"/>
+								</template:if>
+							</template:repeat>
+						</template:with>
+					</template:with>
+				</OverflowToolbar>
+			</f:footer>
+		</f:DynamicPage>
+	</template:with>
 	</template:with>
 </core:FragmentDefinition>

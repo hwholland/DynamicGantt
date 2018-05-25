@@ -9,30 +9,30 @@ The control uses the sap.m.SimpleForm control to display information.</documenta
     <since>1.28.11</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="pageId" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="pageId">
             <documentation>Page id</documentation>
         </property>
-        <property name="header" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="header">
             <documentation>Specifies the text displayed in the header of the control.</documentation>
         </property>
-        <property name="title" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="title">
             <documentation>Specifies the text displayed in the header of the content section of the control.</documentation>
         </property>
-        <property name="titleUrl" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="titleUrl">
             <documentation>Specifies the URL which opens when the title or the thumbnail is clicked.</documentation>
         </property>
-        <property name="crossAppNavCallback" type="sap.ui.core/object" group="Misc">
+        <property group="Misc" type="sap.ui.core/object" name="crossAppNavCallback">
             <documentation>Specifies the application which provides target and param configuration  for cross-application navigation from the 'page header'.</documentation>
         </property>
-        <property name="description" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="description">
             <documentation>Specifies the text displayed under the header of the content section</documentation>
         </property>
-        <property name="icon" type="sap.ui.core/string" defaultValue="" group="Misc">
+        <property group="Misc" defaultValue="" type="sap.ui.core/string" name="icon">
             <documentation>Specifies the URL of the icon displayed under the header of the page</documentation>
         </property>
     </properties>
     <aggregations default="groups">
-        <aggregation name="groups" type="sap.m/QuickViewGroup" cardinality="0..n" bindable="bindable">
+        <aggregation bindable="bindable" cardinality="0..n" type="sap.m/QuickViewGroup" name="groups">
             <documentation>QuickViewGroup consists of a title (optional) and an entity of group elements.</documentation>
         </aggregation>
     </aggregations>

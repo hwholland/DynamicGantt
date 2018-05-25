@@ -37,7 +37,7 @@ Round tabs with optional counter and label
 &lt;h4&gt;Tabs as filters&lt;/h4&gt;
 Tabs with filtered content from the same set of items
 &lt;ul&gt;
-&lt;li&gt;Provide an &lt;i&gt;"All"&lt;/i&gt; tab to show all items without filtering.&lt;/li&gt;
+&lt;li&gt;Provide an &lt;i&gt;&quot;All&quot;&lt;/i&gt; tab to show all items without filtering.&lt;/li&gt;
 &lt;li&gt;Use counters to show the number of items in each filter.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h4&gt;Tabs as process steps&lt;/h4&gt;
@@ -55,105 +55,105 @@ Tabs show a single step in a process
 &lt;/ul&gt;</documentation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="showSelection" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="showSelection">
             <documentation>Defines whether the current selection should be visualized.</documentation>
             <deprecation since="1.15.0">Regarding to changes of this control this property is not needed anymore.</deprecation>
         </property>
-        <property name="expandable" type="sap.ui.core/boolean" defaultValue="true" group="Misc" since="1.15.0">
+        <property since="1.15.0" group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="expandable">
             <documentation>Defines if the tabs are collapsible and expandable.</documentation>
         </property>
-        <property name="expanded" type="sap.ui.core/boolean" defaultValue="true" group="Misc" since="1.15.0">
+        <property since="1.15.0" group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="expanded">
             <documentation>Indicates if the actual tab content is expanded or not.</documentation>
         </property>
-        <property name="selectedKey" type="sap.ui.core/string" group="Data" since="1.15.0">
+        <property since="1.15.0" group="Data" type="sap.ui.core/string" name="selectedKey">
             <documentation>Key of the selected tab item.
 
 If the key has no corresponding aggregated item, no changes will apply.
 If duplicate keys exists the first item matching the key is used.</documentation>
         </property>
-        <property name="upperCase" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.22">
+        <property since="1.22" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="upperCase">
             <documentation>Determines whether the text of the icon tab filter (not the count) is displayed in uppercase.</documentation>
         </property>
-        <property name="stretchContentHeight" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.26">
+        <property since="1.26" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="stretchContentHeight">
             <documentation>Determines whether the IconTabBar height is stretched to the maximum possible height
 of its parent container. As a prerequisite, the height of the parent container must be
 defined as a fixed value.</documentation>
         </property>
-        <property name="applyContentPadding" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.26">
+        <property since="1.26" group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="applyContentPadding">
             <documentation>Determines whether the IconTabBar content fits to the full area.
 The paddings are removed if it's set to false.</documentation>
         </property>
-        <property name="backgroundDesign" type="sap.m/BackgroundDesign" defaultValue="Solid" group="Appearance" since="1.26">
+        <property since="1.26" group="Appearance" defaultValue="Solid" type="sap.m/BackgroundDesign" name="backgroundDesign">
             <documentation>Specifies the background color of the IconTabBar.
 
 Depending on the theme, you can change the state of
-the background color to "Solid", "Translucent", or "Transparent".
-Default is "Solid".</documentation>
+the background color to &quot;Solid&quot;, &quot;Translucent&quot;, or &quot;Transparent&quot;.
+Default is &quot;Solid&quot;.</documentation>
         </property>
-        <property name="headerMode" type="sap.m/IconTabHeaderMode" defaultValue="Standard" group="Appearance" since="1.40">
+        <property since="1.40" group="Appearance" defaultValue="Standard" type="sap.m/IconTabHeaderMode" name="headerMode">
             <documentation>Specifies the header mode.
 &lt;b&gt;Note:&lt;/b&gt; The Inline mode works only if no icons are set.</documentation>
         </property>
-        <property name="showOverflowSelectList" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.42">
+        <property since="1.42" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="showOverflowSelectList">
             <documentation>Specifies if the overflow select list is displayed.
 
 The overflow select list represents a list, where all tab filters are displayed,
 so the user can select specific tab filter easier.</documentation>
         </property>
-        <property name="headerBackgroundDesign" type="sap.m/BackgroundDesign" defaultValue="Solid" group="Appearance" since="1.44">
+        <property since="1.44" group="Appearance" defaultValue="Solid" type="sap.m/BackgroundDesign" name="headerBackgroundDesign">
             <documentation>Specifies the background color of the header.
 
 Depending on the theme, you can change the state of
-the background color to "Solid", "Translucent", or "Transparent".
-Default is "Solid".</documentation>
+the background color to &quot;Solid&quot;, &quot;Translucent&quot;, or &quot;Transparent&quot;.
+Default is &quot;Solid&quot;.</documentation>
         </property>
-        <property name="enableTabReordering" type="sap.ui.core/boolean" defaultValue="false" group="Behavior" since="1.46">
+        <property since="1.46" group="Behavior" defaultValue="false" type="sap.ui.core/boolean" name="enableTabReordering">
             <documentation>Specifies whether tab reordering is enabled. Relevant only for desktop devices.</documentation>
         </property>
     </properties>
     <events>
-        <event name="select" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="select">
             <documentation>Fires when an item is selected.</documentation>
             <parameters>
-                <parameter name="item" type="sap.m/IconTabFilter" since="1.15.0">
+                <parameter since="1.15.0" type="sap.m/IconTabFilter" name="item">
                     <documentation>The selected item</documentation>
                 </parameter>
-                <parameter name="key" type="sap.ui.core/string" since="1.15.0">
+                <parameter since="1.15.0" type="sap.ui.core/string" name="key">
                     <documentation>The key of the selected item</documentation>
                 </parameter>
-                <parameter name="selectedItem" type="sap.m/IconTabFilter">
+                <parameter type="sap.m/IconTabFilter" name="selectedItem">
                     <documentation>The selected item</documentation>
                     <deprecation since="1.15.0">replaced by parameter &lt;code&gt;item&lt;/code&gt; instead.</deprecation>
                 </parameter>
-                <parameter name="selectedKey" type="sap.ui.core/string">
+                <parameter type="sap.ui.core/string" name="selectedKey">
                     <documentation>The key of the selected item</documentation>
                     <deprecation since="1.15.0">replaced by parameter &lt;code&gt;key&lt;/code&gt; instead.</deprecation>
                 </parameter>
             </parameters>
         </event>
-        <event name="expand" since="1.15.0" allowPreventDefault="false">
+        <event allowPreventDefault="false" since="1.15.0" name="expand">
             <documentation>Indicates that the tab will expand or collapse.</documentation>
             <parameters>
-                <parameter name="expand" type="sap.ui.core/boolean">
+                <parameter type="sap.ui.core/boolean" name="expand">
                     <documentation>If the tab will expand, this is true.</documentation>
                 </parameter>
-                <parameter name="collapse" type="sap.ui.core/boolean">
+                <parameter type="sap.ui.core/boolean" name="collapse">
                     <documentation>If the tab will collapse, this is true.</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations>
-        <aggregation name="items" type="sap.m/IconTab" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.m/IconTab" name="items">
             <documentation>The items displayed in the IconTabBar.</documentation>
         </aggregation>
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>Represents the contents displayed below the IconTabBar.
 If there are multiple contents, they are rendered after each other.
 The developer has to manage to display the right one or use the content aggregation
 inside the IconTabFilter (which will be displayed instead if it is set).</documentation>
         </aggregation>
-        <aggregation name="_header" type="sap.m/IconTabHeader" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/IconTabHeader" name="_header">
             <documentation>Internal aggregation for managing the icon tab elements.</documentation>
         </aggregation>
     </aggregations>

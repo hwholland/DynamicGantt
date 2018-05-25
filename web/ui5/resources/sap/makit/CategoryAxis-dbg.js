@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ jQuery.sap.require("sap.makit.Axis");
  * @extends sap.makit.Axis
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -73,8 +73,20 @@ sap.makit.Axis.extend("sap.makit.CategoryAxis", { metadata : {
 	deprecated : true,
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * Sort order of the chart
+		 */
 		"sortOrder" : {type : "sap.makit.SortOrder", group : "Misc", defaultValue : sap.makit.SortOrder.None},
+
+		/**
+		 * Whether to always display the last label on the axis regardless of the automatic resize
+		 */
 		"displayLastLabel" : {type : "boolean", group : "Misc", defaultValue : false},
+
+		/**
+		 * Specify whether to display all the category values when there are multiple category data regions.
+		 */
 		"displayAll" : {type : "boolean", group : "Misc", defaultValue : true}
 	}
 }});

@@ -11,65 +11,65 @@ In the normal calendar the first button contains the displayed day, the second b
     <since>1.28.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="textButton0" type="sap.ui.core/string" group="Appearance" since="1.32.0">
+        <property since="1.32.0" group="Appearance" type="sap.ui.core/string" name="textButton0">
             <documentation>Text of the first button (normally day)</documentation>
         </property>
-        <property name="additionalTextButton0" type="sap.ui.core/string" group="Appearance" since="1.34.0">
+        <property since="1.34.0" group="Appearance" type="sap.ui.core/string" name="additionalTextButton0">
             <documentation>Additional text of the first button (normally day)</documentation>
         </property>
-        <property name="ariaLabelButton0" type="sap.ui.core/string" group="Misc" since="1.32.0">
+        <property since="1.32.0" group="Misc" type="sap.ui.core/string" name="ariaLabelButton0">
             <documentation>aria-label of the first button (normally day)</documentation>
         </property>
-        <property name="visibleButton0" type="sap.ui.core/boolean" defaultValue="false" group="Appearance" since="1.32.0">
+        <property since="1.32.0" group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="visibleButton0">
             <documentation>If set, the first button will be displayed
 
 &lt;b&gt;Note:&lt;/b&gt; The default is set to false to be compatible to older versions</documentation>
         </property>
-        <property name="textButton1" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="textButton1">
             <documentation>Text of the second button (normally month)</documentation>
         </property>
-        <property name="additionalTextButton1" type="sap.ui.core/string" group="Appearance" since="1.34.0">
+        <property since="1.34.0" group="Appearance" type="sap.ui.core/string" name="additionalTextButton1">
             <documentation>Additional text of the second button (normally month)</documentation>
         </property>
-        <property name="ariaLabelButton1" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="ariaLabelButton1">
             <documentation>aria-label of the second button (normally month)</documentation>
         </property>
-        <property name="visibleButton1" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.32.0">
+        <property since="1.32.0" group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="visibleButton1">
             <documentation>If set, the second button will be displayed</documentation>
         </property>
-        <property name="textButton2" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="textButton2">
             <documentation>Text of the third button (normally year)</documentation>
         </property>
-        <property name="additionalTextButton2" type="sap.ui.core/string" group="Appearance" since="1.34.0">
+        <property since="1.34.0" group="Appearance" type="sap.ui.core/string" name="additionalTextButton2">
             <documentation>Additional text of the third button (normally year)</documentation>
         </property>
-        <property name="ariaLabelButton2" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="ariaLabelButton2">
             <documentation>aria-label of the third button (normally year)</documentation>
         </property>
-        <property name="visibleButton2" type="sap.ui.core/boolean" defaultValue="true" group="Appearance" since="1.32.0">
+        <property since="1.32.0" group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="visibleButton2">
             <documentation>If set, the third button will be displayed</documentation>
         </property>
-        <property name="enabledPrevious" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabledPrevious">
             <documentation>Enables the previous button</documentation>
         </property>
-        <property name="enabledNext" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="enabledNext">
             <documentation>Enables the Next button</documentation>
         </property>
     </properties>
     <events>
-        <event name="pressPrevious" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="pressPrevious">
             <documentation>Previous button pressed</documentation>
         </event>
-        <event name="pressNext" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="pressNext">
             <documentation>Next button pressed</documentation>
         </event>
-        <event name="pressButton0" since="1.32.0" allowPreventDefault="false">
+        <event allowPreventDefault="false" since="1.32.0" name="pressButton0">
             <documentation>First button pressed (normally day)</documentation>
         </event>
-        <event name="pressButton1" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="pressButton1">
             <documentation>Second button pressed (normally month)</documentation>
         </event>
-        <event name="pressButton2" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="pressButton2">
             <documentation>Third button pressed (normally year)</documentation>
         </event>
     </events>

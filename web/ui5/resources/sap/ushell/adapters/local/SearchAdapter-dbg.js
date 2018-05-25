@@ -1,24 +1,20 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Search adapter for the demo platform.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
-    "use strict";
+sap.ui.define(['sap/ushell/renderers/fiori2/search/esh/api/release/sina'],
+	function(sina) {
+	"use strict";
+
     /*global jQuery, sap, window */
-    jQuery.sap.declare("sap.ushell.adapters.local.SearchAdapter");
-
-    window.sap.bc = window.sap.bc || {};
-    window.sap.bc = {ina : {api: {sina: {properties: {systemType: "ABAP", startWithSearch : "false" , noSapClientFromUrl: true}}}}};
-    jQuery.sap.require("sap.ushell.renderers.fiori2.search.esh.api.release.sina");
-
     /**
      *
      * @param oSystem
      * @returns {sap.ushell.adapters.abap.SearchAdapter}
      */
-    sap.ushell.adapters.local.SearchAdapter = function (oSystem, sParameter, oAdapterConfiguration) {
+    var SearchAdapter = function (oSystem, sParameter, oAdapterConfiguration) {
 
         this.isSearchAvailable = function () {
             var oDeferred = jQuery.Deferred();
@@ -27,8 +23,12 @@
         };
 
         this.getSina = function(){
-            return sap.bc.ina.api.sina;
+            return window.sina.getSina({systemType: "ABAP", startWithSearch : "false" , noSapClientFromUrl: true});
         };
 
     };
-}());
+
+
+	return SearchAdapter;
+
+}, /* bExport= */ true);

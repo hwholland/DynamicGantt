@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ jQuery.sap.require("sap.ui.core.Element");
  * @extends sap.ui.core.Element
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -75,10 +75,33 @@ sap.ui.core.Element.extend("sap.makit.Axis", { metadata : {
 	deprecated : true,
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * Indicates whether to show label of the Axis by the primary line
+		 */
 		"showLabel" : {type : "boolean", group : "Appearance", defaultValue : true},
+
+		/**
+		 * Indicates whether to show the primary line of the Axis on the chart area
+		 */
 		"showPrimaryLine" : {type : "boolean", group : "Appearance", defaultValue : true},
+
+		/**
+		 * Indicates whether to show grid of the Axis in the chart area
+		 */
 		"showGrid" : {type : "boolean", group : "Appearance", defaultValue : false},
+
+		/**
+		 * The line thickness of the primary line
+		 */
 		"thickness" : {type : "float", group : "Appearance", defaultValue : 1},
+
+		/**
+		 * Color of the primary line. Accept the following format:
+		 * standard name format: gray, red, black, etc
+		 * hex format: #ff00ff
+		 * rgb format: rgb(256, 0, 256)
+		 */
 		"color" : {type : "string", group : "Appearance", defaultValue : 'gray'}
 	}
 }});

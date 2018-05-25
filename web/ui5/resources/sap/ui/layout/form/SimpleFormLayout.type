@@ -11,7 +11,7 @@
         <value name="GridLayout">
             <documentation>Uses the &lt;code&gt;GridLayout&lt;/code&gt; to render the &lt;code&gt;SimpleForm&lt;/code&gt;</documentation>
         </value>
-        <value name="ResponsiveGridLayout" since="1.16.0">
+        <value since="1.16.0" name="ResponsiveGridLayout">
             <documentation>Uses the &lt;code&gt;ResponsiveGridLayout&lt;/code&gt; to render the &lt;code&gt;SimpleForm&lt;/code&gt;</documentation>
         </value>
     </enumeration>

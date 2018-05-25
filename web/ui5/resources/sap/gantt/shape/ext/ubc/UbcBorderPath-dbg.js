@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.gantt.shape.Path
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -76,61 +76,67 @@ sap.ui.define([
 	 * 
 	 * @param {object} oData Shape data.
 	 * @param {object} oRowInfo Information about the row and row data.
-	 * @return {string} Value of property <code>d</code>.
+	 * @return {string} Value of property <code>d</code> or null if the generated d is invalid according to the given data.
 	 * @public
 	 */
 	UbcBorderPath.prototype.getD = function(oData, oRowInfo) {
-		if (this.mShapeConfig.hasShapeProperty("d")) {
-			return this._configFirst("d", oData);
-		}
-
-		//oData.drawData is filtered data
-		var drawData = oData.drawData ? oData.drawData : oData.period;
 		var path = "";
-		if (drawData.length > 0) {
-			var maxTotalRevised = this._getMaxTotalRevised(oData);
-			var maxY = this._getMaxY(oData, oRowInfo);
-			var drawRowHeight = oRowInfo.rowHeight - 1;
-			var oAxisTime = this.getAxisTime();
-			for (var i = 0; i < drawData.length; i++) {
-				var x1, x2, y1, y2;
-				x1 = oAxisTime.timeToView(Format.abapTimestampToDate(drawData[i].start_date)).toFixed(1);
-				if (i < drawData.length - 1) {
-					x2 = oAxisTime.timeToView(Format.abapTimestampToDate(drawData[i + 1].start_date)).toFixed(1);
-				}else {
-					x2 = oAxisTime.timeToView(Format.abapTimestampToDate(drawData[i].start_date)).toFixed(1);
+		if (this.mShapeConfig.hasShapeProperty("d")) {
+			path = this._configFirst("d", oData);
+		} else {
+			//oData.drawData is filtered data
+			var drawData = oData.drawData ? oData.drawData : oData.period;
+			if (drawData.length > 0) {
+				var maxTotalRevised = this._getMaxTotalRevised(oData);
+				var maxY = this._getMaxY(oData, oRowInfo);
+				var drawRowHeight = oRowInfo.rowHeight - 1;
+				var oAxisTime = this.getAxisTime();
+				for (var i = 0; i < drawData.length; i++) {
+					var x1, x2, y1, y2;
+					x1 = oAxisTime.timeToView(Format.abapTimestampToDate(drawData[i].start_date)).toFixed(1);
+					if (i < drawData.length - 1) {
+						x2 = oAxisTime.timeToView(Format.abapTimestampToDate(drawData[i + 1].start_date)).toFixed(1);
+					}else {
+						x2 = oAxisTime.timeToView(Format.abapTimestampToDate(drawData[i].start_date)).toFixed(1);
+					}
+					
+					if ( !jQuery.isNumeric(x1)) {
+						x1 = oAxisTime.timeToView(0).toFixed(1);
+					}
+					if ( !jQuery.isNumeric(x2)) {
+						x1 = oAxisTime.timeToView(0).toFixed(1);
+					}
+					
+					y1 = maxY - drawData[i].demand / maxTotalRevised * drawRowHeight;
+					y1 = y1.toFixed(1);
+					
+					if (y1 < oRowInfo.y) {
+						y1 = oRowInfo.y;
+					}
+					if (i < drawData.length - 1) {
+						y2 = maxY - drawData[i + 1].demand / maxTotalRevised * drawRowHeight;
+					} else {
+						x2 = oAxisTime.timeToView(Format.abapTimestampToDate(drawData[i].start_date)).toFixed(1);
+						y2 = maxY - drawData[i].demand / maxTotalRevised * drawRowHeight;
+					}
+					y2 = y2.toFixed(1);
+					
+					if (y2 < oRowInfo.y) {
+						y2 = oRowInfo.y;
+					}
+					
+					path += " M " + x1 + " " + y1 + "L" + x2 + " " + y1;
+					path += " M " + x2 + " " + y1 + "L" + x2 + " " + y2;
 				}
-				
-				if ( !jQuery.isNumeric(x1)) {
-					x1 = oAxisTime.timeToView(0).toFixed(1);
-				}
-				if ( !jQuery.isNumeric(x2)) {
-					x1 = oAxisTime.timeToView(0).toFixed(1);
-				}
-				
-				y1 = maxY - drawData[i].demand / maxTotalRevised * drawRowHeight;
-				y1 = y1.toFixed(1);
-				
-				if (y1 < oRowInfo.y) {
-					y1 = oRowInfo.y;
-				}
-				if (i < drawData.length - 1) {
-					y2 = maxY - drawData[i + 1].demand / maxTotalRevised * drawRowHeight;
-				} else {
-					x2 = oAxisTime.timeToView(Format.abapTimestampToDate(drawData[i].start_date)).toFixed(1);
-					y2 = maxY - drawData[i].demand / maxTotalRevised * drawRowHeight;
-				}
-				y2 = y2.toFixed(1);
-				
-				if (y2 < oRowInfo.y) {
-					y2 = oRowInfo.y;
-				}
-				
-				path += " M " + x1 + " " + y1 + "L" + x2 + " " + y1;
-				path += " M " + x2 + " " + y1 + "L" + x2 + " " + y2;
 			}
 		}
-		return path;
+
+		if(this.isValid(path)) {
+			return path;
+		} else {
+			jQuery.sap.log.warning("UbcBorderPath shape generated invalid d: " + path + " from the given data: " + oData);
+			return null;
+		}
 	};
 
 	/**

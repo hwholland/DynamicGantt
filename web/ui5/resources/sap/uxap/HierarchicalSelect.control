@@ -10,7 +10,7 @@ otherwise it would be displayed as a first level.</documentation>
     <since>1.26</since>
     <baseType>sap.m/Select</baseType>
     <properties>
-        <property name="upperCase" type="sap.ui.core/boolean" defaultValue="false" group="Appearance">
+        <property group="Appearance" defaultValue="false" type="sap.ui.core/boolean" name="upperCase">
             <documentation>Determines whether the HierarchicalSelect items are displayed in upper case.</documentation>
         </property>
     </properties>

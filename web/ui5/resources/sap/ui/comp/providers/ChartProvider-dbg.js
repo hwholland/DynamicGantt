@@ -1,20 +1,21 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // -----------------------------------------------------------------------------
 // Generates the view metadata required for SmartTable using SAP-Annotations metadata
 // -----------------------------------------------------------------------------
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/comp/odata/MetadataAnalyser', 'sap/ui/comp/odata/ChartMetadata', 'sap/ui/comp/odata/ODataType', './ControlProvider'
-], function(jQuery, MetadataAnalyser, ChartMetadata, ODataType, ControlProvider) {
+	'jquery.sap.global', 'sap/ui/comp/odata/MetadataAnalyser', 'sap/ui/comp/odata/ChartMetadata', 'sap/ui/comp/odata/ODataType', './ControlProvider', 'sap/ui/core/format/DateFormat'
+], function(jQuery, MetadataAnalyser, ChartMetadata, ODataType, ControlProvider, DateFormat) {
 	"use strict";
 
 	/**
 	 * Constructs a class to generate the view/data model metadata for the SmartChart from the SAP-Annotations metadata
-	 * 
+	 *
 	 * @constructor
 	 * @experimental This module is only for internal/experimental use!
 	 * @public
@@ -25,14 +26,18 @@ sap.ui.define([
 			this._oParentODataModel = mPropertyBag.model;
 			this.sEntitySet = mPropertyBag.entitySet;
 			this._sIgnoredFields = mPropertyBag.ignoredFields;
-			this.useSmartField = mPropertyBag.useSmartField;
 			this._bSkipAnnotationParse = mPropertyBag.skipAnnotationParse === "true";
+			this._sChartQualifier = mPropertyBag.chartQualifier;
+			this._sPresentationVariantQualifier = mPropertyBag.presentationVariantQualifier;
 			this._oDefaultDropDownDisplayBehaviour = mPropertyBag.defaultDropDownDisplayBehaviour;
 			try {
 				this._oDateFormatSettings = mPropertyBag.dateFormatSettings ? JSON.parse(mPropertyBag.dateFormatSettings) : undefined;
-				this._oCurrencyFormatSettings = mPropertyBag.currencyFormatSettings ? JSON.parse(mPropertyBag.currencyFormatSettings) : undefined;
 			} catch (ex) {
 				// Invalid JSON provided!
+			}
+
+			if (mPropertyBag.chartLibrary) {
+				ChartMetadata.feedWithChartLibrary(mPropertyBag.chartLibrary);
 			}
 		}
 
@@ -45,8 +50,8 @@ sap.ui.define([
 	};
 
 	/**
-	 * Initialises the necessary table metadata
-	 * 
+	 * Initializes the necessary chart metadata
+	 *
 	 * @private
 	 */
 	ChartProvider.prototype._intialiseMetadata = function() {
@@ -55,11 +60,11 @@ sap.ui.define([
 		this._sFullyQualifiedEntityTypeName = this._oMetadataAnalyser.getEntityTypeNameFromEntitySetName(this.sEntitySet);
 
 		if (!this._bSkipAnnotationParse) {
-			this._oPresentationVariant = this._oMetadataAnalyser.getPresentationVariantAnnotation(this._sFullyQualifiedEntityTypeName);
+			this._oPresentationVariant = this._oMetadataAnalyser.getPresentationVariantAnnotation(this._sFullyQualifiedEntityTypeName, this._sPresentationVariantQualifier);
 			if (this._oPresentationVariant && this._oPresentationVariant.chartAnnotation) {
 				this._oChartAnnotation = this._oPresentationVariant.chartAnnotation;
 			} else {
-				this._oChartAnnotation = this._oMetadataAnalyser.getChartAnnotation(this._sFullyQualifiedEntityTypeName);
+				this._oChartAnnotation = this._oMetadataAnalyser.getChartAnnotation(this._sFullyQualifiedEntityTypeName, this._sChartQualifier);
 			}
 		}
 		if (!this._oDefaultDropDownDisplayBehaviour) {
@@ -73,21 +78,20 @@ sap.ui.define([
 			model: this._oParentODataModel,
 			fieldsMetadata: this._aODataFieldMetadata,
 			dateFormatSettings: this._oDateFormatSettings,
-			currencyFormatSettings: this._oCurrencyFormatSettings,
 			defaultDropDownDisplayBehaviour: this._oDefaultDropDownDisplayBehaviour,
-			useSmartField: this.useSmartField,
 			enableDescriptions: false,
 			entitySet: this.sEntitySet
 		});
 
 		if (this._aODataFieldMetadata) {
+			this._prepareHierarchy();
 			iLen = this._aODataFieldMetadata.length;
 		}
 
 		for (i = 0; i < iLen; i++) {
 			oField = this._aODataFieldMetadata[i];
 			// Ignore the fields in the ignored list -or- the one marked with visible="false" in annotation
-			if (this._aIgnoredFields.indexOf(oField.name) > -1 || !oField.visible) {
+			if (this._aIgnoredFields.indexOf(oField.name) > -1 || !oField.visible || oField.hidden) {
 				continue;
 			}
 
@@ -107,13 +111,27 @@ sap.ui.define([
 		}
 	};
 
+	ChartProvider.prototype._prepareHierarchy = function() {
+		for (var i = 0; i < this._aODataFieldMetadata.length; i++) {
+			if (this._aODataFieldMetadata[i].hierarchy) {
+				for (var j = 0; j < this._aODataFieldMetadata.length; j++) {
+					this._aODataFieldMetadata[j].hierarchy = this._aODataFieldMetadata[j].hierarchy || {};
+					this._aODataFieldMetadata[j].hierarchy.up = this._aODataFieldMetadata[j].hierarchy.up || {};
+
+					if (this._aODataFieldMetadata[i].hierarchy.field === this._aODataFieldMetadata[j].name) {
+						this._aODataFieldMetadata[i].hierarchy.down = this._getFieldViewMetadata(this._aODataFieldMetadata[j]);
+						this._aODataFieldMetadata[j].hierarchy.up[this._aODataFieldMetadata[i].hierarchy.type] = this._getFieldViewMetadata(this._aODataFieldMetadata[i]);
+					}
+				}
+			}
+		}
+	};
+
 	ChartProvider.prototype._setAnnotationMetadata = function(oFieldViewMetadata) {
-		var mAnnotation = null;
 		if (oFieldViewMetadata && oFieldViewMetadata.fullName) {
-			// Update with SemanticObject annotation data
-			mAnnotation = this._oMetadataAnalyser.getSemanticObjectAnnotation(oFieldViewMetadata.fullName);
-			if (mAnnotation) {
-				oFieldViewMetadata.semanticObject = mAnnotation.semanticObject;
+			var oSemanticObjects = this._oMetadataAnalyser.getSemanticObjectsFromAnnotation(oFieldViewMetadata.fullName);
+			if (oSemanticObjects) {
+				oFieldViewMetadata.semanticObjects = oSemanticObjects;
 			}
 		}
 	};
@@ -127,7 +145,7 @@ sap.ui.define([
 
 	/**
 	 * Generate an array of fields that need to be ignored in the SmartChart (if any)
-	 * 
+	 *
 	 * @private
 	 */
 	ChartProvider.prototype._generateIgnoredFieldsArray = function() {
@@ -138,17 +156,27 @@ sap.ui.define([
 
 	/**
 	 * Calculates additional attributes for a field
-	 * 
+	 *
 	 * @param {object} oField - OData metadata for the chart field
 	 * @param {object} oViewField - view metadata for the chart field
 	 * @private
 	 */
 	ChartProvider.prototype._enrichWithChartViewMetadata = function(oField, oViewField) {
 
-		oField.isMeasure = oField.aggregationRole && oField.aggregationRole === "measure";
-		oField.isDimension = oField.aggregationRole && oField.aggregationRole === "dimension";
+		function isRole(sRole, field) {
+			return field.aggregationRole && field.aggregationRole === sRole;
+		}
+
+		oField.isMeasure = isRole("measure", oField);
+		oField.isDimension = isRole("dimension", oField);
+		oField.isHierarchyDimension = oField.hierarchy && oField.hierarchy.type === MetadataAnalyser.hierarchyType.nodeFor && isRole("dimension", oField.hierarchy.down);
+
+		oField.dateFormatter = this._getDateFormatter(oField);
 
 		oField.role = this._getRole(oField);
+		oField.hierarchyLevel = this._getHierarchyLevel(oField);
+
+		oField.dataPoint = this._getDataPoint(oField);
 
 		oField.filterType = oViewField.filterType;
 		if (oViewField.template) {
@@ -157,9 +185,15 @@ sap.ui.define([
 
 		if (oField.isDimension) {
 			oField.displayBehaviour = oViewField.displayBehaviour;
+		} else if (oField.isHierarchyDimension) {
+			//redirect the description from hierarchy
+			var oReferenceField = oField.hierarchy.up[MetadataAnalyser.hierarchyType.nodeExternalKeyFor] || oViewField;
+
+			oField.displayBehaviour = oReferenceField.displayBehaviour;
+			oField.description = oReferenceField.description || oReferenceField.name;
 		}
 
-		oField.isSemanticObject = (oViewField.semanticObject) ? true : false;
+		oField.isSemanticObject = (oViewField.semanticObjects) ? true : false;
 
 		// set the inResult from metadata
 		this._setInResult(oField);
@@ -167,9 +201,61 @@ sap.ui.define([
 		this._setSortOrder(oField);
 	};
 
+	/*************************************************************************************************************************************************
+	 * Determines a custom formatter from the field depending on this._oDateFormatSettings
+	 *
+	 * @param {object} oField - OData metadata for the entity field
+	 * @return {object} a text formatter
+	 * @private
+	 */
+	ChartProvider.prototype._getDateFormatter = function(oField) {
+		var fnCustomFormatter, fnDateFormatter;
+
+		switch (oField.type) {
+			case "Edm.Date":
+				fnDateFormatter = DateFormat.getDateInstance(this.oDateFormatSettings);
+				break;
+			case "Edm.Time":
+				fnDateFormatter = DateFormat.getTimeInstance(this.oDateFormatSettings);
+				break;
+			case "Edm.DateTimeOffset":
+			case "Edm.DateTime":
+				if (oField.displayFormat === "Date") {
+					fnDateFormatter = DateFormat.getDateInstance(this.oDateFormatSettings);
+				} else {
+					fnDateFormatter = DateFormat.getDateTimeInstance(this.oDateFormatSettings);
+				}
+				break;
+			case "Edm.String":
+				if (oField.isCalendarDate) {
+					var oStringDateFormatter = ODataType.getType("Edm.String", this.oDateFormatSettings, {}, true);//get the StringDateType
+
+					fnCustomFormatter = function(oValue) {
+						//concatenate the formatters
+						oValue = oStringDateFormatter.formatValue(oValue, "string");
+
+						return oValue;
+					};
+				}
+				break;
+			default:
+				break;
+
+		}
+
+		if (fnDateFormatter) {
+			fnCustomFormatter = function(timestamp) {
+				var date = new Date(timestamp);
+				return fnDateFormatter.format(date);
+			};
+		}
+
+		return fnCustomFormatter;
+	};
+
 	/**
 	 * Sets inResult on the field metadata if the field exists in the RequestAtLeast of PresentationVariant annotation
-	 * 
+	 *
 	 * @param {object} oField - OData metadata for the table field
 	 * @private
 	 */
@@ -184,11 +270,15 @@ sap.ui.define([
 
 	/**
 	 * Sets sorting realted info (sorted and sortOrder) on the field metadata if the field exists in the SortOrder of PresentationVariant annotation
-	 * 
+	 *
 	 * @param {object} oField - OData metadata for the table field
 	 * @private
 	 */
 	ChartProvider.prototype._setSortOrder = function(oField) {
+		// initialize the sort Order
+		oField.sorted = false;
+		oField.sortOrder = "Ascending";
+
 		var iLen;
 		// first check if field is part of PresentationVariant-->SortOrder
 		if (this._oPresentationVariant && this._oPresentationVariant.sortOrderFields) {
@@ -222,19 +312,72 @@ sap.ui.define([
 	 * @returns {string} the role
 	 */
 	ChartProvider.prototype._getRole = function(oField) {
+
 		if (this._oChartAnnotation) {
-			if (oField.isDimension && this._oChartAnnotation.dimensionAttributes) {
-				return ChartMetadata.getDimensionRole(this._oChartAnnotation.dimensionAttributes[oField.name]);
-			} else if (oField.isMeasure && this._oChartAnnotation.measureAttributes) {
-				return ChartMetadata.getMeasureRole(this._oChartAnnotation.measureAttributes[oField.name]);
+			if ((oField.isDimension || oField.isHierarchyDimension) && this._oChartAnnotation.dimensionAttributes[oField.name]) {
+				return ChartMetadata.getDimensionRole(this._oChartAnnotation.dimensionAttributes[oField.name].role);
+			} else if (oField.isMeasure && this._oChartAnnotation.measureAttributes[oField.name]) {
+				return ChartMetadata.getMeasureRole(this._oChartAnnotation.measureAttributes[oField.name].role);
 			}
 		}
 	};
 
 	/**
-	 * Get the fields that can be added as Columns
-	 * 
-	 * @returns {Array} the table view metadata
+	 * @param {object} oField - OData metadata for the chart field
+	 * @returns {int} the hierarchy level
+	 * @private
+	 */
+	ChartProvider.prototype._getHierarchyLevel = function(oField) {
+		if (this._oChartAnnotation) {
+			if (oField.isHierarchyDimension && this._oChartAnnotation.dimensionAttributes[oField.name]) {
+				var level = null;
+				try {
+					level = parseInt(this._oChartAnnotation.dimensionAttributes[oField.name].hierarchyLevel, 10);
+				} catch (e) {
+					level = 0;
+				}
+				return level;
+			}
+
+			return 0;
+		}
+	};
+
+	/**
+	 * @param {object} oField - OData metadata for the chart field
+	 * @returns {string} the hierarchy level
+	 * @since 1.54
+	 * @private
+	 */
+	ChartProvider.prototype._getTextPropertyForHierachyDimension = function(oField) {
+		var oReferenceField = oField.hierarchy.up[MetadataAnalyser.hierarchyType.nodeExternalKeyFor] || oField;
+
+		return oReferenceField.description || oReferenceField.name;
+	};
+
+	/**
+	 * Retrieve the UI.DataPoint annotation for the chart measure.
+	 *
+	 * @param {oField} The metadata for the chart field
+	 * @returns {string} the dataPoint
+	 * @private
+	 */
+	ChartProvider.prototype._getDataPoint = function(oField) {
+		if (this._oChartAnnotation && oField.isMeasure && this._oChartAnnotation.measureAttributes[oField.name] && this._oChartAnnotation.measureAttributes[oField.name].dataPoint) {
+			var sDataPointPath = this._oChartAnnotation.measureAttributes[oField.name].dataPoint;
+			var aDataPointInformation = sDataPointPath.split("#");
+			var sQualifier = aDataPointInformation.length === 2 ? aDataPointInformation[1] : "";
+
+			return this._getMeasureDataPoint(sQualifier, oField.name);
+		}
+
+		return null;
+	};
+
+	/**
+	 * Gets the fields that can be added as columns.
+	 *
+	 * @returns {array} the table view metadata
 	 * @public
 	 */
 	ChartProvider.prototype.getChartViewMetadata = function() {
@@ -242,8 +385,24 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns the field for the of a specific dimension.
+	 *
+	 * @param sDimName Name of a dimension
+	 * @returns {object} true or false based on metadata.
+	 * @private
+	 */
+	ChartProvider.prototype.getViewField = function(sDimName) {
+		var oField = this._oChartViewMetadata.fields.filter(function(field) {
+			return field.name === sDimName;
+		})[0];
+
+		//Filterable from ChartProvider
+		return oField;
+	};
+
+	/**
 	 * Get the Chart DataPoint metadata
-	 * 
+	 *
 	 * @returns {Object} the DataPoint annotation object
 	 * @public
 	 */
@@ -255,8 +414,43 @@ sap.ui.define([
 	};
 
 	/**
+	 * Returns the UI.DataPoint annotation of for a given qualifier
+	 *
+	 * @param {string} the value of the qualifier
+	 * @param {string} the name of the measure field for consistency check
+	 * @returns {Object} the DataPoint annotation object
+	 * @private
+	 */
+	ChartProvider.prototype._getMeasureDataPoint = function(sQualifier, sMeasure) {
+		var oChartDataPointMetadata = this.getChartDataPointMetadata();
+
+		if (oChartDataPointMetadata) {
+			var oDataPoint = null;
+
+			// filter the correct data point
+			if (sQualifier) {
+				if (oChartDataPointMetadata.additionalAnnotations) {
+					oDataPoint = oChartDataPointMetadata.additionalAnnotations[sQualifier];
+				}
+			} else {
+				if (oChartDataPointMetadata.primaryAnnotation) {
+					oDataPoint = oChartDataPointMetadata.primaryAnnotation;
+				}
+			}
+
+			// consistency check that measure value and field
+			if (oDataPoint != null && oDataPoint.Value && oDataPoint.Value.Path == sMeasure) {
+				return oDataPoint;
+			}
+
+		}
+
+		return null;
+	};
+
+	/**
 	 * Returns a flag indicating whether date handling with UTC is enabled for the table.
-	 * 
+	 *
 	 * @returns {boolean} whether UTC date handling is enabled
 	 * @public
 	 */
@@ -266,7 +460,7 @@ sap.ui.define([
 
 	/**
 	 * Destroys the object
-	 * 
+	 *
 	 * @public
 	 */
 	ChartProvider.prototype.destroy = function() {
@@ -283,6 +477,163 @@ sap.ui.define([
 		this._oChartDataPointMetadata = null;
 		this._sIgnoredFields = null;
 		this.bIsDestroyed = true;
+	};
+
+	/**
+	 * Provides the semantic coloring for the chart measure based on the UI.DataPoint annotation.
+	 *
+	 * @see sap.chart.ColoringType.Criticality
+	 * @param {object} The UI.DataPoint annotation
+	 * @return {sap.chart.ColoringType.Criticality} The semantic coloring for the chart measure
+	 * @public
+	 */
+	ChartProvider.prototype.provideSemanticColoring = function(oDataPoint) {
+		var oCriticality = {};
+		if (oDataPoint.Criticality) {
+
+			if (oDataPoint.Criticality.Path) {
+				oCriticality = {
+					Calculated: oDataPoint.Criticality.Path
+				};
+			} else {
+				oCriticality = {
+					Static: ChartMetadata.getCriticalityType(oDataPoint.Criticality.EnumMember)
+				};
+			}
+
+		} else {
+			var oThresholds = {};
+			var bConstant = this._buildThresholds(oThresholds, oDataPoint.CriticalityCalculation);
+
+			if (bConstant) {
+				oCriticality = {
+					ConstantThresholds: oThresholds
+				};
+			} else {
+				oCriticality = {
+					DynamicThresholds: oThresholds
+				};
+			}
+
+		}
+
+		return oCriticality;
+	};
+
+	/**
+	 * Checks whether the thresholds are dynamic or constant.
+	 *
+	 * @param {object} the threshold skeleton
+	 * @param {object} the UI.DataPoint.CriticalityCalculation annotation
+	 * @returns {boolean} <code>true</code> if the threshold should be supplied as ConstantThresholds, <code>false</code> if the threshold should
+	 *          be supplied as DynamicThresholds
+	 * @private
+	 */
+	ChartProvider.prototype._buildThresholds = function(oThresholds, oCriticalityCalculation) {
+		var bConstant = true;
+
+		oThresholds.ImprovementDirection = ChartMetadata.getImprovementDirectionType(oCriticalityCalculation.ImprovementDirection.EnumMember);
+
+		var aValidThresholds = ChartMetadata.getCriticalityThresholds();
+		var iLen = aValidThresholds.length;
+
+		var oDynamicThresholds = {
+			oneSupplied: false
+		// combination to check whether at least one is supplied
+		};
+		var oConstantThresholds = {
+			oneSupplied: false
+		// combination to check whether at least one is supplied
+		};
+
+		for (var i = 0; i < iLen; i++) {
+			oDynamicThresholds[aValidThresholds[i]] = oCriticalityCalculation[aValidThresholds[i]] ? oCriticalityCalculation[aValidThresholds[i]].Path : undefined;
+			oDynamicThresholds.oneSupplied = oDynamicThresholds.oneSupplied || oDynamicThresholds[aValidThresholds[i]];
+
+			if (!oDynamicThresholds.oneSupplied) {
+				// only consider in case no dynamic threshold is supplied
+				oConstantThresholds[aValidThresholds[i]] = ChartMetadata.calculateConstantValue(oCriticalityCalculation[aValidThresholds[i]]);
+				oConstantThresholds.oneSupplied = oConstantThresholds.oneSupplied || oConstantThresholds[aValidThresholds[i]];
+			}
+		}
+
+		// dynamic definition shall overrule constant definition
+		if (oDynamicThresholds.oneSupplied) {
+			bConstant = false;
+
+			for (var i = 0; i < iLen; i++) {
+				if (oDynamicThresholds[aValidThresholds[i]]) {
+					oThresholds[aValidThresholds[i]] = oDynamicThresholds[aValidThresholds[i]];
+				}
+			}
+
+		} else {
+			var oAggregationLevel;
+			oThresholds.AggregationLevels = [];
+
+			// check if at least one static value is supplied
+			if (oConstantThresholds.oneSupplied) {
+
+				// add one entry in the aggregation level
+				oAggregationLevel = {
+					VisibleDimensions: null
+				};
+
+				for (var i = 0; i < iLen; i++) {
+					if (oConstantThresholds[aValidThresholds[i]]) {
+						oAggregationLevel[aValidThresholds[i]] = oConstantThresholds[aValidThresholds[i]];
+					}
+				}
+
+				oThresholds.AggregationLevels.push(oAggregationLevel);
+
+			}
+
+			// further check for ConstantThresholds
+			if (oCriticalityCalculation.ConstantThresholds && oCriticalityCalculation.ConstantThresholds.length > 0) {
+				for (var i = 0; i < oCriticalityCalculation.ConstantThresholds.length; i++) {
+					var oAggregationLevelInfo = oCriticalityCalculation.ConstantThresholds[i];
+
+					var aVisibleDimensions = oAggregationLevelInfo.AggregationLevel ? [] : null;
+
+					if (oAggregationLevelInfo.AggregationLevel && oAggregationLevelInfo.AggregationLevel.length > 0) {
+						for (var j = 0; j < oAggregationLevelInfo.AggregationLevel.length; j++) {
+							aVisibleDimensions.push(oAggregationLevelInfo.AggregationLevel[j].PropertyPath);
+						}
+					}
+
+					oAggregationLevel = {
+						VisibleDimensions: aVisibleDimensions
+					};
+
+					for (var j = 0; j < iLen; j++) {
+						var nValue = ChartMetadata.calculateConstantValue(oAggregationLevelInfo[aValidThresholds[j]]);
+						if (nValue) {
+							oAggregationLevel[aValidThresholds[j]] = nValue;
+						}
+					}
+
+					oThresholds.AggregationLevels.push(oAggregationLevel);
+				}
+			}
+		}
+
+		return bConstant;
+	};
+
+	/**
+	 * Gets the maxItems property of the UI.PresentationVariant annotation.
+	 *
+	 * <b>Note</b> If this property is set, the chart displays 100 items at most.
+	 */
+	ChartProvider.prototype.getMaxItems = function() {
+		var iMaxItems = -1;
+
+		if (this._oPresentationVariant && this._oPresentationVariant.maxItems) {
+			iMaxItems = Math.min(this._oPresentationVariant.maxItems, 100);
+		}
+
+		return iMaxItems;
 	};
 
 	return ChartProvider;

@@ -31,7 +31,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -42,14 +42,15 @@ sap.ui.define([
 			properties: {
 				tag: {type: "string", defaultValue: "circle"},
 				
-				cx: {type: "number"},
-				cy: {type: "number"},
-				r: {type: "number", defaultValue: 5}
+				cx: {type: "float"},
+				cy: {type: "float"},
+				r: {type: "float", defaultValue: 5}
 			}
 		}
 	});
 	
 	Circle.prototype.init = function() {
+		Shape.prototype.init.apply(this, arguments);
 		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
 		this.setProperty("ariaLabel", oRb.getText("ARIA_CIRCLE"));
 	};
@@ -136,5 +137,13 @@ sap.ui.define([
 		return this._configFirst("r", oData, true);
 	};
 
+	Circle.prototype.getStyle = function(oData, oRowInfo) {
+		var sInheritedStyle = Shape.prototype.getStyle.apply(this, arguments);
+		var oStyles = {
+			"fill": this.determineValueColor(this.getFill(oData, oRowInfo)),
+			"fill-opacity": this.getFillOpacity(oData, oRowInfo)
+		};
+		return sInheritedStyle + this.getInlineStyle(oStyles);
+	};
 	return Circle;
 }, true);

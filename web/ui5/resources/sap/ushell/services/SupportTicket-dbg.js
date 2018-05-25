@@ -1,16 +1,18 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The SupportTicket service.
  */
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.services.SupportTicket");
 
     /**
      * This method MUST be called by the Unified Shell's container only, others
      * MUST call <code>sap.ushell.Container.getService("SupportTicket")</code>.
      * Constructs a new instance of the support ticket service.
+     *
+     * @name sap.ushell.services.SupportTicket
      *
      * @param {object}
      *            oAdapter the service adapter for the support ticket service,
@@ -51,7 +53,7 @@
      * @since 1.19.1
      *
      */
-    sap.ushell.services.SupportTicket = function (oAdapter, oContainerInterface, sParameters, oServiceConfiguration) {
+    function SupportTicket(oAdapter, oContainerInterface, sParameters, oServiceConfiguration) {
         var oServiceConfig = (oServiceConfiguration && oServiceConfiguration.config) || {};
 
         /**
@@ -60,6 +62,7 @@
          * @param {JSON} oSupportTicketData JSON object containing the input fields required for the support ticket.
          * @returns {object} promise
          * @public
+         * @alias sap.ushell.services.SupportTicket#createTicket
          * @since 1.20.0
          */
         this.createTicket = function (oSupportTicketData) {
@@ -74,10 +77,14 @@
          * @return {boolean} <code>true</code> if the service is enabled; <code>false</code> otherwise
          *
          * @public
+         * @alias sap.ushell.services.SupportTicket#isEnabled
          * @since 1.20.0
          */
         this.isEnabled = function () {
             return oServiceConfig.enabled === true;
         };
     };
-}());
+
+    SupportTicket.hasNoAdapter = false;
+    return SupportTicket;
+}, true /* bExport */);

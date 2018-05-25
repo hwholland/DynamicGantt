@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ jQuery.sap.require("sap.ui.core.Element");
  * @extends sap.ui.core.Element
  *
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -82,15 +82,51 @@ sap.ui.core.Element.extend("sap.makit.Layer", { metadata : {
 	],
 	library : "sap.makit",
 	properties : {
+
+		/**
+		 * Chart type
+		 */
 		"type" : {type : "sap.makit.ChartType", group : "Appearance", defaultValue : sap.makit.ChartType.Column},
+
+		/**
+		 * Specify the line thickness of the line graph. Only applies to Line chart type.
+		 */
 		"lineThickness" : {type : "float", group : "Appearance", defaultValue : 1},
+
+		/**
+		 * Allow a layer’s primary axis color palette to be modified without affecting other charts in the same screen. If not set, the chart will use the default color palette defined in the theme. This property will take precedence over other CombinationChart's color palette properties.
+		 * Accept an array of color in string format or hex format. e.g.
+		 * 0xff0000
+		 * "red"
+		 * "rgb(255,0,0)"
+		 */
 		"primaryColorPalette" : {type : "any", group : "Misc", defaultValue : null},
+
+		/**
+		 * Specifiy whether this layer should be drawn on the secondary axis.
+		 */
 		"drawOnSecondaryAxis" : {type : "boolean", group : "Misc", defaultValue : false}
 	},
 	aggregations : {
+
+		/**
+		 * The data rows of the chart. User should bind these to their data source
+		 */
 		"rows" : {type : "sap.makit.Row", multiple : true, singularName : "row", bindable : "bindable"}, 
+
+		/**
+		 * The data column map of the chart.
+		 */
 		"columns" : {type : "sap.makit.Column", multiple : true, singularName : "column", bindable : "bindable"}, 
+
+		/**
+		 * Data region property of the chart's Series
+		 */
 		"series" : {type : "sap.makit.Series", multiple : false}, 
+
+		/**
+		 * Data region property of the chart's Values
+		 */
 		"values" : {type : "sap.makit.Value", multiple : true, singularName : "value"}
 	}
 }});

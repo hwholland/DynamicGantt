@@ -1,15 +1,24 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
-    "use strict";
-    /*global jQuery, $, sap, window */
+sap.ui.define(["sap/ushell/components/flp/launchpad/PagingManager"], function(PagingManager) {
+	"use strict";
+
+    /*global jQuery, $, sap, window, hasher*/
     /*jslint nomen: true */
 
     sap.ui.controller("sap.ushell.components.flp.launchpad.appfinder.Catalog", {
-        oPopoverView: undefined,
-
+        oPopover: null,
         onInit: function () {
-            var that = this;
+            // take the sub-header model
+            this.categoryFilter = "";
+            this.oMainModel = this.oView.getModel();
+            this.oSubHeaderModel = this.oView.getModel("subHeaderModel");
+
+            var that = this,
+                oSelectedTagsBinding = this.oSubHeaderModel.bindProperty("/tag/selectedTags"),
+                oSearchModelBinding = this.oSubHeaderModel.bindProperty("/search"),
+                oTagMode = this.oSubHeaderModel.bindProperty("/tag/tagMode");
+
             sap.ui.getCore().byId("catalogSelect").addEventDelegate({
                 onBeforeRendering : this.onBeforeSelectRendering
             }, this);
@@ -21,16 +30,22 @@
                 that.onShow(oEvent);
             });
             this.timeoutId = 0;
+
+            document.subHeaderModel = this.oSubHeaderModel;
+            document.mainModel = this.oMainModel;
+
+            oSearchModelBinding.attachChange(that.handleSearchModelChanged.bind(this));
+            oSelectedTagsBinding.attachChange(that.handleSearchModelChanged.bind(this));
+            oTagMode.attachChange(that.handleSearchModelChanged.bind(this));
+            // init listener for the toggle button bindig context
+            var oToggleButtonModelBinding = this.oSubHeaderModel.bindProperty("/openCloseSplitAppButtonToggled");
+            oToggleButtonModelBinding.attachChange(that.handleToggleButtonModelChanged.bind(this));
         },
 
         onBeforeRendering: function () {
             //Invoking loading of all catalogs here instead of 'onBeforeShow' as it improves the perceived performance.
             //Fix of incident#:1570469901
             sap.ui.getCore().getEventBus().publish("renderCatalog");
-            //set initial focus
-            setTimeout(function () {
-                jQuery('#catalogSelect').focus();
-            }, 0);
         },
 
         onAfterRendering: function () {
@@ -40,30 +55,24 @@
                 that = this;
             //check if the catalogs were already loaded, if so, we don't need the loading message
             if (!aCurrentCatalogs.length) {
-
-                //add the loading message right after the catalog is rendered
-                oModel.setProperty('/catalogs', [{
-                    title: sap.ushell.resources.i18n.getText('catalogsLoading'),
-                    "static": true,
-                    tiles: [],
-                    numIntentSupportedTiles : -1//only in order to present this option in the Catalog.view (dropdown menu)since there is a filter there on this property
-                }]);
-                oModel.setProperty('/catalogsNoDataText', sap.ushell.resources.i18n.getText('loadingTiles'));
-
+//                oModel.setProperty('/catalogsNoDataText', sap.ushell.resources.i18n.getText('loadingTiles'));
+                //TODO daniel & eran: Add text propery on the catalog container to display the status message.
             } else if (aCurrentCatalogs[0].title != sap.ushell.resources.i18n.getText('catalogsLoading')) {
-                oModel.setProperty('/catalogsNoDataText', sap.ushell.resources.i18n.getText('noFilteredItems'));
+                //oModel.setProperty('/catalogsNoDataText', sap.ushell.resources.i18n.getText('noFilteredItems'));
             }
 
             if (!this.PagingManager) {
                 this.lastCatalogId = 0;
-                jQuery.sap.require("sap.ushell.components.flp.launchpad.PagingManager");
-                this.PagingManager = new sap.ushell.components.flp.launchpad.PagingManager('catalogPaging', {
+                this.PagingManager = new PagingManager('catalogPaging', {
                     supportedElements: {
                         tile : {className: 'sapUshellTile'}
                     },
                     containerHeight: window.innerHeight,
                     containerWidth: window.innerWidth
                 });
+
+                //we need PagingManager in CatalogContainer in order to allocate page if catalog is selected.
+                this.getView().getCatalogContainer().setPagingManager(this.PagingManager);
             }
 
             //just the first time
@@ -71,58 +80,19 @@
                 that.allocateNextPage();
             }
 
-            jQuery("#catalogTilesPage-cont").scroll(function () {
-                var oPage = sap.ui.getCore().byId('catalogTilesPage'),
-                    scroll = oPage.getScrollDelegate(),
-                    currentPos = scroll.getScrollTop(),
-                    max = scroll.getMaxScrollTop();
-
-                if (max - currentPos <= 30 + that.PagingManager.getTileHeight()) {
-                    that.allocateNextPage();
-                }
-            });
             jQuery(window).resize(function () {
                 var windowWidth = $(window).width(),
                     windowHeight = $(window).height();
 
                 that.PagingManager.setContainerSize(windowWidth, windowHeight);
-                that.resetPageFilter();
-                that.applyTileFilters();
             });
+            that._handleAppFinderWithDocking();
+            sap.ui.getCore().getEventBus().subscribe("launchpad", "appFinderWithDocking", that._handleAppFinderWithDocking,this);
         },
 
-        onShow: function (oEvent) {
-            //if the user goes to the catalog directly (not via the dashboard)
-            //we must close the loading dialog
-            var oViewPortContainer,
-                hashTag,
-                oModel = this.getView().getModel(),
-                aCatalogTiles = oModel.getProperty("/catalogTiles") || [],
-                sDataParam = oEvent.getParameter('arguments').filters,
-                oDataParam = sDataParam ? JSON.parse(sDataParam) : sDataParam,
-                i;
-
-            // The catalog does not contain the notification preview,
-            // hence, shifting the scaled center veiwport (when moving to the right viewport) is not needed
-            oViewPortContainer = sap.ui.getCore().byId("viewPortContainer");
-            if (oViewPortContainer) {
-                oViewPortContainer.shiftCenterTransition(false);
-            }
-
-            $.extend(this.getView().getViewData(), oEvent);
-            if (this.PagingManager) {
-                this.resetPageFilter();
-            }
-
-            this.categoryFilter = (oDataParam && oDataParam.catalogSelector && oDataParam.catalogSelector) || null;
-            if (this.categoryFilter) {
-                this.categoryFilter = window.decodeURIComponent(this.categoryFilter);
-            }
-            this.searchFilter = (oDataParam && oDataParam.tileFilter && oDataParam.tileFilter) || null;
-            if (this.searchFilter) {
-                this.searchFilter = window.decodeURIComponent(this.searchFilter);
-            }
-            hashTag = (oDataParam && oDataParam.tagFilter && oDataParam.tagFilter) || "";
+        _decodeUrlFilteringParameters: function (sUrlParameters) {
+            var oUrlParameters = sUrlParameters ? JSON.parse(sUrlParameters) : sUrlParameters,
+                hashTag = (oUrlParameters && oUrlParameters.tagFilter && oUrlParameters.tagFilter) || "";
 
             if (hashTag) {
                 try {
@@ -133,57 +103,73 @@
             } else {
                 this.tagFilter = [];
             }
-            if (this.tagFilter) {
-                oModel.setProperty("/selectedTags", this.tagFilter);
+            this.categoryFilter = (oUrlParameters && oUrlParameters.catalogSelector && oUrlParameters.catalogSelector) || this.categoryFilter;
+            if (this.categoryFilter) {
+                this.categoryFilter = window.decodeURIComponent(this.categoryFilter);
             }
-            oModel.setProperty("/showCatalogHeaders", true);
-            oModel.setProperty("/catalogSearchFilter", this.searchFilter);
-
-            for (i = 0; i < aCatalogTiles.length; i = i + 1) {
-                aCatalogTiles[i].active = false;
-            }
-
-            if (this.categoryFilter || this.searchFilter) {
-                // selected category does not work with data binding
-                // we need to rerender it manually and then set the selection
-                // see function onBeforeSelectRendering
-                sap.ui.getCore().byId("catalogSelect").rerender();
-            } else {
-                //display all
-                if (sap.ui.getCore().byId("catalogSelect")) {
-                    sap.ui.getCore().byId("catalogSelect").setSelectedItemId("");
-                }
-            }
-
-            this.oRenderingFilter = new sap.ui.model.Filter('', 'EQ', 'a');
-            this.oRenderingFilter.fnTest = function (val) {
-                if (val.catalogIndex <= this.lastCatalogId) {
-                    return true;
-                }
-
-                if (this.allocateTiles > 0) {
-                    this.lastCatalogId = val.catalogIndex;
-                    this.allocateTiles--;
-                    return true;
-                }
-
-                return false;
-            }.bind(this);
-
-            if (this.PagingManager) {
-                this.applyTileFilters();
+            this.searchFilter = (oUrlParameters && oUrlParameters.tileFilter && oUrlParameters.tileFilter) || null;
+            if (this.searchFilter) {
+                this.searchFilter = window.decodeURIComponent(this.searchFilter);
             }
         },
+
+        _applyFilters: function () {
+            if (this.categoryFilter) {
+                // If all is selected pass an empty string.
+                this.categoryFilter = sap.ushell.resources.i18n.getText('all') === this.categoryFilter ? '' : this.categoryFilter;
+                this.getView().getModel().setProperty("/categoryFilter", this.categoryFilter);
+                //According to UX definitions, if we have 'Category Filter' we shouldn't carry-on with the other filters.
+                return;
+            }
+
+
+            if (this.searchFilter && this.searchFilter.length) {
+                //Remove all asterisks from search query before applying the filter
+                this.searchFilter = this.searchFilter.replace(/\*/g, '');
+                this.oSubHeaderModel.setProperty('/search', {
+                    searchMode: true,
+                    searchTerm: this.searchFilter
+                });
+            }
+            if (this.tagFilter && this.tagFilter.length) {
+                this.oSubHeaderModel.setProperty('/tag', {
+                    tagMode: true,
+                    selectedTags: this.tagFilter
+                });
+            }
+        },
+
+        onShow: function (oEvent) {
+            //if the user goes to the catalog directly (not via the dashboard)
+            //we must close the loading dialog
+            var oViewPortContainer,
+                sUrlParameters = oEvent.getParameter('arguments').filters;
+
+            // The catalog does not contain the notification preview,
+            // hence, shifting the scaled center veiwport (when moving to the right viewport) is not needed
+            oViewPortContainer = sap.ui.getCore().byId("viewPortContainer");
+            if (oViewPortContainer) {
+                oViewPortContainer.shiftCenterTransition(false);
+            }
+
+            $.extend(this.getView().getViewData(), oEvent);
+            this._decodeUrlFilteringParameters(sUrlParameters);
+            this._applyFilters();
+        },
+
         resetPageFilter : function () {
             this.lastCatalogId = 0;
             this.allocateTiles = this.PagingManager.getNumberOfAllocatedElements();
+            this.getView().getCatalogContainer().setCategoryAllocateTiles(this.allocateTiles);
         },
+
         allocateNextPage : function () {
-            if (!this.allocateTiles || this.allocateTiles === 0) {
+            var oCatalogContainer = this.getView().getCatalogContainer();
+            if (!this.nAllocatedTiles || this.nAllocatedTiles === 0) {
                 //calculate the number of tiles in the page.
                 this.PagingManager.moveToNextPage();
                 this.allocateTiles = this.PagingManager._calcElementsPerPage();
-                this.applyTileFilters();
+                oCatalogContainer.setCategoryAllocateTiles(this.allocateTiles);
             }
         },
 
@@ -193,12 +179,8 @@
                     return oItem.getBindingContext().getObject().title === this.categoryFilter;
                 }, this));
 
-            if (!aItems.length) {
-                aItems.push(oSelect.getItemAt(0));
-            }
-
-            if (aItems[0] && oSelect.getSelectedItemId() !== aItems[0].getId()) {
-                window.setTimeout($.proxy(oSelect.setSelectedItem, oSelect, aItems[0].getId()), 500);
+            if (!aItems.length && oSelect.getItems()[0]) {
+                aItems.push(oSelect.getItems()[0]);
             }
         },
 
@@ -244,210 +226,397 @@
             return sGroupContext ? sGroupContext : "";
         },
 
-        applyTileFilters : function () {
-            var aFilters = [],
-                otagFilter,
-                oSearchFilter,
-                oCategoryFilter,
-                sCatalogTitle;
-            if (this.tagFilter) {
-                otagFilter = new sap.ui.model.Filter('tags', 'EQ', 'v');
-                otagFilter.fnTest = function (oTags) {
-                    var ind, filterByTag;
-                    if (this.tagFilter.length === 0) {
-                        return true;
-                    }
+        _isTagFilteringChanged: function (aSelectedTags) {
+            var bSameLength = aSelectedTags.length === this.tagFilter.length,
+                bIntersect = bSameLength;
 
-                    for (ind = 0; ind < this.tagFilter.length; ind++) {
-                        filterByTag = this.tagFilter[ind];
-                        if (oTags.indexOf(filterByTag) === -1) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }.bind(this);
-
-                aFilters.push(otagFilter);
+            //Checks whether there's a symmetric difference between the currently selected tags and those persisted in the URL.
+            if (!bIntersect) {
+                return true;
             }
-            //Remove all asterisks from search query before applying the filter
-            this.searchFilter = this.searchFilter ? this.searchFilter.replace(/\*/g, '') : this.searchFilter;
+            aSelectedTags.some(function (sTag, iIndex) {
+                bIntersect = jQuery.inArray(sTag, this.tagFilter) !== -1;
 
-            if (this.searchFilter) {
-                oSearchFilter = new sap.ui.model.Filter($.map(this.searchFilter.split(/[\s,]+/), function (v) {
-                    return (v && new sap.ui.model.Filter("keywords", sap.ui.model.FilterOperator.Contains, v)) ||
-                        (v && new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, v)) || undefined;
-                }), true);
-                aFilters.push(oSearchFilter);
-            }
-            if (this.categoryFilter) {
-                sCatalogTitle = this.categoryFilter;
+                return !bIntersect;
+            }.bind(this));
 
-                // Filtering the catalog tiles  according to catalog title (and not catalog ID)  
-                oCategoryFilter = new sap.ui.model.Filter("catalog", sap.ui.model.FilterOperator.EQ, sCatalogTitle);
-                aFilters.push(oCategoryFilter);
-            }
-            //Anyway we would like to filter out tiles which are not supported on current device
-            aFilters.push(new sap.ui.model.Filter("isTileIntentSupported", sap.ui.model.FilterOperator.EQ, true));
-
-            //Adding the page filter.
-            if (this.oRenderingFilter) {
-                aFilters.push(this.oRenderingFilter);
-            }
-
-            sap.ui.getCore().byId("catalogTiles").getBinding("tiles").filter(aFilters);
+            return bIntersect;
         },
 
-        onLiveFilter : function (oEvent) {
+        _setUrlWithTagsAndSearchTerm: function(sSearchTerm, aSelectedTags) {
+            var oUrlParameterObject = {
+                tileFilter : sSearchTerm && sSearchTerm.length ? encodeURIComponent(sSearchTerm) : '',
+                tagFilter: aSelectedTags.length ? JSON.stringify(aSelectedTags) : [],
+                targetGroup : encodeURIComponent(this.getGroupContext())
+            };
 
-            // always clear previous timeout to make sure you that if the filtering was not performed yet,
-            // you will delete the previous call and create a new updated one
-            clearTimeout(this.timeoutId);
-            var that = this,
-                sQuery = oEvent.getParameter("newValue"),
-                nDelay = 300;
+            this.getView().parentComponent.getRouter().navTo('appFinder', {
+                'menu': 'catalog',
+                'filters' : JSON.stringify(oUrlParameterObject)
+            });
+        },
 
-            this.timeoutId = setTimeout(fRunFilter, nDelay, sQuery);
 
-            function fRunFilter(sQuery) {
-                if (sQuery) {
-                    that.setSearchFilter(sQuery);
+        handleSearchModelChanged: function () {
+            var sActiveMenu = this.oSubHeaderModel.getProperty('/activeMenu'),
+                bSearchMode = this.oSubHeaderModel.getProperty('/search/searchMode'),
+                bTagMode = this.oSubHeaderModel.getProperty('/tag/tagMode'),
+                sPageName,
+                sSearchTerm = this.oSubHeaderModel.getProperty('/search/searchTerm'),
+                aSelectedTags = this.oSubHeaderModel.getProperty('/tag/selectedTags'),
+                otagFilter,
+                aFilters = [],
+                oSearchResults;
+
+            // if view ID does not contain the active menu then return
+            if (this.oView.getId().indexOf(sActiveMenu) !== -1) {
+                if (bSearchMode || bTagMode) {
+                    //cahnge the category selection to all
+                    this.oView.setCategoryFilterSelection();
+
+                    if (!this.oView.oCatalogEntrySearchContainer.getBinding("customTilesContainer")) {
+                        this.oView.oCatalogEntrySearchContainer.bindAggregation("customTilesContainer", {
+                            path : "/catalogSearchEntity/customTiles",
+                            template: this.oView.oTileTemplate,
+                            // Table rows (i.e. notification types) are sorted by type name, which is the NotificationTypeDesc field
+                            templateShareable: true
+                        });
+                    }
+
+                    if (!this.oView.oCatalogEntrySearchContainer.getBinding("appBoxesContainer")) {
+                        this.oView.oCatalogEntrySearchContainer.bindAggregation("appBoxesContainer", {
+                            path : "/catalogSearchEntity/appBoxes",
+                            template: this.oView.oAppBoxesTemplate,
+                            // Table rows (i.e. notification types) are sorted by type name, which is the NotificationTypeDesc field
+                            templateShareable: true
+                        });
+                    }
+
+                    if (aSelectedTags && aSelectedTags.length > 0) {
+                        otagFilter = new sap.ui.model.Filter('tags', 'EQ', 'v');
+                        otagFilter.fnTest = function (oTags) {
+                            var ind, filterByTag;
+                            if (aSelectedTags.length === 0) {
+                                return true;
+                            }
+
+                            for (ind = 0; ind < aSelectedTags.length; ind++) {
+                                filterByTag = aSelectedTags[ind];
+                                if (oTags.indexOf(filterByTag) === -1) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        }.bind(this);
+
+                        aFilters.push(otagFilter);
+                    }
+
+                    //Remove all asterisks from search query before applying the filter
+                    sSearchTerm = sSearchTerm ? sSearchTerm.replace(/\*/g, '') : sSearchTerm;
+
+                    if (sSearchTerm) {
+                        var aSearchTermParts = sSearchTerm.split(/[\s,]+/);
+                        //create search filter with all the parts for keywords and apply AND operator ('true' indicates that)
+                        var keywordsSearchFilter = new sap.ui.model.Filter(jQuery.map(aSearchTermParts, function (value) {
+                            return (value && new sap.ui.model.Filter("keywords", sap.ui.model.FilterOperator.Contains, value));
+                        }), true);
+
+                        //create search filter with all the parts for title and apply AND operator ('true' indicates that)
+                        var titleSearchFilter = new sap.ui.model.Filter($.map(aSearchTermParts, function (value) {
+                            return (value && new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, value));
+                        }), true);
+
+                        //create search filter with all the parts for subtitle and apply AND operator ('true' indicates that)
+                        var subtitleSearchFilter = new sap.ui.model.Filter($.map(aSearchTermParts, function (value) {
+                            return (value && new sap.ui.model.Filter("subtitle", sap.ui.model.FilterOperator.Contains, value));
+                        }), true);
+
+                        aFilters.push(keywordsSearchFilter);
+                        aFilters.push(titleSearchFilter);
+                        aFilters.push(subtitleSearchFilter);
+                    }
+
+                    this.oView.oCatalogEntrySearchContainer.getBinding("customTilesContainer").filter(aFilters);
+                    this.oView.oCatalogEntrySearchContainer.getBinding("appBoxesContainer").filter(aFilters);
+
+                    oSearchResults = this.oView.oCatalogEntrySearchContainer.getNumberResults();
+                    this.bSearchResults = (oSearchResults.nAppboxes + oSearchResults.nCustom > 0);
+
+                    this.oView.oCatalogEntrySearchContainer.setAfterHandleElements(function(oInstance) {
+                        var oNumberOfElements = oInstance.getNumberResults();
+                        this.bSearchResults = (oNumberOfElements.nAppboxes + oNumberOfElements.nCustom > 0);
+                        this.oView.splitApp.toDetail(this.getView()._calculateDetailPageId());
+                    }.bind(this));
+
+                    //It has been required by UX to set 'All Catalogs' as selected when in search/tag mode
+                    this._showHideSelectedMasterItem(false);
+
+                    // set the filtering parameters in the url.
+                    if (this._isTagFilteringChanged(aSelectedTags)) {
+                        this._setUrlWithTagsAndSearchTerm(sSearchTerm, aSelectedTags);
+                    }
                 } else {
-                    that.setSearchFilter();
+                    this._showHideSelectedMasterItem(true);
+                    this.setCategoryFilter(this.categoryFilter);
+                }
+                sPageName = this.getView()._calculateDetailPageId();
+                this.oView.splitApp.toDetail(sPageName);
+            } else {
+                //For the edge case in which we return to the catalog after exsiting search mode in the EAM.
+                this._restoreSelectedMasterItem();
+            }
+        },
+
+
+        _handleAppFinderWithDocking: function () {
+            //check if docking
+            if (jQuery(".sapUshellContainerDocked").length > 0) {
+                // 710 is the size of sap.ui.Device.system.phone
+                // 1024 docking supported only in L size.
+                if (jQuery("#mainShell").width() < 710) {
+                    if (window.innerWidth < 1024) {
+                        this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonVisible", false);
+                        this.oView.splitApp.setMode(sap.m.SplitAppMode.ShowHideMode);
+                    } else {
+                        this.oView.splitApp.setMode(sap.m.SplitAppMode.HideMode);
+                        this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonVisible", true);
+                    }
+                } else {
+                    this.oSubHeaderModel.setProperty("/openCloseSplitAppButtonVisible", false);
+                    this.oView.splitApp.setMode(sap.m.SplitAppMode.ShowHideMode);
                 }
             }
         },
 
-        onTagsFilter : function (oEvent) {
-            var selectedItem = oEvent.getParameters("selectedItem").changedItem,
-                selected = oEvent.getParameter("selected"),
-                selectedTagsList = [],
-                selectedTag = selectedItem.getText();
 
-            if (this.tagFilter) {
-                selectedTagsList = this.tagFilter;
+        _showHideSelectedMasterItem: function (bIsVisible) {
+            var oCatalogsList = this.oView.splitApp.getMasterPage('catalogSelect'),
+                oCatalogsListSelectedItem = oCatalogsList.getSelectedItem();
+
+            if (oCatalogsListSelectedItem) {
+                oCatalogsListSelectedItem.toggleStyleClass("sapUshellHideSelectedListItem",!bIsVisible);
+            }
+        },
+
+        _restoreSelectedMasterItem: function () {
+            var oCatalogsList = this.oView.splitApp.getMasterPage('catalogSelect'),
+                oOrigSelectedListItem = sap.ui.getCore().byId(this.selectedCategoryId);
+
+            if (oOrigSelectedListItem) {
+                this.categoryFilter = oOrigSelectedListItem.getTitle();
+            }
+            oCatalogsList.setSelectedItem(oOrigSelectedListItem);
+        },
+
+        handleToggleButtonModelChanged: function () {
+            var bButtonVisible = this.oSubHeaderModel.getProperty("/openCloseSplitAppButtonVisible"),
+                bButtonToggled = this.oSubHeaderModel.getProperty("/openCloseSplitAppButtonToggled");
+
+            // if there was a change in the boolean toogled flag
+            // (this can be called via upadte to subheader model from AppFinder, in such a case we do not
+            // need to switch the views)
+            if (bButtonToggled != this.bCurrentButtonToggled) {
+
+                // for device which is not a Phone
+                if (!sap.ui.Device.system.phone) {
+
+                    if (bButtonVisible) {
+                        if (bButtonToggled && !this.oView.splitApp.isMasterShown()) {
+                            this.oView.splitApp.showMaster();
+                        } else if (this.oView.splitApp.isMasterShown()) {
+                            this.oView.splitApp.hideMaster();
+                        }
+                    }
+                } else {
+
+                    // for Phone the split app is behaving differently
+                    if (bButtonVisible) {
+                        if (bButtonToggled && !this.oView.splitApp.isMasterShown()) {
+
+                            // go to master
+                            var oCatalogSelectMaster = sap.ui.getCore().byId('catalogSelect');
+                            this.oView.splitApp.backMaster(oCatalogSelectMaster);
+
+                        } else if (this.oView.splitApp.isMasterShown()) {
+                            // calculate the relevant detailed page to nav to
+                            var oDetail = sap.ui.getCore().byId(this.getView()._calculateDetailPageId());
+                            this.oView.splitApp.toDetail(oDetail);
+                        }
+                    }
+                }
             }
 
-            if (selected) {
-                selectedTagsList.push(selectedTag);
-            } else {
-                selectedTagsList = selectedTagsList.filter(function (entry) {
-                    return entry !== selectedTag;
-                });
+            this.bCurrentButtonToggled = bButtonToggled;
+        },
+
+        _handleCatalogListItemPress: function (oEvent) {
+            this.onCategoryFilter(oEvent);
+            //eliminate the Search and Tag mode.
+            this.oSubHeaderModel.setProperty('/search/searchMode', false);
+            this.oSubHeaderModel.setProperty('/tag/tagMode', false);
+
+            // on phone, we must make sure the toggle button gets untoggled on every navigation
+            // in the master page
+            if (sap.ui.Device.system.phone || sap.ui.Device.system.tablet) {
+                this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled', !this.oSubHeaderModel.setProperty('/openCloseSplitAppButtonToggled'));
             }
-            this.setTagsFilter(selectedTagsList.length > 0 ? JSON.stringify(selectedTagsList) : "");
+            this.handleSearchModelChanged();
         },
 
         onCategoryFilter : function (oEvent) {
-            var oSource = oEvent.getParameter("selectedItem"),
-                oSourceContext = oSource.getBindingContext(),
-                oModel = oSourceContext.getModel();
-            if (oModel.getProperty("static", oSourceContext)) { // show all categories
+            var oMasterList = oEvent.getSource(),
+                oSelectedCatalog = oMasterList.getSelectedItem(),
+                oSelectedCatalogBindingCtx = oSelectedCatalog.getBindingContext(),
+                oModel = oSelectedCatalogBindingCtx.getModel();
+            if (oModel.getProperty("static", oSelectedCatalogBindingCtx)) { // show all categories
                 oModel.setProperty("/showCatalogHeaders", true);
                 this.setCategoryFilter();
-                this.selectedCategory = undefined;
+                this.selectedCategoryId = undefined;
+                this.categoryFilter = undefined;
             } else { // filter to category
                 oModel.setProperty("/showCatalogHeaders", false);
-                this.setCategoryFilter(window.encodeURIComponent(oSource.getBindingContext().getObject().title));
-                this.selectedCategory = oSource.getId();
+                this.setCategoryFilter(window.encodeURIComponent(oSelectedCatalog.getBindingContext().getObject().title));
+                this.categoryFilter = oSelectedCatalog.getTitle();
+                this.selectedCategoryId = oSelectedCatalog.getId();
             }
         },
 
         onTileAfterRendering : function (oEvent) {
-            var footItem = oEvent.getSource().getFootItems()[0];
-            if (footItem !== undefined) {
-                footItem.addStyleClass("sapUshellCatalogPlusIcon");
-            }
+            var jqTile = jQuery(oEvent.oSource.getDomRef()),
+                jqTileInnerTile = jqTile.find(".sapMGT");
+
+            jqTileInnerTile.attr("tabindex", "-1");
         },
 
         catalogTilePress : function (oController) {
             sap.ui.getCore().getEventBus().publish("launchpad", "catalogTileClick");
         },
 
+        onAppBoxPressed: function (oEvent) {
+            var oAppBox = oEvent.getSource(),
+                oTile = oAppBox.getBindingContext().getObject(),
+                fnPressHandler;
+            if (oEvent.mParameters.srcControl.$().closest(".sapUshellPinButton").length) {
+                return;
+            }
+
+            fnPressHandler = sap.ushell.Container.getService("LaunchPage").getAppBoxPressHandler(oTile);
+
+            if (fnPressHandler) {
+                fnPressHandler(oTile);
+            } else {
+                var sUrl = oAppBox.getProperty("url");
+                if (sUrl && sUrl.indexOf("#") === 0) {
+                    hasher.setHash(sUrl);
+                }
+                else {
+                    window.open(sUrl, '_blank');
+                }
+            }
+        },
+
+
         /**
-         * Event handler triggered when a tile footer is clicked
-         *
-         * There are two main use-cases:
-         *
-         * 1. If the catalog was opened in the context of a specific group
-         *
-         * 2. If the catalog was opened NOT in the context of a specific group. In this case the flow is:
-         *   a. Popover closing use-case:
-         *      - If the groups popover is already opened then it should be closed
-         *   b. Popover opening use-case:
-         *      - Get tile groups data
-         *      - If oPopoverView wasn't created yet - then create it
-         *      - Set the popover's view content and visibility
-         *      - Open the popover
+         * Event handler triggered if tile should be added to the default group.
          *
          * @param {sap.ui.base.Event} oEvent
          *     the event object. It is expected that the binding context of the event source points to the tile to add.
          */
-        onTileFooterClick : function (oEvent) {
-            var clickedObject = oEvent.getSource(),
-                oSourceContext = clickedObject.getBindingContext(),
-                oModel = this.getView().getModel(),
-                sGroupModelPath = oModel.getProperty("/groupContext/path");
+        onTilePinButtonClick : function (oEvent) {
+            var launchPageService = sap.ushell.Container.getService("LaunchPage");
+            var oDefaultGroupPromise = launchPageService.getDefaultGroup();
 
-            // Check if the catalog was opened in the context of a group, according to the groupContext ("/groupContext/path") in the model
-            if (sGroupModelPath) {
-                this._handleTileFooterClickInGroupContext(oSourceContext, sGroupModelPath);
+            oDefaultGroupPromise.done(function(oDefaultGroup) {
+                var clickedObject = oEvent.getSource(),
+                    oSourceContext = clickedObject.getBindingContext(),
+                    oModel = this.getView().getModel(),
+                    sGroupModelPath = oModel.getProperty("/groupContext/path");
+
+                // Check if the catalog was opened in the context of a group, according to the groupContext ("/groupContext/path") in the model
+                if (sGroupModelPath) {
+                    this._handleTileFooterClickInGroupContext(oSourceContext, sGroupModelPath);
 
                 // If the catalog wasn't opened in the context of a group - the action of clicking a catalog tile should open the groups popover
-            } else {
-                // If the popover is already opened - it should be closed
-                if ((this.oPopoverView) && (this.oPopoverView.getVisible() === true)) {
-                    this.oPopoverView.setVisible(false);
-                }
+                } else {
+                    var groupList = oModel.getProperty("/groups");
+                    var launchPageService = sap.ushell.Container.getService("LaunchPage");
+                    var catalogTile = this.getCatalogTileDataFromModel(oSourceContext);
+                    var tileGroups = catalogTile.tileData.associatedGroups;
+                    var aGroupsInitialState = [];
+                    var index = 0;
+                    var groupsData = groupList.map(function (group) {
+                        var realGroupID,
+                            selected,
+                            oTemp;
 
-                var groupList = oModel.getProperty("/groups"),
-                    launchPageService = sap.ushell.Container.getService("LaunchPage"),
-                    catalogTile = this.getCatalogTileDataFromModel(oSourceContext),
-                    tileGroups = catalogTile.tileData.associatedGroups,
-                    oGroupData = groupList.map(function (group) {
                         // Get the group's real ID
-                        var realGroupID = launchPageService.getGroupId(group.object),
-                            // Check if the group (i.e. real group ID) exists in the array of groups that contain the relevant Tile
-                            // if so - the check box that re[resents this group should be initially selected
-                            selected = !($.inArray(realGroupID, tileGroups) == -1);
-
+                        realGroupID = launchPageService.getGroupId(group.object);
+                        // Check if the group (i.e. real group ID) exists in the array of groups that contain the relevant Tile
+                        // if so - the check box that represents this group should be initially selected
+                        selected = !($.inArray(realGroupID, tileGroups) == -1);
+                        oTemp = {
+                            id: realGroupID,
+                            title: this._getGroupTitle(oDefaultGroup, group.object),
+                            selected: selected
+                        }
+                        // Add the group to the array that keeps the groups initial state
+                        // mainly whether or not the group included the relevant tile
+                        aGroupsInitialState.push(oTemp);
+                        index++;
                         return {
                             selected: selected,
                             initiallySelected: selected,
                             oGroup: group
                         };
-                    });
+                    }.bind(this));
 
-                if (this.oPopoverView === undefined) {
-                    this.oPopoverView = sap.ui.getCore().byId("groupListPopoverView");
-                    if (this.oPopoverView === undefined) {
-                        // Create popoverView, is it wasn't created yet
-                        this.oPopoverView = new sap.ui.view({
-                            id: "groupListPopoverView",
-                            type: sap.ui.core.mvc.ViewType.JS,
-                            viewName: "sap.ushell.components.flp.launchpad.appfinder.GroupListPopover",
-                            viewData: {
-                                enableHideGroups: oModel.getProperty("/enableHideGroups"),
-                                enableHelp: oModel.getProperty("/enableHelp")
-                            }
-                        });
-                        // The view is created with visibility = true by default
-                        this.oPopoverView.setVisible(false);
+                    // @TODO:Instead of the jQuery, we should maintain the state of the popover (i.e. opened/closed)
+                    // using the afterOpen and afterClose events of sap.m.ResponsivePopover
+                    var existingPopover = jQuery("#groupsPopover-popover");
+                    if(existingPopover.length === 1) {
+                        var oPopoverView = sap.ui.getCore().byId("sapUshellGroupsPopover");
+                        oPopoverView.destroy();
                     }
-                }
-                if (this.oPopoverView.getVisible() === false) {
+                    var popoverView = new sap.ui.view("sapUshellGroupsPopover", {
+                        type: sap.ui.core.mvc.ViewType.JS,
+                        viewName: "sap.ushell.components.flp.launchpad.appfinder.GroupListPopover",
+                        viewData: {
+                            groupData: groupsData,
+                            title: launchPageService.getCatalogTilePreviewTitle(oModel.getProperty(oSourceContext.sPath).src),
+                            enableHideGroups: oModel.getProperty("/enableHideGroups"),
+                            enableHelp: oModel.getProperty("/enableHelp"),
+                            sourceContext: oSourceContext,
+                            catalogModel: this.getView().getModel(),
+                            catalogController: this
 
-                    this.oPopoverView.setGroupListSingleSelection(sap.m.ListMode.MultiSelect);
-                    // Set the popover's view content and open it
-                    this.oPopoverView.setGroupsData(oGroupData);
-                    this.oPopoverView.setVisible(true);
-                    this.oPopoverView.open(clickedObject).then(this._handlePopoverResponse.bind(this, oSourceContext, catalogTile));
-                }
-            }
+
+                        }
+                    });
+                    popoverView.getController().setSelectedStart(aGroupsInitialState);
+                    popoverView.open(clickedObject).then(this._handlePopoverResponse.bind(this, oSourceContext, catalogTile));
+                    }
+            }.bind(this));
         },
-
+        _getGroupTitle: function (oDefaultGroup, oGroupObject) {
+            var oLaunchPageService = sap.ushell.Container.getService("LaunchPage"),
+                title;
+                //check if is it a default group- change title to "my home".
+                if (oLaunchPageService.getGroupId(oDefaultGroup) === oLaunchPageService.getGroupId(oGroupObject)) {
+                    title = sap.ushell.resources.i18n.getText("my_group");
+                }
+                else{
+                    title = oLaunchPageService.getGroupTitle(oGroupObject);
+                }
+                return title;
+        },
         _handlePopoverResponse: function (oSourceContext, catalogTile, responseData) {
-            var oModel = this.getView().getModel(),
-                groupList = oModel.getProperty("/groups");
+            if (!responseData.addToGroups.length && !responseData.newGroups.length && !responseData.removeFromGroups.length) {
+                return;
+            }
+
+            var oModel = this.getView().getModel();
+            var groupList = oModel.getProperty("/groups");
             var promiseList = [];
 
             responseData.addToGroups.forEach(function (group) {
@@ -503,7 +672,7 @@
                 });
             }
 
-            oModel.setProperty("/catalogTiles/" + catalogTile.tileIndex + "/associatedGroups", tileGroupsIdList);
+            oModel.setProperty(catalogTile.bindingContextPath + "/associatedGroups", tileGroupsIdList);
             var firstAddedGroupTitle = (!!popoverResponse.addToGroups[0]) ? popoverResponse.addToGroups[0].title : "";
             if (!firstAddedGroupTitle.length && popoverResponse.newGroups.length) {
                 firstAddedGroupTitle = popoverResponse.newGroups[0];
@@ -535,7 +704,7 @@
                 oModel = this.getView().getModel(),
                 catalogTile = this.getCatalogTileDataFromModel(oSourceContext),
                 aAssociatedGroups = catalogTile.tileData.associatedGroups,
-                oGroupModel = oModel.getProperty(sGroupModelPath), // Get the model of the group according to the group's model path (e.g. "groups/4") 
+                oGroupModel = oModel.getProperty(sGroupModelPath), // Get the model of the group according to the group's model path (e.g. "groups/4")
                 sGroupId = oLaunchPageService.getGroupId(oGroupModel.object),
                 iCatalogTileInGroup = $.inArray(sGroupId, aAssociatedGroups),
                 tileIndex = this._getCatalogTileIndexInModel(oSourceContext),
@@ -550,12 +719,12 @@
                 return;
             }
             oModel.setProperty('/catalogTiles/' + tileIndex + '/isBeingProcessed', true);
-            // Check if this catalog tile already exist in the relevant group 
+            // Check if this catalog tile already exist in the relevant group
             if (iCatalogTileInGroup == -1) {
                 oGroupContext = new sap.ui.model.Context(oSourceContext.getModel(), sGroupModelPath);
                 oAddTilePromise = this._addTile(oSourceContext, oGroupContext);
 
-                // Function createTile of Dashboard manager always calls defferred.resolve, 
+                // Function createTile of Dashboard manager always calls defferred.resolve,
                 // and the success/failure indicator is the returned data.status
                 oAddTilePromise.done(function (data) {
                     if (data.status == 1) {
@@ -573,7 +742,7 @@
                 groupIndex = sGroupModelPath.split('/')[2];
                 oRemoveTilePromise = this._removeTile(sTileCataogId, groupIndex);
 
-                // Function deleteCatalogTileFromGroup of Dashboard manager always calls defferred.resolve, 
+                // Function deleteCatalogTileFromGroup of Dashboard manager always calls defferred.resolve,
                 // and the success/failure indicator is the returned data.status
                 oRemoveTilePromise.done(function (data) {
                     if (data.status == 1) {
@@ -610,7 +779,7 @@
                 aAssociatedGroups.push(sGroupId);
 
                 // Update the model of the catalog tile with the updated associatedGroups
-                oSourceContext.getModel().setProperty("/catalogTiles/" + oCatalogTileModel.tileIndex + "/associatedGroups", aAssociatedGroups);
+                oSourceContext.getModel().setProperty(oCatalogTileModel.bindingContextPath + "/associatedGroups", aAssociatedGroups);
 
                 detailedMessage = this.prepareDetailedMessage(oCatalogTileModel.tileData.title, 1, 0, oGroupModel.title, "");
 
@@ -626,7 +795,7 @@
                 }
 
                 // Update the model of the catalog tile with the updated associatedGroups
-                oSourceContext.getModel().setProperty("/catalogTiles/" + oCatalogTileModel.tileIndex + "/associatedGroups", aAssociatedGroups);
+                oSourceContext.getModel().setProperty(oCatalogTileModel.bindingContextPath + "/associatedGroups", aAssociatedGroups);
                 detailedMessage = this.prepareDetailedMessage(oCatalogTileModel.tileData.title, 0, 1, "", oGroupModel.title);
             }
 
@@ -761,14 +930,14 @@
          *     model context
          */
         getCatalogTileDataFromModel : function (oSourceContext) {
-            var tileIndex = this._getCatalogTileIndexInModel(oSourceContext),
+            var sBindingCtxPath = oSourceContext.getPath(),
                 oModel = oSourceContext.getModel(),
-                oTileData = oModel.getProperty("/catalogTiles/" + tileIndex);
+                oTileData = oModel.getProperty(sBindingCtxPath);
 
             // Return an object containing the Tile in the CatalogTiles Array (in the model) ,its index and whether it's in the middle of add/removal proccess.
             return {
                 tileData: oTileData,
-                tileIndex: tileIndex,
+                bindingContextPath: sBindingCtxPath,
                 isBeingProcessed: oTileData.isBeingProcessed ? true : false
             };
         },
@@ -845,6 +1014,13 @@
             });
 
             return deferred;
+        },
+
+
+        onExit:function(){
+            sap.ui.getCore().getEventBus().unsubscribe("launchpad", "appFinderWithDocking", this._handleAppFinderWithDocking,this);
         }
     });
-}());
+
+
+}, /* bExport= */ false);

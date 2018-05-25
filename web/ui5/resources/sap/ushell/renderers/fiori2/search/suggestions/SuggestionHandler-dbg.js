@@ -1,26 +1,13 @@
 /* global jQuery, sap, clearTimeout, setTimeout  */
-(function() {
+
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper',
+    'sap/ushell/renderers/fiori2/search/suggestions/SinaSuggestionProvider',
+    'sap/ushell/renderers/fiori2/search/suggestions/AppSuggestionProvider',
+    'sap/ushell/renderers/fiori2/search/suggestions/TimeMerger',
+    'sap/ushell/renderers/fiori2/search/suggestions/SuggestionType'
+], function(SearchHelper, SinaSuggestionProvider, AppSuggestionProvider, TimeMerger, SuggestionType) {
     "use strict";
-
-    // =======================================================================
-    // import packages
-    // =======================================================================
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    var SearchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
-
-
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.suggestions.SinaSuggestionProvider');
-    var SinaSuggestionProvider = sap.ushell.renderers.fiori2.search.suggestions.SinaSuggestionProvider;
-
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.suggestions.DataSourceSuggestionProvider');
-    var DataSourceSuggestionProvider = sap.ushell.renderers.fiori2.search.suggestions.DataSourceSuggestionProvider;
-
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.suggestions.AppSuggestionProvider');
-    var AppSuggestionProvider = sap.ushell.renderers.fiori2.search.suggestions.AppSuggestionProvider;
-
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.suggestions.TimeMerger');
-    var TimeMerger = sap.ushell.renderers.fiori2.search.suggestions.TimeMerger;
-
 
     // =======================================================================
     // declare package
@@ -72,7 +59,6 @@
             // members
             var that = this;
             that.model = params.model;
-            that.sina = that.model.sina;
             that.suggestionProviders = [];
             that.suggestionTermBuffer = new SuggestionTermBuffer();
 
@@ -80,13 +66,6 @@
             that.keyboardRelaxationTime = 400;
             that.uiUpdateInterval = 500;
             that.uiClearOldSuggestionsTimeOut = 1000;
-
-            // datasource suggestion provider - version 1 (for old backends, client based)
-            that.dataSourceSuggestionProvider = new DataSourceSuggestionProvider({
-                model: that.model,
-                sina: that.sina,
-                suggestionTermBuffer: that.suggestionTermBuffer
-            });
 
             // apps suggestion provider
             that.appSuggestionProvider = new AppSuggestionProvider({
@@ -132,82 +111,50 @@
                 return that.suggestionProvidersDeferred;
             }
 
-            // init list of suggestion providers (app suggestions are always available)
-            var suggestionProviders = [that.appSuggestionProvider];
+            that.suggestionProvidersDeferred = that.model.initBusinessObjSearch().then(function() {
 
-            // if no business obj search configured -> just use app suggestion provider
-            if (!that.model.config.searchBusinessObjects) {
-                that.suggestionProvidersDeferred = jQuery.when(suggestionProviders);
-                return that.suggestionProvidersDeferred;
-            }
+                // link to sina
+                that.sinaNext = that.model.sinaNext;
 
-            // do server info call and create sina suggestion providers for all supported suggestion types
-            that.suggestionProvidersDeferred = that.sina.sinaSystem().getServerInfo().then(
-                function(serverInfo) {
-                    // 1. bo search does work -> create sina suggestion providers
-                    suggestionProviders.push.apply(suggestionProviders, that.createSinaSuggestionProviders(serverInfo));
+                // init list of suggestion providers (app suggestions are always available)
+                var suggestionProviders = [that.appSuggestionProvider];
+
+                // if no business obj search configured -> just use app suggestion provider
+                if (!that.model.config.searchBusinessObjects) {
                     return jQuery.when(suggestionProviders);
-                },
-                function() {
-                    // 2. no bo search working -> error just use app suggestion provider
-                    return jQuery.when(suggestionProviders);
-                });
+                }
+
+                // create sina suggestion providers
+                suggestionProviders.push.apply(suggestionProviders, that.createSinaSuggestionProviders());
+                return jQuery.when(suggestionProviders);
+            });
+
             return that.suggestionProvidersDeferred;
         },
 
         // create sina suggestion providers
         // ===================================================================
-        createSinaSuggestionProviders: function(serverInfo) {
+        createSinaSuggestionProviders: function() {
 
             // provider configuration
             var providerConfigurations = [{
-                suggestionTypes: [this.sina.SuggestionType.HISTORY],
-                activeSuggestionTypes: []
+                suggestionTypes: [SuggestionType.SearchTermHistory]
             }, {
-                suggestionTypes: [this.sina.SuggestionType.DATASOURCE],
-                activeSuggestionTypes: []
+                suggestionTypes: [SuggestionType.SearchTermData]
             }, {
-                suggestionTypes: [this.sina.SuggestionType.OBJECTDATA],
-                activeSuggestionTypes: []
+                suggestionTypes: [SuggestionType.DataSource]
             }];
-
-            // determine active suggestion types based on capabilities of sina suggestion service
-            var suggestionTypes = serverInfo.services.Suggestions.suggestionTypes;
-            var providerConfiguration;
-            var dataSourceSuggestionsSupportedBySina = false;
-            for (var i = 0; i < suggestionTypes.length; ++i) {
-                var suggestionType = suggestionTypes[i];
-                if (suggestionType === this.sina.SuggestionType.DATASOURCE) {
-                    dataSourceSuggestionsSupportedBySina = true;
-                }
-                for (var j = 0; j < providerConfigurations.length; ++j) {
-                    providerConfiguration = providerConfigurations[j];
-                    if (providerConfiguration.suggestionTypes.indexOf(suggestionType) < 0) {
-                        continue;
-                    }
-                    providerConfiguration.activeSuggestionTypes.push(suggestionType);
-                }
-            }
 
             // create suggestion providers
             var suggestionProviders = [];
             for (var k = 0; k < providerConfigurations.length; ++k) {
-                providerConfiguration = providerConfigurations[k];
-                if (providerConfiguration.activeSuggestionTypes.length === 0) {
-                    continue;
-                }
+                var providerConfiguration = providerConfigurations[k];
                 suggestionProviders.push(new SinaSuggestionProvider({
                     model: this.model,
-                    sina: this.sina,
+                    sinaNext: this.sinaNext,
                     suggestionTermBuffer: this.suggestionTermBuffer,
-                    suggestionQuery: this.model.suggestionQuery,
-                    suggestionTypes: providerConfiguration.activeSuggestionTypes
+                    suggestionTypes: providerConfiguration.suggestionTypes
                 }));
-            }
-
-            // create fallback datasource suggestion provider
-            if (!dataSourceSuggestionsSupportedBySina) {
-                suggestionProviders.push(this.dataSourceSuggestionProvider);
             }
 
             return suggestionProviders;
@@ -221,7 +168,7 @@
 
         // do suggestions
         // ===================================================================
-        doSuggestion: function() {
+        doSuggestion: function(filter) {
             var that = this;
             if (this.isSuggestionPopupVisible()) {
                 // 1. smooth update : old suggestions are cleared when new suggestion call returns
@@ -236,17 +183,17 @@
                 // 2. hard update : clear old suggestions immediately
                 this.abortSuggestions();
             }
-            this.doSuggestionInternal(); // time delayed
+            this.doSuggestionInternal(filter); // time delayed
         },
 
         // do suggestion internal
         // ===================================================================
-        doSuggestionInternal: function() {
+        doSuggestionInternal: function(filter) {
             /* eslint no-loop-func:0 */
 
             // don't suggest if there is no search term
             var that = this;
-            var suggestionTerm = that.model.getProperty("/uiFilter/searchTerms");
+            var suggestionTerm = that.model.getProperty("/uiFilter/searchTerm");
             if (suggestionTerm.length === 0) {
                 return;
             }
@@ -257,9 +204,11 @@
             }
 
             // log suggestion request
-            that.model.analytics.logCustomEvent('FLP: Search', 'Suggestion', [that.model.getProperty('/uiFilter/searchTerms'),
-                that.model.getProperty('/uiFilter/dataSource').key
-            ]);
+            that.model.eventLogger.logEvent({
+                type: that.model.eventLogger.SUGGESTION_REQUEST,
+                suggestionTerm: that.model.getProperty('/uiFilter/searchTerm'),
+                dataSourceKey: that.model.getProperty('/uiFilter/dataSource').id
+            });
 
             // clear suggestion term buffer
             that.suggestionTermBuffer.clear();
@@ -273,7 +222,7 @@
                 var pending = suggestionProviders.length;
                 for (var i = 0; i < suggestionProviders.length; ++i) {
                     var suggestionProvider = suggestionProviders[i];
-                    promises.push(suggestionProvider.getSuggestions());
+                    promises.push(suggestionProvider.getSuggestions(filter));
                 }
 
                 // process suggestions using time merger
@@ -362,5 +311,5 @@
 
     };
 
-
-})();
+    return suggestions.SuggestionHandler;
+});

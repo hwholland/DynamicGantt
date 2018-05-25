@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -49,15 +49,16 @@ sap.ui.define([
 				tag: {type: "string", defaultValue: "line"},
 				isDuration: {type: "boolean", defaultValue: true},
 				
-				x1: {type: "number"},
-				y1: {type: "number"},
-				x2: {type: "number"},
-				y2: {type: "number"}
+				x1: {type: "float"},
+				y1: {type: "float"},
+				x2: {type: "float"},
+				y2: {type: "float"}
 			}
 		}
 	});
 	
 	Line.prototype.init = function() {
+		Shape.prototype.init.apply(this, arguments);
 		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
 		this.setProperty("ariaLabel", oRb.getText("ARIA_LINE"));
 	};
@@ -188,6 +189,16 @@ sap.ui.define([
 		}
 		
 		return this.getRowYCenter(oData, oRowInfo);
+	};
+
+	Line.prototype.getStyle = function(oData, oRowInfo) {
+		var sInheritedStyle = Shape.prototype.getStyle.apply(this, arguments);
+		var oStyles = {
+			"stroke-dasharray": this.getStrokeDasharray(oData, oRowInfo),
+			"fill-opacity": this.getFillOpacity(oData, oRowInfo),
+			"stroke-opacity": this.getStrokeOpacity(oData, oRowInfo)
+		};
+		return sInheritedStyle + this.getInlineStyle(oStyles);
 	};
 
 	return Line;

@@ -329,7 +329,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/unified/Menu.js" size="41667" compressedSize="18985">
+  <module name="sap/ui/unified/Menu.js" size="41175" compressedSize="18849">
     <description>Provides control sap.ui.unified.Menu.</description>
     <requires>
       <module name="jquery.sap.events.js"/>
@@ -773,12 +773,6 @@
   </module>
   <module name="sap/ui/unified/designtime/messagebundle.properties" size="697">
   </module>
-  <module name="sap/ui/unified/designtime/messagebundle_en.properties" size="617">
-  </module>
-  <module name="sap/ui/unified/designtime/messagebundle_en_US_sappsd.properties" size="1291">
-  </module>
-  <module name="sap/ui/unified/designtime/messagebundle_en_US_saptrc.properties" size="755">
-  </module>
   <module name="sap/ui/unified/library-h2-preload.js" size="19900">
     <requires>
       <module name="jquery.sap.dom.js"/>
@@ -896,7 +890,7 @@
       <module name="sap/ui/unified/rules/FileUploader.support.js"/>
     </includes>
   </module>
-  <module name="sap/ui/unified/library-preload.js" size="423259">
+  <module name="sap/ui/unified/library-preload.js" size="423122">
     <requires>
       <module name="jquery.sap.dom.js"/>
       <module name="jquery.sap.events.js"/>

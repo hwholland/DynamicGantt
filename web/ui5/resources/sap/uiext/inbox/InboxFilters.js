@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.InboxFilters");jQuery.sap.require("sap.uiext.inbox.InboxUtils");jQuery.sap.require("sap.uiext.inbox.InboxSecondaryFilters");jQuery.sap.require("sap.uiext.inbox.InboxPrimaryFilters");sap.ui.base.Object.extend("sap.uiext.inbox.InboxFilters",{constructor:function(){sap.ui.base.Object.apply(this);this.oPrimaryFilter=undefined;this.oSecondaryFilter=undefined;this.inboxUtils=sap.uiext.inbox.InboxUtils;}});
 sap.uiext.inbox.InboxFilters.prototype.setPrimaryFilter=function(p){if(p instanceof sap.uiext.inbox.InboxPrimaryFilters){this.oPrimaryFilter=p;}};

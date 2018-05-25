@@ -6,11 +6,11 @@
  */
 sap.ui.define([
 	"sap/ui/core/Control", "sap/ui/core/Core", "sap/m/OverflowToolbar", "sap/m/OverflowToolbarLayoutData", "sap/m/OverflowToolbarPriority", "sap/m/ToolbarSpacer", "sap/m/FlexBox", "sap/m/FlexDirection", "sap/m/FlexJustifyContent",
-	"sap/m/Button", "sap/m/ButtonType", "sap/m/SegmentedButton", "sap/m/Select", 
+	"sap/m/Button", "sap/m/ButtonType", "sap/m/SegmentedButton", "sap/m/Select", "sap/m/MenuButton", "sap/m/Menu", "sap/m/MenuItem",
 	"sap/ui/core/Item", "sap/m/ViewSettingsDialog", "sap/m/ViewSettingsCustomTab", "sap/m/PlacementType",
 	"sap/m/CheckBox", "sap/ui/core/Orientation", "./AssociateContainer", "sap/gantt/legend/LegendContainer", "sap/gantt/misc/Utility", "sap/m/Slider", "sap/m/Popover"
 ], function (Control, Core, OverflowToolbar, OverflowToolbarLayoutData, OverflowToolbarPriority, ToolbarSpacer, FlexBox, FlexDirection, FlexJustifyContent,
-		Button, ButtonType, SegmentedButton, Select, CoreItem, ViewSettingsDialog, ViewSettingsCustomTab, PlacementType, CheckBox,
+		Button, ButtonType, SegmentedButton, Select, MenuButton, Menu, MenuItem, CoreItem, ViewSettingsDialog, ViewSettingsCustomTab, PlacementType, CheckBox,
 		Orientation, AssociateContainer, LegendContainer, Utility, Slider, Popover) {
 	"use strict";
 
@@ -21,18 +21,21 @@ sap.ui.define([
 				height : {type : "CSSSize", defaultValue: "100%"},
 				type: {type: "string", defaultValue: sap.gantt.control.ToolbarType.Global},
 				sourceId:{type: "string"},
-				zoomRate:{type: "float"},
-				zoomInfo: {type: "object"},
-				sliderStep: {type: "int"},
+				zoomLevel:{type: "int", defaultValue: 0},
 				enableTimeScrollSync: {type: "boolean", defaultValue: true},
 				enableCursorLine: {type: "boolean", defaultValue: true},
 				enableNowLine: {type: "boolean", defaultValue: true},
 				enableVerticalLine: {type: "boolean", defaultValue: true},
+				/**
+				 * Switch to show and hide adhoc lines representing milestones and events along the time axis
+				 */
+				enableAdhocLine: {type: "boolean", defaultValue: true},
 				/*
 				 * Configuration property.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Mode[]</code>. Otherwise some properties you set may not function properly.
 				 */
 				modes: {
-					type: "array",
+					type: "object[]",
 					defaultValue: [sap.gantt.config.DEFAULT_MODE]
 				},
 				mode: {
@@ -41,9 +44,10 @@ sap.ui.define([
 				},
 				/*
 				 * Configuration property.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ToolbarScheme[]</code>. Otherwise some properties you set may not function properly.
 				 */
 				toolbarSchemes: {
-					type: "array",
+					type: "object[]",
 					defaultValue: [
 						sap.gantt.config.DEFAULT_CONTAINER_TOOLBAR_SCHEME,
 						sap.gantt.config.DEFAULT_GANTTCHART_TOOLBAR_SCHEME,
@@ -52,16 +56,18 @@ sap.ui.define([
 				},
 				/*
 				 * Configuration property.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.Hierarchy[]</code>. Otherwise some properties you set may not function properly.
 				 */
 				hierarchies: {
-					type: "array", 
+					type: "object[]", 
 					defaultValue: [sap.gantt.config.DEFAULT_HIERARCHY]
 				},
 				/*
 				 * Configuration property.
+				 * We recommend that you set the type of this argument to <code>sap.gantt.config.ContainerLayout[]</code>. Otherwise some properties you set may not function properly.
 				 */
 				containerLayouts: {
-					type: "array",
+					type: "object[]",
 					defaultValue: [
 						sap.gantt.config.DEFAULT_CONTAINER_SINGLE_LAYOUT,
 						sap.gantt.config.DEFAULT_CONTAINER_DUAL_LAYOUT
@@ -96,9 +102,10 @@ sap.ui.define([
 						action: {type: "string"}
 					}
 				},
-				zoomRateChange: {
+				zoomStopChange: {
 					parameters:{
-						zoomRate: {type : "float"}
+						index: {type : "int"},
+						selectedItem: {type: "sap.ui.core.Item"}
 					}
 				},
 				settingsChange: {
@@ -110,6 +117,11 @@ sap.ui.define([
 				modeChange: {
 					parameters: {
 						mode: {type: "string"}
+					}
+				},
+				birdEye: {
+					parameters: {
+						birdEyeRange: {type: "string"}
 					}
 				}
 			}
@@ -154,13 +166,16 @@ sap.ui.define([
 		this._oContainerLayoutConfigMap[sap.gantt.config.DEFAULT_CONTAINER_DUAL_LAYOUT_KEY] = sap.gantt.config.DEFAULT_CONTAINER_DUAL_LAYOUT;
 
 		this._oZoomSlider = null;
+		this._oSelect = null;
 
 		// iLiveChangeTimer is used to accumulate zoomRate change event in order to reduce shapes drawing cycle
 		this._iLiveChangeTimer = -1;
 
 		this._aTimers = [];
 		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
-
+		// the counter of zoom slider 
+		this._nCounterOfDefaultSliders = 0;
+		this._sZoomControlType = sap.gantt.config.ZoomControlType.SliderWithButtons;
 	};
 
 	Toolbar.prototype._resetToolbarInfo = function(){
@@ -202,6 +217,12 @@ sap.ui.define([
 		return oRetVal;
 	};
 
+	Toolbar.prototype.onAfterRendering = function() {
+		if (this._oVHButton && jQuery("#" + this._oVHButton.getId())[0]) {
+			jQuery("#" + this._oVHButton.getId()).attr("aria-label", this._oRb.getText("TLTP_SWITCH_GANTTCHART"));
+		}
+	};
+
 	Toolbar.prototype.setLegend = function (oLegendContainer){
 		this.setAggregation("legend", oLegendContainer);
 
@@ -220,34 +241,29 @@ sap.ui.define([
 		}
 	};
 
-	Toolbar.prototype.setZoomInfo = function(oZoomInfo) {
-		if (oZoomInfo && oZoomInfo.iChartWidth > 0 && this._oZoomSlider) {
-			var fMinZoomRate = oZoomInfo.determinedByChartWidth.fMinRate,
-			fMaxZoomRate = oZoomInfo.determinedByConfig.fMaxRate,
-				fFinalZoomRate = oZoomInfo.determinedByConfig.fRate,
-				oZoomSlider = this._oZoomSlider;
-
-			oZoomSlider.setMin(Math.log(fMinZoomRate));
-			oZoomSlider.setMax(Math.log(fMaxZoomRate));
-			oZoomSlider.setStep((oZoomSlider.getMax() - oZoomSlider.getMin()) / this.getSliderStep());
-			oZoomSlider.setValue(Math.log(fFinalZoomRate));
-			this.setProperty("zoomInfo", oZoomInfo);
-			this._setZoomRate(fFinalZoomRate);
+	Toolbar.prototype.updateZoomLevel = function (iZoomLevel) {
+		if (iZoomLevel >= 0) {
+			if (this._oZoomSlider) {
+				this._oZoomSlider.setValue(iZoomLevel);
+			}
+			if (this._oSelect) {
+				this._oSelect.setSelectedItem(this._oSelect.getItems()[iZoomLevel]);
+			}
+			this.setZoomLevel(iZoomLevel);
 		}
-		return this;
 	};
-	
-	Toolbar.prototype._setZoomRate = function (fZoomRate, bInvalidate) {
-		this.setProperty("zoomRate", fZoomRate, bInvalidate);
-		if (this._oZoomSlider && this._oZoomInButton && this._oZoomOutButton){
-			var fValue = this._oZoomSlider.getValue(),
-				fMax = this._oZoomSlider.getMax(),
-				fMin = this._oZoomSlider.getMin();
-			
-			if (Utility.floatEqual(fValue, fMax)) {
+
+	Toolbar.prototype.setZoomLevel = function (iZoomLevel, bInvalidate) {
+		this.setProperty("zoomLevel", iZoomLevel, bInvalidate);
+
+		if (this._oToolbarScheme && !isNaN(iZoomLevel) && this._oZoomInButton && this._oZoomOutButton && this._oToolbarScheme.getTimeZoom()){
+			var iMax = this._oToolbarScheme.getTimeZoom().getStepCountOfSlider() - 1,
+				iMin = 0;
+
+			if (iZoomLevel === iMax) {
 				this._oZoomInButton.setEnabled(false);
 				this._oZoomOutButton.setEnabled(true);
-			} else if (Utility.floatEqual(fValue, fMin)) {
+			} else if (iZoomLevel === iMin) {
 				this._oZoomInButton.setEnabled(true);
 				this._oZoomOutButton.setEnabled(false);
 			} else {
@@ -465,11 +481,6 @@ sap.ui.define([
 			oContent = this._oAllItems[sRight][iIndex];
 			fnAddToolbarContent.call(this, oContent);
 		}
-		
-		var oZoomInfo = this.getProperty("zoomInfo");
-		if (oZoomInfo) {
-			this.setZoomInfo(oZoomInfo);
-		}
 	};
 
 	Toolbar.prototype.getAllToolbarItems = function () {
@@ -492,7 +503,7 @@ sap.ui.define([
 			this._bClearCustomItems = false;
 		} else {
 			this._oToolbarScheme = this._oToolbarSchemeConfigMap[this._sToolbarSchemeKey];
-			this._bClearCustomItems = true;
+			this._bClearCustomItems =true;
 		}
 
 		if (this._oToolbarScheme && this._oToolbarScheme.getProperty("toolbarDesign")) {
@@ -501,7 +512,7 @@ sap.ui.define([
 	};
 
 	Toolbar.prototype._destroyCompositeControls = function() {
-		this._oToolbar.removeAllContent();
+		var aContents = this._oToolbar.removeAllContent();
 		this._resetToolbarInfo();
 	};
 
@@ -547,6 +558,9 @@ sap.ui.define([
 			case "sourceSelect":
 				vControl = this._genSourceSelectGroup(oGroupConfig);
 				break;
+			case "birdEye":
+				vControl = this._genBirdEyeGroup(oGroupConfig);
+				break;
 			case "layout":
 				vControl = this._genLayoutGroup(oGroupConfig);
 				break;
@@ -563,7 +577,7 @@ sap.ui.define([
 				vControl = this._genModeButtonGroup(oGroupConfig);
 				break;
 			case "timeZoom":
-				vControl = this._genZoomSliderGroupControls(oGroupConfig);
+				vControl = this._genTimeZoomGroupControls(oGroupConfig);
 				break;
 			case "legend":
 				vControl = this._genLegend(oGroupConfig);
@@ -577,6 +591,100 @@ sap.ui.define([
 		if (vControl) {
 			this._oAllItems[sPosition] = this._oAllItems[sPosition].concat(vControl);
 		}
+	};
+
+	Toolbar.prototype._genBirdEyeGroup = function(oGroupConfig) {
+		var that = this;
+		var oLayout = new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()});
+		var sBirdEye = this._oRb.getText("TXT_BRIDEYE");
+		var sTxtVisibleRows = this._oRb.getText("TXT_BRIDEYE_RANGE_VISIBLE_ROWS");
+		var sTxtAllRows = this._oRb.getText("TXT_BRIDEYE_RANGE_ALL_ROWS");
+		var sTooltipVisibleRows = this._oRb.getText("TLTP_BRIDEYE_ON_VISIBLE_ROWS");
+		var sTooltipAllRows = this._oRb.getText("TLTP_BRIDEYE_ON_ALL_ROWS");
+		this._oBirdEyeButton = null;
+		if (oGroupConfig.getBirdEyeRange() === sap.gantt.config.BirdEyeRange.AllRows) {
+			this._oBirdEyeButton = new Button({
+				icon: "sap-icon://show",
+				tooltip: sBirdEye + "(" + sTxtAllRows + "): " + sTooltipAllRows,
+				layoutData: oLayout,
+				press: function (oEvent) {
+					that.fireBirdEye({
+						action: "birdEye",
+						birdEyeRange: oGroupConfig.getBirdEyeRange()
+					});
+				}
+			});
+		} else if (oGroupConfig.getBirdEyeRange() === sap.gantt.config.BirdEyeRange.VisibleRows) {
+			this._oBirdEyeButton = new Button({
+				icon: "sap-icon://show",
+				tooltip: sBirdEye + "(" + sTxtVisibleRows + "): " + sTooltipVisibleRows,
+				layoutData: oLayout,
+				press: function (oEvent) {
+					that.fireBirdEye({
+						action: "birdEye",
+						birdEyeRange: oGroupConfig.getBirdEyeRange()
+					});
+				}
+			});
+		} else {
+			this._oBirdEyeButton = new MenuButton({
+				width: "8rem",
+				text: sTxtVisibleRows,
+				tooltip: sBirdEye + ": " + sTooltipVisibleRows,
+				icon: "sap-icon://show",
+				buttonMode: sap.m.MenuButtonMode.Split,
+				useDefaultActionOnly : true,//this is to make icon always shown, kind of a workaround
+				defaultAction: function(oEvent){
+					that.fireBirdEye({
+						action: "birdEye",
+						birdEyeRange: this._currentBirdEyeRange ? this._currentBirdEyeRange : sap.gantt.config.BirdEyeRange.VisibleRows
+					});
+				}
+			});
+			var oMenu = new Menu({
+				itemSelected : function (oEvent) {
+					var oItem = oEvent.getParameter("item");
+					var sBirdEyeRange = oItem.birdEyeRange;
+					//restore the property of the menu button
+					that._oBirdEyeButton.setTooltip(oItem.getTooltip());
+					that._oBirdEyeButton.setText(oItem.getText());
+					//set the icon of the item to make the icon shown in menu button
+					oItem.setIcon("sap-icon://show");
+					//update the selected item of current menu
+					if (!this.getParent()._currentBirdEyeRange || this.getParent()._currentBirdEyeRange !== sBirdEyeRange) {
+						this.getParent()._currentBirdEyeRange = sBirdEyeRange;
+					}
+					that.fireBirdEye({
+						action: "birdEye",
+						birdEyeRange: sBirdEyeRange
+					});
+				}
+			});
+
+			//build two menu items, one for visible rows, the other for all rows
+			var oMenuItem = new MenuItem({
+				text : sTxtVisibleRows,
+				tooltip: sBirdEye + ": " + sTooltipVisibleRows,
+				press : function(oEvent){
+					this.setIcon();
+				}
+			});
+			oMenuItem.birdEyeRange = sap.gantt.config.BirdEyeRange.VisibleRows;
+			oMenu.addItem(oMenuItem);
+
+			oMenuItem = new MenuItem({
+				text : sTxtAllRows,
+				tooltip: sBirdEye + ": " + sTooltipAllRows,
+				press : function(oEvent){
+					this.setIcon();
+				}
+			});
+			oMenuItem.birdEyeRange = sap.gantt.config.BirdEyeRange.AllRows;
+			oMenu.addItem(oMenuItem);
+
+			this._oBirdEyeButton.setMenu(oMenu);
+		}
+		return this._oBirdEyeButton ;
 	};
 
 	Toolbar.prototype._genSourceSelectGroup = function(oGroupConfig) {
@@ -689,6 +797,7 @@ sap.ui.define([
 		}
 
 		// lessGanttChartSelect
+		var bEnabled = this._oContainerLayoutConfigMap[this.getSourceId()].getGanttChartLayouts().length > 1 ? true : false;
 		this._oLessGanttChartSelect = new Select({
 			icon: "sap-icon://less",
 			type: sap.m.SelectType.IconOnly,
@@ -696,6 +805,7 @@ sap.ui.define([
 			maxWidth: "50px",
 			autoAdjustWidth: true,
 			forceSelection: false,
+			enabled: bEnabled,
 			layoutData: new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()}),
 			change: function (oEvent) {
 				if (oEvent.getParameter("selectedItem")) {
@@ -733,15 +843,18 @@ sap.ui.define([
 		// VH Layout Button
 		var sIcon = this._oContainerLayoutConfigMap[this.getSourceId()].getOrientation() === Orientation.Vertical ?
 				"sap-icon://resize-vertical" : "sap-icon://resize-horizontal";
+		var sTooltip = this._oContainerLayoutConfigMap[this.getSourceId()].getOrientation() === Orientation.Vertical ?
+				this._oRb.getText("TLTP_ARRANGE_GANTTCHART_VERTICALLY") : this._oRb.getText("TLTP_ARRANGE_GANTTCHART_HORIZONTALLY");
 		this._oVHButton = new Button({
 			icon: sIcon,
-			tooltip: this._oRb.getText("TLTP_SWITCH_GANTTCHART"),
-			type: oGroupConfig.getEnableRichStyle() ? ButtonType.Emphasized : ButtonType.Default,
+			tooltip: sTooltip,
+			type: oGroupConfig.getButtonType(),
 			layoutData: new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()}),
 			press: function (oEvent) {
 				switch (this.getIcon()){
 					case "sap-icon://resize-vertical":
 						this.setIcon("sap-icon://resize-horizontal");
+						this.setTooltip(that._oRb.getText("TLTP_ARRANGE_GANTTCHART_HORIZONTALLY"));
 						that.fireLayoutChange({
 							id: "orientation",
 							value: Orientation.Horizontal
@@ -749,6 +862,7 @@ sap.ui.define([
 						break;
 					case "sap-icon://resize-horizontal":
 						this.setIcon("sap-icon://resize-vertical");
+						this.setTooltip(that._oRb.getText("TLTP_ARRANGE_GANTTCHART_VERTICALLY"));
 						that.fireLayoutChange({
 							id: "orientation",
 							value: Orientation.Vertical
@@ -799,14 +913,13 @@ sap.ui.define([
 			oButton;
 		for (var i = 0; i < aExpandChartButtonConfig.length; i++) {
 			var oConfig = aExpandChartButtonConfig[i];
-			
+
 			oButton = new Button({
 				icon: oConfig.getIcon(),
 				tooltip: oConfig.getTooltip(),
 				layoutData: new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()}),
 				press: fnPressEventHanlder.bind(this),
-				type: oGroupConfig.getEnableRichType() && oConfig.getIsExpand() ?
-						ButtonType.Emphasized : ButtonType.Default,
+				type: oGroupConfig.getButtonType(),
 				customData : [
 					new sap.ui.core.CustomData({
 						key : "isExpand",
@@ -851,7 +964,9 @@ sap.ui.define([
 		this._oTreeGroup = [new Button({
 				icon: "sap-icon://expand",
 				tooltip: this._oRb.getText("TLTP_EXPAND"),
+				type: oGroupConfig.getButtonType(),
 				layoutData: new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()}),
+				enabled: false,
 				press: function (oEvent) {
 					that.fireExpandTreeChange({
 						action: "expand"
@@ -861,6 +976,7 @@ sap.ui.define([
 				icon: "sap-icon://collapse",
 				tooltip: this._oRb.getText("TLTP_COLLAPSE"),
 				layoutData: new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()}),
+				enabled: false,
 				press: function (oEvent) {
 					that.fireExpandTreeChange({
 						action: "collapse"
@@ -878,12 +994,13 @@ sap.ui.define([
 			});
 		};
 		this._oModeSegmentButton = new SegmentedButton({select: fnModeButtonGroupSelectHandler.bind(this)});
-		this._oModeButtonMap = {};	
+		this._oModeButtonMap = {};
 		var fnJqueryeachFunction =  function (iIndex, sMode) {
 			if (this._oModesConfigMap[sMode]) {
 				var oButton = new Button({
 					icon: this._oModesConfigMap[sMode].getIcon(),
 					activeIcon: this._oModesConfigMap[sMode].getActiveIcon(),
+					type: oGroupConfig.getButtonType(),
 					tooltip: this._oModesConfigMap[sMode].getText(),
 					layoutData: new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()}),
 					customData : [
@@ -904,79 +1021,162 @@ sap.ui.define([
 		return this._oModeSegmentButton;
 	};
 
-	Toolbar.prototype._genZoomSliderGroupControls = function (oGroupConfig) {
+	Toolbar.prototype._getCounterOfZoomLevels = function(){
+		if (!this._nCounterOfDefaultSliders){
+			this._nCounterOfDefaultSliders = this._oToolbarScheme.getTimeZoom().getStepCountOfSlider();
+		}
+
+		var aInfoOfSelectItems = this._oToolbarScheme.getTimeZoom().getInfoOfSelectItems();
+		if (!aInfoOfSelectItems || aInfoOfSelectItems.length === 0 ) {
+			//To guarantee the slider can work even if the zoom strategy changed 
+			this._oToolbarScheme.getTimeZoom().setStepCountOfSlider(this._nCounterOfDefaultSliders);
+			return this._nCounterOfDefaultSliders;
+		}
+
+		var len = aInfoOfSelectItems.length;
+		this._oToolbarScheme.getTimeZoom().setStepCountOfSlider(len);
+		return len;
+	};
+
+	Toolbar.prototype._getZoomControlType = function(){
+		return this._sZoomControlType;
+	};
+
+	Toolbar.prototype._genTimeZoomGroupControls = function (oGroupConfig) {
+		var that = this;
+		var sZoomControlType = oGroupConfig.getZoomControlType(),
+			aRetVal = [],
+			oSelect,
+			oZoomSlider,
+			oZoomInButton,
+			oZoomOutButton;
+
 		var oLayoutData = new OverflowToolbarLayoutData({
 			priority: oGroupConfig.getOverflowPriority()
 		});
 
-		var fnSliderValueToZoomRate = function(fSliderValue) {
-			return Math.pow(Math.E, fSliderValue);
-		};
-
-		var fnFireZoomRateChange = function(fZoomRate) {
+		var fnFireZoomStopChange = function(iZoomLevel, oSelectedItem) {
 			jQuery.sap.clearDelayedCall(this._iLiveChangeTimer);
 			this._iLiveChangeTimer = -1;
 
-			var fLastZoomRate = this.getZoomRate();
-			this._setZoomRate(fZoomRate, true);
-			
-			if (fLastZoomRate && Utility.floatEqual(fZoomRate, fLastZoomRate)) {
+			var iLastZoomLevel = this.getZoomLevel();
+			this.setZoomLevel(iZoomLevel, true);
+
+			if (iLastZoomLevel === iZoomLevel) {
 				return ;
 			}
 
-			this.fireZoomRateChange({ zoomRate: fZoomRate });
-			jQuery.sap.log.debug("Toolbar Zoom Rate was changed, zoomRate is: " + fZoomRate);
+			this.fireZoomStopChange({index: iZoomLevel, selectedItem: oSelectedItem});
+			jQuery.sap.log.debug("Toolbar Zoom Stop index is changed, zoomLevel is: " + iZoomLevel);
 		};
 
-		var oZoomSlider = new Slider({
-			width: "200px",
-			layoutData: oLayoutData,
-			liveChange: function(oEvent) {
-				var fZoomRate = fnSliderValueToZoomRate(oEvent.getSource().getValue());
-				// Clear the previous accumulated event
-				jQuery.sap.clearDelayedCall(this._iLiveChangeTimer);
-				this._iLiveChangeTimer = jQuery.sap.delayedCall(200, this, fnFireZoomRateChange, [fZoomRate]);
-			}.bind(this)
-		});
+		this._sZoomControlType = sZoomControlType;
+		this.fireEvent("_zoomControlTypeChange",{zoomControlType: sZoomControlType});
+		if (sZoomControlType === sap.gantt.config.ZoomControlType.None){
 
-		var fnZoomButtonPressHandler = function(bZoomIn) {
-			return function(oEvent){
-				var fSliderStepChangeValue = bZoomIn ? this._oZoomSlider.stepUp(1).getValue() :
-					this._oZoomSlider.stepDown(1).getValue();
-				
-				this._iLiveChangeTimer = jQuery.sap.delayedCall(200, this,
-						fnFireZoomRateChange, [fnSliderValueToZoomRate(fSliderStepChangeValue)]);
-			};
-		};
+			return aRetVal;
+		} else if (sZoomControlType === sap.gantt.config.ZoomControlType.Select){
+			var oSelectItems = [],
+				aInfoOfSelectItems = this._oToolbarScheme.getTimeZoom().getInfoOfSelectItems();
 
-		var oZoomInButton = new sap.m.Button({
-			icon: "sap-icon://zoom-in",
-			tooltip: this._oRb.getText("TLTP_SLIDER_ZOOM_IN"),
-			layoutData: oLayoutData.clone(),
-			press: fnZoomButtonPressHandler(true /**bZoomIn*/).bind(this)
-		});
+			if (aInfoOfSelectItems.length > 0 ) {
+				if (aInfoOfSelectItems[0] instanceof CoreItem) {
+					oSelectItems = aInfoOfSelectItems;
+				} else {
+					for (var i = 0; i < aInfoOfSelectItems.length; i++){
+						var oItem = new CoreItem({
+							key: aInfoOfSelectItems[i].key,
+							text: aInfoOfSelectItems[i].text
+						});
+						oSelectItems.push(oItem);
+					}
+				}
+			}
 
-		var oZoomOutButton = new Button({
-			icon: "sap-icon://zoom-out",
-			tooltip: this._oRb.getText("TLTP_SLIDER_ZOOM_OUT"),
-			layoutData: oLayoutData.clone(),
-			press: fnZoomButtonPressHandler(false /**bZoomIn*/).bind(this)
-		});
-		
-		this._oZoomSlider = oZoomSlider;
-		this._oZoomInButton = oZoomInButton;
-		this._oZoomOutButton = oZoomOutButton;
-		
-		var aRetVal = [];
-		if (!oGroupConfig.getShowZoomButtons || oGroupConfig.getShowZoomButtons()) {
-			aRetVal.push(oZoomOutButton);
+			oSelect = new Select({
+				items: oSelectItems,
+				layoutData: oLayoutData,
+				change: function (oEvent) {
+					var oSelect = oEvent.getSource();
+					var oSelectedItem = oSelect.getSelectedItem();
+					var iSelectItemIndex = oSelect.indexOfItem(oSelectedItem);
+
+					this._iLiveChangeTimer = jQuery.sap.delayedCall(200, that,
+							fnFireZoomStopChange, [iSelectItemIndex, oSelectedItem]);
+				}
+			});
+
+			this._oSelect = oSelect;
+			aRetVal.push(oSelect);
+		} else {
+
+			var iStepCountOfSlider = this._getCounterOfZoomLevels();
+
+			// start: legacy logic to support deprecated property 'sliderStep' of container, to be removed when the property is removed
+			if (this.data("holder") && this.data("holder").getSliderStep()) {
+				iStepCountOfSlider = this.data("holder").getSliderStep();
+			}
+			// end
+			
+			if (sZoomControlType !== sap.gantt.config.ZoomControlType.ButtonsOnly){
+				oZoomSlider = new Slider({
+					width: "200px",
+					layoutData: oLayoutData,
+					max: iStepCountOfSlider - 1,
+					value: this.getZoomLevel(),
+					min: 0,
+					step: 1,
+					liveChange: function(oEvent) {
+						var iSliderValue = parseInt(oEvent.getParameter("value"), 10);
+						// Clear the previous accumulated event
+						jQuery.sap.clearDelayedCall(this._iLiveChangeTimer);
+						this._iLiveChangeTimer = jQuery.sap.delayedCall(200, this, fnFireZoomStopChange, [iSliderValue]);
+					}.bind(this)
+				});
+			}
+
+			if (sZoomControlType !== sap.gantt.config.ZoomControlType.SliderOnly) {
+				var fnZoomButtonPressHandler = function(bZoomIn) {
+					return function(oEvent){
+						var iSliderStepChangeValue = parseInt(bZoomIn ? this._oZoomSlider.stepUp(1).getValue() :
+							this._oZoomSlider.stepDown(1).getValue(), 10);
+
+						this._iLiveChangeTimer = jQuery.sap.delayedCall(200, this,
+								fnFireZoomStopChange, [iSliderStepChangeValue]);
+					};
+				};
+
+				oZoomInButton = new sap.m.Button({
+					icon: "sap-icon://zoom-in",
+					type: oGroupConfig.getButtonType(),
+					tooltip: this._oRb.getText("TLTP_SLIDER_ZOOM_IN"),
+					layoutData: oLayoutData.clone(),
+					press: fnZoomButtonPressHandler(true /**bZoomIn*/).bind(this)
+				});
+
+				oZoomOutButton = new Button({
+					icon: "sap-icon://zoom-out",
+					type: oGroupConfig.getButtonType(),
+					tooltip: this._oRb.getText("TLTP_SLIDER_ZOOM_OUT"),
+					layoutData: oLayoutData.clone(),
+					press: fnZoomButtonPressHandler(false /**bZoomIn*/).bind(this)
+				});
+			}
+
+			if (oZoomOutButton) {
+				aRetVal.push(oZoomOutButton);
+				this._oZoomOutButton = oZoomOutButton;
+			}
+			if (oZoomSlider) {
+				aRetVal.push(oZoomSlider);
+				this._oZoomSlider = oZoomSlider;
+			}
+			if (oZoomInButton) {
+				aRetVal.push(oZoomInButton);
+				this._oZoomInButton = oZoomInButton;
+			}
 		}
-		if (!oGroupConfig.getShowZoomSlider || oGroupConfig.getShowZoomSlider()) {
-			aRetVal.push(oZoomSlider);
-		}
-		if (!oGroupConfig.getShowZoomButtons || oGroupConfig.getShowZoomButtons()) {
-			aRetVal.push(oZoomInButton);
-		}
+
 		return aRetVal;
 	};
 
@@ -993,11 +1193,15 @@ sap.ui.define([
 			this._oLegendPop.removeAllContent();
 			this._oLegendPop.addContent(this.getLegend());
 		}
-		
+
 		this._oLegendButton = new Button({
 			icon: "sap-icon://legend",
+			type: oGroupConfig.getButtonType(),
 			tooltip: this._oRb.getText("TLTP_SHOW_LEGEND"),
-			layoutData: new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()}),
+			layoutData: new OverflowToolbarLayoutData({
+				priority: oGroupConfig.getOverflowPriority(),
+				closeOverflowOnInteraction: false
+			}),
 			press: function (oEvent) {
 				this._oLegendPop.setOffsetX(this._calcOffsetForLegendPopover());
 				var oLegendPop = this._oLegendPop;
@@ -1030,13 +1234,6 @@ sap.ui.define([
 			return oItem.getSelected();
 		});
 
-		/*var fnRetoreOldState = function(aAllSettingItems){
-			this._aOldSettingState.forEach(function(bSelected, iIndex){
-				if (aAllSettingItems[iIndex]) {
-					aAllSettingItems[iIndex].setSelected(bSelected);
-				}
-			});
-		}.bind(this);*/
 		var fnRetoreOldState = function (aAllSettingItems) {
 			for (var i = 0; i < aAllSettingItems.length; i++) {
 				switch (aAllSettingItems[i].getName()) {
@@ -1048,6 +1245,9 @@ sap.ui.define([
 					break;
 				case sap.gantt.config.SETTING_ITEM_ENABLE_VERTICAL_LINE_KEY:
 					aAllSettingItems[i].setSelected(this.getEnableVerticalLine());
+					break;
+				case sap.gantt.config.SETTING_ITEM_ENABLE_ADHOC_LINE_KEY:
+					aAllSettingItems[i].setSelected(this.getEnableAdhocLine());
 					break;
 				case sap.gantt.config.SETTING_ITEM_ENABLE_TIME_SCROLL_SYNC_KEY:
 					aAllSettingItems[i].setSelected(this.getEnableTimeScrollSync());
@@ -1086,18 +1286,26 @@ sap.ui.define([
 				fnRetoreOldState(aAllSettingItems);
 			}
 		});
-		
+
 		this._oSettingsButton = new Button({
 			icon: "sap-icon://action-settings",
+			type: oGroupConfig.getButtonType(),
 			tooltip: this._oRb.getText("TLTP_CHANGE_SETTINGS"),
 			layoutData: new OverflowToolbarLayoutData({priority: oGroupConfig.getOverflowPriority()}),
 			press: function (oEvent) {
-				//fnRetoreOldState(aAllSettingItems);
 				this._oSettingsDialog.open();
 			}.bind(this)
 		});
 
 		return this._oSettingsButton;
+	};
+
+	Toolbar.prototype.toggleExpandTreeButton = function(bRowSelected) {
+		if (this._oTreeGroup && this._oTreeGroup.length > 0) {
+			this._oTreeGroup.forEach(function(oButton){
+				oButton.setEnabled(bRowSelected);
+			});
+		}
 	};
 
 	Toolbar.prototype.getToolbarSchemeKey = function () {
@@ -1124,6 +1332,14 @@ sap.ui.define([
 		this.setProperty("enableVerticalLine", bEnableVerticalLine, true);
 		if (this._oSettingsBox && this._oSettingsBox.getItems().length > 0) {
 			this._setSettingItemProperties(sap.gantt.config.SETTING_ITEM_ENABLE_VERTICAL_LINE_KEY, bEnableVerticalLine);
+		}
+		return this;
+	};
+
+	Toolbar.prototype.setEnableAdhocLine = function(bEnableAdhocLine) {
+		this.setProperty("enableAdhocLine", bEnableAdhocLine, true);
+		if (this._oSettingsBox && this._oSettingsBox.getItems().length > 0) {
+			this._setSettingItemProperties(sap.gantt.config.SETTING_ITEM_ENABLE_ADHOC_LINE_KEY, bEnableAdhocLine);
 		}
 		return this;
 	};
@@ -1195,6 +1411,23 @@ sap.ui.define([
 			}
 		}
 		return iOffsetX;
+	};
+
+	Toolbar.prototype.getZoomLevels = function () {
+		if (this._oToolbarScheme){
+			var oTimeZoomGroupConfig = this._oToolbarScheme.getTimeZoom();
+			if (oTimeZoomGroupConfig){
+				switch (oTimeZoomGroupConfig.getZoomControlType()) {
+					case sap.gantt.config.ZoomControlType.Select:
+						return oTimeZoomGroupConfig.getTextsOfSelect() || 0;
+					case sap.gantt.config.ZoomControlType.None:
+						return -1;
+					default:
+						return oTimeZoomGroupConfig.getStepCountOfSlider();
+				}
+			}
+		}
+		return -1;
 	};
 
 	return Toolbar;

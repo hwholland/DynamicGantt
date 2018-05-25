@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.composite.InboxAttachmentsTileContainer");jQuery.sap.require("sap.uiext.inbox.library");jQuery.sap.require("sap.ui.core.Control");sap.ui.core.Control.extend("sap.uiext.inbox.composite.InboxAttachmentsTileContainer",{metadata:{publicMethods:["addUploadHeader","removeUploadHeader"],library:"sap.uiext.inbox",properties:{"uploadUrl":{type:"string",group:"Misc",defaultValue:null},"fileName":{type:"string",group:"Misc",defaultValue:null},"fileType":{type:"string",group:"Misc",defaultValue:null},"isFileSelected":{type:"boolean",group:"Misc",defaultValue:null},"enteredDescription":{type:"string",group:"Misc",defaultValue:null},"showAddTile":{type:"boolean",group:"Misc",defaultValue:true}},aggregations:{"attachments":{type:"sap.uiext.inbox.composite.InboxAttachmentTile",multiple:true,singularName:"attachment"},"firstTile":{type:"sap.ui.core.Control",multiple:false,visibility:"hidden"}},events:{"uploadButtonPress":{},"uploadSuccess":{},"uploadFailed":{}}}});sap.uiext.inbox.composite.InboxAttachmentsTileContainer.M_EVENTS={'uploadButtonPress':'uploadButtonPress','uploadSuccess':'uploadSuccess','uploadFailed':'uploadFailed'};
 /*!

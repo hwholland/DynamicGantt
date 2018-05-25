@@ -1,9 +1,9 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
 /**
  * @fileOverview The ShellUIService UI5 service
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
 
 /**
@@ -15,11 +15,12 @@
 
 (function () {
     "use strict";
-    /*global jQuery, sap, setTimeout, clearTimeout, window */
+    /*global jQuery, sap, setTimeout, clearTimeout, window, hasher */
     jQuery.sap.declare("sap.ushell.ui5service.ShellUIService");
     jQuery.sap.require("sap.ui.core.service.ServiceFactoryRegistry");
     jQuery.sap.require("sap.ui.core.service.ServiceFactory");
     jQuery.sap.require("sap.ui.base.EventProvider");
+    jQuery.sap.require("sap.ui.thirdparty.hasher");
 
     var sLastSetTitle;
 
@@ -28,10 +29,12 @@
     var O_EVENT_NAME = {
         hierarchyChanged: "hierarchyChanged",
         relatedAppsChanged: "relatedAppsChanged",
-        titleChanged: "titleChanged"
+        titleChanged: "titleChanged",
+        backNavigationChanged: "backNavigationChanged"
     };
 
     var sActiveComponentId;
+
 
     /**
      * Returns an instance of the ShellUIService. This constructor must only be
@@ -65,10 +68,10 @@
      * }
      * </pre>
      *
-     * The service can be then consumed within the component as shown in the
-     * following example:
+     * The service can be then retrieved and consumed from the app root component
+     * as in the following example:
      * <pre>
-     * // Component.js
+     * // Component.js (the app root component)
      * ...
      * this.getService("ShellUIService").then( // promise is returned
      *    function (oService) {
@@ -80,6 +83,34 @@
      * );
      * ...
      * </pre>
+     *
+     * The ShellUIService can work together with the routing defined in a UI5
+     * app to set title and hierarchy automatically, as the navigation within
+     * the app occurs. This can be achieved by enabling the ShellUIService to
+     * load instantly and configuring one or both <code>setTitle</code> and
+     * <code>setHierarchy</code> options to
+     * <code>auto</code> in the app manifest, as shown in the example below:
+     *
+     * <pre>
+     * {
+     *    "sap.ui5": {
+     *       "services" : {
+     *          "ShellUIService": {
+     *              "lazy": false,
+     *              "factoryName": "sap.ushell.ui5service.ShellUIService",
+     *              "settings": {
+     *                  "setHierarchy": "auto", // configuration under discussion currently
+     *                  "setTitle": "auto" // configuration under discussion currently
+     *              }
+     *          }
+     *       }
+     *    }
+     * }
+     * </pre>
+     *
+     * Please note that the <code>setHierarchy</code> or <code>setTitle</code>
+     * methods should not be actively called by the application when title and
+     * hierarchy are set automatically.
      *
      * @param {object} oCallerContext
      *   The context in which the service was instantiated. Must have the
@@ -142,6 +173,139 @@
          */
         _getActiveComponentId: function () {
             return sActiveComponentId;
+        },
+        /*
+         * Determines whether the hierarchy should be set automatically
+         * using the UI5 router for the given App component.
+         *
+         * @param {object} oAppComponent
+         *   The UI5 App root component.
+         *
+         * @returns {boolean}
+         *   Whether the hierarchy should be set automatically in the given
+         *   app component.
+         *
+         * @private
+         * @since 1.44.0
+         */
+        _shouldEnableAutoHierarchy: function (oAppComponent) {
+            return typeof oAppComponent.getManifestEntry === "function"
+                && oAppComponent.getManifestEntry("/sap.ui5/services/ShellUIService/settings/setHierarchy") === "auto";
+        },
+        /*
+         * Determines whether the title should be set automatically using the
+         * UI5 router for the given App component.
+         *
+         * @param {object} oAppComponent
+         *   The UI5 App root component.
+         *
+         * @returns {boolean}
+         *   Whether the title should be set automatically in the given
+         *   app component.
+         *
+         * @private
+         * @since 1.44.0
+         */
+        _shouldEnableAutoTitle: function (oAppComponent) {
+            return typeof oAppComponent.getManifestEntry === "function"
+                && oAppComponent.getManifestEntry("/sap.ui5/services/ShellUIService/settings/setTitle") === "auto";
+        },
+        /**
+         * Enables automatic <code>setHierarchy</code> calls based on
+         * UI5 Router on the given app component.
+         *
+         * @param {object} oAppComponent
+         *   The UI5 root app component with a router.
+         *
+         * @private
+         * @since 1.44.0
+         */
+        _enableAutoHierarchy: function (oAppComponent) {
+            var that = this;
+            var oRouter = oAppComponent.getRouter && oAppComponent.getRouter();
+            if (!oRouter) {
+                jQuery.sap.log.error(
+                    "Could not enable automatic setHierarchy on the current app",
+                    "Router could not be obtained on the app root component via getRouter",
+                    "sap.ushell.ui5service.ShellUIService"
+                );
+                return;
+            }
+
+            oRouter.attachTitleChanged(function (oEvent) {
+                var aHistory = oEvent.getParameter("history");
+                that.setHierarchy(aHistory.reverse().map(function (oUi5HierarchyItem) {
+
+                    var sShellHash = that._getCurrentShellHashWithoutAppRoute();
+
+                    return {
+                        title: oUi5HierarchyItem.title,
+                        intent: sShellHash + "&/" + oUi5HierarchyItem.hash
+                    };
+                }));
+            });
+        },
+        /**
+         * Enables automatic <code>setTitle</code> calls based on
+         * UI5 Router on the given app component.
+         *
+         * @param {object} oAppComponent
+         *   The UI5 root app component with a router.
+         *
+         * @private
+         * @since 1.44.0
+         */
+        _enableAutoTitle: function (oAppComponent) {
+            var that = this;
+            var oRouter = oAppComponent.getRouter && oAppComponent.getRouter();
+            if (!oRouter) {
+                jQuery.sap.log.error(
+                    "Could not enable automatic setTitle on the current app",
+                    "Router could not be obtained on the app root component via getRouter",
+                    "sap.ushell.ui5service.ShellUIService"
+                );
+                return;
+            }
+
+            // set the initial title
+            var oTitleHistory = oRouter.getTitleHistory()[0];
+            if (oTitleHistory && oTitleHistory.title) {
+                setTimeout(function () {
+                    that.setTitle(oTitleHistory.title);
+                }, 0);
+            }
+
+            oRouter.attachTitleChanged(function (oEvent) {
+                // set title after navigation
+                var sTitle = oEvent.getParameter("title");
+                that.setTitle(sTitle);
+            });
+        },
+        /**
+         * Helper function that returns the Hash part of the current URL
+         * without the inner app hash part.
+         *
+         * @returns {string}
+         *   The intent (i.e., URL hash) without any inner app hash part.
+         *
+         * @private
+         * @since 1.44.0
+         */
+        _getCurrentShellHashWithoutAppRoute: function () {
+            var sFullURL = "#" + hasher.getHash();
+            var oURLParsing = sap.ushell.Container.getService("URLParsing");
+            var sURLHashWithParams = oURLParsing.getShellHash(sFullURL);
+
+            if (!sURLHashWithParams) {
+                jQuery.sap.log.error(
+                    "Cannot get the current shell hash",
+                    "URLParsing service returned a falsy value for " + sFullURL,
+                    "sap.ushell.ui5service.ShellUIService"
+                );
+                return "";
+            }
+
+            return "#" + sURLHashWithParams;
         },
         /**
          * Getter for the event provider.  This method is mainly
@@ -210,6 +374,40 @@
         },
 
         /**
+         * Ensures that the given argument is a function, logging an error
+         * message in case it's not.
+         *
+         * <pre>
+         * IMPORTANT: this method must not rely on its context when called or
+         * produce side effects.
+         * </pre>
+         *
+         * @param {variant} vArg
+         *   Any value.
+         * @param {string} sMethodName
+         *   The name of the method that called this function.
+         * @returns {boolean}
+         *   Whether <code>vArg</code> is a function. Logs an error message
+         *   reporting <code>sMethodName</code> in case <code>vArg</code> is
+         *   not a function.
+         *
+         * @private
+         * @since 1.38.0
+         */
+        _ensureFunction: function (vArg, sMethodName) {
+            var sType = typeof vArg;
+            if (sType !== "function") {
+                jQuery.sap.log.error(
+                    "'" + sMethodName + "' was called with invalid arguments",
+                    "the parameter should be a function, got '" + sType + "' instead",
+                    "sap.ushell.ui5service.ShellUIService"
+                );
+                return false;
+            }
+            return true;
+        },
+
+        /**
          * Ensures that the given argument is a string, logging an error
          * message in case it's not.
          *
@@ -263,10 +461,36 @@
             var that = this;
             oPublicServiceInstance[sPublicServiceMethod] = function () {
                 var oContext = oPublicServiceInstance.getContext(); // undefined -> don't authorize
+
                 if (!oContext || oContext.scopeObject.getId() !== sActiveComponentId) {
                     jQuery.sap.log.warning(
                         "Call to " + sPublicServiceMethod + " is not allowed",
                         "This may be caused by an app component other than the active '" +  sActiveComponentId + "' that tries to call the method",
+                        "sap.ushell.ui5service.ShellUIService"
+                    );
+                    return undefined; // eslint
+                }
+
+                if (sPublicServiceMethod === "setHierarchy"  /* app called setHierarchy... */
+                    && oContext.scopeType === "component"
+                    && oContext.scopeObject
+                    && that._shouldEnableAutoHierarchy(oContext.scopeObject) /* ... but should be called automatically */ ) {
+
+                    jQuery.sap.log.warning(
+                        "Call to " + sPublicServiceMethod + " is not allowed",
+                        "The app defines that setHierarchy should be called automatically",
+                        "sap.ushell.ui5service.ShellUIService"
+                    );
+                    return undefined; // eslint
+                }
+                if (sPublicServiceMethod === "setTitle"  /* app called setHierarchy... */
+                    && oContext.scopeType === "component"
+                    && oContext.scopeObject
+                    && that._shouldEnableAutoTitle(oContext.scopeObject) /* ... but should be called automatically */ ) {
+
+                    jQuery.sap.log.warning(
+                        "Call to " + sPublicServiceMethod + " is not allowed",
+                        "The app defines that setTitle should be called automatically",
                         "sap.ushell.ui5service.ShellUIService"
                     );
                     return undefined; // eslint
@@ -309,12 +533,22 @@
             // must re-bind all public methods to the public interface
             // instance, as they would be otherwise called in the context of
             // the service instance.
-            ["setTitle", "setHierarchy", "setRelatedApps"].forEach(function (sMethodToSetup) {
+            ["setTitle", "setHierarchy", "setRelatedApps", "setBackNavigation"].forEach(function (sMethodToSetup) {
                 that._addCallAllowedCheck(oPublicServiceInstance, sMethodToSetup);
             });
 
-            if (oContext.scopeType === "component") {
-                this._setActiveComponentId(oContext.scopeObject.getId());
+            var oAppComponent = oContext.scopeObject;
+            if (oContext.scopeType === "component" && oAppComponent) {
+
+                this._setActiveComponentId(oAppComponent.getId());
+
+                if (this._shouldEnableAutoHierarchy(oAppComponent)) {
+                    this._enableAutoHierarchy(oAppComponent);
+                }
+                if (this._shouldEnableAutoTitle(oAppComponent)) {
+                    this._enableAutoTitle(oAppComponent);
+                }
+
                 return;
             }
 
@@ -332,26 +566,24 @@
          *    An array representing hierarchies of the currently displayed
          *    app.  The array should specify title, icon, and
          *    navigation intent as shown in the following example:
+         *
          * <pre>
          * [
-         *       {
-         *           title: "App 1",
-         *           icon: "sap-icon://folder",
-         *           subtitle: "go to app 1",
-         *           intent: "#Action-toapp1"
-         *       },
-         *       {
-         *           title: "App 2",
-         *           icon: "sap-icon://folder",
-         *           subtitle: "go to app 2",
-         *           intent: "#Action-toapp2"
-         *       },
-         *       {
-         *           title: "App 3",
-         *           icon: "sap-icon://folder",
-         *           subtitle: "go to app 3",
-         *           intent: "#Action-toapp3"
-         *       }
+         *     {
+         *         title: "Main View",
+         *         icon: "sap-icon://documents",
+         *         intent: "#Action-sameApp"
+         *     },
+         *     {
+         *         title: "View 2",
+         *         subtitle: "Application view number 2",
+         *         intent: "#Action-sameApp&/View2/"
+         *     },
+         *     {
+         *         title: "View 3",
+         *         subtitle: "Application view number 3",
+         *         intent: "#Action-sameApp&/View3/"
+         *     }
          * ]
          * </pre>
          *
@@ -417,6 +649,37 @@
             return;
         },
         /**
+         * Displays the back button in the shell header.
+         *
+         * @param {function} [fnCallback]
+         *    A callback function called when the button is clicked in the UI.
+         *
+         * @since 1.38.0
+         * @private
+         */
+        setBackNavigation: function(fnCallback) {
+            /*
+             * IMPORTANT: this method may be called in the context of the
+             * service or the public service instance. In the latter case
+             * "this" has no access to private methods.
+             */
+
+            // validate input
+            if (typeof fnCallback !== "undefined"
+                && !sap.ushell.ui5service.ShellUIService.prototype._ensureFunction(fnCallback, "setBackNavigation")) {
+
+                return;
+            }
+
+            var oComponent = this.getContext().scopeObject;
+
+            oEventProvider.fireEvent(O_EVENT_NAME.backNavigationChanged, {
+                data: fnCallback,
+                component: oComponent
+            });
+            return;
+        },
+        /**
          * Returns the title that was last set via {@link setTitle}.
          *
          * @returns {string}
@@ -434,28 +697,32 @@
          *
          * @param {object[]} [aRelatedApps]
          *    an array of related apps, for example like:
+         *
          * <pre>
          * [
-         *     {
-         *         title: "Related App 1",
-         *         icon: "sap-icon://documents",
-         *         intent: "#Action-todefaultapp"
-         *     },
-         *     {
-         *         title: "Related App 2",
-         *         subtitle: "Application view number 2",
-         *         intent: "#Action-todefaultapp"
-         *     },
-         *     {
-         *         title: "Related App 3",
-         *         subtitle: "Application view number 3",
-         *         intent: "#Action-todefaultapp"
-         *     }
+         *       {
+         *           title: "App 1",
+         *           icon: "sap-icon://folder",
+         *           subtitle: "go to app 1",
+         *           intent: "#Action-toapp1"
+         *       },
+         *       {
+         *           title: "App 2",
+         *           icon: "sap-icon://folder",
+         *           subtitle: "go to app 2",
+         *           intent: "#Action-toapp2"
+         *       },
+         *       {
+         *           title: "App 3",
+         *           icon: "sap-icon://folder",
+         *           subtitle: "go to app 3",
+         *           intent: "#Action-toapp3"
+         *       }
          * ]
          * </pre>
          *
-         * @since 1.38.0
-         * @private
+         * @since 1.40.0
+         * @public
          */
         setRelatedApps : function(aRelatedApps) {
             /*
@@ -504,6 +771,12 @@
         },
         _attachTitleChanged : function (fnFunction) {
             this._getEventProvider().attachEvent(O_EVENT_NAME.titleChanged, fnFunction);
+        },
+        _attachBackNavigationChanged : function (fnFunction) {
+            this._getEventProvider().attachEvent(O_EVENT_NAME.backNavigationChanged, fnFunction);
+        },
+        _detachBackNavigationChanged : function (fnFunction) {
+            this._getEventProvider().detachEvent(O_EVENT_NAME.backNavigationChanged, fnFunction);
         },
         _detachTitleChanged : function (fnFunction) {
             this._getEventProvider().detachEvent(O_EVENT_NAME.titleChanged, fnFunction);

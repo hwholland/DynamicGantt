@@ -6,13 +6,13 @@
     <since>1.22.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="uiConfig" type="sap.ui.core/object" group="Misc">
+        <property group="Misc" type="sap.ui.core/object" name="uiConfig">
             <documentation>Configuration for initialization to VizControl. This property could only set via settings parameter in Constructor.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" defaultValue="640px" group="Misc">
+        <property group="Misc" defaultValue="640px" type="sap.ui.core/CSSSize" name="width">
             <documentation>Width of the VizControl as a CSS size.</documentation>
         </property>
-        <property name="height" type="sap.ui.core/CSSSize" defaultValue="480px" group="Misc">
+        <property group="Misc" defaultValue="480px" type="sap.ui.core/CSSSize" name="height">
             <documentation>Height of the VizControl as a CSS size.</documentation>
         </property>
     </properties>

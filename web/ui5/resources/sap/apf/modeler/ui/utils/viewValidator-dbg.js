@@ -1,25 +1,23 @@
 /*!
  * SAP APF Analysis Path Framework
- * 
+ *
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
-jQuery.sap.require("sap.apf.modeler.ui.utils.nullObjectChecker");
-jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
-(function() {
+
+sap.ui.define([
+	"sap/apf/modeler/ui/utils/nullObjectChecker"
+], function(nullObjectChecker){
 	'use strict';
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
 	/**
 	* @class viewValidator
-	* @memberOf sap.apf.modeler.ui.utils
-	* @name viewValidator
+	* @name sap.apf.modeler.ui.utils.viewValidator
 	* @description helps checking for valid state of mandatory controls on a particular view
 	* @param Accepts sap.ui.view
 	*/
-	sap.apf.modeler.ui.utils.ViewValidator = function(view) {
+	var viewValidator = function(view) {
 		this.aFieldIds = [];
 		this.oView = view;
 	};
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.constructor = sap.apf.modeler.ui.utils.ViewValidator;
 	/**
 	* @private
 	* @function
@@ -53,7 +51,7 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 	* @description adds multiple controls ids for validation
 	* @param accepts an array of control ids
 	* */
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.addFields = function(aFields) {
+	viewValidator.prototype.addFields = function(aFields) {
 		if (!nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(aFields)) {
 			return;
 		}
@@ -71,7 +69,7 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 	* @description adds one control id for validation
 	* @param accepts a control ids
 	* */
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.addField = function(sFieldId) {
+	viewValidator.prototype.addField = function(sFieldId) {
 		if (!nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(sFieldId)) {
 			return;
 		}
@@ -86,7 +84,7 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 	* @description removes multiple control ids from validation
 	* @param accepts an array of control ids
 	* */
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.removeFields = function(aFields) {
+	viewValidator.prototype.removeFields = function(aFields) {
 		var index = -1;
 		var counter, length = aFields.length;
 		if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(aFields) === false) {
@@ -109,7 +107,7 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 	* @description removes one control id from validation
 	* @param accepts a control id
 	* */
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.removeField = function(sFieldId) {
+	viewValidator.prototype.removeField = function(sFieldId) {
 		var index = -1;
 		if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(sFieldId) === false) {
 			return;
@@ -128,7 +126,7 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 	* @name sap.apf.modeler.ui.utils.viewValidator#getFields
 	* @returns all control ids for validation
 	* */
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.getFields = function() {
+	viewValidator.prototype.getFields = function() {
 		return this.aFieldIds;
 	};
 	/**
@@ -137,7 +135,7 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 	* @name sap.apf.modeler.ui.utils.viewValidator#getView
 	* @returns view being validated
 	* */
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.getView = function() {
+	viewValidator.prototype.getView = function() {
 		return this.oView;
 	};
 	/**
@@ -146,7 +144,7 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 	* @name sap.apf.modeler.ui.utils.viewValidator#clearFields
 	* @description removes all control ids from validation
 	* */
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.clearFields = function() {
+	viewValidator.prototype.clearFields = function() {
 		var length = this.aFieldIds.length;
 		this.aFieldIds.splice(0, length);
 	};
@@ -156,7 +154,7 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 	* @name sap.apf.modeler.ui.utils.viewValidator#getValidationState
 	* @returns validation state of the view
 	* */
-	sap.apf.modeler.ui.utils.ViewValidator.prototype.getValidationState = function() {
+	viewValidator.prototype.getValidationState = function() {
 		var bValidState = true, i;
 		for(i = 0; i < this.aFieldIds.length; i++) {
 			if (this.oView.byId(this.aFieldIds[i]) instanceof sap.m.MultiComboBox) {
@@ -178,4 +176,6 @@ jQuery.sap.declare('sap.apf.modeler.ui.utils.viewValidator');
 		}
 		return bValidState;
 	};
-})();
+	sap.apf.modeler.ui.utils.ViewValidator = viewValidator;
+	return viewValidator;
+}, true /* GLOBAL_EXPORT*/ );

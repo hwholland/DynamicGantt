@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides control sap.ui.comp.navpopover.LinkData.
@@ -22,6 +23,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 * @constructor
 	 * @public
+	 * @since 1.28.0
 	 * @alias sap.ui.comp.navpopover.LinkData
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -34,8 +36,6 @@ sap.ui.define([
 
 				/**
 				 * Text which can be displayed on the UI
-				 *
-				 * @since 1.28.0
 				 */
 				text: {
 					type: "string",
@@ -43,10 +43,8 @@ sap.ui.define([
 				},
 
 				/**
-				 * Destination link for a navigation operation in internal format. <b>Note</b>: The link will be encoded before it is shown in external
-				 * format using the <code>hrefForExternal</code> method of the CrossApplicationNavigation service.
-				 *
-				 * @since 1.28.0
+				 * Destination link for a navigation operation in internal format. <b>Note</b>: The link will be encoded before it is shown in
+				 * external format using the <code>hrefForExternal</code> method of the CrossApplicationNavigation service.
 				 */
 				href: {
 					type: "string",
@@ -60,10 +58,82 @@ sap.ui.define([
 				target: {
 					type: "string",
 					defaultValue: null
+				},
+
+				/**
+				 * Description of the link.
+				 *
+				 * @since 1.42.0
+				 */
+				description: {
+					type: "string",
+					defaultValue: undefined
+				},
+
+				/**
+				 * Describes whether the link should be visible on the screen.
+				 *
+				 * @since 1.44.0
+				 * @private
+				 */
+				visible: {
+					type: "boolean",
+					defaultValue: true
+				},
+
+				/**
+				 * Key of link.
+				 *
+				 * @since 1.44.0
+				 * @private
+				 */
+				key: {
+					type: "string",
+					defaultValue: undefined
+				},
+
+				/**
+				 * Callback for <code>press</code> event.
+				 *
+				 * @since 1.46.0
+				 * @private
+				 */
+				press: {
+					type: "object",
+					defaultValue: null
+				},
+
+				/**
+				 * Marker for superior action.
+				 *
+				 * @since 1.48.0
+				 * @private
+				 */
+				isSuperiorAction: {
+					type: "boolean"
 				}
 			}
 		}
 	});
+
+	LinkData.prototype.getJson = function() {
+		return {
+			key: this.getKey(),
+			href: this.getHref(),
+			text: this.getText(),
+			target: this.getTarget(),
+			description: this.getDescription(),
+			visible: this.getVisible(),
+			press: this.getPress(),
+			isSuperiorAction: this.getIsSuperiorAction()
+		};
+	};
+
+	LinkData.convert2Json = function(aLinkDatas) {
+		return aLinkDatas.map(function(oLinkData) {
+			return oLinkData.getJson();
+		});
+	};
 
 	return LinkData;
 

@@ -9,7 +9,7 @@ sap.ui.define([
 	"sap/ui/core/Core", "sap/ui/core/format/NumberFormat"
 ], function (Element, Utility, Format, Core, NumberFormat) {
 	"use strict";
-
+	
 	/**
 	 * Creates and initializes a new Shape class.
 	 * 
@@ -57,7 +57,7 @@ sap.ui.define([
 	 * @abstract
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -78,22 +78,24 @@ sap.ui.define([
 				endTime: {type: "string"},
 				title: {type: "string"},
 				ariaLabel: {type: "string"},
-				xBias: {type: "number", defaultValue: 0},
-				yBias: {type: "number", defaultValue: 0},
+				xBias: {type: "float", defaultValue: 0},
+				yBias: {type: "float", defaultValue: 0},
 				fill: {type : "sap.gantt.ValueSVGPaintServer"},
-				strokeOpacity: {type: "number", defaultValue: 1},
-				fillOpacity: {type: "number", defaultValue: 1},
+				strokeOpacity: {type: "float", defaultValue: 1},
+				fillOpacity: {type: "float", defaultValue: 1},
 				stroke: {type : "sap.gantt.ValueSVGPaintServer"},
-				strokeWidth: {type: "number", defaultValue: 0},
+				strokeWidth: {type: "float", defaultValue: 0},
 				strokeDasharray: {type: "string"},
 				clipPath: {type: "string"},
 				transform: {type: "string"},
 				filter: {type: "string"},
+				enableHover: {type: "boolean", defaultValue: false},
 				enableDnD: {type: "boolean", defaultValue: false},
 				enableSelection: {type: "boolean", defaultValue: true},
-				rowYCenter: {type: "number", defaultValue: 7.5},
-				rotationCenter: {type: "array"},
-				rotationAngle: {type: "number"},
+				enableResize: {type: "boolean", defaultValue: false},
+				rowYCenter: {type: "float", defaultValue: 7.5},
+				rotationCenter: {type: "float[]"}, // only two elements, 0 for x, 1 for y
+				rotationAngle: {type: "float"},
 				isBulk: {type: "boolean", defaultValue: false},
 				arrayAttribute: {type: "string"},
 				timeFilterAttribute: {type: "string"},
@@ -108,7 +110,15 @@ sap.ui.define([
 				 * Selected shape specifies how to draw the selection high-light. Application can implement it by extending
 				 * <code>sap.gantt.shape.SelectedShape</code> and configure it in <code>sap.gantt.config.Shape</code>.
 				 */
-				selectedShape: {type: "sap.gantt.shape.SelectedShape", multiple: false}
+				selectedShape: {type: "sap.gantt.shape.SelectedShape", multiple: false},
+				
+				/**
+				 * Resize Shadow Shape.
+				 * 
+				 * Resize Shadow shape specifies how to draw the shadow highlight when resizing. Applications can implement it by extending
+				 * <code>sap.gantt.shape.ResizeShadowShape</code> and configure it in <code>sap.gantt.config.Shape</code>.
+				 */
+				resizeShadowShape: {type: "sap.gantt.shape.ResizeShadowShape", multiple: false}
 			}
 		}
 	});
@@ -118,10 +128,17 @@ sap.ui.define([
 		this.setProperty("ariaLabel", oRb.getText("ARIA_SHAPE"));
 
 		this.mShapeConfig = null;
-		this.mLocaleConfig = null;
 		this.mChartInstance = null;
 	};
-	
+
+	// used to cache LESS parameter colors
+	var mValueColors = {};
+
+	// theme change need reset colors
+	sap.ui.getCore().attachThemeChanged(function() {
+		mValueColors = {};
+	});
+
 	/**
 	 * Gets current value of property <code>tag</code>.
 	 * 
@@ -302,7 +319,7 @@ sap.ui.define([
 	Shape.prototype.getFill = function (oData, oRowInfo) {
 		return this._configFirst("fill", oData);
 	};
-	
+
 	/**
 	 * Gets current value of property <code>strokeOpacity</code>.
 	 * 
@@ -528,6 +545,39 @@ sap.ui.define([
 	};
 
 	/**
+	 * Gets current value of property <code>enableResize</code>.
+	 * 
+	 * <p>
+	 * This value controls whether a shape is enabled for the resize behavior.
+	 * </p>
+	 * 
+	 * @param {object} oData Shape data.
+	 * @param {object} oRowInfo Information of the row and row data.
+	 * @return {boolean} Value of property <code>enableResize</code>.
+	 * @public
+	 */
+	Shape.prototype.getEnableResize = function (oData) {
+		return this._configFirst("enableResize", oData);
+	};
+
+	/**
+	 * Gets current value of property <code>enableHover</code>.
+	 *
+	 * <p>
+	 * This value controls whether a shape is enabled to fire mouse enter and leave event.
+	 * </p>
+	 *
+	 * @param {object} oData Shape data.
+	 * @param {object} oRowInfo Information of the row and row data.
+	 * @return {boolean} Value of property <code>enableHover</code>.
+	 * @public
+	 */
+	Shape.prototype.getEnableHover = function (oData) {
+		return this._configFirst("enableHover", oData);
+	};
+
+
+	/**
 	 * Gets current value of property <code>rotationAngle</code>.
 	 * 
 	 * <p>
@@ -658,7 +708,7 @@ sap.ui.define([
 	Shape.prototype.getArrayAttribute = function (oData) {
 		return this._configFirst("arrayAttribute", oData);
 	};
-	
+
 	/**
 	 * Gets current value of property <code>timeFilterAttribute</code>.
 	 * 
@@ -674,7 +724,7 @@ sap.ui.define([
 	Shape.prototype.getTimeFilterAttribute = function (oData) {
 		return this._configFirst("timeFilterAttribute", oData);
 	};
-	
+
 	/**
 	 * Gets current value of property <code>endTimeFilterAttribute</code>.
 	 * 
@@ -728,12 +778,28 @@ sap.ui.define([
 			sPropertyValue = this.getProperty(sAttrName);
 		}
 
-		if (bScaleBySapUiSizeMode) {
+		if (bScaleBySapUiSizeMode && this.mChartInstance) {
 			var sMode = this.mChartInstance.getSapUiSizeClass();
 			sPropertyValue = Utility.scaleBySapUiSize(sMode, sPropertyValue);
 		}
 
 		return sPropertyValue;
+	};
+
+	/**
+	 * Get the shape style string
+	 * 
+	 * @param {object} oData Shape data.
+	 * @param {object} oRowInfo Information of the row and row data.
+	 * @return {string} shape styles
+	 * @protected
+	 */
+	Shape.prototype.getStyle = function(oData, oRowInfo) {
+		var oStyles = {
+			"stroke": this.determineValueColor(this.getStroke(oData, oRowInfo)),
+			"stroke-width": this.getStrokeWidth(oData, oRowInfo)
+		};
+		return this.getInlineStyle(oStyles);
 	};
 
 	/**
@@ -744,11 +810,44 @@ sap.ui.define([
 	 */
 	Shape.prototype.getAxisTime = function() {
 		var oAxisTime = null;
-		if (this.mChartInstance) {
+		if(this.mChartInstance) {
 			oAxisTime = this.mChartInstance.getAxisTime();
 		}
 
 		return oAxisTime;
+	};
+
+	/**
+	 * Get Inline style string. Convert style object to string and remove invalid values.
+	 * 
+	 * @param {object} oStyles an object with style attribute and value
+	 * @return {string} inline style
+	 * @private
+	 */
+	Shape.prototype.getInlineStyle = function(oStyles) {
+		return Object.keys(oStyles).reduce(function(initial, attr){ 
+			if (oStyles[attr] !== undefined && oStyles[attr] !== null && oStyles[attr] !== "") {
+				initial += (attr + ":" + oStyles[attr] + "; ");
+			}
+			return initial;
+		}, "");
+	};
+
+	/**
+	 * Determine the actual value color of the less parameter.
+	 * 
+	 * @param {string} sParameter LESS parameter "@sapUiChartSequence1" for instance
+	 * @return {string} real color hex or color name
+	 * @private
+	 */
+	Shape.prototype.determineValueColor = function(sParameter) {
+		var sFoundColor = mValueColors[sParameter];
+		if (!sFoundColor && sParameter) {
+			// if attribute has value but no paint server value
+			sFoundColor = sap.gantt.ValueSVGPaintServer.normalize(sParameter);
+			mValueColors[sParameter] = sFoundColor;
+		}
+		return sFoundColor;
 	};
 
 	/**
@@ -782,14 +881,12 @@ sap.ui.define([
 		
 		return this._formatFromResolvedAttributeMap(oData, sAttrName);
 	};
-	
+
 	Shape.prototype._resolveAttributeMap = function (sAttrValue) {
 		var aRetVal = [];
-		//"  sdf  {dfsdf}   {sdfw} sdfsdf" => ["  sdf  {dfsdf}", "   {sdfw}", " sdfsdf", ""]
 		var aMatchResult = sAttrValue.match(/[^\{\}]*(\{.*?\})?/g);
-		//["  sdf  {dfsdf}", "   {sdfw}", " sdfsdf", ""] => ["  sdf  {dfsdf}", "   {sdfw}", " sdfsdf"]
 		aMatchResult.pop(); 
-		
+
 		aMatchResult.forEach(function (sValue, iIndex, aArray){
 			var oAttrItem = {}, aSplit = sValue.split("{");
 			// resolve plain leading text
@@ -812,7 +909,7 @@ sap.ui.define([
 		});
 		return aRetVal;
 	};
-	
+
 	Shape.prototype._formatFromResolvedAttributeMap = function (oData, sAttrName) {
 		var aAttributeNameBindingParts = this._attributeNameBindingMap[sAttrName],
 			aRetVal = [], sPart, oValue;
@@ -839,19 +936,21 @@ sap.ui.define([
 		}
 		return aRetVal.join("");
 	};
-	
+
 	Shape.prototype._formatValue = function (sAttrValue, sType) {
-		var oLocaleConfig = this.mLocaleConfig,
-			sRetVal = sAttrValue;
-		
+		var sRetVal = sAttrValue;
+
 		switch (sType) {
 			case "Number": // fill data for handling resource
 				sRetVal = this._formatNumber(sAttrValue);
 				break;
 
 			case "Timestamp":
-				if (oLocaleConfig != undefined) {
-					//var isDate = (sAttrValue && (sAttrValue.length === 8));
+				// This is a possibility that mChartInstance is Legend instance :[
+				// but Legend doesn't have locale property and Timestamp type, so move getLocale here
+				// to prevent runtime error.
+				var oLocaleConfig = this.mChartInstance.getLocale();
+				if (oLocaleConfig) {
 					sRetVal = Format.abapTimestampToTimeLabel(sAttrValue, oLocaleConfig);
 				}
 				break;
@@ -863,7 +962,7 @@ sap.ui.define([
 		}
 		return sRetVal;
 	};
-	
+
 	Shape.prototype._formatNumber = function (number,decimalPlaces) {
 		var sRetValue = "";
 		if (decimalPlaces !== undefined) {
@@ -875,6 +974,28 @@ sap.ui.define([
 			sRetValue = NumberFormat.getFloatInstance().format(number);
 		}
 		return sRetValue;
+	};
+
+	/**
+	 * Retrieves the parent shape's referenceId.
+	 * 
+	 * <p>
+	 * The referenceId, which is related to shape data, is generated by a Group shape.
+	 * Aggregation shapes can use this method to retrieve the referenceId.
+	 * </p>
+	 * 
+	 * @param {object} oData Shape data.
+	 * @param {object} oRowInfo Information of the row and row data.
+	 * @return {string} Value of <code>referenceId</code>.
+	 * @public
+	 */
+	Shape.prototype.getParentReferenceId = function (oData, oRowInfo) {
+		if (this.mShapeConfig.hasShapeProperty("referenceId")) {
+			return this._configFirst("referenceId", oData);
+		}
+		if (this.getParent() && this.getParent().genReferenceId) {
+			return this.getParent().genReferenceId(oData, oRowInfo);
+		}
 	};
 
 	return Shape;

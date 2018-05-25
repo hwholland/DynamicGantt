@@ -7,108 +7,61 @@ jQuery.sap.declare("sap.apf.ui.representations.utils.paginationHandler");
 	'use strict';
 	sap.apf.ui.representations.utils.PaginationHandler = function() {
 		this.pagingOption = { // initialize the paging option 
-			inlineCount : true,
 			top : 100,
 			skip : 0
 		};
 	};
 	sap.apf.ui.representations.utils.PaginationHandler.prototype.constructor = sap.apf.ui.representations.utils.PaginationHandler;
-	function _updatePagingOption(oTableDataModel) { //update the top and skip value in the paging option 
-		this.pagingOption.skip = oTableDataModel.getData().tableData.length; //the number of records which is already fetched , which have to be skipped
-		this.pagingOption.top = 10; //later on 10 records are fetched and added to existing data set. 
+	function _updatePagingOption(oPaginationHandler, oTableDataModel) { //update the top and skip value in the paging option 
+		oPaginationHandler.pagingOption.skip = oTableDataModel.getData().tableData.length; //the number of records which is already fetched , which have to be skipped
+		oPaginationHandler.pagingOption.top = 99; //later on 99 records are fetched and added to existing data set. 
 	}
 	/**
 	* @description updates the data in the table after pagination. The updated data is retrieved from the request.
 	* The count for data to be fetched and to be skipped is updated after the pagination is triggered.
 	*/
-	function _triggerPagination(oTableInstance) {
-		var oTableDataModel = oTableInstance.oTableRepresentation.getModel();
+	function _triggerPagination(oPaginationHandler, oTableInstance) {
+		var oTableDataModel = oTableInstance.tableControl.getModel();
 		var paginatedTableData = oTableDataModel.getData();
-		oTableInstance.oTableRepresentation.getParent().getParent().setBusy(true); //set the scroll container to busy state
-		sap.ui.getCore().applyChanges();
-		_updatePagingOption.bind(this)(oTableDataModel);
-		var oActiveStep = oTableInstance.oApi.getActiveStep();
-		oTableInstance.oApi.updatePath(function(oStep, bStepChanged) {
-			if (oStep === oActiveStep) {
-				oTableDataModel.setData(paginatedTableData);
-				oTableInstance.oTableRepresentation.getParent().getParent().setBusy(false);
-			}
-		});
-	}
-	function isPaginationRequired(oTableInstance) {
-		if (this.pagingOption.skip < oTableInstance.oTableRepresentation.getModel().getData().tableData.length) {
-			return true;
-		}
-	}
-	function _createLoadMoreLink(oTableInstance) {
-		var oLoadMoreLink = new sap.m.Link({ // load more link should be shown for the mobile devices
-			text : "More"
-		}).addStyleClass("loadMoreLink");
-		if (isPaginationRequired.bind(this)(oTableInstance)) {// Add More Button for Mobile Device for
-			_appendLoadMoreLinkToTable(oLoadMoreLink);
-		}
-		return oLoadMoreLink;
-	}
-	function _appendLoadMoreLinkToTable(loadMoreLink) {
-		var oLoadMoreLink, htmlOfLoadMoreLink;
-		if (loadMoreLink) {
-			oLoadMoreLink = loadMoreLink;
-			htmlOfLoadMoreLink = sap.ui.getCore().getRenderManager().getHTML(oLoadMoreLink);
-		}
-		jQuery(".loadMoreLink").remove();//clear the more link
-		jQuery(jQuery(".tableWithoutHeaders > div:first-child")).append(htmlOfLoadMoreLink);
-	}
-	function _isLastRecordForMobile(oTableInstance) {
-		if (!jQuery(".openToggleImage").length && isPaginationRequired.bind(this)(oTableInstance)) {
-			return true;
-		}
-	}
-	function _firePaginationOnMobileDevice(oTableInstance, oLoadMoreLink) {
-		if (_isLastRecordForMobile.bind(this)(oTableInstance)) {
-			_triggerPagination.bind(this)(oTableInstance);
-			if (isPaginationRequired.bind(this)(oTableInstance)) {
-				_appendLoadMoreLinkToTable(oLoadMoreLink);
-			} else {
-				jQuery(".loadMoreLink").remove();
-			}
+		_updatePagingOption(oPaginationHandler, oTableDataModel);
+		if(!oPaginationHandler.bPaginationTriggered && (oPaginationHandler.pagingOption.skip < oTableInstance.nDataResponseCount)){
+			oTableInstance.tableControl.getParent().setBusy(true); //set the scroll container to busy state
+			sap.ui.getCore().applyChanges();
+			var oActiveStep = oTableInstance.oApi.getActiveStep();
+			oPaginationHandler.bPaginationTriggered = true;
+			oTableInstance.oApi.updatePath(function(oStep, bStepChanged) {
+				oPaginationHandler.bPaginationTriggered = false;
+				if (oStep === oActiveStep) {
+					oTableDataModel.setData(paginatedTableData);
+					oTableInstance.markSelectionInTable();
+					oTableInstance.tableControl.getParent().setBusy(false);
+					if (oTableDataModel.getData().tableData.length >= oTableInstance.nDataResponseCount) {
+						oTableInstance.oLoadMoreLink.setVisible(false);
+					}
+				}
+			});
 		}
 	}
 	/**
 	* @description creates the load more link and appends it below the table after 100 records.
 	* Handles the click on the "load more data" and triggers the pagination.
 	*/
-	function _attachPaginationInMobileDevice(oTableInstance) {
-		var self = this;
-		var oLoadMoreLink = _createLoadMoreLink.bind(self)(oTableInstance);
-		oLoadMoreLink.attachPress(function() {
-			_firePaginationOnMobileDevice.bind(self)(oTableInstance, oLoadMoreLink);
+	function _attachPaginationInMobileDevice(oPaginationHandler, oTableInstance) {
+		oTableInstance.oLoadMoreLink.setVisible(true);
+		oTableInstance.oLoadMoreLink.attachPress(function() {
+			_triggerPagination(oPaginationHandler, oTableInstance);
 		});
-	}
-	function _isLastRecordForDesktop(oTableInstance, oScrollContainer) {
-		var contentHeight = jQuery(oScrollContainer).prop("scrollHeight") - jQuery(oScrollContainer).prop("offsetHeight") - 5;
-		var scrollHeight = jQuery(oScrollContainer).prop("scrollTop");
-		if ((contentHeight <= scrollHeight) && !jQuery(".openToggleImage").length && isPaginationRequired.bind(this)(oTableInstance)) { //if scroll is at the end and there is more data
-			return true;
-		}
-	}
-	function _firePaginationOnDesktop(oTableInstance, oScrollContainer) {
-		var isPaginationTriggered; // boolean to indicate if pagination is triggered.
-		if (_isLastRecordForDesktop.bind(this)(oTableInstance, oScrollContainer)) {
-			if (!isPaginationTriggered) { //pagination is not triggered yet
-				_triggerPagination.bind(this)(oTableInstance);
-				isPaginationTriggered = true;//pagination triggered
-			} else {
-				isPaginationTriggered = false; // restore the boolean
-			}
-		}
 	}
 	/**
 	* @description Handles the scroll on the table to get more and triggers the pagination.
 	*/
-	function _attachPaginationInDesktopDevice(oTableInstance) {
-		var self = this;
-		jQuery('.tableWithoutHeaders').on("scroll", function() {// Mouse scroll, Mouse Down and Mouse Up Events for desktop
-			_firePaginationOnDesktop.bind(self)(oTableInstance, this);
+	function _attachPaginationInDesktopDevice(oPaginationHandler, oTableInstance) {
+		jQuery('.sapUiTableVSb').on("scroll", function() {// Mouse scroll, Mouse Down and Mouse Up Events for desktop
+			var contentHeight = jQuery(this).prop("scrollHeight") - jQuery(this).prop("offsetHeight") - 5;
+			var scrollHeight = jQuery(this).prop("scrollTop");
+			if (contentHeight <= scrollHeight) { //if scroll is at the end 
+				_triggerPagination(oPaginationHandler, oTableInstance);
+			}
 		});
 	}
 	/**
@@ -118,10 +71,10 @@ jQuery.sap.declare("sap.apf.ui.representations.utils.paginationHandler");
 	* Also updates the data in the table after pagination.
 	*/
 	sap.apf.ui.representations.utils.PaginationHandler.prototype.attachPaginationOnTable = function(oTableInstance) {
-		if (sap.ui.Device.browser.mobile) {
-			_attachPaginationInMobileDevice.bind(this)(oTableInstance);
+		if (sap.ui.Device.system.desktop) {
+			_attachPaginationInDesktopDevice(this, oTableInstance);
 		} else {
-			_attachPaginationInDesktopDevice.bind(this)(oTableInstance);
+			_attachPaginationInMobileDevice(this, oTableInstance);
 		}
 	};
 	/**
@@ -130,7 +83,7 @@ jQuery.sap.declare("sap.apf.ui.representations.utils.paginationHandler");
 	* @description creates the paging option of the request which has the number of records to fetched and records to be skipped.
 	* @returns paging object which has top and skip.
 	*       e.g. pagingOption = {
-	*                       top : 10,
+	*                       top : 99,
 	*                       skip :100,
 	*                       inlineCount :true
 	*                      } 
@@ -148,7 +101,7 @@ jQuery.sap.declare("sap.apf.ui.representations.utils.paginationHandler");
 			skip = 0;
 		}
 		this.pagingOption = { //update the paging option
-			inlineCount : true,
+			inlineCount : topN ? false : true,
 			top : top,
 			skip : skip
 		};
@@ -160,7 +113,6 @@ jQuery.sap.declare("sap.apf.ui.representations.utils.paginationHandler");
 	*/
 	sap.apf.ui.representations.utils.PaginationHandler.prototype.resetPaginationOption = function() {
 		this.pagingOption = { //update the paging option
-			inlineCount : true,
 			top : 100,
 			skip : 0
 		};

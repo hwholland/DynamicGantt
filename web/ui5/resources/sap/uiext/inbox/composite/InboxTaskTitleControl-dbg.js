@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /* ----------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * InboxTaskTitleControl
  * @extends sap.ui.core.Control
- * @version 1.38.33
+ * @version 1.54.3
  *
  * @constructor
  * @public
@@ -66,12 +66,32 @@ sap.ui.core.Control.extend("sap.uiext.inbox.composite.InboxTaskTitleControl", { 
 
 	library : "sap.uiext.inbox",
 	properties : {
+
+		/**
+		 * The Task Title of the Task
+		 */
 		"taskTitle" : {type : "string", group : "Misc", defaultValue : null},
+
+		/**
+		 * Category icon
+		 */
 		"categoryIconURI" : {type : "sap.ui.core.URI", group : "Misc", defaultValue : 'hasCategory'},
+
+		/**
+		 * has Attachments
+		 */
 		"hasAttachments" : {type : "boolean", group : "Misc", defaultValue : null},
+
+		/**
+		 * has Comments
+		 */
 		"hasComments" : {type : "boolean", group : "Misc", defaultValue : null}
 	},
 	aggregations : {
+
+		/**
+		 * Internal aggregation to hold the inner Task Title Link
+		 */
 		"titleLink" : {type : "sap.ui.core.Control", multiple : false}
 	}
 }});

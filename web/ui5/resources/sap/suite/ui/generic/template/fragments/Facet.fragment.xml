@@ -18,13 +18,22 @@
 				</template:elseif>
                 <template:elseif test="{=${facet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.Chart') > -1}">
                             <core:Fragment fragmentName="sap.suite.ui.generic.template.fragments.SmartChart" type="XML"/>
-                </template:elseif>          			</template:if>
+                </template:elseif>          			
+            </template:if>
 		</template:then>
 		<template:elseif test="{= ${facet>RecordType}.indexOf('com.sap.vocabularies.UI.v1.CollectionFacet') > -1 ||
 									(${facet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.FieldGroup') > -1
-								     || ${facet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.Identification') > -1
-								     || ${facet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.DataPoint') > -1) }">
+								     || ${facet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.Identification') > -1) }">
 			<core:Fragment fragmentName="sap.suite.ui.generic.template.fragments.SmartForm" type="XML"/>
+		</template:elseif>
+		<template:elseif test="{= ${facet>Target/AnnotationPath}.indexOf('com.sap.vocabularies.UI.v1.DataPoint') > -1 }">
+			<template:with path="facet>Target" helper="sap.ui.model.odata.AnnotationHelper.resolvePath" var="dataPoint">
+				<template:if test="{= ${dataPoint>Visualization/EnumMember}.indexOf('com.sap.vocabularies.UI.v1.VisualizationType/Rating') = -1 }">
+					<template:then>
+                        <core:Fragment fragmentName="sap.suite.ui.generic.template.fragments.SmartForm" type="XML"/>
+					</template:then>
+				</template:if>
+			</template:with>
 		</template:elseif>
 	</template:if>
 

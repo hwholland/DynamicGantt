@@ -10,7 +10,7 @@ The inherited properties busy, busyIndicatorDelay and visible and the aggregatio
     <since>1.27.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="text" type="sap.ui.core/string" defaultValue="">
+        <property defaultValue="" type="sap.ui.core/string" name="text">
             <documentation>The text of the InvisibleText.</documentation>
         </property>
     </properties>

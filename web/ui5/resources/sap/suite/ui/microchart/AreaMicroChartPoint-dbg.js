@@ -1,13 +1,11 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// This control displays the history of values as a line mini chart or an area mini chart.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
-	function(jQuery, library, Element) {
+sap.ui.define(['./library', 'sap/ui/core/Element', 'sap/ui/core/Control'],
+	function(library, Element, Control) {
 	"use strict";
 
 	/**
@@ -21,7 +19,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -29,19 +27,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var AreaMicroChartPoint = Element.extend("sap.suite.ui.microchart.AreaMicroChartPoint", /** @lends sap.suite.ui.microchart.AreaMicroChartPoint.prototype */ {
-			metadata : {
-				library : "sap.suite.ui.microchart",
-				properties : {
-					/**
-					 * X value for the given point.
-					 */
-					x: { type : "float", group : "Misc", defaultValue : null },
+		metadata : {
+			library : "sap.suite.ui.microchart",
+			properties : {
+				/**
+				 * X value for the given point.
+				 */
+				x: { type : "float", group : "Misc", defaultValue : null },
 
-					/**
-					 * Y value for the given point.
-					 */
-					y: { type : "float", group : "Misc", defaultValue : null }
-				}
+				/**
+				 * Y value for the given point.
+				 */
+				y: { type : "float", group : "Misc", defaultValue : null }
+			}
 		}
 	});
 
@@ -57,13 +55,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 
 		return this.setProperty("y", this._isYValue ? value : NaN, bSuppressInvalidate);
 	};
-	//
 
 	/**
 	 * Returns the x value. It returns 'undefined', if the x property was not set or an invalid number was set.
 	 *
 	 * @public
-	 * @returns {string}
+	 * @returns {float} The x-value, or undefined if the value set was invalid
 	 */
 	AreaMicroChartPoint.prototype.getXValue = function() {
 		return this._isXValue ? this.getX() : undefined;
@@ -73,7 +70,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * Returns the y value. It returns 'undefined', if the y property was not set or an invalid number was set.
 	 *
 	 * @public
-	 * @returns {float}
+	 * @returns {float} The y-value, or undefined if the value set was invalid
 	 */
 	AreaMicroChartPoint.prototype.getYValue = function() {
 		return this._isYValue ? this.getY() : undefined;
@@ -83,16 +80,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	    return typeof n == 'number' && !isNaN(n) && isFinite(n);
 	};
 
-	/**
-	 * Overrides Control.clone to clone additional internal state.
-	 *
-	 * @param {string} sIdSuffix? a suffix to be appended to the cloned element id
-	 * @param {string[]} aLocalIds? an array of local IDs within the cloned hierarchy (internally used)
-	 * @param {object} oOptions
-	 * @returns {sap.ui.core.Control} reference to the newly created clone
-	 */
 	AreaMicroChartPoint.prototype.clone = function(sIdSuffix, aLocalIds, oOptions) {
-		var oClone = sap.ui.core.Control.prototype.clone.apply(this, arguments);
+		var oClone = Control.prototype.clone.apply(this, arguments);
 		oClone._isXValue = this._isXValue;
 		oClone._isYValue = this._isYValue;
 		return oClone;

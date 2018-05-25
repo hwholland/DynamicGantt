@@ -1,22 +1,26 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
-// Provides control sap.ui.comp.smartfield.Configuration.
 sap.ui.define([
 	"jquery.sap.global", "sap/ui/comp/library", "sap/ui/core/Element"
 ], function(jQuery, library, Element) {
 	"use strict";
 
 	/**
-	 * Constructor for a new smartfield/Configuration.
-	 * 
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
-	 * @class The configuration allows to further define the behavior of a SmartField.
+	 * Constructor for a new <code>Smartfield</code>/<code>Configuration</code>.
+	 *
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
+	 *
+	 * @class
+	 * The configuration allows to further define the behavior of a <code>SmartField</code>.
 	 * @extends sap.ui.core.Element
+	 *
+	 * @author SAP SE
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.smartfield.Configuration

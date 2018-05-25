@@ -10,6 +10,10 @@ jQuery.sap.declare('sap.apf.core.utils.annotationHandler');
  */
 sap.apf.core.utils.AnnotationHandler = function(inject) {
 	'use strict';
+	var manifest = inject.manifests && inject.manifests.manifest;
+	var dataSources = manifest && manifest["sap.app"].dataSources;
+	var sapSystem = inject.functions.getSapSystem();
+	var apfMinVersion = manifest && manifest["sap.ui5"] &&  manifest["sap.ui5"].dependencies && manifest["sap.ui5"].dependencies.libs && manifest["sap.ui5"].dependencies.libs["sap.apf"] && manifest["sap.ui5"].dependencies.libs["sap.apf"].minVersion;
 	/**
 	 * @public
 	 * returns either the annotations from manifest of the component or the default annotation file, if it exists. Existence of annotations from the manifest definition is not checked, because
@@ -17,11 +21,10 @@ sap.apf.core.utils.AnnotationHandler = function(inject) {
 	 * @returns {string[]} urisOfAnnotations
 	 */
 	this.getAnnotationsForService = function(serviceRoot) {
-		var dataSources = inject.manifests && inject.manifests.manifest && inject.manifests.manifest["sap.app"].dataSources;
 		if (!dataSources) {
 			return getDefaultAnnotationFile(serviceRoot);
 		}
-		return getAnnotationsForServiceFromManifest(serviceRoot, dataSources);
+		return getAnnotationsForServiceFromManifest(serviceRoot);
 	};
 	/**
 	 * @private
@@ -29,23 +32,40 @@ sap.apf.core.utils.AnnotationHandler = function(inject) {
 	 * @returns {string[]} uriOfDefaultAnnotationFile
 	 */
 	function getDefaultAnnotationFile(serviceRoot) {
-		var sAnnotationUri = inject.functions.getODataPath(serviceRoot) + "annotation.xml";
-		if( inject.instances.fileExists.check(sAnnotationUri)) {
-			return [sAnnotationUri];
+		if( !(typeof apfMinVersion === "string")  ||  apfMinVersion < "1.44.0" ){
+			
+			var sAnnotationUri = inject.functions.getODataPath(serviceRoot) + "annotation.xml";
+			if (sapSystem) {
+				sAnnotationUri = sap.ui.model.odata.ODataUtils.setOrigin(sAnnotationUri, { force : true, alias : sapSystem});		
+			}
+			if( inject.instances.fileExists.check(sAnnotationUri)) {
+				return [sAnnotationUri];
+			}			
 		}
 		return [];
 	}
 	/**
 	 * @private 
-	 * removes a trailing slash from a string
+	 * removes a trailing slash from an url and the origin segment
 	 * @param {string} str
 	 * @returns {string} str without trailing slash
 	 */
-	function removeTrailingSlash(str) {
+	function removeTrailingSlashAndOrigin(str) {
 		if (str && str[str.length - 1] === '/') {
-			return str.substring(0, str.length - 1);
+			str = str.substring(0, str.length - 1);
 		}
-		return str;
+		var i;
+		if (!str) {
+			return str;
+		}
+		var split = str.split(";");
+		var normalizedString = split[0];
+		for (i = 1; i < split.length; i++) {
+			if (split[i].search("o=") === -1) {
+				normalizedString = normalizedString + ';' + split[i];
+			}
+		}
+		return normalizedString;
 	}
 	/**
 	 * @private
@@ -55,8 +75,8 @@ sap.apf.core.utils.AnnotationHandler = function(inject) {
 	 * @returns {boolean} compare result 
 	 */
 	function areEqualUris(uri1, uri2) {
-		var normalizedUri1 = removeTrailingSlash(uri1);
-		var normalizedUri2 = removeTrailingSlash(uri2);
+		var normalizedUri1 = removeTrailingSlashAndOrigin(uri1);
+		var normalizedUri2 = removeTrailingSlashAndOrigin(uri2);
 
 		return (normalizedUri1 === normalizedUri2);
 	}
@@ -65,10 +85,9 @@ sap.apf.core.utils.AnnotationHandler = function(inject) {
 	 * helper function, that looks in the manifest, whether an annotation file is returned in service root. Otherwise returns the default annotation file, if it exists.
 	 * @returns {string[]} urisOfAnnotationFiles
 	 */
-	function getAnnotationsForServiceFromManifest(serviceRoot, dataSources){
+	function getAnnotationsForServiceFromManifest(serviceRoot){
 		var uris = [];
 		var dataSource;
-
 
 		for (dataSource in dataSources) {
 
@@ -90,6 +109,9 @@ sap.apf.core.utils.AnnotationHandler = function(inject) {
 			var componentUri;
 
 			if (annotationUri) {
+				if (sapSystem) {
+					annotationUri = sap.ui.model.odata.ODataUtils.setOrigin(annotationUri, { force : true, alias : sapSystem});		
+				}
 				uris.push(annotationUri);
 			}
 			if (localUri && localUri[0] !== '/') {

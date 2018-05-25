@@ -22,7 +22,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.15
+	 * @version 1.54.4
 	 *
 	 * @constructor
 	 * @public
@@ -128,7 +128,7 @@ sap.ui.define([
 		this.oViewer = sap.ui.getCore().byId(this.getViewer());
 		if (this.oViewer != null) {
 			var newStateFullScreenButton = this._enterFullScreenButton.getPressed();
-			this.oViewer.setEnableFullScreen(newStateFullScreenButton);
+			this.oViewer.activateFullScreenMode(newStateFullScreenButton);
 		}
 	};
 

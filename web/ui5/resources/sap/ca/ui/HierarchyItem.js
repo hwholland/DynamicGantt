@@ -7,7 +7,7 @@ jQuery.sap.declare("sap.ca.ui.HierarchyItem");jQuery.sap.require("sap.ca.ui.libr
  */
 jQuery.sap.require("sap.ui.layout.VerticalLayout");jQuery.sap.require("sap.ui.core.theming.Parameters");
 sap.ca.ui.HierarchyItem.prototype.init=function(){};
-sap.ca.ui.HierarchyItem.prototype._getIconControl=function(){var i=this.getAggregation("_iconControl");if(i==undefined){i=new sap.ui.core.Icon({src:this.getProperty("icon"),color:sap.ui.core.theming.Parameters.get("sapUiLightText")}).addStyleClass("sapCaUiHierarchyItemIcon");this.setAggregation("_iconControl",i);}return i;};
+sap.ca.ui.HierarchyItem.prototype._getIconControl=function(){var i=this.getAggregation("_iconControl");if(i==undefined){i=new sap.ui.core.Icon({src:this.getProperty("icon"),color:sap.ui.core.theming.Parameters.get("sapUiContentNonInteractiveIconColor")}).addStyleClass("sapCaUiHierarchyItemIcon");this.setAggregation("_iconControl",i);}return i;};
 sap.ca.ui.HierarchyItem.prototype._getLevelTypeLabel=function(){var l=this.getAggregation("_levelTypeLabel");if(l==undefined){l=new sap.m.Label({text:this.getProperty("levelType")}).addStyleClass("sapCaUiHierarchyItemLevelTypeLbl");this.setAggregation("_levelTypeLabel",l);}return l;};
 sap.ca.ui.HierarchyItem.prototype._getIdentifierLabel=function(){var i=this.getAggregation("_identifierLabel");if(i==undefined){i=new sap.m.Label({text:this.getProperty("identifier")}).addStyleClass("sapCaUiHierarchyItemIdentifierLbl");this.setAggregation("_identifierLabel",i);}return i;};
 sap.ca.ui.HierarchyItem.prototype._getTitleLabel=function(){var t=this.getAggregation("_titleLabel");if(t==undefined){t=new sap.m.Label({text:this.getProperty("title")}).addStyleClass("sapCaUiHierarchyItemTitleLbl");this.setAggregation("_titleLabel",t);}return t;};

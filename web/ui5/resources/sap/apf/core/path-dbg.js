@@ -4,7 +4,6 @@
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
 jQuery.sap.declare("sap.apf.core.path");
-
 (function() {
 	'use strict';
 	/**
@@ -16,12 +15,9 @@ jQuery.sap.declare("sap.apf.core.path");
 	 * @name sap.apf.core.Path
 	 */
 	sap.apf.core.Path = function(oInject) {
-		// Public vars
 		this.type = "path";
-		// Private vars
 		var oMessageHandler = oInject.instances.messageHandler;
-		var oCoreApi = oInject.instances.coreApi;
-		var that = this;
+		var coreApi = oInject.instances.coreApi;
 		var aStepInstances = [];
 		var aActiveSteps = [];
 		var nUpdateCounter = 0;
@@ -31,9 +27,34 @@ jQuery.sap.declare("sap.apf.core.path");
 				step.destroy();
 			});
 			aStepInstances = [];
-			that = undefined;
 		};
-		// Public functions
+		/**
+		 * @description Loops over all steps until the active step and collects the filterInformation from each step
+		 * @returns jQuery.Deferred() Promise will be resolved with an array of filterInformation-objects
+		 */
+		this.getFilterInformation = function(){
+			var deferred = jQuery.Deferred();
+			var activeStepFound = false;
+			var pathFilterInformation = [];
+			var aPromises = [];
+			var activeStep = aActiveSteps[0];
+			aStepInstances.forEach(function(step, index){
+				if(!activeStepFound){
+					if(this.stepIsActive(step)){
+						activeStepFound = true;
+					} else {
+						aPromises.push(step.getFilterInformation(activeStep, index));
+					}
+				}
+			}.bind(this));
+			jQuery.when.apply(this, aPromises).then(function(){
+				for(var int = 0; int < arguments.length; int++) { //ForEach cannot be used as arguments is not an actual array, but only array-like
+					pathFilterInformation = pathFilterInformation.concat(arguments[int]);
+				}
+				deferred.resolve(pathFilterInformation);
+			});
+			return deferred;
+		};
 		/**
 		 * @function
 		 * @name sap.apf.core.Path.getSteps
@@ -57,7 +78,7 @@ jQuery.sap.declare("sap.apf.core.path");
 		 */
 		this.addStep = function(oStep, fnStepProcessedCallback) {
 			aStepInstances.push(oStep);
-			that.update(fnStepProcessedCallback);
+			this.update(fnStepProcessedCallback);
 		};
 		/**
 		 * @description Sets a step as an active step in the path.
@@ -128,13 +149,13 @@ jQuery.sap.declare("sap.apf.core.path");
 				var i, len = aStepInstances.length;
 				for(i = 0; i < len; i++) {
 					oCumulatedFilter = oCumulatedFilter.addAnd(aStepInstances[i].getFilter());
-					if (that.stepIsActive(aStepInstances[i])) {
+					if (this.stepIsActive(aStepInstances[i])) {
 						deferred.resolve(oCumulatedFilter);
 						return;
 					}
 				}
 				deferred.resolve(oCumulatedFilter);
-			});
+			}.bind(this));
 			return deferred.promise();
 		};
 		/**
@@ -193,7 +214,7 @@ jQuery.sap.declare("sap.apf.core.path");
 				nUpdateCounter++;
 				nCurrentUpdateCount = nUpdateCounter;
 				oCurrentStep.update(oContextFilter, callbackAfterRequest);
-				function callbackAfterRequest(oResponse, bStepNotUpdated) {
+				function callbackAfterRequest(oResponse, bStepUpdated) {
 					var nIndexOfCurrentStep = jQuery.inArray(oCurrentStep, aStepInstances);
 					var oMessageObject;
 					if (nCurrentUpdateCount === nUpdateCounter) {
@@ -225,10 +246,10 @@ jQuery.sap.declare("sap.apf.core.path");
 							}
 							return;
 						}
-						if (!bStepNotUpdated) {
+						if (bStepUpdated) {
 							oCurrentStep.setData(oResponse, oContextFilter);
 						}
-						fnStepProcessedCallback(oCurrentStep, !bStepNotUpdated);
+						fnStepProcessedCallback(oCurrentStep, bStepUpdated);
 						// callback fnStepProcessedCallback could trigger a new path update. So the condition
 						// for processing the step update has to be checked again
 						if (nCurrentUpdateCount !== nUpdateCounter) {
@@ -237,14 +258,18 @@ jQuery.sap.declare("sap.apf.core.path");
 						oCurrentStep.determineFilter(oContextFilter.copy(), callbackFromStepFilterProcessing);
 					}
 				}
-				function callbackFromStepFilterProcessing(oFilter) {
-					oContextFilter = beforeAddingToCumulatedFilter(oContextFilter, oFilter);
+				function callbackFromStepFilterProcessing(oFilter, newCumulativeFilter) {
+					if(newCumulativeFilter){
+						oContextFilter = newCumulativeFilter;
+					}
+					oContextFilter = beforeAddingToCumulatedFilter(oContextFilter, oFilter, oCurrentStep.getContextInfo());
 					var nIndexOfCurrentStep = jQuery.inArray(oCurrentStep, aStepInstances);
 					oContextFilter.addAnd(oFilter);
 					oCurrentStep = aStepInstances[nIndexOfCurrentStep + 1];
 					if (oCurrentStep) {
 						oCurrentStep.update(oContextFilter, callbackAfterRequest);
 					} else {
+						coreApi.storeApfState();
 						oContextFilter = undefined;
 					}
 				}
@@ -271,7 +296,6 @@ jQuery.sap.declare("sap.apf.core.path");
 			addStepsToPathAndDeserialize(oSerializablePath.path.steps, this);
 			makeStepsActive(oSerializablePath.path.indicesOfActiveSteps, this);
 		};
-		// private functions
 		function getIndicesOfActiveSteps() {
 			var aIndicesOfActiveSteps = [];
 			for(var i = 0; i < aStepInstances.length; i++) {
@@ -290,20 +314,19 @@ jQuery.sap.declare("sap.apf.core.path");
 			}
 			return aSerializedSteps;
 		}
-		function addStepsToPathAndDeserialize(aSerializedSteps, oContext) {
-			//deactivate update during deserialization
-			var fnSave = oContext.update;
-			oContext.update = function() {
-			};
+		function addStepsToPathAndDeserialize(aSerializedSteps, path) {
+			//There is an implicit call to path.update() by logic below (core.createStep() invokes path.addStep())
+			//Therefore path.update() needs to be temporarily deactivated during deserialization
+			var originalPathUpdate = path.update;
+			path.update = function() {};
 			var i = 0;
 			for(i = 0; i < aSerializedSteps.length; i++) {
-				oCoreApi.createStep(aSerializedSteps[i].stepId);
+				coreApi.createStep(aSerializedSteps[i].stepId);
 			}
 			for(i = 0; i < aStepInstances.length; i++) {
 				aStepInstances[i].deserialize(aSerializedSteps[i]);
 			}
-			//activate update after deserialization
-			oContext.update = fnSave;
+			path.update = originalPathUpdate;
 		}
 		function makeStepsActive(aIndicesOfActiveSteps, oContext) {
 			for(var i = 0; i < aIndicesOfActiveSteps.length; i++) {
@@ -311,16 +334,67 @@ jQuery.sap.declare("sap.apf.core.path");
 				oContext.makeStepActive(aStepInstances[nIndex]);
 			}
 		}
+		/**
+		 * @description Checks if a given step can be added to the path
+		 * @param {String} StepId
+		 * @returns {jQuery.Deferred} Promise that will be resolved with: 1. {boolean} If step can be added. 2.{sap.apf.MessageObject} optional - if step cannot be added a MessageObject is returned 
+		 */
+		this.checkAddStep = function(stepId){
+			var deferred = jQuery.Deferred();
+			var stepTemplateToBeAdded = coreApi.getConfigurationObjectById(stepId);
+			var requiredFiltersToBeAdded = coreApi.getConfigurationObjectById(stepTemplateToBeAdded.binding).requiredFilters;
+			if(stepTemplateToBeAdded.type === "hierarchicalStep" && requiredFiltersToBeAdded && requiredFiltersToBeAdded.length === 1){
+				var requestTemplateToBeAdded = coreApi.getConfigurationObjectById(stepTemplateToBeAdded.request);
+				coreApi.getMetadata(requestTemplateToBeAdded.service).done(function(metadata){
+					var propertyMetdata = metadata.getPropertyMetadata(requestTemplateToBeAdded.entityType, requiredFiltersToBeAdded[0]);
+					if(propertyMetdata["hierarchy-node-for"] === stepTemplateToBeAdded.hierarchyProperty){
+						aStepInstances.forEach(function(stepInstance){
+							if(stepInstance.type === "hierarchicalStep"){
+								var requiredFiltersForExistingStep = stepInstance.getBinding().getRequiredFilters();
+								if(requiredFiltersForExistingStep.length === 1 && requiredFiltersForExistingStep[0] === requiredFiltersToBeAdded[0]){
+									deferred.resolve(false, oMessageHandler.createMessageObject({
+										code: 5234,
+										aParameters: [stepTemplateToBeAdded.hierarchyProperty, coreApi.getTextNotHtmlEncoded(stepInstance.getAdditionalConfigurationProperties().title.key)],
+										enrichInfoInMessageObject: true
+									}));
+								}
+							}
+						});
+					}
+					if(deferred.state() === "pending"){
+						deferred.resolve(true);
+					}
+				});
+			} else {
+				deferred.resolve(true);
+			}
+			return deferred.promise();
+		};
+
 		function getContextFilter(){
 			var deferred = jQuery.Deferred();
-			jQuery.when(oCoreApi.getCumulativeFilter(), oCoreApi.getSmartFilterBar()).done(function(cumulativeStartFilter, smartFilterBarInstance){
-				var filterArrayFromSFB;
+			jQuery.when(coreApi.getCumulativeFilter(), coreApi.getSmartFilterBarAsPromise()).done(function(cumulativeStartFilter, smartFilterBarInstance){
+				var filterArrayFromSFB, i, analyticalParameterDefinition;
 				var resultFilter = cumulativeStartFilter.copy();
+			
 				if(smartFilterBarInstance){
 					filterArrayFromSFB = smartFilterBarInstance.getFilters();
 					filterArrayFromSFB.forEach(function(filterFromSFB){
 						resultFilter.addAnd(sap.apf.core.utils.Filter.transformUI5FilterToInternal(oMessageHandler, filterFromSFB));
 					});
+					// getFilters() returns only filters and not parameters, so we have to call getFilters(internalParameterName) for each parameter
+					analyticalParameterDefinition = smartFilterBarInstance.getAnalyticalParameters();
+					if (analyticalParameterDefinition && analyticalParameterDefinition.length > 0) {
+						for (i = 0; i < analyticalParameterDefinition.length; i++) {
+							var internalFieldName = analyticalParameterDefinition[i].fieldName;
+							var propertyName = analyticalParameterDefinition[i].fieldNameOData;
+							var filterData = smartFilterBarInstance.getFilters([internalFieldName]);
+							if (filterData && filterData.length) {
+								var value = filterData[0].oValue1;
+								resultFilter.addAnd(new sap.apf.core.utils.Filter(oMessageHandler,propertyName, "EQ", value ));
+							}
+						}
+					}
 				}
 				deferred.resolve(resultFilter);
 			});
@@ -330,9 +404,9 @@ jQuery.sap.declare("sap.apf.core.path");
 		 * Wrapper of the exit. If exit function is not injected it is the identity function.
 		 * Otherwise the exit is applied and its result returned.
 		 */
-		function beforeAddingToCumulatedFilter(cumulatedFilter, filter) {
+		function beforeAddingToCumulatedFilter(cumulatedFilter, filter, oStepContextInfo) {
 			if(oInject.exits && oInject.exits.path && oInject.exits.path.beforeAddingToCumulatedFilter) {
-				return oInject.exits.path.beforeAddingToCumulatedFilter(cumulatedFilter, filter);
+				return oInject.exits.path.beforeAddingToCumulatedFilter(cumulatedFilter, filter, oStepContextInfo);
 			}
 			return cumulatedFilter;
 		}

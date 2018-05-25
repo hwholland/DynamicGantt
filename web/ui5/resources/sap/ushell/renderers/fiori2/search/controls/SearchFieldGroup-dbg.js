@@ -1,15 +1,14 @@
 /* global jQuery, sap, window, console */
-(function() {
+
+sap.ui.define([
+    'sap/ushell/renderers/fiori2/search/SearchHelper',
+    'sap/ushell/renderers/fiori2/search/controls/SearchSelect',
+    'sap/ushell/renderers/fiori2/search/controls/SearchInput',
+    'sap/ushell/renderers/fiori2/search/controls/SearchButton'
+], function() {
     "use strict";
 
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.SearchHelper');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.controls.SearchSelect');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.controls.SearchInput');
-    jQuery.sap.require('sap.ushell.renderers.fiori2.search.controls.SearchButton');
-
-    var searchHelper = sap.ushell.renderers.fiori2.search.SearchHelper;
-
-    sap.ui.core.Control.extend("sap.ushell.renderers.fiori2.search.controls.SearchFieldGroup", {
+    return sap.ui.core.Control.extend("sap.ushell.renderers.fiori2.search.controls.SearchFieldGroup", {
 
         metadata: {
             properties: {
@@ -24,96 +23,142 @@
                 "buttonActive": {
                     defaultValue: true,
                     type: "boolean"
+                },
+                "cancelButtonActive": {
+                    defaultValue: true,
+                    type: "boolean"
                 }
             },
             aggregations: {
-                "select": {
-                    type: "sap.ui.core.Control",
-                    multiple: false
-                },
-                "input": {
-                    type: "sap.ui.core.Control",
-                    multiple: false
-                },
-                "button": {
-                    type: "sap.ui.core.Control",
-                    multiple: false
+                "_flexBox": {
+                    type: "sap.m.FlexBox",
+                    multiple: false,
+                    visibility: "hidden"
                 }
             }
         },
 
 
-        init: function() {
+        constructor: function() {
+            sap.ui.core.Control.prototype.constructor.apply(this, arguments);
             var that = this;
-
-            // check activity //TODO
             that.initSelect();
             that.initInput();
             that.initButton();
+            that.initCancelButton();
+            that.initFlexBox();
+        },
+
+        setCancelButtonActive: function(active) {
+            if (active === this.getProperty('cancelButtonActive')) {
+                return;
+            }
+            this.setProperty('cancelButtonActive', active);
+            this.initFlexBox();
+        },
+
+        initFlexBox: function() {
+            if (!this.select) {
+                return;
+            }
+            var items = [];
+            if (this.getSelectActive()) {
+                this.select.setLayoutData(new sap.m.FlexItemData({
+                    growFactor: 0
+                }));
+                items.push(this.select);
+            }
+            if (this.getInputActive()) {
+                this.input.setLayoutData(new sap.m.FlexItemData({
+                    growFactor: 1
+                }));
+                items.push(this.input);
+            }
+            if (this.getButtonActive()) {
+                this.button.setLayoutData(new sap.m.FlexItemData({
+                    growFactor: 0
+                }));
+                items.push(this.button);
+            }
+            if (this.getCancelButtonActive()) {
+                this.cancelButton.setLayoutData(new sap.m.FlexItemData({
+                    growFactor: 0
+                }));
+                items.push(this.cancelButton);
+            }
+
+            var flexBox = this.getAggregation('_flexBox');
+            if (!flexBox) {
+                flexBox = new sap.m.FlexBox({
+                    alignItems: sap.m.FlexAlignItems.Start,
+                    items: items
+                });
+                this.setAggregation('_flexBox', flexBox);
+            } else {
+                flexBox.removeAllAggregation('items');
+                for (var i = 0; i < items.length; ++i) {
+                    flexBox.addItem(items[i]);
+                }
+            }
+
         },
 
         initSelect: function() {
             var that = this;
-            var select = new sap.ushell.renderers.fiori2.search.controls.SearchSelect(that.getId() + '-select', {});
-            select.attachChange(function() {
+            that.select = new sap.ushell.renderers.fiori2.search.controls.SearchSelect(that.getId() + '-select', {});
+            that.select.attachChange(function() {
                 if (that.getAggregation("input")) {
                     var input = that.getAggregation("input");
-                    input.focus();
-                    //remove? //TODO
-                    input.destroySuggestionRows(); // to be doubly sure to close the suggestion
+                    input.destroySuggestionRows();
                 }
             });
-            that.setAggregation("select", select);
         },
-
 
         initInput: function() {
             var that = this;
-            var input = new sap.ushell.renderers.fiori2.search.controls.SearchInput(that.getId() + '-input', {});
-            that.setAggregation("input", input);
+            that.input = new sap.ushell.renderers.fiori2.search.controls.SearchInput(that.getId() + '-input', {});
         },
-
 
         initButton: function() {
             var that = this;
-            var button = new sap.ushell.renderers.fiori2.search.controls.SearchButton(that.getId() + '-button', {
-                press: function(oEvent) {
 
-                    // no input field -> no search
-                    if (!that.getAggregation("input")) {
-                        return;
-                    }
+            that.button = new sap.ushell.renderers.fiori2.search.controls.SearchButton(that.getId() + '-button', {
+                tooltip: "{i18n>searchbox_tooltip}",
+                ariaLabel: "{i18n>searchbox_tooltip}",
+                press: function(event) {
 
-                    // when not in search app and searchterm is empty and datasource==all 
+                    // searchterm is empty and datasource==all
                     // do not trigger search instead close search field
-                    var model = that.getAggregation('input').getModel();
-                    if (!searchHelper.isSearchAppActive() &&
-                        that.getAggregation("input").getValue() === "" &&
-                        model.getDataSource() === model.allDataSource) {
-                        return;
+                    var model = that.button.getModel();
+                    if (!model.config.odataProvider && model.config.isLaunchpad()) {
+                        if (that.input.getValue() === "" &&
+                            model.getDataSource() === model.getDefaultDataSource()) {
+                            return;
+                        }
                     }
 
                     // trigger search
-                    button.getModel().invalidateQuery();
-                    var input = that.getAggregation("input");
-                    input.destroySuggestionRows();
-                    input.triggerSearch(oEvent);
-
+                    model.invalidateQuery();
+                    that.input.destroySuggestionRows();
+                    that.input.triggerSearch(event);
                 }
+
             });
-            that.setAggregation("button", button);
+
+        },
+
+        initCancelButton: function() {
+            this.cancelButton = new sap.m.Button({
+                text: '{i18n>cancelBtn}'
+            });
+            this.cancelButton.addStyleClass("sapUshellSearchCancelButton");
         },
 
         setModel: function(model) {
-            if (this.getSelectActive()) {
-                this.getAggregation("select").setModel(model);
-            }
-            if (this.getInputActive()) {
-                this.getAggregation("input").setModel(model);
-            }
-            if (this.getButtonActive()) {
-                this.getAggregation("button").setModel(model);
-            }
+            this.select.setModel(model);
+            this.input.setModel(model);
+            this.button.setModel(model);
+            this.cancelButton.setModel(model);
         },
 
         renderer: function(oRm, oControl) {
@@ -122,21 +167,8 @@
             oRm.addClass("SearchFieldGroup");
             oRm.writeClasses();
             oRm.write('>');
-            oRm.write('<div class="sapUshellSearchFieldGroupContainer">');
-            oRm.write('<div class="sapUshellSearchFieldGroupSubContainer">');
-            if (oControl.getSelectActive() === true) {
-                oRm.renderControl(oControl.getAggregation("select"));
-            }
-            if (oControl.getInputActive() === true) {
-                oRm.renderControl(oControl.getAggregation("input"));
-            }
-            oRm.write('</div>');
-            if (oControl.getButtonActive() === true) {
-                oRm.renderControl(oControl.getAggregation("button"));
-            }
-            oRm.write('</div>');
+            oRm.renderControl(oControl.getAggregation('_flexBox'));
             oRm.write('</div>');
         }
     });
-
-}());
+});

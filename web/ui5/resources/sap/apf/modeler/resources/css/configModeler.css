@@ -1,6 +1,5 @@
 .configTitle {
 	font-size: 20px;
-	color: #000000;
 	padding: 10px 20px 10px 20px;
 }
 
@@ -18,7 +17,12 @@
 }
 
 .configMasterData .sapUiTreeTransparent {
-	background-color: #FFFFFF;
+	border: solid;
+	border-right-color: #FFFFFF;
+	border-right-width: thick;
+	border-left: none;
+	border-bottom: none;
+	border-top: none;
 }
 
 .configMasterData  .sapUiTreeNodeContent {
@@ -48,7 +52,6 @@
 	font-size: 22px;
 	font-weight: bold;
 	padding: 20px 15px 30px 15px;
-	color: #000000;
 }
 
 .applicationTitleLayout {
@@ -65,25 +68,20 @@
 	font-size: 15px;
 }
 
-.sapMDialogSection {
+.dialogContentPadding .sapMDialogSection {
 	padding: 3rem;
 }
 
-.repFormRightLabel {
-	margin-top: 6% !important;
-}
-
-.addIconRepresentation {
-	margin-top: 6px;
-}
-
-.lessIconRepresentation {
-	margin-top: 6px;
+.lessIcon {
 	margin-left: 10px;
 }
 
-.configDetailData .sapMLabel {
-	margin-top: 3%;
+.plusMinusLayout {
+	margin-top: 7px;
+}
+
+.facetFilterRadioLabel>.sapMLabel  {
+	margin-top: 1.5%;
 }
 
 .configDetailData .sapUiRFLRow {
@@ -99,8 +97,19 @@
 }
 
 .previewMainChartHolder {
-	overflow: hidden;
 	padding: 16px;
+	margin-left: 15rem;
+	margin-top: -16rem;
+}
+
+.thumbnailChartLayout {
+	width: 200px;
+	overflow: hidden;
+	margin-top: 5rem;
+}
+
+.previewDialogStyle .sapMDialogSection {
+	padding-bottom: initial;
 }
 
 .previewThumbnailHolder {
@@ -120,10 +129,6 @@
 	font-size: 12px;
 }
 
-.previewThumbnailChartLayout {
-	overflow: hidden;
-}
-
 .importFileUploaderDialogLabels {
 	width: 130px;
 	margin-top: 5px;
@@ -140,7 +145,6 @@
 }
 
 .applicationTitleLayout  .appCountLabel {
-	color: #000000;
 	font-weight: bold;
 }
 
@@ -177,11 +181,11 @@
 }
 
 .repRightCornerText {
-	margin: 0% 24% 0% 24%;
+	margin: 0% 23% 0% 23%;
 }
 
 .repLeftCornerText {
-	margin: 0% 45% 0% 45%;
+	margin: 0% 40% 0% 40%;
 }
 
 .stepChartIcon {
@@ -192,51 +196,22 @@
 	margin: 0% 6% 0% 6%;
 }
 
-.basicLayoutData, .sortLayoutData {
-	margin: 0% -1% 0% -1%;
-}
-
-.chartTypeLabel {
-	margin: 0% -4% 0% -4%
-}
-
-.chartTypeBox {
-	margin-left: 2px;
-}
-
 .breadCrumbIcon {
 	size: 15px;
 	width: 25px;
-	color: #666666;
 	margin-top: 2px;
-}
-
-.customRecordValue {
-	margin: 0% 3% 0% 3%;
-}
-
-.stepSortLayout {
-	margin: 0% 9% 0% 9%;
-}
-
-.directionLabel {
-	margin-top: 5% !important;
 }
 
 .formTopPadding .sapUiFormResGrid>div {
 	padding-top: 0px;
 }
 
-.formTopMargin {
-	margin-top: -4px;
-}
-
 .formBottomPadding .sapUiFormResGrid>div {
 	padding-bottom: 0px;
 }
 
-.sortFieldLabel {
-	margin: 3% -3% 0% -3% !important;
+.viewInline .sapUiView {
+	display: inline;
 }
 
 .appCofigCombo {
@@ -244,12 +219,24 @@
 }
 
 .dialogPadding .sapMDialogSection {
-	padding: 0rem !important;
+	padding: 0rem;
 }
-.newConfigTitleLabel > div:first-child{
-	margin-left: 12% ;
+
+.newConfigTitleLabel>div:first-child {
+	margin-left: 12%;
 	padding-top: 2%;
 }
-.newAppLayout > div:first-child{
+
+.newAppLayout>div:first-child {
 	padding-top: 5%;
+}
+
+.previewTable .sapMScrollCont .sapMScrollContV {
+	height: 100% !important;
+}
+.filterProperty {
+	margin-top: 10% !important;
+}
+.filterPropertyLable{
+	margin-top: 6%;
 }

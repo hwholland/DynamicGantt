@@ -56,7 +56,7 @@ jQuery.sap.require("sap.ca.ui.charts.Chart");
  * Stacked Horizontal Bar Chart wrapper around the viz StackedBarChart / MultipleStackedBarChart.
  * To be used in conjunction with the chart toolbar.
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

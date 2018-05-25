@@ -96,9 +96,11 @@ VBI.SceneManager = function() {
 
 		if (mainNode.SceneGeo) {
 			scenemanager.loadNewScene(mainNode.SceneGeo, 'geo', ctx);
-		} else if (mainNode.Scene3D) {
+		}
+		if (mainNode.Scene3D) {
 			scenemanager.loadNewScene(mainNode.Scene3D, '3d', ctx);
-		} else if (mainNode.Scene) {
+		}
+		if (mainNode.Scene) {
 			scenemanager.loadNewScene(mainNode.Scene, 'default', ctx);
 		}
 
@@ -200,6 +202,10 @@ VBI.Scene = function(target) {
 
 	// assign members.........................................................//
 	scene.m_Target = target;
+	//for keyboard events
+	scene.m_KeysDown = [];
+	scene.m_KeysSkipUp = [];
+	scene.m_KeysSkipPress = [];
 
 	// base loading function..................................................//
 	// this is called by all kind of scenes...................................//
@@ -555,100 +561,103 @@ VBI.Scene = function(target) {
 
 	// .......................................................................//
 	// do event dispatching...................................................//
-
-	scene.DispatchEvent = function(e, evName) {
+	scene.DispatchEvent = function(event, evName) {
 		if (VBI.m_bTrace) {
-			VBI.Trace("DispatchEvent " + e.type + " as " + evName + " mode:" + scene.m_nInputMode + (scene.m_Gesture ? " gesture active" : ""));
+			VBI.Trace("DispatchEvent " + event.type + " as " + evName + " mode:" + scene.m_nInputMode + (scene.m_Gesture ? " gesture active" : ""));
 		}
-
-		// when the input mode is tracking, thhere is no dispatching of events.//
+		// when the input mode is tracking, thhere is no dispatching of events.
 		if (scene.m_nInputMode == VBI.InputModeTrackMap) {
 			return false;
 		}
-
-		var func, eventType = e.type;
-
-		// check for abstract event name.......................................//
+		var func, eventType = event.type;
+		// check for abstract event name
 		if (evName) {
-			e.m_evName = eventType = evName;
+			event.m_evName = eventType = evName;
 		}
-		// dispatch the events to the vos......................................//
-		e.m_Scene = scene;
-
-		// do some adjustments for offset parameters, usually only done for ff.//
-		// and touch events....................................................//
-		if (e.offsetX == undefined || e.offsetY == undefined) {
+		// dispatch the events to the vos
+		event.m_Scene = scene;
+		// do some adjustments for offset parameters, usually only done for ff
+		// and touch events
+		if (event.offsetX == undefined || event.offsetY == undefined) {
 			var rect;
-			if (e.clientX !== undefined && e.clientY !== undefined) {
-				// due to ff, there is no correct offsetX/Y therefore set it now.//
-				rect = e.target.getBoundingClientRect();
-				e.offsetX = e.clientX - rect.left;
-				e.offsetY = e.clientY - rect.top;
-			} else if (e.changedTouches !== undefined && (e.changedTouches.length > 0)) {
-				// use the first changed touch as events offset..................//
-				// generate clientX and clientY to be able to create submit event//
-				rect = e.target.getBoundingClientRect();
-				e.clientX = e.changedTouches[0].clientX;
-				e.clientY = e.changedTouches[0].clientY;
-				e.offsetX = e.clientX - rect.left;
-				e.offsetY = e.clientY - rect.top;
+			if (event.clientX !== undefined && event.clientY !== undefined) {
+				// due to ff, there is no correct offsetX/Y therefore set it now
+				rect = event.target.getBoundingClientRect();
+				event.offsetX = event.clientX - rect.left;
+				event.offsetY = event.clientY - rect.top;
+			} else if (event.changedTouches !== undefined && (event.changedTouches.length > 0)) {
+				// use the first changed touch as events offset
+				// generate clientX and clientY to be able to create submit event
+				rect = event.target.getBoundingClientRect();
+				event.clientX = event.changedTouches[0].clientX;
+				event.clientY = event.changedTouches[0].clientY;
+				event.offsetX = event.clientX - rect.left;
+				event.offsetY = event.clientY - rect.top;
 			}
 		}
-
-		// do adjustments on the keyboard state................................//
-		if (e.shiftKey == undefined) {
-			e.shiftKey = VBI.m_shiftKey;
+		// do adjustments on the keyboard state
+		if (event.shiftKey == undefined) {
+			event.shiftKey = VBI.m_shiftKey;
 		}
-		if (e.ctrlKey == undefined) {
-			e.ctrlKey = VBI.m_ctrlKey;
+		if (event.ctrlKey == undefined) {
+			event.ctrlKey = VBI.m_ctrlKey;
 		}
-
-		// the design vo is the first one that gets events in the loop.........//
+		// the design vo is the first one that gets events in the loop
 		if (scene.m_DesignVO) {
 			if (VBI.m_bTrace) {
 				VBI.Trace("DispatchEvent to Design VO");
 			}
 			if ((func = scene.m_DesignVO["on" + eventType]) && typeof (func) == 'function') {
-				// bind the function to the visual objects context, this ensures.//
-				// that the this reference points to the vo......................//
-				// and call the handler..........................................//
-				if ((func.bind(scene.m_DesignVO))(e) == true) {
+				// call the handler with the context set to corresponded visual object
+				if (func.call(scene.m_DesignVO, event)) {
 					return true; // handled
 				}
 			}
 		}
-
-		// when a vo wants to have events first it can capture them, events....//
-		// are not further dispatched when the event handler returns true......//
+		// when a vo wants to have events first it can capture them, events
+		// are not further dispatched when the event handler returns true
 		if (scene.m_CaptureVO) {
 			if ((func = scene.m_CaptureVO["on" + eventType]) && typeof (func) == 'function') {
-				// bind the function to the visual objects context, this ensures.//
-				// that the this reference points to the vo......................//
-				// and call the handler..........................................//
-				if ((func.bind(scene.m_CaptureVO))(e) == true) {
+				// call the handler with the context set to corresponded visual object
+				if (func.call(scene.m_CaptureVO, event)) {
 					return true; // handled
 				}
 			}
 		}
+		// for "click" use two stage approach
+		// first stage - collect all potential candidates based on hit test results
+		// show menu if number of candidates more than 1 or follow usual flow
+		if (eventType.indexOf("click") != -1) {
+			event.hitTests = []; // setup multi hit test
 
-		var idx;
-		for (var nJ = 0, len = scene.m_VOS.length; nJ < len; ++nJ) {
-			// call the event handler on the objects in reverse order...........//
-
-			idx = len - nJ - 1;
-			if ((func = scene.m_VOS[idx]["on" + eventType]) && typeof (func) == 'function') {
-				// bind the function to the visual objects context, this ensures.//
-				// that the this reference references the vo instance itself.....//
-				// and call the handler..........................................//
-				if ((func.bind(scene.m_VOS[idx]))(e) == true) {
-					return true; // handled
+			for (var i = 0;  i < scene.m_VOS.length; ++i) { //step one, collect all VOs which pass hit test
+				if ((func = scene.m_VOS[i]["on" + eventType]) && typeof (func) == 'function') {
+					func.call(scene.m_VOS[i], event); // call the handler with the context set to corresponded visual object
+				}
+			}
+			if (event.hitTests.length == 1) { // standard case - click on single object
+				event.hitCached = event.hitTests[0];
+				var obj = event.hitCached.m_Vo;
+				delete event.hitTests; //has to be deleted to avoid collecting hits information again
+				return obj["on" + eventType].call(obj, event);
+			} else if (event.hitTests.length > 0) { // show menu to narrow selection to one vo
+				scene.showHitMenu(event, event.hitTests);
+				delete event.hitTests; //has to be deleted to avoid collecting hits information again
+				event.preventDefault();
+				return true;
+			}
+		} else { // old approach -> process from last to first which corresponds to the rendering order (from topmost to last)
+			for (var i = scene.m_VOS.length - 1;  i >= 0; --i) {
+				if ((func = scene.m_VOS[i]["on" + eventType]) && typeof (func) == 'function') {
+					// call the handler with the context set to corresponded visual object
+					if (func.call(scene.m_VOS[i], event)) {
+						return true; // handled
+					}
 				}
 			}
 		}
-
-		return false;
+		return false; //not handled
 	};
-
 	return scene;
 };
 
@@ -795,17 +804,17 @@ VBI.Scene3D = function(target) {
 		// scene.m_Events.clear();
 
 		scene.m_Events = new VBI.SceneEvent(this, oCanvas);
-		//      
+		//
 		// // awake Navigation Control
 		// if ( scene.m_bNavControlVisible && scene.m_NavControl ){
 		// scene.m_NavControl.Awake( scene, target );
 		// }
-		//      
+		//
 		// // awake Scale Control
 		// if ( scene.m_bScaleVisible && scene.m_Scale ){
 		// scene.m_Scale.Awake( scene, target );
 		// }
-		//      
+		//
 		// scene.GoToInitialStart();
 	};
 
@@ -918,7 +927,7 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 	scene.m_bNavControlVisible = true;
 	// scene.m_bNavControlVisible = false;
 	scene.m_NavControl = null;
-	scene.m_RenderTimer = null;
+	scene.m_RenderRequestID = 0;
 
 	// Suppressed Navigation
 	scene.m_SuppressedNavigation = {
@@ -1276,13 +1285,10 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		if (bForceRecluster != false) {
 			scene.bForceRecluster = true;
 		}
-		// the render timer is already active, return immediately..............//
-		if (scene.m_RenderTimer) {
-			return;
-		}
 
-		// set the render timer................................................//
-		scene.m_RenderTimer = window.setInterval(scene.DoRender, 20);
+		if (!scene.m_RenderRequestID) {
+			scene.m_RenderRequestID = window.requestAnimationFrame(scene.DoRender);
+		}
 	};
 
 	scene.DoRender = function() {
@@ -1290,13 +1296,9 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 	};
 
 	scene.Render = function(suppressReclustering) {
+		scene.m_RenderRequestID = 0;
 		scene.bForceRecluster = false;
 		// render the overlay..................................................//
-		if (scene.m_RenderTimer) {
-			// clear pending reder timers.......................................//
-			window.clearInterval(scene.m_RenderTimer);
-			scene.m_RenderTimer = null;
-		}
 		if (scene.m_Canvas.length) {
 			scene.InternalRenderLayer(scene.m_Canvas[scene.m_nOverlayIndex], false, true, suppressReclustering != true, scene.m_Canvas[0].m_nExactLOD);
 		}
@@ -1330,8 +1332,6 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 	};
 	scene.GetTargetPointForDistance = function(dist, ptStart) {
 		var ptGeoStart = VBI.MathLib.DegToRad(scene.GetPosFromVPPoint(ptStart));
-		
-		
 		var angle = 90 * Math.PI / 180;
 
 		var lat = Math.asin(Math.sin(ptGeoStart[1]) * Math.cos(dist / VBI.MathLib.earthradius) + Math.cos(ptGeoStart[1]) * Math.sin(dist / VBI.MathLib.earthradius) * Math.cos(angle));
@@ -1404,6 +1404,46 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		return true;
 	};
 
+	scene.ZoomTo = function(areaIds, corr) {
+
+		var lat = [], lon = [];
+
+		var zoomToAreaId = function(dataElementValues, vo, lon, lat, areaid) {
+			dataElementValues.forEach(getValueofElements.bind(this, areaid, vo, lon, lat));
+		 };
+
+		 var getValueofElements = function(areaId, vo, lon, lat, value) {
+			 if (areaId === value.m_Value) {
+					if (vo.m_Pos) {
+						 var pos = vo.m_Pos.GetValueVector(this.m_Ctx);
+						 for (var k = 0; k < pos.length / 3; ++k) {
+							  lon.push(pos[k * 3 + 0]);
+							  lat.push(pos[k * 3 + 1]);
+						 }
+					}
+			   }
+		 };
+
+		for (var i = 0; i < this.m_VOS.length; ++i) {
+			  var vo = this.m_VOS[i];
+			  var node = vo.m_DataSource.GetCurrentNode(this.m_Ctx);
+			  if (node && node.m_dataelements.length) {
+				   for (var j = 0; j < node.m_dataelements.length; ++j) {
+
+						vo.m_DataSource.Select(j);
+
+						var dataElementValues = node.m_dataelements[j].m_dataattributes;
+						areaIds.forEach(zoomToAreaId.bind(this, dataElementValues, vo, lon, lat));
+				   }
+			  }
+		 }
+		 if (lon.length) {
+			  scene.ZoomToMultiplePositions(lon, lat, corr);
+		 }
+		 return true;
+	};
+
+
 	//Collects all points from all VO's then calc combined bounding box and then zoome to it
 	//corr is the correction factor, if corr is set to 1.0 the bounding box points are exactly on the visible boder of the new area / used for rectangular zoom
 	//supressRendering supress the call for async render the map after zoom
@@ -1412,7 +1452,7 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 
 		for (var i = 0; i < scene.m_VOS.length; ++i) {
 			var vo = scene.m_VOS[i];
-			var node = vo.m_DataSource.GetCurrentNode(scene.m_Ctx);
+			var node = vo.m_DataSource ? vo.m_DataSource.GetCurrentNode(scene.m_Ctx) : null; //data provider can be absent
 
 			if (node && node.m_dataelements.length) {
 				for (var j = 0; j < node.m_dataelements.length; ++j) {
@@ -1774,8 +1814,17 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		return true;
 	};
 
+	scene.RefreshMapLayerStack = function() {
+		var name = scene.m_RefMapLayerStack ? scene.m_RefMapLayerStack.m_Name : scene.m_MapLayerStack.m_Name;
+		if (name) {
+			scene.SetMapLayerStack(name);
+			scene.AddCopyright();
+		}
+	};
+
 	scene.SetMapLayerStack = function(name) {
-		var item = VBI.GetMapLayerStack(name);
+		var item = scene.m_Ctx.m_MapLayerStackManager.GetMapLayerStack(name);
+
 		if (item == null) {
 			return; // do nothing
 		}
@@ -1783,14 +1832,11 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		if (scene.m_Canvas[scene.m_nNonDomIndex].m_bCanvasValid) {
 			scene.SwitchTmpCanvasToActive();
 		}
-
 		// set the new layer stack.............................................//
 		scene.m_MapLayerStack = item;
-
 		// request new tiles into the current visible canvas...................//
 		var canvas = scene.m_Canvas[0];
 		scene.m_MapManager.RequestTiles(canvas, scene.m_MapLayerStack, canvas.m_nCurrentX, canvas.m_nCurrentY, scene.m_nTilesX, scene.m_nTilesY, 0, 0, 0, 0, canvas.m_nCurrentLOD, false);
-
 		// set the map layer stack by name.....................................//
 		scene.InternalRenderLayer(scene.m_Canvas[scene.m_nOverlayIndex], false, true, true, canvas.m_nCurrentLOD);
 	};
@@ -1926,7 +1972,7 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		}
 		// VBI.Trace("Renderingstep required "+(Date.now()-ts1)+" ms.");
 	};
-	
+
 	scene.TriggerReRenderTimer = function(nTime) {
 		window.clearInterval(scene.m_ReRenderTimer); // ZooMap is no more guaranteed rendering, so we trigger an asynchronous
 		scene.m_ReRenderTimer = window.setInterval( // rendering 100 ms after the last change
@@ -2446,6 +2492,7 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		if (scene.m_nShadowIndex != undefined) {
 			scene.MoveObject(scene.m_Canvas[scene.m_nShadowIndex], x, y, width, height);
 		}
+
 		scene.MoveObject(canvas, x, y, width, height);
 	};
 
@@ -2512,9 +2559,9 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		var nOffsetX = 0;
 		var nOffsetY = 0;
 		var nTemp;
-		// 
+		//
 		// First we determine whether a tile shift is required
-		// 
+		//
 		if ((dx > 0) && (nTemp = nPosX + scene.m_nMapMoveXPreLoad) > 0) { // left side is missing tiles, calc number of missed tiles //
 			nOffsetX = Math.ceil(nTemp / nCurrentTilePixelWidth);
 		} else if ((dx < 0) && ((nTemp = scene.m_nMapMoveXPreLoad + scene.m_nDivWidth - (nPosX + nPixelWidth)) > 0)) { // right side is missing tiles
@@ -2677,7 +2724,7 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 
 		// Moving current canvas accordingly
 		var newWidth = Math.round(oldWidth * factor);
-		var newHeight = Math.round(oldHeight * factor);
+		var newHeight = Math.round(newWidth * canvas.height / canvas.width);
 		var newLeft = Math.round(oldLeft - ((factor - 1) * xOffset));
 		var newTop = Math.round(oldTop - ((factor - 1) * yOffset));
 
@@ -2803,10 +2850,6 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 			otherCanvas.m_nExactLOD = newExactLod;
 			scene.MoveCanvas(otherCanvas, nPosX, nPosY, newWidth, newHeight);
 
-			var context = otherCanvas.getContext("2d");
-			context.fillStyle = 'white';
-			context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
 			// set properties of new canvas.....................................//
 			scene.m_MapManager.RequestTiles(scene.m_Canvas[1], scene.m_MapLayerStack, newLeft, newTop, scene.m_nTilesX, scene.m_nTilesY, 0, 0, 0, 0, nNewLod, true);
 			canvas.m_Scene.ToggleCanvas(canvas.m_Scene);
@@ -2837,85 +2880,52 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		scene.MoveObject(otherCanvas, newLeft, newTop, otherCanvasWidth, otherCanvasHeight);
 	};
 
-	scene.AnimationStep = function(correctedInterval, bZeroZoom, clientX, clientY, clickCoords, targetedTicksInALod) {
-		if (--scene.m_nAnimOpenTicks) {
-			var rc = scene.m_Canvas[0].getBoundingClientRect();
-			var oldLod = scene.m_Canvas[0].m_nExactLOD;
-			var zoomFactor = 1;
-			if (!bZeroZoom) {
-				zoomFactor = (scene.m_nAnimDirection ? scene.m_nLodFactorZoomInHalf : scene.m_nLodFactorZoomOutHalf);
-			}
-			scene.ZoomMap(zoomFactor, clientX - rc.left, clientY - rc.top, targetedTicksInALod, true);
-			var temp = Date.now(), corr = correctedInterval;
-			if (scene.m_AnimTimestamp) {
-				var delta = Math.max(0, temp - scene.m_AnimTimestamp);
-				corr = Math.max(10, 2 * correctedInterval - delta);
-			}
-			scene.m_AnimTimestamp = temp;
-			if ((scene.m_Canvas[0].m_nExactLOD != oldLod) || (Math.abs(scene.AnimZoomTarget - oldLod) > scene.m_nMaxAnimLodDiff)) {
-				scene.m_AnimZoomTimer = window.setTimeout(function() {
-					scene.AnimationStep(correctedInterval, bZeroZoom, clientX, clientY, clickCoords, targetedTicksInALod);
-				}, corr);
-				return; // if the Lod doesn't change we can continue and stop animation
+	scene.AnimationStep = function() {
+		var currentLod = scene.m_Canvas[0].m_nExactLOD;
+		var rc = scene.m_Canvas[0].getBoundingClientRect();
+		if (currentLod != scene.AnimZoomTarget) {
+			var animPos = Math.min((Date.now() - scene.AnimZoomTimestamp) / scene.AnimZoomDuration, 1);
+			var f = Math.min(animPos * (2 - animPos), 1); // easing out animation
+			var zoomFactor = Math.pow(2, scene.AnimZoomOrigin + (scene.AnimZoomTarget - scene.AnimZoomOrigin) * f) / Math.pow(2, currentLod);
+			scene.ZoomMap(zoomFactor, scene.AnimZoomClientX - rc.left, scene.AnimZoomClientY - rc.top, animPos < 1 ? 0 : 1, true);
+
+			if (animPos < 1) {// request next animation step
+				scene.m_AnimZoomRequestID = window.requestAnimationFrame(scene.AnimationStep);
+				return;
 			}
 		}
 
-		scene.InternalOnMoveLayer(scene.m_Canvas[scene.m_nOverlayIndex], clickCoords);
-		scene.InternalOnZoomLayer(scene.m_Canvas[scene.m_nOverlayIndex], clickCoords);
+		// animation has finished.............................
 
-		// clear the animation zoom timer.............................
-		if (scene.m_AnimZoomTimer) {
-			scene.m_nAnimOpenTicks = scene.m_nAnimationTicks = scene.m_nAnimationDirection = scene.AnimZoomTarget = undefined;
-			window.clearInterval(scene.m_AnimZoomTimer);
-			scene.m_AnimZoomTimer = null;
-			scene.m_AnimTimestamp = 0;
-		}
+		scene.ZoomMap(1, scene.AnimZoomClientX - rc.left, scene.AnimZoomClientY - rc.top, 1, true);
+
+		scene.InternalOnMoveLayer(scene.m_Canvas[scene.m_nOverlayIndex], scene.AnimZoomClickCoords);
+		scene.InternalOnZoomLayer(scene.m_Canvas[scene.m_nOverlayIndex], scene.AnimZoomClickCoords);
+
+		scene.m_AnimZoomRequestID = 0;
+		scene.AnimZoomClientX = scene.AnimZoomClientY = scene.AnimZoomClickCoords = undefined;
+		scene.AnimZoomTimestamp = scene.AnimZoomDuration = scene.AnimZoomOrigin = scene.AnimZoomTarget = undefined;
 	};
-// do an animated zoom to a specific location.............................//
+
+	// do an animated zoom to a specific location.............................//
 	scene.AnimateZoom = function(zoomIn, clientX, clientY, interval, event) {
 		var clickCoords = ((event != undefined && event.clientX != undefined) ? {
 			x: event.clientX,
 			y: event.clientY
 		} : undefined);
 
-		var nCurrentLOD = scene.m_Canvas[0].m_nExactLOD;
-		var targetedTicksInALod = 2 * scene.m_nTicksInALod;
+		scene.AnimZoomClientX = clientX;
+		scene.AnimZoomClientY = clientY;
+		scene.AnimZoomClickCoords = clickCoords;
+		scene.AnimZoomOrigin = scene.m_Canvas[0].m_nExactLOD;
+		scene.AnimZoomTarget = Math.round(scene.AnimZoomTarget ? scene.AnimZoomTarget : scene.AnimZoomOrigin) + (zoomIn ? 1 : -1);
+		scene.AnimZoomTimestamp = Date.now();
+		scene.AnimZoomDuration = Math.pow(Math.abs(scene.AnimZoomTarget - scene.AnimZoomOrigin), 0.8) * 300;
 
-		if (scene.m_AnimZoomTimer && (scene.m_nAnimDirection == zoomIn)) { // Animation in same direction already running
-			if (scene.m_nAnimOpenTicks > 10) { // we reached maximum speeed
-				return;
-			}
-			window.clearInterval(scene.m_AnimZoomTimer);
-			var nToAdd = targetedTicksInALod - (scene.m_bZeroZoom ? 1 : 0);
-			scene.m_nAnimOpenTicks += nToAdd;
-			scene.m_nAnimTicks += nToAdd;
-			scene.m_bZeroZoom = false;
-		} else {
-			// We zoom that so many times that we reach a even LOD level. In case the next LOD level is only
-			// 1 or 2 ticks away we target the LOD level after the next one.
-			if (nCurrentLOD != Math.round(nCurrentLOD)) {
-				var nCurrentTicks = Math.round((nCurrentLOD - Math.floor(nCurrentLOD)) * targetedTicksInALod);
-				scene.m_nAnimTicks = 1 + (zoomIn ? targetedTicksInALod - nCurrentTicks : nCurrentTicks);
-			} else {
-				scene.m_nAnimTicks = 1 + targetedTicksInALod;
-			}
-			scene.m_bZeroZoom = (scene.m_nAnimTicks == 1);
-			if (scene.m_bZeroZoom) {
-				scene.m_nAnimTicks++;
-			}
-
-			scene.m_nAnimOpenTicks = scene.m_nAnimTicks;
-			scene.m_nAnimDirection = zoomIn;
-			if (scene.m_AnimZoomTimer) {
-				window.clearInterval(scene.m_AnimZoomTimer); // we had a running anim in the other direction
-			}
+		if (scene.m_AnimZoomRequestID) {
+			window.cancelAnimationFrame(scene.m_AnimZoomRequestID);
 		}
-
-		var correctedInterval = interval * targetedTicksInALod / Math.max(5, (scene.m_nAnimOpenTicks - 1));
-		scene.AnimZoomTarget = Math.min(scene.GetMaxLOD(), Math.max(scene.GetMinLOD(), nCurrentLOD + (scene.m_nAnimDirection ? 1 : -1) * (scene.m_nAnimOpenTicks - 1) / targetedTicksInALod));
-		scene.m_AnimZoomTimer = window.setTimeout(function() {
-			scene.AnimationStep(correctedInterval, scene.m_bZeroZoom, clientX, clientY, clickCoords, targetedTicksInALod);
-		}, correctedInterval);
+		scene.m_AnimZoomRequestID = window.requestAnimationFrame(scene.AnimationStep);
 	};
 
 	scene.AnimationToGeoStep = function(correctedInterval, lonlat, nTargetLod, nSourceLod, targetedTicksInALod) {
@@ -3169,9 +3179,9 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		//switch order in DOM for right z-order (Canvas 1 behind Canvas 0)
 		scene.m_MapsLayerDiv.insertBefore(scene.m_Canvas[1], scene.m_Canvas[0]);
 		// make a delayed call to ensure styling is applyed to have a real transition
-		jQuery.sap.delayedCall(0, this, function(time){
+		jQuery.sap.delayedCall(0, this, function(time) {
 			scene.m_Canvas[0].className = "vbi-geoscenecanvas vbi-map-active"; // make foreground canvas opaque using a transition
-		});			
+		});
 	};
 
 	VBI.addScenePositioningFunctions(scene);
@@ -3375,9 +3385,9 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		// add a layer div for legend windows
 		scene.m_LegendLayerDiv = VBI.Utilities.CreateGeoSceneDivCSS(target + "-geoscene-legendlayer", "vbi-structure-layer");
 		scene.m_Div.appendChild(scene.m_LegendLayerDiv);
-		
+
 		// add a layer div for VBI detail window elements
-		scene.m_WindowLayerDiv = VBI.Utilities.CreateGeoSceneDivCSS(target + "-geoscene-winlayer", "vbi-structure-layer");	
+		scene.m_WindowLayerDiv = VBI.Utilities.CreateGeoSceneDivCSS(target + "-geoscene-winlayer", "vbi-structure-layer");
 
 		if (VBI.m_bIsPhone) {
 			// on phones the detail window sits statically on the bottom of the screen
@@ -3385,7 +3395,7 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		} else {
 			// on normal devices detail windows belong to the moveable layer and move with the map
 			scene.m_MoveableLayer.appendChild(scene.m_WindowLayerDiv);
-		}		
+		}
 		// activate
 		// the awakening of the canvases requires the div sizes, if they are not provided
 		// behvaiour might be strange. To support a future implementation of a lazy awakening
@@ -3534,6 +3544,20 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		}
 		var rect = scene.m_Div.parentNode.getBoundingClientRect();
 		return rect.height ? rect.height : scene.m_Div.clientHeight;
+	};
+
+	scene.GetPreviewImage = function(mapLayerStack, callback) {
+		var layerStack = mapLayerStack;
+		//If the map config consists of preview position then use it's values
+		if (layerStack.m_PreviewPosition) {
+			scene.m_MapManager.GetPreviewImage(layerStack.m_PreviewPosition.longitude,layerStack.m_PreviewPosition.latitude,layerStack.m_PreviewPosition.lod,layerStack,scene, callback);
+		} else {
+			//If map config doesn't consist of preview position use initial zoom and initial position.
+			var pos = scene.m_Ctx.m_Control.getInitialPosition(); //format 0,0,0:x,y,z. z always = 0.
+			var lod = scene.m_Ctx.m_Control.getInitialZoom(); //lod value
+			var position = pos.split(";");
+			scene.m_MapManager.GetPreviewImage(position[0],position[1],lod,layerStack,scene,callback);
+		}
 	};
 
 	scene.CalculateCanvasDimensions = function() {
@@ -3720,7 +3744,7 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		// create the switchable......................................//
 		var idPrefix = scene.m_TargetName + "-" + scene.m_ID + "-";
 		var bThumbnailMode = false;
-		
+
 		if (scene.m_Ctx.moThumbnail) {
 			bThumbnailMode = true;
 			if (!scene.m_Ctx.moThumbnail.bThumbnailed) {
@@ -3932,6 +3956,61 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 		// triggered a render
 	};
 
+	// show selection narrowing menu when hitting overlapping VOs
+	scene.showHitMenu = function(event, hitTests) {
+		sap.ui.require(["sap/ui/unified/Menu", "sap/ui/unified/MenuItem"], function(Menu, MenuItem) {
+			var ctx = scene.m_Ctx;
+
+			if (ctx.m_strOpenMenu) {
+				ctx.m_Menus.findMenuByID(ctx.m_strOpenMenu).close();
+				ctx.m_strOpenMenu = undefined;
+			}
+			if (ctx.m_HitMenu) {
+				ctx.m_HitMenu.close();
+				ctx.m_HitMenu.destroy();
+			}
+			var menu = new Menu({maxVisibleItems:5});
+			var pos = scene.GetEventVPCoordsObj(event);
+			var language = sap.ui.getCore().getConfiguration().getLanguageTag();
+
+			var buildText = function(hit) { // for menu text use following fallbacks: Label -> Tooltip -> data-path.key
+				var vo = hit.m_Vo;
+				var txt = vo.getLabelText(ctx, hit);
+
+				if (!txt || txt == "") {
+					txt = vo.getTooltip(ctx, hit);
+
+					if (!txt || txt == "") {
+						txt = vo.m_DataSource.m_Path + "." + vo.m_DataSource.GetCurrentElement(ctx).GetKeyValue();
+					}
+				}
+				return txt;
+			};
+
+			hitTests.sort(function(a,b) {
+				if (!a.txt) {
+					a.txt = buildText(a);
+				}
+				if (!b.txt) {
+					b.txt = buildText(b);
+				}
+				return a.txt.localeCompare(b.txt, language);
+			});
+
+			hitTests.forEach(function(hit) {
+				menu.addItem(new MenuItem({
+					text: hit.txt,
+					select: function() {
+						event.hitCached = hit;
+						hit.m_Vo["on" + event.m_evName](event);
+					}
+				}));
+			});
+			ctx.m_HitMenu = menu;
+			menu.open(true, 0, "begin top", "begin top", scene.m_Div, (parseInt(pos.x, 10) + 5) +" " + (parseInt(pos.y, 10) + 5), "fit");
+		});
+	};
+
 	VBI.addSceneLassoTrackingFunctions(scene);
 	VBI.addSceneRectangularTrackingFunctions(scene);
 	scene.m_TransitionTable = scene.BuildQuarterTransistionTable();
@@ -3940,6 +4019,5 @@ VBI.GeoScene = function(target, mapmanager, maplayerstack) {
 	if (target) {
 		scene.Awake(target, mapmanager, maplayerstack);
 	}
-
 	return scene;
 };

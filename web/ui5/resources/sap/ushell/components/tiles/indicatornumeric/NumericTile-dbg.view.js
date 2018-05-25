@@ -1,5 +1,6 @@
 (function () {
-    "use strict";
+	"use strict";
+
     /*global jQuery, sap */
     /*jslint nomen: true */
     jQuery.sap.require("sap.ushell.components.tiles.indicatorTileUtils.smartBusinessUtil");

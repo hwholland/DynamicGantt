@@ -1,6 +1,6 @@
 /*!
- * SAP APF Analysis Path Framework
+ * SAP APF Analysis Path Framework 
  * 
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
-sap.ui.jsview("sap.apf.ui.reuse.view.stepContainer",{getStepToolbar:function(){return this.oStepToolbar;},getControllerName:function(){return"sap.apf.ui.reuse.controller.stepContainer";},createContent:function(c){var v=this.getViewData();this.oStepToolbar=sap.ui.view({viewName:"sap.apf.ui.reuse.view.stepToolbar",type:sap.ui.core.mvc.ViewType.JS,viewData:v});this.stepLayout=new sap.ui.layout.VerticalLayout({content:[this.oStepToolbar],width:"100%"});this.vLayout=new sap.ui.layout.VerticalLayout({content:this.stepLayout,width:"100%"});this.vLayout.setBusy(true);return this.vLayout;}});
+(function(){"use strict";jQuery.sap.require("sap.suite.ui.commons.ChartContainer");sap.ui.jsview("sap.apf.ui.reuse.view.stepContainer",{getControllerName:function(){return"sap.apf.ui.reuse.controller.stepContainer";},createContent:function(c){if(sap.ui.Device.system.desktop){c.getView().addStyleClass("sapUiSizeCompact");}var a=new sap.suite.ui.commons.ChartContainer({id:c.createId("idChartContainer"),showFullScreen:true}).addStyleClass("chartContainer ChartArea");this.stepLayout=new sap.ui.layout.VerticalLayout({id:c.createId("idStepLayout"),content:[a],width:"100%"});this.stepLayout.setBusy(true);return this.stepLayout;}});}());

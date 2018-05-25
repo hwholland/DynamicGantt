@@ -3,7 +3,7 @@
     <name>AccessibleLandmarkRole</name>
     <derived/>
     <documentation>Defines the accessible landmark roles for ARIA support. This enumeration is used with the AccessibleRole control property.
-For more information, goto "Roles for Accessible Rich Internet Applications (WAI-ARIA Roles)" at the www.w3.org homepage.</documentation>
+For more information, goto &quot;Roles for Accessible Rich Internet Applications (WAI-ARIA Roles)&quot; at the www.w3.org homepage.</documentation>
     <enumeration>
         <value name="None">
             <documentation>No explicit role is applicable.

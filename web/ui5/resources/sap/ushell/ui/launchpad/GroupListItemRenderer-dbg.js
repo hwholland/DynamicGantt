@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap*/
 /**
  * @class GroupListItem renderer.
@@ -7,20 +7,17 @@
  * @private
  */
 
-(function () {
-    "use strict";
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.declare("sap.ushell.ui.launchpad.GroupListItemRenderer");
-    jQuery.sap.require("sap.m.ListItemBaseRenderer");
+sap.ui.define(['sap/m/ListItemBaseRenderer','sap/ushell/resources'],
+	function(ListItemBaseRenderer, resources) {
+	"use strict";
 
     /**
      * @class GroupListItem renderer.
      * @static
      */
-    sap.ushell.ui.launchpad.GroupListItemRenderer = sap.ui.core.Renderer.extend(sap.m.ListItemBaseRenderer);
-    var translationBundle = sap.ushell.resources.i18n;
+    var GroupListItemRenderer = sap.ui.core.Renderer.extend(ListItemBaseRenderer);
 
-    sap.ushell.ui.launchpad.GroupListItemRenderer.renderLIAttributes = function (rm) {
+    GroupListItemRenderer.renderLIAttributes = function (rm) {
         rm.addClass("sapUshellGroupLI");
         rm.addClass("sapUshellGroupListItem");
     };
@@ -36,7 +33,7 @@
      *            oLI an object representation of the list item control that should be
      *            rendered
      */
-    sap.ushell.ui.launchpad.GroupListItemRenderer.renderLIContent = function (rm, oLI) {
+    GroupListItemRenderer.renderLIContent = function (rm, oLI) {
         rm.write("<div");
         rm.addClass("sapMSLIDiv");
         rm.addClass("sapMSLITitleDiv");
@@ -52,11 +49,14 @@
         rm.write("<div");
         rm.addClass("sapMSLITitleOnly");
         rm.writeClasses();
-        rm.writeAccessibilityState(oLI, {label : oLI.getTitle() + translationBundle.getText("GroupListItem_label")});
         rm.write(">");
         rm.writeEscaped(oLI.getTitle());
         rm.write("</div>");
 
         rm.write("</div>");
     };
-}());
+
+
+	return GroupListItemRenderer;
+
+}, /* bExport= */ true);

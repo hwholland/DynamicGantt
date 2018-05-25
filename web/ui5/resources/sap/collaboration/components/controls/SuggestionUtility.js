@@ -1,5 +1,7 @@
 /*
-* ! @copyright@
+* ! SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
 */
 sap.ui.base.Object.extend("sap.collaboration.components.controls.SuggestionUtility",{});
 sap.collaboration.components.controls.SuggestionUtility.maintainAtMentionIndices=function(a,l){a.startIndex=a.startIndex+l;a.endIndex=a.endIndex+l;};

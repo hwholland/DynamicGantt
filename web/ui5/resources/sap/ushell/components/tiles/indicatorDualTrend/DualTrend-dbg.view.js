@@ -1,7 +1,8 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// @copyright@
 
 (function () {
-    "use strict";
+	"use strict";
+
     /*global jQuery, sap */
     /*jslint nomen: true */
 
@@ -188,6 +189,12 @@
             var oGenericTileModel = new sap.ui.model.json.JSONModel();
             oGenericTileModel.setData(oGenericTileData);
             this.oGenericTile.setModel(oGenericTileModel);
+            /* new tiles.indicatorArea.areaChartTileService({
+                tile : oNVConfContS,
+                kpiCode :'sap.hba.ecc.mm.pur.NonManagedSpend',// 'com.sap.PS.KPI10',
+                variantId : 'sap.hba.ecc.mm.pur.NonManagedSpendLast7Days',
+            });
+             */
 
             return this.oGenericTile;
         }

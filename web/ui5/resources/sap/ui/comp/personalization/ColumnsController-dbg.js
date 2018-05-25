@@ -1,9 +1,8 @@
-/* eslint-disable strict */
-
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides ColumnsController
@@ -12,25 +11,23 @@ sap.ui.define([
 ], function(jQuery, BaseController, library, Util) {
 	"use strict";
 
-	// TODO: wenn an dem Column "Freeze" gesetzt wurde, sollte die Spalte nicht mehr verschoben werden können in dem
-	// ColumnsPanel
-
 	/**
 	 * The ColumnsController can be used to...
 	 *
 	 * @class Table Personalization Controller
 	 * @extends sap.ui.comp.personalization.BaseController
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
+	 * @private
 	 * @since 1.26.0
-	 * @alias sap.ui.comp.ColumnsController
+	 * @alias sap.ui.comp.personalization.ColumnsController
 	 */
 	var ColumnsController = BaseController.extend("sap.ui.comp.personalization.ColumnsController", /** @lends sap.ui.comp.personalization.ColumnsController */
-
 	{
 		constructor: function(sId, mSettings) {
 			BaseController.apply(this, arguments);
 			this.setType(sap.m.P13nPanelType.columns);
+			this.setItemType(sap.m.P13nPanelType.columns + "Items");
 		},
 		metadata: {
 			properties: {
@@ -58,7 +55,7 @@ sap.ui.define([
 	ColumnsController.prototype.setTable = function(oTable) {
 		BaseController.prototype.setTable.apply(this, arguments);
 
-		if (oTable instanceof sap.ui.table.Table) {
+		if (this.getTableType() === sap.ui.comp.personalization.TableType.AnalyticalTable || this.getTableType() === sap.ui.comp.personalization.TableType.Table || this.getTableType() === sap.ui.comp.personalization.TableType.TreeTable) {
 			oTable.detachColumnMove(this._onColumnMove, this);
 			oTable.detachColumnVisibility(this._onColumnVisibility, this);
 			oTable.detachColumnResize(this._onColumnResize, this);
@@ -67,329 +64,229 @@ sap.ui.define([
 			oTable.attachColumnResize(this._onColumnResize, this);
 		}
 
-		// TODO: $ investigate this to avoid changing the transientData by e.g. variantChange
-		// this._syncTable2TransientModel();
-	};
-
-	ColumnsController.prototype.getTitleText = function() {
-		return sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("PERSODIALOG_TAB_COLUMNS");
-	};
-
-	ColumnsController.prototype.reducePersistentModel = function() {
-		this.syncTable2PersistentModel();
-	};
-
-	ColumnsController.prototype._virtualTable2Json = function() {
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-
-		var oPersistentDataCopy = {
-			columns: Util.copy(oData.persistentData.columns)
-		};
-		var oRestoreCopy = {
-			columns: Util.copy(this.getPersistentDataRestore().columns)
-		};
-
-		var oJsonData = this.getUnionData(oRestoreCopy, oPersistentDataCopy);
-
-		return oJsonData;
+		this._monkeyPatchTable(oTable);
 	};
 
 	/**
 	 * Does a complete JSON snapshot of the current table instance ("original") from the perspective of the columns controller; the JSON snapshot can
 	 * later be applied to any table instance to recover all columns related infos of the "original" table
 	 *
-	 * @returns {objects} JSON objects with meta data from existing table columns
+	 * @returns {object} JSON objects with meta data from existing table columns
 	 */
-	ColumnsController.prototype._getTable2Json = function() {
-		var oJsonData = this._virtualTable2Json();
-		return oJsonData;
+	ColumnsController.prototype.getColumn2Json = function(oColumn, sColumnKey, iIndex) {
+		return {
+			columnKey: sColumnKey,
+			index: iIndex,
+			visible: oColumn.getVisible(),
+			width: oColumn.getWidth ? oColumn.getWidth() : undefined,
+			total: oColumn.getSummed ? oColumn.getSummed() : undefined
+		};
+	};
+	ColumnsController.prototype.getAdditionalData2Json = function(oJsonData, oTable) {
+		oJsonData.columns.fixedColumnCount = oTable && oTable.getFixedColumnCount ? oTable.getFixedColumnCount() : undefined;
+	};
+	ColumnsController.prototype.getColumn2JsonTransient = function(oColumn, sColumnKey, sText, sTooltip) {
+		return {
+			columnKey: sColumnKey,
+			text: sText,
+			tooltip: sTooltip
+		};
 	};
 
-	/**
-	 * The restore structure is build based on <code>aColumnKeys</code> which contains all possible column keys. For those columns which are
-	 * currently not part of table only 'columnKey' and 'index' come from column.
-	 *
-	 * @param {array} aColumnKeys Contains column key of all possible column
-	 * @returns {objects} JSON objects with meta data from existing table columns
-	 */
-	ColumnsController.prototype._getTable2JsonRestore = function(aColumnKeys) {
-		var oJsonData = this.createPersistentStructure();
-		var aIgnoreColumnKeys = this.getIgnoreColumnKeys();
+	ColumnsController.prototype.handleIgnore = function(oJson, iIndex) {
+		oJson.columns.columnsItems[iIndex].visible = false;
+	};
+
+	ColumnsController.prototype.syncJson2Table = function(oJson) {
+		var oTable = this.getTable();
 		var oColumnKey2ColumnMap = this.getColumnMap();
 
-		if (aColumnKeys) {
-			aColumnKeys.forEach(function(sColumnKey, iIndex) {
-				if (aIgnoreColumnKeys.indexOf(sColumnKey) > -1) {
-					return;
-				}
-				var oColumn = oColumnKey2ColumnMap[sColumnKey];
-				oJsonData.columns.columnsItems.push({
-					columnKey: sColumnKey,
-					index: iIndex,
-					visible: oColumn ? oColumn.getVisible() : false,
-					width: oColumn ? oColumn.getWidth() : undefined,
-					total: (oColumn && oColumn.getSummed) ? oColumn.getSummed() : undefined
+		this.fireBeforePotentialTableChange();
+
+		if (this.getTable() && (this.getTableType() === sap.ui.comp.personalization.TableType.AnalyticalTable || this.getTableType() === sap.ui.comp.personalization.TableType.Table || this.getTableType() === sap.ui.comp.personalization.TableType.TreeTable)) {
+			this._applyChangesToUiTableType(oTable, oJson, oColumnKey2ColumnMap);
+		} else if (this.getTableType() === sap.ui.comp.personalization.TableType.ResponsiveTable) {
+			this._applyChangesToMTableType(oTable, oJson, oColumnKey2ColumnMap);
+		}
+
+		this.fireAfterPotentialTableChange();
+	};
+
+	/**
+	 * Similar to 'getTable2Json'.
+	 * Note: 1. If more than one 'LineItem' exists in <code>oDataSuiteFormat</code> the first one will taken over.
+	 *       2. 'Width' is not supported by Data Suite Format yet
+	 * @param {object} oDataSuiteFormat DataSuiteFormat
+	 * @returns {object}
+	 * @private
+	 */
+	ColumnsController.prototype.getDataSuiteFormat2Json = function(oDataSuiteFormat) {
+		var oJson = this.createControlDataStructure();
+		var fnAddProperty = function(sColumnKey, sPropertyName, oPropertyValue) {
+			var iIndex = Util.getIndexByKey("columnKey", sColumnKey, oJson.columns.columnsItems);
+			if (iIndex < 0) {
+				iIndex = oJson.columns.columnsItems.length;
+				oJson.columns.columnsItems.splice(iIndex, 0, {
+					columnKey: sColumnKey
 				});
+			}
+			oJson.columns.columnsItems[iIndex][sPropertyName] = oPropertyValue;
+		};
+
+		// Based on 'controlDataInitial' set all 'visible' columns as 'invisible'
+		this.getControlDataInitial().columns.columnsItems.filter(function(oMItem) {
+			return oMItem.visible === true;
+		}).forEach(function(oMItem) {
+			fnAddProperty(oMItem.columnKey, "visible", false);
+		});
+
+		// Take over 'Visualizations'
+		if (oDataSuiteFormat.Visualizations && oDataSuiteFormat.Visualizations.length) {
+			var aLineItemVisualizations = oDataSuiteFormat.Visualizations.filter(function(oVisualization) {
+				return oVisualization.Type === "LineItem";
 			});
-			return oJsonData;
-		}
-		return this._getTable2Json();
-	};
-
-	ColumnsController.prototype.syncTable2PersistentModel = function() {
-
-		// first put table representation into persistentData - full json representation
-		BaseController.prototype.syncTable2PersistentModel.apply(this, arguments);
-
-		// now reduce persistentData by subtracting the restoreJson from the full json representation
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-		var oDelta = this.getChangeData(oData.persistentData, this.getTableRestoreJson());
-
-		if (oDelta) {
-			oData.persistentData.columns = oDelta.columns;
-		} else {
-			oData.persistentData.columns.columnsItems = [];
-		}
-	};
-
-	ColumnsController.prototype.syncTable2TransientModel = function() {
-		// this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.columns.items = jQuery.extend(true, [],
-		// this._aInitialTransientItems);
-		// TODO: see ($)
-		this._syncTable2TransientModel();
-	};
-
-	ColumnsController.prototype._determineTooltipText = function(oObject) {
-		var sTooltip = null;
-
-		if (oObject && oObject.getTooltip) {
-
-			// first check whether actual object is extended by TooltipBase
-			if (oObject.getTooltip() instanceof sap.ui.core.TooltipBase) {
-				sTooltip = oObject.getTooltip().getTooltip_Text();
-			} else {
-				sTooltip = oObject.getTooltip_Text();
-			}
-
-			// If no tooltip exist now -> check whether oObject is of type analyticalColumn -> that have it's own way to get the tooltip via binding
-			if (!sTooltip && oObject instanceof sap.ui.table.AnalyticalColumn) {
-				sTooltip = oObject.getTooltip_AsString();
-			}
-
-			// for all other try to get tooltip from assigned label
-			if (!sTooltip && oObject.getLabel && oObject.getLabel().getTooltip_Text) {
-				sTooltip = oObject.getLabel().getTooltip_Text();
+			if (aLineItemVisualizations.length) {
+				aLineItemVisualizations[0].Content.forEach(function(oContent, iIndex) {
+					fnAddProperty(oContent.Value, "visible", true);
+					fnAddProperty(oContent.Value, "index", iIndex);
+				}, this);
 			}
 		}
 
-		return sTooltip;
-	};
-
-	ColumnsController.prototype._syncTable2TransientModel = function() {
-		var oTable = this.getTable();
-		var aItems = [];
-		var sColumnKey;
-		var oColumn;
-
-		if (oTable) {
-			var oColumnKey2ColumnMap = this.getColumnMap(true);
-
-			if (oTable instanceof sap.ui.table.Table) {
-				for (sColumnKey in oColumnKey2ColumnMap) {
-					oColumn = oColumnKey2ColumnMap[sColumnKey];
-					var sTooltip = this._determineTooltipText(oColumn);
-					aItems.push({
-						columnKey: sColumnKey,
-						text: oColumn.getLabel().getText(),
-						tooltip: sTooltip,
-						visible: oColumn.getVisible(),
-						width: oColumn.getWidth(),
-						total: (oColumn && oColumn.getSummed) ? oColumn.getWidth() : undefined
-					});
-				}
-			} else {
-				if (oTable instanceof sap.m.Table) {
-					for (sColumnKey in oColumnKey2ColumnMap) {
-						oColumn = oColumnKey2ColumnMap[sColumnKey];
-						aItems.push({
-							columnKey: sColumnKey,
-							text: oColumn.getHeader().getText(),
-							tooltip: (oColumn.getHeader().getTooltip() instanceof sap.ui.core.TooltipBase) ? oColumn.getHeader().getTooltip().getTooltip_Text() : oColumn.getHeader().getTooltip_Text(),
-							visible: oColumn.getVisible(),
-							width: oColumn.getWidth()
-						});
-					}
-				}
-			}
+		// Take over 'Total'
+		if (oDataSuiteFormat.Total && oDataSuiteFormat.Total.length) {
+			oDataSuiteFormat.Total.forEach(function(sColumnKey) {
+				fnAddProperty(sColumnKey, "total", true);
+			});
 		}
-
-		// check if Items was changed at all and take over if it was changed
-		var aItemsBefore = this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.columns.items;
-		if (jQuery(aItems).not(aItemsBefore).length !== 0 || jQuery(aItemsBefore).not(aItems).length !== 0) {
-			this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.columns.items = aItems;
-		}
-
-		// TODO: see ($)
-		// this._aInitialTransientItems = jQuery.extend(true, [],
-		// this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.columns.items);
+		return oJson;
 	};
-
 	/**
-	 * Set index into existing columnsItem. If it does not exist create new columnsItem with new index
-	 *
-	 * @param {object} oData is the JSON based model data wherein the index shall be manipulated
-	 * @param {object} oColumn is the table column
-	 * @param {integer} iNewIndex is the index value that shall be set
-	 * @private
+	 * Creates, if not already exists, property <code>Visualizations</code> in <code>oDataSuiteFormat</code> object if at least one column item exists. Adds an entry for in <code>Visualizations</code> for each visible column of the current ControlDataReduce snapshot.
+	 * Additionally creates property <code>Total</code> in <code>oDataSuiteFormat</code> object if at least one column item with 'total=true' exists. The <code>Total</code> contains the current ControlDataReduce snapshot.
+	 * <b>Note:</b> the 'Label' property is not filled because it is translated text. For example if person 'A' sends via email the DataSuiteFormat in language 'a' the recipient person 'B' will be see the data in language 'a' instead of 'b'.
+	 * @param {object} oDataSuiteFormat Structure of Data Suite Format
 	 */
-	ColumnsController.prototype._setNewColumnItemIndex = function(oData, oColumn, iNewIndex) {
-		var iColumnsItemIndex = -1;
+	ColumnsController.prototype.getDataSuiteFormatSnapshot = function(oDataSuiteFormat) {
+		var oControlDataTotal = this.getUnionData(this.getControlDataInitial(), this.getControlData());
+		if (!oControlDataTotal.columns || !oControlDataTotal.columns.columnsItems || !oControlDataTotal.columns.columnsItems.length) {
+			return;
+		}
 
-		if (oColumn && iNewIndex !== null && iNewIndex !== undefined && iNewIndex > -1) {
-			iColumnsItemIndex = Util.getIndexByKey(oData.persistentData.columns.columnsItems, Util.getColumnKey(oColumn));
-			if (iColumnsItemIndex > -1) {
-				oData.persistentData.columns.columnsItems[iColumnsItemIndex].index = iNewIndex;
-			} else {
-				oData.persistentData.columns.columnsItems.push({
-					columnKey: Util.getColumnKey(oColumn),
-					index: iNewIndex
-				});
+		// Fill 'Total'
+		var aColumnsItemsContainingTotal = oControlDataTotal.columns.columnsItems.filter(function(oColumnsItem) {
+			return !!oColumnsItem.total;
+		});
+		if (aColumnsItemsContainingTotal.length) {
+			oDataSuiteFormat.Total = aColumnsItemsContainingTotal.map(function(oColumnsItem) {
+				return oColumnsItem.columnKey;
+			});
+		}
+
+		// Fill 'Visualizations'
+		// Filter all visible columnsItems and sort them by 'index'
+		var aColumnsItemsVisible = oControlDataTotal.columns.columnsItems.filter(function(oColumnsItem) {
+			return !!oColumnsItem.visible;
+		});
+		if (aColumnsItemsVisible.length) {
+			if (!oDataSuiteFormat.Visualizations) {
+				oDataSuiteFormat.Visualizations = [];
 			}
+			aColumnsItemsVisible.sort(this._sortByIndex);
+
+			oDataSuiteFormat.Visualizations.push({
+				Type: "LineItem",
+				Content: aColumnsItemsVisible.map(function(oColumnsItem) {
+					return {
+						Value: oColumnsItem.columnKey,
+						Label: undefined
+					};
+				})
+			});
 		}
 	};
 
-	/**
-	 * Callback method for table event: ColumnMove
-	 *
-	 * @param {object} oEvent that contains all information about that column move
-	 * @private
-	 */
 	ColumnsController.prototype._onColumnMove = function(oEvent) {
+		var iIndexTo = oEvent.getParameter("newPos");
+		var sColumnKey = Util.getColumnKey(oEvent.getParameter("column"));
+		var oControlData = this.getControlData();
+		var iIndexFrom = Util.getIndexByKey("columnKey", sColumnKey, oControlData.columns.columnsItems);
 
-		var i = 0, iNewIndex = null, oTempColumn = null;
-		var oTable = null, oData = null, oColumn = null;
-		var iNewColumnIndex = null, iOldColumnIndex = null;
-
-		// get new columns information, like new index and the columns that was moved
-		oColumn = oEvent.getParameter("column");
-		iNewColumnIndex = oEvent.getParameter("newPos");
+		if (iIndexFrom < 0 || iIndexTo < 0 || iIndexFrom > oControlData.columns.columnsItems.length - 1 || iIndexTo > oControlData.columns.columnsItems.length - 1) {
+			return;
+		}
 
 		this.fireBeforePotentialTableChange();
 
-		// calculate "old" columns information
-		if (oColumn) {
-			oTable = this.getTable();
-			iOldColumnIndex = oTable.indexOfColumn(oColumn);
-		}
+		// 1. update 'controlData'
+		var aMItem = oControlData.columns.columnsItems.splice(iIndexFrom, 1);
+		oControlData.columns.columnsItems.splice(iIndexTo, 0, aMItem[0]);
 
-		// change index property in model data of columnsItems
-		if (iOldColumnIndex !== null && iNewColumnIndex !== null) {
-			oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-
-			if (iOldColumnIndex > iNewColumnIndex) {
-				for (i = iNewColumnIndex; i <= iOldColumnIndex; i++) {
-					if (i < iOldColumnIndex) {
-						oTempColumn = oTable.getColumns()[i];
-						iNewIndex = i + 1;
-					} else {
-						oTempColumn = oColumn;
-						iNewIndex = oEvent.getParameter("newPos");
-					}
-					this._setNewColumnItemIndex(oData, oTempColumn, iNewIndex);
-				}
-			} else {
-				for (i = iOldColumnIndex; i <= iNewColumnIndex; i++) {
-					if (i === iOldColumnIndex) {
-						oTempColumn = oColumn;
-						iNewIndex = oEvent.getParameter("newPos");
-					} else {
-						oTempColumn = oTable.getColumns()[i];
-						iNewIndex = i - 1;
-					}
-					this._setNewColumnItemIndex(oData, oTempColumn, iNewIndex);
-				}
+		var iItemIndex = -1;
+		oControlData.columns.columnsItems.forEach(function(oMItem) {
+			if (oMItem.index !== undefined) {
+				oMItem.index = ++iItemIndex;
 			}
+		});
 
-			this.getModel("$sapuicomppersonalizationBaseController").setData(oData, true);
+		// 2. update 'controlDataBase'
+		this.updateControlDataBaseFromJson(oControlData);
 
-			this.fireAfterPotentialTableChange();
-
-			this.fireAfterColumnsModelDataChange();
-		}
+		this.fireAfterPotentialTableChange();
+		this.fireAfterColumnsModelDataChange();
 	};
-
-	/**
-	 * Callback method for table event: ColumnVisibility
-	 *
-	 * @param {object} oEvent that contains all information about that column visibility
-	 * @private
-	 */
 	ColumnsController.prototype._onColumnVisibility = function(oEvent) {
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-		var oColumn = oEvent.getParameter("column");
-		var bVisible = oEvent.getParameter("newVisible");
-
 		this.fireBeforePotentialTableChange();
 
-		var iIndex = Util.getIndexByKey(oData.persistentData.columns.columnsItems, Util.getColumnKey(oColumn));
-		if (iIndex > -1) {
-			oData.persistentData.columns.columnsItems[iIndex].visible = bVisible;
-		} else {
-			oData.persistentData.columns.columnsItems.push({
-				columnKey: Util.getColumnKey(oColumn),
-				visible: bVisible
-			});
-		}
-		this.getModel("$sapuicomppersonalizationBaseController").setData(oData, true);
+		this._updateInternalModel(Util.getColumnKey(oEvent.getParameter("column")), "visible", oEvent.getParameter("newVisible"));
 
 		this.fireAfterPotentialTableChange();
-
 		this.fireAfterColumnsModelDataChange();
 	};
-
 	ColumnsController.prototype._onColumnTotal = function(oParams) {
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-		var oColumn = oParams.column;
-		var bIsSummed = oParams.isSummed;
-
 		this.fireBeforePotentialTableChange();
 
-		var iIndex = Util.getIndexByKey(oData.persistentData.columns.columnsItems, Util.getColumnKey(oColumn));
-		if (iIndex > -1) {
-			oData.persistentData.columns.columnsItems[iIndex].total = bIsSummed;
-		} else {
-			oData.persistentData.columns.columnsItems.push({
-				columnKey: Util.getColumnKey(oColumn),
-				total: bIsSummed
-			});
-		}
-		this.getModel("$sapuicomppersonalizationBaseController").setData(oData, true);
+		this._updateInternalModel(Util.getColumnKey(oParams.column), "total", oParams.isSummed);
 
 		this.fireAfterPotentialTableChange();
-
 		this.fireAfterColumnsModelDataChange();
 	};
-
 	ColumnsController.prototype._onColumnResize = function(oEvent) {
-		var oColumn = oEvent.getParameter("column");
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-
 		this.fireBeforePotentialTableChange();
 
-		var iIndex = Util.getIndexByKey(oData.persistentData.columns.columnsItems, Util.getColumnKey(oColumn));
-		if (iIndex > -1) {
-			oData.persistentData.columns.columnsItems[iIndex].width = oEvent.getParameter("width");
-		} else {
-			oData.persistentData.columns.columnsItems.push({
-				columnKey: Util.getColumnKey(oColumn),
-				width: oEvent.getParameter("width")
-			});
-		}
-		this.getModel("$sapuicomppersonalizationBaseController").setData(oData, true);
+		this._updateInternalModel(Util.getColumnKey(oEvent.getParameter("column")), "width", oEvent.getParameter("width"));
 
 		this.fireAfterPotentialTableChange();
-
 		this.fireAfterColumnsModelDataChange();
+	};
+	ColumnsController.prototype._onColumnFixedCount = function(iFixedColumnCount) {
+		this.fireBeforePotentialTableChange();
+
+		// 1. update 'controlData'
+		var oControlData = this.getControlData();
+		this.getInternalModel().setProperty("/controlData/columns/fixedColumnCount", iFixedColumnCount);
+
+		// 2. update 'controlDataBase'
+		this.updateControlDataBaseFromJson(oControlData);
+
+		this.fireAfterPotentialTableChange();
+		this.fireAfterColumnsModelDataChange();
+	};
+	ColumnsController.prototype._updateInternalModel = function(sColumnKey, sPropertyName, vPropertyValue) {
+		if (!sColumnKey || !sPropertyName) {
+			return;
+		}
+
+		// 1. update / insert columnsItem in 'controlData'
+		var oControlData = this.getControlData();
+		var iIndex = Util.getIndexByKey("columnKey", sColumnKey, oControlData.columns.columnsItems);
+		if (iIndex < 0) {
+			throw "No entry found in 'controlDataBase' for columnKey '" + sColumnKey + "'";
+		}
+		this.getInternalModel().setProperty("/controlData/columns/columnsItems/" + iIndex + "/" + sPropertyName, vPropertyValue);
+
+		// 2. update 'controlDataBase'
+		this.updateControlDataBaseFromJson(oControlData);
 	};
 
 	/**
@@ -409,21 +306,18 @@ sap.ui.define([
 		if (oPayload && oPayload.visibleItemsThreshold) {
 			iVisibleItemsThreshold = oPayload.visibleItemsThreshold;
 		}
-		var oPanel = new sap.m.P13nColumnsPanel({
-			title: this.getTitleText(),
+		return new sap.m.P13nColumnsPanel({
 			visibleItemsThreshold: iVisibleItemsThreshold,
 			items: {
-				path: '$sapmP13nPanel>/transientData/columns/items',
+				path: '$sapmP13nPanel>/transientData/columns/columnsItems',
 				template: new sap.m.P13nItem({
 					columnKey: '{$sapmP13nPanel>columnKey}',
 					text: '{$sapmP13nPanel>text}',
-					visible: '{$sapmP13nPanel>visible}',
-					tooltip: '{$sapmP13nPanel>tooltip}',
-					width: "{$sapmP13nPanel>width}"
+					tooltip: '{$sapmP13nPanel>tooltip}'
 				})
 			},
 			columnsItems: {
-				path: "$sapmP13nPanel>/persistentData/columns/columnsItems",
+				path: "$sapmP13nPanel>/controlDataReduce/columns/columnsItems",
 				template: new sap.m.P13nColumnsItem({
 					columnKey: "{$sapmP13nPanel>columnKey}",
 					index: "{$sapmP13nPanel>index}",
@@ -432,255 +326,19 @@ sap.ui.define([
 					total: "{$sapmP13nPanel>total}"
 				})
 			},
-			beforeNavigationTo: that.setModelFunction()
+			beforeNavigationTo: this.setModelFunction(),
+			changeColumnsItems: function(oEvent) {
+				if (!oEvent.getParameter("items")) {
+					return;
+				}
+				// We can not just take over the 'items' from P13nColumnsPanel and overwrite the 'controlDataReduce' because we
+				// would lost information on 'columns' branch like 'fixedColumnCount'.
+				// Note: the 'items' structure is equal to the 'controlDataReduce' so we can take over 'items' at once (different in DimeasureController).
+				var oControlDataReduce = that.getControlDataReduce();
+				oControlDataReduce.columns.columnsItems = oEvent.getParameter("items");
+				that.setControlDataReduce2Model(oControlDataReduce);
+			}
 		});
-
-		oPanel.attachChangeColumnsItems(function(oEvent) {
-			var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-			var aNewColumnsItems = oEvent.getParameter('newItems');
-			var aExistingColumnsItems = oEvent.getParameter('existingItems');
-			var oColumnsItem = null, sColumnKey = null;
-
-			if (aNewColumnsItems) {
-				aNewColumnsItems.forEach(function(oNewColumnsItem) {
-					oColumnsItem = {
-						columnKey: oNewColumnsItem.getColumnKey()
-					};
-					if (oNewColumnsItem.getIndex() !== undefined) {
-						oColumnsItem.index = oNewColumnsItem.getIndex();
-					}
-					if (oNewColumnsItem.getVisible() !== undefined) {
-						oColumnsItem.visible = oNewColumnsItem.getVisible();
-					}
-					if (oNewColumnsItem.getWidth() !== undefined) {
-						oColumnsItem.width = oNewColumnsItem.getWidth();
-					}
-					if (oNewColumnsItem.getTotal() !== undefined) {
-						oColumnsItem.total = oNewColumnsItem.getTotal();
-					}
-					oData.persistentData.columns.columnsItems.push(oColumnsItem);
-				});
-			}
-
-			if (aExistingColumnsItems) {
-				aExistingColumnsItems.forEach(function(oExistingColumnsItem) {
-					oColumnsItem = null;
-					sColumnKey = oExistingColumnsItem.getColumnKey();
-					oColumnsItem = Util.getArrayElementByKey("columnKey", sColumnKey, oData.persistentData.columns.columnsItems);
-					if (oColumnsItem) {
-						if (oExistingColumnsItem.getIndex() !== undefined) {
-							oColumnsItem.index = oExistingColumnsItem.getIndex();
-						}
-						if (oExistingColumnsItem.getVisible() !== undefined) {
-							oColumnsItem.visible = oExistingColumnsItem.getVisible();
-						}
-						if (oExistingColumnsItem.getWidth() !== undefined) {
-							oColumnsItem.width = oExistingColumnsItem.getWidth();
-						}
-						if (oExistingColumnsItem.getTotal() !== undefined) {
-							oColumnsItem.total = oExistingColumnsItem.getTotal();
-						}
-					}
-				});
-			}
-
-		}, this);
-
-		oPanel.attachSetData(function() {
-			var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-			this.getModel("$sapuicomppersonalizationBaseController").setData(oData);
-		}, this);
-
-		this._correctColumnsItemsInPersistentData();
-		return oPanel;
-	};
-
-	/**
-	 * Callback from main controller after Reset button has been executed.
-	 *
-	 * @param {object} oPayload that contains additional information from the panel
-	 */
-	ColumnsController.prototype.onAfterReset = function(oPayload) {
-		var oPanel = null;
-		if (oPayload && oPayload.columns && oPayload.columns.oPanel) {
-			oPanel = oPayload.columns.oPanel;
-			oPanel.reInitialize();
-		}
-	};
-
-	/**
-	 * Callback from main controller after OK button has been executed.
-	 *
-	 * @param {object} oPayload that contains additional information from the panel
-	 */
-	ColumnsController.prototype.onAfterSubmit = function(oPayload) {
-		this._correctColumnsItemsInPersistentData(oPayload);
-		BaseController.prototype.onAfterSubmit.apply(this, arguments);
-	};
-
-	ColumnsController.prototype._correctColumnsItemsInPersistentData = function(oPayload) {
-		this._removeIndexFromInvisibleColumnsItems();
-		this._removeEmptyColumnsItems();
-		if (oPayload) {
-			this._correctColumnsItemIndexesBasedOnPayload(oPayload);
-		}
-	};
-
-	/**
-	 * This method recalculates indexes of all that columnsItems, which exist in payload -> selectedItems
-	 *
-	 * @param {object} oPayload is an object that contains additional columnsPanel data, like list of selected items
-	 */
-	ColumnsController.prototype._correctColumnsItemIndexesBasedOnPayload = function(oPayload) {
-		var aColumnsItems = this.getModel("$sapuicomppersonalizationBaseController").getData().persistentData.columns.columnsItems;
-		var oColumnsItem = null, iIndex = null, sColumnKey = null, iRunningTableIndex = -1;
-
-		if (aColumnsItems && aColumnsItems.length > 0) {
-			if (oPayload && oPayload.columns && oPayload.columns.tableItemsChanged) {
-
-				oPayload.columns.selectedItems.forEach(function(oSelectedItem, iSelectedItemIndex) {
-					iIndex = oColumnsItem = null;
-
-					sColumnKey = oSelectedItem.columnKey;
-					oColumnsItem = Util.getArrayElementByKey("columnKey", sColumnKey, aColumnsItems);
-					if (oColumnsItem && oColumnsItem.index !== undefined && oColumnsItem.index !== null) {
-						iIndex = oColumnsItem.index;
-					}
-					if (iIndex === null || iIndex === undefined) {
-						iIndex = iSelectedItemIndex;
-					}
-
-					/*
-					 * Now consider special cases for indexes from existing columnsItems -> adapt iIndex
-					 */
-
-					// 1.) iIndex is lower than actual running sequence index -> increase the index to next higher index
-					if (iIndex <= iRunningTableIndex) {
-						iIndex = iRunningTableIndex + 1;
-					}
-
-					// 2.) iIndex is more than one sequence step away from actual running table index -> remove the gap
-					if (Math.abs(iIndex - iRunningTableIndex) > 1) {
-						iIndex = iRunningTableIndex + 1;
-					}
-
-					// write back new calculated index property value into actual columnsItem
-					if (oColumnsItem) {
-						oColumnsItem.index = iIndex;
-					} else {
-						oColumnsItem = {
-							"columnKey": sColumnKey,
-							"index": iIndex
-						};
-						aColumnsItems.push(oColumnsItem);
-					}
-
-					iRunningTableIndex = iIndex;
-				});
-			}
-		}
-	};
-
-	/**
-	 * This method removes all columnsItems that have no useful fill properties
-	 */
-	ColumnsController.prototype._removeEmptyColumnsItems = function() {
-		var aColumnsItems = this.getModel("$sapuicomppersonalizationBaseController").getData().persistentData.columns.columnsItems;
-		var i = 0, iLength = 0, oColumnsItem = null;
-
-		if (aColumnsItems && aColumnsItems.length) {
-			iLength = aColumnsItems.length;
-			for (i = 0; i < iLength; i++) {
-				oColumnsItem = aColumnsItems[i];
-				if (oColumnsItem) {
-					if (oColumnsItem.index !== null && oColumnsItem.index !== undefined) {
-						continue;
-					}
-					if (oColumnsItem.visible !== null && oColumnsItem.visible !== undefined) {
-						continue;
-					}
-					if (oColumnsItem.width !== null && oColumnsItem.width !== undefined) {
-						continue;
-					}
-					if (oColumnsItem.total !== null && oColumnsItem.total !== undefined) {
-						continue;
-					}
-					aColumnsItems.splice(i, 1);
-					i -= 1;
-				}
-			}
-		}
-	};
-
-	/**
-	 * Removes the index property of <code>columnsItems</code> in persistent model data. If a <code>columnsItem</code> contains an index property
-	 * but the same item is not visible (visible = false), the <code>index</code> property is removed. As a result, such a column is rearranged in
-	 * alphabetically sorted columns list at the end of unselected columns inside the <code>P13nColumnsPanel</code>. For all the following
-	 * <code>columnsItems</code> that contain an <code>index</code>property this correction has to be made as many times as
-	 * <code>columnsItems</code> properties have been corrected.
-	 */
-	ColumnsController.prototype._removeIndexFromInvisibleColumnsItems = function() {
-		var aColumnsItems = null, aItems = null, oItem = null, iIndexReduceFactor = 0;
-		var oPersistentData = this.getModel("$sapuicomppersonalizationBaseController").getData().persistentData;
-		var oTransientData = this.getModel("$sapuicomppersonalizationBaseController").getData().transientData;
-		var bVisible = null;
-
-		if (oPersistentData && oPersistentData.columns && oPersistentData.columns.columnsItems) {
-			aColumnsItems = oPersistentData.columns.columnsItems;
-			this._sortArrayByPropertyName(aColumnsItems, "index");
-		}
-
-		if (oTransientData && oTransientData.columns && oTransientData.columns.items) {
-			aItems = oTransientData.columns.items;
-		}
-
-		if (aColumnsItems && aColumnsItems.length) {
-			aColumnsItems.forEach(function(oColumnsItem) {
-				oItem = bVisible = null;
-
-				if (oColumnsItem.index !== undefined) {
-					bVisible = oColumnsItem.visible;
-					if (bVisible === undefined || bVisible === null) {
-						oItem = Util.getArrayElementByKey("columnKey", oColumnsItem.columnKey, aItems);
-						if (oItem && oItem.visible !== undefined) {
-							bVisible = oItem.visible;
-						}
-					}
-
-					if (bVisible === false) {
-						// if visible property of current columnsItem is FALSE & it contains an index property -> remove this index
-						// property AND increase the indexReduceFactor
-						delete oColumnsItem.index;
-						iIndexReduceFactor += 1;
-					} else {
-						// But if visible property of current columnsItem is TRUE -> correct the index property according the
-						// indexReduceFactor
-						// An indexReduceFactor > 0 means that for at least one columnsItem the index was removed and for all
-						// following the index property has to be correct by the indexReduceFactor
-						if (oColumnsItem.index > 0 && oColumnsItem.index >= iIndexReduceFactor) {
-							oColumnsItem.index -= iIndexReduceFactor;
-						}
-					}
-				}
-			});
-		}
-	};
-
-	ColumnsController.prototype.syncJsonModel2Table = function(oJsonModel) {
-		var oTable = this.getTable();
-		var aItems = oJsonModel.columns.columnsItems;
-
-		this.fireBeforePotentialTableChange();
-
-		// Apply changes to a UI table
-		if (oTable instanceof sap.ui.table.Table) {
-			this._applyChangesToUiTableType(oTable, aItems);
-		} else if (oTable instanceof sap.m.Table) {
-			// Apply changes to a UI table
-			this._applyChangesToMTableType(oTable, aItems);
-		}
-
-		this.fireAfterPotentialTableChange();
 	};
 
 	/**
@@ -705,40 +363,38 @@ sap.ui.define([
 	/**
 	 * Applies changes to a table of type UI table
 	 *
-	 * @param {object} oTable is the table where all personalization changes shall be allied to
-	 * @param {array} aColumnsItems is an array with changes that shall be applied to oTable
+	 * @param {object} oTable The table where all personalization changes shall be allied to
+	 * @param {object} oJson An object with changes that shall be applied to oTable
+	 * @param {object} oColumnKey2ColumnMap An object with columnKey as key and column as value
 	 */
-	ColumnsController.prototype._applyChangesToUiTableType = function(oTable, aColumnsItems) {
+	ColumnsController.prototype._applyChangesToUiTableType = function(oTable, oJson, oColumnKey2ColumnMap) {
 		var oColumn = null;
 		var oColumnsItemsMap = {};
-		var iFixedColumnCount = oTable.getFixedColumnCount();
-		var iFixedColumnIndex = iFixedColumnCount === 0 ? iFixedColumnCount : iFixedColumnCount - 1;
 		var that = this;
 
-		var fSetOrderArray = function(aColumnsItems_, aColumnKeys) {
-			var aResult = [];
+		var fSetOrderArray = function(aColumnsItems, aColumnKeys) {
 			// organize columnsItems by it's index to apply them in the right order
-			aColumnsItems_.sort(that._sortByIndex);
-
-			aColumnsItems_.forEach(function(oColumnsItem) {
-				aResult.push(oColumnsItem.columnKey);
+			aColumnsItems.forEach(function(oColumnsItem) {
 				oColumnsItemsMap[oColumnsItem.columnKey] = oColumnsItem;
 			});
 
+			aColumnsItems.sort(that._sortByIndex);
+			var aColumnsItemsSortedByIndex = aColumnsItems.map(function(oColumnsItem) {
+				return oColumnsItem.columnKey;
+			});
+
 			aColumnKeys.forEach(function(sColumnKey, iIndex) {
-				if (aResult.indexOf(sColumnKey) < 0) {
-					aResult.splice(iIndex, 0, sColumnKey);
+				if (aColumnsItemsSortedByIndex.indexOf(sColumnKey) < 0) {
+					aColumnsItemsSortedByIndex.splice(iIndex, 0, sColumnKey);
 				}
 			});
-			return aResult;
+			return aColumnsItemsSortedByIndex;
 		};
 
 		var fSetVisibility = function(sColumnKey, oColumn) {
 			// Apply column visibility
 			var oColumnsItem = oColumnsItemsMap[sColumnKey];
 			if (oColumnsItem && oColumnsItem.visible !== undefined && oColumn.getVisible() !== oColumnsItem.visible) {
-				// TODO: was ist mit Binding, wenn das "Visible" Property im XML view gebunden ist?
-				// In dem Beispiel von Markus K. wird die Spalte "Document Number" nicht auf Invisible gesetzt.
 				oColumn.setVisible(oColumnsItem.visible, true);
 			}
 		};
@@ -754,23 +410,6 @@ sap.ui.define([
 					oTable.removeColumn(oColumn, true);
 				}
 				oTable.insertColumn(oColumn, iModelColumnIndex, true);
-
-				// TODO: we would like to avoid "removeColumn" completely, however, only doing an insert produces incorrect result (in certain cases)
-				// - problem in
-				// Analytical Table ?
-				// if (iTableColumnIndex > -1) {
-				// // so column is already existing in table
-				// if (iTableColumnIndex < iModelColumnIndex) {
-				// // it was to the left of its new position
-				// iModelColumnIndex++;
-				// }
-				// }
-
-				// Remove "freeze" if a column was moved from the frozen zone out or column was moved inside of frozen zone.
-				// Allowed is only column move outside of frozen zone.
-				if (!(iTableColumnIndex > iFixedColumnIndex && iModelColumnIndex > iFixedColumnIndex)) {
-					oTable.setFixedColumnCount(0, true);
-				}
 			}
 		};
 
@@ -783,17 +422,16 @@ sap.ui.define([
 		};
 
 		var fSetTotal = function(sColumnKey, oColumn) {
-			// Apply column width
+			// Apply column summed
 			var oColumnsItem = oColumnsItemsMap[sColumnKey];
 			if (oColumnsItem && oColumnsItem.total !== undefined && oColumn.getSummed && oColumn.getSummed() !== oColumnsItem.total) {
 				oColumn.setSummed(oColumnsItem.total, true);
 			}
 		};
 
-		if (aColumnsItems.length) {
+		if (oJson.columns.columnsItems.length) {
 			// apply columnsItems
-			var aColumnsItemsArray = fSetOrderArray(aColumnsItems, this._aColumnKeys);
-			var oColumnKey2ColumnMap = this.getColumnMap();
+			var aColumnsItemsArray = fSetOrderArray(oJson.columns.columnsItems, this.getColumnKeys());
 			aColumnsItemsArray.forEach(function(sColumnKey, iIndex) {
 				oColumn = oColumnKey2ColumnMap[sColumnKey];
 				if (oColumn) {
@@ -804,17 +442,23 @@ sap.ui.define([
 				}
 			});
 		}
+
+		// Apply table 'fixedColumnCount'
+		var iFixedColumnCount = oJson.columns.fixedColumnCount || 0;
+		if (oTable.getFixedColumnCount && oTable.getFixedColumnCount() !== iFixedColumnCount) {
+			oTable.setFixedColumnCount(iFixedColumnCount, true);
+		}
 	};
 
 	/**
 	 * Applies changes to a table of type M table
 	 *
-	 * @param {object} oTable is the table where all personalization changes shall be allied to
-	 * @param {array} aColumnsItems is an array with changes that shall be applied to oTable
+	 * @param {object} oTable The table where all personalization changes shall be allied to
+	 * @param {object} oJson An object with changes that shall be applied to oTable
+	 * @param {object} oColumnKey2ColumnMap An object with columnKey as key and column as value
 	 */
-	ColumnsController.prototype._applyChangesToMTableType = function(oTable, aColumnsItems) {
+	ColumnsController.prototype._applyChangesToMTableType = function(oTable, oJson, oColumnKey2ColumnMap) {
 		var bTableInvalidateNeeded = false;
-		var oColumnKey2ColumnMap = this.getColumnMap();
 
 		var fSetOrder = function(oColumnsItem, oColumn) {
 			// Apply column order
@@ -834,8 +478,8 @@ sap.ui.define([
 		};
 
 		// organize columnsItems by it's index to apply them in the right order
-		if (aColumnsItems.length) {
-			aColumnsItems.sort(function(a, b) {
+		if (oJson.columns.columnsItems.length) {
+			oJson.columns.columnsItems.sort(function(a, b) {
 				if (a.index < b.index) {
 					return -1;
 				}
@@ -846,7 +490,7 @@ sap.ui.define([
 			});
 
 			// apply columnsItems
-			aColumnsItems.forEach(function(oColumnsItem) {
+			oJson.columns.columnsItems.forEach(function(oColumnsItem) {
 				var oColumn = oColumnKey2ColumnMap[oColumnsItem.columnKey];
 				if (oColumn) {
 					fSetOrder(oColumnsItem, oColumn);
@@ -864,20 +508,22 @@ sap.ui.define([
 	 * Operations on columns are processed every time directly at the table. In case that something has been changed via Personalization Dialog or via
 	 * user interaction at table, change is applied to the table.
 	 *
-	 * @param {object} oPersistentDataBase (new) JSON object
-	 * @param {object} oPersistentDataCompare (old) JSON object
+	 * @param {object} oControlDataReduceBase (new) JSON object
+	 * @param {object} oControlDataReduceCompare (old) JSON object
 	 * @returns {object} that represents the change type, like: Unchanged || TableChanged || ModelChanged
 	 */
-	ColumnsController.prototype.getChangeType = function(oPersistentDataBase, oPersistentDataCompare) {
-		var oChangeData = this.getChangeData(oPersistentDataBase, oPersistentDataCompare);
-		var bNeedModelChange;
-		var that = this;
+	ColumnsController.prototype.getChangeType = function(oControlDataReduceBase, oControlDataReduceCompare) {
+		var oChangeData = this.getChangeData(oControlDataReduceBase, oControlDataReduceCompare);
+		// analytical table needs to re-read data from backend even in case a column was made invisible !
+		var bNeedModelChange = this.getTableType() === sap.ui.comp.personalization.TableType.AnalyticalTable || this.getTriggerModelChangeOnColumnInvisible();
 		if (oChangeData) {
 			var oChangeType = sap.ui.comp.personalization.ChangeType.TableChanged;
 			oChangeData.columns.columnsItems.some(function(oItem) {
-				// analytical table needs to re-read data from backend even in case a column was made invisible !
-				bNeedModelChange = that.getTable() instanceof sap.ui.table.AnalyticalTable || that.getTriggerModelChangeOnColumnInvisible();
 				if (oItem.visible || (oItem.visible === false && bNeedModelChange)) {
+					oChangeType = sap.ui.comp.personalization.ChangeType.ModelChanged;
+					return true;
+				}
+				if (oItem.total === false || oItem.total === true) {
 					oChangeType = sap.ui.comp.personalization.ChangeType.ModelChanged;
 					return true;
 				}
@@ -888,27 +534,28 @@ sap.ui.define([
 	};
 
 	/**
-	 * Result is XOR based difference = oPersistentDataBase - oPersistentDataCompare (new - old)
+	 * Result is XOR based difference = oControlDataReduceBase - oControlDataReduceCompare (new - old)
 	 *
-	 * @param {object} oPersistentDataBase (new) JSON object which represents the current model state (Restore+PersistentData)
-	 * @param {object} oPersistentDataCompare (old) JSON object which represents AlreadyKnown || Restore
+	 * @param {object} oControlDataReduceBase (new) JSON object which represents the current model state (Restore+ControlDataReduce)
+	 * @param {object} oControlDataReduceCompare (old) JSON object which represents AlreadyKnown || Restore
 	 * @returns {object} JSON object or null
 	 */
-	ColumnsController.prototype.getChangeData = function(oPersistentDataBase, oPersistentDataCompare) {
+	ColumnsController.prototype.getChangeData = function(oControlDataReduceBase, oControlDataReduceCompare) {
 		// not valid
-		if (!oPersistentDataCompare || !oPersistentDataCompare.columns || !oPersistentDataCompare.columns.columnsItems) {
+		if (!oControlDataReduceCompare || !oControlDataReduceCompare.columns || !oControlDataReduceCompare.columns.columnsItems) {
 			return null;
 		}
 
 		var oChangeData = {
-			columns: Util.copy(oPersistentDataBase.columns)
+			columns: Util.copy(oControlDataReduceBase.columns)
 		};
 
 		// If no changes inside of columns.columnsItems array, return null.
 		// Note: the order inside of columns.columnsItems array is irrelevant.
 		var bIsEqual = true;
-		oPersistentDataBase.columns.columnsItems.some(function(oItem) {
-			var oItemCompare = Util.getArrayElementByKey("columnKey", oItem.columnKey, oPersistentDataCompare.columns.columnsItems);
+		bIsEqual = (oControlDataReduceBase.columns.fixedColumnCount === oControlDataReduceCompare.columns.fixedColumnCount);
+		oControlDataReduceBase.columns.columnsItems.some(function(oItem) {
+			var oItemCompare = Util.getArrayElementByKey("columnKey", oItem.columnKey, oControlDataReduceCompare.columns.columnsItems);
 			if (!Util.semanticEqual(oItem, oItemCompare)) {
 				// Leave forEach() as there are different items
 				bIsEqual = false;
@@ -922,7 +569,7 @@ sap.ui.define([
 		// If same items are different then delete equal properties and return the rest of item
 		var aToBeDeleted = [];
 		oChangeData.columns.columnsItems.forEach(function(oItem, iIndex) {
-			var oItemCompare = Util.getArrayElementByKey("columnKey", oItem.columnKey, oPersistentDataCompare.columns.columnsItems);
+			var oItemCompare = Util.getArrayElementByKey("columnKey", oItem.columnKey, oControlDataReduceCompare.columns.columnsItems);
 			if (Util.semanticEqual(oItem, oItemCompare)) {
 				// Condenser: remove items which are not changed in a chain
 				aToBeDeleted.push(oItem);
@@ -945,10 +592,14 @@ sap.ui.define([
 			}
 		});
 		aToBeDeleted.forEach(function(oItem) {
-			var iIndex = Util.getIndexByKey(oChangeData.columns.columnsItems, oItem.columnKey);
+			var iIndex = Util.getIndexByKey("columnKey", oItem.columnKey, oChangeData.columns.columnsItems);
 			oChangeData.columns.columnsItems.splice(iIndex, 1);
 		});
 
+		// If 'fixedColumnCount' is default then delete it
+		if (oChangeData.columns.fixedColumnCount === 0) {
+			delete oChangeData.columns.fixedColumnCount;
+		}
 		return oChangeData;
 	};
 
@@ -958,7 +609,7 @@ sap.ui.define([
 	 * @param {array} aArrayToBeSorted is the array that shall be sorted by the given property
 	 * @param {string} sPropertyName is the property name that shall be taken as sorting criteria
 	 * @param {Boolean} bTakeACopy is optional and desides whether the given arry shall be copied before its content will be sorted
-	 * @returns {array} aSortedArray is the sorted array
+	 * @returns {object[]} aSortedArray is the sorted array
 	 */
 	ColumnsController.prototype._sortArrayByPropertyName = function(aArrayToBeSorted, sPropertyName, bTakeACopy) {
 		var aSortedArray = [];
@@ -987,155 +638,124 @@ sap.ui.define([
 				return 0;
 			});
 		}
-
 		return aSortedArray;
 	};
 
 	/**
-	 * Sorts a given array by a well-defined property name of its included objects. If required, the array is copied before.
-	 *
-	 * @param {array} aObjects is the array of objects in which the index properties are changed; aObjects needs to be sorted by the index property
-	 * @param {int} iStartIndex is the start index from where the index properties shall be changed
-	 * @param {int} iEndIndex is the end index to where the index properties shall be changed
+	 * Returns copy of 'updated' oJsonBase from oJson (update on attribute level). If an item of oJson does not exist in
+	 * oJsonBase then we take over complete oJson item.
+	 * @param {object} oJsonBase: JSON object to which different properties from JSON oJson are added
+	 * @param {object} oJson: JSON object from where the different properties are added to oJsonBase
+	 * @returns {object} new JSON object as union result of oJsonBase and oJson
 	 */
-	ColumnsController.prototype._recalculateIndexes = function(aObjects, iStartIndex, iEndIndex) {
-		var iMinIndex = null, iMaxIndex = null, iMaxArrayIndex = null;
-
-		if (!aObjects || !aObjects.length) {
-			return;
+	ColumnsController.prototype.getUnionData = function(oJsonBase, oJson) {
+		if (!oJson || !oJson.columns || !oJson.columns.columnsItems) {
+			return Util.copy(oJsonBase);
 		}
+		var oUnion = Util.copy(oJson);
 
-		iMaxArrayIndex = aObjects.length - 1;
-
-		if (iStartIndex === null || iStartIndex === undefined || iStartIndex < 0 || iEndIndex === null || iEndIndex === undefined || iEndIndex < 0 || iEndIndex > iMaxArrayIndex || iStartIndex === iEndIndex) {
-			return;
-		}
-
-		iMinIndex = Math.min(iStartIndex, iEndIndex);
-		iMaxIndex = Math.max(iStartIndex, iEndIndex);
-
-		// to be able to work with forEach and iIndex -> the array aObjects needs to be sorted!!
-		aObjects.forEach(function(oObject, iIndex) {
-
-			// check, whether actual object fit's into index ranges
-			if (iIndex < iMinIndex || iIndex > iMaxIndex || iIndex > iMaxArrayIndex) {
+		Object.keys(oJsonBase.columns).forEach(function(sAttribute) {
+			if (jQuery.isArray(oJsonBase.columns[sAttribute])) {
+				oJsonBase.columns[sAttribute].forEach(function(oMItemBase) {
+					var oMItemUnion = Util.getArrayElementByKey("columnKey", oMItemBase.columnKey, oUnion.columns[sAttribute]);
+					if (!oMItemUnion) {
+						oUnion.columns[sAttribute].push(oMItemBase);
+						return;
+					}
+					if (oMItemUnion.visible === undefined && oMItemBase.visible !== undefined) {
+						oMItemUnion.visible = oMItemBase.visible;
+					}
+					if (oMItemUnion.width === undefined && oMItemBase.width !== undefined) {
+						oMItemUnion.width = oMItemBase.width;
+					}
+					if (oMItemUnion.total === undefined && oMItemBase.total !== undefined) {
+						oMItemUnion.total = oMItemBase.total;
+					}
+					if (oMItemUnion.index === undefined && oMItemBase.index !== undefined) {
+						oMItemUnion.index = oMItemBase.index;
+					}
+				});
 				return;
 			}
-
-			if (iStartIndex > iEndIndex) {
-				// UP
-				oObject.index += 1;
-			} else {
-				// DOWN
-				oObject.index -= 1;
+			if (oUnion.columns[sAttribute] === undefined && oJsonBase.columns[sAttribute] !== undefined) {
+				oUnion.columns[sAttribute] = oJsonBase.columns[sAttribute];
 			}
-		});
-	};
-
-	/**
-	 * @param {object} oPersistentDataBase: JSON object to which different properties from JSON oPersistentDataCompare are added. E.g. Restore
-	 * @param {object} oPersistentDataCompare: JSON object from where the different properties are added to oPersistentDataBase. E.g. CurrentVariant ||
-	 *        PersistentData
-	 * @returns {object} new JSON object as union result of oPersistentDataBase and oPersistentDataCompare
-	 */
-	ColumnsController.prototype.getUnionData = function(oPersistentDataBase, oPersistentDataCompare) {
-
-		// oPersistentDataCompare is empty -> result = oPersistentDataBase
-		if (!oPersistentDataCompare || !oPersistentDataCompare.columns || !oPersistentDataCompare.columns.columnsItems || oPersistentDataCompare.columns.columnsItems.length === 0) {
-			return oPersistentDataBase.columns ? {
-				columns: jQuery.extend(true, {}, oPersistentDataBase.columns)
-			} : null;
-		}
-
-		// oPersistentDataBase is empty -> result = oPersistentDataCompare
-		if (!oPersistentDataBase || !oPersistentDataBase.columns || !oPersistentDataBase.columns.columnsItems) {
-			return {
-				columns: jQuery.extend(true, {}, oPersistentDataCompare.columns)
-			};
-		}
-
-		var aDeltaColumnsItem = [];
-
-		var oUnion = this.createPersistentStructure();
-
-		oPersistentDataBase.columns.columnsItems.forEach(function(oColumnsItemPersistent, iIndex) {
-			var oColumnsItemDelta = Util.getArrayElementByKey("columnKey", oColumnsItemPersistent.columnKey, oPersistentDataCompare.columns.columnsItems);
-
-			if (oColumnsItemDelta) {
-				if (oColumnsItemDelta.visible !== undefined) {
-					oColumnsItemPersistent.visible = oColumnsItemDelta.visible;
-				}
-
-				if (oColumnsItemDelta.width !== undefined) {
-					oColumnsItemPersistent.width = oColumnsItemDelta.width;
-				}
-
-				if (oColumnsItemDelta.total !== undefined) {
-					oColumnsItemPersistent.total = oColumnsItemDelta.total;
-				}
-
-				if (oColumnsItemDelta.index !== undefined) {
-					oColumnsItemPersistent.index = oColumnsItemDelta.index;
-					aDeltaColumnsItem.push(oColumnsItemPersistent);
-					return;
-				}
-			}
-			oUnion.columns.columnsItems.push(oColumnsItemPersistent);
-		});
-
-		if (aDeltaColumnsItem && aDeltaColumnsItem.length > 0) {
-			this._sortArrayByPropertyName(aDeltaColumnsItem, "index");
-			aDeltaColumnsItem.forEach(function(oDeltaColumnsItem) {
-				oUnion.columns.columnsItems.splice(oDeltaColumnsItem.index, 0, oDeltaColumnsItem);
-			});
-		}
-
-		oUnion.columns.columnsItems.forEach(function(oColumnsItemUnion, iIndex) {
-			oColumnsItemUnion.index = iIndex;
-		});
+		}, this);
 
 		return oUnion;
+	};
+
+	ColumnsController.prototype.fixConflictWithIgnore = function(oJson, oJsonIgnore) {
+		if (!oJson || !oJson.columns || !oJson.columns.columnsItems || !oJsonIgnore || !oJsonIgnore.columns || !oJsonIgnore.columns.columnsItems || !oJsonIgnore.columns.columnsItems.length) {
+			return oJson;
+		}
+
+		this._sortArrayByPropertyName(oJson.columns.columnsItems, "index");
+
+		var bIsConflictSituation = false;
+		oJsonIgnore.columns.columnsItems.forEach(function(oMItemIgnore) {
+			var iIndex = Util.getIndexByKey("columnKey", oMItemIgnore.columnKey, oJson.columns.columnsItems);
+			if (iIndex < 0 || oJson.columns.columnsItems[iIndex].index === undefined) {
+				return;
+			}
+			if ((iIndex + 1 <= oJson.columns.columnsItems.length - 1 && oJson.columns.columnsItems[iIndex + 1].index === oJson.columns.columnsItems[iIndex].index) || (iIndex - 1 >= 0 && oJson.columns.columnsItems[iIndex - 1].index === oJson.columns.columnsItems[iIndex].index)) {
+				bIsConflictSituation = true;
+			}
+			if (iIndex + 1 <= oJson.columns.columnsItems.length - 1 && oJson.columns.columnsItems[iIndex + 1].index === oJson.columns.columnsItems[iIndex].index) {
+				var oMItem = oJson.columns.columnsItems.splice(iIndex, 1);
+				oJson.columns.columnsItems.splice(iIndex + 1, 0, oMItem[0]);
+			}
+		});
+
+		if (bIsConflictSituation) {
+			var iItemIndex = -1;
+			oJson.columns.columnsItems.forEach(function(oMItem) {
+				if (oMItem.index !== undefined) {
+					oMItem.index = ++iItemIndex;
+				}
+			});
+		}
 	};
 
 	/**
 	 * Determines whether a specific column is selected or not.
 	 *
 	 * @param {object} oPayload structure about the current selection coming from panel
+	 * @param {object} oControlDataReduce structure about the current selection coming from model
 	 * @param {string} sColumnKey column key of specific column
 	 * @returns {boolean} true if specific column is selected, false if not
 	 */
-	ColumnsController.prototype.isColumnSelected = function(oPayload, oPersistentData, sColumnKey) {
+	ColumnsController.prototype.isColumnSelected = function(oPayload, oControlDataReduce, sColumnKey) {
+		var iIndex;
 		if (!oPayload) {
-			oPersistentData.columnsItems.some(function(oColumnsItem, iIndex_) {
-				if (oColumnsItem.columnKey === sColumnKey && oColumnsItem.visible) {
-					iIndex = iIndex_;
-					return true;
-				}
-			});
-			return iIndex > -1;
+			iIndex = Util.getIndexByKey("columnKey", sColumnKey, oControlDataReduce.columnsItems);
+			return (iIndex > -1) ? oControlDataReduce.columnsItems[iIndex].visible : false;
 		}
 
 		// oPayload has been passed...
 		if (!oPayload.selectedItems) {
 			return false;
 		}
-		var iIndex = Util.getIndexByKey(oPayload.selectedItems, sColumnKey);
+		iIndex = Util.getIndexByKey("columnKey", sColumnKey, oPayload.selectedItems);
 		return iIndex > -1;
 	};
 
-	ColumnsController.prototype.determineNeededColumnKeys = function(oPersistentData) {
-		var aNeededColumnKeys = [];
-		if (!oPersistentData || !oPersistentData.columns || !oPersistentData.columns.columnsItems) {
-			return {
-				columns: []
-			};
+	ColumnsController.prototype._monkeyPatchTable = function(oTable) {
+		if (this.getTableType() !== sap.ui.comp.personalization.TableType.AnalyticalTable && this.getTableType() !== sap.ui.comp.personalization.TableType.Table && this.getTableType() !== sap.ui.comp.personalization.TableType.TreeTable) {
+			return;
 		}
-		oPersistentData.columns.columnsItems.forEach(function(oModelColumn) {
-			aNeededColumnKeys.push(oModelColumn.columnKey);
-		});
-		return {
-			columns: aNeededColumnKeys
+
+		var that = this;
+		var fSetFixedColumnCountOrigin = oTable.setFixedColumnCount.bind(oTable);
+		var fSetFixedColumnCountOverwritten = function(iFixedColumnCount, bSuppressInvalidate) {
+			that._onColumnFixedCount(iFixedColumnCount);
+			fSetFixedColumnCountOrigin(iFixedColumnCount, bSuppressInvalidate);
 		};
+		if (oTable.setFixedColumnCount.toString() === fSetFixedColumnCountOverwritten.toString()) {
+			// Do nothing if due to recursion the method is already overwritten.
+			return;
+		}
+		oTable.setFixedColumnCount = fSetFixedColumnCountOverwritten;
 	};
 
 	/**
@@ -1147,7 +767,7 @@ sap.ui.define([
 		BaseController.prototype.exit.apply(this, arguments);
 
 		var oTable = this.getTable();
-		if (oTable && oTable instanceof sap.ui.table.Table) {
+		if (this.getTable() && (this.getTableType() === sap.ui.comp.personalization.TableType.AnalyticalTable || this.getTableType() === sap.ui.comp.personalization.TableType.Table || this.getTableType() === sap.ui.comp.personalization.TableType.TreeTable)) {
 			oTable.detachColumnMove(this._onColumnMove, this);
 			oTable.detachColumnVisibility(this._onColumnVisibility, this);
 			oTable.detachColumnResize(this._onColumnResize, this);

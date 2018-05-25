@@ -5,6 +5,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	width: undefined, // sap.ui.core.CSSSize
@@ -45,6 +46,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	width=""
@@ -141,6 +143,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	size: sap.m.Size.Auto, // sap.m.Size
@@ -177,6 +180,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	size="Auto"
@@ -229,6 +233,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	size: sap.m.Size.Auto, // sap.m.Size
@@ -255,6 +260,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	size="Auto"
@@ -322,14 +328,17 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	size: sap.m.Size.Auto, // sap.m.Size
 	scale: "", // string
-	width: undefined, // sap.ui.core.CSSSize
+	minValue: undefined, // float, since 1.42.0
+	maxValue: undefined, // float, since 1.42.0
 	view: sap.suite.ui.microchart.ComparisonMicroChartViewType.Normal, // sap.suite.ui.microchart.ComparisonMicroChartViewType
 	colorPalette: [], // string[]
 	shrinkable: false, // boolean
+	width: undefined, // sap.ui.core.CSSSize
 	height: undefined, // sap.ui.core.CSSSize
 	isResponsive: false, // boolean, since 1.38.0
 	tooltip: undefined, // sap.ui.core.TooltipBase
@@ -348,14 +357,17 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	size="Auto"
 	scale=""
-	width=""
+	minValue=""
+	maxValue=""
 	view="Normal"
 	colorPalette=""
 	shrinkable="false"
+	width=""
 	height=""
 	isResponsive="false"
 	validateFieldGroup=""
@@ -398,6 +410,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	value1: undefined, // float
@@ -426,6 +439,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	value1=""
@@ -451,6 +465,7 @@
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	total: undefined, // float
@@ -479,6 +494,7 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	total=""
@@ -524,17 +540,364 @@
 </HarveyBallMicroChartItem>
 ]]></xmlTemplate>
 </Template>
+<Template name="sap.suite.ui.microchart.InteractiveBarChart" alias="InteractiveBarChart,Chart">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.InteractiveBarChart({
+	id: "${id}", // sap.ui.core.ID
+	busy: false, // boolean
+	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
+	visible: true, // boolean
+	fieldGroupIds: [], // string[], since 1.31
+	displayedBars: 3, // int
+	labelWidth: "40%", // sap.ui.core.Percentage
+	selectionEnabled: true, // boolean
+	min: undefined, // float
+	max: undefined, // float
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [], // sap.ui.core.Element, since 1.19
+	bars: [], // sap.suite.ui.microchart.InteractiveBarChartBar
+	ariaLabelledBy: [], // sap.ui.core.Control
+	validateFieldGroup: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	selectionChanged: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	press: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this]
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<InteractiveBarChart xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	busy="false"
+	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
+	visible="true"
+	fieldGroupIds=""
+	displayedBars="3"
+	labelWidth="40%"
+	selectionEnabled="true"
+	min=""
+	max=""
+	ariaLabelledBy=""
+	validateFieldGroup=""
+	selectionChanged=""
+	press="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+		<bars></bars> <!-- sap.suite.ui.microchart.InteractiveBarChartBar -->
+</InteractiveBarChart>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.InteractiveBarChartBar" alias="InteractiveBarChartBar,Bar">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.InteractiveBarChartBar({
+	id: "${id}", // sap.ui.core.ID
+	label: undefined, // string
+	selected: false, // boolean
+	displayedValue: undefined, // string
+	color: sap.m.ValueColor.Neutral, // sap.m.ValueColor, since 1.50.0
+	value: undefined, // float
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [] // sap.ui.core.Element, since 1.19
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<InteractiveBarChartBar xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	label=""
+	selected="false"
+	displayedValue=""
+	color="Neutral"
+	value="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+</InteractiveBarChartBar>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.InteractiveDonutChart" alias="InteractiveDonutChart,Chart">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.InteractiveDonutChart({
+	id: "${id}", // sap.ui.core.ID
+	busy: false, // boolean
+	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
+	visible: true, // boolean
+	fieldGroupIds: [], // string[], since 1.31
+	displayedSegments: 3, // int
+	selectionEnabled: true, // boolean
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [], // sap.ui.core.Element, since 1.19
+	segments: [], // sap.suite.ui.microchart.InteractiveDonutChartSegment
+	ariaLabelledBy: [], // sap.ui.core.Control
+	validateFieldGroup: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	selectionChanged: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	press: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this]
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<InteractiveDonutChart xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	busy="false"
+	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
+	visible="true"
+	fieldGroupIds=""
+	displayedSegments="3"
+	selectionEnabled="true"
+	ariaLabelledBy=""
+	validateFieldGroup=""
+	selectionChanged=""
+	press="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+		<segments></segments> <!-- sap.suite.ui.microchart.InteractiveDonutChartSegment -->
+</InteractiveDonutChart>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.InteractiveDonutChartSegment" alias="InteractiveDonutChartSegment,Segment">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.InteractiveDonutChartSegment({
+	id: "${id}", // sap.ui.core.ID
+	label: undefined, // string
+	selected: false, // boolean
+	value: undefined, // float
+	displayedValue: undefined, // string
+	color: sap.m.ValueColor.Neutral, // sap.m.ValueColor, since 1.50.0
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [] // sap.ui.core.Element, since 1.19
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<InteractiveDonutChartSegment xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	label=""
+	selected="false"
+	value=""
+	displayedValue=""
+	color="Neutral">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+</InteractiveDonutChartSegment>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.InteractiveLineChart" alias="InteractiveLineChart,Chart">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.InteractiveLineChart({
+	id: "${id}", // sap.ui.core.ID
+	busy: false, // boolean
+	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
+	visible: true, // boolean
+	fieldGroupIds: [], // string[], since 1.31
+	displayedPoints: 6, // int
+	selectionEnabled: true, // boolean
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [], // sap.ui.core.Element, since 1.19
+	points: [], // sap.suite.ui.microchart.InteractiveLineChartPoint
+	ariaLabelledBy: [], // sap.ui.core.Control
+	validateFieldGroup: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	selectionChanged: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	press: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this]
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<InteractiveLineChart xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	busy="false"
+	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
+	visible="true"
+	fieldGroupIds=""
+	displayedPoints="6"
+	selectionEnabled="true"
+	ariaLabelledBy=""
+	validateFieldGroup=""
+	selectionChanged=""
+	press="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+		<points></points> <!-- sap.suite.ui.microchart.InteractiveLineChartPoint -->
+</InteractiveLineChart>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.InteractiveLineChartPoint" alias="InteractiveLineChartPoint,Point">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.InteractiveLineChartPoint({
+	id: "${id}", // sap.ui.core.ID
+	label: undefined, // string
+	selected: false, // boolean
+	value: undefined, // float
+	displayedValue: undefined, // string
+	color: sap.m.ValueColor.Neutral, // sap.m.ValueColor, since 1.50.0
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [] // sap.ui.core.Element, since 1.19
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<InteractiveLineChartPoint xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	label=""
+	selected="false"
+	value=""
+	displayedValue=""
+	color="Neutral">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+</InteractiveLineChartPoint>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.LineMicroChart" alias="LineMicroChart,Chart">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.LineMicroChart({
+	id: "${id}", // sap.ui.core.ID
+	busy: false, // boolean
+	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
+	visible: true, // boolean
+	fieldGroupIds: [], // string[], since 1.31
+	size: sap.m.Size.Auto, // sap.m.Size
+	threshold: 0, // float
+	minXValue: undefined, // float
+	maxXValue: undefined, // float
+	minYValue: undefined, // float
+	maxYValue: undefined, // float
+	leftTopLabel: undefined, // string
+	rightTopLabel: undefined, // string
+	leftBottomLabel: undefined, // string
+	rightBottomLabel: undefined, // string
+	color: Neutral, // any
+	showPoints: false, // boolean
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [], // sap.ui.core.Element, since 1.19
+	points: [], // sap.suite.ui.microchart.LineMicroChartPoint
+	validateFieldGroup: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	press: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this]
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<LineMicroChart xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	busy="false"
+	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
+	visible="true"
+	fieldGroupIds=""
+	size="Auto"
+	threshold="0"
+	minXValue=""
+	maxXValue=""
+	minYValue=""
+	maxYValue=""
+	leftTopLabel=""
+	rightTopLabel=""
+	leftBottomLabel=""
+	rightBottomLabel=""
+	color="Neutral"
+	showPoints="false"
+	validateFieldGroup=""
+	press="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+		<points></points> <!-- sap.suite.ui.microchart.LineMicroChartPoint -->
+</LineMicroChart>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.LineMicroChartEmphasizedPoint" alias="LineMicroChartEmphasizedPoint,Point">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.LineMicroChartEmphasizedPoint({
+	id: "${id}", // sap.ui.core.ID
+	busy: false, // boolean
+	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
+	visible: true, // boolean
+	fieldGroupIds: [], // string[], since 1.31
+	x: 0, // float
+	y: 0, // float
+	color: sap.m.ValueColor.Neutral, // sap.m.ValueColor
+	show: false, // boolean
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [], // sap.ui.core.Element, since 1.19
+	validateFieldGroup: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this]
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<LineMicroChartEmphasizedPoint xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	busy="false"
+	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
+	visible="true"
+	fieldGroupIds=""
+	x="0"
+	y="0"
+	color="Neutral"
+	show="false"
+	validateFieldGroup="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+</LineMicroChartEmphasizedPoint>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.LineMicroChartPoint" alias="LineMicroChartPoint,Point">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.LineMicroChartPoint({
+	id: "${id}", // sap.ui.core.ID
+	busy: false, // boolean
+	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
+	visible: true, // boolean
+	fieldGroupIds: [], // string[], since 1.31
+	x: 0, // float
+	y: 0, // float
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [], // sap.ui.core.Element, since 1.19
+	validateFieldGroup: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this]
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<LineMicroChartPoint xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	busy="false"
+	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
+	visible="true"
+	fieldGroupIds=""
+	x="0"
+	y="0"
+	validateFieldGroup="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+</LineMicroChartPoint>
+]]></xmlTemplate>
+</Template>
 <Template name="sap.suite.ui.microchart.RadialMicroChart" alias="RadialMicroChart,Chart">
 	<jsTemplate><![CDATA[new sap.suite.ui.microchart.RadialMicroChart({
 	id: "${id}", // sap.ui.core.ID
 	busy: false, // boolean
 	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
 	visible: true, // boolean
 	fieldGroupIds: [], // string[], since 1.31
 	total: undefined, // float
 	fraction: undefined, // float
 	percentage: undefined, // float
 	valueColor: "Neutral", // sap.m.ValueCSSColor
+	size: sap.m.Size.Responsive, // sap.m.Size, since 1.44.0
 	tooltip: undefined, // sap.ui.core.TooltipBase
 	customData: [], // sap.ui.core.CustomData
 	dependents: [], // sap.ui.core.Element, since 1.19
@@ -550,17 +913,81 @@
 	id="${id}"
 	busy="false"
 	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
 	visible="true"
 	fieldGroupIds=""
 	total=""
 	fraction=""
 	percentage=""
 	valueColor="Neutral"
+	size="Responsive"
 	validateFieldGroup=""
 	press="">
 		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
 		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
 </RadialMicroChart>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.StackedBarMicroChart" alias="StackedBarMicroChart,Chart">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.StackedBarMicroChart({
+	id: "${id}", // sap.ui.core.ID
+	busy: false, // boolean
+	busyIndicatorDelay: 1000, // int
+	busyIndicatorSize: sap.ui.core.BusyIndicatorSize.Medium, // sap.ui.core.BusyIndicatorSize
+	visible: true, // boolean
+	fieldGroupIds: [], // string[], since 1.31
+	size: sap.m.Size.Auto, // sap.m.Size
+	maxValue: undefined, // float
+	precision: 1, // int
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [], // sap.ui.core.Element, since 1.19
+	bars: [], // sap.suite.ui.microchart.StackedBarMicroChartBar
+	validateFieldGroup: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this],
+	press: [function (oEvent) {
+		var ${control} = oEvent.getSource();
+	}, this]
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<StackedBarMicroChart xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	busy="false"
+	busyIndicatorDelay="1000"
+	busyIndicatorSize="Medium"
+	visible="true"
+	fieldGroupIds=""
+	size="Auto"
+	maxValue=""
+	precision="1"
+	validateFieldGroup=""
+	press="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+		<bars></bars> <!-- sap.suite.ui.microchart.StackedBarMicroChartBar -->
+</StackedBarMicroChart>
+]]></xmlTemplate>
+</Template>
+<Template name="sap.suite.ui.microchart.StackedBarMicroChartBar" alias="StackedBarMicroChartBar,Bar">
+	<jsTemplate><![CDATA[new sap.suite.ui.microchart.StackedBarMicroChartBar({
+	id: "${id}", // sap.ui.core.ID
+	value: 0, // float
+	valueColor: undefined, // sap.m.ValueCSSColor
+	displayValue: undefined, // string
+	tooltip: undefined, // sap.ui.core.TooltipBase
+	customData: [], // sap.ui.core.CustomData
+	dependents: [] // sap.ui.core.Element, since 1.19
+})
+]]></jsTemplate>
+	<xmlTemplate><![CDATA[<StackedBarMicroChartBar xmlns="sap.suite.ui.microchart"
+	id="${id}"
+	value="0"
+	valueColor=""
+	displayValue="">
+		<tooltip></tooltip> <!-- sap.ui.core.TooltipBase -->
+		<dependents></dependents> <!-- sap.ui.core.Element, since 1.19 -->
+</StackedBarMicroChartBar>
 ]]></xmlTemplate>
 </Template>
 </Library>

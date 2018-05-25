@@ -1,11 +1,12 @@
 /*!
  * SAP APF Analysis Path Framework
- * 
+ *
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
 /*global jQuery, sap, OData */
 jQuery.sap.declare("sap.apf.core.instance");
 jQuery.sap.require('sap.apf.utils.utils');
+jQuery.sap.require("sap.apf.core.utils.checkForTimeout");
 jQuery.sap.require("sap.apf.core.utils.uriGenerator");
 jQuery.sap.require("sap.apf.core.metadata");
 jQuery.sap.require("sap.apf.core.metadataFacade");
@@ -21,6 +22,8 @@ jQuery.sap.require("sap.apf.core.path");
 jQuery.sap.require("sap.apf.core.sessionHandler");
 jQuery.sap.require("sap.apf.core.resourcePathHandler");
 jQuery.sap.require("sap.apf.core.persistence");
+jQuery.sap.require("sap.apf.cloudFoundry.analysisPathProxy");
+jQuery.sap.require("sap.apf.cloudFoundry.ajaxHandler");
 jQuery.sap.require("sap.apf.core.readRequest");
 jQuery.sap.require("sap.apf.core.readRequestByRequiredFilter");
 jQuery.sap.require("sap.apf.core.utils.fileExists");
@@ -38,12 +41,14 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 	 */
 	sap.apf.core.Instance = function(oApiInject) {
 		var that = this;
+		var isUsingCloudFoundryProxy;
+		var ajaxHandlerInject, AjaxHandler, oAjaxHandler;
 		var oMessageHandler = oApiInject.instances.messageHandler;
 		var oStartParameter = oApiInject.instances.startParameter;
-		var sRememberedPath;
-		oApiInject = oApiInject || {};
 		oApiInject.constructors = oApiInject.constructors || {};
-		var oInject = { //TODO Clarify why this object literal was introduced. Couldn't we just pass on oApiInject?
+		var checkForTimeout = (oApiInject.functions && oApiInject.functions.checkForTimeout) || sap.apf.core.utils.checkForTimeout;
+
+		var oInject = {
 			instances : {
 				messageHandler : oMessageHandler,
 				coreApi : this
@@ -53,11 +58,11 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 			},
 			exits : {
 				binding : {
-					afterGetFilter : oApiInject && oApiInject.exits && oApiInject.exits.binding && oApiInject.exits.binding.afterGetFilter
+					afterGetFilter :  oApiInject.exits && oApiInject.exits.binding && oApiInject.exits.binding.afterGetFilter
 				},
 				path : {
-					beforeAddingToCumulatedFilter : oApiInject && oApiInject.exits && oApiInject.exits.path && oApiInject.exits.path.beforeAddingToCumulatedFilter
-			}
+					beforeAddingToCumulatedFilter : oApiInject.exits && oApiInject.exits.path && oApiInject.exits.path.beforeAddingToCumulatedFilter
+				}
 			},
 			functions : oApiInject.functions
 		};
@@ -79,14 +84,16 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		 * @see sap.apf.core.ajax
 		 */
 		this.ajax = function(oSettings) {
-			var inject = jQuery.extend(true, {}, oSettings);
+			var settingsAndInject = jQuery.extend(true, {}, oSettings);
+			settingsAndInject.functions = settingsAndInject.functions || {};
+			settingsAndInject.functions.getSapSystem = oStartParameter.getSapSystem;
 			if (oApiInject.functions && oApiInject.functions.ajax) {
-				inject.functions = inject.functions || {};
-				inject.functions.ajax = oApiInject.functions.ajax;
+
+				settingsAndInject.functions.ajax = oApiInject.functions.ajax;
 			}
-			inject.instances = inject.instances || {};
-			inject.instances.messageHandler = oMessageHandler;
-			return sap.apf.core.ajax(inject);
+			settingsAndInject.instances = settingsAndInject.instances || {};
+			settingsAndInject.instances.messageHandler = oMessageHandler;
+			return sap.apf.core.ajax(settingsAndInject);
 		};
 		/**
 		 * @see sap.apf.core.odataRequestWrapper
@@ -95,9 +102,13 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 			var oInject = {
 				instances: {
 					datajs : datajs
+				},
+				functions: {
+					getSapSystem : oStartParameter.getSapSystem
 				}
 			};
-			sap.apf.core.odataRequestWrapper(oInject, oRequest, fnSuccess, fnError, oBatchHandler);
+			var request = (oApiInject && oApiInject.functions && oApiInject.functions.odataRequest) || sap.apf.core.odataRequestWrapper;
+			request(oInject, oRequest, fnSuccess, fnError, oBatchHandler);
 		};
 		/**
 		 * @see sap.apf.utils.startParameter
@@ -141,12 +152,6 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 			oMessageHandler.setMessageCallback(fnCallback);
 		};
 		/**
-		 * @see sap.apf.core.MessageHandler#setApplicationMessageCallback
-		 */
-		this.setApplicationCallbackForMessageHandling = function(fnCallback) {
-			oMessageHandler.setApplicationMessageCallback(fnCallback);
-		};
-		/**
 		 * @see sap.apf.core.MessageHandler#getLogMessages
 		 */
 		this.getLogMessages = function() {
@@ -156,7 +161,7 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		 * @see sap.apf.core.checkForTimeout
 		 */
 		this.checkForTimeout = function(oServerResponse) {
-			var oMessageObject = sap.apf.core.utils.checkForTimeout(oServerResponse);
+			var oMessageObject = checkForTimeout(oServerResponse);
 			// up to now, the error handling was hard coded in checkForTimeout
 			if (oMessageObject) {
 				oMessageHandler.putMessage(oMessageObject);
@@ -243,6 +248,13 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 			return oConfigurationFactory.getStepTemplates();
 		};
 		/**
+		 * @see sap.apf.core.ConfigurationFactory#getConfigurationById
+		 */
+		this.getConfigurationObjectById = function(sId) {
+			return oConfigurationFactory.getConfigurationById(sId);
+		};
+		// noinspection JSValidateJSDoc
+		/**
 		 * @description Register smartFilterBarInstance.
 		 * @param {sap.ui.comp.smartfilterbar.SmartFilterBar} instance
 		 */
@@ -254,20 +266,24 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		};
 		/**
 		 * @description Get smartFilterBarInstance.
-		 * @returns {jQuery.Deferred} promise that is resolved with {sap.ui.comp.smartfilterbar.SmartFilterBar | null} 
+		 * @returns {jQuery.Deferred} promise that is resolved with {sap.ui.comp.smartfilterbar.SmartFilterBar | null}
 		 */
-		this.getSmartFilterBar = function() {
-			if(!this.getSmartFilterBarConfiguration()){
-				return null;
-			} else if (!smartFilterBarDeferred){
+		this.getSmartFilterBarAsPromise = function() {
+			if(!smartFilterBarDeferred){
 				smartFilterBarDeferred = jQuery.Deferred();
 			}
+			this.getSmartFilterBarConfigurationAsPromise().done(function(smartFilterBarConfiguration){
+				if(!smartFilterBarConfiguration){
+					smartFilterBarDeferred.resolve(null);
+				}
+
+			});
 			return smartFilterBarDeferred;
 		};
 		/**
-		 * @see sap.apf.core.ConfigurationFactory#getSmartFilterBarConfiguration
+		 * @see sap.apf.core.ConfigurationFactory#getSmartFilterBarConfigurationAsPromise
 		 */
-		this.getSmartFilterBarConfiguration = function() {
+		this.getSmartFilterBarConfigurationAsPromise = function() {
 			return oConfigurationFactory.getSmartFilterBarConfiguration();
 		};
 		/**
@@ -276,7 +292,7 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		 * @returns {String} persistence key
 		 */
 		this.getSmartFilterBarPersistenceKey = function(id) {
-			
+
 			return "APF" + oConfigurationFactory.getConfigHeader().AnalyticalConfiguration + id;
 		};
 		/**
@@ -299,16 +315,16 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 				defaultFilterValues.resolve(controlConfig);
 			});
 			return defaultFilterValues;
-			
+
 			function mapToSelectOption(filter, property){
 				var terms = filter.getFilterTermsForProperty(property);
 				var defaultFilterValues = [];
- 
+
 				terms.forEach(function(filterTerm){
 					var selectOption = new sap.ui.comp.smartfilterbar.SelectOption({
 							low : filterTerm.getValue(),
 							operator : filterTerm.getOp(),
-							high : filterTerm.getHighValue(), 
+							high : filterTerm.getHighValue(),
 							sign : 'I'
 					});
 					defaultFilterValues.push(selectOption);
@@ -323,19 +339,21 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		this.getReducedCombinedContext = function(){
 			var deferred = jQuery.Deferred();
 			oApiInject.functions.getCombinedContext().done(function(filter){
-				var smartFilterBarPromise = that.getSmartFilterBar();
-				if(smartFilterBarPromise){
-					smartFilterBarPromise.done(function(smartFilterBar){
-						var combinedFilterFromSFB = new sap.apf.core.utils.Filter(oApiInject.instances.messageHandler);
-						var filterArrayFromSFB = smartFilterBar.getFilters();
-						filterArrayFromSFB.forEach(function(filterFromSFB){
+				var smartFilterBarPromise = that.getSmartFilterBarAsPromise();
+
+				smartFilterBarPromise.done(function(smartFilterBar){
+					if (!smartFilterBar) {
+						deferred.resolve(filter);
+						return;
+					}
+					var combinedFilterFromSFB = new sap.apf.core.utils.Filter(oApiInject.instances.messageHandler);
+					var filterArrayFromSFB = smartFilterBar.getFilters();
+					filterArrayFromSFB.forEach(function(filterFromSFB){
 							combinedFilterFromSFB.addAnd(sap.apf.core.utils.Filter.transformUI5FilterToInternal(oApiInject.instances.messageHandler, filterFromSFB));
-						});
-						deferred.resolve(filter.removeTermsByProperty(combinedFilterFromSFB.getProperties()));
 					});
-				}else{
-					deferred.resolve(filter);
-				}
+					deferred.resolve(filter.removeTermsByProperty(combinedFilterFromSFB.getProperties()));
+				});
+
 			});
 			return deferred;
 		};
@@ -383,8 +401,8 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		 * @name sap.apf.core.Instance#updatePath
 		 * @see sap.apf.core.Path#update
 		 */
-		this.updatePath = function(fnStepProcessedCallback, bContextChanged) {
-			oPath.update(fnStepProcessedCallback, bContextChanged);
+		this.updatePath = function(fnStepProcessedCallback) {
+			oPath.update(fnStepProcessedCallback);
 		};
 		/**
 		 * @see sap.apf.core.Path#removeStep
@@ -393,29 +411,13 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 			oPath.removeStep(oStep, fnStepProcessedCallback);
 		};
 		/**
-		 * @description Creates a new Path instance
-		 * @param {boolean} [bRememberActualPath] if true, then the path can be restored
-		 *
+		 * @description Deletes the current Path instance and creates a new one
 		 */
-		this.resetPath = function(bRememberActualPath) {
-			if (bRememberActualPath) {
-				sRememberedPath = oPath.serialize();
-			}
+		this.resetPath = function() {
 			if (oPath) {
 				oPath.destroy();
 			}
 			oPath = new sap.apf.core.Path(oInject);
-		};
-		/**
-		 * if resetPath has been called with bRememberActualPath, then the old path
-		 * can be restored
-		 */
-		this.restoreOriginalPath = function() {
-			if (sRememberedPath) {
-				oPath.destroy();
-				oPath = new sap.apf.core.Path(oInject);
-				oPath.deserialize(sRememberedPath);
-			}
 		};
 		/**
 		 * @see sap.apf.core.Path#stepIsActive
@@ -424,16 +426,35 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 			return oPath.stepIsActive(oStep);
 		};
 		/**
+		 * @see sap.apf.core.SessionHandler#isApfStateAvailable
+		 */
+		this.isApfStateAvailable = function() {
+			return oSessionHandler.isApfStateAvailable();
+		};
+		/**
+		 * @see sap.apf.core.SessionHandler#storeApfState
+		 */
+		this.storeApfState = function() {
+			oSessionHandler.storeApfState();
+		};
+		/**
+		 * @see sap.apf.core.SessionHandler#restoreApfState
+		 */
+		this.restoreApfState = function() {
+			return oSessionHandler.restoreApfState();
+		};
+		/**
 		 * @description Serializes the path and the smartFilterBar
 		 * @returns {Object} serializable object
 		 */
 		this.serialize = function() {
 			var serializableObject = oPath.serialize();
-			if(that.getSmartFilterBar()){
-				that.getSmartFilterBar().done(function(smartFilterBarInstance){
-					serializableObject.smartFilterBar = smartFilterBarInstance.fetchVariant();
-				});
-			}
+
+			that.getSmartFilterBarAsPromise().done(function(smartFilterBarInstance){
+					if(smartFilterBarInstance){
+						serializableObject.smartFilterBar = smartFilterBarInstance.fetchVariant();
+					}
+			});
 			return serializableObject;
 		};
 		/**
@@ -447,6 +468,8 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 				}
 				smartFilterBarDeferred.done(function(oSFB){
 					oSFB.applyVariant(serializedObject.smartFilterBar);
+					oSFB.clearVariantSelection();
+					oSFB.fireFilterChange();
 				});
 			}
 			oPath.deserialize(serializedObject);
@@ -507,7 +530,7 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
          */
         this.getPathName = function() {
             return oSessionHandler.getPathName();
-        };		
+        };
 		/**
 		 * @see sap.apf.core.utils.StartFilterHandler#getCumulativeFilter
 		 */
@@ -517,11 +540,11 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		/**
 		 * @see sap.apf#createReadRequest
 		 * @description Creates an object for performing an Odata Request get operation.
-		 * @param {String|Object} sRequestConfigurationId - identifies a request configuration, which is contained in the analytical configuration.
+		 * @param {String|Object} requestConfiguration - identifier for a request configuration, which is contained in the analytical configuration.
 		 *                        or the request configuration is directly passed as an object oRequestConfiguration.
 		 * @returns {sap.apf.core.ReadRequest}
 		 */
-		this.createReadRequest = function(/* sRequestConfigurationId | oRequestConfiguration */requestConfiguration) {
+		this.createReadRequest = function(requestConfiguration) {
 			var oRequest = oConfigurationFactory.createRequest(requestConfiguration);
 			var oRequestConfiguration;
 			if (typeof requestConfiguration === 'string') {
@@ -534,7 +557,7 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		/**
 		 * @see sap.apf#createReadRequestByRequiredFilter
 		 * @description Creates an object for performing an Odata Request get operation with required filter for parameter entity set key properties & required filters.
-		 * @param {String|Object} sRequestConfigurationId - identifies a request configuration, which is contained in the analytical configuration.
+		 * @param {String|Object} requestConfiguration - identifier for a request configuration, which is contained in the analytical configuration.
 		 *                        or the request configuration is directly passed as an object oRequestConfiguration.
 		 * @returns {sap.apf.core.ReadRequestByRequiredFilter}
 		 */
@@ -569,20 +592,20 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 			var sPathId;
 			var sName;
 			var fnCallback;
-			var oExternalObject;
+			var serializableApfState;
 			if (typeof arg1 === 'string' && typeof arg2 === 'string' && typeof arg3 === 'function') {
 				sPathId = arg1;
 				sName = arg2;
 				fnCallback = arg3;
-				oExternalObject = arg4;
+				serializableApfState = arg4;
 				this.setPathName(sName);
-				oPersistence.modifyPath(sPathId, sName, fnCallback, oExternalObject);
+				oPersistence.modifyPath(sPathId, sName, fnCallback, serializableApfState);
 			} else if (typeof arg1 === 'string' && typeof arg2 === 'function') {
 				sName = arg1;
 				fnCallback = arg2;
-				oExternalObject = arg3;
+				serializableApfState = arg3;
 				this.setPathName(sName);
-				oPersistence.createPath(sName, fnCallback, oExternalObject);
+				oPersistence.createPath(sName, fnCallback, serializableApfState);
 			} else {
 				oMessageHandler.putMessage(sap.apf.core.createMessageObject({
 					code : "5027",
@@ -599,17 +622,14 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		/**
 		 * @see sap.apf.core.Persistence#openPath
 		 */
-		this.openPath = function(sPathId, fnCallback, nActiveStep) {
-			function localCallback(oResponse, oEntitiyMetadata, oMessageObject) {
-				if (!oMessageObject && sRememberedPath) {
-					sRememberedPath = undefined;
-				} 
+		this.openPath = function(sPathId, callback) {
+			function callbackFromPersistence(oResponse, oEntitiyMetadata, oMessageObject) {
 				if (!oMessageObject) {
 					that.setPathName(oResponse.path.AnalysisPathName);
 				}
-				fnCallback(oResponse, oEntitiyMetadata, oMessageObject);
+				callback(oResponse, oEntitiyMetadata, oMessageObject);
 			}
-			return oPersistence.openPath(sPathId, localCallback, nActiveStep);
+			return oPersistence.openPath(sPathId, callbackFromPersistence);
 		};
 		/**
 		 * @see sap.apf.core.Persistence#deletePath
@@ -698,17 +718,32 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 		this.getAnnotationsForService = function(serviceRoot) {
 			return oAnnotationHandler.getAnnotationsForService(serviceRoot);
 		};
+		/**
+		 * @see sap.apf.core.Path#checkAddStep
+		 */
+		this.checkAddStep = function(sId){
+			return oPath.checkAddStep(sId);
+		};
+		/**
+		 * @see sap.apf.core.Path#getPathFilterInformation
+		 */
+		this.getPathFilterInformation = function(){
+			return oPath.getFilterInformation();
+		};
 		// create local singleton instances...
-		oTextResourceHandler = new ((oApiInject && oApiInject.constructors && oApiInject.constructors.TextResourceHandler) || sap.apf.core.TextResourceHandler)(oInject);
+		oTextResourceHandler = new ((oApiInject.constructors.TextResourceHandler) || sap.apf.core.TextResourceHandler)(oInject);
 		oMessageHandler.setTextResourceHandler(oTextResourceHandler);
 		if (oApiInject.manifests) {
 			oInject.manifests = oApiInject.manifests;
 		}
 
-		oFileExists = new sap.apf.core.utils.FileExists({ functions : { ajax : that.ajax }});
+		oFileExists = new ((oApiInject.constructors.FileExists) || sap.apf.core.utils.FileExists)({ functions : {
+			ajax : that.ajax, getSapSystem : oStartParameter.getSapSystem }});
+
 		var injectAnnotationHandler = {
 				manifests : oApiInject.manifests,
 				functions: {
+					getSapSystem : oStartParameter.getSapSystem,
 					getComponentNameFromManifest : sap.apf.utils.getComponentNameFromManifest,
 					getODataPath : sap.apf.core.utils.uriGenerator.getODataPath,
 					getBaseURLOfComponent : sap.apf.core.utils.uriGenerator.getBaseURLOfComponent,
@@ -718,30 +753,51 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 					fileExists : oFileExists
 				}
 		};
-		oAnnotationHandler = new ((oApiInject && oApiInject.constructors && oApiInject.constructors.AnnotationHandler) || sap.apf.core.utils.AnnotationHandler)(injectAnnotationHandler);
-		oConfigurationFactory = new sap.apf.core.ConfigurationFactory(oInject);
+		oAnnotationHandler = new ((oApiInject.constructors.AnnotationHandler) || sap.apf.core.utils.AnnotationHandler)(injectAnnotationHandler);
+		oConfigurationFactory = new ((oApiInject.constructors.ConfigurationFactory) || sap.apf.core.ConfigurationFactory)(oInject);
 		var oInjectMetadataFactory = {
 			constructors : {
 				EntityTypeMetadata : sap.apf.core.EntityTypeMetadata,
-				Hashtable : (oApiInject && oApiInject.constructors && oApiInject.constructors.Hashtable) || sap.apf.utils.Hashtable,
-				Metadata : (oApiInject && oApiInject.constructors && oApiInject.constructors.Metadata) || sap.apf.core.Metadata,
-				MetadataFacade : (oApiInject && oApiInject.constructors && oApiInject.constructors.MetadataFacade) || sap.apf.core.MetadataFacade,
-				MetadataProperty : (oApiInject && oApiInject.constructors && oApiInject.constructors.MetadataProperty) || sap.apf.core.MetadataProperty,
-				ODataModel : (oApiInject && oApiInject.constructors && oApiInject.constructors.ODataModel) || sap.ui.model.odata.ODataModel
+				Hashtable : (oApiInject.constructors.Hashtable) || sap.apf.utils.Hashtable,
+				Metadata : (oApiInject.constructors.Metadata) || sap.apf.core.Metadata,
+				MetadataFacade : (oApiInject.constructors.MetadataFacade) || sap.apf.core.MetadataFacade,
+				MetadataProperty : (oApiInject.constructors.MetadataProperty) || sap.apf.core.MetadataProperty,
+				ODataModel : (oApiInject.constructors.ODataModel) || sap.ui.model.odata.v2.ODataModel
 			},
 			instances : {
 				messageHandler : oInject.instances.messageHandler,
 				coreApi : that,
-				configurationFactory : oConfigurationFactory,
 				annotationHandler: oAnnotationHandler
 			},
 			functions : {
-				getServiceDocuments : oConfigurationFactory.getServiceDocuments
+				getServiceDocuments : oConfigurationFactory.getServiceDocuments,
+				getSapSystem : oStartParameter.getSapSystem
 			}
 		};
-		oMetadataFactory = new (oApiInject && oApiInject.constructors && oApiInject.constructors.MetadataFactory || sap.apf.core.MetadataFactory)(oInjectMetadataFactory);
-		oPath = new sap.apf.core.Path(oInject);
-		oSessionHandler = new (oApiInject && oApiInject.constructors && oApiInject.constructors.SessionHandler || sap.apf.core.SessionHandler)(oInject);
+		oMetadataFactory = new (oApiInject.constructors.MetadataFactory || sap.apf.core.MetadataFactory)(oInjectMetadataFactory);
+		oPath = new (oApiInject.constructors.Path || sap.apf.core.Path)(oInject);
+		oSessionHandler = new (oApiInject.constructors.SessionHandler || sap.apf.core.SessionHandler)(oInject);
+		if (oApiInject.functions && oApiInject.functions.isUsingCloudFoundryProxy) {
+			isUsingCloudFoundryProxy = oApiInject.functions.isUsingCloudFoundryProxy;
+		} else {
+			isUsingCloudFoundryProxy = function() {
+				return false;
+			};
+		}
+
+		if (isUsingCloudFoundryProxy()) {
+			ajaxHandlerInject = {
+					instances : {
+						messageHandler: oMessageHandler
+					},
+					functions: {
+						coreAjax : this.ajax
+					}
+			};
+			AjaxHandler = (oApiInject.constructors.AjaxHandler || sap.apf.cloudFoundry.AjaxHandler);
+			oAjaxHandler = new AjaxHandler(ajaxHandlerInject);
+		}
+
 		var oInjectPersistence = {
 				instances : {
 					messageHandler : oMessageHandler,
@@ -749,18 +805,38 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 				},
 				functions : {
 					getComponentName : oApiInject.functions && oApiInject.functions.getComponentName
-				}
-			};
-		oPersistence = new (oApiInject.constructors.Persistence || sap.apf.core.Persistence)(oInjectPersistence);
-		var oInjectRessourcePathHandler = {
-			instances : {
-				coreApi : that,
-				messageHandler : oInject.instances.messageHandler,
-				fileExists : oFileExists
-			},
-			manifests : oApiInject.manifests
+				},
+				manifests : oApiInject.manifests
 		};
-		oResourcePathHandler = new (oApiInject && oApiInject.constructors && oApiInject.constructors.ResourcePathHandler || sap.apf.core.ResourcePathHandler)(oInjectRessourcePathHandler);
+		if (oApiInject.constructors.Persistence) {
+			oInjectPersistence.instances.ajaxHandler = oAjaxHandler;
+			oPersistence = new oApiInject.constructors.Persistence(oInjectPersistence);
+		} else if (isUsingCloudFoundryProxy()) {
+			oInjectPersistence.instances.ajaxHandler = oAjaxHandler;
+			oPersistence = new sap.apf.cloudFoundry.AnalysisPathProxy(oInjectPersistence);
+		} else {
+			oPersistence = new sap.apf.core.Persistence(oInjectPersistence);
+		}
+		var oInjectRessourcePathHandler = {
+				instances : {
+					coreApi : that,
+					messageHandler : oInject.instances.messageHandler,
+					fileExists : oFileExists
+				},
+				functions: {
+					checkForTimeout : checkForTimeout,
+					initTextResourceHandlerAsPromise : oTextResourceHandler.loadResourceModelAsPromise,
+					isUsingCloudFoundryProxy : isUsingCloudFoundryProxy
+				},
+				corePromise : oApiInject.corePromise,
+				manifests : oApiInject.manifests
+			};
+		if (oApiInject.constructors && oApiInject.constructors.ProxyForAnalyticalConfiguration) {
+			oInjectRessourcePathHandler.constructors = {
+					ProxyForAnalyticalConfiguration: oApiInject.constructors.ProxyForAnalyticalConfiguration
+			};
+		}
+		oResourcePathHandler = new (oApiInject.constructors.ResourcePathHandler || sap.apf.core.ResourcePathHandler)(oInjectRessourcePathHandler);
 
 		/**
 		 * Sends all internal references to a probe object injected.
@@ -775,7 +851,8 @@ jQuery.sap.require("sap.ui.thirdparty.datajs");
 				path: oPath,
 				sessionHandler: oSessionHandler,
 				persistence: oPersistence,
-				fileExists: oFileExists
+				fileExists: oFileExists,
+				corePromise : oApiInject.corePromise
 			});
 		}
 	};

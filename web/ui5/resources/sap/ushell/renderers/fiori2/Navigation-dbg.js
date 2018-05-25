@@ -1,11 +1,10 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-(function () {
-    "use strict";
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, window */
     /*jslint nomen: true */
-    jQuery.sap.declare("sap.ushell.renderers.fiori2.Navigation");
-
-    sap.ushell.renderers.fiori2.Navigation = function () {
+    var Navigation = function () {
         //OBSOLETE FOR NOW: search is not part of the navigation
         this.SEARCH = {
             ID : "ShellSearch",
@@ -25,8 +24,9 @@
                         "additionalInformation": "SAPUI5.Component=sap.ushell.renderers.fiori2.search.container",
                         "applicationType": "URL",
                         "url": jQuery.sap.getResourcePath("sap/ushell/renderers/fiori2/search/container"),
-                        "loadCoreExt": false,    // avoid loading of core-ext-light and default dependencies for search component
-                        "loadDefaultDependencies": false
+                        "loadCoreExt": true,    // for the search component core-ext-light should be loaded to avoid
+                                                // single module loading and to trigger plugin loading
+                        "loadDefaultDependencies": false // but we don't need old default dependencies like scaffolding
                     };
                 }
                 oDeferred.resolve(res);
@@ -54,7 +54,12 @@
                     "applicationType": "URL",
                     "url": jQuery.sap.getResourcePath("sap/ushell/components/flp"),
                     "loadCoreExt": false,    // avoid loading of core-ext-light and default dependencies for renderer component
-                    "loadDefaultDependencies": false
+                    "loadDefaultDependencies": false,
+                    "applicationDependencies": {
+                        asyncHints: {
+                            preloadBundles: ["sap/fiori/flp-controls.js"]
+                        }
+                    }
                 };
             }
             oDeferred.resolve(res);
@@ -62,5 +67,9 @@
         }
     });
 
-    sap.ushell.renderers.fiori2.Navigation = new sap.ushell.renderers.fiori2.Navigation();
-}());
+    var Navigation = new Navigation();
+
+
+	return Navigation;
+
+}, /* bExport= */ true);

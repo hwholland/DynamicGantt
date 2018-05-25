@@ -3,7 +3,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides DimeasureController
@@ -18,28 +19,30 @@ sap.ui.define([
 	 * @class Table Personalization Controller
 	 * @extends sap.ui.comp.personalization.BaseController
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
+	 * @private
 	 * @since 1.34.0
 	 * @alias sap.ui.comp.DimeasureController
 	 */
 	var DimeasureController = BaseController.extend("sap.ui.comp.personalization.DimeasureController", /** @lends sap.ui.comp.personalization.DimeasureController */
 
-	{
-		constructor: function(sId, mSettings) {
-			BaseController.apply(this, arguments);
+		{
+			constructor: function(sId, mSettings) {
+				BaseController.apply(this, arguments);
 			this.setType(sap.m.P13nPanelType.dimeasure);
-		},
-		metadata: {
-			events: {
-				afterDimeasureModelDataChange: {}
+			this.setItemType(sap.m.P13nPanelType.dimeasure + "Items");
+			},
+			metadata: {
+				events: {
+					afterDimeasureModelDataChange: {}
+				}
 			}
-		}
-	});
+		});
 
 	DimeasureController.prototype.setTable = function(oTable) {
 		BaseController.prototype.setTable.apply(this, arguments);
 
-		if (!(oTable instanceof ChartWrapper)) {
+		if (this.getTableType() !== sap.ui.comp.personalization.TableType.ChartWrapper) {
 			throw "The provided object is incorrect. 'oTable' has to be an instance of sap.ui.comp.personalization.ChartWrapper. ";
 		}
 
@@ -49,18 +52,15 @@ sap.ui.define([
 		oChart.detachDrilledUp(this._onDrilledUp, this);
 		oChart.attachDrilledUp(this._onDrilledUp, this);
 
+		this._monkeyPatchTable(oChart);
+	};
+
+	DimeasureController.prototype._monkeyPatchTable = function(oChart) {
 		var that = this;
-		var fSetChartTypeOrigin = jQuery.proxy(oChart.setChartType, oChart);
+		var fSetChartTypeOrigin = oChart.setChartType.bind(oChart);
 		var fSetChartTypeOverwritten = function(sChartType) {
 			fSetChartTypeOrigin(sChartType);
-			var oModel = that.getModel("$sapuicomppersonalizationBaseController");
-			var oData = oModel.getData();
-			if (sChartType && sChartType !== oData.persistentData.dimeasure.chartTypeKey) {
-				that.fireBeforePotentialTableChange();
-				oData.persistentData.dimeasure.chartTypeKey = sChartType;
-				that.fireAfterPotentialTableChange();
-				that.fireAfterDimeasureModelDataChange();
-			}
+			that._onSetChartType(sChartType);
 		};
 		if (oChart.setChartType.toString() === fSetChartTypeOverwritten.toString()) {
 			// Do nothing if due to recursion the method is already overwritten.
@@ -68,104 +68,119 @@ sap.ui.define([
 		}
 		oChart.setChartType = fSetChartTypeOverwritten;
 	};
-
-	DimeasureController.prototype._onDrilledDown = function(oEvent) {
-		this._updateModel(oEvent.getSource());
-	};
-
-	DimeasureController.prototype._onDrilledUp = function(oEvent) {
-		this._updateModel(oEvent.getSource());
-	};
-
-	DimeasureController.prototype._updateModel = function(oChart) {
-		var oModel = this.getModel("$sapuicomppersonalizationBaseController");
-		var oData = oModel.getData();
-		var oColumnKey2ColumnMap = this.getColumnMap();
-
+	DimeasureController.prototype._onSetChartType = function(sChartType) {
 		this.fireBeforePotentialTableChange();
 
-		// Take over visible dimensions and measures as dimMeasureItems into model
-		oData.persistentData.dimeasure.dimeasureItems = [];
+		// 1. update 'controlData'
+		var oControlData = this.getControlData();
+		oControlData.dimeasure.chartTypeKey = sChartType;
 
-		oChart.getVisibleDimensions().forEach(function(sDimensionName) {
-			var oColumn = oColumnKey2ColumnMap[sDimensionName];
-			oData.persistentData.dimeasure.dimeasureItems.push({
-				columnKey: sDimensionName,
-				index: oData.persistentData.dimeasure.dimeasureItems.length,
-				visible: true,
-				role: oColumn.getRole()
-			});
-		});
-		oChart.getVisibleMeasures().forEach(function(sMeasureName) {
-			var oColumn = oColumnKey2ColumnMap[sMeasureName];
-			oData.persistentData.dimeasure.dimeasureItems.push({
-				columnKey: sMeasureName,
-				index: oData.persistentData.dimeasure.dimeasureItems.length,
-				visible: true,
-				role: oColumn.getRole()
-			});
-		});
-		oModel.refresh();
+		// 2. update 'controlDataBase'
+		this.updateControlDataBaseFromJson(oControlData);
 
 		this.fireAfterPotentialTableChange();
-
 		this.fireAfterDimeasureModelDataChange();
 	};
 
-	DimeasureController.prototype.createPersistentStructure = function(aItems) {
-		var oPersistentData = BaseController.prototype.createPersistentStructure.apply(this, arguments);
-		oPersistentData.dimeasure.chartTypeKey = "";
-		return oPersistentData;
-	};
+	DimeasureController.prototype._onDrilledDown = function(oEvent) {
+		this.fireBeforePotentialTableChange();
 
-	DimeasureController.prototype.getTitleText = function() {
-		return sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("PERSODIALOG_TAB_DIMEASURE");
-	};
+		this._addVisibleDimensions(oEvent.getParameter("dimensions") || []);
 
-	/**
-	 * Callback from main controller after OK button has been executed.
-	 *
-	 * @param {object} oPayload that contains additional information from the panel
-	 */
-	DimeasureController.prototype.onAfterSubmit = function(oPayload) {
-		if (!oPayload || !oPayload.dimeasure) {
+		this.fireAfterPotentialTableChange();
+		this.fireAfterDimeasureModelDataChange();
+	};
+	DimeasureController.prototype._addVisibleDimensions = function(aDimensions) {
+		if (!aDimensions.length) {
 			return;
 		}
-		var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
+		var oControlData = this.getControlData();
+		// Determine the count of all visible dimensions ignoring the passed ones.
+		var iVisibleDimensionsCount = oControlData.dimeasure.dimeasureItems.filter(function(oMItem) {
+			return oMItem.aggregationRole === CompLibrary.personalization.AggregationRole.Dimension && aDimensions.indexOf(oMItem.columnKey) < 0;
+		}).reduce(function(iCount, oMItem) {
+			return oMItem.visible ? iCount + 1 : iCount;
+		}, 0);
+		aDimensions.forEach(function(sColumnKey, iIndex) {
+			var iIndexTo = iVisibleDimensionsCount + iIndex;
+			var iIndexFrom = Util.getIndexByKey("columnKey", sColumnKey, oControlData.dimeasure.dimeasureItems);
+			if (iIndexFrom < 0 || iIndexTo < 0 || iIndexFrom > oControlData.dimeasure.dimeasureItems.length - 1 || iIndexTo > oControlData.dimeasure.dimeasureItems.length - 1) {
+				return;
+			}
 
-		// Take over updated, new added or deleted dimMeasureItems into model
-		oData.persistentData.dimeasure.dimeasureItems = [];
-		oPayload.dimeasure.dimMeasureItems.forEach(function(oDimMeasureItem) {
-			oData.persistentData.dimeasure.dimeasureItems.push({
-				columnKey: oDimMeasureItem.getColumnKey(),
-				index: oDimMeasureItem.getIndex(),
-				visible: oDimMeasureItem.getVisible(),
-				role: oDimMeasureItem.getRole()
-			});
-		});
-		oData.persistentData.dimeasure.chartTypeKey = oPayload.dimeasure.chartTypeKey;
-		this.getModel("$sapuicomppersonalizationBaseController").refresh();
+			// 1. update 'controlData'
+			var aMItem = oControlData.dimeasure.dimeasureItems.splice(iIndexFrom, 1);
+			aMItem[0].visible = true;
+			oControlData.dimeasure.dimeasureItems.splice(iIndexTo, 0, aMItem[0]);
 
-		// Apply changes to the chart
-		BaseController.prototype.onAfterSubmit.apply(this, arguments);
-	};
-
-	DimeasureController.prototype.syncJsonModel2Table = function(oJsonModel) {
-		var oTable = this.getTable();
-		var oChart = oTable.getChartObject();
-		var aDimensionItems = [];
-		var aMeasureItems = [];
-		var fUpdateSelectedEntities = function(aDimeasureItems, aSelectedEntitiesOld, fSetSelectedEntities, fGetDimeasureByName) {
-			var aDimeasureItemsCopy = Util.copy(aDimeasureItems);
-			aDimeasureItemsCopy.sort(function(a, b) {
-				if (a.index < b.index) {
-					return -1;
-				} else if (a.index > b.index) {
-					return 1;
-				} else {
-					return 0;
+			var iItemIndex = -1;
+			oControlData.dimeasure.dimeasureItems.forEach(function(oMItem) {
+				if (oMItem.index !== undefined) {
+					oMItem.index = ++iItemIndex;
 				}
 			});
+
+			// 2. update 'controlDataBase'
+			this.updateControlDataBaseFromJson(oControlData);
+		}, this);
+	};
+	DimeasureController.prototype._onDrilledUp = function(oEvent) {
+		this.fireBeforePotentialTableChange();
+
+		var oControlData = this.getControlData();
+		var aInvisibleDimensions = oEvent.getParameter("dimensions") || [];
+		aInvisibleDimensions.forEach(function(sColumnKey) {
+			// 1. update dimeasureItem in 'controlData'
+			var oMItem = Util.getArrayElementByKey("columnKey", sColumnKey, oControlData.dimeasure.dimeasureItems);
+			if (!oMItem) {
+				throw "No entry found in 'controlDataBase' for columnKey '" + sColumnKey + "'";
+			}
+			oMItem.visible = false;
+
+			// 2. update 'controlDataBase'
+			this.updateControlDataBaseFromJson(oControlData);
+		}, this);
+
+		this.fireAfterPotentialTableChange();
+		this.fireAfterDimeasureModelDataChange();
+	};
+
+	DimeasureController.prototype.getColumn2Json = function(oColumn, sColumnKey, iIndex) {
+		if (!Util.isAggregatable(oColumn)) {
+			return null;
+		}
+		return {
+			columnKey: sColumnKey,
+			index: iIndex,
+			visible: oColumn.getVisible(),
+			role: oColumn.getRole(),
+			aggregationRole: oColumn.getAggregationRole()
+			// this transient data we only keep in order to recognise internally in DimeasureController whether this is a dimension or measure
+		};
+	};
+	DimeasureController.prototype.getAdditionalData2Json = function(oJsonData, oTable) {
+		var oChart = oTable.getChartObject();
+		oJsonData.dimeasure.chartTypeKey = oChart.getChartType();
+	};
+	DimeasureController.prototype.getColumn2JsonTransient = function(oColumn, sColumnKey, sText, sTooltip) {
+		if (!Util.isAggregatable(oColumn)) {
+			return null;
+		}
+		return {
+			columnKey: sColumnKey,
+			text: sText,
+			tooltip: sTooltip,
+			aggregationRole: oColumn.getAggregationRole()
+		};
+	};
+	DimeasureController.prototype.handleIgnore = function(oJson, iIndex) {
+		oJson.dimeasure.dimeasureItems[iIndex].visible = false;
+	};
+	DimeasureController.prototype.syncJson2Table = function(oJson) {
+		var oChart = this.getTable().getChartObject();
+		var fUpdateSelectedEntities = function(aDimeasureItems, aSelectedEntitiesOld, fSetSelectedEntities, fGetDimeasureByName) {
+			var aDimeasureItemsCopy = Util.copy(aDimeasureItems);
+			aDimeasureItemsCopy.sort(DimeasureController._sortByIndex);
 			var aSelectedEntitiesNew = [];
 			aDimeasureItemsCopy.forEach(function(oDimeasureItem) {
 				if (oDimeasureItem.visible === true) {
@@ -184,102 +199,132 @@ sap.ui.define([
 		// Apply changes to the Chart
 		this.fireBeforePotentialTableChange();
 
-		Util.splitDimeasures(oJsonModel.dimeasure.dimeasureItems, this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.dimeasure.items, aDimensionItems, aMeasureItems);
+		var aDimensionItems = oJson.dimeasure.dimeasureItems.filter(function(oMItem) {
+			return oMItem.aggregationRole === sap.ui.comp.personalization.AggregationRole.Dimension;
+		});
+		var aMeasureItems = oJson.dimeasure.dimeasureItems.filter(function(oMItem) {
+			return oMItem.aggregationRole === sap.ui.comp.personalization.AggregationRole.Measure;
+		});
 
 		var aVisibleDimensions = oChart.getVisibleDimensions();
-		fUpdateSelectedEntities(aDimensionItems, aVisibleDimensions, jQuery.proxy(oChart.setVisibleDimensions, oChart), jQuery.proxy(oChart.getDimensionByName, oChart));
+		fUpdateSelectedEntities(aDimensionItems, aVisibleDimensions, oChart.setVisibleDimensions.bind(oChart), oChart.getDimensionByName.bind(oChart));
 		var aVisibleMeasures = oChart.getVisibleMeasures();
-		fUpdateSelectedEntities(aMeasureItems, aVisibleMeasures, jQuery.proxy(oChart.setVisibleMeasures, oChart), jQuery.proxy(oChart.getMeasureByName, oChart));
+		fUpdateSelectedEntities(aMeasureItems, aVisibleMeasures, oChart.setVisibleMeasures.bind(oChart), oChart.getMeasureByName.bind(oChart));
 
-		oChart.setChartType(oJsonModel.dimeasure.chartTypeKey);
+		oChart.setChartType(oJson.dimeasure.chartTypeKey);
 
 		this.fireAfterPotentialTableChange();
 	};
 
 	/**
-	 * Does a complete JSON snapshot of the current table instance ("original") from the perspective of the columns controller; the JSON snapshot can
-	 * later be applied to any table instance to recover all columns related infos of the "original" table
-	 *
-	 * @returns {objects} JSON objects with meta data from existing table columns
+	 * Similar to 'getTable2Json'
 	 */
-	DimeasureController.prototype._getTable2Json = function() {
-		var oJsonData = this.createPersistentStructure();
-		var oTable = this.getTable();
-		if (!oTable) {
-			return oJsonData;
-		}
-		var oChart = oTable.getChartObject();
-		var aVisibleDimensionNames = oChart.getVisibleDimensions();
-		var aVisibleMeasureNames = oChart.getVisibleMeasures();
-		var oColumnKey2ColumnMap = this.getColumnMap(true);
-
-		oJsonData.dimeasure.chartTypeKey = oChart.getChartType();
-
-		aVisibleDimensionNames.forEach(function(sDimensionName) {
-			var oColumn = oColumnKey2ColumnMap[sDimensionName];
-			if (!oColumn) {
-				return;
+	DimeasureController.prototype.getDataSuiteFormat2Json = function(oDataSuiteFormat) {
+		var oJson = this.createControlDataStructure();
+		var fnAddItemProperty = function(sColumnKey, sPropertyName, oPropertyValue) {
+			var iIndex = Util.getIndexByKey("columnKey", sColumnKey, oJson.dimeasure.dimeasureItems);
+			if (iIndex < 0) {
+				iIndex = oJson.dimeasure.dimeasureItems.length;
+				oJson.dimeasure.dimeasureItems.splice(iIndex, 0, {
+					columnKey: sColumnKey
+				});
 			}
-			if (oColumn.getAggregationRole() !== sap.ui.comp.personalization.AggregationRole.Dimension && oColumn.getAggregationRole() !== sap.ui.comp.personalization.AggregationRole.Measure) {
-				return;
-			}
-			oJsonData.dimeasure.dimeasureItems.push({
-				columnKey: sDimensionName,
-				index: oJsonData.dimeasure.dimeasureItems.length,
-				visible: true,
-				role: oColumn.getRole()
-			});
+			oJson.dimeasure.dimeasureItems[iIndex][sPropertyName] = oPropertyValue;
+		};
+
+		// Based on 'controlDataInitial' set all 'visible' dimeasures as 'invisible'
+		this.getControlDataInitial().dimeasure.dimeasureItems.filter(function(oMItem) {
+			return oMItem.visible === true;
+		}).forEach(function(oMItem) {
+			fnAddItemProperty(oMItem.columnKey, "visible", false);
 		});
 
-		aVisibleMeasureNames.forEach(function(sMeasureName) {
-			var oColumn = oColumnKey2ColumnMap[sMeasureName];
-			if (!oColumn) {
-				return;
-			}
-			if (oColumn.getAggregationRole() !== sap.ui.comp.personalization.AggregationRole.Dimension && oColumn.getAggregationRole() !== sap.ui.comp.personalization.AggregationRole.Measure) {
-				return;
-			}
-			oJsonData.dimeasure.dimeasureItems.push({
-				columnKey: sMeasureName,
-				index: oJsonData.dimeasure.dimeasureItems.length,
-				visible: true,
-				role: oColumn.getRole()
+		// Take over 'Visualizations'
+		if (oDataSuiteFormat.Visualizations && oDataSuiteFormat.Visualizations.length) {
+			var aChartVisualizations = oDataSuiteFormat.Visualizations.filter(function(oVisualization) {
+				return oVisualization.Type === "Chart";
 			});
-		}, this);
-
-		return oJsonData;
+			if (aChartVisualizations.length) {
+				var iVisibleDimensionsLength = 0;
+				if (aChartVisualizations[0].Content.Dimensions.length) {
+					iVisibleDimensionsLength = aChartVisualizations[0].Content.Dimensions.length;
+					aChartVisualizations[0].Content.Dimensions.forEach(function(sName, iIndex) {
+						var oAttribute = Util.getArrayElementByKey("Dimension", sName, aChartVisualizations[0].Content.DimensionAttributes);
+						fnAddItemProperty(sName, "visible", true);
+						fnAddItemProperty(sName, "index", iIndex);
+						if (oAttribute && oAttribute.Role) {
+							fnAddItemProperty(sName, "role", sap.ui.comp.odata.ChartMetadata.getDimensionRole(oAttribute.Role));
+						}
+						fnAddItemProperty(sName, "aggregationRole", sap.ui.comp.personalization.AggregationRole.Dimension);
+					}, this);
+				}
+				if (aChartVisualizations[0].Content.Measures.length) {
+					aChartVisualizations[0].Content.Measures.forEach(function(sName, iIndex) {
+						var oAttribute = Util.getArrayElementByKey("Measure", sName, aChartVisualizations[0].Content.MeasureAttributes);
+						fnAddItemProperty(sName, "visible", true);
+						fnAddItemProperty(sName, "index", iVisibleDimensionsLength + iIndex);
+						if (oAttribute && oAttribute.Role) {
+							fnAddItemProperty(sName, "role", sap.ui.comp.odata.ChartMetadata.getMeasureRole(oAttribute.Role));
+						}
+						fnAddItemProperty(sName, "aggregationRole", sap.ui.comp.personalization.AggregationRole.Measure);
+					}, this);
+				}
+			}
+			// Note: if runtime error occurs because sap.chart library has not been loaded (there is dependency to sap.chart inside of sap.ui.comp.odata.ChartMetadata) then the caller of DimeasureController has to load the sap.chart library.
+			oJson.dimeasure.chartTypeKey = sap.ui.comp.odata.ChartMetadata.getChartType(aChartVisualizations[0].Content.ChartType);
+		}
+		return oJson;
 	};
-
-	DimeasureController.prototype._getTable2JsonRestore = function() {
-		return this._getTable2Json();
-	};
-
-	DimeasureController.prototype.syncTable2TransientModel = function() {
-		var aItems = [];
-		var oTable = this.getTable();
-		if (!oTable) {
+	/**
+	 * Creates, if not already exists, property <code>Visualizations</code> in <code>oDataSuiteFormat</code> object if at least one dimeasure item exists. Adds an object of the current PersistentData snapshot into <code>Visualizations</code> array.
+	 * @param {object} oDataSuiteFormat Structure of Data Suite Format
+	 */
+	DimeasureController.prototype.getDataSuiteFormatSnapshot = function(oDataSuiteFormat) {
+		var oControlDataTotal = this.getUnionData(this.getControlDataInitial(), this.getControlData());
+		if (!oControlDataTotal.dimeasure || !oControlDataTotal.dimeasure.dimeasureItems || !oControlDataTotal.dimeasure.dimeasureItems.length) {
 			return;
 		}
 
-		var oColumnKey2ColumnMap = this.getColumnMap(true);
-		for ( var sColumnKey in oColumnKey2ColumnMap) {
-			var oColumn = oColumnKey2ColumnMap[sColumnKey];
-			if (oColumn.getAggregationRole() === sap.ui.comp.personalization.AggregationRole.NotDimeasure) {
-				continue;
+		// Fill 'Visualizations'
+		var aDimensionItemsVisible = oControlDataTotal.dimeasure.dimeasureItems.filter(function(oMItem) {
+			return oMItem.aggregationRole === sap.ui.comp.personalization.AggregationRole.Dimension;
+		}).filter(function(oMItem) {
+			return oMItem.visible === true;
+		});
+		var aMeasureItemsVisible = oControlDataTotal.dimeasure.dimeasureItems.filter(function(oMItem) {
+			return oMItem.aggregationRole === sap.ui.comp.personalization.AggregationRole.Measure;
+		}).filter(function(oMItem) {
+			return oMItem.visible === true;
+		});
+		if (aDimensionItemsVisible.length || aMeasureItemsVisible.length) {
+			if (!oDataSuiteFormat.Visualizations) {
+				oDataSuiteFormat.Visualizations = [];
 			}
-			aItems.push({
-				columnKey: sColumnKey,
-				text: oColumn.getLabel(),
-				tooltip: oColumn.getTooltip(),
-				// visible: oColumn.getSelected(),
-				aggregationRole: oColumn.getAggregationRole()
+			oDataSuiteFormat.Visualizations.push({
+				Type: "Chart",
+				Content: {
+					// Note: if runtime error occurs because sap.chart library has not been loaded (there is dependency to sap.chart inside of sap.ui.comp.odata.ChartMetadata) then the caller of DimeasureController has to load the sap.chart library.
+					ChartType: sap.ui.comp.odata.ChartMetadata.getAnnotationChartType(oControlDataTotal.dimeasure.chartTypeKey),
+					Dimensions: aDimensionItemsVisible.map(function(oDimensionItem) {
+						return oDimensionItem.columnKey;
+					}),
+					DimensionAttributes: aDimensionItemsVisible.map(function(oDimensionItem) {
+						return {
+							Dimension: oDimensionItem.columnKey,
+							Role: sap.ui.comp.odata.ChartMetadata.getAnnotationDimensionRole(oDimensionItem.role)
+						};
+					}),
+					Measures: aMeasureItemsVisible.map(function(oMeasureItem) {
+						return oMeasureItem.columnKey;
+					}),
+					MeasureAttributes: aMeasureItemsVisible.map(function(oMeasureItem) {
+						return {
+							Measure: oMeasureItem.columnKey,
+							Role: sap.ui.comp.odata.ChartMetadata.getAnnotationMeasureRole(oMeasureItem.role)
+						};
+					})
+				}
 			});
-		}
-
-		// check if Items was changed at all and take over if it was changed
-		var aItemsBefore = this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.dimeasure.items;
-		if (jQuery(aItems).not(aItemsBefore).length !== 0 || jQuery(aItemsBefore).not(aItems).length !== 0) {
-			this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.dimeasure.items = aItems;
 		}
 	};
 
@@ -289,6 +334,12 @@ sap.ui.define([
 	 * @returns {sap.m.P13nDimMeasurePanel} returns a new created ColumnsPanel
 	 */
 	DimeasureController.prototype.getPanel = function(oPayload) {
+
+		// Note: in the time where controller gets the panel all table columns are present (also missing columns).
+		// Note: in case that all aggregatable columns are excluded we nevertheless have to create the panel for the case that some aggregatable columns will be included.
+		if (!Util.hasAggregatableColumns(this.getColumnMap())) {
+			return null;
+		}
 
 		sap.ui.getCore().loadLibrary("sap.m");
 		jQuery.sap.require("sap/m/P13nDimMeasurePanel");
@@ -300,31 +351,53 @@ sap.ui.define([
 		if (oPayload && oPayload.availableChartTypes) {
 			aAvailableChartTypes = oPayload.availableChartTypes;
 		}
-		var oPanel = new sap.m.P13nDimMeasurePanel({
-			title: this.getTitleText(),
-			availableChartTypes: aAvailableChartTypes,
-			chartTypeKey: "{$sapmP13nPanel>/persistentData/dimeasure/chartTypeKey}",
-			items: {
-				path: '$sapmP13nPanel>/transientData/dimeasure/items',
+		return new sap.m.P13nDimMeasurePanel({
+					availableChartTypes: aAvailableChartTypes,
+					chartTypeKey: "{$sapmP13nPanel>/controlDataReduce/dimeasure/chartTypeKey}",
+					items: {
+						path: '$sapmP13nPanel>/transientData/dimeasure/dimeasureItems',
 				template: new sap.m.P13nItem({
-					columnKey: '{$sapmP13nPanel>columnKey}',
-					text: '{$sapmP13nPanel>text}',
-					tooltip: '{$sapmP13nPanel>tooltip}',
-					aggregationRole: '{$sapmP13nPanel>aggregationRole}'
-				})
-			},
-			dimMeasureItems: {
-				path: "$sapmP13nPanel>/persistentData/dimeasure/dimeasureItems",
+							columnKey: '{$sapmP13nPanel>columnKey}',
+							text: '{$sapmP13nPanel>text}',
+							tooltip: '{$sapmP13nPanel>tooltip}',
+							aggregationRole: '{$sapmP13nPanel>aggregationRole}'
+						})
+					},
+					dimMeasureItems: {
+						path: "$sapmP13nPanel>/controlDataReduce/dimeasure/dimeasureItems",
 				template: new sap.m.P13nDimMeasureItem({
-					columnKey: "{$sapmP13nPanel>columnKey}",
-					index: "{$sapmP13nPanel>index}",
-					visible: "{$sapmP13nPanel>visible}",
-					role: "{$sapmP13nPanel>role}"
-				})
-			},
-			beforeNavigationTo: that.setModelFunction()
+							columnKey: "{$sapmP13nPanel>columnKey}",
+							index: "{$sapmP13nPanel>index}",
+							visible: "{$sapmP13nPanel>visible}",
+							role: "{$sapmP13nPanel>role}"
+						})
+					},
+					beforeNavigationTo: that.setModelFunction(),
+					changeChartType: function(oEvent) {
+						var oControlDataReduce = that.getControlDataReduce();
+						oControlDataReduce.dimeasure.chartTypeKey = oEvent.getParameter("chartTypeKey");
+						that.setControlDataReduce2Model(oControlDataReduce);
+					},
+					changeDimMeasureItems: function(oEvent) {
+						if (!oEvent.getParameter("items")) {
+							return;
+						}
+						var aItemsChanged = oEvent.getParameter("items");
+						var oControlDataReduce = that.getControlDataReduce();
+						oControlDataReduce.dimeasure.dimeasureItems.forEach(function(oMItemReduce) {
+							var oMItemChanged = Util.getArrayElementByKey("columnKey", oMItemReduce.columnKey, aItemsChanged);
+							if (!oMItemChanged) {
+								return;
+							}
+					// We can not just take over the 'items' from P13nColumnsPanel and overwrite the 'controlDataReduce' because
+							// the 'items' structure does not contain all parameters of 'controlDataReduce' (e.g. 'aggregationRole')
+							oMItemReduce.index = oMItemChanged.index;
+							oMItemReduce.visible = oMItemChanged.visible;
+							oMItemReduce.role = oMItemChanged.role;
+						});
+						that.setControlDataReduce2Model(oControlDataReduce);
+					}
 		});
-		return oPanel;
 	};
 
 	DimeasureController.prototype._isDimMeasureItemEqual = function(oDimMeasureItemA, oDimMeasureItemB) {
@@ -380,9 +453,9 @@ sap.ui.define([
 		};
 		var aDimeasureItemsBase = Util.copy(oPersistentDataBase.dimeasure.dimeasureItems).sort(fSort);
 		var aDimeasureItems = Util.copy(oPersistentData.dimeasure.dimeasureItems).sort(fSort);
-// if (aDimeasureItems.length !== aDimeasureItemsBase.length) {
-// return false;
-// }
+		// if (aDimeasureItems.length !== aDimeasureItemsBase.length) {
+		// return false;
+		// }
 		var bIsEqual = true;
 		aDimeasureItemsBase.some(function(oDimeasureItem, iIndex) {
 			if (!this._isDimMeasureItemEqual(oDimeasureItem, aDimeasureItems[iIndex])) {
@@ -418,7 +491,7 @@ sap.ui.define([
 	DimeasureController.prototype.getChangeData = function(oPersistentDataBase, oPersistentDataCompare) {
 
 		if (!oPersistentDataBase || !oPersistentDataBase.dimeasure || !oPersistentDataBase.dimeasure.dimeasureItems) {
-			return this.createPersistentStructure();
+			return this.createControlDataStructure();
 		}
 
 		if (!oPersistentDataCompare || !oPersistentDataCompare.dimeasure || !oPersistentDataCompare.dimeasure.dimeasureItems) {
@@ -437,40 +510,56 @@ sap.ui.define([
 	};
 
 	/**
-	 * @param {object} oDataOld: JSON object to which different properties from oDataNew are added. E.g. Restore
-	 * @param {object} oDataNew: JSON object from where the different properties are added to oDataOld. E.g. CurrentVariant || PersistentData
+	 * @param {object} oJsonBase: JSON object to which different properties from oDataNew are added. E.g. Restore
+	 * @param {object} oJson: JSON object from where the different properties are added to oDataOld. E.g. CurrentVariant || PersistentData
 	 * @returns {object} new JSON object as union result of oDataOld and oPersistentDataCompare
 	 */
-	DimeasureController.prototype.getUnionData = function(oDataOld, oDataNew) {
-		if (!oDataNew || !oDataNew.dimeasure || !oDataNew.dimeasure.dimeasureItems) {
-			return {
-				chartTypeKey: oDataOld.dimeasure.chartTypeKey,
-				dimeasure: Util.copy(oDataOld.dimeasure)
-			};
+	DimeasureController.prototype.getUnionData = function(oJsonBase, oJson) {
+		if (!oJson || !oJson.dimeasure || !oJson.dimeasure.dimeasureItems) {
+			return Util.copy(oJsonBase);
 		}
-		return {
-			dimeasure: {
-				chartTypeKey: oDataNew.dimeasure.chartTypeKey ? oDataNew.dimeasure.chartTypeKey : oDataOld.dimeasure.chartTypeKey,
-				dimeasureItems: Util.copy(oDataNew.dimeasure.dimeasureItems)
+		var oUnion = Util.copy(oJson);
+
+		Object.keys(oJsonBase.dimeasure).forEach(function(sAttribute) {
+			if (jQuery.isArray(oJsonBase.dimeasure[sAttribute])) {
+				oJsonBase.dimeasure[sAttribute].forEach(function(oMItemBase) {
+					var oMItemUnion = Util.getArrayElementByKey("columnKey", oMItemBase.columnKey, oUnion.dimeasure[sAttribute]);
+					if (!oMItemUnion) {
+						oUnion.dimeasure[sAttribute].push(oMItemBase);
+						return;
+					}
+					if (oMItemUnion.visible === undefined && oMItemBase.visible !== undefined) {
+						oMItemUnion.visible = oMItemBase.visible;
+					}
+					if (oMItemUnion.role === undefined && oMItemBase.role !== undefined) {
+						oMItemUnion.role = oMItemBase.role;
+					}
+					if (oMItemUnion.index === undefined && oMItemBase.index !== undefined) {
+						oMItemUnion.index = oMItemBase.index;
+					}
+					if (oMItemUnion.aggregationRole === undefined && oMItemBase.aggregationRole !== undefined) {
+						oMItemUnion.aggregationRole = oMItemBase.aggregationRole;
+					}
+				});
+				return;
 			}
-		};
+			if (oUnion.dimeasure[sAttribute] === undefined && oJsonBase.dimeasure[sAttribute] !== undefined) {
+				oUnion.dimeasure[sAttribute] = oJsonBase.dimeasure[sAttribute];
+			}
+		}, this);
+
+		return oUnion;
 	};
 
-	DimeasureController.prototype.determineNeededColumnKeys = function(oPersistentData) {
-		var aNeededColumnKeys = [];
-		if (!oPersistentData || !oPersistentData.dimeasure || !oPersistentData.dimeasure.dimeasureItems) {
-			return {
-				dimeasure: []
-			};
+	DimeasureController._sortByIndex = function(a, b) {
+		if (a.index < b.index) {
+			return -1;
+		} else if (a.index > b.index) {
+			return 1;
+		} else {
+			return 0;
 		}
-		oPersistentData.dimeasure.dimeasureItems.forEach(function(oModelColumn) {
-			aNeededColumnKeys.push(oModelColumn.columnKey);
-		});
-		return {
-			dimeasure: aNeededColumnKeys
-		};
 	};
-
 	/**
 	 * Cleans up before destruction.
 	 *
@@ -480,10 +569,12 @@ sap.ui.define([
 		BaseController.prototype.exit.apply(this, arguments);
 
 		var oTable = this.getTable();
-		var oChart = oTable.getChartObject();
-		if (oChart) {
-			oChart.detachDrilledDown(this._onDrilledDown, this);
-			oChart.detachDrilledUp(this._onDrilledUp, this);
+		if (oTable) {
+			var oChart = oTable.getChartObject();
+			if (oChart) {
+				oChart.detachDrilledDown(this._onDrilledDown, this);
+				oChart.detachDrilledUp(this._onDrilledUp, this);
+			}
 		}
 	};
 

@@ -19,7 +19,7 @@
         <value name="Center">
             <documentation>Centered text alignment.</documentation>
         </value>
-        <value name="Initial" since="1.26.0">
+        <value since="1.26.0" name="Initial">
             <documentation>Sets no text align, so the browser default is used.</documentation>
         </value>
     </enumeration>

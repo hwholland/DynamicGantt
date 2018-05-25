@@ -1,13 +1,14 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // -------------------------------------------------------------------------------
 // Helper class used for generic ODataModel related handling
 // -------------------------------------------------------------------------------
-sap.ui.define([], function() {
+sap.ui.define(["sap/ui/model/odata/v2/ODataModel"], function(ODataModelV2) {
 	"use strict";
 
 	/**
@@ -32,7 +33,7 @@ sap.ui.define([], function() {
 					// Check if ODataMetaModel was loaded
 					// If not, delay the creation of table content/helpers until ODataMetaModel is loaded!
 					// Do this only for async ODataModel
-					if (oModel.getMetadata() && oModel.getMetadata().getName() === "sap.ui.model.odata.v2.ODataModel") {
+					if (oModel.getMetadata() && oModel instanceof sap.ui.model.odata.v2.ODataModel) {
 						bLoadMetadataAsync = true; // always true for v2.ODataModel
 					} else if (oModel.bLoadMetadataAsync || (oModel.getServiceMetadata && !oModel.getServiceMetadata())) {
 						bLoadMetadataAsync = true; // assume async if bLoadMetadataAsync or if no service metadata has been loaded for the ODataModel

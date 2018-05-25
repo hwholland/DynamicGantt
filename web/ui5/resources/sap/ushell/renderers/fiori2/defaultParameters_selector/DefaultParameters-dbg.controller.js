@@ -1,5 +1,8 @@
-(function () {
-    "use strict";
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+
+sap.ui.define(function() {
+	"use strict";
+
     /*global jQuery, sap, setTimeout, clearTimeout */
     /*jslint plusplus: true, nomen: true */
     sap.ui.controller("sap.ushell.renderers.fiori2.defaultParameters_selector.DefaultParameters", {
@@ -10,6 +13,21 @@
             this.oBlockedParameters = {}; // parmeters of odata models which are not yet filled with "our" value
             this.aDisplayedUserDefaults = []; // array of displayed parameters, in order
             this.DefaultParametersService = sap.ushell.Container.getService("UserDefaultParameters");
+        },
+        applyFocus: function () {
+            var that = this;
+            //Since each field is loaded separately, we have to check for focusable element
+            //After each element is loaded in order to assure that the first element is focused
+            //When the view is displayed for the first time.
+            setTimeout(function () {
+                if (!sap.ui.Device.phone) {
+                    var elFirstToFocus = jQuery.sap.byId(that.getView().getId()).firstFocusableDomRef();
+
+                    if (elFirstToFocus) {
+                        jQuery.sap.focus(elFirstToFocus);
+                    }
+                }
+            },1);
         },
         overrideOdataModelValue: function (oEvent) {
             var sUrl = oEvent.getParameter('url'),
@@ -73,9 +91,10 @@
 
             this.aDisplayedUserDefaults = oUserDefTmp;
             //
+            jQuery.sap.require("sap.ui.comp.smartform.SmartForm");
             this.sForm = new sap.ui.comp.smartform.SmartForm( {
                 editable: true
-            });
+            }).addStyleClass("sapUshellShellDefaultValuesForm");
 
             this.getView().addContent(this.sForm);
         },
@@ -86,8 +105,8 @@
             var oHasRelevantMaintainableParameters = sap.ushell.Container.getService("UserDefaultParameters").hasRelevantMaintainableParameters();
             oHasRelevantMaintainableParameters.done(function (bHasRelevantParameters) {
                 deferred.resolve({
-                    value: bHasRelevantParameters ? 1:0,
-                    displayText: ""
+                    value: bHasRelevantParameters ? 1 : 0,
+                    displayText: " "
                 });
             });
 
@@ -111,7 +130,7 @@
         revertToPlainModelControls : function(grpel, oRecord) {
             jQuery.sap.log.error("Metadata loading for parameter " + oRecord.parameterName + " failed" + JSON.stringify(oRecord.editorMetadata));// metadata loading for the model intended for this control failed
             // -> instead display as plain
-            // switch model binding: 
+            // switch model binding:
             oRecord.modelBind.isOdata = false;
             this.createPlainModel(grpel, oRecord);
             // switch to create other controls
@@ -153,8 +172,9 @@
 
                     if (lastGroup != oRecord.editorMetadata.groupId) {
                         // generate a group on group change
-                        grp = new sap.ui.comp.smartform.Group({ label : oRecord.editorMetadata.groupTitle ||
-                        sap.ushell.resources.i18n.getText("userDefaultsGeneralGroup"), "editable" : true});
+                        //var groupTitle = oRecord.editorMetadata.groupTitle || sap.ushell.resources.i18n.getText("userDefaultsGeneralGroup");
+                        var groupTitle = oRecord.editorMetadata.groupTitle || undefined;
+                        grp = new sap.ui.comp.smartform.Group({ label : groupTitle, "editable" : true});
                         lastGroup = oRecord.editorMetadata.groupId;
                         that.sForm.addGroup(grp);
                     }
@@ -227,7 +247,7 @@
                     type : {
                         parts: ['MdlParameter>/' + oRecord.parameterName + '/valueObject/extendedValue/Ranges'],
                         formatter: function (aRanges) {
-                            return aRanges && aRanges.length ? sap.m.ButtonType.Emphasized : sap.m.ButtonType.Default;
+                            return aRanges && aRanges.length ? sap.m.ButtonType.Emphasized : sap.m.ButtonType.Transparent;
                         }
                     },
                     press: function (oEvent) {
@@ -243,31 +263,47 @@
                grpel.removeElement(oElement);
             });
             var aFields = grpel.getFields().slice();
-            aFields.forEach(function(oElement) {
-               grpel.removeField(oElement);
-            });
+                aFields.forEach(function(oElement) {
+                   grpel.removeField(oElement);
+                });
+
             lbl = new sap.ui.comp.smartfield.SmartLabel({
-                text: oRecord.editorMetadata.displayText || oRecord.parameterName,
-                tooltip: oRecord.editorMetadata.description || oRecord.parameterName
+                width: sap.ui.Device.system.phone ? "auto" : "12rem",
+                textAlign: sap.ui.Device.system.phone ? 'Left' : 'Right'
             });
             if (oRecord.modelBind.isOdata && oRecord.editorMetadata.editorInfo) {
+                jQuery.sap.require("sap.ui.comp.smartfield.SmartField");
                 sf = new sap.ui.comp.smartfield.SmartField({
                     value: oRecord.modelBind.sPropertyName,
                     name: oRecord.parameterName
                 });
+                sf.attachInnerControlsCreated({}, this.applyFocus, this);
+                lbl.setLabelFor(sf);
             } else {
                 sf = new sap.m.Input({ name: oRecord.parameterName, value : oRecord.modelBind.sPropertyName , type : "Text"});
                 this.setPropValue(oRecord);
+                lbl.setText((oRecord.editorMetadata.displayText || oRecord.parameterName) + ":");
+                lbl.setTooltip(oRecord.editorMetadata.description || oRecord.parameterName);
             }
-            lbl.setLabelFor(sf);
-            grpel.addElement(lbl);
-            sf.addStyleClass("sapUshellDefaultParametersField");
+
             sf.attachChange(this.storeChangedData.bind(this));
-            layout =  new sap.m.HBox({
-                items: [sf, expButton]
+            sf.addStyleClass("sapUshellDefaultValuesSmartField");
+            sf.setLayoutData(new sap.m.FlexItemData({shrinkFactor: 0}));
+            var oInputBox = new sap.m.FlexBox({
+               width: sap.ui.Device.system.phone ? '100%' : 'auto',
+               direction: (sap.ui.Device.system.phone && !expButton) ? 'Column' : 'Row',
+               items: [sf, expButton]
             });
+            lbl.setLayoutData(new sap.m.FlexItemData({shrinkFactor: 0}));
+            layout =  new sap.m.FlexBox({
+                alignItems: sap.ui.Device.system.phone ? 'Start' : 'Center',
+                direction: sap.ui.Device.system.phone ? 'Column' : 'Row',
+                items: [lbl, oInputBox]
+            });
+
             grpel.addElement(layout);
         },
+
 
         openExtendedValueDialog: function(oEvent, oData) {
             var that = this,
@@ -284,6 +320,7 @@
                     lblText = oData.modelBind.model.getMetaModel().getODataProperty(oEntityType, oData.editorMetadata.editorInfo.propertyName)["sap:label"];
                 }
             }
+            jQuery.sap.require('sap.ui.comp.valuehelpdialog.ValueHelpDialog');
             var oValueHelpDialog = new sap.ui.comp.valuehelpdialog.ValueHelpDialog({
                 basicSearchText:  oData.editorMetadata.displayText || lblText || oData.parameterName,
                 title: oData.editorMetadata.displayText || lblText || oData.parameterName,
@@ -438,11 +475,7 @@
         storeChangedData: function() {
             var i = 0,
                 that = this,
-                arr = that.aDisplayedUserDefaults,
-                aCheckList = this.sForm.check(),
-                oSaveBtn = sap.ui.getCore().byId("saveButton");
-
-            oSaveBtn.setEnabled(!aCheckList.length);
+                arr = that.aDisplayedUserDefaults;
 
             // check for all changed parameters...
             for (i = 0; i < arr.length; ++i) {
@@ -475,7 +508,9 @@
 
 
         onCancel: function () {
-            sap.ui.getCore().byId("saveButton").setEnabled(true);
+            if (sap.ui.getCore().byId("saveButton")) {
+                sap.ui.getCore().byId("saveButton").setEnabled(true);
+            }
         },
 
         isValueDifferent : function(oValueObject1, oValueObject2) {
@@ -510,7 +545,8 @@
         },
 
         onSave: function () {
-            var deferred = new jQuery.Deferred(),
+            var that = this,
+                deferred = new jQuery.Deferred(),
                 i,
                 aChangedParameterNames = Object.keys(this.oChangedParameters).sort(),
                 oSetValuePromise,
@@ -536,7 +572,11 @@
                         this.oCurrentParameters[pn].valueObject.extendedValue = undefined;
                     }
                     oSetValuePromise = sap.ushell.Container.getService("UserDefaultParameters").editorSetValue(pn, this.oCurrentParameters[pn].valueObject);
-                    oSetValuePromise.done(deferred.resolve);
+                    oSetValuePromise.done(function (sParameterName) {
+                        that.oChangedParameters = {};
+                        that.oOriginalParameters[sParameterName].valueObject.value = that.oCurrentParameters[sParameterName].valueObject.value;
+                        deferred.resolve();
+                    });
                     oSetValuePromise.fail(deferred.reject);
                 }
             }
@@ -544,4 +584,6 @@
         }
 
     });
-}());
+
+
+}, /* bExport= */ false);

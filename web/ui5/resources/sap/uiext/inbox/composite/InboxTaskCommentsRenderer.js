@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.composite.InboxTaskCommentsRenderer");sap.uiext.inbox.composite.InboxTaskCommentsRenderer={};
 sap.uiext.inbox.composite.InboxTaskCommentsRenderer.render=function(r,c){var a=r;var C=c;var m=C.getId();a.write('<ARTICLE');a.writeControlData(C);a.addClass('sapuiextInboxTaskCommentsChunk');a.writeClasses();a.write('>');if(C.getAggregation('busyIndicator'))a.renderControl(C.getAggregation('busyIndicator'));if(C.getComments().length>0||C.showCommentFeeder){a.write("<SECTION>");this.renderComments(a,C);a.write("</SECTION>");}a.write('</ARTICLE>');};

@@ -12,10 +12,10 @@
             <documentation>Key</documentation>
         </value>
         <value name="ValueKey">
-            <documentation>A value-key pair formatted like "text (key)"</documentation>
+            <documentation>A value-key pair formatted like &quot;text (key)&quot;</documentation>
         </value>
         <value name="KeyValue">
-            <documentation>A key-value pair formatted like "(key) text"</documentation>
+            <documentation>A key-value pair formatted like &quot;(key) text&quot;</documentation>
         </value>
     </enumeration>
 </simple-type>

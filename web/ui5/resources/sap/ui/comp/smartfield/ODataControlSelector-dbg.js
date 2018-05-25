@@ -1,18 +1,19 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 /**
- * Selector for controls that are hosted by <code>sap.ui.comp.SmartField</code>.
+ * Selector for controls that are hosted by <code>sap.ui.comp.smartfield.SmartField</code>.
  *
  * @private
  * @name sap.ui.comp.smartfield.ODataControlSelector
  * @author SAP SE
- * @version 1.38.33
+ * @version 1.54.3
  * @since 1.28.0
- * @param {jquery.sap.global} jQuery a reference to the jQuery implementation.
+ * @param {jQuery} jQuery a reference to the jQuery implementation.
  * @returns {sap.ui.comp.smartfield.ODataControlSelector} new control selector instance.
  */
 sap.ui.define([
@@ -59,7 +60,7 @@ sap.ui.define([
 		}
 
 		// currently there is no replacement for <code>sap:semantics</code> with value <code>fixed-values</code>.
-		if (oResult.valuelistType === "fixed-values" && !bConfigOnly) {
+		if ((oResult.valuelistType === "fixed-values") && !bConfigOnly) {
 			oResult.combobox = true;
 		}
 
@@ -127,7 +128,7 @@ sap.ui.define([
 		// this method is only invoked for Edm.DateTime,
 		// so no need exists to replace it with V4 annotations,
 		// as Edm.DateTime is "pruned" in V4.
-		if (this._oMetaData.property && this._oMetaData.property.property && this._oMetaData.property.property["sap:display-format"] === "Date") {
+		if (this._oMetaData.property && this._oMetaData.property.property && ( this._oMetaData.property.property["sap:display-format"] === "Date" || this._oTypes.isCalendarDate(this._oMetaData.property))) {
 			return true;
 		}
 
@@ -161,7 +162,10 @@ sap.ui.define([
 	 * @public
 	 */
 	ODataControlSelector.prototype.getCreator = function(bBlockSmartLinkCreation) {
-		var bContextEditable = true, oConfig, mMethods = {
+		var bContextEditable = true,
+			oConfig;
+
+		var mMethods = {
 			"Edm.Decimal": "_createEdmNumeric",
 			"Edm.Double": "_createEdmNumeric",
 			"Edm.Float": "_createEdmNumeric",
@@ -199,10 +203,13 @@ sap.ui.define([
 		// check for display mode.
 		if (!this._oParent.getEditable() || !this._oParent.getEnabled() || !this._oParent.getContextEditable() || !bContextEditable) {
 			if (this._oMetaData.annotations) {
-				// check for semantic annotation.
-				if (this._oMetaData.annotations.text && this._oMetaData.annotations.semanticKeys && this._oMetaData.annotations.semanticKeys.semanticKeyFields && this._oMetaData.annotations.semanticKeys.semanticKeyFields.indexOf(this._oMetaData.path) > -1) {
+
+				// ObjectIdentifier + SmartLink
+				if (this.useObjectIdentifier(this.checkDatePicker()) && this._oMetaData.annotations.text && this._oMetaData.annotations.semanticKeys && this._oMetaData.annotations.semanticKeys.semanticKeyFields && this._oMetaData.annotations.semanticKeys.semanticKeyFields.indexOf(this._oMetaData.path) > -1) {
 					return "_createEdmDisplay";
 				}
+
+				// SmartLink
 				if (this._oMetaData.annotations.semantic && !bBlockSmartLinkCreation) {
 					return "_createEdmSemantic";
 				}
@@ -225,6 +232,11 @@ sap.ui.define([
 		}
 
 		if (this._oMetaData.property && this._oMetaData.property.property) {
+
+			if (this._oTypes.isCalendarDate(this._oMetaData.property)) {
+				return "_createEdmDateTime";
+			}
+
 			// check by EdmType.
 			return mMethods[this._oMetaData.property.property.type] || "_createEdmString";
 		}
@@ -239,7 +251,9 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataControlSelector.prototype._isUOMDisplay = function() {
+
 		if (this._oMetaData.annotations.uom) {
+
 			if (this._isObjectNumberProposed()) {
 				if (!this._oParent.getContextEditable() || (!this._oParent.getEditable() && !this._oParent.getUomEditable()) || (!this._oParent.getEnabled() && !this._oParent.getUomEnabled())) {
 					return true;
@@ -263,8 +277,11 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataControlSelector.prototype._isUOMDisplayObjectStatus = function() {
+
 		if (this._oMetaData.annotations.uom) {
+
 			if (this._isObjectStatusProposed()) {
+
 				if (!this._oParent.getContextEditable() || (!this._oParent.getEditable() && !this._oParent.getUomEditable()) || (!this._oParent.getEnabled() && !this._oParent.getUomEnabled())) {
 					return true;
 				}
@@ -335,6 +352,7 @@ sap.ui.define([
 		var oProposal;
 
 		if (this._oMetaData && this._oMetaData.property && this._oMetaData.property.property && this._oMetaData.property.property.type === "Edm.String") {
+
 			if (!bDatePicker && !bMasked) {
 				oProposal = this._oParent.getControlProposal();
 

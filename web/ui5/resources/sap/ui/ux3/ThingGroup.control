@@ -6,18 +6,18 @@
     <deprecation since="1.38"></deprecation>
     <baseType>sap.ui.core/Element</baseType>
     <properties>
-        <property name="title" type="sap.ui.core/string" group="Misc">
+        <property group="Misc" type="sap.ui.core/string" name="title">
             <documentation>Title of Group</documentation>
         </property>
-        <property name="colspan" type="sap.ui.core/boolean" defaultValue="false" group="Misc">
+        <property group="Misc" defaultValue="false" type="sap.ui.core/boolean" name="colspan">
             <documentation>If Group is used in a column layout the groups spans the all columns if set to true.</documentation>
         </property>
     </properties>
     <aggregations default="content">
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>Content of Group</documentation>
         </aggregation>
-        <aggregation name="actions" type="sap.ui.ux3/ThingGroup" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.ux3/ThingGroup" name="actions">
             <documentation>Actions of the groups content</documentation>
         </aggregation>
     </aggregations>

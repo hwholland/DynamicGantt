@@ -1,100 +1,20 @@
-/* SAP CVOM 4.0 © <2012-2014> SAP SE. All rights reserved. Build Version 1.4.0, Build context N/A */
-if (requirejs && requirejs.s && requirejs.s.contexts && requirejs.s.contexts._) {
-    window.__sap_viz_internal_requirejs_nextTick__ = requirejs.s.contexts._.nextTick;
-    requirejs.s.contexts._.nextTick = function(fn) {fn();};
-}
-/*
- * 1. Make every AMD module exports itself.
- * 2. Every module stays anonymous until they are required.
- * 3. "Exporting" includes global namespace setup and auto loading.
- * 4. The trick must work for any valid AMD loader.
- */
-(function(global){
-    var ostring = Object.prototype.toString;
-    function isFunction(it) {
-        return ostring.call(it) === '[object Function]';
-    }
+/* SAP CVOM 4.0 © <2012-2014> SAP SE. All rights reserved. Build Version 1.9.0, Build context N/A */
 
-    function isArray(it) {
-        return ostring.call(it) === '[object Array]';
-    }
+// cache global require & define
+sap.viz.moduleloader.originalDefine = define;
+sap.viz.moduleloader.originalRequire = require;
+sap.viz.moduleloader.originalRequirejs = requirejs;
 
-    function mixin(target, src) {
-        for(var prop in src){
-            if(src.hasOwnProperty(prop)){
-                target[prop] = src[prop];
-            }
-        }
-        if(isFunction(target) && isFunction(src)){
-            target = src;
-        }
-        return target;
-    }
-
-    function exportNamespace(id, mod){
-        for(var i = 0,
-                nameParts = id.split("/"),
-                p = global,
-                c;
-            c = nameParts[i]; ++i){
-
-            if(i < nameParts.length - 1){
-                p[c] = p[c] || {};
-            }else{
-                p[c] = p[c] ? mixin(p[c], mod) : mod;
-            }
-            p = p[c];
-        }
-    }
-    var exportNamespaces = {
-        'sap/viz/vizframe/frame/VizFrame' : 'sap/viz/vizframe/VizFrame',
-        'sap/viz/vizframe/common/Version' : 'sap/viz/vizframe/VERSION'
-    };
-    if(define && define.amd && !define.__exportNS){
-        var originalDefine = define;
-        define = function(name, deps, callback){
-            if(typeof name !== 'string'){
-                callback = deps;
-                deps = name;
-                name = null;
-            }
-            if(!isArray(deps)){
-                callback = deps;
-                deps = [];
-            }
-
-            var needExport = deps.indexOf('exports') >= 0;
-            var needRequire = needExport || deps.indexOf('require') >= 0;
-            if(needExport){
-                deps.push('module');
-
-                var originalCallback = callback;
-                callback = function(){
-                    var last = arguments.length - 1;
-                    var mod = arguments[last];
-                    var result = originalCallback;
-                    if(isFunction(originalCallback)){
-                        var args = [].slice.apply(arguments, [0, last]);
-                        result = originalCallback.apply(this, args);
-                    }
-                    exportNamespace(exportNamespaces[mod.id] || mod.id, result);
-                    return result;
-                };
-            }
-            if(name && needRequire){
-                define.__autoLoad.push(name);
-            }
-
-            return name ? originalDefine(name, deps, callback) : originalDefine(deps, callback);
-        };
-        for(var prop in originalDefine){
-            define[prop] = originalDefine[prop];
-        }
-        define.__exportNS = originalDefine;
-        define.__autoLoad = [];
-    }
-})(this);
-
+// replace with sap.viz.moduleloader.require/define
+var define = sap.viz.moduleloader.define;
+var require = sap.viz.moduleloader.require.config({
+	context: "lw-vizframe",
+	exportMap : {
+		'sap/viz/vizframe/frame/VizFrame' : 'sap.viz.vizframe.VizFrame',
+		'sap/viz/vizframe/common/Version' : 'sap.viz.vizframe.VERSION'
+	}
+});
+var requirejs = require;
 define('sap/viz/vizframe/common/Version',['exports'], function() {
     /** sap.viz.vizframe.VERSION
      */
@@ -105,7 +25,7 @@ define('sap/viz/vizframe/common/Version',['exports'], function() {
      * @example
      * var version = sap.viz.vizframe.VERSION;
      */
-    return '1.4.0';
+    return '1.9.0';
 });
 
 // @formatter:off
@@ -745,31 +665,25 @@ define('sap/viz/vizframe/common/UIControl',[
 
 // @formatter:off
 define('sap/viz/vizframe/frame/viz/VizUtil',[
-], function() {
+    'jquery'
+], function($) {
 // @formatter:on
     var VizUtil = {};
-
+    var PROPS = ["data", "bindings", "customizations", "template", "size", "sharedRuntimeScales"];
     VizUtil.mergeOptions = function(destination, source) {
-        if (source.data) {
-            destination.data = source.data;
-        }
-        if (source.bindings) {
-            destination.bindings = source.bindings;
+        for(var i = 0; i < PROPS.length; ++i){
+            if(source[PROPS[i]]){
+                destination[PROPS[i]] = source[PROPS[i]];
+            }
         }
         if (source.properties) {
             destination.properties = sap.viz.vizservices.__internal__.PropertyService.mergeProperties(destination.type, destination.properties, source.properties);
         }
         if (source.scales) {
+            if(source.scalesOption) {
+                destination.scalesOption = $.extend({}, source.scalesOption);
+            }
             destination.scales = sap.viz.vizservices.__internal__.ScaleService.mergeScales(destination.type, destination.scales, source.scales);
-        }
-        if (source.customizations) {
-            destination.customizations = source.customizations;
-        }
-        if (source.template) {
-            destination.template = source.template;
-        }
-        if (source.size) {
-            destination.size = source.size;
         }
         return destination;
     };
@@ -790,15 +704,19 @@ define('sap/viz/vizframe/frame/viz/VizCache',[
         this._options = options;
     };
 
-    VizCache.generateFromVizInstance = function(vizInstance) {
+    VizCache.generateFromVizInstance = function(vizInstance, param) {
+        var resetScales = param.scalesOption && param.scalesOption.level === 'user' && param.scalesOption.replace;
         var options = {
             'data' : vizInstance.data(),
             'bindings' : vizInstance.bindings(),
-            'properties' : vizInstance.properties({}, {
-                'level' : 'user'
-            }),
             'scales' : vizInstance.scales([], {
-                'level' : 'user'
+                'level': 'user',
+                'isRender' : false,
+                'replace': resetScales
+            }),
+            'properties' : vizInstance.properties({}, {
+                'level': 'user',
+                'isRender' : false
             }),
             'customizations' : vizInstance.customizations(),
             'template' : vizInstance.template()
@@ -857,6 +775,10 @@ define('sap/viz/vizframe/frame/viz/Viz',[
         this._afterRenderCallback = afterRenderCallback;
     };
     OOUtil.extend(Viz, UIControl);
+    
+    Viz.prototype._getDataRange = function(start, end){
+        return this._vizInstance && this._vizInstance._getDataRange(start, end);
+    };
 
     Viz.prototype.update = function(options) {
         this._beforeRenderCallback();
@@ -865,7 +787,7 @@ define('sap/viz/vizframe/frame/viz/Viz',[
                 this._createVizInstance(options);
             } else {
                 if (options.type !== undefined && options.type !== this._type) {
-                    this._vizCache = VizCache.generateFromVizInstance(this._vizInstance);
+                    this._vizCache = VizCache.generateFromVizInstance(this._vizInstance, options);
                     this._clearVizInstance();
                     this._createVizInstance(options);
                 } else {
@@ -1049,7 +971,7 @@ define('sap/viz/vizframe/frame/viz/Viz',[
             this._vizInstance.update(options);
         } catch (err) {
             // Switch vizInstance to vizCache
-            this._vizCache = VizCache.generateFromVizInstance(this._vizInstance);
+            this._vizCache = VizCache.generateFromVizInstance(this._vizInstance, options);
             this._vizCache.update(options);
 
             this._clearVizInstance();
@@ -1288,7 +1210,10 @@ define('sap/viz/vizframe/frame/VizFrame',[
             };
         })(name);
     });
-
+    VizFrame.prototype._getDataRange = function(start, end){
+        return this._viz._getDataRange(start, end);
+    };
+    
     VizFrame.prototype.getControl = function(id) {
         return this._controls[id];
     };
@@ -1485,7 +1410,8 @@ define('sap/viz/vizframe/api/VizFrame',[
         "sharedRuntimeScales",
         "runtimeScales",
         "states",
-        "zoom" 
+        "zoom",
+        "_getDataRange"
         ].join(" "));
 
     /**
@@ -1682,12 +1608,8 @@ define('sap/viz/vizframe/api/VizFrame',[
         require(list);
     }
 })();
-if(define && define.__exportNS){
-    define = define.__exportNS;
-}
-if (window.__sap_viz_internal_requirejs_nextTick__ !== undefined) {
-    if (requirejs && requirejs.s && requirejs.s.contexts && requirejs.s.contexts._) {
-        requirejs.s.contexts._.nextTick = window.__sap_viz_internal_requirejs_nextTick__;
-    }
-    window.__sap_viz_internal_requirejs_nextTick__ = undefined;
-}
+
+// restore global require & define
+define = sap.viz.moduleloader.originalDefine;
+require = sap.viz.moduleloader.originalRequire;
+requirejs = sap.viz.moduleloader.originalRequirejs;

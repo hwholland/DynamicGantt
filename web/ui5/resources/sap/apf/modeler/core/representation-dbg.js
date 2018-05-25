@@ -21,7 +21,9 @@ jQuery.sap.declare("sap.apf.modeler.core.representation");
 	 * @constructor
 	 */
 	sap.apf.modeler.core.Representation = function(representationId, inject, dataFromCopy) {
-		var representationTypeId, alternateRepresentationTypeId, width, dimensions, measures, properties, leftUpperCornerTextKey, rightUpperCornerTextKey, leftLowerCornerTextKey, rightLowerCornerTextKey, orderByProperties, topN;
+		var representationTypeId, alternateRepresentationTypeId, width, dimensions, measures, properties, leftUpperCornerTextKey, 
+		rightUpperCornerTextKey, leftLowerCornerTextKey, rightLowerCornerTextKey, orderByProperties, topN, 
+		hierarchyProperty, hierarchyPropertyTextLabelKey, hierarchyLabelDisplayOption;
 		if (!dataFromCopy) {
 			width = {};
 			dimensions = new inject.constructors.ElementContainer("dimension", undefined, inject);
@@ -29,6 +31,8 @@ jQuery.sap.declare("sap.apf.modeler.core.representation");
 			properties = new inject.constructors.ElementContainer("property", undefined, inject);
 			orderByProperties = new inject.constructors.ElementContainer("orderBy", undefined, inject);
 		} else {
+			hierarchyProperty = dataFromCopy.hierarchyProperty;
+			hierarchyPropertyTextLabelKey = dataFromCopy.hierarchyPropertyTextLabelKey;
 			representationTypeId = dataFromCopy.representationTypeId;
 			alternateRepresentationTypeId = dataFromCopy.alternateRepresentationTypeId;
 			width = dataFromCopy.width;
@@ -41,6 +45,7 @@ jQuery.sap.declare("sap.apf.modeler.core.representation");
 			rightLowerCornerTextKey = dataFromCopy.rightLowerCornerTextKey;
 			orderByProperties = dataFromCopy.orderByProperties;
 			topN = dataFromCopy.topN;
+			hierarchyLabelDisplayOption = dataFromCopy.hierarchyLabelDisplayOption;
 		}
 		/**
 		 * @private
@@ -326,6 +331,9 @@ jQuery.sap.declare("sap.apf.modeler.core.representation");
 		this.getMeasureKind = function(propertyName) {
 			var object = measures.getElement(propertyName);
 			if (object) {
+				if(object.kind === "yAxis1"){
+					object.kind = "yAxis";
+				}
 				return object.kind;
 			}
 			return undefined;
@@ -395,6 +403,64 @@ jQuery.sap.declare("sap.apf.modeler.core.representation");
 		 */
 		this.removeProperty = function(propertyName) {
 			properties.removeElement(propertyName);
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.representation#getHierarchyProperty
+		 * @function
+		 * @returns {string} - hierarchyProperty
+		 */
+		this.getHierarchyProperty = function(){
+			return hierarchyProperty;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.representation#setHierarchyProperty
+		 * @function
+		 * @param {string} - hierarchyProperty
+		 */
+		this.setHierarchyProperty = function(property){
+			if(hierarchyProperty !== property){
+				hierarchyPropertyTextLabelKey = undefined;
+				hierarchyLabelDisplayOption = undefined;
+			}
+			hierarchyProperty = property;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.representation#getHierarchyPropertyTextLabelKey
+		 * @function
+		 * @returns {string} - hierarchyPropertyTextLabelKey
+		 */
+		this.getHierarchyPropertyTextLabelKey = function(){
+			return hierarchyPropertyTextLabelKey;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.representation#setHierarchyPropertyTextLabelKey
+		 * @function
+		 * @param {string} - hierarchyPropertyTextLabelKey
+		 */
+		this.setHierarchyPropertyTextLabelKey = function(key){
+			hierarchyPropertyTextLabelKey = key;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.representation#getHierarchyPropertyLabelDisplayOption
+		 * @function
+		 * @returns {string} - hierarchyPropertyLabelDisplayOption
+		 */
+		this.getHierarchyPropertyLabelDisplayOption = function(){
+			return hierarchyLabelDisplayOption;
+		};
+		/**
+		 * @private
+		 * @name sap.apf.modeler.core.representation#setHierarchyPropertyLabelDisplayOption
+		 * @function
+		 * @param {string} - hierarchyLabelDisplayOption
+		 */
+		this.setHierarchyPropertyLabelDisplayOption = function(key){
+			hierarchyLabelDisplayOption = key;
 		};
 		/**
 		 * @private
@@ -611,7 +677,7 @@ jQuery.sap.declare("sap.apf.modeler.core.representation");
 		 * @name sap.apf.modeler.core.Representation#getMeasures
 		 * @description Return a list of parameter objects describing measures of a representation.
 		 *      Each parameter object has a method getId() which returns the propertyName.
-		 * @returns {String[]} - list of ids which are propertyNames
+		 * @returns {Object []} - list of objects with 'property' (propertyName) and 'ascending' (ascending or descending) properties
 		 */
 		this.getOrderbySpecifications = function() {
 			var list = [];
@@ -644,7 +710,10 @@ jQuery.sap.declare("sap.apf.modeler.core.representation");
 				leftLowerCornerTextKey : leftLowerCornerTextKey,
 				rightLowerCornerTextKey : rightLowerCornerTextKey,
 				orderByProperties : orderByProperties,
-				topN : topN
+				topN : topN,
+				hierarchyProperty : hierarchyProperty,
+				hierarchyPropertyTextLabelKey : hierarchyPropertyTextLabelKey,
+				hierarchyLabelDisplayOption : hierarchyLabelDisplayOption
 			};
 			var dataFromCopy = sap.apf.modeler.core.ConfigurationObjects.deepDataCopy(dataForCopy);
 			return new sap.apf.modeler.core.Representation((newIdForCopy || this.getId()), inject, dataFromCopy);

@@ -49,7 +49,7 @@ sap.ui.define([
 	 * @extend sap.gantt.shape.Shape
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -61,9 +61,9 @@ sap.ui.define([
 				isClosed: {type: "boolean", defaultValue: true},
 				isDuration: {type: "boolean", defaultValue: true},
 				
-				headLength: {type: "number", defaultValue: 5},
-				tailLength: {type: "number", defaultValue: 5},
-				height: {type: "number", defaultValue: 15}
+				headLength: {type: "float", defaultValue: 5},
+				tailLength: {type: "float", defaultValue: 5},
+				height: {type: "float", defaultValue: 15}
 			}
 		}
 	});
@@ -112,60 +112,61 @@ sap.ui.define([
 	 * 
 	 * @param {object} oData Shape data.
 	 * @param {object} oRowInfo Information about the row and row data.
-	 * @return {string} Value of property <code>d</code>.
+	 * @return {string} Value of property <code>d</code> or null if the generated d is invalid according to the given data.
 	 * @public
 	 */
 	Chevron.prototype.getD = function (oData, oRowInfo) {
+		var sD;
 		if (this.mShapeConfig.hasShapeProperty("d")) {
-			return this._configFirst("d", oData);
+			sD = this._configFirst("d", oData);
+		} else {
+			var nHeight = this.getHeight(oData, oRowInfo);
+			
+			var nHeadLength = this.getHeadLength(oData, oRowInfo),
+				nTailLength = this.getTailLength(oData, oRowInfo),
+				oAxisTime = this.getAxisTime();
+			
+			var nStartOriginalX = oAxisTime.timeToView(Format.abapTimestampToDate(
+					this.getTime(oData, oRowInfo)));
+			var nEndOriginalX = oAxisTime.timeToView(Format.abapTimestampToDate(
+					this.getEndTime(oData, oRowInfo)));
+			
+			var nRowYCenter = this.getRowYCenter(oData, oRowInfo);
+			
+			sD = this.getDString({
+				nStartOriginalX: nStartOriginalX,
+				nEndOriginalX: nEndOriginalX,
+				nTailLength: nTailLength,
+				nHeadLength: nHeadLength,
+				nHeight: nHeight,
+				nRowYCenter: nRowYCenter
+			});
 		}
-
-		var nHeadLength = this.getHeadLength(oData, oRowInfo),
-			nTailLength = this.getTailLength(oData, oRowInfo),
-			nHeight = this.getHeight(oData, oRowInfo),
-			oAxisTime = this.getAxisTime();
-
-		var nStartOriginalX = oAxisTime.timeToView(Format.abapTimestampToDate(
-				this.getTime(oData, oRowInfo)));
-		var nEndOriginalX = oAxisTime.timeToView(Format.abapTimestampToDate(
-				this.getEndTime(oData, oRowInfo)));
-
-		if (nStartOriginalX < 0) {
-			nStartOriginalX = oAxisTime.timeToView(0);
+		
+		if(this.isValid(sD)) {
+			return sD;
+		} else {
+			jQuery.sap.log.warning("Chevron shape generated invalid d: " + sD + " from the given data: " + oData);
+			return null;
 		}
-		if (nEndOriginalX < 0) {
-			nEndOriginalX = oAxisTime.timeToView(0);
-		}
-
-		var nRowYCenter = this.getRowYCenter(oData, oRowInfo);
-
-		return this.getDString({
-			nStartOriginalX: nStartOriginalX,
-			nEndOriginalX: nEndOriginalX,
-			nTailLength: nTailLength,
-			nHeadLength: nHeadLength,
-			nHeight: nHeight,
-			nRowYCenter: nRowYCenter
-		});
 	};
 	
 	Chevron.prototype.getDString = function (oConf) {
 		var nHalfHeight = oConf.nHeight / 2;
-		var sRetVal, nBodyLength, nX1;
-
+		
 		if (this._isRTL) {
 			//for RTL mode, get the axis X1
-			nBodyLength = oConf.nStartOriginalX - oConf.nEndOriginalX - oConf.nHeadLength;
-			nBodyLength = (nBodyLength > 0) ? nBodyLength : 1;
-			nX1 = (nBodyLength === 1) ? (oConf.nStartOriginalX - 1) : (oConf.nStartOriginalX - oConf.nTailLength);
-			sRetVal = "m " + nX1 + " " + oConf.nRowYCenter + " l " + oConf.nTailLength + " -" + nHalfHeight + " l -" + nBodyLength + " " +
+			var nBodyLength = oConf.nStartOriginalX - oConf.nEndOriginalX - oConf.nHeadLength;
+			var nBodyLength = (nBodyLength > 0) ? nBodyLength : 1;
+			var nX1 = (nBodyLength === 1) ? (oConf.nStartOriginalX - 1) : (oConf.nStartOriginalX - oConf.nTailLength);
+			var sRetVal = "m " + nX1 + " " + oConf.nRowYCenter + " l " + oConf.nTailLength + " -" + nHalfHeight + " l -" + nBodyLength + " " +
 				0 + " l -" + oConf.nHeadLength + " " + nHalfHeight + " l " + oConf.nHeadLength + " " + nHalfHeight + " l " + nBodyLength +
 				" " + 0 + " z";
 		} else {
-			nBodyLength = oConf.nEndOriginalX - oConf.nStartOriginalX - oConf.nHeadLength;
-			nBodyLength = (nBodyLength > 0) ? nBodyLength : 1;
-			nX1 = (nBodyLength === 1) ? (oConf.nStartOriginalX + 1) : (oConf.nStartOriginalX + oConf.nTailLength);
-			sRetVal = "m " + nX1 + " " + oConf.nRowYCenter + " l -" + oConf.nTailLength + " -" + nHalfHeight + " l " + nBodyLength + " " +
+			var nBodyLength = oConf.nEndOriginalX - oConf.nStartOriginalX - oConf.nHeadLength;
+			var nBodyLength = (nBodyLength > 0) ? nBodyLength : 1;
+			var nX1 = (nBodyLength === 1) ? (oConf.nStartOriginalX + 1) : (oConf.nStartOriginalX + oConf.nTailLength);
+			var sRetVal = "m " + nX1 + " " + oConf.nRowYCenter + " l -" + oConf.nTailLength + " -" + nHalfHeight + " l " + nBodyLength + " " +
 				0 + " l " + oConf.nHeadLength + " " + nHalfHeight + " l -" + oConf.nHeadLength + " " + nHalfHeight + " l -" + nBodyLength +
 				" " + 0 + " z";
 		}

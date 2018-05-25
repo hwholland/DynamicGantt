@@ -73,6 +73,7 @@ VBI.Shader = (function() {
 		this.m_GL.compileShader(shader);
 		if (!this.m_GL.getShaderParameter(shader, this.m_GL.COMPILE_STATUS)) {
 			jQuery.sap.log.error("Shader Compilation Error");
+			jQuery.sap.log.error(this.m_GL.getShaderInfoLog(shader));
 		}
 	};
 
@@ -80,6 +81,7 @@ VBI.Shader = (function() {
 		this.m_GL.linkProgram(this.m_Prog);
 		if (!this.m_GL.getProgramParameter(this.m_Prog, this.m_GL.LINK_STATUS)) {
 			jQuery.sap.log.error("Shader Link Error");
+			jQuery.sap.log.error(this.m_GL.getProgramInfoLog(this.m_Prog));
 		}
 	};
 
@@ -99,10 +101,6 @@ VBI.Shader = (function() {
 	Shader.prototype.SetInt = function(name, val) {
 		this.m_GL.uniform1i(this.getLoc(name), val);
 		return this;
-	};
-
-	Shader.prototype.SetV2 = function(name, val) {
-		this.m_GL.uniform2f(this.getLoc(name), val[0], val[1]);
 	};
 
 	return Shader;
@@ -295,42 +293,54 @@ VBI.Vals = (function() {
 		this.m_H = height;
 
 		this.m_Shader = new VBI.Shader(this.m_GL, 
-		                               "attribute vec4 pos, value;" +
-		                               "varying vec2 off, dim;" +
-		                               "uniform vec2 size;" +
-		                               "varying float val;" +
-		                               "void main(){ " +
-		                               "  off = pos.zw; " +
-		                               "  dim = abs(pos.zw); " +
-		                               "  vec2 pos = pos.xy + pos.zw; " +
-		                               "  val = value.x; " +
-		                               "  gl_Position = vec4((pos / size) * 2.0 - 1.0, 0.0, 1.0);" +
-		                               "}", 
-		                               "#ifdef GL_FRAGMENT_PRECISION_HIGH \n" +
-		                               "  precision highp int;" +
-		                               "  precision highp float; \n" +
-		                               "#else \n" +
-		                               "  precision mediump int;" +
-		                               "  precision mediump float; \n" +
-		                               "#endif \n" +
-		                               "varying vec2 off, dim;" +
-		                               "varying float val;" +
-		                               "void main(){ " +
-		                               "  float f = (1.0 - smoothstep(0.0, 1.0, length(off / dim))); " +
-		                               "  float tmp = f * val; " +
-		                               "  gl_FragColor = vec4(tmp);" +
-		                               "}");
-		
+						"uniform vec4 uTM;" +
+						"attribute vec4 aPos;" +
+						"attribute float aValue;" +
+						"varying vec3 vData;" +
+						"void main(){" +
+						"  gl_Position = vec4(aPos.xy * uTM.xy + uTM.zw, 0.0, 1.0);" +
+						"  vData.xy = aPos.zw;" +
+						"  vData.z = aValue;" +
+						"}",
+						"#ifdef GL_FRAGMENT_PRECISION_HIGH\n" +
+						"  precision highp int;" +
+						"  precision highp float;\n" +
+						"#else\n" +
+						"  precision mediump int;" +
+						"  precision mediump float;\n" +
+						"#endif\n" +
+						"varying vec3 vData;" +
+						"void main(){" +
+						"  float f = smoothstep(1.0, 0.0, length(vData.xy)) * vData.z;" +
+						"  gl_FragColor = vec4(f);" +
+						"}");
+
 		// "#ifdef GL_FRAGMENT_PRECISION_HIGH\n precision highp int;\n precision highp float;\n#else\n precision mediump int;\n precision mediump
 		// float;\n#endif\nvarying vec2 off, dim;\nvarying float val;\nvoid main(){ float d = length(off/dim); float f = exp( -1.0/(d*d) ); float tmp
 		// = f*val; gl_FragColor=vec4(tmp);}\n");
+
+		this.m_Shader.aPos = this.m_Shader.getShaderVar('aPos');
+		this.m_Shader.aValue = this.m_Shader.getShaderVar('aValue');
+		this.m_Shader.uTM = this.m_Shader.getLoc('uTM');
 
 		// create a render output buffer
 		this.m_Ro = new VBI.Ro(this.m_GL, this.m_W, this.m_H);
 
 		this.m_VB = this.m_GL.createBuffer();
 		this.m_vBuf = new Float32Array(this.m_nPointChunk * this.m_nVertexSize * 6);
-		this.m_vBufs = new Float32Array(this.m_vBuf.buffer, 0, this.m_nPointChunk * this.m_nVertexSize * 6);
+
+		this.m_IB = this.m_GL.createBuffer();
+		var elements = new Uint16Array(this.m_nPointChunk * 6);
+		for (var i = 0, j = 0; i < elements.length; j += 4) {
+			elements[i++] = j;
+			elements[i++] = j + 1;
+			elements[i++] = j + 2;
+			elements[i++] = j + 2;
+			elements[i++] = j + 1;
+			elements[i++] = j + 3;
+		}
+		this.m_GL.bindBuffer(this.m_GL.ELEMENT_ARRAY_BUFFER, this.m_IB);
+		this.m_GL.bufferData(this.m_GL.ELEMENT_ARRAY_BUFFER, elements, this.m_GL.STATIC_DRAW);
 
 		this.m_nIdx = 0;
 		this.m_nPoints = 0;
@@ -345,31 +355,28 @@ VBI.Vals = (function() {
 
 	Vals.prototype.Render = function() {
 		if (this.m_nPoints > 0) {
-			this.m_GL.enable(this.m_GL.BLEND);
+			var gl = this.m_GL;
+			gl.enable(gl.BLEND);
 			this.m_Ro.Apply();
-			this.m_GL.bindBuffer(this.m_GL.ARRAY_BUFFER, this.m_VB);
-			this.m_GL.bufferData(this.m_GL.ARRAY_BUFFER, this.m_vBufs, this.m_GL.STREAM_DRAW);
-
-			// get shader variables
-			var svPos = this.m_Shader.getShaderVar('pos');
-			var svValue = this.m_Shader.getShaderVar('value');
-
-			this.m_GL.enableVertexAttribArray(1);
-			this.m_GL.vertexAttribPointer(svPos, 4, this.m_GL.FLOAT, false, 32, 0);
-			this.m_GL.vertexAttribPointer(svValue, 4, this.m_GL.FLOAT, false, 32, 16);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.m_IB);
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.m_VB);
+			gl.bufferData(gl.ARRAY_BUFFER, this.m_vBuf, gl.STREAM_DRAW);
 
 			this.m_Shader.Apply();
-			this.m_Shader.SetV2('size', [
-				this.m_W, this.m_H
-			]);
+
+			gl.enableVertexAttribArray(1);
+			gl.vertexAttribPointer(this.m_Shader.aPos, 4, gl.FLOAT, false, 20, 0);
+			gl.vertexAttribPointer(this.m_Shader.aValue, 1, gl.FLOAT, false, 20, 16);
+
+			gl.uniform4f(this.m_Shader.uTM, 2 / this.m_W, 2 / this.m_H, -1, -1);
 
 			// draw squares
-			this.m_GL.drawArrays(this.m_GL.TRIANGLES, 0, this.m_nPoints * 6);
-			this.m_GL.disableVertexAttribArray(1);
+			gl.drawElements(gl.TRIANGLES, this.m_nPoints * 6, gl.UNSIGNED_SHORT, 0);
+			gl.disableVertexAttribArray(1);
 
 			// cleanup
 			this.m_Ro.UnBindRo();
-			this.m_GL.disable(this.m_GL.BLEND);
+			gl.disable(gl.BLEND);
 			this.m_nPoints = 0;
 			this.m_nIdx = 0;
 		}
@@ -391,12 +398,10 @@ VBI.Vals = (function() {
 		y = this.m_H - y; // flip y coordinate
 
 		// the flat rectangle to draw to.........................................//
-		this.PushVertex(x, y, -s, -s, val);
-		this.PushVertex(x, y, +s, -s, val);
-		this.PushVertex(x, y, -s, +s, val);
-		this.PushVertex(x, y, -s, +s, val);
-		this.PushVertex(x, y, +s, -s, val);
-		this.PushVertex(x, y, +s, +s, val);
+		this.PushVertex(x - s, y - s, -1, -1, val);
+		this.PushVertex(x + s, y - s, +1, -1, val);
+		this.PushVertex(x - s, y + s, -1, +1, val);
+		this.PushVertex(x + s, y + s, +1, +1, val);
 		this.m_nPoints += 1;
 		return this.m_nPoints;
 	};
@@ -408,7 +413,7 @@ VBI.Vals = (function() {
 		a[cnt++] = y;
 		a[cnt++] = xs;
 		a[cnt++] = ys;
-		a[cnt++] = a[cnt++] = a[cnt++] = a[cnt++] = val;
+		a[cnt++] = val;
 		this.m_nIdx = cnt;
 	};
 
@@ -557,7 +562,7 @@ VBI.Hm = (function() {
 
 		// square geometry with uv coordinates
 		var geo = new Float32Array([
-			-1, -1, 0, 1, 1, -1, 0, 1, -1, 1, 0, 1, -1, 1, 0, 1, 1, -1, 0, 1, 1, 1, 0, 1
+			-1, -1, 0, 1, 1, -1, 0, 1, -1, 1, 0, 1, 1, 1, 0, 1
 		]);
 		this.m_Geo = this.m_GL.createBuffer();
 
@@ -608,7 +613,7 @@ VBI.Hm = (function() {
 		this.m_Shader.Apply();
 		this.m_Shader.SetInt("src", 0);
 		this.m_Shader.SetInt("colTex", 1);
-		this.m_GL.drawArrays(this.m_GL.TRIANGLES, 0, 6);
+		this.m_GL.drawArrays(this.m_GL.TRIANGLE_STRIP, 0, 4);
 		return;
 	};
 

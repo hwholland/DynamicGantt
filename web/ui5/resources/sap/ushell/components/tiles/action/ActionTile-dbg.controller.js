@@ -1,18 +1,17 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
-(function() {
-    "use strict";
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
+sap.ui.define(['sap/ui/core/IconPool','sap/ushell/components/tiles/utils'],
+	function(IconPool, utils) {
+	"use strict";
+
     /* global document, jQuery, sap */
     sap.ui.getCore().loadLibrary("sap.m");
-    jQuery.sap.require("sap.ui.core.IconPool");
-    jQuery.sap.require("sap.ushell.components.tiles.utils");
-
     sap.ui.controller("sap.ushell.components.tiles.action.ActionTile", {
         onInit: function() {
             var oView = this.getView();
             var oViewData = oView.getViewData();
-            var oResourceModel = sap.ushell.components.tiles.utils.getResourceBundleModel();
+            var oResourceModel = utils.getResourceBundleModel();
             var oTileApi = oViewData.chip; // instance                                                                                                                                                                    // API
-            var oConfig = sap.ushell.components.tiles.utils.getActionConfiguration(oTileApi);
+            var oConfig = utils.getActionConfiguration(oTileApi);
             var oModel;
             var that = this;
 
@@ -32,7 +31,7 @@
             if (oTileApi.configurationUi.isEnabled()) {
                 // attach configuration UI provider, which is essentially a components.tiles.action.Configuration
                 oTileApi.configurationUi.setUiProvider(function() {
-                    var oConfigurationUi = sap.ushell.components.tiles.utils.getConfigurationUi(that.getView(), "sap.ushell.components.tiles.action.Configuration");
+                    var oConfigurationUi = utils.getConfigurationUi(that.getView(), "sap.ushell.components.tiles.action.Configuration");
                     oTileApi.configurationUi.attachCancel(this.onCancelConfiguration.bind(null, oConfigurationUi));
                     oTileApi.configurationUi.attachSave(this.onSaveConfiguration.bind(this, oConfigurationUi, formatDisplayText)); // mind the
                                                                                                                                     // closure
@@ -68,7 +67,7 @@
 
             // If the input fields icon, semantic object and action are failing the input validations, then through an error message requesting the
             // user to enter/correct those fields
-            var bReject = sap.ushell.components.tiles.utils.checkTMInputOnSaveConfig(oConfigurationView);
+            var bReject = utils.checkTMInputOnSaveConfig(oConfigurationView);
             if (bReject) {
                 oDeferred.reject("mandatory_fields_missing");
                 return oDeferred.promise();
@@ -76,15 +75,15 @@
 
             // Before saving the model data, check if Mapping signature table contains duplicate parameter names
             // in this case the save will fail and all the data will be lost as this is the designer behavior.
-            if (sap.ushell.components.tiles.utils.tableHasDuplicateParameterNames(oModel.getProperty("/config/rows"))) {
-                var oBundle = sap.ushell.components.tiles.utils.getResourceBundleModel().getResourceBundle();
+            if (utils.tableHasDuplicateParameterNames(oModel.getProperty("/config/rows"))) {
+                var oBundle = utils.getResourceBundleModel().getResourceBundle();
                 oDeferred.reject(oBundle.getText("configuration.signature.uniqueParamMessage.text"));
             } else { // only if the data is valid proceed with the save operation
                 // Decide according to special flag if the setting in form factor are default
                 // if so , the configuration should not be saved - this is crucial for the backend checks
-                var oFormFactor = oModel.getProperty("/config/formFactorConfigDefault") ? undefined : sap.ushell.components.tiles.utils.buildFormFactorsObject(oModel);
-                var sMappingSignature = sap.ushell.components.tiles.utils.getMappingSignatureString(oModel.getProperty("/config/rows"), oModel.getProperty("/config/isUnknownAllowed"));
-                var oMappingSignature = sap.ushell.components.tiles.utils.getMappingSignature(oModel.getProperty("/config/rows"), oModel.getProperty("/config/isUnknownAllowed"));
+                var oFormFactor = oModel.getProperty("/config/formFactorConfigDefault") ? undefined : utils.buildFormFactorsObject(oModel);
+                var sMappingSignature = utils.getMappingSignatureString(oModel.getProperty("/config/rows"), oModel.getProperty("/config/isUnknownAllowed"));
+                var oMappingSignature = utils.getMappingSignature(oModel.getProperty("/config/rows"), oModel.getProperty("/config/isUnknownAllowed"));
                 // get the configuration to save from the model
                 var configToSave = {
                     semantic_object: jQuery.trim(oModel.getProperty("/config/semantic_object")) || "",
@@ -121,8 +120,8 @@
                 },
                 // success handler
                 function() {
-                    var oConfigurationConfig = sap.ushell.components.tiles.utils.getActionConfiguration(oTileApi, false);
-                    var oTileConfig = sap.ushell.components.tiles.utils.getActionConfiguration(oTileApi, true);
+                    var oConfigurationConfig = utils.getActionConfiguration(oTileApi, false);
+                    var oTileConfig = utils.getActionConfiguration(oTileApi, true);
                     // switching the model under the tile -> keep the tile model
                     oModel = new sap.ui.model.json.JSONModel({
                         config: oConfigurationConfig,
@@ -166,11 +165,13 @@
             // tile model placed into configuration model by getConfigurationUi
             var oTileModel = oModel.getProperty("/tileModel");
             var oTileApi = oViewData.chip;
-            var oCurrentConfig = sap.ushell.components.tiles.utils.getActionConfiguration(oTileApi, false);
+            var oCurrentConfig = utils.getActionConfiguration(oTileApi, false);
             oConfigurationView.getModel().setData({
                 config: oCurrentConfig,
                 tileModel: oTileModel
             }, false);
         }
     });
-}());
+
+
+}, /* bExport= */ true);

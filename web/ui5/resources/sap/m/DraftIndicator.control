@@ -7,15 +7,15 @@
     <since>1.32.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="state" type="sap.m/DraftIndicatorState" defaultValue="Clear" group="Behavior">
-            <documentation>State of the indicator. Could be "Saving", "Saved" and "Clear".</documentation>
+        <property group="Behavior" defaultValue="Clear" type="sap.m/DraftIndicatorState" name="state">
+            <documentation>State of the indicator. Could be &quot;Saving&quot;, &quot;Saved&quot; and &quot;Clear&quot;.</documentation>
         </property>
-        <property name="minDisplayTime" type="sap.ui.core/int" defaultValue="1500" group="Behavior">
+        <property group="Behavior" defaultValue="1500" type="sap.ui.core/int" name="minDisplayTime">
             <documentation>Minimum time in milliseconds for showing the draft indicator</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="_label" type="sap.m/Label" cardinality="0..1" visibility="hidden">
+        <aggregation visibility="hidden" cardinality="0..1" type="sap.m/Label" name="_label">
             <documentation>The State is managed in this aggregation</documentation>
         </aggregation>
     </aggregations>

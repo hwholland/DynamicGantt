@@ -53,7 +53,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * 
  * This control is used to switch between readonly and edit modes. A typical use case would be to change the value of a Label.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

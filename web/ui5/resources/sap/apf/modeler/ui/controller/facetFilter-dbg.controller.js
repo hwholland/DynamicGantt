@@ -8,6 +8,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.textPoolHelper");
 jQuery.sap.require("sap.apf.modeler.ui.utils.nullObjectChecker");
 jQuery.sap.require("sap.apf.modeler.ui.utils.optionsValueModelBuilder");
 jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
+jQuery.sap.require("sap.apf.modeler.ui.utils.textManipulator");
 /**
 * @class facetFilter
 * @name facetFilter
@@ -23,24 +24,15 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 (function() {
 	"use strict";
 	var oParams, oTextReader, oConfigurationHandler, oConfigurationEditor, oTextPool, oFacetFilter, viewValidatorForFF;
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
-	var optionsValueModelBuilder = new sap.apf.modeler.ui.utils.OptionsValueModelBuilder();
-	// Adds 'Auto Complete Feature' to the input label field in the view using sap.apf.modeler.ui.utils.TextPoolHelper
-	function _enableAutoComplete(oController) {
-		var oTextPoolHelper = new sap.apf.modeler.ui.utils.TextPoolHelper(oTextPool);
-		var oTranslationFormat = sap.apf.modeler.ui.utils.TranslationFormatMap.FACETFILTER_LABEL;
-		var oDependenciesForText = {
-			oTranslationFormat : oTranslationFormat,
-			type : "text"
-		};
-		var oFacetFilterLabel = oController.byId("idLabel");
-		oTextPoolHelper.setAutoCompleteOn(oFacetFilterLabel, oDependenciesForText);
-	}
+	var nullObjectChecker = sap.apf.modeler.ui.utils.nullObjectChecker;
+	var optionsValueModelBuilder = sap.apf.modeler.ui.utils.optionsValueModelBuilder;
+	var textManipulator = sap.apf.modeler.ui.utils.textManipulator;
+	var oTranslationFormat = sap.apf.modeler.ui.utils.TranslationFormatMap.FACETFILTER_LABEL;
 	// Sets static texts in UI
 	function _setDisplayText(oController) {
-		oController.byId("idFacetFilterBasicData").setTitle(oTextReader("basicData"));
+		oController.byId("idFacetFilterBasicData").setText(oTextReader("basicData"));
 		oController.byId("idFFLabel").setText(oTextReader("ffLabel"));
-		oController.byId("idLabel").setPlaceholder(oTextReader("New Filter"));
+		oController.byId("idLabel").setPlaceholder(oTextReader("newFacetFilter"));
 		oController.byId("idFFPropertyLabel").setText(oTextReader("ffProperty"));
 		oController.byId("idDoNotShowAtRuntimeLabel").setText(oTextReader("doNotShowAtRuntime"));
 		oController.byId("idSelectionModeLabel").setText(oTextReader("ffSelectionMode"));
@@ -51,17 +43,20 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		oController.byId("idConfigListOfValuesLabel").setText(oTextReader("configListOfValuesLabel"));
 		oController.byId("idSingleSelectionMode").setText(oTextReader("singleSelection"));
 		oController.byId("idMultiSelectionMode").setText(oTextReader("multipleSelection"));
-		oController.byId("idDefaultValuesTitle").setTitle(oTextReader("vhDefaultValues"));
+		oController.byId("idDefaultValuesTitle").setText(oTextReader("vhDefaultValues"));
 		oController.byId("idPreselectionModeLabel").setText(oTextReader("vhDefaultValueMode"));
+		oController.byId("idNoneSelection").setText(oTextReader("none"));
 		oController.byId("idAutomaticSelection").setText(oTextReader("automaticValue"));
 		oController.byId("idFixedValue").setText(oTextReader("fixedValues"));
 		oController.byId("idFunction").setText(oTextReader("function"));
 		oController.byId("idPreselectionDefaultsLabel").setText(oTextReader("vhDefaultValues"));
 		oController.byId("idPreselectionFunctionLabel").setText(oTextReader("function"));
-		oController.byId("idValueHelpTitle").setTitle(oTextReader("valueHelp"));
-		oController.byId("idFFAliasLabel").setText(oTextReader("ffAlias"));
-		oController.byId("idFilterResolutionTitle").setTitle(oTextReader("filterResolution"));
+		oController.byId("idValueHelpTitle").setText(oTextReader("valueHelp"));
+		oController.byId("idFilterResolutionTitle").setText(oTextReader("contextResolution"));
 		oController.byId("idUseVHRAsFRRCheckBoxLabel").setText(oTextReader("vhCheckBoxLabel"));
+		oController.byId("idAriaPropertyForSelection").setText(oTextReader("ffSelectionMode"));
+		oController.byId("idAriaPropertyForDefaultMode").setText(oTextReader("vhDefaultValueMode"));
+		oController.byId("idAriaPropertyForVHR").setText(oTextReader("valueHelpMode"));
 	}
 	// Updates the tree node with ID of the new facet filter created and icon in case of new filter; If a label change is to be updated we pass new label and ID of facet filter
 	function _updateTreeNode(oController, sFacetFilterLabel) {
@@ -120,17 +115,19 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 			viewData : oViewData,
 			controller : requestOptionsFRRController
 		});
+		oVHRView.attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.UPDATEPROPERTIES, oController.setFFProperty.bind(oController));
+		oFRRView.attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.UPDATEPROPERTIES, oController.setFFProperty.bind(oController));
 		//To be fired whenever useSameAsVHR check box is selected/unselected
-		oController.getView().attachEvent("useSameAsVHREvent", oFRRView.getController().handleCopy.bind(oFRRView.getController()));
-		oController.getView().attachEvent("enableDisableFRRFieldsEvent", oFRRView.getController().enableOrDisableView.bind(oFRRView.getController()));
-		oVHRView.attachEvent("useSameAsVHREvent", oFRRView.getController().handleCopy.bind(oFRRView.getController()));
+		oController.getView().attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.USESAMEASVHR, oFRRView.getController().handleCopy.bind(oFRRView.getController()));
+		oController.getView().attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.ENABLEDISABLEFRRFIELDS, oFRRView.getController().enableOrDisableView.bind(oFRRView.getController()));
+		oVHRView.attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.USESAMEASVHR, oFRRView.getController().handleCopy.bind(oFRRView.getController()));
 		//To be fired to update subView facet filter and config editor instances after reset
-		oController.getView().attachEvent("updateSubViewInstancesOnResetEvent", oVHRView.getController().updateSubViewInstancesOnReset.bind(oVHRView.getController()));
-		oController.getView().attachEvent("updateSubViewInstancesOnResetEvent", oFRRView.getController().updateSubViewInstancesOnReset.bind(oFRRView.getController()));
+		oController.getView().attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.UPDATESUBVIEWINSTANCESONRESET, oVHRView.getController().updateSubViewInstancesOnReset.bind(oVHRView.getController()));
+		oController.getView().attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.UPDATESUBVIEWINSTANCESONRESET, oFRRView.getController().updateSubViewInstancesOnReset.bind(oFRRView.getController()));
 		//To be fired whenever facet filter visibility is changed
-		oController.getView().attachEvent("doNotShowAtRuntimeEvent", oVHRView.getController().clearVHRFields.bind(oVHRView.getController()));
-		oController.getView().attachEvent("clearVHRFieldsIfValueListEvent", oVHRView.getController().clearVHRFields.bind(oVHRView.getController()));
-		oController.getView().attachEvent("doNotShowAtRuntimeEvent", oFRRView.getController().clearFRRFields.bind(oFRRView.getController()));
+		oController.getView().attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.DONOTSHOWATRUNTIME, oVHRView.getController().clearVHRFields.bind(oVHRView.getController()));
+		oController.getView().attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.CLEARVHRFIELDSIFVALUELIST, oVHRView.getController().clearVHRFields.bind(oVHRView.getController()));
+		oController.getView().attachEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.DONOTSHOWATRUNTIME, oFRRView.getController().clearFRRFields.bind(oFRRView.getController()));
 		oVHRView.addStyleClass("formTopPadding");
 		oVHRView.addStyleClass("formBottomPadding");
 		oFRRView.addStyleClass("formTopPadding");
@@ -143,12 +140,13 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		oController.byId("idValueHelp").setVisible(bVisibleInForm);
 		oController.byId("idValueHelpLabel").setVisible(bVisibleInForm);
 		oController.byId("idValueHelpRadioGroup").setSelectedButton(oController.byId("idVHNone"));
-		oController.byId("idValueHelpTitle").setVisible(bVisibleInForm);
 		oController.byId("idFFForm1").setVisible(bVisibleInForm);
 		if (bVisibleInForm) {
+			oController.byId("idValueHelpTitle").setText(oTextReader("valueHelp"));
 			oController.byId("idFRRVBox").insertItem(oController.byId("idFRRView"));
 			oController.byId("idDoNotShowAtRuntimeCheckBox").setSelected(false);
 		} else {
+			oController.byId("idValueHelpTitle").setText("");
 			_setOrRemoveMandatoryForValueHelpRequest(oController, bVisibleInForm);
 			_setOrRemoveMandatoryForConfigValueList(oController, bVisibleInForm);
 			oController.byId("idFRRVBox").removeItem(oController.byId("idFRRView"));
@@ -161,14 +159,6 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		}
 		_hideOrShowForHiddenFilter(oController, oFacetFilter.isVisible());
 	}
-	// Called on init to set property of facet filter
-	function _setFFProperty(oController) {
-		var oModelForFFProp = optionsValueModelBuilder.convert(oConfigurationEditor.getAllKnownProperties());
-		oController.byId("idFFProperty").setModel(oModelForFFProp);
-		if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oFacetFilter.getProperty())) {
-			oController.byId("idFFProperty").setValue(oFacetFilter.getProperty());
-		}
-	}
 	// Called on init to set label of facet filter
 	function _setFFLabel(oController) {
 		// In case of a new facet filter do not set a label
@@ -179,14 +169,6 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 			oController.byId("idLabel").setValue(oTextPool.get(oFacetFilter.getLabelKey()).TextElementDescription);
 		} else {
 			oController.byId("idLabel").setValue(oFacetFilter.getId());
-		}
-	}
-	// Called on init to set alias of facet filter
-	function _setFFAlias(oController) {
-		var oModelForFFAlias = optionsValueModelBuilder.convert(oConfigurationEditor.getAllKnownProperties());
-		oController.byId("idFFAlias").setModel(oModelForFFAlias);
-		if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oFacetFilter.getAlias())) {
-			oController.byId("idFFAlias").setValue(oFacetFilter.getAlias());
 		}
 	}
 	// Called on init to set selection mode of facet filter
@@ -209,18 +191,18 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 	// Sets default value mode and model on Init. For a new filter preselection mode is set to fixed values
 	function _setDefaultValueMode(oController) {
 		var bIsFunction = false, bIsFixedValue = false;
-		if (oFacetFilter.getAutomaticSelection()) {
+		if (oFacetFilter.getNoneSelection()) {
+			oController.byId("idPreselectionModeRadioGroup").setSelectedButton(oController.byId("idNoneSelection"));
+		} else if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oFacetFilter.getPreselectionFunction())) {
+			oController.byId("idPreselectionModeRadioGroup").setSelectedButton(oController.byId("idFunction"));
+			_setPreselectionFunction(oController);
+			bIsFunction = true;
+		} else if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oFacetFilter.getPreselectionDefaults())) {
+			oController.byId("idPreselectionModeRadioGroup").setSelectedButton(oController.byId("idFixedValue"));
+			_setPreselectionDefaults(oController);
+			bIsFixedValue = true;
+		} else if (oFacetFilter.getAutomaticSelection()) {
 			oController.byId("idPreselectionModeRadioGroup").setSelectedButton(oController.byId("idAutomaticSelection"));
-		} else {
-			if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oFacetFilter.getPreselectionFunction())) {
-				oController.byId("idPreselectionModeRadioGroup").setSelectedButton(oController.byId("idFunction"));
-				_setPreselectionFunction(oController);
-				bIsFunction = true;
-			} else {
-				oController.byId("idPreselectionModeRadioGroup").setSelectedButton(oController.byId("idFixedValue"));
-				_setPreselectionDefaults(oController);
-				bIsFixedValue = true;
-			}
 		}
 		_setOrRemoveMandatoryForPreselectionFunction(oController, bIsFunction);
 		_setOrRemoveMandatoryForPreselectionDefault(oController, bIsFixedValue);
@@ -282,15 +264,12 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 	}
 	// sets or removes the required fields (value help request fields) based on boolean
 	function _setOrRemoveMandatoryForValueHelpRequest(oController, bIsVisible) {
-		oController.byId("idFFAliasLabel").setVisible(bIsVisible);
-		oController.byId("idFFAlias").setVisible(bIsVisible);
-		oController.getView().fireEvent("enableDisableFRRFieldsEvent");
+		oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.ENABLEDISABLEFRRFIELDS);
 		_hideOrShowUseVHRAsFRRCheckBox(oController, bIsVisible);
 		if (bIsVisible) {
 			oController.byId("idVHRVBox").insertItem(oController.byId("idVHRView"));
 		} else {
-			oController.getView().fireEvent("clearVHRFieldsIfValueListEvent");
-			oController.byId("idFFAlias").setValue("");
+			oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.CLEARVHRFIELDSIFVALUELIST);
 			oController.byId("idVHRVBox").removeItem(oController.byId("idVHRView"));
 		}
 	}
@@ -298,7 +277,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 	function _setUseVHRCheckBox(oController) {
 		if (oFacetFilter.getUseSameRequestForValueHelpAndFilterResolution()) { // if the same request has to be used for filter resolution
 			oController.byId("idUseVHRAsFRRCheckBox").setSelected(true);
-			oController.getView().fireEvent("enableDisableFRRFieldsEvent");
+			oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.ENABLEDISABLEFRRFIELDS);
 		}
 	}
 	//set value help mode based on the availability of values none/value help request/ config value list
@@ -358,7 +337,6 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 			}
 			viewValidatorForFF = new sap.apf.modeler.ui.utils.ViewValidator(oController.getView());
 			_setDisplayText(oController);
-			_enableAutoComplete(oController);
 			_retrieveOrCreateFFObject(oController);
 			_instantiateSubViews(oController);
 			oController.setDetailData();
@@ -377,9 +355,8 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		setDetailData : function() {
 			var oController = this;
 			_setFFVisibility(oController);
-			_setFFProperty(oController);
+			oController.setFFProperty();
 			_setFFLabel(oController);
-			_setFFAlias(oController);
 			_setFFSelectionMode(oController);
 			_setDefaultValueMode(oController);
 			_setValueHelpMode(oController);
@@ -390,7 +367,42 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 			var oController = this;
 			oConfigurationEditor = oConfigEditor;
 			oFacetFilter = oConfigurationEditor.getFacetFilter(oFacetFilter.getId());
-			oController.getView().fireEvent("updateSubViewInstancesOnResetEvent", [ oConfigurationEditor, oFacetFilter ]);
+			oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.UPDATESUBVIEWINSTANCESONRESET, {
+				"oConfigurationEditor" : oConfigurationEditor,
+				"oParentObject" : oFacetFilter
+			});
+		},
+		//Returns array of properties to populate the model and also the property which has to be shown as selected
+		validateSelectedValues : function(oController, sSelectedValue, aAllValues) {
+			var oValidInvalidObj = {}, aInvalidValues = [], aValidValues = [], aInvalidValuesWithPrefix = [], aValues = [], sValue;
+			oValidInvalidObj = sap.apf.utils.validateSelectedValues(sSelectedValue, aAllValues);
+			aInvalidValues = oValidInvalidObj.invalid;
+			aValidValues = oValidInvalidObj.valid;
+			aInvalidValuesWithPrefix = textManipulator.addPrefixText(aInvalidValues, oTextReader);
+			aValues = aInvalidValuesWithPrefix.concat(aAllValues).length !== 0 ? aInvalidValuesWithPrefix.concat(aAllValues) : aAllValues;
+			sValue = aInvalidValuesWithPrefix.concat(aValidValues).length !== 0 ? aInvalidValuesWithPrefix.concat(aValidValues) : sSelectedValue;
+			return {
+				aValues : aValues,
+				aSelectedValues : sValue
+			};
+		},
+		// Called on init to set property of facet filter
+		setFFProperty : function() {
+			var oController = this;
+			var aAllProperties = [], aValidatedValues, sFFProperty;
+			oConfigurationEditor.getFilterablePropertiesAndParametersAsPromise().done(function(props) {
+				aAllProperties = props;
+				sFFProperty = oFacetFilter.getProperty();
+				//Validate selected values
+				if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(sFFProperty)) {
+					aValidatedValues = oController.validateSelectedValues(oController, [ sFFProperty ], aAllProperties);
+					aAllProperties = aValidatedValues.aValues;
+					sFFProperty = aValidatedValues.aSelectedValues[0];
+				}
+				var oModelForFFProp = optionsValueModelBuilder.convert(aAllProperties);
+				oController.byId("idFFProperty").setModel(oModelForFFProp);
+				oController.byId("idFFProperty").setSelectedKey(sFFProperty);
+			});
 		},
 		// Fires enable of FRR fields if facet filter is set to invisible. By default sets selection mode to multiple. Triggers event to show/hide UI controls on visible/invisible
 		handleChangeForVisibilityAtRuntime : function() {
@@ -399,8 +411,8 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 				bVisibleInRuntime = false;
 				oFacetFilter.setInvisible();
 				oFacetFilter.setUseSameRequestForValueHelpAndFilterResolution(false);
-				oController.getView().fireEvent("enableDisableFRRFieldsEvent");
-				oController.getView().fireEvent("doNotShowAtRuntimeEvent");
+				oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.ENABLEDISABLEFRRFIELDS);
+				oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.DONOTSHOWATRUNTIME);
 				oFacetFilter.setValueList([]);
 				_setConfigValueList(oController);
 			} else {
@@ -415,7 +427,8 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		// Updates property of facet filter on change
 		handleChangeForProperty : function() {
 			var oController = this;
-			var sFacetFilterProperty = oController.byId("idFFProperty").getValue().trim();
+			var sFacetFilterProperty = oController.byId("idFFProperty").getSelectedKey().trim();
+			sFacetFilterProperty = textManipulator.removePrefixText(sFacetFilterProperty, oTextReader(sap.apf.modeler.ui.utils.CONSTANTS.texts.NOTAVAILABLE));
 			if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(sFacetFilterProperty)) {
 				oFacetFilter.setProperty(sFacetFilterProperty);
 			}
@@ -424,26 +437,22 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		// Updates label of facet filter on change and also tree node, title and breadcrumb if not empty
 		handleChangeForLabel : function() {
 			var oController = this;
-			var sFacetFilterLabelId;
 			var sFacetFilterLabel = oController.byId("idLabel").getValue().trim();
-			var oTranslationFormat = sap.apf.modeler.ui.utils.TranslationFormatMap.FACETFILTER_LABEL;
 			if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(sFacetFilterLabel)) {
-				sFacetFilterLabelId = oTextPool.setText(sFacetFilterLabel, oTranslationFormat);
-				oFacetFilter.setLabelKey(sFacetFilterLabelId);
-				_updateTreeNode(oController, sFacetFilterLabel);
-				_updateBreadCrumbOnFFLabelChange(oController, sFacetFilterLabel);
+				oTextPool.setTextAsPromise(sFacetFilterLabel, oTranslationFormat).done(function(sFacetFilterLabelId) {
+					oFacetFilter.setLabelKey(sFacetFilterLabelId);
+					_updateTreeNode(oController, sFacetFilterLabel);
+					_updateBreadCrumbOnFFLabelChange(oController, sFacetFilterLabel);
+					oConfigurationEditor.setIsUnsaved();
+				});
+			} else {
+				oConfigurationEditor.setIsUnsaved();
 			}
-			oConfigurationEditor.setIsUnsaved();
 		},
-		// Updates alias of facet filter on change
-		handleChangeForAlias : function() {
-			var oController = this;
-			var sFacetFilterAlias = oController.byId("idFFAlias").getValue().trim();
-			oFacetFilter.setAlias(undefined);
-			if (nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(sFacetFilterAlias)) {
-				oFacetFilter.setAlias(sFacetFilterAlias);
-			}
-			oConfigurationEditor.setIsUnsaved();
+		// handler for suggestions
+		handleSuggestions : function(oEvent) {
+			var oSuggestionTextHandler = new sap.apf.modeler.ui.utils.SuggestionTextHandler(oTextPool);
+			oSuggestionTextHandler.manageSuggestionTexts(oEvent, oTranslationFormat);
 		},
 		// Updates selection mode of facet filter on change; Changes required tag of preselection mode controls
 		handleChangeForSelectionMode : function() {
@@ -471,8 +480,11 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 		},
 		// Updates preselection mode of facet filter on change; Hides/shows preselection defaults/function
 		handleChangeForPreselectionMode : function() {
-			var oController = this, bAutomatic = false, bPreselectionFunctionVisible = false, bPreselectionDefaultVisible = false;
+			var oController = this, bAutomatic = false, bPreselectionFunctionVisible = false, bPreselectionDefaultVisible = false, bNone = false;
 			switch (oController.byId("idPreselectionModeRadioGroup").getSelectedButton()) {
+				case oController.byId("idAutomaticSelection"):
+					bAutomatic = true;
+					break;
 				case oController.byId("idFunction"):
 					bPreselectionFunctionVisible = true;
 					oFacetFilter.removePreselectionDefaults();
@@ -482,9 +494,10 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 					oFacetFilter.removePreselectionFunction();
 					break;
 				default:
-					bAutomatic = true;
+					bNone = true;
 			}
 			oFacetFilter.setAutomaticSelection(bAutomatic);
+			oFacetFilter.setNoneSelection(bNone);
 			_setPreselectionDefaults(oController);
 			_setPreselectionFunction(oController);
 			_setOrRemoveMandatoryForPreselectionDefault(oController, bPreselectionDefaultVisible);
@@ -546,8 +559,8 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.viewValidator");
 			} else {
 				oFacetFilter.setUseSameRequestForValueHelpAndFilterResolution(false);
 			}
-			oController.getView().fireEvent("enableDisableFRRFieldsEvent");
-			oController.getView().fireEvent("useSameAsVHREvent");
+			oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.ENABLEDISABLEFRRFIELDS);
+			oController.getView().fireEvent(sap.apf.modeler.ui.utils.CONSTANTS.events.facetFilter.USESAMEASVHR);
 			oConfigurationEditor.setIsUnsaved();
 		},
 		// Updates value mode of facet filter on change; Hides/shows value help request/value config list/ none

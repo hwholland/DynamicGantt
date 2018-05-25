@@ -4950,7 +4950,7 @@ if ( !jQuery.sap.isDeclared('sap.ca.ui.library') ) {
  * ----------------------------------------------------------------------------------- */
 
 /**
- * Initialization Code and shared classes of library sap.ca.ui (1.38.5)
+ * Initialization Code and shared classes of library sap.ca.ui (1.54.0)
  */
 jQuery.sap.declare("sap.ca.ui.library");
 jQuery.sap.require('sap.ui.core.Core'); // unlisted dependency retained
@@ -5016,7 +5016,7 @@ sap.ui.getCore().initLibrary({
 	elements: [
 		"sap.ca.ui.HierarchicalSelectDialogItem"
 	],
-	version: "1.38.5"
+	version: "1.54.0"
 });
 
 /*!
@@ -5033,7 +5033,7 @@ jQuery.sap.declare("sap.ca.ui.charts.ChartColor");
 /**
  * @class Enumeration of available color to be used in sap.ca.ui charts.
  *
- * @version 1.38.5
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5121,7 +5121,7 @@ jQuery.sap.declare("sap.ca.ui.charts.ChartSelectionMode");
 /**
  * @class Determines the selection mode of a Chart.
  *
- * @version 1.38.5
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5161,7 +5161,7 @@ jQuery.sap.declare("sap.ca.ui.charts.ChartSemanticColor");
 /**
  * @class Enumeration of available semantic color to be used in sap.Ca.ui
  *
- * @version 1.38.5
+ * @version 1.54.0
  * @static
  * @public
  * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
@@ -5636,26 +5636,22 @@ sap.ca.ui.utils.Lessifier.lessifyCSS = function(sModuleName, sCssPath, bTrueLess
 		// but take care of declared variables
 		// IMPROVE: Invalid less is not yet detected and might still lead to app crashes.
 		sLessStylesheet = stylesheetText.replace(/@([a-zA-Z0-9\-_]*)/g, function (match, compare) {
-			var bChecked = false;
 			var parameterValue;
 			// check if this is a declared one and simply return it
 			if (params.indexOf(compare) != -1){
-				bChecked = true;
 				return match;
 			}
 			// if this is a parameter that has not been declared lets get it from the API
-			if (!bChecked) {
-				parameterValue = sap.ui.core.theming.Parameters.get(compare);
-				if (parameterValue == null) {
-					// if less processing is enabled a real color dummy string needs to be written back
-					if (bTrueLess){
-						jQuery.sap.log.error("The parameter @" + compare + " was replaced by a dummy value due to missing reference!");
-						return sap.ca.ui.utils.Lessifier.DEFAULT_COLOR;
-					// otherwise we can safely return the parameter.
-					} else {
-						jQuery.sap.log.warning("The parameter @" + compare + " was not found via API call!");
-						return "@" + compare;
-					}
+			parameterValue = sap.ui.core.theming.Parameters.get(compare);
+			if (parameterValue == null) {
+				// if less processing is enabled a real color dummy string needs to be written back
+				if (bTrueLess){
+					jQuery.sap.log.error("The parameter @" + compare + " was replaced by a dummy value due to missing reference!");
+					return sap.ca.ui.utils.Lessifier.DEFAULT_COLOR;
+				// otherwise we can safely return the parameter.
+				} else {
+					jQuery.sap.log.warning("The parameter @" + compare + " was not found via API call!");
+					return "@" + compare;
 				}
 			}
 			return parameterValue;
@@ -6019,7 +6015,7 @@ jQuery.sap.require('sap.m.FeedListItem'); // unlisted dependency retained
  * Extends the FeedListItem to hide text when it is longer than maxLines. When text is hidden a See more
  * link is displayed, clicking on the link displays the entire text.
  * @extends sap.m.FeedListItem
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -6193,9 +6189,10 @@ sap.ca.ui.ExpansibleFeedListItem.prototype.onAfterRendering = function() {
  */
 sap.ca.ui.ExpansibleFeedListItem.prototype._getLinkControl = function () {
     // BAD PRACTICE: this is a private method of sap.m.FeedListItem!
-	// Agreement to continue and use this private method on 20141124-1015CET (see email) sap.ca PO / UI5-BS-FCW PO
+	// sap.ca dev & ui5 dev agreed to continue and use this private method on 20141124-1015CET
     return this._getLinkSender();
 };
+
 }; // end of sap/ca/ui/ExpansibleFeedListItem.js
 if ( !jQuery.sap.isDeclared('sap.ca.ui.FileUploadRenderer') ) {
 /*
@@ -6324,7 +6321,7 @@ jQuery.sap.require('sap.m.ScrollContainer'); // unlisted dependency retained
  * @class
  * A Tile container for the Overview tile with growing capabilities
  * @extends sap.m.ScrollContainer
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -7035,7 +7032,7 @@ jQuery.sap.require('sap.m.Dialog'); // unlisted dependency retained
  * @extends sap.m.Dialog
  *
  * @author Bruno Vicente
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -7597,7 +7594,7 @@ jQuery.sap.require('sap.ui.core.Item'); // unlisted dependency retained
  * @extends sap.ui.core.Item
  *
  * @author Bruno Vicente
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -7792,7 +7789,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * hierarchical data. The emphasized item shows the one item to display. Optional item can be hidden using the
  * hideOptionalLevels property. Hidden items will stay accessible with an expand button.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -8109,7 +8106,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * that we want to represent in his hierarchy. Optionals item will be hidden if the option is true on the Hierarchy
  * control.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -8460,6 +8457,7 @@ jQuery.sap.require('sap.ui.layout.VerticalLayout'); // unlisted dependency retai
 jQuery.sap.require('sap.ui.core.theming.Parameters'); // unlisted dependency retained
 
 
+
 sap.ca.ui.HierarchyItem.prototype.init = function () {
 };
 
@@ -8468,7 +8466,7 @@ sap.ca.ui.HierarchyItem.prototype._getIconControl = function () {
     if (oIcon == undefined) {
         oIcon = new sap.ui.core.Icon({
             src:this.getProperty("icon"),
-            color:sap.ui.core.theming.Parameters.get("sapUiLightText")
+            color:sap.ui.core.theming.Parameters.get("sapUiContentNonInteractiveIconColor")
         }).addStyleClass("sapCaUiHierarchyItemIcon");
         this.setAggregation("_iconControl", oIcon);
     }
@@ -8576,7 +8574,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * 
  * This control is used to switch between readonly and edit modes. A typical use case would be to change the value of a Label.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -9653,7 +9651,7 @@ jQuery.sap.require('sap.m.List'); // unlisted dependency retained
  * the FeedListItem or the ExpansibleFeedListItem). The developer is also responsible to implement the code to send
  * the notes to the backend system, by responding to the addNote event.
  * @extends sap.m.List
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -10114,7 +10112,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * The OverflowContainer allows the content of a control to be partially displayed before being fully expanded.
  * It will cut its content to a fixed height that can be defined. It is fully suitable within an IconTabBar.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -10463,7 +10461,7 @@ jQuery.sap.require('sap.m.Tile'); // unlisted dependency retained
  * @class
  * Display aTile that presents an overview of a customer
  * @extends sap.m.Tile
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -11254,7 +11252,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * A picture / photo Item for AddPicture and PictureViewer Controls
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -11719,6 +11717,9 @@ sap.ca.ui.PictureItem.prototype.onAfterRendering = function() {
 	} else {
 		$image.load(jQuery.proxy(fnResize,this));
 	}
+	// remove tabindex from image - containing div has it.
+	// this prevents unwanted tab and speech for accessibility
+	$image.attr("tabIndex", -1);
 };
 
 
@@ -11832,7 +11833,7 @@ jQuery.sap.require('sap.m.CustomTile'); // unlisted dependency retained
  * @class
  * Tile control embedding an image and allowing custom sizing
  * @extends sap.m.CustomTile
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -12194,7 +12195,7 @@ jQuery.sap.require('sap.m.TileContainer'); // unlisted dependency retained
  * @class
  * Picture viewer control relying on the TileContainer control
  * @extends sap.m.TileContainer
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -12774,14 +12775,12 @@ sap.ca.ui.PictureViewer.prototype.onAfterRendering = function () {
 	//init resizing
 	//this._sResizeListenerId = sap.ui.core.ResizeHandler.register(this.getDomRef().parentElement,  jQuery.proxy(this._resize, this));
 
-	//init the dimensions to the container scoll area 
+	//init the dimensions to the container scoll area
 	this._applyDimension();
 	this.$().toggleClass("sapCaPWEditable", this.getRemovable() === true);
 	var that = this;
 	this._sInitialResizeTimeoutId = setTimeout(function () {
 		that.addStyleClass("sapCaPWRendering");
-		that._applyPageStartIndex(that._selectedIndex);
-
 		that._update(false);
 
 	}, this._iInitialResizeTimeout);
@@ -12962,7 +12961,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Picture viewer control relying on the TileContainer control
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -13164,7 +13163,7 @@ jQuery.sap.require('sap.m.ScrollContainer'); // unlisted dependency retained
  * @class
  * Based on a ScrollContainer, it allows you to pinch and zoom on mobile devices
  * @extends sap.m.ScrollContainer
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -13423,7 +13422,7 @@ jQuery.sap.require('sap.m.ListItemBase'); // unlisted dependency retained
  * @extends sap.m.ListItemBase
  *
  * @author SAP SE
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -13747,7 +13746,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * - personalization icon
  * - showLegend toggle
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -15574,7 +15573,7 @@ jQuery.sap.require('sap.m.ListItemBase'); // unlisted dependency retained
  * @extends sap.m.ListItemBase
  *
  * @author SAP SE
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -17534,7 +17533,7 @@ sap.ui.model.SimpleType.extend("sap.ca.ui.model.type.Number", /** @lends sap.ca.
  * @see sap.ui.model.SimpleType.prototype.formatValue
  */
 sap.ca.ui.model.type.Number.prototype.formatValue = function(fValue, sInternalType) {
-    if (fValue == undefined || fValue == null) {
+    if (fValue === undefined || fValue === null) {
         return null;
     }
     switch(sInternalType) {
@@ -18448,7 +18447,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @extends sap.ui.core.Control
  *
  * @author SAP SE
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -19618,7 +19617,7 @@ jQuery.sap.require('sap.m.CustomListItem'); // unlisted dependency retained
  * @class
  * Extends the ObjectListItem to display a line in the customer context control.
  * @extends sap.m.CustomListItem
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -20092,7 +20091,7 @@ jQuery.sap.require('sap.m.InputBase'); // unlisted dependency retained
  * Allows end users to interact with dates.
  * Entries can directly be written in, or selected from a calendar pad.
  * @extends sap.m.InputBase
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -21637,7 +21636,7 @@ sap.ui.model.SimpleType.extend("sap.ca.ui.model.type.FileSize", /** @lends sap.c
  * @see sap.ui.model.SimpleType.prototype.formatValue
  */
 sap.ca.ui.model.type.FileSize.prototype.formatValue = function(fValue, sInternalType) {
-    if (fValue == undefined || fValue == null) {
+    if (fValue === undefined || fValue === null) {
         return null;
     }
     switch(sInternalType) {
@@ -22046,7 +22045,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * 
  * When opening the dialog in "select" mode, if a customer has been persisted in a previous session, it will be retrieved and the dialog won't open at all.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -22638,8 +22637,7 @@ sap.ca.ui.CustomerContext.prototype.select = function () {
 			try {
 				var oReadPromise = this._oPersService.getPersData();
 				oReadPromise.done(jQuery.proxy(function (sCustomer) { // Success callback
-
-					if (sCustomer && sCustomer !== "") {
+					if (sCustomer !== null && sCustomer !== "") {
 						var oCustomer = JSON.parse(sCustomer);
 
 						// set the right item into the list
@@ -22951,7 +22949,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * @class
  * Allows you to display a list of uploaded files. You can also upload a new one, rename or delete them
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -25440,8 +25438,6 @@ sap.ca.ui.FileUpload.prototype._getIconFromMimeType = function (sVal) {
         sIcon = "sap-icon://attachment-text-file";
     } else if (sVal.indexOf('audio') === 0) {
         sIcon = "sap-icon://attachment-audio";
-    } else if (sVal.indexOf('audio') === 0) {
-        sIcon = "sap-icon://attachment-audio";
     } else if (sVal.indexOf('application') === 0) {
         switch (sVal) {
             case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
@@ -26076,7 +26072,7 @@ jQuery.sap.require('sap.ui.core.Control'); // unlisted dependency retained
  * - Minimum bar / dot / blip ... size
  * - Integration with ChartToolbar and ChartPopover
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -29602,7 +29598,7 @@ jQuery.sap.declare("sap.ca.ui.charts.CombinedChart");
  * @class
  * Allows you to create a chart using vertical bars and lines to represent the data
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -29885,7 +29881,7 @@ jQuery.sap.declare("sap.ca.ui.charts.HorizontalBarChart");
  * @class
  * Allows you to create a chart using horizontal bars to represent the data
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -30279,7 +30275,7 @@ jQuery.sap.declare("sap.ca.ui.charts.LineChart");
  * @class
  * Line Chart for the Fiori Project
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -31102,7 +31098,7 @@ jQuery.sap.declare("sap.ca.ui.charts.StackedHorizontalBarChart");
  * Stacked Horizontal Bar Chart wrapper around the viz StackedBarChart / MultipleStackedBarChart.
  * To be used in conjunction with the chart toolbar.
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -31465,7 +31461,7 @@ jQuery.sap.declare("sap.ca.ui.charts.StackedVerticalColumnChart");
  * Stacked Vertical Column Chart wrapper around the viz StackedColumnChart / MultipleStackedColumnChart.
  * To be used in conjunction with the chart toolbar.
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -31838,7 +31834,7 @@ jQuery.sap.declare("sap.ca.ui.charts.VerticalBarChart");
  * @class
  * Allows you to create a chart using vertical bars to represent the data
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -32351,7 +32347,7 @@ jQuery.sap.declare("sap.ca.ui.charts.BubbleChart");
  * 
  * Bubble chart.
  * @extends sap.ca.ui.charts.Chart
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

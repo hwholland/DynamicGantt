@@ -1,10 +1,9 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's sap.ushell.adapters.cdm.CommonDataModelAdapter for the 'CDM'
  *               platform.
  *
- * @version
- * 1.38.26
+ * @version 1.54.3
  */
 (function() {
     "use strict";
@@ -31,10 +30,12 @@
         } else if (oAdapterConfiguration && oAdapterConfiguration.config && oAdapterConfiguration.config.siteDataPromise) {
             this.oCdmSiteDataRequestPromise = oAdapterConfiguration.config.siteDataPromise;
         } else {
-            this.sCdmSiteUrl = jQuery.sap.getModulePath("sap.ushell.cdmSiteData") + "/CommonDataModelAdapterData.json"; // demo cdm data
-            //in case the adapter configuration has set a cdm site url, use that one instad the demo cdm data
-            if (oAdapterConfiguration && oAdapterConfiguration.config && oAdapterConfiguration.config.sCdmSiteUrl) {
-                this.sCdmSiteUrl = oAdapterConfiguration.config.sCdmSiteUrl;
+            // if cdm site data is not directly set in configuration, a URL has to be defined
+            // for consistency, the property should be called 'siteDataUrl', but we still support
+            // 'cdmSiteUrl' for backwards compatibility
+            if (oAdapterConfiguration && oAdapterConfiguration.config) {
+                this.sCdmSiteUrl = oAdapterConfiguration.config.siteDataUrl
+                    || oAdapterConfiguration.config.cdmSiteUrl;
             }
             //request cdm site
             this.oCdmSiteDataRequestPromise = this._requestSiteData(this.sCdmSiteUrl);
@@ -54,16 +55,21 @@
     sap.ushell.adapters.cdm.CommonDataModelAdapter.prototype._requestSiteData = function (sUrl) {
         var oSiteDataRequestDeferred = new jQuery.Deferred();
 
-        jQuery.ajax({
-            type: "GET",
-            dataType: "json",
-            url: sUrl
-        }).done(function (oResponseData) {
-            oSiteDataRequestDeferred.resolve(oResponseData);
-        }).fail(function (oError) {
-            jQuery.sap.log.error(oError.responseText);
-            oSiteDataRequestDeferred.reject("CDM Site was requested but could not be loaded.");
-        });
+        if (!sUrl) {
+            oSiteDataRequestDeferred.reject(
+                "Cannot load site: configuration property 'siteDataUrl' is missing for CommonDataModelAdapter.");
+        } else {
+            jQuery.ajax({
+                type: "GET",
+                dataType: "json",
+                url: sUrl
+            }).done(function(oResponseData) {
+                oSiteDataRequestDeferred.resolve(oResponseData);
+            }).fail(function(oError) {
+                jQuery.sap.log.error(oError.responseText);
+                oSiteDataRequestDeferred.reject("CDM Site was requested but could not be loaded.");
+            });
+        }
 
         return oSiteDataRequestDeferred.promise();
     };

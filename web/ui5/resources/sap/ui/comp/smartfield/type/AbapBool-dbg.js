@@ -1,23 +1,23 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
-sap.ui.define([	"jquery.sap.global", "sap/ui/model/FormatException", "sap/ui/model/ParseException", "sap/ui/model/SimpleType" ], function(jQuery, FormatException, ParseException, SimpleType) {
+sap.ui.define(["jquery.sap.global", "sap/ui/model/FormatException", "sap/ui/model/ParseException", "sap/ui/model/SimpleType" ], function(jQuery, FormatException, ParseException, SimpleType) {
 	"use strict";
 
 	/**
 	 * Constructor for an ABAP Boolean type.
-	 * 
-	 * @private
-	 * @class 
-	 * @classdesc
+	 *
+	 * @class
 	 * ABAP Boolean data type.
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
+	 * @private
 	 * @since 1.28.0
-	 * @alias sap.ui.comp.smartfield.type.AbapBool
 	 * @extends sap.ui.model.type.SimpleType
+	 * @alias sap.ui.comp.smartfield.type.AbapBool
 	 */
 	var AbapBool = SimpleType.extend("sap.ui.comp.smartfield.type.AbapBool", {
 		constructor: function() {
@@ -28,7 +28,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/model/FormatException", "sap/ui/mod
 
 	/**
 	 * Formats the given boolean value to the given target type.
-	 * 
+	 *
 	 * @param {boolean} bValue the value to be formatted
 	 * @param {string} sTargetType the target type; may be "any" or "boolean".
 	 * @returns {boolean} the formatted output value in the target type; <code>undefined</code> or <code>null</code> are formatted to
@@ -52,7 +52,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/model/FormatException", "sap/ui/mod
 
 	/**
 	 * Parses the given value from the given type to a boolean.
-	 * 
+	 *
 	 * @param {boolean} oValue the value to be parsed.
 	 * @param {string} sSourceType the source type, may be "boolean".
 	 * @returns {boolean} the parsed value.
@@ -70,7 +70,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/model/FormatException", "sap/ui/mod
 
 	/**
 	 * Validates whether the given value in model representation is valid and meets the given constraints.
-	 * 
+	 *
 	 * @param {boolean} sValue the value to be validated.
 	 * @throws {sap.ui.model.ValidateException} if the value is not valid
 	 * @public

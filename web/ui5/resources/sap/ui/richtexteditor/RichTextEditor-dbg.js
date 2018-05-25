@@ -1,14 +1,14 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 /*global Promise */
 
 // Provides control sap.ui.richtexteditor.RichTextEditor.
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHandler', './library'],
-	function(jQuery, Control, ResizeHandler, library) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHandler', './library', './ToolbarWrapper'],
+	function(jQuery, Control, ResizeHandler, library, ToolbarWrapper) {
 	"use strict";
 	/**
 	 * Describes the internal status of the editor component used inside the RichTextEditor control. Currently only
@@ -43,7 +43,31 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
+	 *
 	 * The RichTextEditor-Control is used to enter formatted text.
+	 *
+	 * The <code>RichTextEditor</code> uses a third party component, which might in some cases not be
+	 * completely compatible with the way UI5's (re-)rendering mechanism works. <strong>If you keep hidden
+	 * instances of the control (instances which are not visible in the DOM), you might run into
+	 * problems with some browser versions.</strong> In this case please make sure you destroy the
+	 * <code>RichTextEditor</code> instance instead of hiding it and create a new one when you show it again.
+	 *
+	 * With version 1.48 onward, aside from the native toolbar of the TinyMCE, the RichTextEditor can also use a
+	 * toolbar built with SAPUI5 controls. Which toolbar is used is taken into consideration only while the
+	 * control is being initialized and it will not be possible to change it during runtime, because of
+	 * lifecycle incompatibilities between the SAPUI5 and the third-party library.
+	 * The custom toolbar acts like a wrapper to the native toolbar and takes care of
+	 * synchronizing the state of its internal controls with the current state of the selection in the editor
+	 * (bold, italics, font styles etc.).
+	 *
+	 * <b>Limitation:</b>
+	 *
+	 * The third-party component TinyMCE does not fully support the High Contrast themes. The control,
+	 * which internally uses TinyMCE, is thus also not compliant to this product standard.
+	 * Applications, which embed the RichTextEditor control and use the high-contrast theme,
+	 * will not have a full High Contrast support. Certain buttons, menus etc. are available in the correct theme,
+	 * but many elements are still showing up with a normal, non-contrast style.
+	 *
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
@@ -85,75 +109,75 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 				/**
 				 * The editor implementation to use.
 				 * Valid values are the ones found under sap.ui.richtexteditor.EditorType and any other editor identifier that may be introduced by other groups (hence this is not an enumeration).
-				 * Any attempts to set this property after the first rendering will not have any effect.
+				 * <b>Note:</b> Any attempts to set this property after the first rendering will not have any effect.
 				 */
 				editorType: { type: "string", group: "Misc", defaultValue: 'TinyMCE' },
 
 				/**
 				 * Relative or absolute URL where the editor is available. Must be on the same server.
-				 * Any attempts to set this property after the first rendering will not have any effect.
+				 * <b>Note:</b> Any attempts to set this property after the first rendering will not have any effect.
 				 * @deprecated Since version 1.25.0.
 				 * The editorLocation is set implicitly when choosing the editorType.
 				 */
 				editorLocation: { type: "string", group: "Misc", defaultValue: 'js/tiny_mce/tiny_mce_src.js', deprecated: true },
 
 				/**
-				 * Whether the editor content can be modified by the user. When set to "false" there might not be any editor toolbar.
+				 * Determines whether the editor content can be modified by the user. When set to "false" there might not be any editor toolbar.
 				 */
 				editable: { type: "boolean", group: "Misc", defaultValue: true },
 
 				/**
-				 * Whether the toolbar button group containing commands like Bold, Italic, Underline and Strikethrough is available. Changing this after the initial rendering will result in some visible redrawing.
+				 * Determines whether the toolbar button group containing commands like Bold, Italic, Underline and Strikethrough is available. Changing this after the initial rendering will result in some visible redrawing.
 				 */
 				showGroupFontStyle: { type: "boolean", group: "Misc", defaultValue: true },
 
 				/**
-				 * Whether the toolbar button group containing text alignment commands is available. Changing this after the initial rendering will result in some visible redrawing.
+				 * Determines whether the toolbar button group containing text alignment commands is available. Changing this after the initial rendering will result in some visible redrawing.
 				 */
 				showGroupTextAlign: { type: "boolean", group: "Misc", defaultValue: true },
 
 				/**
-				 * Whether the toolbar button group containing commands like Bullets and Indentation is available. Changing this after the initial rendering will result in some visible redrawing.
+				 * Determines whether the toolbar button group containing commands like Bullets and Indentation is available. Changing this after the initial rendering will result in some visible redrawing.
 				 */
 				showGroupStructure: { type: "boolean", group: "Misc", defaultValue: true },
 
 				/**
-				 * Whether the toolbar button group containing commands like Font, Font Size and Colors is available. Changing this after the initial rendering will result in some visible redrawing.
+				 * Determines whether the toolbar button group containing commands like Font, Font Size and Colors is available. Changing this after the initial rendering will result in some visible redrawing.
 				 */
 				showGroupFont: { type: "boolean", group: "Misc", defaultValue: false },
 
 				/**
-				 * Whether the toolbar button group containing commands like Cut, Copy and Paste is available. Changing this after the initial rendering will result in some visible redrawing.
+				 * Determines whether the toolbar button group containing commands like Cut, Copy and Paste is available. Changing this after the initial rendering will result in some visible redrawing.
 				 */
 				showGroupClipboard: { type: "boolean", group: "Misc", defaultValue: true },
 
 				/**
-				 * Whether the toolbar button group containing commands like Insert Image and Insert Smiley is available. Changing this after the initial rendering will result in some visible redrawing.
+				 * Determines whether the toolbar button group containing commands like Insert Image and Insert Smiley is available. Changing this after the initial rendering will result in some visible redrawing.
 				 */
 				showGroupInsert: { type: "boolean", group: "Misc", defaultValue: false },
 
 				/**
-				 * Whether the toolbar button group containing commands like Create Link and Remove Link is available. Changing this after the initial rendering will result in some visible redrawing.
+				 * Determines whether the toolbar button group containing commands like Create Link and Remove Link is available. Changing this after the initial rendering will result in some visible redrawing.
 				 */
 				showGroupLink: { type: "boolean", group: "Misc", defaultValue: false },
 
 				/**
-				 * Whether the toolbar button group containing commands like Undo and Redo is available. Changing this after the initial rendering will result in some visible redrawing.
+				 * Determines whether the toolbar button group containing commands like Undo and Redo is available. Changing this after the initial rendering will result in some visible redrawing.
 				 */
 				showGroupUndo: { type: "boolean", group: "Misc", defaultValue: false },
 
 				/**
-				 * Whether the text in the editor is wrapped. This does not affect the editor's value, only the representation in the control.
+				 * Determines whether the text in the editor is wrapped. This does not affect the editor's value, only the representation in the control.
 				 */
 				wrapping: { type: "boolean", group: "Appearance", defaultValue: true },
 
 				/**
-				 * Whether a value is required.
+				 * Determines whether a value is required.
 				 */
 				required: { type: "boolean", group: "Misc", defaultValue: false },
 
 				/**
-				 * Whether to run the HTML sanitizer once the value (HTML markup) is applied or not. To configure allowed URLs please use the whitelist API via jQuery.sap.addUrlWhitelist
+				 * Determines whether to run the HTML sanitizer once the value (HTML markup) is applied or not. To configure allowed URLs please use the whitelist API via <code>jQuery.sap.addUrlWhitelist</code>
 				 */
 				sanitizeValue: { type: "boolean", group: "Misc", defaultValue: true },
 
@@ -164,14 +188,22 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 				plugins: { type: "object[]", group: "Behavior", defaultValue: [] },
 
 				/**
-				 * Whether or not to use the legacy theme for the toolbar buttons. If this is set to false, the default theme for the editor will be used (which might change slightly with every update). The legacy theme has the disadvantage that not all functionality has its own icon, so using non default buttons might lead to invisible buttons with the legacy theme - use the default editor theme in this case.
+				 * Determines whether or not to use the legacy theme for the toolbar buttons. If this is set to false, the default theme for the editor will be used (which might change slightly with every update). The legacy theme has the disadvantage that not all functionality has its own icon, so using non default buttons might lead to invisible buttons with the legacy theme - use the default editor theme in this case.
 				 */
 				useLegacyTheme: { type: "boolean", group: "Appearance", defaultValue: true },
 
 				/**
 				 * An array of button configurations. These configurations contain the names of buttons as array in the property "buttons" and the name of the group in "name", they can also contain the "row" where the buttons should be placed, a "priority" and whether the buttons are "visible". See method addButtonGroup() for more details on the structure of the objects in this array.
 				 */
-				buttonGroups: { type: "object[]", group: "Behavior", defaultValue: [] }
+				buttonGroups: { type: "object[]", group: "Behavior", defaultValue: [] },
+
+				/**
+				 * Determines whether a Fiori Toolbar is used instead of the TinyMCE default toolbar one. It is applied only when the EditorType is TinyMCE4 and sap.m library is loaded.
+				 * <b>Note:</b> The <code>customToolbar</code> property will have effect only on initial loading. Changing it during runtime will not affect the initially loaded toolbar.
+				 *
+				 * @since 1.48
+				 */
+				customToolbar: { type: "boolean", group: "Misc", defaultValue: false }
 			},
 			events: {
 
@@ -194,9 +226,32 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 				ready: {},
 
 				/**
+				 * Analogous to the ready event, the event is fired when the used editor is loaded and ready. But the event is fired after every time the control is ready to use and not only once like the ready event.
+				 */
+
+				readyRecurring: {},
+
+				/**
 				 * This event is fired right before the TinyMCE instance is created and can be used to change the settings object that will be given to TinyMCE. The parameter "configuration" is the javascript oject that will be given to TinyMCE upon first instantiation. The configuration parameter contains a map that can be changed in the case of TinyMCE.
 				 */
 				beforeEditorInit: {}
+			},
+			aggregations: {
+				/**
+				 * Custom toolbar wrapper.
+				 * The wrapper gets instantiated when customToolbar property is set to true.
+				 *
+				 * @since 1.48
+				 */
+				_toolbarWrapper: {type: "sap.ui.richtexteditor.IToolbar", multiple: false, visibility : "hidden", defaultValue: null},
+				/**
+				 * Custom buttons are meant to extend the RichTextEditor's custom toolbar.
+				 * Though type is set to sap.ui.Control, only sap.m.Button is allowed.
+				 * <b>Note:</b> customButtons are available only when the customToolbar is enabled and all the requirements are fulfilled.
+				 *
+				 * @since 1.48
+				 */
+				customButtons: {type: "sap.ui.core.Control", multiple: true, singularName: "customButton", defaultValue: null}
 			}
 		}
 	});
@@ -215,9 +270,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 
 	RichTextEditor._iCountInstances = 0;
 
+	RichTextEditor.BUTTON_GROUPS = library.ButtonGroups;
+
 	// Editor type entries for backwards compatibility
-	RichTextEditor.EDITORTYPE_TINYMCE = sap.ui.richtexteditor.EditorType.TinyMCE;
-	RichTextEditor.EDITORTYPE_TINYMCE4 = sap.ui.richtexteditor.EditorType.TinyMCE4;
+	RichTextEditor.EDITORTYPE_TINYMCE = library.EditorType.TinyMCE;
+	RichTextEditor.EDITORTYPE_TINYMCE4 = library.EditorType.TinyMCE4;
 
 	RichTextEditor.EDITORLOCATION_TINYMCE = "js/tiny_mce/tiny_mce.js";
 	RichTextEditor.EDITORLOCATION_TINYMCE4 = "js/tiny_mce4/tinymce.min.js";
@@ -350,9 +407,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 */
 	RichTextEditor.loadTinyMCE = function(sLocation) {
 		if (sLocation) {
-			var sRealLocation = sap.ui.resource('sap.ui.richtexteditor', sLocation);
-			var oScriptElement = document.querySelector("#sapui5-tinyMCE");
-			var sLoadedLocation = oScriptElement ? oScriptElement.getAttribute("src") : "";
+			var sRealLocation = sap.ui.resource('sap.ui.richtexteditor', sLocation),
+				oScriptElement = document.querySelector("#sapui5-tinyMCE"),
+				sLoadedLocation = oScriptElement ? oScriptElement.getAttribute("src") : "";
 
 
 			if (sRealLocation !== sLoadedLocation && RichTextEditor._iCountInstances === 1) {
@@ -379,12 +436,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		this._sTimerId = null;
 		RichTextEditor._iCountInstances++;
 
-
 		this.setButtonGroups([{
 			name: "font-style",
 			visible: true,
 			row: 0,
 			priority: 10,
+			customToolbarPriority: 20,
 			buttons: [
 				"bold", "italic", "underline", "strikethrough"
 			]
@@ -394,6 +451,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			visible: true,
 			row: 0,
 			priority: 20,
+			customToolbarPriority: 30,
 			buttons: [
 				"justifyleft", "justifycenter", "justifyright", "justifyfull"
 			]
@@ -402,6 +460,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			visible: false,
 			row: 0,
 			priority: 30,
+			customToolbarPriority: 50,
 			buttons: [
 				"fontselect", "fontsizeselect", "forecolor", "backcolor"
 			]
@@ -410,6 +469,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			visible: true,
 			row: 1,
 			priority: 10,
+			customToolbarPriority: 110,
 			buttons: [
 				"cut", "copy", "paste"
 			]
@@ -418,6 +478,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			visible: true,
 			row: 1,
 			priority: 20,
+			customToolbarPriority: 60,
 			buttons: [
 				"bullist", "numlist", "outdent", "indent"
 			]
@@ -426,12 +487,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			visible: false,
 			row: 1,
 			priority: 30,
+			customToolbarPriority: 10,
 			buttons: []
 		}, {
 			name: "undo",
 			visible: false,
 			row: 1,
 			priority: 40,
+			customToolbarPriority: 100,
 			buttons: [
 				"undo", "redo"
 			]
@@ -440,6 +503,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			visible: false,
 			row: 1,
 			priority: 50,
+			customToolbarPriority: 80,
 			buttons: [
 				"image", "emotions"
 			]
@@ -448,6 +512,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			visible: false,
 			row: 1,
 			priority: 60,
+			customToolbarPriority: 70,
 			buttons: [
 				"link", "unlink"
 			]
@@ -463,6 +528,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			name: "inlinepopups"
 		}, {
 			name: "tabfocus"
+		}, {
+			name: "table"
 		}]);
 
 		this._textAreaId = this.getId() + "-textarea";
@@ -478,6 +545,19 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	};
 
 	RichTextEditor.prototype.onBeforeRendering = function() {
+		this._customToolbarEnablement();
+
+		var oCustomToolbar = this.getAggregation("_toolbarWrapper");
+
+		// if there is a custom toolbar, the toolbar content should be enabled/disabled correspondingly
+		if (oCustomToolbar) {
+			oCustomToolbar.setToolbarEnabled(this.getEditable(), true);
+		}
+
+		if (!this._bCustomToolbarRequirementsFullfiled && this.getCustomToolbar()) {
+			jQuery.sap.log.warning("Cannot set custom toolbar - not all requirements are fulfilled.");
+		}
+
 		this._callEditorSpecific("onBeforeRendering");
 	};
 
@@ -488,6 +568,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	/**
 	 * After configuration has changed, this method can be used to trigger a complete re-rendering
 	 * that also re-initializes the editor instance from scratch. Caution: this is expensive, performance-wise!
+	 *
 	 * @private
 	 */
 	RichTextEditor.prototype.reinitialize = function() {
@@ -550,7 +631,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	// the following setters will work after initial rendering, but can cause a complete re-initialization
 
 	RichTextEditor.prototype.setEditable = function(bEditable) {
+		var oCustomToolbar = this.getAggregation("_toolbarWrapper");
+
 		this.setProperty("editable", bEditable, true);
+
+		// if there is a custom toolbar, the toolbar content should be enabled/disabled correspondingly
+		if (oCustomToolbar) {
+			oCustomToolbar.setToolbarEnabled(bEditable, true);
+		}
+
 		this.reinitialize();
 		return this;
 	};
@@ -567,71 +656,106 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		return this;
 	};
 
-	RichTextEditor.prototype.setShowGroupFontStyle = function(bShowGroupFontStyle) {
-		this.setProperty("showGroupFontStyle", bShowGroupFontStyle, true);
-		this.setButtonGroupVisibility("font-style", bShowGroupFontStyle);
-		this.reinitialize();
+	/**
+	 * Helper function for show/hide of each button group
+	 *
+	 * @param {boolean} [bShow] Boolean value, indicating if the group should be shown or hidden
+ 	 * @param {object} [mSettings] Settings object
+	 * @returns {object} Control instance (for method chaining)
+	 * @private
+	 */
+	RichTextEditor.prototype._setShowGroup = function (bShow, mSettings) {
+		var oCustomToolbar = this.getAggregation("_toolbarWrapper");
+
+		this.setProperty(mSettings.property, bShow, true);
+		this.setButtonGroupVisibility(mSettings.buttonGroup, bShow);
+
+		if (!oCustomToolbar) {
+			this.reinitialize();
+			return this;
+		}
+
+		oCustomToolbar.setShowGroup(mSettings.buttonGroup, bShow);
+
 		return this;
+	};
+
+	RichTextEditor.prototype.setShowGroupFontStyle = function(bShowGroupFontStyle) {
+		return this._setShowGroup(bShowGroupFontStyle, {
+			property: 'showGroupFontStyle',
+			buttonGroup: 'font-style'
+		});
 	};
 
 
 	RichTextEditor.prototype.setShowGroupTextAlign = function(bShowGroupTextAlign) {
-		this.setProperty("showGroupTextAlign", bShowGroupTextAlign, true);
-		this.setButtonGroupVisibility("text-align", bShowGroupTextAlign);
-		this.reinitialize();
-		return this;
+		return this._setShowGroup(bShowGroupTextAlign, {
+			property: 'showGroupTextAlign',
+			buttonGroup: 'text-align'
+		});
 	};
 
 	RichTextEditor.prototype.setShowGroupStructure = function(bShowGroupStructure) {
-		this.setProperty("showGroupStructure", bShowGroupStructure, true);
-		this.setButtonGroupVisibility("structure", bShowGroupStructure);
-		this.reinitialize();
-		return this;
+		return this._setShowGroup(bShowGroupStructure, {
+			property: 'showGroupStructure',
+			buttonGroup: 'structure'
+		});
 	};
 
 	RichTextEditor.prototype.setShowGroupFont = function(bShowGroupFont) {
-		this.setProperty("showGroupFont", bShowGroupFont, true);
-		this.setButtonGroupVisibility("font", bShowGroupFont);
-		this.reinitialize();
-		return this;
+		return this._setShowGroup(bShowGroupFont, {
+			property: 'showGroupFont',
+			buttonGroup: 'font'
+		});
 	};
 
 	RichTextEditor.prototype.setShowGroupClipboard = function(bShowGroupClipboard) {
-		this.setProperty("showGroupClipboard", bShowGroupClipboard, true);
-		this.setButtonGroupVisibility("clipboard", bShowGroupClipboard);
-		this.reinitialize();
-		return this;
+		return this._setShowGroup(bShowGroupClipboard, {
+			property: 'showGroupClipboard',
+			buttonGroup: 'clipboard'
+		});
 	};
 
 	RichTextEditor.prototype.setShowGroupInsert = function(bShowGroupInsert) {
-		this.setProperty("showGroupInsert", bShowGroupInsert, true);
-		this.setButtonGroupVisibility("insert", bShowGroupInsert);
-		this.reinitialize();
-		return this;
+		return this._setShowGroup(bShowGroupInsert, {
+			property: 'showGroupInsert',
+			buttonGroup: 'insert'
+		});
 	};
 
 	RichTextEditor.prototype.setShowGroupLink = function(bShowGroupLink) {
-		this.setProperty("showGroupLink", bShowGroupLink, true);
-		this.setButtonGroupVisibility("link", bShowGroupLink);
-		this.reinitialize();
-		return this;
+		return this._setShowGroup(bShowGroupLink, {
+			property: 'showGroupLink',
+			buttonGroup: 'link'
+		});
 	};
 
 	RichTextEditor.prototype.setShowGroupUndo = function(bShowGroupUndo) {
-		this.setProperty("showGroupUndo", bShowGroupUndo, true);
-		this.setButtonGroupVisibility("undo", bShowGroupUndo);
-		this.reinitialize();
-		return this;
+		return this._setShowGroup(bShowGroupUndo, {
+			property: 'showGroupUndo',
+			buttonGroup: 'undo'
+		});
 	};
 
+	RichTextEditor.prototype.setCustomToolbar = function (bEnabled) {
+		// switching the custom toolbar on/off after init may cause performance issues, backward incompatibility
+		// and TinyMCE life-cycle management
+		if (this._tinyMCE4Status === EditorStatus.Initial) { // only supported before first rendering!
+			this.setProperty("customToolbar", bEnabled);
+		} else {
+			jQuery.sap.log.error("Cannot set customToolbar property to " + bEnabled + " after initialization.", this);
+		}
+
+		return this;
+	};
 
 	/**
 	 * Allows to add plugins (that must already be installed on the server) to the
 	 * RichtextEditor.
 	 *
 	 * @param {map|string} [mPlugin] A map with the property name containing the plugin IDs/name or an object with the property "name".
-	 * @public
 	 * @returns {object} Control instance (for method chaining)
+	 * @public
 	 */
 	RichTextEditor.prototype.addPlugin = function(mPlugin) {
 		if (typeof mPlugin === "string") {
@@ -649,8 +773,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	/**
 	 * Removes the plugin with the given name/ID from the list of plugins to load
 	 *
-	 * @param {string} [sPluginName] The name/id of the plugin to remove
+	 * @param {string} [sPluginName] The name/ID of the plugin to remove
 	 * @returns {object} Control instance (for method chaining)
+	 * @public
 	 */
 	RichTextEditor.prototype.removePlugin = function(sPluginName) {
 		var aPlugins = this.getProperty("plugins").slice(0);
@@ -673,8 +798,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * the button correctly.
 	 *
 	 * @param {boolean} [bUseLegacyTheme] Whether to use the legacy button theme
-	 * @public
 	 * @returns {object} Control instance (for method chaining)
+	 * @public
 	 */
 	RichTextEditor.prototype.setUseLegacyTheme = function(bUseLegacyTheme) {
 		var oDomRef = this.getDomRef();
@@ -695,15 +820,54 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * @param {boolean}    [mGroup.visible=true] (optional) The priority of the button group. Lower priorities are added first.
 	 * @param {int}        [mGroup.row=0] (optional) Row number in which the button should be
 	 * @param {int}        [mGroup.priority=10] (optional) The priority of the button group. Lower priorities are added first.
-	 * @public
 	 * @returns {object} Control instance (for method chaining)
+	 * @public
 	 */
-	RichTextEditor.prototype.addButtonGroup = function(mGroup) {
+	RichTextEditor.prototype.addButtonGroup = function (mGroup) {
+		var aGroups = this.getProperty("buttonGroups").slice(),
+			oCustomToolbar = this.getAggregation("_toolbarWrapper"),
+			bFullGroup = true;
+
+		// check if the group is already added
+		for (var i = 0; i < aGroups.length; ++i) {
+			if (mGroup === "string" && aGroups[i].name === mGroup || aGroups[i].name === mGroup.name) {
+				return this;
+			}
+		}
+
+		//if mGroup is string internally we are creating a group object.
 		if (typeof mGroup === "string") {
-			mGroup = {
-				name: this._createId("buttonGroup"),
-				buttons: [mGroup]
-			};
+			bFullGroup = false;
+			switch (mGroup) {
+				case "formatselect":
+					bFullGroup = true;
+					mGroup = {
+						name: "formatselect",
+						buttons: ["formatselect"]
+					};
+					break;
+				case "styleselect":
+					bFullGroup = true;
+					mGroup = {
+						name: "styleselect",
+						buttons: ["styleselect"],
+						customToolbarPriority: 40
+					};
+					break;
+				case "table":
+					bFullGroup = true;
+					mGroup = {
+						name: "table",
+						buttons: ["table"],
+						customToolbarPriority: 90
+					};
+					break;
+				default:
+					mGroup = {
+						name: this._createId("buttonGroup"),
+						buttons: [mGroup]
+					};
+			}
 		}
 
 		if (mGroup.visible === undefined) {
@@ -718,17 +882,25 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 
 		var aButtonGroups = this.getButtonGroups();
 		aButtonGroups.push(mGroup);
-		this.setButtonGroups(aButtonGroups);
+		this.setProperty("buttonGroups", aButtonGroups);
+
+		if (oCustomToolbar) {
+			oCustomToolbar.addButtonGroupToContent(mGroup, bFullGroup);
+		}
 
 		return this;
 	};
 
 	RichTextEditor.prototype.removeButtonGroup = function(sGroupName) {
-		var aGroups = this.getProperty("buttonGroups").slice(0);
+		var aGroups = this.getProperty("buttonGroups").slice(0),
+			oCustomToolbar = this.getAggregation("_toolbarWrapper");
+
 		for (var i = 0; i < aGroups.length; ++i) {
 			if (aGroups[i].name === sGroupName) {
 				aGroups.splice(i, 1);
 				--i;
+
+				oCustomToolbar && oCustomToolbar.removeButtonGroup(sGroupName);
 			}
 		}
 		this.setProperty("buttonGroups", aGroups);
@@ -738,12 +910,38 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	};
 
 	/**
+	 * Sets the button groups to the editor.
+	 *
+	 * @param {array} [aGroups] Array of names or objects containing the group information
+	 * @returns {object} Control instance (for method chaining)
+	 * @public
+	 */
+	RichTextEditor.prototype.setButtonGroups = function (aGroups) {
+		var oCustomToolbar;
+		if (!Array.isArray(aGroups)){
+			jQuery.sap.log.error("Button groups cannot be set: " + aGroups + " is not an array.");
+			return this;
+		}
+
+		this.setProperty("buttonGroups", aGroups);
+
+		oCustomToolbar = this.getAggregation("_toolbarWrapper");
+		if (oCustomToolbar) {
+			oCustomToolbar.setButtonGroups(aGroups);
+		}
+
+		this.reinitialize();
+		return this;
+
+	};
+
+	/**
 	 * Make the button group with the given name (in)visible (if used before initialization of the editor)
 	 *
 	 * @param {string} [sGroupName] Name of the group of buttons to be chenged
 	 * @param {bool}   [bVisible=false] Whether or not this group should be visible
-	 * @private
 	 * @returns {object} Control instance (for method chaining)
+	 * @private
 	 */
 	RichTextEditor.prototype.setButtonGroupVisibility = function(sGroupName, bVisible) {
 		var aButtonGroups = this.getButtonGroups();
@@ -761,7 +959,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 *
 	 * @param {string} [sPrefix] The string prepended to the unique ID
 	 * @returns {string} A unique ID for the editor
-	 *
 	 * @private
 	 */
 	RichTextEditor.prototype._createId = function(sPrefix) {
@@ -788,7 +985,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			this.setProperty("editorType", sEditorType);
 
 			switch (sEditorType) {
-				case sap.ui.richtexteditor.EditorType.TinyMCE:
+				case library.EditorType.TinyMCE:
 					this.setEditorLocation(RichTextEditor.EDITORLOCATION_TINYMCE);
 					// The plugin "emotions" has been replaced by "emoticons" in v4 mind the "c"
 					this.removePlugin("emoticons");
@@ -824,7 +1021,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 					});
 					break;
 
-				case sap.ui.richtexteditor.EditorType.TinyMCE4:
+				case library.EditorType.TinyMCE4:
 					this.setEditorLocation(RichTextEditor.EDITORLOCATION_TINYMCE4);
 					// The plugin "emotions" has been replaced by "emoticons" in v 4 mind the "c"
 					this.removePlugin("emotions");
@@ -847,6 +1044,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 						visible: true,
 						row: 0,
 						priority: 20,
+						customToolbarPriority: 30,
 						buttons: [
 							"alignleft", "aligncenter", "alignright", "alignjustify"
 						]
@@ -857,6 +1055,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 						visible: false,
 						row: 1,
 						priority: 50,
+						customToolbarPriority: 80,
 						buttons: [
 							"image", "emoticons"
 						]
@@ -910,13 +1109,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		sButtonSeparator = sButtonSeparator === undefined ? "," : sButtonSeparator;
 		sGroupSeparator = sGroupSeparator === undefined ? "|" : sGroupSeparator;
 
-		var aButtonGroups = this.getButtonGroups();
-		var sGroupSep = sButtonSeparator + sGroupSeparator + sButtonSeparator;
-
-		var i, iLen, mGroup;
+		var aButtonGroups = this.getButtonGroups(),
+			sGroupSep = sButtonSeparator + sGroupSeparator + sButtonSeparator,
+			i, iLen, mGroup,
+			aOrderedGroups = {},
+			aButtonRows = [];
 
 		// Order Groups by priority
-		var aOrderedGroups = {};
 		for (i = 0, iLen = aButtonGroups.length; i < iLen; ++i) {
 			mGroup = aButtonGroups[i];
 			if (!aOrderedGroups[mGroup.priority]) {
@@ -930,7 +1129,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		}
 
 		// Add Groups in order to the four button rows
-		var aButtonRows = [];
 		for (var key in aOrderedGroups) {
 			for (i = 0, iLen = aOrderedGroups[key].length; i < iLen; ++i) {
 				mGroup = aOrderedGroups[key][i];
@@ -977,12 +1175,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	/**
 	 * Creates the ButtonRow strings for TinyMCE
 	 *
-	 * @private
 	 * @returns {string} Plugin string specificly formatted for TinyMCE
+	 * @private
 	 */
 	RichTextEditor.prototype._createPluginsListTinyMCE = function() {
-		var aPlugins = this.getPlugins();
-		var aPluginNames = [];
+		var aPlugins = this.getPlugins(),
+			aPluginNames = [];
+
 		for (var i = 0, iLen = aPlugins.length; i < iLen; ++i) {
 			aPluginNames.push(aPlugins[i].name);
 		}
@@ -994,8 +1193,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	/**
 	 * Checks whether TinyMCE has rendered its HTML
 	 *
+	 * @returns {boolean} Whether TinyMCE is rendered inside the page
 	 * @private
-	 * @returns {bool} Whether TinyMCE is rendered inside the page
 	 */
 	RichTextEditor.prototype.tinyMCEReady = function() {
 		var iframe = jQuery.sap.domById(this._iframeId);
@@ -1046,8 +1245,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * @private
 	 */
 	RichTextEditor.prototype._tinyMCEKeyboardHandler = function(oEvent) {
-		var newIndex;
-		var key = oEvent['keyCode'];
+		var newIndex,
+			key = oEvent['keyCode'];
+
 		switch (key) {
 			case jQuery.sap.KeyCodes.TAB: /* 9 */
 				if (!this.$focusables.index(jQuery(oEvent.target)) === 0) { // if not on very first element
@@ -1088,15 +1288,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * @returns {string} The language to be used for TinyMCE
 	 */
 	RichTextEditor.prototype._getLanguageTinyMCE = function() {
-		var oLocale = new sap.ui.core.Locale(sap.ui.getCore().getConfiguration().getLanguage());
-		var sLanguage = oLocale.getLanguage();
-		var sRegion = oLocale.getRegion();
+		var oLocale = new sap.ui.core.Locale(sap.ui.getCore().getConfiguration().getLanguage()),
+			sLanguage = oLocale.getLanguage(),
+			sRegion = oLocale.getRegion(),
+			mLangFallback = {
+				"zh": "zh-" + (sRegion ? sRegion.toLowerCase() : "cn"),
+				"sh": "sr",
+				"hi": "en" // Hindi is not supported by tinyMCE - fallback to en to show something at least
+			};
 
-		var mLangFallback = {
-			"zh": "zh-" + (sRegion ? sRegion.toLowerCase() : "cn"),
-			"sh": "sr",
-			"hi": "en" // Hindi is not supported by tinyMCE - fallback to en to show something at least
-		};
 		sLanguage = mLangFallback[sLanguage] ? mLangFallback[sLanguage] : sLanguage;
 
 		return sLanguage;
@@ -1111,6 +1311,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 
 	/**
 	 * Static initialization for usage of TinyMCE
+	 *
 	 * @private
 	 */
 	RichTextEditor.initTinyMCEStatic = function() {
@@ -1126,6 +1327,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 
 	/**
 	 * Saves the current control data and detaches the editor instance from the DOM element
+	 *
 	 * @private
 	 */
 	RichTextEditor.prototype.onBeforeRenderingTinyMCE = function() {
@@ -1141,6 +1343,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 
 	/**
 	 * Restores the data and re-attaches the editor instance to the DOM element
+	 *
 	 * @private
 	 */
 	RichTextEditor.prototype.onAfterRenderingTinyMCE = function() {
@@ -1173,9 +1376,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 
 	/**
 	 * Initializes the TinyMCE instance
+	 *
 	 * @private
 	 */
 	RichTextEditor.prototype.initTinyMCEAfterFirstRendering = function() {
+		var oCustomToolbar = this.getAggregation("_toolbarWrapper");
+
 		// make sure static initialization has happened
 		if (!RichTextEditor.TinyMCEInitialized) {
 			RichTextEditor.initTinyMCEStatic();
@@ -1192,40 +1398,44 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		}
 		this._bEditorCreated = true; // do this as soon as we enter the init code with no chance of return
 
-		var aButtonRows = this._createButtonRowsTinyMCE();
-		var sPluginsList = this._createPluginsListTinyMCE();
+		var aButtonRows = this._createButtonRowsTinyMCE(),
+			sPluginsList = this._createPluginsListTinyMCE(),
+			oConfig = {
+				mode: "exact",
+				// The following line only covers the editor content, not the UI in general
+				directionality: (sap.ui.getCore().getConfiguration().getRTL() ? "rtl" : "ltr"),
+				elements: this._textAreaId,
+				theme: "advanced",
+				language: this._getLanguageTinyMCE(),
+				browser_spellcheck: true,
+				convert_urls: false,
+				plugins: sPluginsList, /* autosave causes problems with missing selection, maybe after rerendering */
+				// Theme options
+				theme_advanced_buttons1: aButtonRows[0],
+				theme_advanced_buttons2: aButtonRows[1],
+				theme_advanced_buttons3: aButtonRows[2],
+				theme_advanced_buttons4: aButtonRows[3],
+				theme_advanced_toolbar_location: "top",
+				theme_advanced_toolbar_align: "left",
+				theme_advanced_statusbar_location: "none",
+				readonly: (this.getEditable() ? 0 : 1),
+				nowrap: !this.getWrapping(),
+				onchange_callback: function(oCurrentInst) {
+					var sId = oCurrentInst.editorId.substr(0, oCurrentInst.editorId.lastIndexOf("-")),
+						oRTE = sap.ui.getCore().byId(sId);
 
-		/*eslint-disable camelcase */
-		var oConfig = {
-			mode: "exact",
-			// The following line only covers the editor content, not the UI in general
-			directionality: (sap.ui.getCore().getConfiguration().getRTL() ? "rtl" : "ltr"),
-			elements: this._textAreaId,
-			theme: "advanced",
-			language: this._getLanguageTinyMCE(),
-			browser_spellcheck: true,
-			convert_urls: false,
-			plugins: sPluginsList, /* autosave causes problems with missing selection, maybe after rerendering */
-			// Theme options
-			theme_advanced_buttons1: aButtonRows[0],
-			theme_advanced_buttons2: aButtonRows[1],
-			theme_advanced_buttons3: aButtonRows[2],
-			theme_advanced_buttons4: aButtonRows[3],
-			theme_advanced_toolbar_location: "top",
-			theme_advanced_toolbar_align: "left",
-			theme_advanced_statusbar_location: "none",
-			readonly: (this.getEditable() ? 0 : 1),
-			nowrap: !this.getWrapping(),
-			onchange_callback: function(oCurrentInst) {
-				var sId = oCurrentInst.editorId.substr(0, oCurrentInst.editorId.lastIndexOf("-"));
-				var oRTE = sap.ui.getCore().byId(sId);
-				if (oRTE) {
-					oRTE.onTinyMCEChange(oCurrentInst);
-				} else {
-					jQuery.sap.log.error("RichtTextEditor change called for unknown instance: " + sId);
+					if (oRTE) {
+						oRTE.onTinyMCEChange(oCurrentInst);
+					} else {
+						jQuery.sap.log.error("RichtTextEditor change called for unknown instance: " + sId);
+					}
 				}
-			}
-		};
+			};
+
+		// apply setup for RichTextEditor with Custom Toolbar
+		if (this._bCustomToolbarRequirementsFullfiled && oCustomToolbar) {
+			oConfig = oCustomToolbar.modifyRTEToolbarConfig(oConfig);
+		}
 		/*eslint-enable camelcase */
 
 		this.fireBeforeEditorInit({ configuration: oConfig });
@@ -1242,20 +1452,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			var oEditor = this.getNativeApi();
 			if (oEditor && oEditor.getContainer()) {
 
-				var that = this;
-				var fnRemoveControl = function() {
-					try {
-						/*eslint-disable camelcase */
-						window.tinymce.execCommand('mceRemoveControl', false, that._textAreaId, { skip_focus: true });
-						/*eslint-enable camelcase */
-					} catch (ex) {
-						// Ignored. If unloading fails this might lead to multiple instances of TinyMCE
-						// being created, but there is nothing we can do as it depends on the third-
-						// party tinymce code. This may happen in certain scenarios in IE < 11 or
-						// Firefox when TinyMCE tries to access properties of the inner iframe's
-						// document.
-					}
-				};
+				var that = this,
+					fnRemoveControl = function() {
+						try {
+							/*eslint-disable camelcase */
+							window.tinymce.execCommand('mceRemoveControl', false, that._textAreaId, { skip_focus: true });
+							/*eslint-enable camelcase */
+						} catch (ex) {
+							// Ignored. If unloading fails this might lead to multiple instances of TinyMCE
+							// being created, but there is nothing we can do as it depends on the third-
+							// party tinymce code. This may happen in certain scenarios in IE < 11 or
+							// Firefox when TinyMCE tries to access properties of the inner iframe's
+							// document.
+						}
+					};
 
 				try {
 					this.setProperty("value", oEditor.getContent(), true); // required because rerendering newly creates the textarea, where tinymce stored the data
@@ -1282,6 +1492,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 
 	/**
 	 * Contains initialization code that only can be run once the TinyMCE editor is fully created (=has rendered its HTML)
+	 *
 	 * @private
 	 */
 	RichTextEditor.prototype.initWhenTinyMCEReady = function() {
@@ -1295,22 +1506,22 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			return;
 		}
 
-		var inst = this.getNativeApiTinyMCE();
-		var $IFrame = jQuery.sap.byId(this._iframeId);
-		var $Body = jQuery(inst.getBody());
-		var bTriggered;
+		var inst = this.getNativeApiTinyMCE(),
+			$IFrame = jQuery.sap.byId(this._iframeId),
+			$Body = jQuery(inst.getBody()),
+			bTriggered,
+			sTooltip,
+			sTitle;
 
 		if (this.getTooltip() && this.getTooltip().length > 0) {
-			var sTooltip = jQuery.sap.encodeHTML(this.getTooltip_Text());
+			sTooltip = jQuery.sap.encodeHTML(this.getTooltip_Text());
 			inst.getBody().title = sTooltip;
 			$IFrame.attr("title", sTooltip);
 		} else {
 			// TinyMCE3 creates wrong aria title (containing multiple ACC-help texts)
-			var sTitle =
-				inst.getLang("aria.rich_text_area") + " - " + inst.getLang('advanced.help_shortcut');
+			sTitle = inst.getLang("aria.rich_text_area") + " - " + inst.getLang('advanced.help_shortcut');
 			$IFrame.attr("title", sTitle);
 		}
-
 
 		// Make 100% height work in Firefox and IE
 		if (sap.ui.Device.browser.firefox) {
@@ -1330,8 +1541,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		}
 
 		// Focus handling of RTE
-		var tableId = this._textAreaId + "_tbl";
-		var $Editor = jQuery.sap.byId(tableId);
+		var tableId = this._textAreaId + "_tbl",
+			$Editor = jQuery.sap.byId(tableId);
+
 		this.$focusables = $Editor.find(":sapFocusable");
 		$Editor.bind('keydown', jQuery.proxy(this, "_tinyMCEKeyboardHandler"));
 
@@ -1364,6 +1576,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	/**
 	 * After configuration has changed, this method can be used to trigger a complete re-rendering
 	 * that also re-initializes the editor instance from scratch. Caution: this is expensive, performance-wise!
+	 *
 	 * @private
 	 */
 	RichTextEditor.prototype.reinitializeTinyMCE = function() {
@@ -1440,14 +1653,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * @private
 	 */
 	RichTextEditor.prototype._registerWithPopupTinyMCE = function() {
-		var oEditor = this.getNativeApi();
-		var oBus = sap.ui.getCore().getEventBus();
-		var $Pop = this.$().closest("[data-sap-ui-popup]");
+		var oEditor = this.getNativeApi(),
+			oBus = sap.ui.getCore().getEventBus(),
+			$Pop = this.$().closest("[data-sap-ui-popup]");
 
 		setTimeout(function() {
 			if ($Pop.length === 1) {
-				var sEventId = "sap.ui.core.Popup.addFocusableContent-" + $Pop.attr("data-sap-ui-popup");
-				var oObject = { id: this._iframeId };
+				var sEventId = "sap.ui.core.Popup.addFocusableContent-" + $Pop.attr("data-sap-ui-popup"),
+					oObject = { id: this._iframeId };
+
 				oBus.publish("sap.ui", sEventId, oObject);
 
 				oEditor.windowManager.onOpen.add(function(oTiny, oFrame, oPopup) {
@@ -1527,7 +1741,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 
 			case EditorStatus.Ready:
 				this._oEditor.remove();
-				this._oEditor.destroy();
 				this._tinyMCE4Status = EditorStatus.Destroyed;
 				this._boundResizeEditorTinyMCE4 = null;
 				this._oEditor = null;
@@ -1566,6 +1779,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 */
 	RichTextEditor.prototype.onAfterRenderingTinyMCE4 = function() {
 		var oDomRef = this.getDomRef();
+
+		// If RTE is direct child of a container which would be preserved
+		// there's no need to preserve the RTE. Such case is RTE inside XML View.
+		if (oDomRef && oDomRef.parentNode && oDomRef.parentNode.getAttribute("data-sap-ui-preserve")) {
+			oDomRef.removeAttribute("data-sap-ui-preserve");
+		}
 
 		if (!window.tinymce) {
 			// TinyMCE not loaded yet. try again later...
@@ -1632,11 +1851,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		var fnReinitialize = function() {
 
 			if (this._oEditor) {
-				/*eslint-disable camelcase */
-				window.tinymce.execCommand('mceRemoveControl', false, this._textAreaId, { skip_focus: true }); // also includes "remove" and "destroy"
-				/*eslint-enable camelcase */
-
-				this._oEditor.destroy();
+				this._oEditor.remove();
 			}
 
 			this._initializeTinyMCE4();
@@ -1662,6 +1877,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			case EditorStatus.Loaded:
 			case EditorStatus.Ready:
 				this._bInitializationPending = true;
+				// Makes sure that all other started reinitializations are completed, before the next one starts. The RTE is crashing in IE11 and Edge browser without that extra timeout.
 				setTimeout(function() {
 					fnReinitialize();
 				}, 0);
@@ -1677,8 +1893,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * TinyMCE4 specific getNativeApi method
 	 * Returns the editor instance for this control instance if available
 	 *
-	 * @private
+	 * <b>Note:</b> This is the only official way of accessing TinyMCE. Accessing the third-party API through
+	 * the window object may lead to backward incompatibility with later updates. Such cases will not be supported.
+	 *
 	 * @returns {object} The TinyMCE4 editor instance
+	 * @private
 	 */
 	RichTextEditor.prototype.getNativeApiTinyMCE4 = function() {
 		return this._oEditor;
@@ -1726,7 +1945,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		this._pTinyMCE4Initialized = new Promise(function(fnResolve, fnReject) {
 			this._bInitializationPending = false;
 			this._tinyMCE4Status = EditorStatus.Initializing;
-			this._textAreaDom.value = this.getValue();
+			this._textAreaDom.value = this._patchTinyMCE4Value(this.getValue());
 			window.tinymce.init(this._createConfigTinyMCE4(function() {
 				this._tinyMCE4Status = EditorStatus.Ready;
 				// Wee need to add a timeout here, as the promise resolves before other asynchronous tasks like the
@@ -1741,12 +1960,31 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		}.bind(this));
 	};
 
+	/**
+	 * Patches the value which would be inserted in TinyMCE4.
+	 *
+	 * If the value starts with an HTML comment, then tinyMCE
+	 * throws an exception and its init hook is not executed.
+	 *
+	 * TODO: Check if this is fixed with higher version of TinyMCE and remove the patch
+	 *
+	 * @param {string} value The value which will be inserted in the TinyMCE4
+	 * @returns {string} The patched value
+	 * @private
+	 */
+	RichTextEditor.prototype._patchTinyMCE4Value = function (value) {
+		if (value.indexOf("<!") === 0) {
+			value = "&#8203;" + value; // Prepend the value with "ZERO WIDTH NO-BREAK SPACE" character
+		}
+
+		return value;
+	};
+
 
 	/**
 	 * Sets up the TinyMCE instance after it has been loaded, initialized and shown on the
 	 * page.
 	 *
-	 * @param {object} [oEditor] The current TinyMCE4 editor instance
 	 * @private
 	 */
 	RichTextEditor.prototype._onAfterReadyTinyMCE4 = function() {
@@ -1765,9 +2003,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		$Editor.bind('keydown', jQuery.proxy(this, this._tinyMCEKeyboardHandler));
 
 		// Make sure focus event is triggered, when body inside the iframe is focused
-		var $EditorIFrame = jQuery.sap.byId(this._iframeId);
-		var $Body = jQuery(this._oEditor.getBody());
-		var bTriggered = false;
+		var $EditorIFrame = jQuery.sap.byId(this._iframeId),
+			$Body = jQuery(this._oEditor.getBody()),
+			bTriggered = false;
+
 		$Body.bind('focus', function() {
 			if (!bTriggered) {
 				bTriggered = true;
@@ -1827,9 +2066,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 				break;
 
 			case EditorStatus.Ready:
-				if (!this._readyFired && !this._bInitializationPending) {
-					this._readyFired = true;
-					this.fireReady.apply(this, arguments);
+				if (!this._bInitializationPending) {
+					if (!this._readyFired){
+						this._readyFired = true;
+						this.fireReady.apply(this, arguments);
+					}
+					this.fireReadyRecurring.apply(this, arguments);
 				}
 				break;
 
@@ -1844,10 +2086,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * Creates the configuration object which is used to initialize the tinymce editor instance
 	 *
 	 * @param {function} fnOnInit is a callback which is called on init
-	 * @private
 	 * @returns {bool} Whether the configuration changed since last time
+	 * @private
 	 */
 	RichTextEditor.prototype._createConfigTinyMCE4 = function(fnOnInit) {
+		var oCustomToolbar = this.getAggregation("_toolbarWrapper");
+
 		// Create new instance of TinyMCE4
 		var aButtonRows = this._createButtonRowsTinyMCE(" ", "|");
 		if (aButtonRows.length === 0) {
@@ -1871,8 +2115,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			plugins: sPluginsList,
 			toolbar_items_size: 'small',
 			toolbar: aButtonRows,
-			statusbar: false,
-			image_advtab: true,
+			statusbar: false, // disables display of the status bar at the bottom of the editor
+			image_advtab: true, // Adds an "Advanced" tab to the image dialog allowing you to add custom styles, spacing and borders to images
 			readonly: (this.getEditable() ? 0 : 1),
 			nowrap: !this.getWrapping(),
 			init_instance_callback: function(oEditor) {
@@ -1881,6 +2125,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			}.bind(this)
 		};
 		/*eslint-enable camelcase */
+
+		// apply setup for RichTextEditor with Custom Toolbar}
+		if (this._bCustomToolbarRequirementsFullfiled && oCustomToolbar) {
+			oConfig = oCustomToolbar.modifyRTEToolbarConfig(oConfig);
+		}
 
 		// Hook to allow apps to modify the editor configuration directly before first creation
 		this.fireBeforeEditorInit({ configuration: oConfig });
@@ -1896,9 +2145,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * @returns {string} The language to be used for TinyMCE
 	 */
 	RichTextEditor.prototype._getLanguageTinyMCE4 = function() {
-		var oLocale = new sap.ui.core.Locale(sap.ui.getCore().getConfiguration().getLanguage());
-		var sLanguage = oLocale.getLanguage();
-		var sRegion = oLocale.getRegion();
+		var oLocale = new sap.ui.core.Locale(sap.ui.getCore().getConfiguration().getLanguage()),
+			sLanguage = oLocale.getLanguage(),
+			sRegion = oLocale.getRegion(),
+			sLangStr;
 
 		// Language mapping for old/fallback languages
 		sLanguage = RichTextEditor.MAPPED_LANGUAGES_TINYMCE4[sLanguage] || sLanguage;
@@ -1908,7 +2158,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			sRegion = RichTextEditor.SUPPORTED_LANGUAGES_DEFAULT_REGIONS[sLanguage];
 		}
 
-		var sLangStr = sRegion ? sLanguage + "_" + sRegion.toUpperCase() : sLanguage;
+		sLangStr = sRegion ? sLanguage + "_" + sRegion.toUpperCase() : sLanguage;
 
 		// If there is no language for that region defined, try without region
 		if (!RichTextEditor.SUPPORTED_LANGUAGES_TINYMCE4[sLangStr]) {
@@ -1936,11 +2186,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			return;
 		}
 
-		var oEditorContentDom = this._oEditor.getContentAreaContainer();
-		var iFullHeight = this.$().height();
-		var iContainerHeight = jQuery(this._oEditor.getContainer()).height();
-		var iContentHeight = jQuery(oEditorContentDom).height();
-		var iRestHeight = iFullHeight - (iContainerHeight - iContentHeight);
+		var oEditorContentDom = this._oEditor.getContentAreaContainer(),
+			iFullHeight = this.getDomRef().offsetHeight,
+			iContainerHeight = this._oEditor.getContainer().offsetHeight,
+			iContentHeight = oEditorContentDom.offsetHeight,
+			iCustomToolbarHeight,
+			iRestHeight,
+			iDifference;
+
+		// if there is a custom toolbar substract the height from the editor height
+		iCustomToolbarHeight = this.getAggregation("_toolbarWrapper") ? this.getAggregation("_toolbarWrapper")
+																			.getAggregation("_toolbar")
+																			.getDomRef().offsetHeight : "0";
+
+		iRestHeight = iFullHeight - (iContainerHeight - iContentHeight) - iCustomToolbarHeight;
 
 		// There is a border of 1 px around the editor, which screws up the size determination when used the combination
 		// of a 100%-sized editor and an auto-sized dialog. In this case the border leads to end endless loop of resize
@@ -1948,10 +2207,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 		// So only trigger a resize if the size difference is actually noticable. In case the difference is 0, the resize
 		// call is needed because TinyMCE does not always actually resize when the resizeTo method is called.
 		// There should be a better solution to this problem...
-		var iDifference = Math.abs(this._lastRestHeight - iRestHeight);
+		iDifference = Math.abs(this._lastRestHeight - iRestHeight);
 		if (iDifference == 0 || iDifference > 5) {
 			try {
-				this._oEditor.theme.resizeTo(undefined, iRestHeight);
+				// the substraction of the result height is needed because of the
+				// border bottom and border top (1px each) - otherwise they are being cut off
+				this._oEditor.theme.resizeTo(undefined, iRestHeight - 2);
 			} catch (ex) {
 				// In some cases this leads to exceptions in IE11 after a current security fix. These cases can be safely ignored.
 			}
@@ -1971,14 +2232,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 	 * @private
 	 */
 	RichTextEditor.prototype._registerWithPopupTinyMCE4 = function() {
-		var oBus = sap.ui.getCore().getEventBus();
-		var $Pop = this.$().closest("[data-sap-ui-popup]");
+		var oBus = sap.ui.getCore().getEventBus(),
+			$Pop = this.$().closest("[data-sap-ui-popup]");
 
 		setTimeout(function() {
 			if ($Pop.length === 1) {
-				var sPopupId = $Pop.attr("data-sap-ui-popup");
+				var sPopupId = $Pop.attr("data-sap-ui-popup"),
+					oObject = { id: this._iframeId };
 
-				var oObject = { id: this._iframeId };
 				oBus.publish("sap.ui", "sap.ui.core.Popup.addFocusableContent-" + sPopupId, oObject);
 
 				if (this._oEditor) {
@@ -2016,10 +2277,88 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/ResizeHa
 			}
 		}
 	};
-
-
 	////////////////////////////////// End editor section "TinyMCE4" /////////////////////////////////
 
+
+	////////////////////////////////// Custom Toolbar Section  /////////////////////////////////
+
+	/**
+	 * Checks Custom Toolbar dependencies
+	 *
+	 * @returns {boolean} True if the requirements for using the custom toolbar are fulfilled
+	 * @private
+	 */
+	RichTextEditor.prototype._checkCustomToolbarRequirements = function() {
+		var bRequirementsFullfiled = this.getCustomToolbar() &&
+			this.getEditorType() === library.EditorType.TinyMCE4 &&
+			library.RichTextEditorHelper.bSapMLoaded;
+
+		this.$().toggleClass("sapUiRTEWithCustomToolbar", bRequirementsFullfiled);
+
+		return bRequirementsFullfiled;
+	};
+
+	/**
+	 * Manage Custom Toolbar lifecycle.
+	 *
+	 * As RichTextEditor's "customButtons" aggregation is just a proxy to the Toolbar's content,
+	 * we need to take care of it manually.
+	 * When the toolbar is created, the "customButtons" aggregation items are moved to the Toolbar,
+	 * but if the Toolbar is destroyed, we need to move the items back to the RTE's aggregation.
+	 * Therefore switching customToolbar on/off would produce the same output.
+	 *
+	 * @private
+	 */
+	RichTextEditor.prototype._customToolbarEnablement = function () {
+		var aCustomButtons,
+			oToolbarWrapper = this.getAggregation("_toolbarWrapper");
+		this._bCustomToolbarRequirementsFullfiled = this._checkCustomToolbarRequirements();
+
+		if (this._bCustomToolbarRequirementsFullfiled && !oToolbarWrapper) {
+			aCustomButtons = this.getAggregation("customButtons"); // Take items from RichTextEditor's aggregation
+			this.removeAllAggregation("customButtons"); // Detach custom buttons from the RTE before moving them to the Toolbar
+			oToolbarWrapper = new ToolbarWrapper({editor: this});
+			this.setAggregation("_toolbarWrapper", oToolbarWrapper);
+
+			if (aCustomButtons && aCustomButtons.length) {
+				// The delayedCall is needed as the ToolbarWrapper is not yet ready.
+				jQuery.sap.delayedCall(0, this, function () {
+					aCustomButtons.forEach(function (oButton) {
+						oToolbarWrapper.modifyToolbarContent("add", oButton);
+					});
+				});
+			}
+		}
+	};
+
+	/**
+	 * Overwrite customButton getters and setters and proxy that aggregation to the toolbar
+	 */
+	["add", "destroy", "get", "indexOf", "insert", "removeAll", "remove"].forEach(function (sMethodPrefix) {
+		var sMethodName = sMethodPrefix + "CustomButton" +
+			(["destroy", "get", "removeAll"].indexOf(sMethodPrefix) > -1 ? "s" : "");
+
+		RichTextEditor.prototype[sMethodName] = function () {
+			var vResult = null,
+				oItem = arguments[0],
+				oToolbarWrapper = this.getAggregation("_toolbarWrapper");
+
+			// As we can't limit the aggregation type to sap.m.Button, the check should be performed manually
+			if (typeof oItem === "object" && oItem.getMetadata().getName() !== "sap.m.Button") {
+				jQuery.sap.log.error("Only sap.m.Button is allowed as aggregation.");
+				return;
+			}
+
+			if (oToolbarWrapper && oToolbarWrapper.modifyToolbarContent) {
+				vResult = oToolbarWrapper.modifyToolbarContent.bind(oToolbarWrapper, sMethodPrefix).apply(oToolbarWrapper, arguments);
+			} else {
+				vResult = this[sMethodPrefix + "Aggregation"].bind(this, "customButtons").apply(this, arguments);
+			}
+
+			return vResult;
+		};
+	});
+	////////////////////////////////// END Custom Toolbar Section  /////////////////////////////////
 
 	return RichTextEditor;
 

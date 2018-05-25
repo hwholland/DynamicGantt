@@ -29,14 +29,34 @@ sap.ui.define([
 	 */
 	ViewportRenderer.render = function(rm, control) {
 
-		rm.write("<div");
-		rm.writeControlData(control);
-		rm.addClass("sapVizKitViewport");
-		rm.writeClasses();
-		rm.writeAttribute("tabindex", 0);
-		rm.write(">");
-		rm.write("</div>");
+		if (control._implementation) {
+			rm.renderControl(control._implementation);
+		} else {
+			rm.write("<div");
+			rm.writeControlData(control);
+			rm.addClass("sapVizKitViewport");
+			rm.writeClasses();
+			rm.writeAttribute("tabindex", 0);
 
+			var addStyle = false;
+			var width = control.getWidth();
+			if (width) {
+				rm.addStyle("width", width);
+				addStyle = true;
+			}
+			var height = control.getHeight();
+			if (height) {
+				rm.addStyle("height", height);
+				addStyle = true;
+			}
+			if (addStyle) {
+				rm.writeStyles();
+			}
+
+			rm.write(">");
+			// rm.writeEscaped("NO CONTENT");
+			rm.write("</div>");
+		}
 	};
 
 	return ViewportRenderer;

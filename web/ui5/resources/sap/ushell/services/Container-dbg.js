@@ -1,8 +1,8 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's container which manages renderers, services, and adapters.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
 /**
  * @namespace Namespace for Unified Shell.
@@ -43,7 +43,12 @@
  * @since 1.15.0
  * @public
  */
-(function () {
+sap.ui.define([
+    'sap/ushell/utils',
+    'sap/ushell/System',
+    'sap/ushell/Ui5ServiceFactory',
+    'sap/ui/core/service/ServiceFactoryRegistry'
+], function (utils, System, oUi5ServiceFactory, ServiceFactoryRegistry) {
     "use strict";
     /*global close, document, jQuery, localStorage, OData, sap, setTimeout, window */
 
@@ -55,11 +60,6 @@
         // bootstrap and is valid for the given logon platform
         mPlatformPackages,
         sFirstInitStack;   // keep stack trace of first initialization call for debugging purposes
-
-    jQuery.sap.declare(S_COMPONENT_NAME);
-
-    jQuery.sap.require("sap.ushell.utils");
-    jQuery.sap.require("sap.ushell.System");
 
     /*
      * Try to close window.
@@ -123,7 +123,9 @@
         var oAdapterConfig = getServiceConfig(sName).adapter || {},
             sAdapterName = oAdapterConfig.module
                 || getPlatformPackage(oSystem.getPlatform()) + "." + sName + "Adapter";
+
         jQuery.sap.require(sAdapterName);
+
         return new (jQuery.sap.getObject(sAdapterName))(oSystem, sParameter,
             {config: oAdapterConfig.config || {}});
     }
@@ -155,8 +157,8 @@
             mRemoteSystems = {},
             oGlobalDirtyDeferred,
             fnStorageEventListener,
-            oLocalStorage = sap.ushell.utils.getLocalStorage(),
-            mServicesByName = new sap.ushell.utils.Map(),
+            oLocalStorage = utils.getLocalStorage(),
+            mServicesByName = new utils.Map(),
             sSessionTerminationKey = "sap.ushell.Container." + oAdapter.getSystem().getPlatform()
                     + ".sessionTermination",
             that = this;
@@ -174,6 +176,7 @@
          * @name cancelLogon
          * @since 1.21.2
          * @public
+         * @alias sap.ushell.services.Container#cancelLogon
          * @see sap.ushell.services.Container#setLogonFrameProvider
          */
         this.cancelLogon = function () {
@@ -216,6 +219,7 @@
          * @name createRenderer
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.Container#createRenderer
          */
         this.createRenderer = function (sRendererName) {
             var oComponentData,
@@ -224,6 +228,7 @@
                 oRendererControl,
                 oRendererConfig;
 
+            jQuery.sap.measure.start("FLP:Container.InitLoading", "Initial Loading", "FLP");
             sRendererName = sRendererName || oConfig.defaultRenderer;
             if (!sRendererName) {
                 throw new Error("Missing renderer name");
@@ -314,12 +319,14 @@
          * @name sap.ushell.Container.DirtyState
          * @since 1.21.1
          * @public
+         * @alias sap.ushell.services.Container#getGlobalDirty
          */
         this.DirtyState = {
             /**
              * The embedded application is clean, there is no unsaved data.
              *
              * @public
+             * @alias sap.ushell.services.Container#getGlobalDirty
              * @constant
              * @default "CLEAN"
              * @name sap.ushell.Container.DirtyState.CLEAN
@@ -332,6 +339,7 @@
              * that is not yet saved.
              *
              * @public
+             * @alias sap.ushell.services.Container#getGlobalDirty
              * @constant
              * @default "DIRTY"
              * @name sap.ushell.Container.DirtyState.DIRTY
@@ -344,6 +352,7 @@
              * of technical reasons.
              *
              * @public
+             * @alias sap.ushell.services.Container#getGlobalDirty
              * @constant
              * @default "MAYBE_DIRTY"
              * @name sap.ushell.Container.DirtyState.MAYBE_DIRTY
@@ -390,6 +399,7 @@
          * @name getGlobalDirty
          * @since 1.21.1
          * @public
+         * @alias sap.ushell.services.Container#getGlobalDirty
          */
         this.getGlobalDirty = function () {
             var i,
@@ -464,7 +474,7 @@
                         );
                     } else {
                         iPending += 1;
-                        sap.ushell.utils.localStorageSetItem(sStorageKey,
+                        utils.localStorageSetItem(sStorageKey,
                             this.DirtyState.PENDING, true);
                         jQuery.sap.log.debug(
                             "getGlobalDirty() Requesting status for: " + sStorageKey,
@@ -527,6 +537,7 @@
          * @name getDirtyFlag
          * @since 1.27.0
          * @public
+         * @alias sap.ushell.services.Container#getDirtyFlag
          */
         this.getDirtyFlag = function () {
             for (var i = 0; i < aRegisteredDirtyMethods.length; i++) {
@@ -547,9 +558,25 @@
          * @default false
          * @since 1.27.0
          * @public
+         * @alias sap.ushell.services.Container#setDirtyFlag
          */
         this.setDirtyFlag = function (bIsDirty) {
             isDirty = bIsDirty;
+        };
+
+        /**
+         * Instructs the platform/backend system to keep the session alive.
+         *
+         * @since 1.48.0
+         *
+         * @private
+         * 
+         * @alias sap.ushell.services.Container#sessionKeepAlive
+         */
+        this.sessionKeepAlive = function () {
+            if (oAdapter.sessionKeepAlive) {
+                oAdapter.sessionKeepAlive();
+            }
         };
 
         /**
@@ -566,6 +593,7 @@
          * @methodOf sap.ushell.services.Container#
          * @name registerDirtyStateProvider
          * @public
+         * @alias sap.ushell.services.Container#registerDirtyStateProvider
          */
         this.registerDirtyStateProvider = function (fnDirty) {
             if (typeof fnDirty !== "function") {
@@ -642,6 +670,7 @@
          * @see sap.ushell.services.ContainerInterface
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.Container#getService
          */
         this.getService = function (sServiceName, sParameter) {
             /**
@@ -657,6 +686,7 @@
                 sKey,
                 Service, // Service constructor function
                 oService,
+                bServiceHasNoAdapter,
                 oServiceAdapter,
                 oServiceConfig,
                 oServiceProperties;
@@ -700,10 +730,15 @@
             sKey = sModuleName + "/" + (sParameter || "");
             oServiceProperties = {config: oServiceConfig.config || {}};
             if (!mServicesByName.containsKey(sKey)) {
-                jQuery.sap.require(sModuleName);
-                Service = jQuery.sap.getObject(sModuleName);
+                /*
+                 * extract information about the requested service
+                 */
+                Service = sap.ui.requireSync(sModuleName.replace(/[.]/g, "/"));
 
-                if (Service.hasNoAdapter === true) {
+                /*
+                 * create the service
+                 */
+                if (Service.hasNoAdapter) {
                     // has no adapter: don't create and don't pass one
                     oService = new Service(oContainerInterface, sParameter, oServiceProperties);
                 } else {
@@ -741,7 +776,7 @@
                     try {
                         sSystemAlias = sKey.substring(sRemoteSystemPrefix.length);
                         oSystemData = JSON.parse(oLocalStorage.getItem(sKey));
-                        mRemoteSystems[sSystemAlias] = new sap.ushell.System(oSystemData);
+                        mRemoteSystems[sSystemAlias] = new System(oSystemData);
                     } catch (e) {
                         // local storage contained garbage (non-parseable)
                         oLocalStorage.removeItem(sKey);
@@ -794,6 +829,7 @@
          * @name addRemoteSystem
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.Container#addRemoteSystem
          */
         /* Internal details
            oRemoteSystem.getAlias() is the unique key within the remote systems list.
@@ -828,7 +864,7 @@
                 jQuery.sap.log.debug("Added " + oRemoteSystem, null, "sap.ushell.Container");
             }
             mRemoteSystems[sAlias] = oRemoteSystem;
-            sap.ushell.utils.localStorageSetItem(sRemoteSystemPrefix + sAlias, oRemoteSystem);
+            utils.localStorageSetItem(sRemoteSystemPrefix + sAlias, oRemoteSystem);
         };
 
         /**
@@ -870,7 +906,7 @@
             }
 
             if (oSystemInfo.alias && oSystemInfo.platform) {
-                this.addRemoteSystem(new sap.ushell.System(oSystemInfo));
+                this.addRemoteSystem(new System(oSystemInfo));
             }
         };
 
@@ -884,6 +920,7 @@
          * @name attachLogoutEvent
          * @since 1.19.1
          * @public
+         * @alias sap.ushell.services.Container#attachLogoutEvent
          */
         this.attachLogoutEvent = function (fnFunction) {
             oEventProvider.attachEvent("Logout", fnFunction);
@@ -900,6 +937,7 @@
          * @name detachLogoutEvent
          * @since 1.19.1
          * @public
+         * @alias sap.ushell.services.Container#detachLogoutEvent
          */
         this.detachLogoutEvent = function (fnFunction) {
             oEventProvider.detachEvent("Logout", fnFunction);
@@ -919,6 +957,7 @@
          * @name attachRendererCreatedEvent
          * @since 1.34.1
          * @public
+         * @alias sap.ushell.services.Container#attachRendererCreatedEvent
          */
         this.attachRendererCreatedEvent = function (fnFunction) {
             oEventProvider.attachEvent("rendererCreated", fnFunction);
@@ -934,6 +973,7 @@
          * @name detachLogoutEvent
          * @since 1.34.1
          * @public
+         * @alias sap.ushell.services.Container#detachRendererCreatedEvent
          */
         this.detachRendererCreatedEvent = function (fnFunction) {
             oEventProvider.detachEvent("rendererCreated", fnFunction);
@@ -950,6 +990,7 @@
          * @name logout
          * @since 1.15.0
          * @public
+         * @alias sap.ushell.services.Container#logout
          */
         this.logout = function () {
             var oDeferred = new jQuery.Deferred();
@@ -980,7 +1021,7 @@
                     window.removeEventListener('storage', fnStorageEventListener);
                 }
 
-                sap.ushell.utils.localStorageSetItem(sSessionTerminationKey, "pending");
+                utils.localStorageSetItem(sSessionTerminationKey, "pending");
                 that._suppressOData();
                 mRemoteSystems = that._getRemoteSystems();
                 Object.keys(mRemoteSystems).forEach(function (sAlias) {
@@ -1056,11 +1097,38 @@
          * @name setLogonFrameProvider
          * @since 1.21.2
          * @public
+         * @alias sap.ushell.services.Container#setLogonFrameProvider
          * @see sap.ushell.services.Container#cancelLogon
          */
         this.setLogonFrameProvider = function (oLogonFrameProvider) {
             if (this.oFrameLogonManager) {
                 this.oFrameLogonManager.setLogonFrameProvider(oLogonFrameProvider);
+            }
+        };
+
+        /**
+         * Sets the timeout for XHR logon requests if a XHR logon frame manager is active.
+         * <p>
+         * The shell runtime might support logon for XHR requests (if this feature is supported
+         * on the actual platform). The XHR logon allows to define specific timeout settings per
+         * request path, until a logon frame is shown.
+         * <p>
+         * This method is not a public API, it must only be called by shell internal services.
+         *
+         * @param {string} sPath
+         *   the URL path for which the custom timeout will be applied
+         * @param {number} iTimeout
+         *   the timeout value in milliseconds
+         *
+         * @methodOf sap.ushell.services.Container#
+         * @name setXhrLogonTimeout
+         * @since 1.46.3
+         * @private
+         * @alias sap.ushell.services.Container#setXhrLogonTimeout
+         */
+        this.setXhrLogonTimeout = function (sPath, iTimeout) {
+            if (this.oFrameLogonManager) {
+                this.oFrameLogonManager.setTimeout(sPath, iTimeout);
             }
         };
 
@@ -1100,7 +1168,7 @@
                 if (oStorageEvent.key.indexOf(sRemoteSystemPrefix) === 0
                         && oStorageEvent.newValue
                         && oStorageEvent.newValue !== oLocalStorage.getItem(oStorageEvent.key)) {
-                    sap.ushell.utils.localStorageSetItem(oStorageEvent.key, oStorageEvent.newValue);
+                    utils.localStorageSetItem(oStorageEvent.key, oStorageEvent.newValue);
                 }
                 if (oStorageEvent.key === sSessionTerminationKey) {
                     if (oStorageEvent.newValue === "pending") {
@@ -1116,6 +1184,31 @@
             };
             window.addEventListener('storage', fnStorageEventListener);
         }
+    }
+
+    /**
+     * Creates and registers injectable ui5services.
+     *
+     * @param {array} aServicesToRegister
+     *   An array of service names to register.
+     *
+     * @private
+     */
+    function registerInjectableUi5Services(aServicesToRegister) {
+
+        aServicesToRegister.forEach(function (sUshellServiceName) {
+
+            // create registerable factory
+            var oServiceFactory = oUi5ServiceFactory.createServiceFactory(
+                sUshellServiceName
+            );
+
+            // register factory to allow UI5 to create the service
+            ServiceFactoryRegistry.register(
+                "sap.ushell.ui5service." + sUshellServiceName,
+                oServiceFactory
+            );
+        });
     }
 
     /**
@@ -1196,13 +1289,24 @@
             });
         }
 
-        oAdapter = createAdapter("Container", new sap.ushell.System({
+        oAdapter = createAdapter("Container", new System({
             // this is the initial logon system object
             alias: "",
             platform: oConfig.platform || sPlatform
         }));
 
-        return oAdapter.load().done(function () {
+        // Register all injectable ui5services
+        registerInjectableUi5Services([
+            "Personalization",
+            "URLParsing",
+            "CrossApplicationNavigation"
+        ]);
+
+        return oAdapter.load().then( function () {
+
+            var oCDMService, oContainer, oPluginManager;
+            var oDeferredCDMSitePlugins, bLoadAdditionalPluginsFromSite;
+
             /**
              * The Unified Shell container as a singleton object. This object will only be
              * available after <code>sap.ushell.bootstrap()</code> has finished.
@@ -1212,10 +1316,39 @@
              * @see sap.ushell.bootstrap
              * @public
              */
-            sap.ushell.Container = new Container(oAdapter);
+            sap.ushell.Container = new Container( oAdapter );
 
-            // initialize PluginManager with bootstrap plugins
-            sap.ushell.Container.getService("PluginManager").registerPlugins(oConfig.bootstrapPlugins);
-        });
+            oContainer = sap.ushell.Container;
+
+            bLoadAdditionalPluginsFromSite = ( function () {
+                var oUShellPluginManagerConfig, oPluginManagerConfig;
+                var oUshellConfig = window["sap-ushell-config"];
+
+                if ( !oUshellConfig || !oUshellConfig.services ) {
+                    return false;
+                }
+
+                oUShellPluginManagerConfig = oUshellConfig.services.PluginManager;
+
+                oPluginManagerConfig = oUShellPluginManagerConfig && oUShellPluginManagerConfig.config;
+
+                return oPluginManagerConfig && oPluginManagerConfig.loadPluginsFromSite;
+            } )();
+
+            if ( bLoadAdditionalPluginsFromSite ) {
+                oCDMService = oContainer.getService( "CommonDataModel" );
+                oDeferredCDMSitePlugins = oCDMService.getPlugins();
+            } else {
+                oDeferredCDMSitePlugins = jQuery.when( { } );
+            }
+
+            return oDeferredCDMSitePlugins.then( function ( oCDMSitePlugins ) {
+                var oAllPlugins = jQuery.extend( true, { }, oConfig.bootstrapPlugins, oCDMSitePlugins );
+
+                oPluginManager = oContainer.getService( "PluginManager" );
+
+                oPluginManager.registerPlugins( oAllPlugins );
+            } );
+        } );
     };
-}());
+});

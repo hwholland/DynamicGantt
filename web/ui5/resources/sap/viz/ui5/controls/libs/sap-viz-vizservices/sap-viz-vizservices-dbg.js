@@ -1,104 +1,24 @@
-/* SAP CVOM 4.0 © <2012-2014> SAP SE. All rights reserved. Build Version 1.4.0, Build context N/A */
-if (requirejs && requirejs.s && requirejs.s.contexts && requirejs.s.contexts._) {
-    window.__sap_viz_internal_requirejs_nextTick__ = requirejs.s.contexts._.nextTick;
-    requirejs.s.contexts._.nextTick = function(fn) {fn();};
-}
-/*
- * 1. Make every AMD module exports itself.
- * 2. Every module stays anonymous until they are required.
- * 3. "Exporting" includes global namespace setup and auto loading.
- * 4. The trick must work for any valid AMD loader.
- */
-(function(global){
-    var ostring = Object.prototype.toString;
-    function isFunction(it) {
-        return ostring.call(it) === '[object Function]';
-    }
+/* SAP CVOM 4.0 © <2012-2014> SAP SE. All rights reserved. Build Version 1.9.0, Build context N/A */
 
-    function isArray(it) {
-        return ostring.call(it) === '[object Array]';
-    }
+// cache global require & define
+sap.viz.moduleloader.originalDefine = define;
+sap.viz.moduleloader.originalRequire = require;
+sap.viz.moduleloader.originalRequirejs = requirejs;
 
-    function mixin(target, src) {
-        for(var prop in src){
-            if(src.hasOwnProperty(prop)){
-                target[prop] = src[prop];
-            }
-        }
-        if(isFunction(target) && isFunction(src)){
-            target = src;
-        }
-        return target;
-    }
-
-    function exportNamespace(id, mod){
-        for(var i = 0,
-                nameParts = id.split("/"),
-                p = global,
-                c;
-            c = nameParts[i]; ++i){
-
-            if(i < nameParts.length - 1){
-                p[c] = p[c] || {};
-            }else{
-                p[c] = p[c] ? mixin(p[c], mod) : mod;
-            }
-            p = p[c];
-        }
-    }
-    var exportNamespaces = {
-        'sap/viz/vizservices/service/bvr/BVRService' : 'sap/viz/vizservices/BVRService',
-        'sap/viz/vizservices/service/feed/FeedService' : 'sap/viz/vizservices/FeedService',
-        'sap/viz/vizservices/service/binding/BindingService' : 'sap/viz/vizservices/__internal__/BindingService',
-        'sap/viz/vizservices/service/property/PropertyService' : 'sap/viz/vizservices/__internal__/PropertyService',
-        'sap/viz/vizservices/service/scale/ScaleService' : 'sap/viz/vizservices/__internal__/ScaleService',
-        'sap/viz/vizservices/common/Version' : 'sap/viz/vizservices/VERSION'
-    };
-    if(define && define.amd && !define.__exportNS){
-        var originalDefine = define;
-        define = function(name, deps, callback){
-            if(typeof name !== 'string'){
-                callback = deps;
-                deps = name;
-                name = null;
-            }
-            if(!isArray(deps)){
-                callback = deps;
-                deps = [];
-            }
-
-            var needExport = deps.indexOf('exports') >= 0;
-            var needRequire = needExport || deps.indexOf('require') >= 0;
-            if(needExport){
-                deps.push('module');
-
-                var originalCallback = callback;
-                callback = function(){
-                    var last = arguments.length - 1;
-                    var mod = arguments[last];
-                    var result = originalCallback;
-                    if(isFunction(originalCallback)){
-                        var args = [].slice.apply(arguments, [0, last]);
-                        result = originalCallback.apply(this, args);
-                    }
-                    exportNamespace(exportNamespaces[mod.id] || mod.id, result);
-                    return result;
-                };
-            }
-            if(name && needRequire){
-                define.__autoLoad.push(name);
-            }
-
-            return name ? originalDefine(name, deps, callback) : originalDefine(deps, callback);
-        };
-        for(var prop in originalDefine){
-            define[prop] = originalDefine[prop];
-        }
-        define.__exportNS = originalDefine;
-        define.__autoLoad = [];
-    }
-})(this);
-
+// replace with sap.viz.moduleloader.require/define
+var define = sap.viz.moduleloader.define;
+var require = sap.viz.moduleloader.require.config({
+	context: "lw-vizservices",
+	exportMap: {
+		'sap/viz/vizservices/service/bvr/BVRService' : 'sap.viz.vizservices.BVRService',
+		'sap/viz/vizservices/service/feed/FeedService' : 'sap.viz.vizservices.FeedService',
+		'sap/viz/vizservices/service/binding/BindingService' : 'sap.viz.vizservices.__internal__.BindingService',
+		'sap/viz/vizservices/service/property/PropertyService' : 'sap.viz.vizservices.__internal__.PropertyService',
+		'sap/viz/vizservices/service/scale/ScaleService' : 'sap.viz.vizservices.__internal__.ScaleService',
+		'sap/viz/vizservices/common/Version' : 'sap.viz.vizservices.VERSION'
+	}
+});
+var requirejs = require;
 define('sap/viz/vizservices/common/feed/FeedConst',[],function() {
     var FeedConst = {};
     
@@ -237,6 +157,8 @@ define('sap/viz/vizservices/common/metadata/bindingdef/BindingDefConst',[],funct
     BindingDefConst.MND_MODE_NONE = 'none';
     BindingDefConst.MND_MODE_SUPPORT_EXCLUSIVELY = 'supportExclusively',
     BindingDefConst.MND_MODE_SUPPORT = 'support';
+
+    BindingDefConst.MND_MODE_ONLY = 'mndOnly';
     
     return BindingDefConst;
 });
@@ -357,17 +279,26 @@ define('sap/viz/vizservices/common/metadata/bindingdef/InfoBindingDefAdaptor',[
             });
             var defs = [];
             infoDefs.forEach(function(infoDef) {
-                defs.push(new BindingDef({
-                    'id' : infoDef.id,
-                    'name' : infoDef.name,
-                    'type' : infoDef.type,
-                    'min' : infoDef.min,
-                    'max' : infoDef.max,
-                    'mndEnumerable' : infoDef.type === BindingDefConst.TYPE_MEASURE && infoDef.role.split('.')[0] === 'layout',
-                    'mndMode' : infoDef.acceptMND === true ? BindingDefConst.MND_MODE_SUPPORT : BindingDefConst.MND_MODE_NONE,
-                    'bvrPriority' : sortedDefs.indexOf(infoDef),
-                    'bvrMNDPriority' : _rolesSortingMND.indexOf(infoDef.role.split('.')[0]) * 1000 + sortedDefs.indexOf(infoDef)
-                }));
+                var def = {};
+                def.id = infoDef.id;
+                def.name = infoDef.name;
+                def.type = infoDef.type;
+                def.min = infoDef.min;
+                def.max = infoDef.max;
+                def.mndEnumerable = (infoDef.type === BindingDefConst.TYPE_MEASURE && infoDef.role.split('.')[0] === 'layout');
+                if (infoDef.acceptMND) {
+                    if (infoDef.MNDOnly) {
+                        def.mndMode = BindingDefConst.MND_MODE_ONLY;
+                    } else {
+                        def.mndMode = BindingDefConst.MND_MODE_SUPPORT;
+                    }
+                } else {
+                    def.mndMode = BindingDefConst.MND_MODE_NONE;
+                }
+                def.bvrPriority = sortedDefs.indexOf(infoDef);
+                def.bvrMNDPriority = _rolesSortingMND.indexOf(infoDef.role.split('.')[0]) * 1000 + sortedDefs.indexOf(infoDef);
+
+                defs.push(new BindingDef(def));
             });
             return defs;
         }
@@ -794,6 +725,8 @@ define('sap/viz/vizservices/common/metadata/bindingdef/BindingDefUtils',[
             } else {
                 if (def.mndMode() === BindingDefConst.MND_MODE_NONE) {
                     return analysisObject.type === FeedConst.TYPE_DIMENSION;
+                } else if (def.mndMode() === BindingDefConst.MND_MODE_ONLY) {
+                    return analysisObject.type === FeedConst.TYPE_MND;
                 } else {
                     return analysisObject.type === FeedConst.TYPE_DIMENSION || analysisObject.type === FeedConst.TYPE_MND;
                 }
@@ -1687,6 +1620,14 @@ define('sap/viz/vizservices/service/bvr/feeders/MNDFeeder',[
 function(MetadataFactory, FeedUtils, BindingDefConst, FeedConst) {
 // @formatter:on
     var MNDFeeder = {};
+    
+    // Process "inResult" dimension, we should put "MND" before "inResult" dimensions.
+    function putMNDBeforeInResult(values, mnd){
+        var k = values.length - 1;
+        for(; k >= 0 && values[k].inResult; --k){
+        }
+        values.splice(k + 1, 0, mnd);
+    }
     MNDFeeder.feed = function(visualizationType, feeds, analysisObjects) {
         var i, def;
         var index = FeedUtils.indexOfMNDInValues(analysisObjects);
@@ -1700,13 +1641,14 @@ function(MetadataFactory, FeedUtils, BindingDefConst, FeedConst) {
             return def1.bvrMNDPriority() - def2.bvrMNDPriority();
         });
 
-        // Feed when min validate failed
+        // Feed when min validate failed 
+        // When UI5 supports "info/combinationEx", it should check (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT_EXCLUSIVELY && values.length === 0).
         for ( i = 0; i < defs.length; i++) {
             def = defs[i];
             values = FeedUtils.getFeedValues(feeds, def.id());
-            if (def.mndMode() !== BindingDefConst.MND_MODE_NONE && def.min() > values.length) {
-                if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT || (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT_EXCLUSIVELY && values.length === 0)) {
-                    values.push(mnd);
+            if (values && def.mndMode() !== BindingDefConst.MND_MODE_NONE && def.min() > values.length) {
+                if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT || def.mndMode() === BindingDefConst.MND_MODE_ONLY) { 
+                    putMNDBeforeInResult(values, mnd)
                     return;
                 }
             }
@@ -1717,7 +1659,7 @@ function(MetadataFactory, FeedUtils, BindingDefConst, FeedConst) {
         var row = FeedUtils.getFeed(feeds, FeedConst.ID_TRELLIS_ROW),
             column = FeedUtils.getFeed(feeds, FeedConst.ID_TRELLIS_COLUMN);
         if (row && column && row.values.length === 0 && column.values.length === 0) {
-            row.values.push(mnd);
+            putMNDBeforeInResult(row.values, mnd)
             return;
         }
         
@@ -1725,17 +1667,32 @@ function(MetadataFactory, FeedUtils, BindingDefConst, FeedConst) {
         for ( i = 0; i < defs.length; i++) {
             def = defs[i];
             values = FeedUtils.getFeedValues(feeds, def.id());
-            if (def.mndMode() !== BindingDefConst.MND_MODE_NONE && values.length === 0) {
-                values.push(mnd);
+            if (values && def.mndMode() !== BindingDefConst.MND_MODE_NONE && values.length === 0) {
+                putMNDBeforeInResult(values, mnd);
                 return;
             }
         }
+        
+        // Don't need mnd when there is only one measure binding and one value in this binding.
+        var isNeedMnd = false, msrBindingCount = 0;
+        for ( i = 0; !isNeedMnd && i < defs.length; i++) {
+            def = defs[i];
+            if (def.type() === "Measure") {
+                msrBindingCount++;
+                values = FeedUtils.getFeedValues(feeds, def.id());
+                isNeedMnd = msrBindingCount > 1 || (values && values.length > 1) ;
+            }
+        }
+        if (!isNeedMnd) {
+            return;
+        }
+
         // Feed to else
         for ( i = 0; i < defs.length; i++) {
             def = defs[i];
             values = FeedUtils.getFeedValues(feeds, def.id());
-            if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT || (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT_EXCLUSIVELY && values.length === 0)) {
-                values.push(mnd);
+            if (values && def.mndMode() === BindingDefConst.MND_MODE_SUPPORT) {
+                putMNDBeforeInResult(values, mnd);
                 return;
             }
         }
@@ -1792,6 +1749,8 @@ define('sap/viz/vizservices/common/viz/ChartConst',[
     ChartConst.TYPE_TIMESERIES_LINE = "info/timeseries_line";
     ChartConst.TYPE_TIMESERIES_SCATTER = "info/timeseries_scatter";
     ChartConst.TYPE_TIMESERIES_BUBBLE = "info/timeseries_bubble";
+    ChartConst.TYPE_TIMESERIES_COMBINATION = "info/timeseries_combination";
+    ChartConst.TYPE_DUAL_TIMESERIES_COMBINATION = "info/dual_timeseries_combination";
 
     /**
      * Line chart, the dataset is sap.viz.api.data.FlatTableDataset.
@@ -1983,7 +1942,9 @@ function(FeedConst,
         return [
             ChartConst.TYPE_TIMESERIES_LINE,
             ChartConst.TYPE_TIMESERIES_SCATTER,
-            ChartConst.TYPE_TIMESERIES_BUBBLE
+            ChartConst.TYPE_TIMESERIES_BUBBLE,
+            ChartConst.TYPE_TIMESERIES_COMBINATION,
+            ChartConst.TYPE_DUAL_TIMESERIES_COMBINATION
         ].indexOf(type) >= 0;
     }
     var TimeFeeder = {};
@@ -2001,7 +1962,7 @@ function(FeedConst,
             return;
         }
         var bindingDef = BindingDefUtils.get(visualizationType, feed.id);
-        if (feed.values.length >= bindingDef.max) {
+        if (feed.values.length >= bindingDef.max()) {
             return;
         }
 
@@ -2285,7 +2246,7 @@ function(FeedUtils, BindingDefConst, FeedConst, Utils) {
             if (result) {
                     validation.valid = false;
                     if (def.type() === FeedConst.TYPE_DIMENSION) {
-                        if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT) {
+                        if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT || def.mndMode() === BindingDefConst.MND_MODE_ONLY) {
                             allowMND = !hasMND;
                         } else if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT_EXCLUSIVELY) {
                             allowMND = (analysisObjects.length > 0 ? false : true) && !hasMND;
@@ -2489,9 +2450,8 @@ define('sap/viz/vizservices/service/feed/validators/MissingMNDValidator',[
                 }
             });
         }
-
         return validation;
-    }; 
+    };
     
     var _countMeasure = function(defs, feedItems) {
        var num = 0;
@@ -2506,7 +2466,7 @@ define('sap/viz/vizservices/service/feed/validators/MissingMNDValidator',[
     
     var _validateOne = function(def, analysisObjects) {
         var result = {};
-        if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT) {
+        if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT || def.mndMode() === BindingDefConst.MND_MODE_ONLY) {
             result.allowMND = true;
         } else if (def.mndMode() === BindingDefConst.MND_MODE_SUPPORT_EXCLUSIVELY) {
             result.allowMND = analysisObjects.length > 0 ? false : true;
@@ -2514,7 +2474,7 @@ define('sap/viz/vizservices/service/feed/validators/MissingMNDValidator',[
             result.allowMND = false;
         }
         return result;
-    }; 
+    };
 
     var supportChartType = [
         // bar
@@ -2578,6 +2538,8 @@ define('sap/viz/vizservices/service/feed/validators/MissingMNDValidator',[
         // time series
         ChartConst.TYPE_TIMESERIES_LINE,
         ChartConst.TYPE_TIMESERIES_COLUMN,
+        ChartConst.TYPE_TIMESERIES_COMBINATION,
+        ChartConst.TYPE_DUAL_TIMESERIES_COMBINATION,
        
         // waterfall
         ChartConst.TYPE_STACKED_WATERFALL,
@@ -2764,6 +2726,8 @@ define('sap/viz/vizservices/service/feed/FeedService',[
         var validate = true;
         validate = validate && MaxValidator.validate(defs, feedItems).valid;
         validate = validate && MNDValidator.validate(visualizationType, defs, feedItems).valid;
+        validate = validate && TypeValidator.validate(defs, feedItems).valid;
+
         return validate;
     };
 
@@ -2863,7 +2827,7 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
 // @formatter:on
     var AliasMapping = {};
     var _mapping = {
-        //XY, XYY, Bubble, Pie, Scatter, TreeMap, HeatMap, TagCloud, TimeLine, TimeScatter, Numeric, Radar, Bullet, Waterfall, StackedWaterfall.
+        //XY, XYY, Bubble, Pie, Scatter, TreeMap, HeatMap, TagCloud, TimeLine, TimeScatter, Numeric, Radar, Bullet, Waterfall, StackedWaterfall, HichertVariance.
         "XY" : {
             "mapTo" : [
                 "TimeScatter",
@@ -2919,20 +2883,22 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Radar", 
                 "Bullet", 
                 "Waterfall", 
-                "StackedWaterfall"
+                "StackedWaterfall",
+                "HichertVariance",
+                "TimeCombination"
                 ],
             "size" : {
-                "XYY,Scatter,Bubble,Radar,Waterfall,StackedWaterfall,TimeLine,TimeScatter" : "valueAxis",
+                "XYY,Scatter,Bubble,Radar,Waterfall,StackedWaterfall,TimeLine,TimeScatter,HichertVariance,TimeCombination" : "valueAxis",
                 "Numeric" : "value",
                 "Bullet" : "actualValues",
                 "TreeMap,TagCloud" : "weight",
                 "HeatMap" : "color",
             },
             "color" : {
-                "XYY,Bullet,HeatMap,Radar,Waterfall,StackedWaterfall" : "categoryAxis",
+                "XYY,Bullet,HeatMap,Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis",
                 "TreeMap" : "title",
                 "TagCloud" : "text",
-                "Scatter,Bubble,TimeLine,TimeScatter" : "color"
+                "Scatter,Bubble,TimeLine,TimeScatter,TimeCombination" : "color"
             },
             "dataFrame" : {
                 "XYY,Scatter,Bubble,TagCloud,Radar" : "dataFrame",
@@ -2991,7 +2957,8 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Radar", 
                 "Waterfall", 
                 "StackedWaterfall",
-                "Numeric"
+                "Numeric",
+                "HichertVariance"
                 ],
             "valueAxis" : {
                 "Radar,Waterfall,StackedWaterfall" : "valueAxis",
@@ -3001,9 +2968,40 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Numeric" : "value"
             },
             "color" : {
-                "HeatMap,Bullet,Radar,Waterfall,StackedWaterfall" : "categoryAxis",
+                "HeatMap,Bullet,Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis",
                 "TreeMap" : "title",
                 "TagCloud" : "text"
+            },
+            "timeAxis" : {
+                "TimeCombination" : "timeAxis"
+            }
+        },
+        "TimeCombination" : {
+            "mapTo" : [
+                "XY",
+                "TagCloud",
+                "TreeMap",
+                "HeatMap",
+                "Bullet", 
+                "Radar", 
+                "Waterfall", 
+                "StackedWaterfall",
+                "Numeric",
+                "HichertVariance"
+                ],
+            "color" : {
+                "XY,Bullet,HeatMap,Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis",
+                "TagCloud" : "text",
+                "TreeMap" : "title"
+            },
+            "valueAxis" : {
+                "TagCloud,TreeMap" : "weight",
+                "HeatMap" : "color",
+                "Bullet" : "actualValues",
+                "Numeric" : "value"
+            },
+            "valueAxis2" : {
+                "TagCloud,TreeMap" : "color"
             }
         },
         "TimeScatter" : {
@@ -3016,7 +3014,8 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Radar", 
                 "Waterfall", 
                 "StackedWaterfall",
-                "Numeric"
+                "Numeric",
+                "HichertVariance"
                 ],
             "valueAxis" : {
                 "Scatter,Radar,Waterfall,StackedWaterfall" : "valueAxis",
@@ -3027,7 +3026,7 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
             },
             "color" : {
                 "Scatter" : "color",
-                "HeatMap,Bullet,Radar,Waterfall,StackedWaterfall" : "categoryAxis",
+                "HeatMap,Bullet,Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis",
                 "TreeMap" : "title",
                 "TagCloud" : "text"
             },
@@ -3037,7 +3036,7 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Bullet,Radar,StackedWaterfall" : "color"
             },
             "bubbleWidth" : {
-                "Scatter" : "valueAxis2",
+                "Scatter,HichertVariance" : "valueAxis2",
                 "TagCloud,TreeMap" : "color",
                 "Bullet" : "targetValues"
             }
@@ -3051,7 +3050,8 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Radar", 
                 "Bullet", 
                 "Waterfall", 
-                "StackedWaterfall"
+                "StackedWaterfall",
+                "HichertVariance"
                 ],
             "valueAxis" : {
                 "Radar,Waterfall,StackedWaterfall" : "valueAxis",
@@ -3069,7 +3069,7 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "HeatMap" : "categoryAxis2"
             },
             "color" : {
-                "HeatMap,Bullet,Radar,Waterfall,StackedWaterfall" : "categoryAxis",
+                "HeatMap,Bullet,Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis",
                 "TreeMap" : "title",
                 "TagCloud" : "text"
             },
@@ -3095,7 +3095,8 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Radar", 
                 "Bullet", 
                 "Waterfall", 
-                "StackedWaterfall"
+                "StackedWaterfall",
+                "HichertVariance"
                 ],
             "valueAxis" : {
                 "Radar,Waterfall,StackedWaterfall" : "valueAxis",
@@ -3113,7 +3114,7 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "HeatMap" : "categoryAxis2"
             },
             "color" : {
-                "Bullet,HeatMap,Radar,Waterfall,StackedWaterfall" : "categoryAxis",
+                "Bullet,HeatMap,Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis",
                 "TreeMap" : "title",
                 "TagCloud" : "text",
                 
@@ -3136,18 +3137,20 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Radar", 
                 "Bullet", 
                 "Waterfall", 
-                "StackedWaterfall"
+                "StackedWaterfall",
+                "HichertVariance"
                 ],
             "title" : {
-                "Bullet,HeatMap,Radar,Waterfall,StackedWaterfall" : "categoryAxis",
+                "Bullet,HeatMap,Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis",
                 "TagCloud" : "text"
             },
             "color" : {
                 "HeatMap,TagCloud" : "color",
-                "Bullet" : "targetValues"
+                "Bullet" : "targetValues",
+                "HichertVariance" : "valueAxis2"
             },
             "weight" : {
-                "Radar,Waterfall,StackedWaterfall" : "valueAxis",
+                "Radar,Waterfall,StackedWaterfall,HichertVariance" : "valueAxis",
                 "Bullet" : "actualValues",
                 "Numeric" : "value",
                 "TagCloud" : "weight"
@@ -3160,17 +3163,19 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Bullet", 
                 "HeatMap",
                 "Waterfall", 
-                "StackedWaterfall"
+                "StackedWaterfall",
+                "HichertVariance"
                 ],
             "text" : {
-                "Bullet,Radar,HeatMap,Waterfall,StackedWaterfall" : "categoryAxis"
+                "Bullet,Radar,HeatMap,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis"
             },
             "color" : {
                 "HeatMap" : "color",
-                "Bullet" : "targetValues"
+                "Bullet" : "targetValues",
+                "HichertVariance" : "valueAxis2"
             },
             "weight" : {
-                "Waterfall,Radar,StackedWaterfall" : "valueAxis",
+                "Waterfall,Radar,StackedWaterfall,HichertVariance" : "valueAxis",
                 "Bullet" : "actualValues",
                 "Numeric" : "value"
             },
@@ -3184,13 +3189,14 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Radar", 
                 "Bullet",
                 "Waterfall", 
-                "StackedWaterfall"
+                "StackedWaterfall",
+                "HichertVariance"
                 ],
             "categoryAxis" : {
-                "Bullet,Radar,Waterfall,StackedWaterfall" : "categoryAxis"
+                "Bullet,Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis"
             },
             "color" : {
-                "Radar,Waterfall,StackedWaterfall" : "valueAxis",
+                "Radar,Waterfall,StackedWaterfall,HichertVariance" : "valueAxis",
                 "Numeric" : "value",
                 "Bullet" : "actualValues"
             },
@@ -3203,17 +3209,27 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
                 "Numeric",
                 "Radar",
                 "Waterfall", 
-                "StackedWaterfall"
+                "StackedWaterfall",
+                "HichertVariance"
                 ],
             "categoryAxis" : {
-                "Radar,Waterfall,StackedWaterfall" : "categoryAxis"
+                "Radar,Waterfall,StackedWaterfall,HichertVariance" : "categoryAxis"
             },
             "color" : {
                 "Radar,StackedWaterfall" : "color"
             },
             "actualValues" : {
-                "Radar,Waterfall,StackedWaterfall" : "valueAxis",
+                "Radar,Waterfall,StackedWaterfall,HichertVariance" : "valueAxis",
                 "Numeric" : "value"
+            },
+            "targetValues" : {
+                "HichertVariance" : "valueAxis2"
+            },
+            "additionalValues" : {
+                "HichertVariance" : "variance1"
+            },
+            "forecastValues" : {
+                "HichertVariance" : "variance2"
             }
         },
         "Radar" : {
@@ -3236,6 +3252,14 @@ define('sap/viz/vizservices/service/bvr/switch/AliasMapping',[
             "mapTo" : [
                 "Numeric"
                 ],
+            "valueAxis" : {
+                "Numeric" : "value"
+            }
+        },
+        "HichertVariance" : {
+            "mapTo" : [
+                "Numeric"
+            ],
             "valueAxis" : {
                 "Numeric" : "value"
             }
@@ -3457,10 +3481,12 @@ define('sap/viz/vizservices/service/bvr/switch/ChartCategories',[], function() {
         "TagCloud" : ["info/tagcloud"],
         "TimeLine" : ["info/timeseries_line"],
         "TimeScatter" : ["info/timeseries_scatter", "info/timeseries_bubble"],
+        "TimeCombination" : ["info/timeseries_combination","info/dual_timeseries_combination"],
         "Numeric" : ["info/number"],
         "Radar" : ["info/radar", "info/trellis_radar"],
         "Waterfall" : ["info/waterfall", "info/horizontal_waterfall"],
-        "StackedWaterfall" : ["info/stacked_waterfall", "info/horizontal_stacked_waterfall"]
+        "StackedWaterfall" : ["info/stacked_waterfall", "info/horizontal_stacked_waterfall"],
+        "HichertVariance" : ["info/hichert_column", "info/hichert_bar"]
     }; 
 
     
@@ -3629,7 +3655,9 @@ define('sap/viz/vizservices/service/bvr/BVRService',[
         // Balance
         var exclude = [];
         exclude.push("dataFrame");
-        var scope = generateScope(toType, exclude);
+
+        var suggestOptionalFeed = !options || (options.suggestOptionalFeed !== false); // default is true
+        var scope = generateScope(toType, exclude, suggestOptionalFeed);
         result = suggestFeeds(toType, result, remainings, scope).feedItems;
 
         if (fromType !== toType) {
@@ -3659,7 +3687,7 @@ define('sap/viz/vizservices/service/bvr/BVRService',[
                 "id": FeedConst.ID_MND,
                 "type": FeedConst.TYPE_MND,
                 "measureNames": FeedUtil.getMNDEnumeration(results.type)
-            }]).feedItems;
+            }], scope).feedItems;
         }
 
         return {
@@ -3693,7 +3721,9 @@ define('sap/viz/vizservices/service/bvr/BVRService',[
         feedItems = FeedUtil.cloneFeeds(feedItems);
         var exclude = [];
         exclude.push("dataFrame");
-        var scope = generateScope(type, exclude);
+
+        var suggestOptionalFeed = !options || (options.suggestOptionalFeed !== false);
+        var scope = generateScope(type, exclude, suggestOptionalFeed);
         
         var copiedAnalysisObjects = analysisObjects.slice(0);
 
@@ -3771,15 +3801,16 @@ define('sap/viz/vizservices/service/bvr/BVRService',[
         };
     };
     
-    var generateScope = function(type, exclude) {
-        var bindingDef = MetadataFactory.get(type).getBindingDefs();
-        var result = [];
-        for (var i = 0; i < bindingDef.length; i ++) {
-            if (exclude.indexOf(bindingDef[i].id()) === -1) {
-                result.push(bindingDef[i].id());
-            }
-        }
-        return result;
+    var generateScope = function(type, exclude, includeOptinalFeed) {
+        includeOptinalFeed = includeOptinalFeed !== false;
+        var bindingDefs = MetadataFactory.get(type).getBindingDefs();
+        return bindingDefs.filter(function (def) {
+            var isExclude = exclude.indexOf(def.id()) !== -1;
+            var isOptionalFeed = !def.min() && def.id() !== FeedConst.ID_TRELLIS_ROW && def.id() !== FeedConst.ID_TRELLIS_COLUMN;
+            return !isExclude && (includeOptinalFeed || !isOptionalFeed);
+        }).map(function (def) {
+            return def.id();
+        });
     };
 
     var _autoFeeding = function(type, feedItems, remainings, inScopeFeedItems) {
@@ -4032,6 +4063,10 @@ define('sap/viz/vizservices/api/BVRService',[
      * AnalysisObject.id is a string which indicate the analysis object id.<br />
      * AnalysisObject.type is a string which indicate the analysis object type. Available values are: Dimension, Measure, MND.<br />
      * AnalysisObject.dataType is a string which indicate the analysis object data type. Available values are: String, Number, Date.<br />
+     * @param {JSON} options
+     * contains some flags, this param is optional.<br />
+     * suggestOptionalFeed: whether to feed  optional feeds like waterfallType in Waterfall., the default value is true.<br />
+     * <br/ >
      * @return {Object<String, Array<FeedItem>>} Object with type and feedItems.
      * <br/ >
      * @example <caption>Sample Code:</caption>
@@ -4135,6 +4170,10 @@ define('sap/viz/vizservices/api/BVRService',[
      * FeedItem.id is a string which indicate the feed id.<br />
      * FeedItem.values is an array of AnalysisObject. values indicate the Dimensions or Measures which fed on the feed id.<br />
      * @param {String} toType
+     * @param {JSON} options
+     * contains some flags, this param is optional.<br />
+     * suggestOptionalFeed: whether to feed  optional feeds like waterfallType in Waterfall., the default value is true.<br />
+     * <br/ >
      * @return {Object<String, Array<FeedItem>>} Object with toType and feeds.
      * <br/ >
      * @example <caption>Sample Code:</caption>
@@ -4224,7 +4263,7 @@ define('sap/viz/vizservices/common/Version',[],function() {
      * @example
      * var verion = sap.viz.vizservices.VERSION;
      */
-    return '1.4.0';
+    return '1.9.0';
 });
 
 // @formatter:off
@@ -4661,12 +4700,8 @@ define('sap/viz/vizservices/service/scale/ScaleService',[
         require(list);
     }
 })();
-if(define && define.__exportNS){
-    define = define.__exportNS;
-}
-if (window.__sap_viz_internal_requirejs_nextTick__ !== undefined) {
-    if (requirejs && requirejs.s && requirejs.s.contexts && requirejs.s.contexts._) {
-        requirejs.s.contexts._.nextTick = window.__sap_viz_internal_requirejs_nextTick__;
-    }
-    window.__sap_viz_internal_requirejs_nextTick__ = undefined;
-}
+
+// restore global require & define
+define = sap.viz.moduleloader.originalDefine;
+require = sap.viz.moduleloader.originalRequire;
+requirejs = sap.viz.moduleloader.originalRequirejs;

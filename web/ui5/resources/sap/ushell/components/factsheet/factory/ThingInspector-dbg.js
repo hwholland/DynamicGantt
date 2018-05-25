@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview This file contains an annotation parser for fact sheets.
  */
@@ -550,7 +550,7 @@
                         wrapping: true
                     });
                     if (oBinding.BindingInfo) {
-                        oText.bindProperty("text", oBinding.BindingInfo);
+                        oText.bindProperty("text", jQuery.extend({}, oBinding.BindingInfo));
                     } else {
                         oText.setProperty("text", oBinding.String);
                     }
@@ -1878,7 +1878,7 @@
                 iFreeSpaceBuffer, aContent, oFieldSumsByPriority, iFieldsOnOverview, oFormLayout, sGeneralTileHeight, oAddBookmarkButton,
                 iRowSpan, oFacet, oGeoContent, sNavType, sCardinality, parameters, oEmailBtn,
                 thingInspectorBindingChanged, numKpiTiles = 0, key, aDataPoint, sTerm, oDataReadCallbackMedia, sHeight,
-                oDataReadCallbackError, adjustHorizontalLayoutContent, extractContactsFromBatchRequest;
+                oDataReadCallbackError, extractContactsFromBatchRequest;
             sService = getServiceFromUri(sUri);
             //Because of a bug in icm the bsp application name and file name must be in lower case
             sAnnotationUriPath = sAnnotationUri.substring(0, sAnnotationUri.substring(0, sAnnotationUri.lastIndexOf("/")).lastIndexOf("/"));
@@ -2466,28 +2466,6 @@
                 };
             };
 
-            adjustHorizontalLayoutContent = function (oEvent) {
-                var iHorizontalLayoutWidth, iHorizontalLayoutWidthLeft;
-                iHorizontalLayoutWidth = oEvent.srcControl.getParent().getParent().getDomRef().clientWidth;
-                iHorizontalLayoutWidthLeft = iHorizontalLayoutWidth;
-                if (oEvent.srcControl.getParent().getContent()[0]) {
-                    iHorizontalLayoutWidthLeft -= oEvent.srcControl.getParent().getContent()[0].getDomRef().clientWidth;
-                    if (iHorizontalLayoutWidth < oEvent.srcControl.getParent().getContent()[0].getDomRef().clientWidth) {
-                        oEvent.srcControl.getParent().getContent()[0].getDomRef().setAttribute("style", "width:" + iHorizontalLayoutWidth + "px");
-                        return;
-                    }
-                }
-                if (oEvent.srcControl.getParent().getContent()[1]) {
-                    iHorizontalLayoutWidthLeft -= oEvent.srcControl.getParent().getContent()[1].getDomRef().clientWidth;
-                }
-                if (iHorizontalLayoutWidthLeft < 10) {
-                    iHorizontalLayoutWidthLeft = 0;
-                }
-                if (oEvent.srcControl.getParent().getContent()[2]) {
-                    oEvent.srcControl.getParent().getContent()[2].getDomRef().setAttribute("style", "width:" + iHorizontalLayoutWidthLeft + "px");
-                }
-            };
-
             // Callback method of the oData reads for the further facets
             oDataReadCallback = function (functionParameters) {
                 return function (data) {
@@ -2546,8 +2524,30 @@
                                     if (oTitle.setWrapping) {
                                         oTitle.setWrapping(false);
                                     }
-                                    oTitle.addDelegate({
-                                        onAfterRendering: adjustHorizontalLayoutContent
+                                    sap.ui.getCore().byId(oTI.getId() + "-master-page").addDelegate({
+                                        onAfterShow: (function (oHLayout) {
+                                            return function () {
+                                                var iHorizontalLayoutWidth, iHorizontalLayoutWidthLeft;
+                                                iHorizontalLayoutWidth = oHLayout.getParent().getDomRef().clientWidth;
+                                                iHorizontalLayoutWidthLeft = iHorizontalLayoutWidth;
+                                                if (oHLayout.getContent()[0]) {
+                                                    iHorizontalLayoutWidthLeft -= oHLayout.getContent()[0].getDomRef().clientWidth;
+                                                    if (iHorizontalLayoutWidth < oHLayout.getContent()[0].getDomRef().clientWidth) {
+                                                        oHLayout.getContent()[0].getDomRef().setAttribute("style", "width:" + iHorizontalLayoutWidth + "px");
+                                                        return;
+                                                    }
+                                                }
+                                                if (oHLayout.getContent()[1]) {
+                                                    iHorizontalLayoutWidthLeft -= oHLayout.getContent()[1].getDomRef().clientWidth;
+                                                }
+                                                if (iHorizontalLayoutWidthLeft < 10) {
+                                                    iHorizontalLayoutWidthLeft = 0;
+                                                }
+                                                if (oHLayout.getContent()[2]) {
+                                                    oHLayout.getContent()[2].getDomRef().setAttribute("style", "width:" + iHorizontalLayoutWidthLeft + "px");
+                                                }
+                                            };
+                                        }(oHLayout))
                                     });
                                     oJsonModel = new sap.ui.model.json.JSONModel();
                                     oJsonModel.setData({result: data.results[i]});
@@ -2603,9 +2603,6 @@
                                         if (oMainInfo.setWrapping) {
                                             oMainInfo.setWrapping(false);
                                         }
-                                        oMainInfo.addDelegate({
-                                            onAfterRendering: adjustHorizontalLayoutContent
-                                        });
                                         oMainInfo.setModel(oJsonModel);
                                         oMainInfo.bindElement("/result");
                                         oHLayout.addContent(oMainInfo);

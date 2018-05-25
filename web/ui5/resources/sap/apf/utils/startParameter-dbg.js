@@ -21,7 +21,8 @@
 		var evaluationId;
 		var startParameters; 
 		var sapClient;
-		 
+		var sapSystem;
+		
 		if (component && component.getComponentData && component.getComponentData() && component.getComponentData().startupParameters) {
 			startParameters = component.getComponentData().startupParameters;
 			if (startParameters['sap-apf-configuration-id']) {
@@ -42,8 +43,21 @@
 			if (startParameters['sap-client']) {
 				sapClient = startParameters['sap-client'][0];
 			}
+			if (startParameters['sap-system']) {
+				sapSystem = startParameters['sap-system'][0];
+			}
 			
 		}
+		/**
+		 * @private
+		 * @function
+		 * @name sap.apf.utils.StartParameter#getSapSystem
+		 * @description Returns the sap-system parameter, if set in url, otherwise undefined
+		 * @returns {string|undefined}
+		 */
+		this.getSapSystem = function() {
+			return sapSystem;
+		};
 		/**
 		 * @private
 		 * @function

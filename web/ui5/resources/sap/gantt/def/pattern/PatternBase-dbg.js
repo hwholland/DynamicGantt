@@ -33,7 +33,7 @@ sap.ui.define([
 	 * @extends sap.gantt.def.DefBase
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -65,7 +65,7 @@ sap.ui.define([
 				/**
 				 * Fill opacity of background color.
 				 */
-				backgroundFillOpacity : {type : "number", defaultValue : "1"}
+				backgroundFillOpacity : {type : "float", defaultValue : "1"}
 			}
 		}
 	});

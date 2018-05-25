@@ -1,4 +1,4 @@
-﻿// ...........................................................................//
+// ...........................................................................//
 // maplayer objects..........................................................//
 
 // Author: Ulrich Roegelein
@@ -86,6 +86,7 @@ VBI.MapLayerStack = function(name, description) {
 	maplayerstack.m_Name = name;
 	maplayerstack.m_Description = description;
 	maplayerstack.m_nMaxSquare = 0;
+	maplayerstack.m_colBkgnd = null;
 
 	maplayerstack.clear = function() {
 		// clear the sources...................................................//
@@ -117,6 +118,12 @@ VBI.MapLayerStack = function(name, description) {
 		}
 		if (dat.maxSquare) {
 			maplayerstack.m_nMaxSquare = dat.maxSquare;
+		}
+		if (dat.previewPosition) {
+			maplayerstack.m_PreviewPosition = dat.previewPosition;
+		}
+		if (dat.colBkgnd) {
+			maplayerstack.m_colBkgnd = dat.colBkgnd;
 		}
 		maplayerstack.m_bSingleBMP = (dat.singleBMP && dat.singleBMP == "true");
 
@@ -194,7 +201,6 @@ VBI.MapLayer = function() {
 	maplayer.m_Name = null;
 	maplayer.m_refMapProvider = null;
 	maplayer.m_fOpacity = 1.0;
-	maplayer.m_colBkgnd = null;
 
 	maplayer.clear = function() {
 		// clear the references................................................//
@@ -209,9 +215,6 @@ VBI.MapLayer = function() {
 		}
 		if (dat.opacity) {
 			maplayer.m_fOpacity = dat.opacity;
-		}
-		if (dat.colBkgnd) {
-			maplayer.m_colBkgnd = dat.colBkgnd;
 		}
 
 		// determine the map provider..........................................//

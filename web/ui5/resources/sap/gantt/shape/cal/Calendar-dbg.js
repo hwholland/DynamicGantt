@@ -25,7 +25,7 @@ sap.ui.define([
 	 * @extends sap.gantt.shape.Rectangle
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -43,6 +43,7 @@ sap.ui.define([
 	});
 	
 	Calendar.prototype.init = function() {
+		Rectangle.prototype.init.apply(this, arguments);
 		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.gantt");
 		this.setProperty("ariaLabel", oRb.getText("ARIA_CALENDAR"));
 	};

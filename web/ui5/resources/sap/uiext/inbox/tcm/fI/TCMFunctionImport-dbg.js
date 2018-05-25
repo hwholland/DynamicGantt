@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 // Utility functions for TCMFunctionImport calls
 jQuery.sap.declare("sap.uiext.inbox.tcm.fI.TCMFunctionImport");

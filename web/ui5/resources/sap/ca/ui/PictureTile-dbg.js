@@ -55,7 +55,7 @@ jQuery.sap.require("sap.m.CustomTile");
  * @class
  * Tile control embedding an image and allowing custom sizing
  * @extends sap.m.CustomTile
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

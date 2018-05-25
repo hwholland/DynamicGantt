@@ -16,7 +16,7 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.nullObjectChecker");
 (function() {
 	"use strict";
 	var oParentControl, oCoreApi;
-	var nullObjectChecker = new sap.apf.modeler.ui.utils.NullObjectChecker();
+	var nullObjectChecker = sap.apf.modeler.ui.utils.nullObjectChecker;
 	function _setDisplayText(oController) {
 		var oTextReader = oCoreApi.getText;
 		oController.byId("idNewAppDialog").setTitle(oTextReader("newApplication"));
@@ -45,18 +45,28 @@ jQuery.sap.require("sap.apf.modeler.ui.utils.nullObjectChecker");
 			var appObject = {};
 			appObject.ApplicationName = nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oController.byId("idDescriptionInput").getValue().trim()) ? oController.byId("idDescriptionInput").getValue().trim() : undefined;
 			appObject.SemanticObject = nullObjectChecker.checkIsNotNullOrUndefinedOrBlank(oController.byId("idSemanticObjectInput").getValue().trim()) ? oController.byId("idSemanticObjectInput").getValue().trim() : undefined;
-			oCoreApi.getApplicationHandler(function(oApplicationHandler) {
-				oApplicationHandler.setAndSave(appObject, function(oResponse, oMetadata, msgObj) {
-					if (!nullObjectChecker.checkIsNotUndefined(msgObj) && (typeof oResponse === "string")) {
-						oParentControl.fireEvent("addNewAppEvent");
-					} else {
-						var oMessageObject = oCoreApi.createMessageObject({
-							code : "11500"
-						});
-						oMessageObject.setPrevious(msgObj);
-						oCoreApi.putMessage(oMessageObject);
-					}
-				});
+			oCoreApi.getApplicationHandler(function(oApplicationHandler, messageObject) {
+				if (oApplicationHandler && !nullObjectChecker.checkIsNotUndefined(messageObject)) {
+					oApplicationHandler.setAndSave(appObject, function(oResponse, oMetadata, msgObj) {
+						if (!nullObjectChecker.checkIsNotUndefined(msgObj) && (typeof oResponse === "string")) {
+							oParentControl.fireEvent("addNewAppEvent", {
+								"appId" : oResponse
+							});
+						} else {
+							var oMessageObject = oCoreApi.createMessageObject({
+								code : "11500"
+							});
+							oMessageObject.setPrevious(msgObj);
+							oCoreApi.putMessage(oMessageObject);
+						}
+					});
+				} else {
+					var oMessageObject = oCoreApi.createMessageObject({
+						code : "11509"
+					});
+					oMessageObject.setPrevious(messageObject);
+					oCoreApi.putMessage(oMessageObject);
+				}
 			});
 			oController.getView().destroy();
 		},

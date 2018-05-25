@@ -112,7 +112,7 @@ sap.ui.define([
 	 * mobile devices, it opens in full screen.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.54.5
+	 * @version 1.54.3
 	 *
 	 * @constructor
 	 * @public
@@ -443,6 +443,7 @@ sap.ui.define([
 				oPopover.setShowArrow(false);
 			}
 
+			this._oPopup.attachBeforeOpen(_handleBeforeOpen, this);
 			this._oPopup.attachAfterOpen(_handleAfterOpen, this);
 			this._oPopup.attachAfterClose(_handleAfterClose, this);
 
@@ -478,8 +479,6 @@ sap.ui.define([
 		if (!this._oPopup) {
 			return;
 		}
-
-		this._storeInputSelection(this._$input.get(0));
 
 		var oPopover = this._oPopup.getAggregation("_popup");
 		oPopover.oPopup.setAutoCloseAreas([this.getDomRef()]);
@@ -630,6 +629,10 @@ sap.ui.define([
 
 		this._oCalendar.removeAllSelectedDates();
 		this._oCalendar.addSelectedDate(new DateRange().setStartDate(this._getInitialFocusedDateValue()));
+	}
+
+	function _handleBeforeOpen(){
+		this._storeInputSelection(this._$input.get(0));
 	}
 
 	function _handleAfterOpen(oEvent){

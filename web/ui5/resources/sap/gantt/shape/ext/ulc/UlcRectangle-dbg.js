@@ -26,7 +26,7 @@ sap.ui.define([
 	 * @abstract
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
@@ -37,6 +37,15 @@ sap.ui.define([
 			"abstract": true
 		}
 	});
+
+	/**
+	 * Get fill value for UlcRectangle, return `transparent` as default value
+	 * 
+	 * @return {string} fill rectangle fill value
+	 */
+	UlcRectangle.prototype.getFill = function() {
+		return Rectangle.prototype.getFill.apply(this, arguments) || "transparent";
+	};
 
 	/**
 	 * Gets the value of property <code>x</code>.

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 sap.ui.define([
     'jquery.sap.global',
@@ -26,23 +26,28 @@ function(jQuery, Bar, Button, Label, IconPool) {
         },
         renderer : {}
     });
-
+    
     HeaderBar.prototype.getContentLeft = function() {
         if (!this._oNavButton) {
             this._oNavButton = new Button(this._createId("popoverNavButton"), {
                 type : sap.m.ButtonType.Back,
+                tooltip : sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("PAGE_NAVBUTTON_TEXT"),
                 press : jQuery.proxy(function() {
                     this.fireNavButtonPress();
                 }, this)
             }).addStyleClass('viz-controls-chartPopover-backButton');
         }
         this._oNavButton.setVisible(this.getShowNavButton());
+        this._oNavButton.onAfterRendering = function(){
+            this.focus();
+        }
         return [this._oNavButton];
     };
 
     HeaderBar.prototype.getContentMiddle = function() {
         if (!this._oTitleLabel) {
             this._oTitleLabel = new Label(this._createId('popoverHeaderTitle'));
+            this.addAriaLabelledBy(this._oTitleLabel);
         }
         this._oTitleLabel.setText(this.getTitle());
         return [this._oTitleLabel];
@@ -60,7 +65,11 @@ function(jQuery, Bar, Button, Label, IconPool) {
         }
         return [this._oCloseButton];
     };
-
+    
+//    HeaderBar.prototype.onBeforeRendering = function () {
+//        this.addAriaLabelledBy(this._oTitleLabel);
+//    };
+    
     HeaderBar.prototype.exit = function() {
         if (this._oCloseButton) {
             this._oCloseButton.destroy();

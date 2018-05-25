@@ -1,30 +1,46 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 /* global Promise */
 
 // Provides control sap.ui.comp.smartform.SmartForm.
 sap.ui.define([
-	'jquery.sap.global', 'sap/ui/comp/library', 'sap/m/MessageBox', 'sap/ui/core/Control', 'sap/ui/layout/form/Form', 'sap/ui/layout/form/ResponsiveLayout', 'sap/ui/fl/Utils', 'sap/ui/fl/registry/Settings', 'sap/m/Label', 'sap/m/Title', 'sap/m/Button', 'sap/m/ButtonType', 'sap/m/Panel', 'sap/m/OverflowToolbar', 'sap/m/ToolbarSpacer', 'sap/m/ToolbarSeparator'
-], function(jQuery, library, MessageBox, Control, Form, ResponsiveLayout, Utils, Settings, Label, Title, Button, ButtonType, Panel, OverflowToolbar, ToolbarSpacer, ToolbarSeparator) {
+	'jquery.sap.global', 'sap/ui/comp/library', 'sap/ui/core/Control',
+	'sap/ui/layout/form/Form', 'sap/ui/layout/form/ResponsiveGridLayout'
+], function(jQuery, library, Control,
+		Form, ResponsiveGridLayout) {
 	"use strict";
+
+	var Panel;
+	var Title;
+	var OverflowToolbar;
+	var ToolbarSpacer;
+	var ToolbarSeparator;
+	var Button;
+	var MessageBox;
+	var ResponsiveLayout;
 
 	/**
 	 * Constructor for a new smartform/SmartForm.
-	 * 
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
+	 *
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
 	 * @param {object} [mSettings] initial settings for the new control
-	 * @class The SmartForm control renders a form (sap.ui.layout.form.Form) and supports key user personalization, such as adding/hiding fields and
-	 *        groups, changing the order of fields and groups, and changing labels. When used with the SmartField control the label is taken from the
-	 *        metadata annotation <code>sap:label</code> if not specified in the XML view.
+	 * @class The <code>SmartForm</code> control renders a form (<code>sap.ui.layout.form.Form</code>).
+	 *        When used with the <code>SmartField</code> control the label is taken from the
+	 *        metadata annotation <code>sap:label</code> if not specified directly.
+	 *
+	 * <b>Warning:</b> Do not put any layout or other container controls into the <code>GroupElement</code>.
+	 * Views are also not supported. This could damage the visual layout, keyboard support and screen-reader support.
+	 *
 	 * @extends sap.ui.core.Control
-	 * @author Alexander Fürbach
 	 * @constructor
 	 * @public
 	 * @alias sap.ui.comp.smartform.SmartForm
+	 * @see {@link topic:99e33bdfde074bb48d2e603fa5ecd2d0 Smart Form}
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var SmartForm = Control.extend("sap.ui.comp.smartform.SmartForm", /**
@@ -34,6 +50,7 @@ sap.ui.define([
 		metadata: {
 
 			library: "sap.ui.comp",
+			designtime: "sap/ui/comp/designtime/smartform/SmartForm.designtime",
 			properties: {
 
 				/**
@@ -46,8 +63,11 @@ sap.ui.define([
 				},
 
 				/**
-				 * Specifies whether the groups are rendered in a {@link sap.ui.layout.form.ResponsiveLayout ResponsiveLayout} with the label above
-				 * the field. Each group is rendered in a new line.
+				 * Specifies whether the groups are rendered in a {@link sap.ui.layout.form.ResponsiveLayout ResponsiveLayout}
+				 * with the label above the field. Each group is rendered in a new line.
+				 *
+				 * <b>Note</b> The value of this property will be passed on to the <code>useHorizontalLayout</code>
+				 * property of all <code>Group</code> and <code>GroupElement</code> elements.
 				 */
 				useHorizontalLayout: {
 					type: "boolean",
@@ -57,6 +77,8 @@ sap.ui.define([
 
 				/**
 				 * Specifies the minimal size in pixels of all group elements of the form if the horizontal layout is used.
+				 *
+				 * @deprecated Since version 1.48.0, please do not use this property as it does not have any effect on the current layout of the <code>SmartForm</code> control.
 				 */
 				horizontalLayoutGroupElementMinWidth: {
 					type: "int",
@@ -76,7 +98,7 @@ sap.ui.define([
 				/**
 				 * CSV of entity types for which the flexibility features are available.<br>
 				 * For more information about SAPUI5 flexibility, refer to the Developer Guide.<br>
-				 * <i>Note:</i><br>
+				 * <b>Note:</b>
 				 * No validation is done. Please ensure that you do not add spaces or special characters.
 				 */
 				entityType: {
@@ -105,7 +127,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Specifies whether the editable property is togglable via button.
+				 * If set to <code>true</code>, a button to toggle the <code>editable</code> property is shown in the toolbar.
 				 */
 				editTogglable: {
 					type: "boolean",
@@ -124,7 +146,7 @@ sap.ui.define([
 
 				/**
 				 * CSV of fields that must be ignored in the OData metadata by the SmartForm control.<br>
-				 * <i>Note:</i><br>
+				 * <b>Note:</b><br>
 				 * No validation is done. Please ensure that you do not add spaces or special characters.
 				 */
 				ignoredFields: {
@@ -165,7 +187,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Layout settings to adjust ResponsiveGridLayout
+				 * Layout settings to adjust <code>ResponsiveGridLayout</code>
 				 */
 				layout: {
 					type: "sap.ui.comp.smartform.Layout",
@@ -202,483 +224,229 @@ sap.ui.define([
 				/**
 				 * This event is fired when the editable property is toggled.
 				 */
-				editToggled: {},
+				editToggled: {
+					parameters: {
+						/**
+						 * If <code>true</code>, the control is in edit mode
+						 */
+						editable: {
+							type: "boolean"
+						}
+					}
+				},
 
 				/**
 				 * This event is fired after check was performed.
 				 */
-				checked: {}
+				checked: {
+					parameters: {
+						/**
+						 * An array containing all smart fields with errors
+						 */
+						erroneousFields: {
+							type: "sap.ui.comp.smartfield.SmartField[]"
+						}
+					}
+				}
 			}
 		},
-		renderer: function(oRm, oControl) {
-			var oToolbar = oControl._getCustomToolbar() || oControl._oToolbar;
-
+		renderer: function(oRm, oSmartForm) {
 			oRm.write("<div");
-			oRm.writeControlData(oControl);
+			oRm.writeControlData(oSmartForm);
 			oRm.addClass("sapUiCompSmartForm");
 			oRm.writeClasses();
 			oRm.write(">");
 
-			if (oControl.mProperties["expandable"]) {
-				oRm.renderControl(oControl._oPanel);
-			} else {
-				if (oToolbar) {
-					oRm.renderControl(oToolbar);
-				}
-				oRm.renderControl(oControl._oForm);
-			}
+			var oContent = oSmartForm.getAggregation("content");
+			oRm.renderControl(oContent);
 
 			oRm.write("</div>");
 		}
 	});
 
-	/**
-	 * Initialize the control.
-	 * 
-	 * @private
-	 */
 	SmartForm.prototype.init = function() {
-		this._bisLayoutCreated = false;
-		this._oForm = null;
-		this._oPanel = null;
-		this._oTitle = new Title(this.getId() + "-title-sfmain").addStyleClass("title");
-		this._bUpdateToolbar = true;
-		this._sResizeListenerId = "";
+
+		var oFormLayout = _createResponsiveGridLayout.call(this);
+		this._oForm = new Form(this.getId() + "--Form", {layout: oFormLayout});
+		this._oForm.getToolbar = function(){
+			var oSmartForm = this.getParent();
+			if (oSmartForm && !oSmartForm.getExpandable()) {
+				return oSmartForm._getToolbar();
+			}
+		};
+
+		this.setAggregation("content", this._oForm);
 		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp");
 
 	};
 
-	SmartForm.prototype._resizeHandlerRegId = "";
-
-	/**
-	 * Function is called before the rendering of the control is started.
-	 * 
-	 * @private
-	 */
 	SmartForm.prototype.onBeforeRendering = function() {
 
-		this._updateToolbar();
-		this._createLayout();
-		this._updatePanel();
+		_useResponsiveLayout.call(this);
 
-		if (this.getUseHorizontalLayout() && this.getLayout() && this.getLayout().getGridDataSpan()) {
-			this._propagateGridDataSpan();
-			this._registerResizeHandler();
-		}
 	};
 
-	/**
-	 * Adds a group to the aggregation named groups.
-	 * 
-	 * @public
-	 * @param {object} Group to be added
-	 */
 	SmartForm.prototype.addGroup = function(oGroup) {
-		this.addAggregation("groups", oGroup, true);
-	};
 
-	/**
-	 * Adds some entity oObject to the aggregation identified by sAggregationName.
-	 * 
-	 * @public
-	 * @param {string} Name of the aggregation
-	 * @param {object} The object representing a group
-	 */
-	SmartForm.prototype.addAggregation = function(sAggregationName, oObject) {
-		if (sAggregationName === "groups") {
-			this._insertGroup(oObject);
-		} else {
-			Control.prototype.addAggregation.apply(this, arguments);
+		if (!oGroup) {
+			return this;
 		}
+
+		// as "groups" aggregation is not used, at least validate it
+		oGroup = this.validateAggregation("groups", oGroup, /* multiple */ true);
+
+		_inheritCustomData.call(this, oGroup);
+		this._delegateEditMode(oGroup);
+
+		this._oForm.addFormContainer(oGroup);
+
+		_enhanceGroup.call(this, oGroup);
+
+		return this;
+
 	};
 
-	/**
-	 * Returns the content of aggregation groups.
-	 * 
-	 * @public
-	 * @returns {array} of groups
-	 */
 	SmartForm.prototype.getGroups = function() {
-		var aGroups = this.getAggregation('groups');
+		return this._oForm.getFormContainers();
 
-		return ((aGroups === null) ? [] : aGroups);
 	};
 
-	/**
-	 * Returns the aggregated object(s) for the named aggregation.
-	 * 
-	 * @public
-	 * @param {string} Name of the aggregation
-	 * @returns {array} Content of an aggregation
-	 */
-	SmartForm.prototype.getAggregation = function(sAggregationName) {
-		var aResult = null;
-		if (sAggregationName === "groups") {
-			aResult = this._oForm ? this._oForm.getFormContainers() : [];
-		} else {
-			aResult = Control.prototype.getAggregation.apply(this, arguments);
+	SmartForm.prototype.indexOfGroup = function(oGroup) {
+
+		return this._oForm.indexOfFormContainer(oGroup);
+
+	};
+
+	SmartForm.prototype.insertGroup = function(oGroup, iIndex) {
+
+		if (!oGroup) {
+			return this;
 		}
 
-		return aResult;
+		// as "groups" aggregation is not used, at least validate it
+		oGroup = this.validateAggregation("groups", oGroup, /* multiple */ true);
+
+		_inheritCustomData.call(this, oGroup);
+		this._delegateEditMode(oGroup);
+
+		this._oForm.insertFormContainer(oGroup, iIndex);
+
+		_enhanceGroup.call(this, oGroup);
+
+		return this;
+
 	};
 
-	/**
-	 * Creates a ResponsiveGridLayout and applies settings from aggregation <code>layout together with default settings
-	 *
-	 * @return {sap.ui.layout.form.ResponsiveGridLayout} the layout to be used for the form.
-	 * @private
-	 */
-	SmartForm.prototype._getLayout = function() {
+	SmartForm.prototype.removeGroup = function(vGroup) {
 
-		var oLayout = this.getLayout();
-		var oFormLayout = null;
+		var oGroup = this._oForm.removeFormContainer(vGroup);
+
+		if (oGroup) {
+			oGroup.detachEvent("_visibleChanged", _updateColumnsForLayout, this);
+			_removeCustomData.call(this, oGroup);
+			_updateColumnsForLayout.call(this);
+		}
+
+		return oGroup;
+
+	};
+
+	SmartForm.prototype.removeAllGroups = function() {
+
+		var aGroups = this._oForm.removeAllFormContainers();
+
+		for (var i = 0; i < aGroups.length; i++) {
+			aGroups[i].detachEvent("_visibleChanged", _updateColumnsForLayout, this);
+			_removeCustomData.call(this, aGroups[i]);
+		}
+		_updateColumnsForLayout.call(this);
+
+		return aGroups;
+
+	};
+
+	SmartForm.prototype.destroyGroups = function() {
+
 		var aGroups = this.getGroups();
+		for (var i = 0; i < aGroups.length; i++) {
+			aGroups[i].detachEvent("_visibleChanged", _updateColumnsForLayout, this);
+		}
 
-		if (oLayout) {
-			oFormLayout = new sap.ui.layout.form.ResponsiveGridLayout({
-				"labelSpanXL": oLayout.mProperties["labelSpanXL"] ? oLayout.mProperties["labelSpanXL"] : -1,
-				"labelSpanL": oLayout.mProperties["labelSpanL"] ? oLayout.mProperties["labelSpanL"] : 4,
-				"labelSpanM": oLayout.mProperties["labelSpanM"] ? oLayout.mProperties["labelSpanM"] : 4,
-				"emptySpanXL": oLayout.mProperties["emptySpanXL"] ? oLayout.mProperties["emptySpanXL"] : -1,
-				"emptySpanL": oLayout.mProperties["emptySpanL"] ? oLayout.mProperties["emptySpanL"] : 0,
-				"emptySpanM": oLayout.mProperties["emptySpanM"] ? oLayout.mProperties["emptySpanM"] : 0,
-				"columnsXL": oLayout.mProperties["columnsXL"] ? oLayout.mProperties["columnsXL"] : -1,
-				"columnsL": oLayout.mProperties["columnsL"] ? oLayout.mProperties["columnsL"] : 3,
-				"columnsM": oLayout.mProperties["columnsM"] ? oLayout.mProperties["columnsM"] : 2,
-				"singleContainerFullSize": oLayout.mProperties["singleGroupFullSize"],
-				"breakpointXL": oLayout.mProperties["breakpointXL"] ? oLayout.mProperties["breakpointXL"] : 1440,
-				"breakpointL": oLayout.mProperties["breakpointL"] ? oLayout.mProperties["breakpointL"] : 1024,
-				"breakpointM": oLayout.mProperties["breakpointL"] ? oLayout.mProperties["breakpointL"] : 600
-			});
+		this._oForm.destroyFormContainers();
+		_updateColumnsForLayout.call(this);
 
+		return this;
+
+	};
+
+	function _enhanceGroup(oGroup) {
+
+		var bUseHorizontalLayout = this.getUseHorizontalLayout();
+		var iHorizontalLayoutGroupElementMinWidth = this.getHorizontalLayoutGroupElementMinWidth();
+
+		oGroup.attachEvent("_visibleChanged", _updateColumnsForLayout, this);
+		if (iHorizontalLayoutGroupElementMinWidth != oGroup.getHorizontalLayoutGroupElementMinWidth) {
+			oGroup.setHorizontalLayoutGroupElementMinWidth(iHorizontalLayoutGroupElementMinWidth);
+		}
+		if (bUseHorizontalLayout != oGroup.getUseHorizontalLayout()) {
+			oGroup.setUseHorizontalLayout(bUseHorizontalLayout);
+		}
+		if (bUseHorizontalLayout) {
+			oGroup._updateGridDataSpan();
+			oGroup._updateLineBreaks();
 		} else {
-			oFormLayout = new sap.ui.layout.form.ResponsiveGridLayout({
-				"labelSpanL": 4,
-				"labelSpanM": 4,
-				"emptySpanL": 0,
-				"emptySpanM": 0,
-				"columnsL": 3,
-				"columnsM": 2,
-				"breakpointL": 1024,
-				"breakpointM": 600
-			});
+			_updateColumnsForLayout.call(this);
 		}
 
-		if (aGroups && aGroups.length < oFormLayout.getColumnsL() && oFormLayout.mProperties["singleContainerFullSize"]) {
-			oFormLayout.setColumnsL(aGroups.length);
-		}
-
-		return oFormLayout;
-	};
+	}
 
 	/**
-	 * Creates a toolbar and sets it into the content aggregation
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._createToolbar = function() {
-		if (this._oToolbar) {
-			var oContent = this._oToolbar.removeContent(this._oToolbar.getId() + "-button-sfmain-editToggle");
-			if (oContent) {
-				oContent.destroy();
-				this._oEditToggleButton = null;
-			}
-			oContent = this._oToolbar.removeContent(this.getId() + "-" + this._oToolbar.getId() + "-button-sfmain-check");
-			if (oContent) {
-				oContent.destroy();
-			}
-			oContent = this._oToolbar.removeContent(this.getId() + "-" + this._oToolbar.getId() + "-AdaptationButton");
-			if (oContent) {
-				oContent.destroy();
-			}
-			this._oToolbar.removeContent(this.getId() + "-title-sfmain");
-		}
-		this._oToolbar = new OverflowToolbar({
-			"height": "3rem",
-			"design": sap.m.ToolbarDesign.Transparent
-		});
-		this.setAggregation("toolbar", this._oToolbar);
-	};
-
-	/**
-	 * Updates the toolbar.
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._updateToolbar = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-
-		if (this._bUpdateToolbar) {
-			if (oCustomToolbar) {
-				this._cleanToolbar();
-				this._addHeaderToToolbar();
-				this._addSeparatorToToolbar();
-				this._addEditTogglableToToolbar();
-				this._addCheckToToolbar();
-				this._addChangeModeToToolbar();
-				this._removeSeparatorFromToolbar();
-			} else {
-				this._createToolbar();
-				this._addHeaderToToolbar();
-				this._addEditTogglableToToolbar();
-				this._addCheckToToolbar();
-				this._addChangeModeToToolbar();
-				if (this._oToolbar.getContent().length === 1 && !this.getExpandable()) {
-					this._oToolbar.destroyContent();
-					this._oToolbar.destroy();
-					this._oToolbar = null;
-					this.setAggregation("toolbar", null);
-				}
-			}
-			this._bUpdateToolbar = false;
-		}
-	};
-
-	/**
-	 * Returns the toolbar.
-	 * 
+	 * @return {object} oToolbar Returns the toolbar.
 	 * @private
 	 */
 	SmartForm.prototype._getToolbar = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-		return oCustomToolbar || this._oToolbar;
-	};
-
-	SmartForm.prototype._updatePanel = function() {
-		var that = this;
-		var oToolbar = this._getToolbar();
-
-		if (this.mProperties["expandable"]) {
-			if (!this._oPanel) {
-				this._oPanel = new Panel({
-					"expanded": this.mProperties["expanded"],
-					"expandable": true,
-					"headerText": this.getTitle(),
-					"headerToolbar": oToolbar
-				});
-				this._oPanel.attachExpand(function(oEvent) {
-					that.setProperty("expanded", oEvent.getParameters()["expand"], false);
-				});
-
-				this._oPanel.addContent(this._oForm);
-				this.setAggregation("content", this._oPanel);
-			} else {
-				this._oPanel.setExpanded(this.mProperties["expanded"]);
-				this._oPanel.setHeaderToolbar(oToolbar);
-			}
-		} else {
-			this.setAggregation("content", this._oForm);
-		}
+		var oCustomToolbar = this.getCustomToolbar();
+		return oCustomToolbar || this.getAggregation("toolbar");
 	};
 
 	/**
-	 * Removes content from customToolbar
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._cleanToolbar = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-
-		var oContent = oCustomToolbar.removeContent(oCustomToolbar.getId() + "-button-sfmain-editToggle");
-		if (oContent) {
-			oContent.destroy();
-			this._oEditToggleButton = null;
-		}
-		oContent = oCustomToolbar.removeContent(this.getId() + "-" + oCustomToolbar.getId() + "-button-sfmain-check");
-		if (oContent) {
-			oContent.destroy();
-		}
-		oContent = oCustomToolbar.removeContent(this.getId() + "-" + oCustomToolbar.getId() + "-AdaptationButton");
-		if (oContent) {
-			oContent.destroy();
-		}
-		oCustomToolbar.removeContent(this.getId() + "-title-sfmain");
-	};
-
-	/**
-	 * Adds a title and a toolbar separator to the toolbar.
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._addHeaderToToolbar = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-		var oToolbar = oCustomToolbar || this._oToolbar;
-		var aContent = [];
-		var i = 0;
-		var oToolbarSpacer = null;
-
-		if (this.getTitle() || this.mBindingInfos['title']) {
-			oToolbar.insertContent(this._oTitle, 0);
-		}
-
-		if (this._oToolbar) {
-			oToolbar.insertContent(new ToolbarSpacer(), 1);
-		} else {
-			aContent = oToolbar.getContent();
-			for (i; i < aContent.length; i++) {
-				if (aContent[i].getMetadata().getName() === "sap.m.ToolbarSpacer") {
-					oToolbarSpacer = aContent[i];
-				}
-			}
-			if (!oToolbarSpacer) {
-				oToolbar.addContent(new ToolbarSpacer());
-			}
-		}
-	};
-
-	/**
-	 * Adds the button to change between edit and read only mode if property <code>editTogglable</code> equals true
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._addEditTogglableToToolbar = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-		var oToolbar = oCustomToolbar || this._oToolbar;
-		var that = this;
-		var sIconSrc = this.getEditable() ? "sap-icon://display" : "sap-icon://edit";
-		var sTooltip = this._oRb.getText(this.getEditable() ? "FORM_TOOLTIP_DISPLAY" : "FORM_TOOLTIP_EDIT");
-
-		if (this.getEditTogglable()) {
-			if (!this._oEditToggleButton) {
-				this._oEditToggleButton = new Button(oToolbar.getId() + "-button-sfmain-editToggle", {
-					type: ButtonType.Default,
-					icon: sIconSrc,
-					tooltip: sTooltip,
-					press: function() {
-						that._toggleEditMode();
-					}
-				});
-			}
-
-			oToolbar.addContent(this._oEditToggleButton);
-		}
-	};
-
-	/**
-	 * Sets the span of the GridData of group elements (LayoutData)
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._propagateGridDataSpan = function() {
-		var aGroups, sSpan = "", oLayout = this.getLayout(), oVariantLayout;
-
-		if (oLayout) {
-			sSpan = oLayout.getGridDataSpan();
-		}
-
-		aGroups = this.getGroups();
-
-		// set gridDataSpan to all group elements
-		aGroups.forEach(function(oGroup) {
-
-			var aElements = oGroup.getGroupElements();
-
-			aElements.forEach(function(oElement) {
-
-				var oLayout = oElement.getFields()[0].getLayoutData();
-
-				if (oLayout) {
-					if (oLayout instanceof sap.m.FlexItemData) {
-						oVariantLayout = new sap.ui.core.VariantLayoutData({
-							multipleLayoutData: [
-								oLayout, new sap.ui.layout.GridData({
-									span: sSpan
-								})
-							]
-						});
-						oElement.getFields()[0].setLayoutData(oVariantLayout);
-					} else if (oLayout instanceof sap.ui.layout.GridData) {
-						oLayout.setSpan(sSpan);
-					} else if (oLayout instanceof sap.ui.core.VariantLayoutData) {
-						oLayout.getMultipleLayoutData().forEach(function(oLayout) {
-							if (oLayout instanceof sap.ui.layout.GridData) {
-								oLayout.setSpan(sSpan);
-							}
-						});
-					}
-				} else {
-					oLayout = new sap.ui.layout.GridData({
-						span: sSpan
-					});
-					oElement.getFields()[0].setLayoutData(oLayout);
-				}
-
-				if (oElement.getFields()[0] instanceof sap.m.VBox) {
-					var oSmartField = oElement.getFields()[0].getItems()[1];
-					if (oSmartField && oSmartField.setControlContext) {
-						oSmartField.setControlContext(sap.ui.comp.smartfield.ControlContextType.SmartFormGrid);
-					}
-				}
-
-			});
-		});
-	};
-
-	/**
-	 * Sets default span for GridData layout of group elements when used with horizontal layout.
-	 * 
+	 * Sets default span for <code>GridData</code> layout of group elements when used with horizontal layout.
+	 *
+	 * <b>Note:</b> There is no need to call this function
+	 * as the update of all <code>GroupElement</code> elements inside the <code>SmartForm</code> control is triggered automatically
+	 * if the <code>GridDataSpan</code> property of the <code>Layout</code> aggregation changes or the <code>Layout</code> aggregation is added.
 	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
 	 * @public
 	 */
 	SmartForm.prototype.propagateGridDataSpan = function() {
-		this._propagateGridDataSpan();
+
+		var aGroups = this.getGroups();
+		for (var i = 0; i < aGroups.length; i++) {
+			var oGroup = aGroups[i];
+			oGroup._updateGridDataSpan();
+			oGroup._updateLineBreaks();
+		}
+
 		return this;
+
 	};
 
-	/**
-	 * Registers a resize handler to update the linebreaks
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._registerResizeHandler = function() {
+	SmartForm.prototype._getGridDataSpanNumbers = function( ) {
 
-		if (this._resizeHandlerRegId) {
-			return;
+		var oLayout = this.getLayout();
+		var oSpan;
+
+		if (oLayout && oLayout._getGridDataSpanNumbers) {
+			oSpan = oLayout._getGridDataSpanNumbers();
 		}
 
-		var that = this;
-		var fResizeHandler = function() {
+		return oSpan;
 
-			var aGroups = that.getGroups();
-
-			aGroups.forEach(function(oGroup) {
-				oGroup._updateLineBreaks();
-			});
-		};
-		this._resizeHandlerRegId = sap.ui.core.ResizeHandler.register(this._oForm, fResizeHandler);
-	};
-
-	/**
-	 * Gets the span based on the current screen size
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._getCurrentSpan = function() {
-		var sSpan = this.getLayout().getGridDataSpan();
-		var iCurrentSpan = 0;
-		var aResult = [];
-
-		if (this.getDomRef() && this._oForm) {
-			if (this.getDomRef().clientWidth > this._oForm.getLayout().getBreakpointL()) {
-				var L = /L([1-9]|1[0-2])/i;
-				aResult = L.exec(sSpan);
-				iCurrentSpan = aResult[1];
-			} else if (this.getDomRef().clientWidth > this._oForm.getLayout().getBreakpointM()) {
-				var M = /M([1-9]|1[0-2])/i;
-				aResult = M.exec(sSpan);
-				iCurrentSpan = aResult[1];
-			} else {
-				var S = /S([1-9]|1[0-2])/i;
-				aResult = S.exec(sSpan);
-				iCurrentSpan = aResult[1];
-			}
-		}
-		return iCurrentSpan;
 	};
 
 	/**
 	 * Change to edit/read only depending on the current state.
-	 * 
+	 *
 	 * @private
 	 */
 	SmartForm.prototype._toggleEditMode = function() {
@@ -687,128 +455,9 @@ sap.ui.define([
 	};
 
 	/**
-	 * Triggers the addition of the button for personalization to the toolbar, if change mode supported.
-	 * 
-	 * @returns {Promise} the promise for flexibility settings
-	 * @private
-	 */
-	SmartForm.prototype._addChangeModeToToolbar = function() {
-		if (Settings.isFlexChangeMode() && Settings.isFlexibilityAdaptationButtonAllowed()) {
-			return this._getAddChangeModelToToolbarPromise();
-		}
-
-		return Promise.resolve();
-	};
-
-	/**
-	 * Creates the promise for the personalization button.
-	 * 
-	 * @returns {Promise} the promise for the addition of the toolbar modification.
-	 * @private
-	 */
-	SmartForm.prototype._getAddChangeModelToToolbarPromise = function() {
-		var that = this;
-		var sComponentName = Utils.getComponentClassName(this);
-		var mPropertyBag = {
-			appDescriptor: Utils.getAppDescriptor(this),
-			siteId: Utils.getSiteId(this)
-		};
-
-		var bIsFlexEnabled = this.getFlexEnabled();
-		if (bIsFlexEnabled) {
-			return Settings.getInstance(sComponentName, mPropertyBag).then(function(oSettings) {
-				if (oSettings.isKeyUser() && Utils.checkControlId(that)) {
-					that._setToolbarAndAddContent();
-				}
-			}, function(oError) {
-			});
-		} else {
-			return Promise.resolve();
-		}
-	};
-
-	/**
-	 * Creates a toolbar and sets it into the content aggregation
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._setToolbarAndAddContent = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-		var oToolbar = oCustomToolbar || this._oToolbar;
-
-		if (!oToolbar || oToolbar.bIsDestroyed) {
-			this._createToolbar();
-			this._oToolbar.addStyleClass("titleBar");
-			this._addHeaderToToolbar();
-			oToolbar = this._oToolbar;
-			this.invalidate();
-		}
-
-		oToolbar.addContent(new Button(this.getId() + "-" + oToolbar.getId() + "-AdaptationButton", {
-			type: ButtonType.Default,
-			icon: "sap-icon://action-settings",
-			tooltip: this._oRb.getText("FORM_TOOLTIP_SETTINGS"),
-			press: this._handleAdaptationButtonPress.bind(this)
-		}));
-	};
-
-	/**
-	 * Handles press of personalization button.
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._handleAdaptationButtonPress = function() {
-		var that = this;
-		var oMetaModel = this.getModel().getMetaModel();
-		oMetaModel.loaded().then(that._openAdaptationDialog.bind(that));
-	};
-
-	/**
-	 * Opens the adaptation dialog
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._openAdaptationDialog = function() {
-		jQuery.sap.require('sap.ui.comp.smartform.flexibility.FormP13nHandler');
-		var handler = new sap.ui.comp.smartform.flexibility.FormP13nHandler();
-		handler.init(this);
-		handler.show();
-	};
-
-	/**
-	 * Adds the button for checking.
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._addCheckToToolbar = function() {
-		if (!this.getEditable()) {
-			return;
-		}
-
-		var oCustomToolbar = this._getCustomToolbar();
-		var oToolbar = oCustomToolbar || this._oToolbar;
-		var that = this;
-
-		if (this.getCheckButton()) {
-			oToolbar.addContent(new Button(this.getId() + "-" + oToolbar.getId() + "-button-sfmain-check", {
-				type: ButtonType.Default,
-				text: this._oRb.getText("SMART_FORM_CHECK"),
-				press: function() {
-					var aErroneousFields = [];
-					aErroneousFields = that.check();
-					that.fireChecked({
-						erroneousFields: aErroneousFields
-					});
-				}
-			}));
-		}
-
-	};
-
-	/**
 	 * Checks smart fields for client errors.
-	 * 
-	 * @param {boolean} Determines is only visible fields in visible groups should be considered. default: <code>true</code>
+	 *
+	 * @param {boolean} bConsiderOnlyVisible Determines is only visible fields in visible groups should be considered. default: <code>true</code>
 	 * @returns {string[]} An array of fields with errors
 	 * @public
 	 */
@@ -824,8 +473,8 @@ sap.ui.define([
 
 	/**
 	 * Check smart fields for client errors.
-	 * 
-	 * @param {boolean} bConsiderOnlyVisible determines if only visible filters of visible groups should be considered. Default. <code>true</code>
+	 *
+	 * @param {boolean} bConsiderOnlyVisible determines if only visible filters of visible <code>groups</code> and <code>groupElements</code> should be considered. Default. <code>true</code>
 	 * @returns {string[]} an array of fields with errors
 	 * @private
 	 */
@@ -835,7 +484,7 @@ sap.ui.define([
 			bConsiderOnlyVisible = true;
 		}
 
-		var aFields = this.getSmartFields(bConsiderOnlyVisible);
+		var aFields = this.getSmartFields(bConsiderOnlyVisible, bConsiderOnlyVisible);
 		var aErroneousFields = [];
 		var oGroup = null;
 		aFields.forEach(function(oField) {
@@ -850,7 +499,7 @@ sap.ui.define([
 				oGroup = oField.getParent();
 				while (oGroup.getParent) {
 					oGroup = oGroup.getParent();
-					if (oGroup instanceof sap.ui.comp.smartform.Group) {
+					if (_isLazyInstance(oGroup, "sap/ui/comp/smartform/Group")) {
 						if (!oGroup.getExpanded()) {
 							oGroup.setExpanded(true);
 						}
@@ -864,86 +513,66 @@ sap.ui.define([
 	};
 
 	/**
-	 * Adds a separator to the toolbar.
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._addSeparatorToToolbar = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-		var oToolbar = oCustomToolbar || this._oToolbar;
-		oToolbar.addContent(new ToolbarSeparator());
-	};
-
-	/**
-	 * Removes useless separators.
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._removeSeparatorFromToolbar = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-		var oToolbar = oCustomToolbar || this._oToolbar;
-		var oContent = oToolbar.getContent();
-		var oLastElement = null;
-		var aRemoveElement = [];
-		var i = 0;
-
-		// remove last separator
-		oLastElement = oContent[oContent.length - 1];
-		if (oLastElement.getMetadata().getName() === "sap.m.ToolbarSeparator") {
-			oToolbar.removeContent(oLastElement);
-		}
-
-		// remove superfluous separator
-		oLastElement = null;
-		for (i; i < oContent.length; i++) {
-			if (oContent[i].getMetadata().getName() === "sap.m.ToolbarSeparator" && oLastElement.getMetadata().getName() != "sap.m.Button") {
-				aRemoveElement.push(oContent[i]);
-			}
-			oLastElement = oContent[i];
-		}
-		for (i = 0; i < aRemoveElement.length; i++) {
-			oToolbar.removeContent(aRemoveElement[i]);
-		}
-	};
-
-	/**
 	 * Displays error message.
-	 * 
+	 * @param {array} aErroneousFields field with error
 	 * @private
 	 */
 	SmartForm.prototype._displayError = function(aErroneousFields) {
-		var sErrorMessage, sErrorTitle;
 
-		sErrorTitle = this._oRb.getText("FORM_CLIENT_CHECK_ERROR_TITLE");
-		sErrorMessage = this._oRb.getText("FORM_CLIENT_CHECK_ERROR");
+		var sErrorTitle = this._oRb.getText("FORM_CLIENT_CHECK_ERROR_TITLE");
+		var sErrorMessage = this._oRb.getText("FORM_CLIENT_CHECK_ERROR");
 
-		MessageBox.show(sErrorMessage, {
-			icon: MessageBox.Icon.ERROR,
-			title: sErrorTitle,
-			styleClass: (this.$() && this.$().closest(".sapUiSizeCompact").length) ? "sapUiSizeCompact" : ""
-		});
+		if (!MessageBox && !this.bMessageBoxRequested) {
+			MessageBox = sap.ui.require("sap/m/MessageBox");
+			if (!MessageBox) {
+				sap.ui.require(["sap/m/MessageBox"], _MessageBoxLoaded.bind(this));
+				this._bMessageBoxRequested = true;
+			}
+		}
+
+		if (MessageBox) {
+			MessageBox.show(sErrorMessage, {
+				icon: MessageBox.Icon.ERROR,
+				title: sErrorTitle,
+				styleClass: (this.$() && this.$().closest(".sapUiSizeCompact").length) ? "sapUiSizeCompact" : ""
+			});
+		}
 	};
 
-	/**
-	 * Setter for property <code>editable</code>.
-	 * 
-	 * @param {boolean} bEditable New value for property <code>editable</code>.
-	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
-	 * @public
-	 */
+	function _MessageBoxLoaded(fnMessageBox) {
+
+		MessageBox = fnMessageBox;
+		this._bMessageBoxRequested = false;
+
+		if (!this._bIsBeingDestroyed) {
+			_checkForError.call(this);
+		}
+
+	}
+
+	function _checkForError() {
+
+		var aErroneousFields = this.check(true);
+		if (aErroneousFields && aErroneousFields.length > 0) {
+			this._displayError(aErroneousFields);
+			return true;
+		}
+
+		return false;
+
+	}
+
 	SmartForm.prototype.setEditable = function(bEditable) {
-		var sTooltip;
+
 		var bOldEditable = this.getEditable();
+		bEditable = this.validateProperty("editable", bEditable);
+
 		if (bOldEditable === bEditable) {
 			return this;
 		}
 
 		if (!bEditable && this.hasListeners("editToggled")) {
-			var aErroneousFields = [];
-			aErroneousFields = this.check(true);
-			if (aErroneousFields && aErroneousFields.length > 0) {
-
-				this._displayError(aErroneousFields);
+			if (_checkForError.call(this)) {
 				return this;
 			}
 		}
@@ -959,7 +588,7 @@ sap.ui.define([
 
 		if (this._oEditToggleButton) {
 			this._oEditToggleButton.setIcon(bEditable ? "sap-icon://display" : "sap-icon://edit");
-			sTooltip = this._oRb.getText(bEditable ? "FORM_TOOLTIP_DISPLAY" : "FORM_TOOLTIP_EDIT");
+			var sTooltip = this._oRb.getText(bEditable ? "FORM_TOOLTIP_DISPLAY" : "FORM_TOOLTIP_EDIT");
 			this._oEditToggleButton.setTooltip(sTooltip);
 		}
 
@@ -968,83 +597,157 @@ sap.ui.define([
 			oGroup.setEditMode(bEditable);
 		});
 
-		this._bUpdateToolbar = true;
+		if (this.getCheckButton() && bEditable) {
+			_addCheckButtonToToolbar.call(this);
+		} else {
+			_removeCheckButtonFromToolbar.call(this);
+		}
+
 		return this;
+
 	};
 
-	/**
-	 * Setter for property <code>editTogglable</code>. Default value is <code>undefined</code>.
-	 * 
-	 * @param {boolean} New value for property <code>editTogglable</code>.
-	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
-	 * @public
-	 */
 	SmartForm.prototype.setEditTogglable = function(bTogglable) {
-		this.setProperty("editTogglable", bTogglable);
-		this._bUpdateToolbar = true;
+
+		this.setProperty("editTogglable", bTogglable, true); // do not need to rerender whole Form
+
+		if (bTogglable) {
+			_addEditableButtonToToolbar.call(this);
+		} else {
+			_removeEditableButtonFromToolbar.call(this);
+		}
+
+		_useTitleOrToolbar.call(this);
+
 		return this;
+
 	};
 
-	/**
-	 * Setter for property <code>title</code>. Default value is <code>undefined</code>.
-	 * 
-	 * @param {string} sTitle new value for property <code>title</code>.
-	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
-	 * @public
-	 */
 	SmartForm.prototype.setTitle = function(sTitle) {
-		Control.prototype.setProperty.apply(this, [
-			"title", sTitle
-		]);
-		this._oTitle.setText(sTitle);
+
+		this.setProperty("title", sTitle, true); // do not need to rerender whole Form
+
+		if (this._oPanel) {
+			this._oPanel.setHeaderText(sTitle);
+		}
+
+		_useTitleOrToolbar.call(this);
+
 		return this;
+
 	};
 
-	/**
-	 * Setter for property <code>useHorizontalLayout</code>.
-	 * 
-	 * @param {boolean} New value for property <code>useHorizontalLayout</code>.
-	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
-	 * @public
-	 */
+	SmartForm.prototype.setCheckButton = function(bCheckButton) {
+
+		this.setProperty("checkButton", bCheckButton, true); // do not need to rerender whole Form
+
+		if (bCheckButton) {
+			_addCheckButtonToToolbar.call(this);
+		} else {
+			_removeCheckButtonFromToolbar.call(this);
+		}
+
+		_useTitleOrToolbar.call(this);
+
+		return this;
+
+	};
+
 	SmartForm.prototype.setUseHorizontalLayout = function(bUseHorizontalLayout) {
-		var oldUseHorizontalLayout = this.getProperty("useHorizontalLayout");
 
-		if (oldUseHorizontalLayout !== bUseHorizontalLayout) {
-			this.setProperty("useHorizontalLayout", bUseHorizontalLayout);
+		var bOldUseHorizontalLayout = this.getUseHorizontalLayout();
 
+		this.setProperty("useHorizontalLayout", bUseHorizontalLayout);
+
+		if (bOldUseHorizontalLayout !== bUseHorizontalLayout) {
 			if (bUseHorizontalLayout) {
 				this.addStyleClass("sapUiCompSmartFormHorizontalLayout");
 			} else {
 				this.removeStyleClass("sapUiCompSmartFormHorizontalLayout");
 			}
 
-			// add groups
+			// update groups
 			var aGroup = this.getGroups();
 			if (aGroup) {
 				aGroup.forEach(function(oGroup) {
-					oGroup.setUseHorizontalLayout(bUseHorizontalLayout);
+					if (oGroup.getUseHorizontalLayout() != bUseHorizontalLayout) {
+						oGroup.setUseHorizontalLayout(bUseHorizontalLayout);
+					}
 				});
 			}
 
-			// new layout is created in OnBeforeRendering
-			this._bisLayoutCreated = false;
+			var oLayout = this.getLayout();
+			if (bUseHorizontalLayout) {
+				// if ResponsiveLayout is needed this will be checked before rendering as Layout needs to be updated before
+				_updateResponsiveGridLayout.call(this, oLayout);
+			} else {
+				// ResponsiveLayout not longer needed (if used) - remove and create new ResponsiveGridLayout and use Layouts settings
+				_useResponsiveLayout.call(this);
+				_updateResponsiveGridLayout.call(this, oLayout);
+			}
 		}
 
 		return this;
+
 	};
 
-	/**
-	 * Setter for property <code>horizontalLayoutGroupElementMinWidth</code>.
-	 * 
-	 * @param {int} New value for property <code>horizontalLayoutGroupElementMinWidth</code>.
-	 * @public
-	 */
+	SmartForm.prototype.setLayout = function(oLayout) {
+
+		var oOldLayout = this.getLayout();
+		if (oOldLayout == oLayout) {
+			return this;
+		}
+
+		if (oOldLayout) {
+			oOldLayout.detachEvent("_change", _handleLayoutChanged, this);
+		}
+
+		this.setAggregation("layout", oLayout);
+
+		if (oLayout) {
+			oLayout.attachEvent("_change", _handleLayoutChanged, this);
+		}
+		this.propagateGridDataSpan();
+
+		// now we can decide to use ResponsiveLayout or not
+		_useResponsiveLayout.call(this);
+		_updateResponsiveGridLayout.call(this, oLayout);
+
+		return this;
+
+	};
+
+	SmartForm.prototype.destroyLayout = function() {
+
+		var oOldLayout = this.getLayout();
+		if (!oOldLayout) {
+			return this;
+		}
+
+		this.destroyAggregation("layout");
+
+		this.propagateGridDataSpan();
+
+		// now we can decide to use ResponsiveLayout or not
+		_useResponsiveLayout.call(this);
+		_updateResponsiveGridLayout.call(this, null);
+
+		return this;
+
+	};
+
 	SmartForm.prototype.setHorizontalLayoutGroupElementMinWidth = function(nMinWidth) {
+
+		var nOldValue = this.getHorizontalLayoutGroupElementMinWidth();
+		if (nOldValue == nMinWidth) {
+			return this;
+		}
+
+		jQuery.sap.log.error("HorizontalLayoutGroupElementMinWidth is deprecated", this);
 
 		this.setProperty("horizontalLayoutGroupElementMinWidth", nMinWidth);
 
-		// add groups
+		// update groups
 		var aGroup = this.getGroups();
 		if (aGroup) {
 			aGroup.forEach(function(oGroup) {
@@ -1056,7 +759,7 @@ sap.ui.define([
 
 	/**
 	 * Returns the array of properties currently visible on the UI.
-	 * 
+	 *
 	 * @return {string[]} The properties currently visible
 	 * @public
 	 */
@@ -1067,14 +770,14 @@ sap.ui.define([
 		var aGroup = this.getGroups();
 		if (aGroup) {
 			aGroup.forEach(function(oGroup) {
-				var aGroupElement = oGroup.getGroupElements();
-				if (aGroupElement) {
-					aGroupElement.forEach(function(oGroupElement) {
-						var aField = oGroupElement.getFields();
-						if (aField) {
-							aField.forEach(function(oField) {
-								if (oField.getVisible()) {
-									var sPath = oField.getBindingPath("value");
+				var aGroupElements = oGroup.getGroupElements();
+				if (aGroupElements.length > 0) {
+					aGroupElements.forEach(function(oGroupElement) {
+						var aElements = oGroupElement.getElements();
+						if (aElements.length > 0) {
+							aElements.forEach(function(oElement) {
+								if (oElement.getVisible()) {
+									var sPath = oElement.getBindingPath("value");
 									if (sPath) {
 										aProperty.push(sPath);
 									}
@@ -1090,276 +793,314 @@ sap.ui.define([
 
 	};
 
-	/**
-	 * Setter for aggregation <code>customToolbar</code>. Default value is <code>undefined</code>.
-	 * 
-	 * @param {sap.m.Toolbar} New value for aggregation <code>customToolbar</code>.
-	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
-	 * @public
-	 */
 	SmartForm.prototype.setCustomToolbar = function(oCustomToolbar) {
-		if (oCustomToolbar) {
-			oCustomToolbar.data('bIsSmartFormCustomToolbar', true);
+
+		var oOldCustomToolbar = this.getCustomToolbar();
+
+		if (oOldCustomToolbar == oCustomToolbar) {
+			return this;
 		}
+
+		// remove content from old toolbar
+		_removeTitleFromToolbar.call(this);
+		_removeEditableButtonFromToolbar.call(this);
+		_removeCheckButtonFromToolbar.call(this);
 
 		this.setAggregation("customToolbar", oCustomToolbar);
 
+		// add content to new toolbar
+		if (this.getTitle()) {
+			_useTitleOrToolbar.call(this);
+		}
+		if (this.getEditTogglable()) {
+			_addEditableButtonToToolbar.call(this);
+		}
+		if (this.getCheckButton()) {
+			_addCheckButtonToToolbar.call(this);
+		}
+
+		return this;
+
+	};
+
+	SmartForm.prototype.destroyCustomToolbar = function() {
+
+		var oCustomToolbar = this.getCustomToolbar();
+
 		if (oCustomToolbar) {
-			this._bUpdateToolbar = true;
+			// remove content from cutomToolbar
+			_removeTitleFromToolbar.call(this);
+			_removeEditableButtonFromToolbar.call(this);
+			_removeCheckButtonFromToolbar.call(this);
 		}
+
+		this.destroyAggregation("customToolbar");
+
+		// add content to private toolbar
+		if (this.getTitle()) {
+			_useTitleOrToolbar.call(this);
+		}
+		if (this.getEditTogglable()) {
+			_addEditableButtonToToolbar.call(this);
+		}
+		if (this.getCheckButton()) {
+			_addCheckButtonToToolbar.call(this);
+		}
+
 		return this;
+
 	};
 
-	/**
-	 * Getter for aggregation <code>customToolbar</code>.
-	 * 
-	 * @return {sap.m.Toolbar} The custom toolbar
-	 * @public
-	 */
-	SmartForm.prototype.getCustomToolbar = function() {
-		var oCustomToolbar = this._getCustomToolbar();
-		return oCustomToolbar;
-	};
+	SmartForm.prototype.setExpandable = function(bExpandable) {
 
-	/**
-	 * Determine CustomToolbar from own aggregation of from internal panel
-	 * 
-	 * @return {sap.m.Toolbar} the custom toolbar
-	 * @private
-	 */
-	SmartForm.prototype._getCustomToolbar = function() {
-		var oCustomToolbar = this.getAggregation("customToolbar");
-		if (!oCustomToolbar && this._oPanel) {
-			oCustomToolbar = this._oPanel.getHeaderToolbar();
-			if (!oCustomToolbar.data('bIsSmartFormCustomToolbar')) {
-				oCustomToolbar = null;
-			}
+		var bOldExpandable = this.getExpandable();
+
+		this.setProperty("expandable", bExpandable);
+
+		if (bExpandable == bOldExpandable) {
+			return this;
 		}
-		return oCustomToolbar;
-	};
 
-	/**
-	 * Inserts a <code>group</code> into the aggregation named groups.
-	 * 
-	 * @param {sap.ui.comp.smartform.Group} The group to insert
-	 * @param {int} The 0-based index the group should be inserted at
-	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
-	 * @public
-	 */
-	SmartForm.prototype.insertGroup = function(oGroup, iIndex) {
-		this.insertAggregation("groups", oGroup, iIndex);
-		return this;
-	};
-
-	SmartForm.prototype.insertAggregation = function(sAggregationName, oObject, iIndex) {
-		if (sAggregationName === "groups") {
-			this._insertGroup(oObject, iIndex);
-		} else {
-			Control.prototype.insertAggregation.apply(this, arguments);
-		}
-	};
-
-	/**
-	 * Removes a <code>group</code> from the aggregation named groups.
-	 * 
-	 * @param {sap.ui.comp.smartform.Group} The group to be removed
-	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
-	 * @public
-	 */
-	SmartForm.prototype.removeGroup = function(oGroup) {
-		this.removeAggregation("groups", oGroup);
-		return this;
-	};
-
-	SmartForm.prototype.removeAggregation = function(sAggregationName, oObject) {
-		if (sAggregationName === "groups") {
-			return this._oForm.removeFormContainer(oObject);
-		} else {
-			return Control.prototype.removeAggregation.apply(this, arguments);
-		}
-	};
-
-	SmartForm.prototype.removeAllAggregation = function(sAggregationName) {
-		if (sAggregationName === "groups") {
-			return this.removeAllGroups();
-		} else {
-			return Control.prototype.removeAllAggregation.apply(this, arguments);
-		}
-	};
-
-	/**
-	 * Destroys a <code>group</code> from the aggregation named groups.
-	 * 
-	 * @return {sap.ui.comp.smartform.SmartForm} <code>this</code> to allow method chaining.
-	 * @public
-	 */
-	SmartForm.prototype.destroyGroups = function() {
-		this.destroyAggregation("groups");
-		return this;
-	};
-
-	SmartForm.prototype.destroyAggregation = function(sAggregationName) {
-		if (sAggregationName === "groups") {
-			this._oForm.destroyFormContainers();
-		} else {
-			Control.prototype.destroyAggregation.apply(this, arguments);
-		}
-	};
-
-	/**
-	 * Checks if the internal form control already exist and if not it will be created
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._createForm = function() {
-		if (!this._oForm) {
-			this._oForm = new Form({
-				"editable": this.getEditable()
-			// if the form is NOT editable, only label / static texts are allowed -> no editable controls
-			});
-		}
-	};
-
-	/**
-	 * Creates a layout for the internal form
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype._createLayout = function() {
-		var oLayout = null;
-
-		this._createForm();
-
-		if (!this._bisLayoutCreated && this._oForm) {
-
-			// Remove old existing layout from From
-			oLayout = this._oForm.getLayout();
-			if (oLayout) {
-				oLayout.destroy();
-			}
-
-			// Create new layout based on grid or form
-			if (this.mProperties["useHorizontalLayout"]) {
-				if (this.getLayout() && this.getLayout().getGridDataSpan()) {
-					oLayout = new sap.ui.layout.form.ResponsiveGridLayout({
-						columnsL: 1,
-						columnsM: 1
-					});
-					if (this.getLayout().getBreakpointM() > 0) {
-						oLayout.setBreakpointM(this.getLayout().getBreakpointM());
-					}
-					if (this.getLayout().getBreakpointL() > 0) {
-						oLayout.setBreakpointM(this.getLayout().getBreakpointL());
-					}
-				} else {
-					oLayout = new sap.ui.layout.form.ResponsiveLayout();
+		if (bExpandable) {
+			if (!Panel && !this._bPanelRequested) {
+				Panel = sap.ui.require("sap/m/Panel");
+				if (!Panel) {
+					sap.ui.require(["sap/m/Panel"], _PanelLoaded.bind(this));
+					this._bPanelRequested = true;
 				}
-			} else {
-				oLayout = this._getLayout();
 			}
-			this._oForm.setLayout(oLayout);
-			this._bisLayoutCreated = true;
+			if (Panel) {
+				_createPanel.call(this);
+			}
+		} else if (this._oPanel) {
+			// just put Form back to Content
+			this.setAggregation("content", this._oForm);
+			this._oPanel.destroy();
+			this._oPanel = null;
 		}
+
+		_useTitleOrToolbar.call(this);
+
+		return this;
+
+	};
+
+	function _createPanel() {
+
+		this._oPanel = new Panel( this.getId() + "--Panel", {
+			expanded: this.getExpanded(),
+			expandable: true,
+			headerText: this.getTitle(),
+			expandAnimation: false
+		});
+
+		this._oPanel.getHeaderToolbar = function(){
+			var oSmartForm = this.getParent();
+			if (oSmartForm) {
+				return oSmartForm._getToolbar();
+			}
+		};
+
+		this._oPanel.attachExpand(_handlePanelExpand, this);
+		this.setAggregation("content", this._oPanel);
+		this._oPanel.addContent(this._oForm);
+
+	}
+
+	function _PanelLoaded(fnPanel) {
+
+		Panel = fnPanel;
+		this._bPanelRequested = false;
+
+		if (this.getExpandable() && !this._bIsBeingDestroyed) {
+			_createPanel.call(this);
+		}
+
+	}
+
+	function _handlePanelExpand(oEvent) {
+
+		this.setProperty("expanded", oEvent.getParameter("expand"), true); // no invalidation of SmartForm
+
+	}
+
+	SmartForm.prototype.setExpanded = function(bExpanded) {
+
+		this.setProperty("expanded", bExpanded);
+
+		if (this._oPanel) {
+			this._oPanel.setExpanded(bExpanded);
+		}
+
+		return this;
+
 	};
 
 	/**
-	 * Adds existing custom data to a given group instance
-	 * 
-	 * @private
-	 * @param {object} oGroup for which the custom data should be propagated
+	 * Adds some customData into the aggregation <code>customData</code>.
+	 *
+	 * <b>Note:</b> <code>customData</code> that is used by the <code>SmartField</code> control itself
+	 * is also added to the <code>Group</code> elements, <code>GroupElement</code> elements
+	 * and the <code>SmartField</code> controls in the children hierarchy.
+	 * Additional <code>customData</code> that is not used by the <code>SmartField</code> control
+	 * internally might not be added.
+	 *
+	 * @param {sap.ui.core.CustomData} oCustomData the customData to add; if empty, nothing is added
+	 * @return {sap.ui.comp.smartform.GroupElement} Reference to <code>this</code> to allow method chaining.
+	 * @public
 	 */
-	SmartForm.prototype._addCustomData = function(oGroup) {
-		var aCustomData = null;
+	SmartForm.prototype.addCustomData = function(oCustomData) {
 
-		if (oGroup) {
-			aCustomData = this.getCustomData();
-			if (aCustomData && aCustomData.length > 0) {
-				aCustomData.forEach(function(oCustomData) {
-					oGroup.addCustomData(oCustomData.clone());
-				});
-			}
+		if (!oCustomData) {
+			return this;
 		}
+
+		Control.prototype.addCustomData.apply(this, arguments);
+
+		var aGroups = this.getGroups();
+		for (var i = 0; i < aGroups.length; i++) {
+			_addCustomDataToGroup.call(this, aGroups[i], oCustomData);
+		}
+
+		return this;
+
 	};
 
 	/**
-	 * Delegates the edit mode from the SmartForm to the given group
-	 * 
+	 * Inserts some customData into the aggregation <code>customData</code>.
+	 *
+	 * <b>Note:</b> <code>customData</code> that is used by the <code>SmartField</code> control itself
+	 * is also added to the <code>Group</code> elements, <code>GroupElement</code> elements
+	 * and the <code>SmartField</code> controls in the children hierarchy.
+	 * Additional <code>customData</code> that is not used by the <code>SmartField</code> control
+	 * internally might not be added.
+	 *
+	 * @param {sap.ui.core.CustomData} oCustomData the customData to insert; if empty, nothing is inserted
+	 * @param {int} iIndex the 0-based index the customData should be inserted at; for a negative value of iIndex, the customData is inserted at position 0; for a value greater than the current size of the aggregation, the customData is inserted at the last position
+	 * @return {sap.ui.comp.smartform.GroupElement} Reference to <code>this</code> to allow method chaining.
+	 * @public
+	 */
+	SmartForm.prototype.insertCustomData = function(oCustomData, iIndex) {
+
+		if (!oCustomData) {
+			return this;
+		}
+
+		Control.prototype.insertCustomData.apply(this, arguments);
+
+		var aGroups = this.getGroups();
+		for (var i = 0; i < aGroups.length; i++) {
+			// order doesn't matter
+			_addCustomDataToGroup.call(this, aGroups[i], oCustomData);
+		}
+
+		return this;
+
+	};
+
+	SmartForm.prototype.removeCustomData = function(vCustomData) {
+
+		var oCustomData = Control.prototype.removeCustomData.apply(this, arguments);
+
+		if (oCustomData) {
+			var aGroups = this.getGroups();
+			for (var i = 0; i < aGroups.length; i++) {
+				_removeCustomData.call(this, aGroups[i], oCustomData.getId());
+			}
+		}
+
+		return oCustomData;
+
+	};
+
+	SmartForm.prototype.removeAllCustomData = function() {
+
+		var aCustomData = Control.prototype.removeAllCustomData.apply(this, arguments);
+
+		if (aCustomData.length > 0) {
+			var aGroups = this.getGroups();
+			for (var i = 0; i < aGroups.length; i++) {
+				_removeCustomData.call(this, aGroups[i]);
+			}
+		}
+
+		return aCustomData;
+
+	};
+
+	SmartForm.prototype.destroyCustomData = function() {
+
+		Control.prototype.destroyCustomData.apply(this, arguments);
+
+		var aGroups = this.getGroups();
+		for (var i = 0; i < aGroups.length; i++) {
+			_removeCustomData.call(this, aGroups[i]);
+		}
+
+		return this;
+
+	};
+
+	function _inheritCustomData(oGroup) {
+
+		var aCustomData = this.getCustomData();
+
+		for (var i = 0; i < aCustomData.length; i++) {
+			_addCustomDataToGroup.call(this, oGroup, aCustomData[i]);
+		}
+
+	}
+
+	function _addCustomDataToGroup(oGroup, oCustomData) {
+
+		if (sap.ui.comp.smartform.inheritCostomDataToFields(oCustomData)) {
+			var oNewCustomData = oCustomData.clone();
+			oNewCustomData._bFromSmartForm = true;
+			oNewCustomData._sOriginalId = oCustomData.getId();
+			oGroup.addCustomData(oNewCustomData);
+		}
+
+	}
+
+	function _removeCustomData(oGroup, sOriginalId) {
+
+		var aCustomData = oGroup.getCustomData();
+
+		for (var i = 0; i < aCustomData.length; i++) {
+			var oCustomData = aCustomData[i];
+			if (oCustomData._bFromSmartForm && (!sOriginalId || sOriginalId == oCustomData._sOriginalId)) {
+				oGroup.removeCustomData(oCustomData);
+			}
+		}
+
+	}
+
+	/**
+	 * Delegates the edit mode from the <code>SmartForm</code> to the given group
+	 *
 	 * @private
 	 * @param {object} oGroup on which the editable property should be set
 	 */
 	SmartForm.prototype._delegateEditMode = function(oGroup) {
 		if (oGroup) {
-			oGroup.setEditMode(this.mProperties["editable"]);
-		}
-	};
-
-	/**
-	 * Inserts a given group to aggregation FormContainer in the internal Form instance at the given iIndex.
-	 * 
-	 * @private
-	 * @param {object} Group to be added
-	 * @param {numeric} Position where group is inserted
-	 */
-	SmartForm.prototype._insertGroup = function(oGroup, iIndex) {
-
-		// check if internal form exist and creates one if not
-		this._createForm();
-
-		// calculate index value if it is not given via interface
-		if (iIndex === undefined || iIndex === null) {
-			iIndex = this._oForm.getFormContainers().length;
-		} else if (iIndex === -1) {
-			iIndex = 0;
-		}
-
-		oGroup.setHorizontalLayoutGroupElementMinWidth(this.getHorizontalLayoutGroupElementMinWidth());
-		oGroup.setUseHorizontalLayout(this.getUseHorizontalLayout());
-
-		this._addCustomData(oGroup);
-		this._delegateEditMode(oGroup);
-		this._oForm.insertFormContainer(oGroup, iIndex);
-	};
-
-	/**
-	 * Removes all the groups in the aggregation named groups.
-	 * 
-	 * @return {sap.ui.comp.smartform.Group[]} an array of the removed groups (might be empty).
-	 * @public
-	 */
-	SmartForm.prototype.removeAllGroups = function() {
-		if (this._oForm) {
-			return this._oForm.removeAllFormContainers();
-		}
-	};
-
-	/**
-	 * Generic method which is called, whenever an aggregation binding is changed. This method deletes all elements in this aggregation and recreates
-	 * them according to the data model. In case a managed object needs special handling for a aggregation binding, it can create a typed
-	 * update-method (e.g. "updateRows") which will be used instead of the default behaviour.
-	 * 
-	 * @private
-	 */
-	SmartForm.prototype.updateAggregation = function(sAggregation) {
-
-		Control.prototype.updateAggregation.apply(this, arguments);
-
-		if (sAggregation === "groups") {
-			this._updateClonedElements(this);
+			oGroup.setEditMode(this.getEditable());
 		}
 	};
 
 	/**
 	 * Retrieves all the smart fields of the form.
-	 * 
-	 * @param {boolean} Determines if only visible groups are considered; default is true
+	 *
+	 * <b>Note:</b> Even invisible <code>SmartField</code> controls are returned if the <code>group</code> or <code>groupElement</code> is visible.
+	 *
+	 * @param {boolean} bConsiderOnlyVisibleGroups Determines if only visible <code>groups</code> are taken into account; default is true
+	 * @param {boolean} bConsiderOnlyVisibleGroupElements Determines if only visible <code>groupElement</code> elements are taken into account; default is false (to be compatible)
 	 * @return {sap.ui.comp.smartfield.SmartField[]} An array of smart fields (might be empty).
 	 * @public
 	 */
-	SmartForm.prototype.getSmartFields = function(bConsiderOnlyVisibleGroups) {
+	SmartForm.prototype.getSmartFields = function(bConsiderOnlyVisibleGroups, bConsiderOnlyVisibleGroupElements) {
 		var aGroups = [];
 		var aGroupElements = [];
 		var aElements = [];
-		var aFields = [];
 		var aSmartFields = [];
 
 		if (bConsiderOnlyVisibleGroups === undefined) {
@@ -1368,61 +1109,50 @@ sap.ui.define([
 
 		aGroups = this.getGroups();
 
-		aGroups.forEach(function(oGroup) {
-
-			if (!bConsiderOnlyVisibleGroups || (bConsiderOnlyVisibleGroups && oGroup.getVisible())) {
+		for (var i = 0; i < aGroups.length; i++) {
+			var oGroup = aGroups[i];
+			if (!bConsiderOnlyVisibleGroups || (bConsiderOnlyVisibleGroups && oGroup.isVisible())) {
 				aGroupElements = oGroup.getGroupElements();
-
-				aGroupElements.forEach(function(oGroupElement) {
-
-					aFields = [];
-					aElements = oGroupElement.getElements();
-
-					aFields = oGroupElement._extractFields(aElements, true);
-
-					aFields = aFields.filter(function(oField) {
-						return oField instanceof sap.ui.comp.smartfield.SmartField;
-					});
-
-					aSmartFields = aSmartFields.concat(aFields);
-				});
+				for (var j = 0; j < aGroupElements.length; j++) {
+					var oGroupElement = aGroupElements[j];
+					if (!bConsiderOnlyVisibleGroupElements || (bConsiderOnlyVisibleGroupElements && oGroupElement.isVisible())) {
+						aElements = oGroupElement.getElements();
+						for (var k = 0; k < aElements.length; k++) {
+							var oElement = aElements[k];
+							if (_isLazyInstance(oElement, "sap/ui/comp/smartfield/SmartField")) {
+								aSmartFields.push(oElement);
+							}
+						}
+					}
+				}
 			}
-		});
+		}
 
 		return aSmartFields;
 	};
 
 	/**
 	 * Sets the focus on the first editable control.
-	 * 
+	 *
 	 * @since 1.36.0
 	 * @public
 	 */
 	SmartForm.prototype.setFocusOnEditableControl = function() {
 		var aControls = [];
 		this.getGroups().forEach(function(oGroup) {
-			oGroup.getGroupElements().forEach(function(oGroupElement) {
-				aControls = aControls.concat(oGroupElement.getElements());
-			});
-		});
-		/* eslint-disable no-loop-func */
-		while (aControls.some(function(oControl) {
-			return oControl instanceof sap.m.FlexBox;
-		})) {
-			for (var i = 0; i < aControls.length; i++) {
-				if (aControls[i] instanceof sap.m.FlexBox) {
-					Array.prototype.splice.apply(aControls, [
-						i, 1
-					].concat(aControls[i].getItems()));
-				}
+			if (oGroup.isVisible()) {
+				oGroup.getGroupElements().forEach(function(oGroupElement) {
+					if (oGroupElement.isVisible()) {
+						aControls = aControls.concat(oGroupElement.getElements());
+					}
+				});
 			}
-		}
-		/* eslint-enable no-loop-func */
+		});
 
 		aControls.some(function(oControl) {
-			if (oControl.getEditable && oControl.getEditable() && oControl.focus) {
+			if (oControl.getEditable && oControl.getEditable() && oControl.focus && oControl.getVisible()) {
 
-				if (oControl instanceof sap.ui.comp.smartfield.SmartField) {
+				if (_isLazyInstance(oControl, "sap/ui/comp/smartfield/SmartField")) {
 					oControl.attachEventOnce("innerControlsCreated", function(oEvent) {
 						jQuery.sap.delayedCall(0, oEvent.oSource._oControl[oEvent.oSource._oControl.current], "focus");
 					});
@@ -1434,120 +1164,80 @@ sap.ui.define([
 		});
 	};
 
-	/**
-	 * Clones the SmartForm control.
-	 * 
-	 * @param {string} [sIdSuffix] A suffix to be appended to the cloned element id
-	 * @param {string[]} [aLocalIds] An array of local IDs within the cloned hierarchy (internally used)
-	 * @return {sap.ui.base.ManagedObject} A reference to the newly created clone
-	 * @protected
+	/*
+	 * As we do not want to clone internal controls like Form, Layout, Panel, Toolbar, ToolbarButtons or CustomData
+	 * we need to remove them from the aggregations before cloning and add them afterwards.
+	 * As Groups have cloned CustomData, the CustomData must be removed from the groups and added again.
 	 */
 	SmartForm.prototype.clone = function(sIdSuffix, aLocalIds) {
+
+		this.setAggregation("content", null);
+		var oLayout = this.getLayout();
+		var oToolbar = this.getAggregation("toolbar");
+		var oCustomToolbar = this.getCustomToolbar();
+		var aCustomData = this.getCustomData();
+		var aGroups = this.getGroups();
+		var i = 0;
+
+		if (oLayout) {
+			oLayout.detachEvent("_change", _handleLayoutChanged, this);
+		}
+
+		if (oCustomToolbar) {
+			_removeTitleFromToolbar.call(this);
+			_removeEditableButtonFromToolbar.call(this);
+			_removeCheckButtonFromToolbar.call(this);
+		} else if (oToolbar) {
+			this.setAggregation("toolbar", null);
+		}
+
+		if (aCustomData.length > 0) {
+			for (i = 0; i < aGroups.length; i++) {
+				_removeCustomData.call(this, aGroups[i]);
+			}
+		}
+
 		var oClone = Control.prototype.clone.apply(this, arguments);
 
-		var oAggregations = this.getMetadata().getAggregations();
-		var sAggregation;
-		var oAggregation;
+		// clone groups manually as assigned to internal Form that is not cloned
+		for (i = 0; i < aGroups.length; i++) {
+			var oGroupClone = aGroups[i].clone(sIdSuffix, aLocalIds);
+			oClone.addGroup(oGroupClone);
+		}
 
-		for (sAggregation in oAggregations) {
-			oAggregation = this.getAggregation(sAggregation);
+		if (this.getExpandable() && this._oPanel) {
+			this.setAggregation("content", this._oPanel);
+		} else {
+			this.setAggregation("content", this._oForm);
+		}
 
-			// do not clone aggregation if aggregation is bound (already done by Control.prototype.clone); aggregation is filled on update
-			// do not clone aggregation if already done by Control.prototype.clone
-			if (this.getMetadata().hasAggregation(sAggregation) && !this.isBound(sAggregation) && ((oClone.getAggregation(sAggregation) === null) || oClone.getAggregation(sAggregation).length === 0)) {
-				if (oAggregation instanceof sap.ui.base.ManagedObject) {
-					oClone.addAggregation(sAggregation, oAggregation.clone(sIdSuffix, aLocalIds));
-				} else if (jQuery.isArray(oAggregation)) {
-					for (var i = 0; i < oAggregation.length; i++) {
-						oClone.addAggregation(sAggregation, oAggregation[i].clone(sIdSuffix, aLocalIds));
-					}
+		if (oLayout) {
+			oLayout.attachEvent("_change", _handleLayoutChanged, this);
+		}
 
-					if (sAggregation === "groups") {
-						this._updateClonedElements(oClone);
-					}
+		if (oCustomToolbar) {
+			if (this.getTitle()) {
+				_useTitleOrToolbar.call(this);
+			}
+			if (this.getEditTogglable()) {
+				_addEditableButtonToToolbar.call(this);
+			}
+			if (this.getCheckButton()) {
+				_addCheckButtonToToolbar.call(this);
+			}
+		} else if (oToolbar) {
+			this.setAggregation("toolbar", oToolbar);
+		}
 
-				} else if (oAggregation != null) {
-					// must be an alt type
-					oClone.setAggregation(sAggregation, oAggregation.clone(sIdSuffix, aLocalIds));
-				}
+		if (aCustomData.length > 0) {
+			for (i = 0; i < aGroups.length; i++) {
+				_inheritCustomData.call(this, aGroups[i]);
 			}
 		}
 
 		return oClone;
 	};
 
-	/**
-	 * Updates controls in the hierarchy of a cloned smart form.
-	 * 
-	 * @param {sap.ui.comp.smartform.SmartForm} The cloned smart form
-	 * @protected
-	 */
-	SmartForm.prototype._updateClonedElements = function(oSmartForm) {
-		var oField = null, oLabel = null;
-		var aGroupElements = [];
-		var aElements = [];
-		var aFields = [];
-
-		var aGroups = oSmartForm.getGroups();
-
-		aGroups.forEach(function(oGroup) {
-
-			aGroupElements = oGroup.getGroupElements();
-
-			aGroupElements.forEach(function(oGroupElement) {
-
-				// set the link between cloned SmartLabel and SmartField
-				oField = oGroupElement._getFieldRelevantForLabel();
-				oLabel = oGroupElement._getLabel();
-
-				if (oField && oLabel) {
-					oLabel.setLabelFor(oField);
-				}
-
-				// update registration for smart field events
-				// cloned group elements still registered for template smart fields
-				aElements = oGroupElement.getElements();
-
-				aFields = [];
-
-				aFields = oGroupElement._extractFields(aElements, true);
-
-				aFields.forEach(function(oField) {
-
-					if (oField.getEditable) {
-						if (!oField.getEditable()) {
-							oField.data("editable", false);
-						}
-					}
-					if (oField.attachVisibleChanged) {
-						oField.attachVisibleChanged(function(oEvent) {
-							oGroupElement._updateFormElementVisibility();
-						});
-					}
-
-					if (oField.attachContextEditableChanged) {
-						oField.attachContextEditableChanged(function(oEvent) {
-							oGroupElement._updateFormElementEditable(oEvent);
-						});
-					}
-
-					if (oField.attachInnerControlsCreated) {
-						oField.attachInnerControlsCreated(function(oEvent) {
-							oGroupElement._updateFormElementLabel(oEvent);
-						});
-					}
-
-				});
-			});
-		});
-
-	};
-
-	/**
-	 * Cleans up the resources associated with this element and all its children.
-	 * 
-	 * @public
-	 */
 	SmartForm.prototype.exit = function() {
 		if (this._oForm) {
 			this._oForm.destroy();
@@ -1558,9 +1248,6 @@ sap.ui.define([
 		if (this._oTitle) {
 			this._oTitle.destroy();
 		}
-		if (this._oToolbar) {
-			this._oToolbar.destroy();
-		}
 		if (this._oEditToggleButton) {
 			this._oEditToggleButton.destroy();
 		}
@@ -1568,16 +1255,544 @@ sap.ui.define([
 		this._oForm = null;
 		this._oPanel = null;
 		this._oTitle = null;
-		this._bUpdateToolbar = true;
-		this._sResizeListenerId = "";
 		this._oRb = null;
-		this._oToolbar = null;
 		this._oEditToggleButton = null;
-		if (this._resizeHandlerRegId) {
-			sap.ui.core.ResizeHandler.deregister(this._resizeHandlerRegId);
-			this._resizeHandlerRegId = "";
-		}
 	};
+
+	// Toolbar handling
+	function _createToolbar() {
+
+		var oToolbar = this.getAggregation("toolbar");
+
+		if (!oToolbar) {
+			oToolbar = new OverflowToolbar(this.getId() + "-toolbar-sfmain", {
+				"height": "3rem",
+				"design": sap.m.ToolbarDesign.Transparent
+			});
+			oToolbar._bCreatedBySmartForm = true;
+			this.setAggregation("toolbar", oToolbar);
+		}
+
+		return oToolbar;
+
+	}
+
+	function _destroyToolbar(bCheck) {
+
+		var oToolbar = this.getAggregation("toolbar");
+
+		if (oToolbar) {
+			if (bCheck) {
+				var aContent = oToolbar.getContent();
+				if (aContent.length > 0) {
+					return;
+				}
+			}
+			this.destroyAggregation("toolbar");
+		}
+
+	}
+
+	function _useTitleOrToolbar() {
+
+		// if there is ony a Title set and no Toolbar Button, no Panel and no custom Toolbat
+		// the title can directly used on the Form, no toolbar is needed
+		var sTitle = this.getTitle();
+
+		if (sTitle) {
+			if (!this.getCustomToolbar() && !this.getCheckButton() && !this.getEditTogglable()) {
+				if (this._oTitle) {
+					if (this._getToolbar()) {
+						_removeTitleFromToolbar.call(this);
+					}
+					this._oForm.removeAriaLabelledBy(this._oTitle);
+					this._oTitle.destroy();
+					this._oTitle = null;
+				}
+
+				this._oForm.setTitle(sTitle);
+			} else {
+				this._oForm.setTitle();
+				if (!this._oTitle) {
+					if ((!Title || !OverflowToolbar || !ToolbarSpacer || !ToolbarSeparator) && !this._bTitleRequested) {
+						Title = sap.ui.require("sap/m/Title");
+						OverflowToolbar = sap.ui.require("sap/m/OverflowToolbar");
+						ToolbarSpacer = sap.ui.require("sap/m/ToolbarSpacer");
+						ToolbarSeparator = sap.ui.require("sap/m/ToolbarSeparator");
+						if (!Title || !OverflowToolbar || !ToolbarSpacer || !ToolbarSeparator) {
+							sap.ui.require(["sap/m/Title", 'sap/m/OverflowToolbar',
+							                'sap/m/ToolbarSpacer', 'sap/m/ToolbarSeparator'], _TitleLoaded.bind(this));
+							this._bTitleRequested = true;
+						}
+					}
+					if (Title && !this._bTitleRequested) {
+						this._oTitle = new Title(this.getId() + "-title-sfmain");
+					}
+				}
+				if (this._oTitle) {
+					this._oTitle.setText(sTitle);
+					this._oForm.addAriaLabelledBy(this._oTitle);
+					_addTitleToToolbar.call(this);
+				}
+			}
+		} else {
+			if (this._oTitle) {
+				_removeTitleFromToolbar.call(this);
+				this._oForm.removeAriaLabelledBy(this._oTitle);
+				this._oTitle.destroy();
+				this._oTitle = null;
+			} else {
+				this._oForm.setTitle();
+			}
+		}
+
+	}
+
+	function _TitleLoaded(fnTitle, fnOverflowToolbar, fnToolbarSpacer, fnToolbarSeparator) {
+
+		Title = fnTitle;
+		OverflowToolbar = fnOverflowToolbar;
+		ToolbarSpacer = fnToolbarSpacer;
+		ToolbarSeparator = fnToolbarSeparator;
+		this._bTitleRequested = false;
+		if (!this._bIsBeingDestroyed) {
+			_useTitleOrToolbar.call(this);
+		}
+
+	}
+
+	function _addTitleToToolbar() {
+
+		if (!this._oTitle) {
+			return;
+		}
+
+		var oToolbar = this._getToolbar();
+		if (!oToolbar) {
+			oToolbar = _createToolbar.call(this);
+		}
+
+		oToolbar.insertContent(this._oTitle, 0);
+
+	}
+
+	function _removeTitleFromToolbar() {
+
+		if (!this._oTitle) {
+			return;
+		}
+
+		var oToolbar = this._getToolbar();
+
+		oToolbar.removeContent(this._oTitle);
+
+		_destroyToolbar.call(this, true);
+
+	}
+
+	function _checkButtonLoaded() {
+
+		if ((!Button || !OverflowToolbar || !ToolbarSpacer || !ToolbarSeparator) && !this._bButtonRequested) {
+			Button = sap.ui.require("sap/m/Button");
+			OverflowToolbar = sap.ui.require("sap/m/OverflowToolbar");
+			ToolbarSpacer = sap.ui.require("sap/m/ToolbarSpacer");
+			ToolbarSeparator = sap.ui.require("sap/m/ToolbarSeparator");
+			if (!Button || !OverflowToolbar || !ToolbarSpacer || !ToolbarSeparator) {
+				sap.ui.require(["sap/m/Button", 'sap/m/OverflowToolbar',
+				                'sap/m/ToolbarSpacer', 'sap/m/ToolbarSeparator'], _ButtonLoaded.bind(this));
+				this._bButtonRequested = true;
+			}
+		}
+		if (Button && !this._bButtonRequested) {
+			return true;
+		}
+
+		return false;
+
+	}
+
+	function _ButtonLoaded(fnButton, fnOverflowToolbar, fnToolbarSpacer, fnToolbarSeparator) {
+
+		Button = fnButton;
+		OverflowToolbar = fnOverflowToolbar;
+		ToolbarSpacer = fnToolbarSpacer;
+		ToolbarSeparator = fnToolbarSeparator;
+		this._bButtonRequested = false;
+
+		if (!this._bIsBeingDestroyed) {
+			if (this._bEditRequested) {
+				this._bEditRequested = false;
+				_addEditableButtonToToolbar.call(this);
+			}
+			if (this._bCheckRequested) {
+				this._bCheckRequested = false;
+				_addCheckButtonToToolbar.call(this);
+			}
+		}
+
+	}
+
+	function _addEditableButtonToToolbar() {
+
+		if (!this.getEditTogglable()) {
+			return;
+		}
+
+		if (!_checkButtonLoaded.call(this)) {
+			this._bEditRequested = true;
+			return;
+		}
+
+		var oToolbar = this._getToolbar();
+		if (!oToolbar) {
+			oToolbar = _createToolbar.call(this);
+		}
+
+		if (!this._oCheckButton) {
+			// Separator if first button
+			_addSeparatorToToolbar.call(this, oToolbar);
+		}
+
+		if (!this._oEditToggleButton) {
+			var sIconSrc = this.getEditable() ? "sap-icon://display" : "sap-icon://edit";
+			var sTooltip = this._oRb.getText(this.getEditable() ? "FORM_TOOLTIP_DISPLAY" : "FORM_TOOLTIP_EDIT");
+
+			this._oEditToggleButton = new Button(oToolbar.getId() + "-button-sfmain-editToggle", {
+				icon: sIconSrc,
+				tooltip: sTooltip
+			});
+
+			this._oEditToggleButton.attachPress(this._toggleEditMode, this);
+		}
+
+		var iIndex = oToolbar.getContent().length;
+		if (this._oCheckButton) {
+			iIndex--;
+		}
+
+		oToolbar.insertContent(this._oEditToggleButton, iIndex);
+
+	}
+
+	function _removeEditableButtonFromToolbar() {
+
+		if (!this._oEditToggleButton) {
+			return;
+		}
+
+		var oToolbar = this._getToolbar();
+		oToolbar.removeContent(this._oEditToggleButton);
+		this._oEditToggleButton.destroy();
+		this._oEditToggleButton = null;
+
+		_removeSeparatorFromToolbar.call(this, oToolbar);
+		_destroyToolbar.call(this, true);
+
+	}
+
+	function _addCheckButtonToToolbar() {
+
+		if (!this.getCheckButton() || !this.getEditable()) {
+			return;
+		}
+
+		if (!_checkButtonLoaded.call(this)) {
+			this._bCheckRequested = true;
+			return;
+		}
+
+		var oToolbar = this._getToolbar();
+		if (!oToolbar) {
+			oToolbar = _createToolbar.call(this);
+		}
+
+		if (!this._oEditToggleButton) {
+			// Separator if first button
+			_addSeparatorToToolbar.call(this, oToolbar);
+		}
+
+		if (!this._oCheckButton) {
+			this._oCheckButton = new Button(this.getId() + "-" + oToolbar.getId() + "-button-sfmain-check", {
+				text: this._oRb.getText("SMART_FORM_CHECK")
+			});
+
+			this._oCheckButton.attachPress(_checkForm, this);
+		}
+
+
+		var iIndex = oToolbar.getContent().length;
+
+		oToolbar.insertContent(this._oCheckButton, iIndex);
+
+	}
+
+	function _removeCheckButtonFromToolbar() {
+
+		if (!this._oCheckButton) {
+			return;
+		}
+
+		var oToolbar = this._getToolbar();
+		oToolbar.removeContent(this._oCheckButton);
+		this._oCheckButton.destroy();
+		this._oCheckButton = null;
+
+		_removeSeparatorFromToolbar.call(this, oToolbar);
+		_destroyToolbar.call(this, true);
+
+	}
+
+	function _checkForm(oEvent) {
+
+		var aErroneousFields = [];
+		aErroneousFields = this.check();
+		this.fireChecked({
+			erroneousFields: aErroneousFields
+		});
+
+	}
+
+	function _addSeparatorToToolbar(oToolbar) {
+
+		var oToolbarSpacer;
+
+		if (!oToolbar._bCreatedBySmartForm) {
+			var aContent = oToolbar.getContent();
+
+			// add spacer to customToolbar
+			var bFound = false;
+			for (var i = 0; i < aContent.length; i++) {
+				if (aContent[i] instanceof ToolbarSpacer) {
+					bFound = true;
+					break;
+				}
+			}
+			if (!bFound) {
+				oToolbarSpacer = new ToolbarSpacer();
+				oToolbarSpacer._bCreatedBySmartForm = true;
+				oToolbar.addContent(oToolbarSpacer);
+			}
+
+			if (!(aContent[aContent.length - 1] instanceof ToolbarSeparator)) {
+				var oSeparator = new ToolbarSeparator();
+				oSeparator._bCreatedBySmartForm = true;
+				oToolbar.addContent(oSeparator);
+			}
+		} else {
+			// in private toolbar no separtaor - just spacer
+			oToolbarSpacer = new ToolbarSpacer();
+			oToolbarSpacer._bCreatedBySmartForm = true;
+			oToolbar.addContent(oToolbarSpacer);
+		}
+
+	}
+
+	function _removeSeparatorFromToolbar(oToolbar) {
+
+		var aContent = oToolbar.getContent();
+		var oLastControl;
+		if (!oToolbar._bCreatedBySmartForm) {
+			// remove Separator from customToolbar
+			oLastControl = aContent[aContent.length - 1];
+			if (oLastControl instanceof ToolbarSeparator && oLastControl._bCreatedBySmartForm) {
+				oLastControl.destroy();
+			}
+
+			aContent = oToolbar.getContent();
+		}
+
+		oLastControl = aContent[aContent.length - 1];
+		if (oLastControl instanceof ToolbarSpacer && oLastControl._bCreatedBySmartForm) {
+			oLastControl.destroy();
+		}
+
+	}
+
+	function _createResponsiveGridLayout() {
+
+		this._oFormLayoutNotInitial = true;
+		var oFormLayout = new ResponsiveGridLayout();
+		_initResponsiveGridLayout.call(this, oFormLayout);
+		return oFormLayout;
+
+	}
+
+	function _useResponsiveLayout() {
+
+		var oLayout = this.getLayout();
+		var oFormLayout = this._oForm.getLayout();
+		var bLayoutChanged = false;
+
+		if (this.getUseHorizontalLayout() && (!oLayout || !oLayout.getGridDataSpan())) {
+			if (!ResponsiveLayout && !this._bResponsiveLayoutRequested) {
+				ResponsiveLayout = sap.ui.require("sap/ui/layout/form/ResponsiveLayout");
+				if (!ResponsiveLayout) {
+					sap.ui.require(["sap/ui/layout/form/ResponsiveLayout"], _ResponsiveLayoutLoaded.bind(this));
+					this._bResponsiveLayoutRequested = true;
+				}
+			}
+			if (ResponsiveLayout && !this._bResponsiveLayoutRequested && !(oFormLayout instanceof ResponsiveLayout)) {
+				oFormLayout.destroy();
+				oFormLayout = new ResponsiveLayout();
+				this._oForm.setLayout(oFormLayout);
+				bLayoutChanged = true;
+			}
+		} else if (!(oFormLayout instanceof ResponsiveGridLayout)){
+			oFormLayout.destroy();
+			oFormLayout = _createResponsiveGridLayout.call(this);
+			this._oForm.setLayout(oFormLayout);
+			_updateResponsiveGridLayout.call(this, oLayout);
+			bLayoutChanged = true;
+		}
+
+		if (bLayoutChanged) {
+			var aGroups = this.getGroups();
+			for (var i = 0; i < aGroups.length; i++) {
+				var oGroup = aGroups[i];
+				oGroup._updateLayoutData();
+			}
+		}
+
+	}
+
+	function _ResponsiveLayoutLoaded(fnResponsiveLayout) {
+
+		ResponsiveLayout = fnResponsiveLayout;
+		this._bResponsiveLayoutRequested = false;
+		if (!this._bIsBeingDestroyed) {
+			_useResponsiveLayout.call(this);
+		}
+
+	}
+
+	function _updateResponsiveGridLayout(oLayout) {
+
+		var oFormLayout = this._oForm.getLayout();
+		if (!(oFormLayout instanceof ResponsiveGridLayout)) {
+			return;
+		}
+
+		if (this.getUseHorizontalLayout()) {
+			if (oLayout && oLayout.getGridDataSpan()) {
+				_initResponsiveGridLayout.call(this, oFormLayout);
+				oFormLayout.setColumnsL(1);
+				oFormLayout.setColumnsM(1);
+				if (oLayout.getBreakpointM() > 0) {
+					oFormLayout.setBreakpointM(oLayout.getBreakpointM());
+				}
+				if (oLayout.getBreakpointL() > 0) {
+					oFormLayout.setBreakpointL(oLayout.getBreakpointL());
+				}
+				if (oLayout.getBreakpointXL() > 0) {
+					oFormLayout.setBreakpointXL(oLayout.getBreakpointXL());
+				}
+				this._oFormLayoutNotInitial = true;
+			}
+		} else {
+			if (oLayout) {
+				oFormLayout.setLabelSpanXL(oLayout.getLabelSpanXL() ? oLayout.getLabelSpanXL() : -1);
+				oFormLayout.setLabelSpanL(oLayout.getLabelSpanL() ? oLayout.getLabelSpanL() : 4);
+				oFormLayout.setLabelSpanM(oLayout.getLabelSpanM() ? oLayout.getLabelSpanM() : 4);
+				oFormLayout.setLabelSpanS(oLayout.getLabelSpanS() ? oLayout.getLabelSpanS() : 12);
+				oFormLayout.setEmptySpanXL(oLayout.getEmptySpanXL() ? oLayout.getEmptySpanXL() : -1);
+				oFormLayout.setEmptySpanL(oLayout.getEmptySpanL() ? oLayout.getEmptySpanL() : 0);
+				oFormLayout.setEmptySpanM(oLayout.getEmptySpanM() ? oLayout.getEmptySpanM() : 0);
+				oFormLayout.setColumnsXL(oLayout.getColumnsXL() ? oLayout.getColumnsXL() : -1);
+				oFormLayout.setColumnsL(oLayout.getColumnsL() ? oLayout.getColumnsL() : 3);
+				oFormLayout.setColumnsM(oLayout.getColumnsM() ? oLayout.getColumnsM() : 2);
+				oFormLayout.setSingleContainerFullSize(oLayout.getSingleGroupFullSize());
+				oFormLayout.setBreakpointXL(oLayout.getBreakpointXL() ? oLayout.getBreakpointXL() : 1440);
+				oFormLayout.setBreakpointL(oLayout.getBreakpointL() ? oLayout.getBreakpointL() : 1024);
+				oFormLayout.setBreakpointM(oLayout.getBreakpointM() ? oLayout.getBreakpointM() : 600);
+				this._oFormLayoutNotInitial = true;
+			} else {
+				_initResponsiveGridLayout.call(this, oFormLayout);
+			}
+			_updateColumnsForLayout.call(this, oLayout, oFormLayout);
+		}
+
+	}
+
+	function _updateColumnsForLayout(oLayout, oFormLayout) {
+
+		if (this.getUseHorizontalLayout()) {
+			return;
+		}
+
+		if (!oFormLayout) {
+			oFormLayout = this._oForm.getLayout();
+			oLayout = this.getLayout();
+		}
+
+		var aGroups = this.getGroups();
+		var iColumnsXL = -1;
+		var iColumnsL = 3;
+		var bSingleContainerFullSize = true;
+		var iVisibleGroups = 0;
+
+		for (var i = 0; i < aGroups.length; i++) {
+			if (aGroups[i].isVisible()) {
+				iVisibleGroups++;
+			}
+		}
+
+		if (oLayout) {
+			iColumnsL = oLayout.getColumnsL() ? oLayout.getColumnsL() : 3;
+			iColumnsXL = (oLayout.getColumnsXL() > 0) ? oLayout.getColumnsXL() : -1;
+			bSingleContainerFullSize = oLayout.getSingleGroupFullSize();
+		}
+
+		if (aGroups && iVisibleGroups > 0 && iVisibleGroups < iColumnsXL && bSingleContainerFullSize) {
+			oFormLayout.setColumnsXL(iVisibleGroups);
+		} else if (oFormLayout.getColumnsXL() != iColumnsXL) {
+			oFormLayout.setColumnsXL(iColumnsXL); // to restet to default if group number increased
+		}
+
+		if (aGroups && iVisibleGroups > 0 && iVisibleGroups < iColumnsL && bSingleContainerFullSize) {
+			oFormLayout.setColumnsL(iVisibleGroups);
+		} else if (oFormLayout.getColumnsL() != iColumnsL) {
+			oFormLayout.setColumnsL(iColumnsL); // to restet to default if group number increased
+		}
+
+	}
+
+	function _initResponsiveGridLayout(oFormLayout) {
+
+		if (this._oFormLayoutNotInitial) {
+			oFormLayout.setLabelSpanXL(-1);
+			oFormLayout.setLabelSpanL(4);
+			oFormLayout.setLabelSpanM(4);
+			oFormLayout.setLabelSpanS(12);
+			oFormLayout.setEmptySpanXL(-1);
+			oFormLayout.setEmptySpanL(0);
+			oFormLayout.setEmptySpanM(0);
+			oFormLayout.setColumnsXL(-1);
+			oFormLayout.setColumnsL(3);
+			oFormLayout.setColumnsM(2);
+			oFormLayout.setSingleContainerFullSize(true);
+			oFormLayout.setBreakpointXL(1440);
+			oFormLayout.setBreakpointL(1024);
+			oFormLayout.setBreakpointM(600);
+			this._oFormLayoutNotInitial = false;
+		}
+
+	}
+
+	function _handleLayoutChanged(oEvent) {
+
+		var oLayout = oEvent.oSource;
+		_updateResponsiveGridLayout.call(this, oLayout);
+
+		if (oEvent.getParameter("name") == "gridDataSpan") {
+			this.propagateGridDataSpan();
+		}
+
+	}
+
+	function _isLazyInstance(oObj, sModule) {
+		var fnClass = sap.ui.require(sModule);
+		return oObj && typeof fnClass === 'function' && (oObj instanceof fnClass);
+	}
 
 	return SmartForm;
 

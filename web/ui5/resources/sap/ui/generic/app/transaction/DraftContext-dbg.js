@@ -1,8 +1,7 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define([	"jquery.sap.global", "sap/ui/base/Object", "sap/ui/generic/app/util/ModelUtil" ], function(jQuery, BaseObject, ModelUtil) {
@@ -15,7 +14,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/base/Object", "sap/ui/generic/app/u
 	 * @class The class provides access to information on draft handling that is available in the
 	 *        OData service's metadata as it interprets draft-specific annotations.
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.30.0
 	 * @alias sap.ui.generic.app.transaction.DraftContext
 	 * @param {sap.ui.model.odata.ODataModel} oModel The OData model currently used
@@ -79,6 +78,9 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/base/Object", "sap/ui/generic/app/u
 	 */
 	DraftContext.prototype.hasDraft = function(oContext) {
 		var sEntitySet = ModelUtil.getEntitySetFromContext(oContext);
+		if (sEntitySet == null) {
+			return false;
+		}
 		return this.isDraftEnabled(sEntitySet);
 	};
 
@@ -123,7 +125,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/base/Object", "sap/ui/generic/app/u
 	 * Checks whether a given key is a technical key.
 	 *
 	 * @param {string} sEntitySet The name of the entity set
-	 * @param {oKeys} oKeys The given key
+	 * @param {object} oKeys The given key
 	 * @returns {boolean} <code>true</code>, if a given key is a technical key, <code>false</code> otherwise
 	 * @throws {Error} If no entity set is handed over as input parameter
 	 * @public
@@ -159,7 +161,7 @@ sap.ui.define([	"jquery.sap.global", "sap/ui/base/Object", "sap/ui/generic/app/u
 	 * Checks whether a given key is a semantic key.
 	 *
 	 * @param {string} sEntitySet The name of the entity set
-	 * @param {oKeys} oKeys The given key
+	 * @param {object} oKeys The given key
 	 * @returns {boolean} <code>true</code>, if a given key is a semantic key, <code>false</code> otherwise
 	 * @throws {Error} If no entity set is handed over as input parameter
 	 * @public

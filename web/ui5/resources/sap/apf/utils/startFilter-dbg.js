@@ -41,6 +41,7 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 	var contextInitiallyPrependedToValueHelp = false;
 	var filterResolutionBuffer = {};
 	var valueHelpBuffer = {};
+	var prependedValueHelpList;
 
 	prependListValuesIfNotContainedInResponse = prependListValuesIfNotContainedInResponse.bind(this);
 	convertRequestResponseToArrayList = convertRequestResponseToArrayList.bind(this);
@@ -48,6 +49,16 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 	sendFilterResolutionRequest = sendFilterResolutionRequest.bind(this);
 	determineSelected = determineSelected.bind(this);
 	determineValues = determineValues.bind(this);
+
+	/**
+	 * @private
+	 * @function 
+	 * @name sap.apf.utils.StartFilter#hasValueHelpRequest
+	 * @returns {boolean} if the facet filter has a value help request defined
+	 */
+	this.hasValueHelpRequest = function () {
+		return !!config.valueHelpRequest;
+	};
 	/**
 	 * @private
 	 * @function 
@@ -135,10 +146,6 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 		if(!deferredSelected) {
 			deferredSelected = jQuery.Deferred();
 		}
-		if(!deferredValues) {
-			deferredValues = jQuery.Deferred();
-		}
-		determineValuesAndResolve(++concurrentDetermineValuesCount);
 		determineSelectedAndResolve(++concurrentDetermineSelectedCount);
 	};
 	/**
@@ -212,14 +219,11 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 	 */
 	this.getValues = function() {
 		var promiseToBeReturned;
-		if(!deferredValues) {
+		if(!deferredValues || deferredValues.state() !== 'pending') {
 			deferredValues = jQuery.Deferred();
-			promiseToBeReturned = deferredValues;
-			determineValuesAndResolve(++concurrentDetermineValuesCount);
-		} else if(deferredValues.state() === 'pending') {
-			promiseToBeReturned = deferredValues;
-			determineValuesAndResolve(++concurrentDetermineValuesCount);
 		}
+		promiseToBeReturned = deferredValues;
+		determineValuesAndResolve(++concurrentDetermineValuesCount);
 		return promiseToBeReturned.promise();
 	};
 	/**
@@ -230,14 +234,8 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 	 * @returns {object} Metadata object {@link sap.apf.core.EntityTypeMetadata#getPropertyMetadata()} 
 	 */
 	this.getMetadata = function() {
-		if (config.valueHelpRequest) {
-			return sendValueHelpRequest().then(function(response) {
-				return response.metadata.getPropertyMetadata(this.getAliasNameIfExistsElsePropertyName());
-			}.bind(this));
-		} else if (config.filterResolutionRequest) {
-			return sendFilterResolutionRequest().then(function(response) {
-				return response.metadata.getPropertyMetadata(this.getAliasNameIfExistsElsePropertyName());
-			}.bind(this));
+		if (config.metadataProperty) {
+			return jQuery.Deferred().resolve(config.metadataProperty);
 		}
 		return jQuery.Deferred().resolve({});
 	};
@@ -249,7 +247,7 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 	 * @param {boolean} isNavigation Indicator for serializing a start filter for navigation purpose
 	 * @returns {object} Serialized data as deep JS object
 	 */
-	this.serialize = function(isNavigation) {
+	this.serialize = function(isNavigation, keepInitialStartFilterValues) {
 		var deferredSerialization = jQuery.Deferred();
 		var serializedStartFilter = {
 			propertyName : this.getPropertyName()
@@ -264,7 +262,10 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 					if(isNavigation === true) {
 						serializedStartFilter.initiallySelectedValues = values;
 					}
-					initiallySelectedValues = null;
+					//Case for keeping the initial values if a serialization is triggered for saving the 'last good APF state' 
+					if(keepInitialStartFilterValues !== true) {
+						initiallySelectedValues = null;
+					}
 					deferredSerialization.resolve(serializedStartFilter);
 				});
 			} else {
@@ -316,9 +317,7 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 	function determineValuesAndResolve(currentDeterminationNumber) {
 		determineValues(currentDeterminationNumber, concurrentDetermineValuesCount).done(function(values) {
 			if(currentDeterminationNumber === concurrentDetermineValuesCount){
-				var promiseToBeResolved = deferredValues; 
-				deferredValues = jQuery.Deferred();
-				promiseToBeResolved.resolve(values, deferredValues.promise());
+				deferredValues.resolve(values);
 			}
 		});
 	}
@@ -350,7 +349,7 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 		} else if (valueHelpConfigured  && ((config.preselectionDefaults && config.preselectionDefaults.length > 0) || jQuery.isFunction(config.preselectionFunction))) {
 			getValueHelp(currentCount, concurrenCount).then(function(response) {
 				var valueHelpList = response.data;
-				var prependedValueHelpList = prependListValuesIfNotContainedInResponse(preselectionNotInValueHelp, valueHelpList);
+				prependedValueHelpList = prependListValuesIfNotContainedInResponse(preselectionNotInValueHelp, valueHelpList);
 				deferredDetermination.resolve(prependedValueHelpList);
 			});
 		} else if (valueHelpConfigured) {
@@ -370,16 +369,16 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 			deferredDetermination.resolve(valueHelpList);
 		} else if (((config.preselectionDefaults && config.preselectionDefaults.length > 0) || jQuery.isFunction(config.preselectionFunction)) && !valueHelpConfigured && !config.filterResolutionRequest && !context) {
 			if (this.isMultiSelection()) {
-				var prependedValueHelpList = prependListValuesIfNotContainedInResponse(preselectionNotInValueHelp, valueHelpList);
+				prependedValueHelpList = prependListValuesIfNotContainedInResponse(preselectionNotInValueHelp, valueHelpList);
 			} else if(preselectionNotInValueHelp.length > 0 ){
-				var prependedValueHelpList = prependListValuesIfNotContainedInResponse([ preselectionNotInValueHelp[0] ], valueHelpList);
+				prependedValueHelpList = prependListValuesIfNotContainedInResponse([ preselectionNotInValueHelp[0] ], valueHelpList);
 			}
 			deferredDetermination.resolve(prependedValueHelpList);
 		} else if (((config.preselectionDefaults && config.preselectionDefaults.length > 0) || jQuery.isFunction(config.preselectionFunction)) && config.filterResolutionRequest && !context) {
 			if (this.isMultiSelection()) {
-				var prependedValueHelpList = prependListValuesIfNotContainedInResponse(preselectionNotInValueHelp, valueHelpList);
+				prependedValueHelpList = prependListValuesIfNotContainedInResponse(preselectionNotInValueHelp, valueHelpList);
 			} else if(preselectionNotInValueHelp.length > 0 ){
-				var prependedValueHelpList = prependListValuesIfNotContainedInResponse([ preselectionNotInValueHelp[0] ], valueHelpList);
+				prependedValueHelpList = prependListValuesIfNotContainedInResponse([ preselectionNotInValueHelp[0] ], valueHelpList);
 			}
 			deferredDetermination.resolve(prependedValueHelpList);
 		} else if (context && context.type === 'internalFilter' || !context) {
@@ -429,6 +428,8 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 			resolvePromise();
 		} else if (context && context.type === 'internalFilter' && !config.filterResolutionRequest) {
 			deferredDetermination.resolve(context);
+		} else if (config.preselectionDefaults === null && !context) {
+			deferredDetermination.resolve([]);
 		} else if (config.filterResolutionRequest && !context && !valueHelpConfigured && !(config.preselectionDefaults && config.preselectionDefaults.length > 0)) {
 			deferredDetermination.resolve(null);
 		} else if (context && context.type === 'internalFilter' && config.filterResolutionRequest) {
@@ -480,7 +481,7 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 							selectedValues.push(value);
 						}
 					});
-					if(selectedValues.length === 0){
+					if(selectedValuesCandidates.length !== 0 && selectedValues.length === 0 && config.preselectionDefaults !== null){
 						selectedValues = convertRequestResponseToArrayList({data: values});
 					}
 					if (!startFilter.isMultiSelection()) {
@@ -575,7 +576,8 @@ sap.apf.utils.StartFilter = function(inject, config, context) {
 	function createAvailableValuesHashMap(arrayOfResponseObjects) {
 		var valuesHashMap = {};
 		arrayOfResponseObjects.forEach(function(responseObject) {
-			valuesHashMap[responseObject[this.getAliasNameIfExistsElsePropertyName()]] = true;
+			var value = responseObject[this.getAliasNameIfExistsElsePropertyName()];
+			valuesHashMap[value] = true;
 		}.bind(this));
 		return valuesHashMap;
 	}

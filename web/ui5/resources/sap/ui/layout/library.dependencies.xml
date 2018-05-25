@@ -756,7 +756,7 @@
       <module name="ui5loader-autoconfig.js"/>
     </requires>
   </module>
-  <module name="sap/ui/layout/form/SimpleForm.js" size="65506" compressedSize="24943">
+  <module name="sap/ui/layout/form/SimpleForm.js" size="65088" compressedSize="24819">
     <description>Provides control sap.ui.layout.form.SimpleForm.</description>
     <requires>
       <module name="jquery.sap.global.js"/>
@@ -894,7 +894,7 @@
       <module name="sap/ui/layout/rules/Form.support.js"/>
     </includes>
   </module>
-  <module name="sap/ui/layout/library-preload.js" size="229762">
+  <module name="sap/ui/layout/library-preload.js" size="229638">
     <requires>
       <module name="jquery.sap.global.js"/>
       <module name="sap/ui/Device.js"/>
@@ -1081,7 +1081,7 @@
       <module name="sap/ui/layout/manifest.json"/>
     </includes>
   </module>
-  <module name="sap/ui/layout/library-preload.support.js" size="30668">
+  <module name="sap/ui/layout/library-preload.support.js" size="30616">
     <requires>
       <module name="jquery.sap.global.js"/>
       <module name="sap/ui/support/library.js"/>
@@ -1193,7 +1193,7 @@
   </module>
   <module name="sap/ui/layout/messagebundle_zh_TW.properties" size="1112">
   </module>
-  <module name="sap/ui/layout/rules/Form.support.js" size="30073" compressedSize="17598">
+  <module name="sap/ui/layout/rules/Form.support.js" size="30021" compressedSize="17577">
     <description>Defines support rules of the Form controls of sap.ui.layout library.</description>
     <requires>
       <module name="jquery.sap.global.js"/>

@@ -1,13 +1,11 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// Provides control sap.suite.ui.microchart.BulletMicroChartData.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
-	function(jQuery, library, Element) {
+sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element', 'sap/ui/core/Control'],
+	function(jQuery, library, Element, Control) {
 	"use strict";
 
 	/**
@@ -20,7 +18,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * Contains the thresholds data.
 	 * @extends sap.ui.core.Element
 	 *
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @constructor
@@ -54,7 +52,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	};
 
 	BulletMicroChartData.prototype.clone = function(sIdSuffix, aLocalIds, oOptions) {
-		var oClone = sap.ui.core.Control.prototype.clone.apply(this, arguments);
+		var oClone = Control.prototype.clone.apply(this, arguments);
 		oClone._isValueSet = this._isValueSet;
 		return oClone;
 	};

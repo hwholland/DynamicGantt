@@ -58,7 +58,7 @@ jQuery.sap.require("sap.ui.core.Item");
  * @extends sap.ui.core.Item
  *
  * @author Bruno Vicente
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

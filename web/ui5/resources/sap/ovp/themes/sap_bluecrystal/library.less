@@ -11,17 +11,6 @@
   font-size: @sapMFontMediumSize;
 }
 
-.sapOvpBarListProgressIndicator {
-  background-color: inherit;
-  .sapMPIText {
-    font-size: @sapMFontMediumSize;
-  }
-}
-
-.sapOvpBarListProgressIndicatorBackground {
-  background-color: @sapUiLightBG;
-}
-
 .sapOvpBarListObjectNumberWithoutState {
   color: @sapUiDarkText;
   font-size: @sapMFontMediumSize;
@@ -67,9 +56,9 @@
 }
 
 .sapOvpBaseCard tr {
-  &:hover {
-    background: #f0f0f0;
-  }
+  &:active {
+    background: @sapUiListActiveBackground;
+  } 
 }
 
 .sapOvpStackCardIcon {
@@ -81,12 +70,12 @@
 }
 
 .sapOvpStackCardContent{
-  background-color: @sapUiBrand;
+  background-color: @sapUiSegmentedButtonBackground;
   &> .sapMFlexItem, .sapMLabel {
-    color: @sapUiLightestBG;
+    color: @sapUiHighlight;
   }
   &:hover {
-    background-color: @sapUiHighlight;
+    background-color: @sapUiSegmentedButtonHoverBackground;
   }
 }
 
@@ -116,17 +105,17 @@
 
 
 .sapOvpCardHeader .sapOvpKPIHeaderTitleStyle {
-	color: @sapUiLightText;
+  color: @sapUiLightText;
   font-size: @sapMFontHeader5Size;
 }
 
 .sapOvpCardHeader .sapOvpKPIHeaderDimensionStyle {
-	color: @sapUiLightText;
+  color: @sapUiLightText;
   font-size: @sapMFontSmallSize;
 }
 
 .sapOvpCardHeader .sapOvpKPIHeaderFilterStyle {
-	color: @sapUiLightText;
+  color: @sapUiLightText;
   font-size: @sapMFontSmallSize;
 }
 
@@ -135,29 +124,17 @@
 
 }
 
-.ovpCardResizeGhost {
-	position: absolute;
-	background-color: @sapUiContentShadowColor;
-	opacity: 0.1;
-}
-
-.ovpResizeRubberBand {
-	position: absolute;
-	border-width: 3px; 
-	border-style: dashed;
-	border-color: @sapUiMediumBorder;
-	opacity: 1;
-	}
 /* END "Card.less" */
 
 /* START "ObjectStream.less" */
 .sapOvpStackedCardPopup {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0);
+  box-shadow: none;
   .sapMDialogSection {
     background-color: transparent;
   }
   .sapOvpObjectStreamHeader {
-    color: @sapUiInvertedElement;
+    color: @sapUiInvertedElement !important;
     font-size: @sapMFontHeader2Size
   }
   .sapOvpObjectStreamClose {
@@ -199,6 +176,11 @@
   .sapOvpObjectStreamClose {
     font-size: @sapMFontHeader5Size;
   }
+}
+
+.sapMQuickViewPage .sapMQuickViewThumbnail {
+    background-color: #ffffff;
+    color: #000000;
 }
 
 
@@ -249,32 +231,16 @@
     background-color: @sapUiButtonStandardBG;
 }
 .sapOvpStackPlaceHolderIcon{
-  color: @sapUiDarkText;
+  color: @sapUiContentNonInteractiveIconColor;
 }
 
 .sapOvpStackPlaceHolderTextLine{
-  color: @sapUiDarkText;
-  font-size: @sapMFontHeader3Size;
-}
-
-.sapOvpStackPlaceHolderLabelsContainer{
-  background-color: @sapUiLightestBG;
-}
-
-.sapOvpStackPlaceHolderAppName{
-  font-size: @sapMFontHeader6Size;
+  color: @sapUiLink;
 }
 /* END "StackPlaceHolder.less" */
 
 /* START "DashboardLayout.less" */
-.sapOvpDashboardLayoutItem > .sapUiComponentContainer {
-    background-color:@sapUiTileBackground;
-}
-.sapOvpDasboardGhost {
-	position: absolute;
-	background-color: @sapUiContentShadowColor;
-	opacity: 0.1;
-}
+
 /* END "DashboardLayout.less" */
 
 /* START "LinkListCard.less" */

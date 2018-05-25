@@ -2,6 +2,7 @@
 	'use strict';
 	jQuery.sap.declare('sap.apf.messageCallbackForStartup');
 	jQuery.sap.require('sap.apf.core.constants');
+	jQuery.sap.require("sap.m.MessageBox");
 	sap.apf.messageCallbackForStartup = function(messageObject) {
 		function closeApplication() {
 			window.history.go(-1);
@@ -16,7 +17,7 @@
 		}
 		function openDetailedLogDialog() {
 			var oDetailLogDialog = new sap.m.Dialog({
-				title : messageObject.getSeverity(),
+				title : "Error",
 				type : sap.m.DialogType.Message,
 				state : sap.ui.core.ValueState.Error,
 				content : new sap.ui.core.HTML({
@@ -37,7 +38,7 @@
 			oDetailLogDialog.open();
 		}
 		var oDialog = new sap.m.Dialog({
-			title : messageObject.getSeverity(),
+			title : "Error",
 			type : sap.m.DialogType.Message,
 			state : sap.ui.core.ValueState.Error,
 			content : [ new sap.m.Text({
@@ -52,7 +53,7 @@
 				}) ]
 			}) ],
 			beginButton : new sap.m.Button({
-				text : "OK", //This text has to be a translated text
+				text : "Close", //This text has to be a translated text
 				press : function() {
 					if (messageObject.getSeverity() === sap.apf.core.constants.message.severity.fatal) {
 						closeApplication();

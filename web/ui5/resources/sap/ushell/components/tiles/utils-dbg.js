@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview This file contains miscellaneous utility functions.
  */
@@ -685,7 +685,7 @@ this.sap = this.sap || {};
             oModel.setProperty('/data/' + sPropertyName, sPropertyValue);
             oModel.setProperty('/config/' + sPropertyName, sPropertyValue);
             if (sPropertyName === "navigation_target_url") {
-                oModel.setProperty('/nav/' + sPropertyName, sPropertyValue);
+            	oModel.setProperty('/nav/' + sPropertyName, sPropertyValue);
             }
         });
     };

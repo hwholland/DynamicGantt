@@ -10,6 +10,8 @@
 
 /* START "Viewer.less" */
 .sapVizKitViewer {
+	height: 100%;
+	position: relative;
 	touch-action: none;
 	-ms-touch-action: none;
 	background-color: @sapUiExtraLightBG;
@@ -31,39 +33,39 @@
 	z-index: 10;
 }
 
-
+.sapVizKitViewer .sapUiVizKitLayout {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
 
 .sapVizKitViewer .sapUiLocalBusyIndicator {
 	background-color: rgba(242, 242, 242, 0.9);
 }
 
-.sapVizKitViewer .sapUiVizkitProgressIndicator {
-	position: relative;
+.sapVizKitViewer .sapUiVizKitProgressIndicator {
+	position: absolute;
 	overflow: hidden;
 	z-index: 10;
 	width: 100%;
-	bottom: 1.6rem;
+	bottom: 0;
 }
 /* END "Viewer.less" */
 
 /* START "Viewport.less" */
-@canvasTopColor: black;
-@canvasBottomColor: white;
-
 .sapVizKitViewport {
-	width: 100%;
-	height: 100%;
-	padding:0px;
-	margin:0px;
-	background-image: linear-gradient(to bottom, @canvasTopColor, @canvasBottomColor);
+	padding: 0;
+	margin: 0;
 	outline-offset: -1px;
+	min-width: 100px;
+	touch-action: none;
+	-ms-touch-action: none;
+	overflow: hidden;
 
 	canvas {
 		display: block;
-		width: 100%;
-		height: 100%;
-		padding:0px;
-		margin:0px;
+		padding: 0;
+		margin: 0;
 	}
 }
 
@@ -88,8 +90,7 @@
 /* END "Overlay.less" */
 
 /* START "NativeViewport.less" */
-@canvas-top-color: black;
-@canvas-bottom-color: white;
+
 
 .sapVizKitNativeViewport {
     display: inline-flex;
@@ -117,7 +118,7 @@
 /* END "NativeViewport.less" */
 
 /* START "SceneTree.less" */
-.sapRULTSceneTree {
+.sapUiVkSceneTree {
 	width: 100%;
 	height: 100%;
 	-webkit-transform: translate3d(0,0,0);
@@ -129,46 +130,42 @@
 	padding: 0.5em 0 0 0.5em;
 }
 
-*:focus {
-	outline: 1px dotted @sapUiHighlight;
-}
-
 //We use this for Text controls inside the scene tree,
 //because we want the long labels to turn into ellipsis.
 //display: inline is required for this to happen.
-.sapRULTSceneTree .sapMText {
+.sapUiVkSceneTree .sapMText {
 	display: inline;
 	position: relative;
 }
 
 //We are setting the border-right property to 0 so there are no vertical borders displayed.
-.sapRULTSceneTree .sapUiTableRowHdr {
+.sapUiVkSceneTree .sapUiTableRowHdr {
 	border-right: 0;
 }
 
-.sapRULTSceneTree .sapUiTableTr > td {
+.sapUiVkSceneTree .sapUiTableTr > td {
 	border-right: 0;
 }
 
-.sapRULTSceneTree .sapUiTableColHdrScr .sapUiTableCol {
+.sapUiVkSceneTree .sapUiTableColHdrScr .sapUiTableCol {
 	border-right: 0;
 }
 
-.sapRULTSceneTree .sapUiTableColHdrCnt .sapUiTableColRowHdr {
+.sapUiVkSceneTree .sapUiTableColHdrCnt .sapUiTableColRowHdr {
 	border-right: 0;
 }
 
 //This class is the one that looks after the scroll bar in the scene tree.
 //We are setting to auto so it can show a scroll bar when the scene tree height
 //is greater than the container.
-.sapRULTSceneTree .sapUiTableVSb {
+.sapUiVkSceneTree .sapUiTableVSb {
 	overflow-y: auto;
 }
 
 //iPad rendering is not consistent with Windows so we have to add this
 //float: none style to prevent a bug where the text labels overlapping
 //with the expand arrows.
-.sapRULTSceneTree .sapUiTableTreeIcon {
+.sapUiVkSceneTree .sapUiTableTreeIcon {
 	float: none;
 }
 /* END "SceneTree.less" */
@@ -256,32 +253,33 @@
 /* END "FlexibleControl.less" */
 
 /* START "CheckEye.less" */
-.sapUiCheckEye input[type="checkbox"] {
+.sapUiVkCheckEye input[type="checkbox"] {
 	display: none;
 }
 
-.sapUiCheckEye input[type="checkbox"] + label:before {
+.sapUiVkCheckEye input[type="checkbox"] + label:before {
 	content: "\e1ea";
 	font-family: "SAP-icons";
 	font-size: 1rem;
 	color: @sapUiMediumBG;
 }
 
-.sapUiCheckEye input[type="checkbox"]:checked + label:before {
+.sapUiVkCheckEye input[type="checkbox"]:checked + label:before {
 	content: "\e1e9";
 	color: @sapUiDarkBG;
 }
 
 //Making the Chekeye clicking area fill the whole table cell
-.sapUiCheckEye {
+.sapUiVkCheckEye {
 	height: 100%;
-	width: 100%;
+	width: 40px;
 	display: block;
-	padding-left: 1em;
-	padding-right: 1em;
-	margin-left: -1.2em;
-	padding-top: 0.15em;
-	padding-bottom: 0.15em;
+	margin-left: -7px;
+}
+
+.sapUiVkCheckEye:focus {
+	outline: 1px dotted @sapUiBaseBorder;
+	outline-offset: -1px;
 }
 /* END "CheckEye.less" */
 
@@ -335,24 +333,26 @@
 
 /* START "MapContainer.less" */
 /*...........................................................................*/
+
+
 /* LESS for control sap.ui.vk/MapContainer.control...................................*/
+
+
 /*...........................................................................*/
 
 
-/* main map container style..................................................*/ 
+/* main map container style..................................................*/
 
-.sapUiVkMapContainer {
-}
-
+.sapUiVkMapContainer {}
 .sapUiVkMapContainerOverlay {
 	position: absolute;
 	top: 0.5rem;
 	left: 0.5rem;
 	right: 0.25rem;
 	bottom: 1rem;
-	pointer-events: none; /* necessary to let events through to the content below */
+	/* necessary to let events through to the content below */
+	pointer-events: none;
 }
-
 html.sap-phone {
 	.sapUiVkMapContainerOverlay {
 		top: 0.25rem;
@@ -360,13 +360,12 @@ html.sap-phone {
 		right: 0.25rem;
 	}
 	.sapUiVkContainerBaseWrapper {
-  		position: absolute;
-  		top: 0px;
-  		left: 0px;	
-   	transition: transform 0.4s;
+		position: absolute;
+		top: 0px;
+		left: 0px;
+		transition: transform 0.4s;
 	}
 }
-
 .sapUiVkMapContainer {
 	.sapUiVkContainerBaseContentArea {
 		padding-top: 0px;
@@ -374,38 +373,36 @@ html.sap-phone {
 	.sapUiVkContainerBaseToolbarArea {
 		position: static;
 		/* since parent sapUiVkMapContainerOverlay declares pointer-events: none, which gets inherited,
-		 this is needed to make toolbar buttons functional */	
-	   pointer-events: auto; 
+		 this is needed to make toolbar buttons functional */
+		pointer-events: auto;
 	}
 	.sapUiVkContainerBaseToolbarArea .sapMTB {
 		border: none;
-		height: 1px !important; /* This trick allows to let events pass transparent parts of the toolbar */
+		/* This trick allows to let events pass transparent parts of the toolbar */
+		height: 1px !important;
 		overflow: visible;
-		margin-top: 1.5rem;	
+		margin-top: 1.5rem;
 	}
 	.sapUiVkMapContainerListPanelArea {
 		/* since parent sapUiVkMapContainerOverlay declares pointer-events: none, which gets inherited,
-		 this is needed to make ListPanelStack functional */	
-	   pointer-events: auto; 	
+		 this is needed to make ListPanelStack functional */
+		pointer-events: auto;
 	}
 }
-
 .sapUiSizeCompact .sapUiVkMapContainer .sapUiVkContainerBaseToolbarArea .sapMTB {
-	margin-top: 1rem;	
+	margin-top: 1rem;
 }
-
 .sapUiVkMapContainerNavbarArea {
 	position: absolute;
 	right: 0rem;
 	bottom: 0rem;
 	/* since parent sapUiVkMapContainerOverlay declares pointer-events: none, which gets inherited,
-		 this is needed to make navbar buttons functional */	
-	pointer-events: auto; 
+		 this is needed to make navbar buttons functional */
+	pointer-events: auto;
 }
-
-.sapUiVkMapContainerNavbarArea { 
+.sapUiVkMapContainerNavbarArea {
 	.sapMTB {
-   	border: none;
+		border: none;
 		flex-direction: column;
 		height: auto !important;
 		width: 1px;
@@ -415,38 +412,34 @@ html.sap-phone {
 		margin-top: -0.5rem;
 	}
 }
-
 .sapUiVkMapContainerLPW {
 	top: 0px;
 	left: 0px;
 	background: white;
 	width: 100%;
 	height: 100%;
-	padding-left: 0.25rem; /* from back button */
+	/* from back button */
+	padding-left: 0.25rem;
 	transform: translateX(-100%);
 	transition: transform 0.4s;
-	box-sizing: border-box;	
+	box-sizing: border-box;
 }
-
 html.sap-phone .sapUiVkMapContainerListPanelArea {
-	margin-left: -0.25rem; /* neutralize padding from sapUiVkMapContainerLPW */
+	/* neutralize padding from sapUiVkMapContainerLPW */
+	margin-left: -0.25rem;
 }
-
 html:not(.sap-phone) .sapUiVkMapContainerListPanelArea {
 	float: left;
 }
-
 .sapUiVkMapContainerLPWIn {
 	transform: translateX(0%);
 }
-
 .sapUiVkMapContainerMapOut {
 	transform: translateX(100%);
 }
-
 html[dir=rtl] {
 	.sapUiVkMapContainerLPW {
-		transform: translateX(100%);	
+		transform: translateX(100%);
 	}
 	.sapUiVkMapContainerLPWIn {
 		transform: translateX(0%);
@@ -456,7 +449,54 @@ html[dir=rtl] {
 	}
 }
 
-@sapUiVkMCOverlayShadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.5);
+
+.mapContainerHboxPopover.sapMFlexBox.sapMFlexBoxAlignContentStretch.sapMFlexBoxAlignItemsStretch.sapMFlexBoxBGTransparent.sapMFlexBoxJustifyStart.sapMFlexBoxWrapNoWrap.sapMHBox {
+	height:5rem;
+	width: 100%;
+}
+
+
+
+.mapLayerPopoverItemText.sapMText.sapMTextBreakWord.sapMTextMaxWidth.sapUiSelectable{
+	bottom: 0.1rem;
+	right: 0.3rem;
+	position: absolute;
+	background:rgba(255,255,255,0.6);
+	margin-bottom: 0.15rem;
+}
+
+
+.layerType.sapMImg.sapMPointer{
+	border: 0.15rem solid white;
+	height:4.688rem;
+}
+
+
+.sapUiVkMapContainerNavbarArea .mapLayerPopoverItem {
+	position: absolute;
+	border: 0.15rem solid white;
+	height: 4.7rem;
+	bottom: 0.25rem;
+	right: 3.25rem;
+	z-index: 1;
+}
+
+
+.sapUiVkMapContainerNavbarContainer {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+}
+
+.mapLayerSelectedText.sapMText.sapMTextBreakWord.sapMTextMaxWidth.sapUiSelectable{
+	bottom: 0.6rem;
+	right: 6.66rem;
+	position: absolute;
+	background:rgba(255,255,255,0.6);
+	white-space: nowrap;
+	z-index: 2;
+}
+
 .sapUiVkMapContainer {
 	.sapUiVkContainerBaseToolbarArea .sapMBtnTransparent:not(.sapMToggleBtnPressed),
 	.sapUiVkMapContainerNavbarArea .sapMBtnTransparent:not(.sapMToggleBtnPressed) {
@@ -498,6 +538,12 @@ html:not(.sap-phone) .sapUiVkMapContainer {
        font-weight: normal;
        font-style: normal;
 }
+
+
+#__popover0-scroll {
+	margin-right: 0px !important;
+}
+
 /* END "MapContainer.less" */
 
 /* START "ListPanelStack.less" */
@@ -621,22 +667,6 @@ html:not(.sap-phone) .sapUiVkMapContainer {
  
 /* END "LegendItem.less" */
 
-/* START "ProgressIndicator.less" */
-.sapUiVizkitProgressIndicator .sapMPIBar  {
-	background-color: rgb(0, 157, 224) !important;
-	background-image: none;
-}
-
-.sapUiVizkitProgressIndicator .sapMPI {
-	background-color: rgb(166,232,255) !important;
-	border: none !important;
-}
-
-.sapUiVizkitProgressIndicatorText {
-	padding-left: 1rem;
-}
-/* END "ProgressIndicator.less" */
-
 /* START "Notifications.less" */
 /*...........................................................................*/
 /* LESS for control sap.ui.vk/Notifications.control.........................*/
@@ -654,3 +684,260 @@ html:not(.sap-phone) .sapUiVkMapContainer {
 }
 /* END "Notifications.less" */
 
+/* START "DockContainer.less" */
+.sapUiDockContainer_elem {
+	position: absolute;
+	background-color: blue;
+	z-index: 30;
+}
+
+.sapUiDockContainer_splitter {
+	position: absolute;
+	opacity: 0;
+	background-color: blue;
+	z-index: 60;
+	visibility: hidden;
+}
+
+/* END "DockContainer.less" */
+
+/* START "DockManager.less" */
+.sapUiDockManager_elem {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	position: relative;
+	background-color: darkgrey;
+}
+
+.sapUiDockManager_dockIcon {
+	position: absolute;
+	background-color: white;
+	border: 1px solid darkgrey;
+	opacity: 0.9;
+	cursor: default;
+	z-index: 100;
+}
+
+.sapUiDockManager_dockShadow {
+	position: absolute;
+	background-color: blue;
+	opacity: 0.3;
+	z-index: 90;
+	cursor: default;
+}
+
+/* END "DockManager.less" */
+
+/* START "DockPane.less" */
+.sapUiDockPane_elem {
+	position: absolute;
+	background-color: darkgrey;
+	z-index: 50;
+	overflow: hidden;
+}
+
+.sapUiDockPane_title {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	height: 25px;
+	box-sizing: border-box;
+	padding: 3px 4px;
+	background-color: black;
+	color: white;
+	cursor: default;
+	user-select: none;
+	overflow: hidden;
+}
+
+.sapUiDockPane_close {
+	position: absolute;
+	right: 4px;
+	top: 4px;
+	width: 18px;
+	height: 18px;
+	background-color: red;
+	opacity: 0.5;
+	text-align: center;
+}
+
+.sapUiDockPane_border {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	z-index: 10;
+	pointer-events: none;
+}
+
+.sapUiDockPane_border_t {
+	position: absolute;
+	left: 8px;
+	top: 0;
+	right: 8px;
+	height: 8px;
+	cursor: ns-resize;
+}
+
+.sapUiDockPane_border_b {
+	position: absolute;
+	left: 8px;
+	bottom: 0;
+	right: 8px;
+	height: 8px;
+	cursor: ns-resize;
+}
+
+.sapUiDockPane_border_l {
+	position: absolute;
+	left: 0;
+	top: 8px;
+	width: 8px;
+	bottom: 8px;
+	cursor: ew-resize;
+}
+
+.sapUiDockPane_border_r {
+	position: absolute;
+	right: 0;
+	top: 8px;
+	width: 8px;
+	bottom: 8px;
+	cursor: ew-resize;
+}
+
+.sapUiDockPane_border_tl {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 8px;
+	height: 8px;
+	cursor: nwse-resize;
+}
+
+.sapUiDockPane_border_tr {
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 8px;
+	height: 8px;
+	cursor: nesw-resize;
+}
+
+.sapUiDockPane_border_bl {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 8px;
+	height: 8px;
+	cursor: nesw-resize;
+}
+
+.sapUiDockPane_border_br {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: 8px;
+	height: 8px;
+	cursor: nwse-resize;
+}
+
+.sapUiDockPane_tabBox {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 24px;
+	overflow: hidden;
+}
+
+.sapUiDockPane_tabElem {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 0;
+	height: 24px;
+	box-sizing: border-box;
+	overflow: hidden;
+	padding: 0 4px;
+	background-color: darkgrey;
+	border: 1px solid grey;
+}
+
+.sapUiDockPane_content {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	box-sizing: border-box;
+	background-color: lightgrey;
+	border: 1px solid grey;
+	overflow: hidden;
+}
+
+/* END "DockPane.less" */
+
+/* START "RedlineDesign.less" */
+.sapUiVizkitRedlineDesign, .sapUiVizkitRedlineSurface {
+	box-shadow: inset 0px 0px 0px 0.25em #0099db;
+}
+
+.sapUiVizkitRedlineDesignMode {
+	cursor: crosshair;
+}
+
+.sapUiVizkitRedlineInteractionMode {
+	cursor: pointer;
+}
+
+/* END "RedlineDesign.less" */
+
+/* START "RedlineSurface.less" */
+//disable interaction for all elements inside RedlineSurface
+.sapUiVizkitRedlineSurface * {
+	pointer-events: none
+}
+/* END "RedlineSurface.less" */
+
+/* START "Tooltip.less" */
+.sapVizKitViewport .sapUiVizKitTooltip {
+	position: absolute;
+	color: #fff;
+	border-style: solid;
+	border-width: 2px;
+	background-color: rgba(128, 128, 128, 0.5);
+	cursor: default;
+	padding: 5px 10px 5px 10px;
+	border-radius: 20px;
+	text-shadow: 1px 1px 2px #000000;
+	display: none;
+}
+/* END "Tooltip.less" */
+
+/* START "SceneOrientationGizmo.less" */
+.sapVizKitViewport .sapUiVizKitSceneOrientationGizmo {
+	position: absolute;
+	width: 160px;
+	height: 160px;
+	right: 10px;
+	top: 10px;
+}
+
+.sapUiVizKitSceneOrientationGizmoButton {
+	position: absolute !important;
+	right: 0;
+}
+
+.sapMBtnInner {
+	border-radius: 0px !important;
+}
+
+.sapUiMnu {
+	border-radius: 0px !important;
+}
+/* END "SceneOrientationGizmo.less" */

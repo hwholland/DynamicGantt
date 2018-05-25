@@ -45,9 +45,9 @@ the input field, it must fit to the used date format and locale.
 Supported format options are pattern-based on Unicode LDML Date Format notation.
 See {@link http://unicode.org/reports/tr35/#Date_Field_Symbol_Table}
 
-For example, if the &lt;code&gt;valueFormat&lt;/code&gt; is "yyyy-MM-dd",
-the &lt;code&gt;displayFormat&lt;/code&gt; is "MMM d, y", and the used locale is English, a
-valid value string is "2015-07-30", which leads to an output of "Jul 30, 2015".
+For example, if the &lt;code&gt;valueFormat&lt;/code&gt; is &quot;yyyy-MM-dd&quot;,
+the &lt;code&gt;displayFormat&lt;/code&gt; is &quot;MMM d, y&quot;, and the used locale is English, a
+valid value string is &quot;2015-07-30&quot;, which leads to an output of &quot;Jul 30, 2015&quot;.
 
 If no placeholder is set to the &lt;code&gt;DatePicker&lt;/code&gt;, the used
 &lt;code&gt;displayFormat&lt;/code&gt; is displayed as a placeholder. If another placeholder
@@ -70,23 +70,23 @@ the close event), or select Cancel.</documentation>
     <since>1.22.0</since>
     <baseType>sap.m/DateTimeField</baseType>
     <properties>
-        <property name="displayFormatType" type="sap.ui.core/string" defaultValue="" group="Appearance" since="1.28.6">
+        <property since="1.28.6" group="Appearance" defaultValue="" type="sap.ui.core/string" name="displayFormatType">
             <documentation>Displays date in this given type in input field. Default value is taken from locale settings.
 Accepted are values of &lt;code&gt;sap.ui.core.CalendarType&lt;/code&gt; or an empty string. If no type is set, the default type of the
 configuration is used.
 &lt;b&gt;Note:&lt;/b&gt; If data binding on &lt;code&gt;value&lt;/code&gt; property with type &lt;code&gt;sap.ui.model.type.Date&lt;/code&gt; is used, this property will be ignored.</documentation>
         </property>
-        <property name="secondaryCalendarType" type="sap.ui.core/CalendarType" group="Appearance" since="1.34.1">
+        <property since="1.34.1" group="Appearance" type="sap.ui.core/CalendarType" name="secondaryCalendarType">
             <documentation>If set, the days in the calendar popup are also displayed in this calendar type
 If not set, the dates are only displayed in the primary calendar type</documentation>
         </property>
-        <property name="minDate" type="sap.ui.core/object" group="Misc" since="1.38.0">
+        <property since="1.38.0" group="Misc" type="sap.ui.core/object" name="minDate">
             <documentation>Minimum date that can be shown and selected in the &lt;code&gt;DatePicker&lt;/code&gt;. This must be a JavaScript date object.
 
 &lt;b&gt;Note:&lt;/b&gt; If the &lt;code&gt;minDate&lt;/code&gt; is set to be after the &lt;code&gt;maxDate&lt;/code&gt;,
 the &lt;code&gt;maxDate&lt;/code&gt; and the &lt;code&gt;minDate&lt;/code&gt; are switched before rendering.</documentation>
         </property>
-        <property name="maxDate" type="sap.ui.core/object" group="Misc" since="1.38.0">
+        <property since="1.38.0" group="Misc" type="sap.ui.core/object" name="maxDate">
             <documentation>Maximum date that can be shown and selected in the &lt;code&gt;DatePicker&lt;/code&gt;. This must be a JavaScript date object.
 
 &lt;b&gt;Note:&lt;/b&gt; If the &lt;code&gt;maxDate&lt;/code&gt; is set to be before the &lt;code&gt;minDate&lt;/code&gt;,
@@ -94,17 +94,17 @@ the &lt;code&gt;maxDate&lt;/code&gt; and the &lt;code&gt;minDate&lt;/code&gt; ar
         </property>
     </properties>
     <events>
-        <event name="navigate" since="1.46.0" allowPreventDefault="false">
+        <event allowPreventDefault="false" since="1.46.0" name="navigate">
             <documentation>Fired when navigating in &lt;code&gt;Calendar&lt;/code&gt; popup.</documentation>
             <parameters>
-                <parameter name="dateRange" type="sap.ui.unified/DateRange">
+                <parameter type="sap.ui.unified/DateRange" name="dateRange">
                     <documentation>Date range containing the start and end date displayed in the &lt;code&gt;Calendar&lt;/code&gt; popup.</documentation>
                 </parameter>
             </parameters>
         </event>
     </events>
     <aggregations>
-        <aggregation name="specialDates" type="sap.ui.core/Element" since="1.38.5" cardinality="0..n">
+        <aggregation cardinality="0..n" since="1.38.5" type="sap.ui.core/Element" name="specialDates">
             <documentation>Date Range with type to visualize special days in the Calendar.
 If one day is assigned to more than one Type, only the first one will be used.
 
@@ -115,7 +115,7 @@ enum type just as any other special date type using sap.ui.unified.DateRangeType
         </aggregation>
     </aggregations>
     <associations>
-        <association name="legend" type="sap.ui.core/Control" cardinality="0..1" since="1.38.5">
+        <association since="1.38.5" cardinality="0..1" type="sap.ui.core/Control" name="legend">
             <documentation>Association to the &lt;code&gt;CalendarLegend&lt;/code&gt; explaining the colors of the &lt;code&gt;specialDates&lt;/code&gt;.
 
 &lt;b&gt;Note&lt;/b&gt; The legend does not have to be rendered but must exist, and all required types must be assigned.</documentation>

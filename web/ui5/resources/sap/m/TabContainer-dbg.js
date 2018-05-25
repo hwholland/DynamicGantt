@@ -55,7 +55,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.54.5
+		 * @version 1.54.3
 		 *
 		 * @constructor
 		 * @public
@@ -332,7 +332,7 @@ sap.ui.define([
 					};
 
 			// Selection (causes invalidation)
-			if (bSetAsSelected) {
+			if (bSetAsSelected && oNextItem) {
 				this.setSelectedItem(oNextItem);
 				// Notify the subscriber
 				this.fireItemSelect({item: oNextItem});

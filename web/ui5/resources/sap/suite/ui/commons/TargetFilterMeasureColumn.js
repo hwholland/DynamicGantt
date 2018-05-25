@@ -1,9 +1,7 @@
 /*!
  * 
- * 		SAP UI development toolkit for HTML5 (SAPUI5)
- * 		(c) Copyright 2009-2015 SAP SE. All rights reserved
- * 	
+		SAP UI development toolkit for HTML5 (SAPUI5)
+		(c) Copyright 2009-2015 SAP SE. All rights reserved
+	
  */
-jQuery.sap.declare("sap.suite.ui.commons.TargetFilterMeasureColumn");jQuery.sap.require("sap.suite.ui.commons.library");jQuery.sap.require("sap.ui.core.Element");sap.ui.core.Element.extend("sap.suite.ui.commons.TargetFilterMeasureColumn",{metadata:{library:"sap.suite.ui.commons",properties:{"path":{type:"string",group:"Misc",defaultValue:null},"type":{type:"any",group:"Misc",defaultValue:null}}}});
-sap.suite.ui.commons.TargetFilterMeasureColumn.prototype.init=function(){this.setType(new sap.ui.model.type.Integer({groupingEnabled:true}));};
-sap.suite.ui.commons.TargetFilterMeasureColumn.prototype.setType=function(t,s){if(!(t instanceof sap.ui.model.SimpleType)){jQuery.sap.log.error(t+" is not instance of sap.ui.model.SimpleType",this);}this.setProperty("type",t,s);};
+sap.ui.define(['jquery.sap.global','./library','sap/ui/core/Element','sap/ui/model/type/Integer','sap/ui/model/SimpleType'],function(q,l,E,I,S){"use strict";var T=E.extend("sap.suite.ui.commons.TargetFilterMeasureColumn",{metadata:{deprecated:true,library:"sap.suite.ui.commons",properties:{path:{type:"string",group:"Misc",defaultValue:null},type:{type:"any",group:"Misc",defaultValue:null}}}});T.prototype.init=function(){this.setType(new I({groupingEnabled:true}));};T.prototype.setType=function(t,s){if(!(t instanceof S)){q.sap.log.error(t+" is not instance of sap.ui.model.SimpleType",this);}this.setProperty("type",t,s);};return T;});

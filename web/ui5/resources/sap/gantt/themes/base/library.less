@@ -12,64 +12,42 @@
 /*!
  * ${copyright}
  */
-/*** CSS - 'default' theme ***/
 
-@sapGanttChartTextBlack: @sapUiDeepText;
-@sapGanttChartTextWhite: @sapUiWhite;
+/* =================================== */
+/* CSS for control sap.gantt/GanttChart  */
+/* Base theme                          */
+/* =================================== */
 
-@sapGanttChartSplitterBorderColor: #ccc;
-@sapGanttDimensionLegendPathStrokeColor: #b7b6b6;
+/*******************************************************************************
+ * GANTT PARAMETERS
+ ******************************************************************************/
+@_sap_gantt_Gantt_HeaderHeight: 101px;
+@_sap_gantt_Gantt_CompactHeaderHeight: @_sap_gantt_Gantt_HeaderHeight - 30px;
 
-@sapGanttChartHeaderHeight: 99px;
-@sapGanttChartHeaderDefaultHeight: 85px;
-@sapGanttChartHeaderBG: #F7F7F7;
-@sapGanttHeaderBorderColor: #DDDDDD;
+@_sap_gantt_Gantt_CursorLineStroke: @sapUiAccent6;
+@_sap_gantt_Gantt_NowLineStroke: @sapUiCalendarColorToday;
 
-@sapGanttChartCompactHeaderHeight: 69px;
+@_sap_gantt_Gantt_VerticalLineStroke: @sapUiListVerticalBorderColor;
 
-// For now it's only work for chrome
-@sapGanttCursorLineHeaderWidth: 64px;
-@sapGanttCursorLineHeaderHeight: 25px;
-@sapGanttCursorLineStrokeColor: #1DA9C1;
-@sapGanttCursorLineStrokeWidth: 1;
-@sapGanttCursorLineStrokeDashArray: none;
-@sapGanttCursorLineBodyStroke: @sapGanttCursorLineStrokeColor;
+@_sap_gantt_Gantt_ExpandChartBG: #F6F6F6;
+@_sap_gantt_Gantt_ExpandChartLine: #ddd;
+@_sap_gantt_Gantt_ExpandChartText: #848f94;
 
-@sapGanttCursorLineHeaderCozyHeight: 30px;
-
-// For Gantt Chart Now Line style
-@sapGanttNowLineStroke: @sapUiBlackBorder;
-@sapGanttNowLineStrokeWidth: 1;
-@sapGanttNowLineStrokeDashArray: 10, 5;
-
-// Gantt Chart Vertical Line Style
-@sapGanttVerticalLineStroke: #DDDDDD;
-@sapGanttVerticalLineStrokeWidth: 1;
-@sapGanttVerticalLineStrokeDashArray: none;
-
-@sapGanttExpandChartBG: #F6F6F6;
-@sapGanttExpandChartLine: #DDDDDD;
-@sapGanttExpandChartText: #848f94;
-// Global Toolbar Slider width
-@sapGanttToolbarSliderWidth: 200px;
-
-// Gantt Chart Header Text Color
-@sapGanttTimeHeaderSvgTextColor0: #999999;
-@sapGanttTimeHeaderSvgTextColor1: @sapGanttChartTextBlack;
-@sapGanttLegendTextDefaultColor:#666666;
-
-// Gantt chart container height
-@sapGlobalToolbarCozyHeight: 48px;
-@sapGlobalToolbarCompactHeight: 32px;
+@_sap_gantt_Gantt_TimelineZoomColor: #40b0f0;
+@_sap_gantt_Gantt_LegendTextColor:#666;
 
 .sapGanttTimeHeaderSvgText0 {
-	font-size: @sapUiFontSmallSize;
-	fill: @sapGanttTimeHeaderSvgTextColor0;
+	font-size: @sapMFontHeader6Size;
+	font-family: @sapUiFontFamily;
+	font-weight: @sapUiFontHeaderWeight;
+	fill: @sapUiListTableGroupHeaderTextColor;
 }
 
 .sapGanttTimeHeaderSvgText1 {
-	font-size: @sapUiFontSmallSize;
-	fill: @sapGanttTimeHeaderSvgTextColor1;
+	font-size: @sapMFontMediumSize;
+	font-family: @sapUiFontFamily;
+	font-weight: normal;
+	fill: @sapUiListHeaderTextColor;
 }
 
 .sapGanttChart {
@@ -86,21 +64,24 @@
 	stroke-dasharray: none;
 }
 
+.sapGanttTimeHeaderLargeIntervalSvgPath {
+	stroke: @sapUiListTableGroupHeaderTextColor;
+	stroke-width: 1px;
+	opacity: 0.8;
+}
+
 .sapGanttShapeSvgText {
-	fill: @sapGanttChartTextBlack;
+	fill: @sapUiDeepText;
 }
 
 .sapGanttChartHeader {
-	min-height: @sapGanttChartHeaderDefaultHeight;
-	height: @sapGanttChartHeaderDefaultHeight;
+	min-height: @_sap_gantt_Gantt_HeaderHeight;
+	height: @_sap_gantt_Gantt_HeaderHeight;
 	width: 100%;
-	background-color: @sapGanttChartHeaderBG;
+	background-color: @sapUiListHeaderBackground;
 	overflow: hidden;
-	border-bottom: 1px solid @sapGanttHeaderBorderColor;
 }
-.sapGanttChartHeaderSvg {
-
-}
+.sapGanttChartHeaderSvg {}
 
 .sapGanttChartSvgCtn {
 	position: absolute;
@@ -114,7 +95,6 @@
 .sapGanttChartTT {
 	position: relative;
 	width: 100%;
-	height: 100%;
 }
 
 .sapGanttChartSPMSvgCtn {
@@ -137,29 +117,29 @@
 
 .sapGanttExpandChartCntBG {
 	pointer-events: auto;
-	fill: @sapGanttExpandChartBG;
+	fill: @_sap_gantt_Gantt_ExpandChartBG;
 	opacity: 1;
 }
 
 .sapGanttExpandChartHeaderBG {
 	pointer-events: auto;
-	fill: @sapGanttExpandChartBG;
+	fill: @_sap_gantt_Gantt_ExpandChartBG;
 	opacity: 1;
 }
 
 .sapGanttExpandChartLine {
 	pointer-events: auto;
-	fill: @sapGanttExpandChartLine;
+	fill: @_sap_gantt_Gantt_ExpandChartLine;
 	stroke-width: 1;
-	stroke: @sapGanttExpandChartLine;
+	stroke: @_sap_gantt_Gantt_ExpandChartLine;
 	shape-rendering: crispEdges
 }
 .sapGanttExpandChartContent text{
-	fill: @sapGanttExpandChartText;
+	fill: @_sap_gantt_Gantt_ExpandChartText;
 }
 
 .sapGanttExpandChartCloseButton{
-	stroke: @sapGanttExpandChartText;
+	stroke: @_sap_gantt_Gantt_ExpandChartText;
 }
 
 .sapGanttSPMaskSvg{
@@ -193,6 +173,10 @@
 	z-index: 2;
 }
 
+.sapGanttChartTT .sapUiTable,
+.sapGanttChartWithTable .sapUiTable {
+	z-index: auto;
+}
 //Since the z-index of all content elements inside the splitter container are the same, the expanded chart content is rendered above the splitter bar according to the DOM order
 //The splitter bar would be overlapped by the expanded chart content when the selection panel is really narrow, less than the min-width of the tree table
 //So, set the z-index of the elements inside the splitter container to distinguish the rendering order
@@ -242,7 +226,7 @@
 	flex: 1;
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;
-	color:@sapGanttLegendTextDefaultColor;
+	color: @_sap_gantt_Gantt_LegendTextColor;
 }
 
 .sapGanttLLSvg,
@@ -264,26 +248,27 @@
 	float: left;
 }
 .sapGanttDimensionLegendText{
-	fill:@sapGanttLegendTextDefaultColor;
+	fill: @_sap_gantt_Gantt_LegendTextColor;
+	overflow: hidden;
  }
- 
+
 .sapGanttDimensionLegendPath {
-	stroke: @sapGanttDimensionLegendPathStrokeColor;
+	stroke: #b7b6b6;
 	stroke-width: 1;
 }
 
 .sapGanttCursorLineHeader {
-	width: @sapGanttCursorLineHeaderWidth;
-	height: @sapGanttCursorLineHeaderCozyHeight;
-	fill: @sapUiWhiteBG;
+	width: 64px;
+	height: 30px;
+	fill: @sapUiListBackground;
 	font-size: @sapUiFontSmallSize;
-	stroke: @sapGanttCursorLineStrokeColor;
+	stroke: @_sap_gantt_Gantt_CursorLineStroke;
 	stroke-width: 1;
 	pointer-events: none;
 }
 
 text.sapGanttCursorLineLabel {
-	fill: @sapGanttCursorLineStrokeColor;
+	fill: @sapUiLink;
 	font-size: @sapUiFontSmallSize;
 	text-anchor: middle;
 	alignment-baseline: baseline;
@@ -292,38 +277,38 @@ text.sapGanttCursorLineLabel {
 
 .sapGanttCursorLineBody {
 	shape-rendering: crispEdges;
-	stroke: @sapGanttCursorLineBodyStroke;
-	stroke-width: @sapGanttCursorLineStrokeWidth;
-	stroke-dasharray: @sapGanttCursorLineStrokeDashArray;
+	stroke: @_sap_gantt_Gantt_CursorLineStroke;
+	stroke-width: 1;
+	stroke-dasharray: none;
 	pointer-events: none;
 }
 
 .sapGanttChartVerticalLine {
-	stroke: @sapGanttVerticalLineStroke;
-	stroke-width: @sapGanttVerticalLineStrokeWidth;
-	stroke-dasharray: @sapGanttVerticalLineStrokeDashArray;
+	stroke: @_sap_gantt_Gantt_VerticalLineStroke;
+	stroke-width: 1;
+	stroke-dasharray: none;
 }
 
 .sapGanttNowLine {
-	stroke: @sapGanttNowLineStroke;
-	stroke-width: @sapGanttNowLineStrokeWidth;
+	stroke: @_sap_gantt_Gantt_NowLineStroke;
+	stroke-width: 1;
 	shape-rendering: crispEdges
 }
 
 .sapGanttNowLineHeaderSvgPath {
 	.sapGanttNowLine();
-	fill: @sapGanttNowLineStroke;
+	fill: @_sap_gantt_Gantt_NowLineStroke;
 }
 .sapGanttNowLineBodySvgLine {
 	.sapGanttNowLine();
-	stroke-dasharray: @sapGanttNowLineStrokeDashArray;
+	stroke-dasharray: 10, 5;
 }
 
 .sapGanttSkipToolbar {
 	height: 0;
 }
 .sapGanttToolbar .sapMSlider {
-	width: @sapGanttToolbarSliderWidth !important;
+	width: 200px !important;
 }
 .sapGanttChartWithTable .sapUiTable>.sapUiTableExt {
 	background-color: @sapUiWhiteBG;
@@ -334,19 +319,24 @@ text.sapGanttCursorLineLabel {
 	cursor: move;
 }
 
+.sapGanttDraggingOverflow {
+	overflow: hidden;
+}
+
 .sapGanttDraggingShadow {
 	position : absolute;
 	z-index : 999;
 	pointer-events: none;
 }
 
-.sapUiSizeCozy {
-	.sapGanttChartHeader {
-		min-height: @sapGanttChartHeaderHeight;
-		height: @sapGanttChartHeaderHeight;
-		
-	}
+.sapGanttChartTimePeriodZoomRectangle {
+	fill: @_sap_gantt_Gantt_TimelineZoomColor;
+	stroke: @_sap_gantt_Gantt_TimelineZoomColor;
+	stroke-width: 2px;
+	fill-opacity: 0.4;
+}
 
+.sapUiSizeCozy {
 	/* Gantt Chart Eapanded Row Checkbox */
 	.sapUiTableRowHdr.sapGanttExpandedRow::after {
 		margin-top: 12px !important;
@@ -374,26 +364,22 @@ tspan.sapGanttTooltipLine:nth-child(2n) {
 /* ------------------------------------------------ */
 /* Compact size                                     */
 /* ------------------------------------------------ */
-html[data-sap-ui-browser ^= "ff"]{
-	.sapUiSizeCompact {
-		.sapGanttChartHeader {
-			min-height: @sapGanttChartCompactHeaderHeight + 2px;
-		}
-	}
-}
+
 
 .sapUiSizeCompact {
+
 	.sapGanttChartHeader {
-		height: @sapGanttChartCompactHeaderHeight;
-		min-height: @sapGanttChartCompactHeaderHeight;
+		min-height: @_sap_gantt_Gantt_CompactHeaderHeight;
+		height: @_sap_gantt_Gantt_CompactHeaderHeight;
 	}
+
 	.sapGanttChartSvgCtn{
 		top: 0;
 	}
 
 	.sapGanttCursorLineHeader {
-		width: @sapGanttCursorLineHeaderWidth;
-		height: @sapGanttCursorLineHeaderHeight;
+		width: 64px;
+		height: 25px;
 	}
 	text.sapGanttCursorLineLabel {
 		font-size: @sapUiFontSmallSize;
@@ -404,7 +390,7 @@ html[data-sap-ui-browser ^= "ff"]{
 	}
 
 	/* Gantt Chart Eapanded Row Checkbox */
-	.sapUiTableRowHdr.sapGanttExpandedRow::after {
+	.sapUiTableRowHdr.sapGanttExpandedRow::before {
 		margin-top: 6px !important;
 	}
 }
@@ -417,4 +403,12 @@ html[data-sap-ui-browser ^= "ff"]{
 		padding-top: 2px !important;
 	}
 }
+
+/* ------------------------------------------------ */
+/* Shape resize                                     */
+/* ------------------------------------------------ */
+.sapUiShapeResizingCursor {
+	cursor: ew-resize;
+}
+
 /* END "Gantt.less" */

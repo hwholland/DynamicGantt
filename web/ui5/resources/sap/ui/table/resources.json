@@ -452,7 +452,6 @@
 			"isDebug": true,
 			"required": [
 				"jquery.sap.global.js",
-				"sap/ui/Device.js",
 				"sap/ui/core/Control.js",
 				"sap/ui/table/TableAccRenderExtension.js",
 				"sap/ui/table/TableExtension.js",
@@ -465,7 +464,6 @@
 			"module": "sap/ui/table/TableAccExtension.js",
 			"required": [
 				"jquery.sap.global.js",
-				"sap/ui/Device.js",
 				"sap/ui/core/Control.js",
 				"sap/ui/table/TableAccRenderExtension.js",
 				"sap/ui/table/TableExtension.js",

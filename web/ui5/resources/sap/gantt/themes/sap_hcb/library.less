@@ -11,21 +11,16 @@
 /*!
  * ${copyright}
  */
-@sapGanttChartHeaderHeight: 104px;
-@sapGanttChartCompactHeaderHeight: 72px;
-@sapGanttHeaderBorderColor: #FFFFFF;
+ 
+@_sap_gantt_Gantt_HeaderHeight: 106px;
 
-@sapGanttNowLineStroke: #03B803;
-@sapGanttExpandChartBG: #000000;
-@sapGanttExpandChartText: #FFFFFF;
+@_sap_gantt_Gantt_ExpandChartBG: #000;
+@_sap_gantt_Gantt_ExpandChartText: #fff;
 
 .sapGanttShapeSvgText {
 	fill: @sapContent_ContrastTextColor;
 }
 
-.sapGanttChartHeader {
-	background-color: @sapHCStandardBG;
-}
 .sapGanttTimeHeaderSvgText0 {
 	fill: @sapHCStandardFG;
 }
@@ -57,24 +52,16 @@ text.sapGanttCursorLineLabel{
 	fill: @sapHCStandardFG;
 }
 
-.sapGanttCursorLineBody {
-	stroke: @sapHCStandardFG;
-}
-
-.sapGanttChartVerticalLine {
-	stroke: @sapHCStandardFG;
-}
-
 .sapGanttExpandChartBG {
-	fill: @sapGanttExpandChartBG;
+	fill: @_sap_gantt_Gantt_ExpandChartBG;
 }
 
 .sapGanttExpandChartContent text{
-	fill: @sapGanttExpandChartText;
+	fill: @_sap_gantt_Gantt_ExpandChartText;
 }
 
 .sapGanttExpandChartCloseButton{
-	stroke: @sapGanttExpandChartText;
+	stroke: @_sap_gantt_Gantt_ExpandChartText;
 }
 
 .sapGanttChartWithTable{

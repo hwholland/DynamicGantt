@@ -7,17 +7,17 @@
     <since>1.16.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="responsive" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="responsive">
             <documentation>If set to false, all added controls will keep their width, or otherwise, the controls will be stretched to the possible width of a row.</documentation>
         </property>
     </properties>
     <aggregations default="content">
-        <aggregation name="content" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="content">
             <documentation>Added content that should be positioned. Every content item should have a ResponsiveFlowLayoutData attached, or otherwise, the default values are used.</documentation>
         </aggregation>
     </aggregations>
     <associations>
-        <association name="ariaLabelledBy" type="sap.ui.core/Control" cardinality="0..n" since="1.48.7">
+        <association since="1.48.7" cardinality="0..n" type="sap.ui.core/Control" name="ariaLabelledBy">
             <documentation>Association to controls / IDs that label this control (see WAI-ARIA attribute &lt;code&gt;aria-labelledby&lt;/code&gt;).</documentation>
         </association>
     </associations>

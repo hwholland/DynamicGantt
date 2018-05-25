@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.controls.Popover.
@@ -160,8 +160,12 @@ sap.ui.define([
 	  	  if (!vizFrame._vizFrame) {
 		  	return;
 		  }
+		  vizFrame._vizFrame.off('showInstantTooltip');
+		  vizFrame._vizFrame.off('hideInstantTooltip');
 		  vizFrame._vizFrame.on('showTooltip', function(event) {
-			  popOver.setOptions(event.data).openBy(event.data.target);
+		  	  if (event.data.target) {
+				  popOver.setOptions(event.data).openBy(event.data.target);
+		  	  }
 		  });
 		  vizFrame._vizFrame.on('hideTooltip', function() {
 			  popOver.close(); 
@@ -234,6 +238,13 @@ sap.ui.define([
 	  });
 	 };
 
+    Popover.prototype.addStyleClass = function() {
+        this._Popover.addStyleClass.apply(this._Popover, arguments);
+    };
+
+    Popover.prototype.removeStyleClass = function() {
+        this._Popover.removeStyleClass.apply(this._Popover, arguments);
+    };
 
 	return Popover;
 

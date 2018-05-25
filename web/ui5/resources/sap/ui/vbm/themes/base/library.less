@@ -30,6 +30,146 @@
 }
 /* END "AnalyticMap.less" */
 
+/* START "Cluster.less" */
+
+/*...........................................................................*/
+/* LESS for control sap.ui.vbm/Cluster.control...............................*/
+/*...........................................................................*/
+
+
+/* main cluster container style..................................................*/
+.sapUiVbicluster-main {
+	height: 100%;
+  	-webkit-user-select: none;
+  	-moz-user-select: none;
+  	-ms-user-select: none;
+  	user-select: none;
+  	z-index: 0;
+  	cursor: pointer; 
+}
+
+
+.sapUiVbicluster-backgroundcircle{
+	position: relative;
+	padding: 0.0625rem;
+	width: 3.625rem;
+	height: 3.625rem;
+	box-sizing: border-box;
+	border-radius: 1.8125rem;
+	background-color: rgba(255,255,255,0.25);
+	border-style: solid;
+	border-width: 0.5rem;
+	
+}
+
+.sapUiVbicluster-innercircle{
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: 1.25rem;
+	border-width: 0.125rem;
+	box-sizing: border-box;
+	border-style: solid;
+	line-height: 2.25rem;
+}
+
+.sapUiVbicluster-background-error{
+	background-color: rgba(211, 32, 48, 1.0);
+	border-color: rgba(211, 32, 48, 1.0);
+}
+
+.sapUiVbicluster-border-error{
+	border-color: rgba(211, 32, 48, 0.5);
+}
+
+.sapUiVbicluster-background-warning{
+	background-color: rgba(225, 123, 36, 1.0);
+	border-color: rgba(225, 123, 36, 1.0);
+}
+
+.sapUiVbicluster-border-warning{
+	border-color: rgba(225, 123, 36, 0.5);
+}
+
+.sapUiVbicluster-inner-light{
+	background-color: rgba(255, 255, 255, 0.8);
+	
+	
+}
+
+.sapUiVbicluster-background-success{
+	border-color: rgba(77, 132, 69, 0.5);
+}
+
+.sapUiVbicluster-border-success{
+	border-color: rgba(77, 132, 69, 0.5);
+}
+
+.sapUiVbicluster-background-default{
+	border-color: rgba(94, 105, 110, 0.5);
+}
+.sapUiVbicluster-border-default{
+	border-color: rgba(94, 105, 110, 0.5);
+}
+
+.sapUiVbicluster-icon{
+	display:inline-block;
+	vertical-align: sub;
+	font-family: SAP-icons;
+	font-size: 1.375rem;
+}
+
+.sapUiVbicluster-iconSuccess{
+	color: rgba(77, 132, 69, 1.0);
+}
+
+.sapUiVbicluster-iconDefault{
+	color: rgba(94, 105, 110, 1.0);
+}
+
+.sapUiVbicluster-iconLight{
+	color: rgba(255, 255, 255, 1.0);
+}
+
+.sapUiVbicluster-textbox-success{
+	border-color: rgba(77, 132, 69, 1.0);
+}
+
+.sapUiVbicluster-textbox-warning{
+	border-color: rgba(225, 123, 36, 1.0);
+}
+
+.sapUiVbicluster-textbox-default{
+	border-color: rgba(94, 105, 110, 1.0);
+}
+
+.sapUiVbicluster-textbox-error{
+	border-color: rgba(211, 32, 48, 1.0);
+}
+
+
+.sapUiVbicluster-textbox{
+	line-height: normal;
+    position: absolute;
+   bottom: 2rem;
+   left: 2rem;
+	border-radius: 0.59375rem;
+	border-width: 0.125rem;
+	box-sizing: border-box;
+	
+	border-style: solid;
+	background-color: rgba(255, 255, 255, 1.0);
+}
+
+.sapUiVbicluster-textbox div{
+	margin: 0rem 0.3125rem 0rem 0.3125rem;
+	font-weight: normal;
+	font-family: @sapUiFontFamily;
+	font-size: 0.75rem;
+	color: #333333;
+}
+
+/* END "Cluster.less" */
+
 /* START "GeoMap.less" */
 
 /* ============================================= */
@@ -844,9 +984,9 @@ td.vbi-legend-content-celltext
 
 .vbi-scale
 {
-	left: 10px;
+	left: 5px;
 	position: absolute;
-	bottom: 10px;
+	bottom: 1px;
 	pointer-events: none;
 }
 
@@ -874,143 +1014,69 @@ td.vbi-legend-content-celltext
 
 /* END "VBI.less" */
 
-/* START "Cluster.less" */
+/* START "Viewport.less" */
+.sapUiVbmViewport {
+	padding: 0;
+	margin: 0;
+	outline-offset: -1px;
+	min-width: 100px;
+	touch-action: none;
+	-ms-touch-action: none;
+	overflow: hidden;
 
-/*...........................................................................*/
-/* LESS for control sap.ui.vbm/Cluster.control...............................*/
-/*...........................................................................*/
+	canvas {
+		display: block;
+		padding: 0;
+		margin: 0;
+		width: 100%;
+		height: 100%;
+	}
+}
+/* END "Viewport.less" */
 
-
-/* main cluster container style..................................................*/
-.sapUiVbicluster-main {
-	height: 100%;
-  	-webkit-user-select: none;
-  	-moz-user-select: none;
-  	-ms-user-select: none;
-  	user-select: none;
-  	z-index: 0;
-  	cursor: pointer; 
+/* START "DetailWindow.less" */
+.sapUiVbmDetailWindowAnchor {
+	width: 1px;
+	height: 1px;
+	position: absolute;
+	visibility: hidden;
 }
 
-
-.sapUiVbicluster-backgroundcircle{
-	position: relative;
-	padding: 0.0625rem;
-	width: 3.625rem;
-	height: 3.625rem;
-	box-sizing: border-box;
-	border-radius: 1.8125rem;
-	background-color: rgba(255,255,255,0.25);
-	border-style: solid;
-	border-width: 0.5rem;
-	
+.sapUiVbmDetailWindow {
+	padding: 10px;
 }
 
-.sapUiVbicluster-innercircle{
-	width: 2.5rem;
-	height: 2.5rem;
-	border-radius: 1.25rem;
-	border-width: 0.125rem;
-	box-sizing: border-box;
-	border-style: solid;
-	line-height: 2.25rem;
+.sapUiVbmDetailWindowBase
+{
+   font-size: 10px;
+   font-family: @sapUiFontFamily;
+   color: @sapUiBaseText;
+   background-color: transparent;
+   text-align: left;
 }
 
-.sapUiVbicluster-background-error{
-	background-color: rgba(211, 32, 48, 1.0);
-	border-color: rgba(211, 32, 48, 1.0);
+.sapUiVbmDetaiWindowCaption {
+	font-size: 12px;
+	color: @sapUiText;
 }
 
-.sapUiVbicluster-border-error{
-	border-color: rgba(211, 32, 48, 0.5);
+.sapUiVbmDetailWindowCaption3 {
+	color: @sapUiText;
+	font-size: 14px;
+	font-weight: bold;
 }
 
-.sapUiVbicluster-background-warning{
-	background-color: rgba(225, 123, 36, 1.0);
-	border-color: rgba(225, 123, 36, 1.0);
+.sapUiVbmDetailWindowAlignLeft {
+	text-align: left;
 }
 
-.sapUiVbicluster-border-warning{
-	border-color: rgba(225, 123, 36, 0.5);
+.sapUiVbmDetailWindowAlignCenter {
+	text-align: center;
 }
 
-.sapUiVbicluster-inner-light{
-	background-color: rgba(255, 255, 255, 0.8);
-	
-	
+.sapUiVbmDetailWindowAlignRight {
+	text-align: right;
 }
 
-.sapUiVbicluster-background-success{
-	border-color: rgba(77, 132, 69, 0.5);
-}
-
-.sapUiVbicluster-border-success{
-	border-color: rgba(77, 132, 69, 0.5);
-}
-
-.sapUiVbicluster-background-default{
-	border-color: rgba(94, 105, 110, 0.5);
-}
-.sapUiVbicluster-border-default{
-	border-color: rgba(94, 105, 110, 0.5);
-}
-
-.sapUiVbicluster-icon{
-	display:inline-block;
-	vertical-align: sub;
-	font-family: SAP-icons;
-	font-size: 1.375rem;
-}
-
-.sapUiVbicluster-iconSuccess{
-	color: rgba(77, 132, 69, 1.0);
-}
-
-.sapUiVbicluster-iconDefault{
-	color: rgba(94, 105, 110, 1.0);
-}
-
-.sapUiVbicluster-iconLight{
-	color: rgba(255, 255, 255, 1.0);
-}
-
-.sapUiVbicluster-textbox-success{
-	border-color: rgba(77, 132, 69, 1.0);
-}
-
-.sapUiVbicluster-textbox-warning{
-	border-color: rgba(225, 123, 36, 1.0);
-}
-
-.sapUiVbicluster-textbox-default{
-	border-color: rgba(94, 105, 110, 1.0);
-}
-
-.sapUiVbicluster-textbox-error{
-	border-color: rgba(211, 32, 48, 1.0);
-}
-
-
-.sapUiVbicluster-textbox{
-	line-height: normal;
-    position: absolute;
-   bottom: 2rem;
-   left: 2rem;
-	border-radius: 0.59375rem;
-	border-width: 0.125rem;
-	box-sizing: border-box;
-	
-	border-style: solid;
-	background-color: rgba(255, 255, 255, 1.0);
-}
-
-.sapUiVbicluster-textbox div{
-	margin: 0rem 0.3125rem 0rem 0.3125rem;
-	font-weight: normal;
-	font-family: @sapUiFontFamily;
-	font-size: 0.75rem;
-	color: #333333;
-}
-
-/* END "Cluster.less" */
+/* END "DetailWindow.less" */
 

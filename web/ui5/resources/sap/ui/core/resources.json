@@ -256,7 +256,6 @@
 				"sap/ui/SyncPoint.js",
 				"sap/ui/XHRProxy.js",
 				"sap/ui/bootstrap/StoredConfig.js",
-				"sap/ui/dom/activeElementFix.js",
 				"sap/ui/dom/appendHead.js",
 				"sap/ui/dom/computedStylePolyfill.js",
 				"sap/ui/dom/includeScript.js",
@@ -290,7 +289,6 @@
 				"sap/ui/SyncPoint.js",
 				"sap/ui/XHRProxy.js",
 				"sap/ui/bootstrap/StoredConfig.js",
-				"sap/ui/dom/activeElementFix.js",
 				"sap/ui/dom/appendHead.js",
 				"sap/ui/dom/computedStylePolyfill.js",
 				"sap/ui/dom/includeScript.js",
@@ -772,7 +770,6 @@
 				"sap/ui/core/message/Message.js",
 				"sap/ui/core/message/MessageManager.js",
 				"sap/ui/core/message/MessageProcessor.js",
-				"sap/ui/dom/activeElementFix.js",
 				"sap/ui/dom/appendHead.js",
 				"sap/ui/dom/computedStylePolyfill.js",
 				"sap/ui/dom/containsOrEquals.js",
@@ -962,7 +959,6 @@
 				"sap/ui/core/message/Message.js",
 				"sap/ui/core/message/MessageManager.js",
 				"sap/ui/core/message/MessageProcessor.js",
-				"sap/ui/dom/activeElementFix.js",
 				"sap/ui/dom/appendHead.js",
 				"sap/ui/dom/computedStylePolyfill.js",
 				"sap/ui/dom/containsOrEquals.js",
@@ -1785,21 +1781,6 @@
 			"name": "../debug/images/space.gif"
 		},
 		{
-			"name": "../dom/activeElementFix-dbg.js",
-			"module": "sap/ui/dom/activeElementFix.js",
-			"isDebug": true,
-			"required": [
-				"sap/base/log.js"
-			]
-		},
-		{
-			"name": "../dom/activeElementFix.js",
-			"module": "sap/ui/dom/activeElementFix.js",
-			"required": [
-				"sap/base/log.js"
-			]
-		},
-		{
 			"name": "../dom/appendHead-dbg.js",
 			"module": "sap/ui/dom/appendHead.js",
 			"isDebug": true
@@ -1887,7 +1868,8 @@
 			"required": [
 				"sap/base/assert.js",
 				"sap/ui/Device.js",
-				"sap/ui/dom/appendHead.js"
+				"sap/ui/dom/appendHead.js",
+				"sap/ui/thirdparty/URI.js"
 			]
 		},
 		{
@@ -1896,7 +1878,8 @@
 			"required": [
 				"sap/base/assert.js",
 				"sap/ui/Device.js",
-				"sap/ui/dom/appendHead.js"
+				"sap/ui/dom/appendHead.js",
+				"sap/ui/thirdparty/URI.js"
 			]
 		},
 		{
@@ -5895,7 +5878,8 @@
 				"sap/ui/test/_OpaLogger.js",
 				"sap/ui/test/_opaCorePlugin.js",
 				"sap/ui/test/matchers/Ancestor.js",
-				"sap/ui/test/matchers/MatcherFactory.js",
+				"sap/ui/test/matchers/Interactable.js",
+				"sap/ui/test/matchers/Visible.js",
 				"sap/ui/test/pipelines/MatcherPipeline.js"
 			]
 		},
@@ -5909,7 +5893,8 @@
 				"sap/ui/test/_OpaLogger.js",
 				"sap/ui/test/_opaCorePlugin.js",
 				"sap/ui/test/matchers/Ancestor.js",
-				"sap/ui/test/matchers/MatcherFactory.js",
+				"sap/ui/test/matchers/Interactable.js",
+				"sap/ui/test/matchers/Visible.js",
 				"sap/ui/test/pipelines/MatcherPipeline.js"
 			]
 		},
@@ -5972,29 +5957,6 @@
 				"jquery.sap.sjax.js",
 				"sap/ui/core/Core.js",
 				"sap/ui/thirdparty/URI.js"
-			]
-		},
-		{
-			"name": "../test/_ControlFinder-dbg.js",
-			"module": "sap/ui/test/_ControlFinder.js",
-			"isDebug": true,
-			"required": [
-				"jquery.sap.global.js",
-				"sap/ui/base/Object.js",
-				"sap/ui/test/Opa5.js",
-				"sap/ui/test/OpaPlugin.js",
-				"sap/ui/test/actions/Press.js"
-			]
-		},
-		{
-			"name": "../test/_ControlFinder.js",
-			"module": "sap/ui/test/_ControlFinder.js",
-			"required": [
-				"jquery.sap.global.js",
-				"sap/ui/base/Object.js",
-				"sap/ui/test/Opa5.js",
-				"sap/ui/test/OpaPlugin.js",
-				"sap/ui/test/actions/Press.js"
 			]
 		},
 		{
@@ -6643,27 +6605,6 @@
 			"required": [
 				"sap/ui/base/ManagedObject.js",
 				"sap/ui/test/_OpaLogger.js"
-			]
-		},
-		{
-			"name": "../test/matchers/MatcherFactory-dbg.js",
-			"module": "sap/ui/test/matchers/MatcherFactory.js",
-			"isDebug": true,
-			"required": [
-				"jquery.sap.global.js",
-				"sap/ui/base/Object.js",
-				"sap/ui/test/matchers/Interactable.js",
-				"sap/ui/test/matchers/Visible.js"
-			]
-		},
-		{
-			"name": "../test/matchers/MatcherFactory.js",
-			"module": "sap/ui/test/matchers/MatcherFactory.js",
-			"required": [
-				"jquery.sap.global.js",
-				"sap/ui/base/Object.js",
-				"sap/ui/test/matchers/Interactable.js",
-				"sap/ui/test/matchers/Visible.js"
 			]
 		},
 		{
@@ -10851,7 +10792,6 @@
 				"sap/ui/test/PageObjectFactory.js",
 				"sap/ui/test/TestEnv.js",
 				"sap/ui/test/TestUtils.js",
-				"sap/ui/test/_ControlFinder.js",
 				"sap/ui/test/_LogCollector.js",
 				"sap/ui/test/_OpaLogger.js",
 				"sap/ui/test/_ParameterValidator.js",
@@ -10886,7 +10826,6 @@
 				"sap/ui/test/matchers/Interactable.js",
 				"sap/ui/test/matchers/LabelFor.js",
 				"sap/ui/test/matchers/Matcher.js",
-				"sap/ui/test/matchers/MatcherFactory.js",
 				"sap/ui/test/matchers/Properties.js",
 				"sap/ui/test/matchers/PropertyStrictEquals.js",
 				"sap/ui/test/matchers/Visible.js",
@@ -11391,7 +11330,6 @@
 				"sap/ui/test/PageObjectFactory.js",
 				"sap/ui/test/TestEnv.js",
 				"sap/ui/test/TestUtils.js",
-				"sap/ui/test/_ControlFinder.js",
 				"sap/ui/test/_LogCollector.js",
 				"sap/ui/test/_OpaLogger.js",
 				"sap/ui/test/_ParameterValidator.js",
@@ -11426,7 +11364,6 @@
 				"sap/ui/test/matchers/Interactable.js",
 				"sap/ui/test/matchers/LabelFor.js",
 				"sap/ui/test/matchers/Matcher.js",
-				"sap/ui/test/matchers/MatcherFactory.js",
 				"sap/ui/test/matchers/Properties.js",
 				"sap/ui/test/matchers/PropertyStrictEquals.js",
 				"sap/ui/test/matchers/Visible.js",

@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
  * 
- * (c) Copyright 2009-2016 SAP SE. All rights reserved
+ * (c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 jQuery.sap.declare("sap.uiext.inbox.composite.InboxTaskTitleControlRenderer");sap.uiext.inbox.composite.InboxTaskTitleControlRenderer={};
 sap.uiext.inbox.composite.InboxTaskTitleControlRenderer.render=function(r,c){var R=r;R.write("<div");R.writeControlData(c);R.writeStyles();R.addClass("sapUiExtInboxTaskTitle");R.writeClasses();R.write(">");if(c.getCategoryIconURI()&&sap.ui.core.IconPool.isIconURI(c.getCategoryIconURI())){this.renderTaskCategoryIcon(R,c);}var l=c.getAggregation("titleLink");l.addStyleClass("sapUiExtInboxTaskTitleLink");R.renderControl(l);if(c.getHasAttachments()){this.renderAttachmentIcon(R,c);}if(c.getHasComments()){this.renderCommentsIcon(R,c);}R.write("</div>");};

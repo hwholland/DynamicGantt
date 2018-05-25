@@ -32,7 +32,7 @@ sap.ui.define([
 		oRm.write("<div");
 		oRm.writeControlData(oControl);
 		oRm.addClass("sapUiSizeCompact");
-		oRm.addClass("sapRULTSceneTree");
+		oRm.addClass("sapUiVkSceneTree");
 		oRm.writeClasses();
 		oRm.write(">");
 		oRm.renderControl(oControl.getAggregation("_tree"));

@@ -6,15 +6,17 @@
  */
 
 // Provides control sap.ui.vk.InputDeviceMouse.
-sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider"], function(jQuery, EventProvider) {
+sap.ui.define([
+	"jquery.sap.global", "sap/ui/base/EventProvider"
+], function(jQuery, EventProvider) {
 	"use strict";
 
-	var Mouse = EventProvider.extend("sap.ui.vk.InputDeviceMouse", {
+	var InputDeviceMouse = EventProvider.extend("sap.ui.vk.InputDeviceMouse", {
 		metadata: {
 			publicMethods: [
-			    "isSupported",
-			    "enable",
-			    "disable"
+				"isSupported",
+				"enable",
+				"disable"
 			]
 		},
 
@@ -26,11 +28,16 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider"], function(jQuer
 				x: 0,
 				y: 0
 			};
-			
+			this._mousedownProxy = this._onmousedown.bind(this);
+			this._mouseupProxy = this._onmouseup.bind(this);
+			this._mousemoveProxy = this._onmousemove.bind(this);
+			this._mousewheelProxy = this._onmousewheel.bind(this);
+			this._contextmenuProxy = this._oncontextmenu.bind(this);
+			this._onmouseupWindowListenerProxy = this._onmouseupWindowListener.bind(this);
 		}
 	});
 
-	Mouse.prototype._buttonFlags = function(button, down) {
+	InputDeviceMouse.prototype._buttonFlags = function(button, down) {
 		if (down) {
 			this._buttonFlagsValue |= (1 << button);
 		} else {
@@ -39,8 +46,8 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider"], function(jQuer
 
 		return this._buttonFlagsValue;
 	};
-	
-	Mouse.prototype._eventToInput = function(event, buttonsOverride) {
+
+	InputDeviceMouse.prototype._eventToInput = function(event, buttonsOverride) {
 		// Encapsulate HTML mouse event to Loco input event
 		// "button" as bit mask: 1: left, 2: right, 4: middle, 8: Fourth, 16: Fifth, ...
 		var btn = (event.buttons != undefined) ? event.buttons : this._buttonFlagsValue;
@@ -108,45 +115,44 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider"], function(jQuer
 		return input;
 	};
 
-	Mouse.prototype._onmouseup = function(event) {
+	InputDeviceMouse.prototype._onmouseup = function(event) {
 		this._capturedByControl = true;
 		var btn = (event.buttons != undefined) ? event.buttons : this._buttonFlags(event.button, false);
-		if (event._sapui_handledByControl) {
+		if (event["_sapui_handledByControl"]) {
 			return;
 		}
 
 		var input = this._eventToInput(event, this._buttons);
-		this._loco.endGesture(input);
+		this._loco.endGesture(input, this._control);
 
 		if (btn == 2) {
 			this._zoomOrigin.x = event.pageX;
 			this._zoomOrigin.y = event.pageY;
 		}
 
-		var input = this._eventToInput(event);
+		input = this._eventToInput(event);
 		if (btn != 0) {
 			input.handled = false;
-			this._loco.beginGesture(input);
+			this._loco.beginGesture(input, this._control);
 		}
 
 		this._buttons = btn;
 
-		if (input.handled) {
-			event.preventDefault();
-		}
-
-		event._sapui_handledByControl = true;
+		// if (input.handled) {
+		// 	event.preventDefault();
+		// 	event["_sapui_handledByControl"] = true;
+		// }
 	};
 
-	//This method is called when we the mouseup event is fired.
-	//When you hold and drag the left mouse button and release while outside
-	//the area of Viewport/NativeViewport, Loco doesn't know the gesture ended.
-	//This way, we attach a listener to the window so we can capture the mouseup all the time.
-	//This method is fired after the regular "Mouse._prototype._onmouseup". We check if the mouseup event
-	//was handled in that method. If not, than we call the _onmouseup method manually.
-	//This fix is requiered because Loco gets confused when the mouseup event occurs outside
-	//the Viewport/NativeViewport.
-	Mouse.prototype._onmouseupWindowListener = function(event) {
+	// This method is called when we the mouseup event is fired.
+	// When you hold and drag the left mouse button and release while outside
+	// the area of Viewport/NativeViewport, Loco doesn't know the gesture ended.
+	// This way, we attach a listener to the window so we can capture the mouseup all the time.
+	// This method is fired after the regular "InputDeviceMouse.prototype._onmouseup". We check if the mouseup event
+	// was handled in that method. If not, than we call the _onmouseup method manually.
+	// This fix is requiered because Loco gets confused when the mouseup event occurs outside
+	// the Viewport/NativeViewport.
+	InputDeviceMouse.prototype._onmouseupWindowListener = function(event) {
 		if (!this._capturedByControl) {
 			this._onmouseup(event);
 		}
@@ -154,61 +160,62 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider"], function(jQuer
 	};
 
 
-	Mouse.prototype._onmousemove = function(event) {
-		var btn = (event.buttons != undefined) ? event.buttons : this._buttonFlagsValue;
+	InputDeviceMouse.prototype._onmousemove = function(event) {
+		// var btn = (event.buttons != undefined) ? event.buttons : this._buttonFlagsValue;
 
-		if (event._sapui_handledByControl || btn == 0) {
+		if (event["_sapui_handledByControl"] /* || btn == 0*/) {
 			return;
 		}
 
-		//If it's a Mac computer, and the movement happens while the double-finger click is pressed,
-		//then we turn it into a left-mouse + right-mouse button event so we can do pan gestures
-		//as per requirements (requirements say that on mac, two finger click & drag performs panning).
+		// If it's a Mac computer, and the movement happens while the double-finger click is pressed,
+		// then we turn it into a left-mouse + right-mouse button event so we can do pan gestures
+		// as per requirements (requirements say that on mac, two finger click & drag performs panning).
 		if (sap.ui.Device.os.name === sap.ui.Device.os.OS.MACINTOSH && event.buttons === 2) {
 			event.buttons = 3;
 		}
 
 		var input = this._eventToInput(event);
-		this._loco.move(input);
+		this._loco.move(input, this._control);
 
-		if (input.handled) {
-			event._sapui_handledByControl = true;
-			event.preventDefault();
-		}
+		// if (input.handled) {
+		// 	event["_sapui_handledByControl"] = true;
+		// 	event.preventDefault();
+		// }
 	};
 
-	Mouse.prototype._onmousedown = function(event) {
+	InputDeviceMouse.prototype._onmousedown = function(event) {
 		var btn = (event.buttons != undefined) ? event.buttons : this._buttonFlags(event.button, true);
 
-		if (event._sapui_handledByControl) {
+		if (event["_sapui_handledByControl"]) {
 			return;
 		}
 
+		var input;
 		if (this._buttons != 0) {
-			var input = this._eventToInput(event, this._buttons);
-			this._loco.endGesture(input);
+			input = this._eventToInput(event, this._buttons);
+			this._loco.endGesture(input, this._control);
 		}
 
 		if (btn == 2) {
 			this._zoomOrigin.x = event.pageX;
 			this._zoomOrigin.y = event.pageY;
 		}
-		var input = this._eventToInput(event);
+		input = this._eventToInput(event);
 
 		input.handled = false;
-		this._loco.beginGesture(input);
+		this._loco.beginGesture(input, this._control);
 		this._prevButtons = btn;
 		this._buttons = btn;
 
-		if (input.handled) {
-			event._sapui_handledByControl = true;
-			event.preventDefault();
-		}
+		// if (input.handled) {
+		// 	event["_sapui_handledByControl"] = true;
+		// 	event.preventDefault();
+		// }
 	};
 
-	Mouse.prototype._onmousewheel = function(ev) {
+	InputDeviceMouse.prototype._onmousewheel = function(ev) {
 		var event = ev.originalEvent ? ev.originalEvent : ev;
-		if (event._sapui_handledByControl || this._buttons != 0) {
+		if (event["_sapui_handledByControl"] || this._buttons != 0) {
 			return;
 		}
 
@@ -222,7 +229,7 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider"], function(jQuer
 			wheelDelta: event.wheelDelta
 		};
 		var input = this._eventToInput(simevent);
-		this._loco.beginGesture(input);
+		this._loco.beginGesture(input, this._control);
 
 		var delta = event.detail ? event.detail * (-40) : event.wheelDelta;
 
@@ -230,62 +237,57 @@ sap.ui.define(["jquery.sap.global", "sap/ui/base/EventProvider"], function(jQuer
 		input = this._eventToInput(simevent);
 
 		input.handled = false;
-		this._loco.move(input);
+		this._loco.move(input, this._control);
 
 		input.handled = false;
-		this._loco.endGesture(input);
+		this._loco.endGesture(input, this._control);
 
 		if (input.handled) {
-			event._sapui_handledByControl = true;
+			event["_sapui_handledByControl"] = true;
 			event.preventDefault();
 		}
 	};
 
-	Mouse.prototype._oncontextmenu = function(event) {
+	InputDeviceMouse.prototype._oncontextmenu = function(event) {
 		var input = this._eventToInput(event);
 
-		this._loco.contextMenu(input);
+		this._loco.contextMenu(input, this._control);
 
 		if (input.handled) {
-			event._sapui_handledByControl = true;
+			event["_sapui_handledByControl"] = true;
 			event.preventDefault();
 		}
 	};
 
-	Mouse.prototype.isSupported = function() {
+	InputDeviceMouse.prototype.isSupported = function() {
 		return true;
 	};
 
-	Mouse.prototype.enable = function(control) {
+	InputDeviceMouse.prototype.enable = function(control) {
 		this._buttonFlagsValue = 0;
 		this._buttons = 0;
-		this._mousedownProxy = this._onmousedown.bind(this);
-		this._mouseupProxy = this._onmouseup.bind(this);
-		this._mousemoveProxy = this._onmousemove.bind(this);
-		this._mousewheelProxy = this._onmousewheel.bind(this);
-		this._contextmenuProxy = this._oncontextmenu.bind(this);
 		this._control = control;
 
-		var func = (this._control) ? this._control.attachBrowserEvent.bind(this._control) : window.document.addEventListener;
-		func('mousedown', this._mousedownProxy, false);
-		func('mouseup', this._mouseupProxy, false);
-		func('mousemove', this._mousemoveProxy, false);
-		func('mousewheel', this._mousewheelProxy, false);
-		func('DOMMouseScroll', this._mousewheelProxy, false);
-		func("contextmenu", this._contextmenuProxy, false);
-		window.document.addEventListener("mouseup", this._onmouseupWindowListener.bind(this));
-	};
-
-	Mouse.prototype.disable = function() {
-		var func = (this._control) ? this._control.attachBrowserEvent.bind(this._control) : window.document.addEventListener;
-		func('mousedown', this._mousedownProxy);
-		func('mouseup', this._mouseupProxy);
-		func('mousemove', this._mousemoveProxy);
-		func('mousewheel', this._mousewheelProxy);
-		func('DOMMouseScroll', this._mousewheelProxy);
+		var func = this._control ? this._control.attachBrowserEvent.bind(this._control) : window.document.addEventListener;
+		func("mousedown", this._mousedownProxy);
+		func("mouseup", this._mouseupProxy);
+		func("mousemove", this._mousemoveProxy);
+		func("mousewheel", this._mousewheelProxy);
+		func("DOMMouseScroll", this._mousewheelProxy);
 		func("contextmenu", this._contextmenuProxy);
-		window.document.removeEventListener("mouseup", this._onmouseupWindowListener.bind(this));
+		window.document.addEventListener("mouseup", this._onmouseupWindowListenerProxy);
 	};
 
-	return Mouse;
+	InputDeviceMouse.prototype.disable = function() {
+		var func = this._control ? this._control.detachBrowserEvent.bind(this._control) : window.document.removeEventListener;
+		func("mousedown", this._mousedownProxy);
+		func("mouseup", this._mouseupProxy);
+		func("mousemove", this._mousemoveProxy);
+		func("mousewheel", this._mousewheelProxy);
+		func("DOMMouseScroll", this._mousewheelProxy);
+		func("contextmenu", this._contextmenuProxy);
+		window.document.removeEventListener("mouseup", this._onmouseupWindowListenerProxy);
+	};
+
+	return InputDeviceMouse;
 }, /* bExport= */ true);

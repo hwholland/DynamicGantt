@@ -1,13 +1,13 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// This control displays the history of values as a line mini chart or an area mini chart.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
-	function(jQuery, library, Element) {
+sap.ui.define([
+	"./library",
+	"sap/ui/core/Element"
+], function(library, Element) {
 	"use strict";
 
 	/**
@@ -21,7 +21,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -29,29 +29,29 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var AreaMicroChartItem = Element.extend("sap.suite.ui.microchart.AreaMicroChartItem", /** @lends sap.suite.ui.microchart.AreaMicroChartItem.prototype */ {
-			metadata: {
-				library: "sap.suite.ui.microchart",
-				properties: {
-					/**
-					 * The graphic element color.
-					 */
-					color: { group: "Misc", type: "sap.m.ValueColor", defaultValue: "Neutral" },
-					
-					/**
-					 * The line title.
-					 */
-					title: { type: "string", group: "Misc", defaultValue: null}
-				},
-				defaultAggregation : "points",
-				aggregations: {
-					
-					/**
-					 * The set of points for this graphic element.
-					 */
-					"points": { multiple: true, type: "sap.suite.ui.microchart.AreaMicroChartPoint", bindable : "bindable" }
-				}
+		metadata: {
+			library: "sap.suite.ui.microchart",
+			properties: {
+				/**
+				 * The graphic element color.
+				 */
+				color: { group: "Misc", type: "sap.m.ValueColor", defaultValue: "Neutral" },
+
+				/**
+				 * The line title.
+				 */
+				title: { type: "string", group: "Misc", defaultValue: null }
+			},
+			defaultAggregation: "points",
+			aggregations: {
+
+				/**
+				 * The set of points for this graphic element.
+				 */
+				"points": { multiple: true, type: "sap.suite.ui.microchart.AreaMicroChartPoint", bindable: "bindable" }
+			}
 		}
 	});
-	
-	return AreaMicroChartItem; 
+
+	return AreaMicroChartItem;
 });

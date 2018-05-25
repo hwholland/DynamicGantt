@@ -28,24 +28,24 @@ The behavior of the FixFlex is controlled by the following properties:
     <since>1.25.0</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="vertical" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="vertical">
             <documentation>Determines the direction of the layout of child elements. True for vertical and false for horizontal layout.</documentation>
         </property>
-        <property name="fixFirst" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
-            <documentation>Determines whether the fixed-size area should be on the beginning/top ( if the value is "true") or end/bottom ( if the value is "false").</documentation>
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="fixFirst">
+            <documentation>Determines whether the fixed-size area should be on the beginning/top ( if the value is &quot;true&quot;) or end/bottom ( if the value is &quot;false&quot;).</documentation>
         </property>
-        <property name="fixContentSize" type="sap.ui.core/CSSSize" defaultValue="auto" group="Dimension">
-            <documentation>Determines the height (if the vertical property is "true") or the width (if the vertical property is "false") of the fixed area. If left at the default value "auto", the fixed-size area will be as large as its content. In this case the content cannot use percentage sizes.</documentation>
+        <property group="Dimension" defaultValue="auto" type="sap.ui.core/CSSSize" name="fixContentSize">
+            <documentation>Determines the height (if the vertical property is &quot;true&quot;) or the width (if the vertical property is &quot;false&quot;) of the fixed area. If left at the default value &quot;auto&quot;, the fixed-size area will be as large as its content. In this case the content cannot use percentage sizes.</documentation>
         </property>
-        <property name="minFlexSize" type="sap.ui.core/int" defaultValue="0" since="1.29">
-            <documentation>Enables scrolling inside the flexible part. The given size is calculated in "px". If the child control in the flexible part is larger than the available flexible size on the screen and if the available size for the flexible part is smaller or equal to the minFlexSize value, the scroll will be for the entire FixFlex control.</documentation>
+        <property since="1.29" defaultValue="0" type="sap.ui.core/int" name="minFlexSize">
+            <documentation>Enables scrolling inside the flexible part. The given size is calculated in &quot;px&quot;. If the child control in the flexible part is larger than the available flexible size on the screen and if the available size for the flexible part is smaller or equal to the minFlexSize value, the scroll will be for the entire FixFlex control.</documentation>
         </property>
     </properties>
     <aggregations>
-        <aggregation name="fixContent" type="sap.ui.core/Control" cardinality="0..n">
+        <aggregation cardinality="0..n" type="sap.ui.core/Control" name="fixContent">
             <documentation>Controls in the fixed part of the layout.</documentation>
         </aggregation>
-        <aggregation name="flexContent" type="sap.ui.core/Control" cardinality="0..1">
+        <aggregation cardinality="0..1" type="sap.ui.core/Control" name="flexContent">
             <documentation>Control in the stretching part of the layout.</documentation>
         </aggregation>
     </aggregations>

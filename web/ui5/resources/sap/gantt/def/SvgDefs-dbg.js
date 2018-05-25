@@ -5,8 +5,8 @@
 	
  */
 sap.ui.define([
-	"sap/ui/base/ManagedObject"
-], function (ManagedObject) {
+	"sap/ui/base/ManagedObject",'sap/ui/core/Element'
+], function (ManagedObject, Element) {
 	"use strict";
 
 	/**
@@ -30,13 +30,13 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * 
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 * 
 	 * @constructor
 	 * @public
 	 * @alias sap.gantt.def.SvgDef
 	 */
-	var SvgDefs = ManagedObject.extend("sap.gantt.def.SvgDefs", /** @lends sap.gantt.def.SvgDefs.prototype */{
+	var SvgDefs = Element.extend("sap.gantt.def.SvgDefs", /** @lends sap.gantt.def.SvgDefs.prototype */{
 		metadata: {
 			aggregations: {
 				

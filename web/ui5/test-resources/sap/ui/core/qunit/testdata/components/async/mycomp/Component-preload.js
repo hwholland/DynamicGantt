@@ -1,3 +1,0 @@
-sap.ui.require.preload({
-	"web/ui5/test-resources/sap/ui/core/qunit/testdata/components/async/mycomp/Component.js": "sap.ui.define([\"jquery.sap.global\",\"sap/ui/core/Component\"],function(t,e){\"use strict\";return e.extend(\"sap.test.mycomp.Component\",{metadata:{libs:[\"sap.test.lib2\",\"sap.test.lib3\"],components:[\"sap.test.mysubcomp\"]}})});"
-}, "web/ui5/test-resources/sap/ui/core/qunit/testdata/components/async/mycomp/Component-preload");

@@ -18,25 +18,25 @@ This control cannot be used stand-alone, it just renders a &lt;code&gt;Form&lt;/
     <since>1.16.0</since>
     <baseType>sap.ui.layout/form/FormLayout</baseType>
     <properties>
-        <property name="labelSpanXL" type="sap.ui.core/int" defaultValue="-1" group="Misc" since="1.34.0">
+        <property since="1.34.0" group="Misc" defaultValue="-1" type="sap.ui.core/int" name="labelSpanXL">
             <documentation>Default span for labels in extra large size.
 
 &lt;b&gt;Note:&lt;/b&gt; If the default value -1 is not overwritten with the meaningful one then the &lt;code&gt;labelSpanL&lt;/code&gt; value is used.</documentation>
         </property>
-        <property name="labelSpanL" type="sap.ui.core/int" defaultValue="4" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="4" type="sap.ui.core/int" name="labelSpanL">
             <documentation>Default span for labels in large size.
 
 &lt;b&gt;Note:&lt;/b&gt; If &lt;code&gt;adjustLabelSpanThis&lt;/code&gt; is set, this property is only used if more than 1 &lt;code&gt;FormContainer&lt;/code&gt; is in one line. If only 1 &lt;code&gt;FormContainer&lt;/code&gt; is in the line, then the &lt;code&gt;labelSpanM&lt;/code&gt; value is used.</documentation>
         </property>
-        <property name="labelSpanM" type="sap.ui.core/int" defaultValue="2" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="2" type="sap.ui.core/int" name="labelSpanM">
             <documentation>Default span for labels in medium size.
 
 &lt;b&gt;Note:&lt;/b&gt; If &lt;code&gt;adjustLabelSpanThis&lt;/code&gt; is set this property is used for full-size &lt;code&gt;FormContainers&lt;/code&gt;. If more than one &lt;code&gt;FormContainer&lt;/code&gt; is in one line, &lt;code&gt;labelSpanL&lt;/code&gt; is used.</documentation>
         </property>
-        <property name="labelSpanS" type="sap.ui.core/int" defaultValue="12" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="12" type="sap.ui.core/int" name="labelSpanS">
             <documentation>Default span for labels in small size.</documentation>
         </property>
-        <property name="adjustLabelSpan" type="sap.ui.core/boolean" defaultValue="true" group="Misc" since="1.34.0">
+        <property since="1.34.0" group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="adjustLabelSpan">
             <documentation>If set, the usage of &lt;code&gt;labelSpanL&lt;/code&gt; and &lt;code&gt;labelSpanM&lt;/code&gt; are dependent on the number of &lt;code&gt;FormContainers&lt;/code&gt; in one row.
 If only one &lt;code&gt;FormContainer&lt;/code&gt; is displayed in one row, &lt;code&gt;labelSpanM&lt;/code&gt; is used to define the size of the label.
 This is the same for medium and large &lt;code&gt;Forms&lt;/code&gt;.
@@ -46,48 +46,48 @@ This is done to align the labels on forms where full-size &lt;code&gt;FormContai
 If not set, the usage of &lt;code&gt;labelSpanL&lt;/code&gt; and &lt;code&gt;labelSpanM&lt;/code&gt; are dependent on the &lt;code&gt;Form&lt;/code&gt; size.
 The number of &lt;code&gt;FormContainers&lt;/code&gt; doesn't matter in this case.</documentation>
         </property>
-        <property name="emptySpanXL" type="sap.ui.core/int" defaultValue="-1" group="Misc" since="1.34.0">
+        <property since="1.34.0" group="Misc" defaultValue="-1" type="sap.ui.core/int" name="emptySpanXL">
             <documentation>Number of grid cells that are empty at the end of each line on extra large size.
 
 &lt;b&gt;Note:&lt;/b&gt; If the default value -1 is not overwritten with the meaningful one then the &lt;code&gt;emptySpanL&lt;/code&gt; value is used.</documentation>
         </property>
-        <property name="emptySpanL" type="sap.ui.core/int" defaultValue="0" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="0" type="sap.ui.core/int" name="emptySpanL">
             <documentation>Number of grid cells that are empty at the end of each line on large size.</documentation>
         </property>
-        <property name="emptySpanM" type="sap.ui.core/int" defaultValue="0" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="0" type="sap.ui.core/int" name="emptySpanM">
             <documentation>Number of grid cells that are empty at the end of each line on medium size.</documentation>
         </property>
-        <property name="emptySpanS" type="sap.ui.core/int" defaultValue="0" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="0" type="sap.ui.core/int" name="emptySpanS">
             <documentation>Number of grid cells that are empty at the end of each line on small size.</documentation>
         </property>
-        <property name="columnsXL" type="sap.ui.core/int" defaultValue="-1" group="Misc" since="1.34.0">
+        <property since="1.34.0" group="Misc" defaultValue="-1" type="sap.ui.core/int" name="columnsXL">
             <documentation>Number of columns for extra large size.
 
 The number of columns for extra large size must not be smaller than the number of columns for large size.
 &lt;b&gt;Note:&lt;/b&gt; If the default value -1 is not overwritten with the meaningful one then the &lt;code&gt;columnsL&lt;/code&gt; value is used (from the backward compatibility reasons).</documentation>
         </property>
-        <property name="columnsL" type="sap.ui.core/int" defaultValue="2" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="2" type="sap.ui.core/int" name="columnsL">
             <documentation>Number of columns for large size.
 
 The number of columns for large size must not be smaller than the number of columns for medium size.</documentation>
         </property>
-        <property name="columnsM" type="sap.ui.core/int" defaultValue="1" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="1" type="sap.ui.core/int" name="columnsM">
             <documentation>Number of columns for medium size.</documentation>
         </property>
-        <property name="singleContainerFullSize" type="sap.ui.core/boolean" defaultValue="true" group="Misc" since="1.34.0">
+        <property since="1.34.0" group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="singleContainerFullSize">
             <documentation>If the &lt;code&gt;Form&lt;/code&gt; contains only one single &lt;code&gt;FormContainer&lt;/code&gt; and this property is set,
 the &lt;code&gt;FormContainer&lt;/code&gt; is displayed using the full size of the &lt;code&gt;Form&lt;/code&gt;.
 In this case the properties &lt;code&gt;columnsXL&lt;/code&gt;, &lt;code&gt;columnsL&lt;/code&gt; and &lt;code&gt;columnsM&lt;/code&gt; are ignored.
 
 In all other cases the &lt;code&gt;FormContainer&lt;/code&gt; is displayed in the size of one column.</documentation>
         </property>
-        <property name="breakpointXL" type="sap.ui.core/int" defaultValue="1440" group="Misc" since="1.34.0">
+        <property since="1.34.0" group="Misc" defaultValue="1440" type="sap.ui.core/int" name="breakpointXL">
             <documentation>Breakpoint (in pixel) between large size and extra large (XL) size.</documentation>
         </property>
-        <property name="breakpointL" type="sap.ui.core/int" defaultValue="1024" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="1024" type="sap.ui.core/int" name="breakpointL">
             <documentation>Breakpoint (in pixel) between Medium size and Large size.</documentation>
         </property>
-        <property name="breakpointM" type="sap.ui.core/int" defaultValue="600" group="Misc" since="1.16.3">
+        <property since="1.16.3" group="Misc" defaultValue="600" type="sap.ui.core/int" name="breakpointM">
             <documentation>Breakpoint (in pixel) between Small size and Medium size.</documentation>
         </property>
     </properties>

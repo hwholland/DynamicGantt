@@ -14,12 +14,12 @@ your content HTML in the _renderContent method of the specialized tile.</documen
     <deprecation since="1.50">replaced by {@link sap.m.GenericTile}</deprecation>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="removable" type="sap.ui.core/boolean" defaultValue="true" group="Misc">
+        <property group="Misc" defaultValue="true" type="sap.ui.core/boolean" name="removable">
             <documentation>Determines whether the tile is movable within the surrounding tile container. The remove event is fired by the tile container.</documentation>
         </property>
     </properties>
     <events>
-        <event name="press" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="press">
             <documentation>Tap event is raised if the user taps or clicks the control.</documentation>
         </event>
     </events>

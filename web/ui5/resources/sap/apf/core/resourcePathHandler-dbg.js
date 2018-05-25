@@ -7,13 +7,13 @@
 (function() {
 	'use strict';
 	jQuery.sap.declare("sap.apf.core.resourcePathHandler");
-	jQuery.sap.require("sap.apf.core.utils.checkForTimeout");
 	jQuery.sap.require("sap.apf.core.utils.filter");
 	jQuery.sap.require("sap.apf.utils.hashtable"); // ctor called
 	jQuery.sap.require("sap.apf.core.messageHandler"); // constants used
 	jQuery.sap.require("sap.apf.core.messageDefinition");
 	jQuery.sap.require("sap.apf.core.odataProxy");
 	jQuery.sap.require("sap.apf.core.layeredRepositoryProxy");
+	jQuery.sap.require("sap.apf.cloudFoundry.runtimeProxy");
 	jQuery.sap.require("sap.apf.core.constants");
 	jQuery.sap.require("sap.apf.utils.startParameter");
 	jQuery.sap.require("sap.apf.utils.utils");
@@ -29,23 +29,24 @@
 		var oConfigurationProperties;
 		var oPersistenceConfiguration;
 		var oSmartBusinessConfiguration = null;
-		var bConfigurationLoaded = false;
-		var bIsAnalyticalConfigRequested = false;
-		var Proxy = sap.apf.core.OdataProxy;
+		var deferredConfigurationLoaded = jQuery.Deferred();
+
+		var loadConfigurationTriggered = false;
+		var Proxy;
 		//noinspection JSLint
-		setDefaultLocations();
+		
 		/**
 		 * @description Loads a new  application configuration in JSON format.
 		 * Loads only once. When called twice or more then skips processing and returns immediately.
 		 * @param {string} sFilePath The absolute path of application configuration file. Host and port will be added in front of this path.
 		 */
 		this.loadConfigFromFilePath = function(sFilePath) {
-			if (bConfigurationLoaded) {
+			
+			if (loadConfigurationTriggered) {
 				return;
 			}
-			if (coreApi.getStartParameterFacade().getAnalyticalConfigurationId()) {
-				bIsAnalyticalConfigRequested = true;
-			}
+			loadConfigurationTriggered = true;
+			var analyticalConfigurationId = coreApi.getStartParameterFacade().getAnalyticalConfigurationId();
 			var sUrl = sFilePath;
 			//noinspection ReuseOfLocalVariableJS
 			coreApi.ajax({
@@ -54,63 +55,62 @@
 				success : parseConfigurationFile,
 				error : function(oJqXHR, sStatus, sError) {
 					var oMessageObject = messageHandler.createMessageObject({
-						code : sap.apf.core.constants.message.code.errorLoadingRessource,
-						rawText : "Error " + sError + " when loading the configuration of the resource location: " + sUrl
+						code : "5068",
+						aParameters : [sUrl, sStatus, sError]
 					});
-					messageHandler.putMessage(oMessageObject);
+					putMessage(oMessageObject);
 				},
-				async : false
+				async : true,
+				suppressSapSystem : true
 			});
 
-			configureMessageHandling();
-			if (bIsAnalyticalConfigRequested) {
-				loadAnalyticalConfigFromService();
-			} else {
-				loadAnalyticalConfigFromFile();
-			}
-			bConfigurationLoaded = true;
 			function parseConfigurationFile(oData, sStatus, oJqXHR) {
-
-				var oMessage = sap.apf.core.utils.checkForTimeout(oJqXHR);
-				if (oMessage) {
-					messageHandler.putMessage(messageHandler.createMessageObject({
-						code : sap.apf.core.constants.message.code.errorStartUp,
-						rawText : "Timeout when loading application configuration from " + sFilePath + "."
-					}));
+				var oTimeoutMessage = oInject.functions.checkForTimeout(oJqXHR);
+				var oMessageExplainingContext;
+				if (oTimeoutMessage) {
+					oMessageExplainingContext = messageHandler.createMessageObject({
+						code : "5054",
+						aParameters : [ sFilePath ]
+					});
+					oMessageExplainingContext.setPrevious(oTimeoutMessage);
+					putMessage(oMessageExplainingContext);
 				}
 				if (!oData || !oData.applicationConfiguration) {
-					messageHandler.putMessage(messageHandler.createMessageObject({
-						code : sap.apf.core.constants.message.code.errorStartUp,
-						rawText : "The application configuration from " + sFilePath + " has no valid format."
+					putMessage(messageHandler.createMessageObject({
+						code : "5055",
+						aParameters : [ sFilePath ]
 					}));
-					return;
 				}
 				if (oData.applicationConfiguration.textResourceLocations === undefined) {
-					messageHandler.putMessage(messageHandler.createMessageObject({
-						code : sap.apf.core.constants.message.code.errorStartUp,
-						rawText : "The textResourceLocations is missing in the application configuration from " + sFilePath + "."
+					putMessage(messageHandler.createMessageObject({
+						code : "5056",
+						aParameters : [ sFilePath ]
 					}));
 					return;
 				}
-				processApplicationConfiguration(oData);
+				processApplicationConfiguration(oData, analyticalConfigurationId);
+				configureMessageHandlingAsPromise().done(function(){
+					if (analyticalConfigurationId) {
+						loadAnalyticalConfigFromService(analyticalConfigurationId);
+					} else {
+						loadAnalyticalConfigFromFile();
+					}
+				});
 			}
 		};
 		function useLrepProxy() {
 			return coreApi.getStartParameterFacade().isLrepActive();
 		}
-	
-		function loadAnalyticalConfigFromService() {
-			var config = coreApi.getStartParameterFacade().getAnalyticalConfigurationId();
-			var application =  config.applicationId;
-			var configuration = config.configurationId;
-			
+		function loadAnalyticalConfigFromService(analyticalConfigurationId) {
+			var application =  analyticalConfigurationId.applicationId;
+			var configuration = analyticalConfigurationId.configurationId;
 			if (useLrepProxy() && !application) {
-				messageHandler.putMessage(messageHandler.createMessageObject({
+				putMessage(messageHandler.createMessageObject({
 					code : "5024"
 				}));
 			}
 			var odataProxy = new Proxy({
-				serviceRoot : oPersistenceConfiguration.path.service,
+				serviceRoot : oPersistenceConfiguration && oPersistenceConfiguration.path && oPersistenceConfiguration.path.service,
 				entityTypes : {
 					configuration : sap.apf.core.constants.entitySets.configuration,
 					texts : sap.apf.core.constants.entitySets.texts
@@ -119,46 +119,69 @@
 				instances : {
 					coreApi : coreApi,
 					messageHandler : messageHandler
-				}
+				},
+				manifests : oInject.manifests
 			});
+			//Parallel reading configuration and texts if LREP is used
+			if (useLrepProxy()) {
+				var deferreds = [];
+				var deferredCallback = jQuery.Deferred();
+				deferreds.push(deferredCallback);
+				deferreds.push(loadTextFromService(application, odataProxy));
+			}
 			odataProxy.readEntity("configuration", function(result, metadata, messageObject) {
 				if (messageObject) {
-					messageHandler.putMessage(messageHandler.createMessageObject({
+					putMessage(messageHandler.createMessageObject({
 						code : "5022",
 						aParameters : [ configuration ]
 					}));
+					deferredConfigurationLoaded.resolve();
 				} else {
 					var analyticalConfiguration = JSON.parse(result.SerializedAnalyticalConfiguration);
-					coreApi.loadAnalyticalConfiguration(JSON.parse(result.SerializedAnalyticalConfiguration));
-					application = application || result.Application;
-					loadTextFromService(application, odataProxy);
+					coreApi.loadAnalyticalConfiguration(analyticalConfiguration);
 					if (analyticalConfiguration.applicationTitle) {
 						oConfigurationProperties.appName = analyticalConfiguration.applicationTitle.key;
 						oConfigurationProperties.appTitle = analyticalConfiguration.applicationTitle.key;
+					}
+					if(useLrepProxy()) {
+						deferredCallback.resolve();
+					}else {
+						application = application || result.Application;
+						loadTextFromService(application, odataProxy).then(function (){
+							deferredConfigurationLoaded.resolve();
+						});
 					}
 				}
 			}, [ {
 				name : "AnalyticalConfiguration",
 				value : configuration
-			} ], undefined, false, //sync call
+			} ], undefined,
 			application, 
-			{ layer:'ALL' } );
+			{ layer:'ALL' }, {'noMetadata' : true});
+			if (useLrepProxy()) {
+				jQuery.when.apply(jQuery, deferreds).then(function() {
+					deferredConfigurationLoaded.resolve();
+				});
+			}
 		}
 		function loadTextFromService(applicationId, odataProxy) {
+			var deferred = jQuery.Deferred();
 			var filterApplication = new sap.apf.core.utils.Filter(messageHandler, 'Application', 'eq', applicationId);
 			var filter = new sap.apf.core.utils.Filter(messageHandler, 'Language', 'eq', sap.apf.core.constants.developmentLanguage);
 			filter.addAnd(filterApplication);
 			var selectList = [ "TextElement", "TextElementDescription" ];
 			odataProxy.readCollection('texts', function(result, metadata, messageObject) {
 				if (messageObject) {
-					messageHandler.putMessage(messageHandler.createMessageObject({
+					putMessage(messageHandler.createMessageObject({
 						code : "5023",
-						aParameters : [ sap.apf.utils.uriParameter.getConfigurationId() ]
+						aParameters : [ coreApi.getStartParameterFacade().getAnalyticalConfigurationId() ]
 					}));
 				} else {
 					coreApi.loadTextElements(result);
 				}
-			}, undefined, selectList, filter, false, { layer : 'ALL' } );
+				deferred.resolve();
+			}, undefined, selectList, filter, { layer : 'ALL' } );
+			return deferred.promise();
 		}
 		function loadAnalyticalConfigFromFile() {
 			var sUrl = thisModule.getResourceLocation(sap.apf.core.constants.resourceLocation.analyticalConfigurationLocation);
@@ -174,85 +197,98 @@
 								oConfigurationProperties.appName = oData.applicationTitle.key;
 								oConfigurationProperties.appTitle = oData.applicationTitle.key;
 							}
+							deferredConfigurationLoaded.resolve();
 						} else {
 							oMessageObject = messageHandler.createMessageObject({
-								code : sap.apf.core.constants.message.code.errorLoadingAnalyticalConfig,
-								rawText : "No data received when loading analytical configuration file" + sUrl
+								code : "5057",
+								aParameters : [ sUrl ]
 							});
-							messageHandler.putMessage(oMessageObject);
+							putMessage(oMessageObject);
 						}
 					},
-					error : function(oJqXHR, sStatus, sError) {
+					error : function(oJqXHR, sStatus, sError, originalMessageObject) {
 						oMessageObject = messageHandler.createMessageObject({
-							code : sap.apf.core.constants.message.code.errorLoadingAnalyticalConfig,
-							rawText : "Error " + sError + " when loading analytical configuration file" + sUrl
+							code : "5057",
+							aParameters : [ sUrl ]
 						});
-						messageHandler.putMessage(oMessageObject);
+						if (originalMessageObject) {
+							oMessageObject.setPrevious(originalMessageObject);
+						}
+						putMessage(oMessageObject);
 					},
-					async : false
+					async : true,
+					suppressSapSystem : true
 				});
 			} else { // the case of the default value which is set by this module when the file path was undefined in the config file
 				oMessageObject = messageHandler.createMessageObject({
-					code : sap.apf.core.constants.message.code.missingAnalyticalConfig,
-					rawText : "No analytical configuration defined in the application configuration"
+					code : "5060"
 				});
-				messageHandler.putMessage(oMessageObject);
+				putMessage(oMessageObject);
 			}
 		}
-		function configureMessageHandling() {
+		function configureMessageHandlingAsPromise() {
 			coreApi.loadMessageConfiguration(sap.apf.core.messageDefinition, true);
-			loadMessagesFromConfigurationFile(sap.apf.core.constants.resourceLocation.applicationMessageDefinitionLocation, false);
+			return loadMessagesFromConfigurationFileAsPromise(sap.apf.core.constants.resourceLocation.applicationMessageDefinitionLocation, false);
 		}
-		function loadMessagesFromConfigurationFile(sResourceLocation, bResetRegistry) {
+		function loadMessagesFromConfigurationFileAsPromise(sResourceLocation, bResetRegistry) {
+			var deferred = jQuery.Deferred();
 			var sUrl = thisModule.getResourceLocation(sResourceLocation);
 			if (sUrl !== "") {
 				coreApi.ajax({
 					url : sUrl,
 					dataType : "json",
 					success : parseMessageConfigurationFile,
-					error : function(oJqXHR, sStatus, sError) {
+					error : function(oJqXHR, sStatus, sError, originalMessageObject) {
+						
 						var oMessageObject = messageHandler.createMessageObject({
-							code : sap.apf.core.constants.message.code.errorLoadingAnalyticalConfig,
-							rawText : "Error " + sError + " when loading message configuration file" + sUrl
+							code : "5058",
+							aParameters : [sStatus, sError, sUrl ]
 						});
-						messageHandler.putMessage(oMessageObject);
+						if (originalMessageObject) {
+							oMessageObject.setPrevious(originalMessageObject);
+						}
+						putMessage(oMessageObject);
 					},
-					async : false
+					async : true,
+					suppressSapSystem : true
 				});
+			} else {
+				deferred.resolve();
 			}
-			//noinspection JSUnusedLocalSymbols
+			return deferred.promise();
+
 			function parseMessageConfigurationFile(oData, sStatus, oJqXHR) {
-				var oMessageObject;
-				var oMessage = sap.apf.core.utils.checkForTimeout(oJqXHR);
-				if (!oMessage) {
+				var oMessageExplainingContext;
+				var oTimeoutMessage = oInject.functions.checkForTimeout(oJqXHR);
+
+				if (!oTimeoutMessage) {
 					if (oData.messageConfiguration) {
 						coreApi.loadMessageConfiguration(oData.messageConfiguration.definitions, bResetRegistry);
 					}
 				} else {
-					oMessageObject = messageHandler.createMessageObject({
-						code : sap.apf.core.constants.message.code.errorLoadingAnalyticalConfig,
-						rawText : "Timeout error when loading message configuration file" + sUrl
+					oMessageExplainingContext = messageHandler.createMessageObject({
+						code : "5067"
 					});
-					messageHandler.putMessage(oMessageObject);
+					oMessageExplainingContext.setPrevious(oTimeoutMessage);
+					putMessage(oMessageExplainingContext);
 				}
+				deferred.resolve();
 			}
 		}
-		//noinspection FunctionWithMoreThanThreeNegationsJS
+
 		function checkPersistenceConfiguration(oConfig) {
 			var oMessageObject;
 			if (!oConfig || !oConfig.path) {
 				oMessageObject = messageHandler.createMessageObject({
-					code : sap.apf.core.constants.message.code.errorInAnalyticalConfig,
-					rawText : "persistence path configuration is missing in the application configuration"
+					code : "5066"
 				});
-				messageHandler.putMessage(oMessageObject);
+				putMessage(oMessageObject);
 			}
 			if (!oConfig.path.service) {
 				oMessageObject = messageHandler.createMessageObject({
-					code : sap.apf.core.constants.message.code.errorInAnalyticalConfig,
-					rawText : "service in persistence path configuration is missing"
+					code : "5067"
 				});
-				messageHandler.putMessage(oMessageObject);
+				putMessage(oMessageObject);
 			}
 			if (oConfig.analyticalConfiguration) {
 				if (!oConfig.analyticalConfiguration.service) {
@@ -260,7 +296,7 @@
 						code : sap.apf.core.constants.message.code.errorInAnalyticalConfig,
 						rawText : "service or entity set are missing in analytical configuration in the application configuration"
 					});
-					messageHandler.putMessage(oMessageObject);
+					putMessage(oMessageObject);
 				}
 			}
 		}
@@ -268,24 +304,22 @@
 			var oMessageObject;
 			if (oConfig.evaluations && !oConfig.evaluations.service) {
 				oMessageObject = messageHandler.createMessageObject({
-					code : sap.apf.core.constants.message.code.errorInAnalyticalConfig,
-					rawText : "service in Smart Business service root configuration is missing"
+					code : "5063"
 				});
-				messageHandler.putMessage(oMessageObject);
+				putMessage(oMessageObject);
 			}
 			if (oConfig.evaluations && (!oConfig.evaluations.type || oConfig.evaluations.type !== "smartBusinessRequest")) {
 				oMessageObject = messageHandler.createMessageObject({
-					code : sap.apf.core.constants.message.code.errorInAnalyticalConfig,
+					code : "5062",
 					rawText : "type in Smart Business configuration is not smartBusinessRequest"
 				});
-				messageHandler.putMessage(oMessageObject);
+				putMessage(oMessageObject);
 			}
 			if (oConfig.evaluations && !oConfig.evaluations.entityType) {
 				oMessageObject = messageHandler.createMessageObject({
-					code : sap.apf.core.constants.message.code.errorInAnalyticalConfig,
-					rawText : "entityType in Smart Business service root configuration is missing"
+					code : "5061"
 				});
-				messageHandler.putMessage(oMessageObject);
+				putMessage(oMessageObject);
 			}
 		}
 		/**
@@ -301,16 +335,22 @@
 		 * @returns {object} persistence configuration object
 		 */
 		this.getPersistenceConfiguration = function() {
-			messageHandler.check(bConfigurationLoaded, "RessourcePathHandler: configuration must be loaded before access to ressources");
-			return oPersistenceConfiguration;
+			var deferredPersistenceConfiguration = jQuery.Deferred();
+			deferredConfigurationLoaded.done(function(){
+				deferredPersistenceConfiguration.resolve(oPersistenceConfiguration);
+			});
+			return deferredPersistenceConfiguration;
 		};
 		/**
 		 * @description This function returns the properties of the configuration file, which are not used internally.
 		 * @returns {object} Copy of properties in configuration
 		 */
 		this.getConfigurationProperties = function() {
-			messageHandler.check(bConfigurationLoaded, "RessourcePathHandler: configuration must be loaded before access to ressources");
-			return oConfigurationProperties;
+			var deferredConfigProperties = jQuery.Deferred();
+			oInject.corePromise.done(function(){
+				deferredConfigProperties.resolve(oConfigurationProperties);
+			});
+			return deferredConfigProperties;
 		};
 		/**
 		 * @description sets  application configuration in JSON object format and loads the ressources and analytical configuration.
@@ -321,17 +361,22 @@
 			var property, sbService, persistenceServiceRoot;
 			var manifest = oInject.manifests.manifest;
 			var baseManifest = oInject.manifests.baseManifest;
-			if (bConfigurationLoaded) {
+			var oMessageObject;
+			if (deferredConfigurationLoaded.state() === 'resolved') {
 				return;
-			}
-			if (coreApi.getStartParameterFacade().getAnalyticalConfigurationId()) {
-				bIsAnalyticalConfigRequested = true;
 			}
 			var baseComponentUri = uriGenerator.getBaseURLOfComponent(sap.apf.utils.getComponentNameFromManifest(oInject.manifests.baseManifest));
 			var componentUri = uriGenerator.getBaseURLOfComponent(sap.apf.utils.getComponentNameFromManifest(oInject.manifests.manifest));
 
 			if (manifest["sap.app"].dataSources && manifest["sap.app"].dataSources.PathPersistenceServiceRoot) {
 				persistenceServiceRoot = manifest["sap.app"].dataSources.PathPersistenceServiceRoot.uri;
+			} else if (oInject.functions.isUsingCloudFoundryProxy()) {
+				persistenceServiceRoot = "";
+			} else {
+				oMessageObject = messageHandler.createMessageObject({
+					code : "5064"
+				});
+				putMessage(oMessageObject);
 			}
 			var apfUiTextBundle = baseManifest["sap.app"].i18n;
 			apfUiTextBundle = uriGenerator.addRelativeToAbsoluteURL(baseComponentUri, apfUiTextBundle);
@@ -340,10 +385,17 @@
 			var title = manifest["sap.app"].title;
 			var titleKey = sap.apf.utils.createPseudoGuid();
 			coreApi.registerTextWithKey(titleKey, title);
+			var analyticalConfigurationId = coreApi.getStartParameterFacade().getAnalyticalConfigurationId();
 			var analyticalConf = "";
-			if (manifest["sap.app"].dataSources && manifest["sap.app"].dataSources.AnalyticalConfigurationLocation) {
+			if (manifest["sap.app"].dataSources && manifest["sap.app"].dataSources.AnalyticalConfigurationLocation && manifest["sap.app"].dataSources.AnalyticalConfigurationLocation.uri) {
 				analyticalConf = manifest["sap.app"].dataSources.AnalyticalConfigurationLocation.uri;
 				analyticalConf = uriGenerator.addRelativeToAbsoluteURL(componentUri, analyticalConf);
+			}
+			if (!analyticalConfigurationId && !analyticalConf) {
+				oMessageObject = messageHandler.createMessageObject({
+					code : "5065"
+				});
+				putMessage(oMessageObject);
 			}
 			var oApplicationConfiguration = {
 				"appName" : titleKey,
@@ -364,9 +416,6 @@
 					oApplicationConfiguration[property] = manifest["sap.apf"].appSpecificParameters[property];
 				}
 			}
-			if (useLrepProxy()) {
-				Proxy = sap.apf.core.LayeredRepositoryProxy;
-			}
 			if (manifest["sap.app"].dataSources && manifest["sap.app"].dataSources.SmartBusiness) {
 				sbService = manifest["sap.app"].dataSources.SmartBusiness.uri;
 				oApplicationConfiguration.smartBusiness = {
@@ -382,14 +431,15 @@
 			}
 			processApplicationConfiguration({
 				applicationConfiguration : oApplicationConfiguration
+			}, analyticalConfigurationId);
+
+			configureMessageHandlingAsPromise().done(function(){
+				if (analyticalConfigurationId) {
+					loadAnalyticalConfigFromService(analyticalConfigurationId);
+				} else {
+					loadAnalyticalConfigFromFile();
+				}
 			});
-			configureMessageHandling();
-			if (bIsAnalyticalConfigRequested) {
-				loadAnalyticalConfigFromService();
-			} else {
-				loadAnalyticalConfigFromFile();
-			}
-			bConfigurationLoaded = true;
 		}
 		function setDefaultLocations() {
 			var sApfLocation = coreApi.getUriGenerator().getApfLocation();
@@ -399,7 +449,7 @@
 			oHT.setItem(sap.apf.core.constants.resourceLocation.applicationUiTextBundle, "");
 			oHT.setItem(sap.apf.core.constants.resourceLocation.analyticalConfigurationLocation, "");
 		}
-		function processApplicationConfiguration(conf) {
+		function processApplicationConfiguration(conf, analyticalConfigurationId) {
 			function saveRestrictedCopyOfApplicationConfiguration(oApplicationConfiguration) {
 				oConfigurationProperties = jQuery.extend(true, {}, oApplicationConfiguration);
 				delete oConfigurationProperties.type;
@@ -412,9 +462,11 @@
 			saveRestrictedCopyOfApplicationConfiguration(oApplicationConfiguration);
 			var oTextResourceLocations = conf.applicationConfiguration.textResourceLocations;
 			oPersistenceConfiguration = conf.applicationConfiguration.persistence;
-			checkPersistenceConfiguration(oPersistenceConfiguration);
-			if (!oPersistenceConfiguration.path.entitySet) {
-				oPersistenceConfiguration.path.entitySet = sap.apf.core.constants.entitySets.analysisPath;
+			if (!oInject.functions.isUsingCloudFoundryProxy()) {
+				checkPersistenceConfiguration(oPersistenceConfiguration);
+				if (!oPersistenceConfiguration.path.entitySet) {
+					oPersistenceConfiguration.path.entitySet = sap.apf.core.constants.entitySets.analysisPath;
+				}
 			}
 			if (conf.applicationConfiguration.smartBusiness) {
 				oSmartBusinessConfiguration = conf.applicationConfiguration.smartBusiness;
@@ -423,11 +475,13 @@
 			var oMessageObject;
 			var sUrl;
 			var oProperty;
-			for(oProperty in sap.apf.core.constants.resourceLocation) {
+			for (oProperty in sap.apf.core.constants.resourceLocation) {
 				if (!sap.apf.core.constants.resourceLocation.hasOwnProperty(oProperty)) {
 					continue;
 				}
-
+				if (oProperty === sap.apf.core.constants.resourceLocation.analyticalConfigurationLocation && analyticalConfigurationId ) {
+					continue;
+				}
 				if (oApplicationConfiguration[oProperty] !== undefined) {
 					sUrl = oApplicationConfiguration[oProperty];
 				} else if (oTextResourceLocations[oProperty] !== undefined) {
@@ -435,20 +489,55 @@
 				} else {
 					continue;
 				}
-				if (oInject.instances.fileExists.check(sUrl)) {
+				if (oInject.manifests) { //do not check file existence in case of valid manifest
 					oHT.setItem(oProperty, sUrl);
-				} else if (!bIsAnalyticalConfigRequested) {
+				} else if (oProperty === sap.apf.core.constants.resourceLocation.apfUiTextBundle || oInject.instances.fileExists.check(sUrl, true)) {
+					oHT.setItem(oProperty, sUrl);
+				} else if (!analyticalConfigurationId) {
 					oMessageObject = messageHandler.createMessageObject({
-						code : sap.apf.core.constants.message.code.wrongRessourcePath,
-						rawText : "The path " + sUrl + " for resource location " + oProperty + "is not valid."
+						code : "5059",
+						aParameters : [ sUrl, oProperty ]
 					});
-					messageHandler.putMessage(oMessageObject);
+					putMessage(oMessageObject);
 				}
 
 			}
 		}
+		function putMessage(messageObject){
+			messageHandler.putMessage(messageObject);		
+		}
+		function resolveCorePromiseAfterResourceLoading() {
+			var sApfBundleUrl;
+			var sApplicationUIBundleUrl;
+			var sApplicationMessageBundleURL;
+
+			jQuery.when(deferredConfigurationLoaded).done(function(){
+				sApfBundleUrl = thisModule.getResourceLocation(sap.apf.core.constants.resourceLocation.apfUiTextBundle);
+				sApplicationUIBundleUrl = thisModule.getResourceLocation(sap.apf.core.constants.resourceLocation.applicationUiTextBundle);
+				sApplicationMessageBundleURL =  thisModule.getResourceLocation(sap.apf.core.constants.resourceLocation.applicationMessageTextBundle);
+
+				oInject.functions.initTextResourceHandlerAsPromise(sApfBundleUrl, sApplicationUIBundleUrl, sApplicationMessageBundleURL).done(function(){
+					oInject.corePromise.resolve();	
+				});
+			});	
+		}
+
+		setDefaultLocations();
+
+		if (oInject.constructors && oInject.constructors.ProxyForAnalyticalConfiguration) {
+			Proxy = oInject.constructors.ProxyForAnalyticalConfiguration;
+		} else if (oInject.functions.isUsingCloudFoundryProxy()){
+			Proxy = sap.apf.cloudFoundry.RuntimeProxy;
+		} else if (useLrepProxy()) {
+				Proxy = sap.apf.core.LayeredRepositoryProxy;
+		} else {
+			Proxy = sap.apf.core.OdataProxy;
+		}
 		if (oInject.manifests && oInject.manifests.manifest) {
 			loadAnalyticalConfigurationAndRessources();
+		} 
+		if (oInject.corePromise) {
+			resolveCorePromiseAfterResourceLoading();
 		}
 	};
 }());

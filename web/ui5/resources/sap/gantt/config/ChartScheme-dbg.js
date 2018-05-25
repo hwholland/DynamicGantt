@@ -22,7 +22,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.38.22
+	 * @version 1.54.2
 	 *
 	 * @constructor
 	 * @public
@@ -63,7 +63,11 @@ sap.ui.define([
 				/**
 				 * Array of the key of {@link sap.gantt.config.Shape}
 				 */
-				shapeKeys: {type: "array", defaultValue: []}
+				shapeKeys: {type: "string[]", defaultValue: []},
+				/**
+				 * Decides which attribute serves as the purpose of "rowIndex" if it has multiple rows
+				 */
+				rowIndexName: {type: "string", defaultValue: "rowIndex"}
 			}
 		}
 	});

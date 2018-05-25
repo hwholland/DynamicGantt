@@ -20,7 +20,7 @@
         <value name="Auto">
             <documentation>The size depends on the device it is running on. It is medium size for desktop and tablet and small size for phone.</documentation>
         </value>
-        <value name="Responsive" since="1.44.0">
+        <value since="1.44.0" name="Responsive">
             <documentation>The width and height of the control are determined by the width and height of the container the control is placed in.
 Please note: it is decided by the control whether or not sap.m.Size.Responsive is supported.</documentation>
         </value>

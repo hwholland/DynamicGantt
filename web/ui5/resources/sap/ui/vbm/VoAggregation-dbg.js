@@ -13,8 +13,8 @@ sap.ui.define([
 	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
-	 * @class Abstract VO aggregation container. This element implements the common part for all specific VO aggregations with selection cardinatities.
-	 * It must not be used directly, but is the base for further extension.
+	 * @class Abstract VO aggregation container. This element implements the common part for all specific VO aggregations with selection
+	 *        cardinatities. It must not be used directly, but is the base for further extension.
 	 * @extends sap.ui.vbm.VoAbstract
 	 * @abstract
 	 * @constructor
@@ -793,7 +793,7 @@ sap.ui.define([
 			}
 			switch (sName) {
 				case "click":
-					if ( event.Action.AddActionProperties && event.Action.AddActionProperties.AddActionProperty.length && event.Action.AddActionProperties.AddActionProperty[0].name == 'pos'){
+					if (event.Action.AddActionProperties && event.Action.AddActionProperties.AddActionProperty.length && event.Action.AddActionProperties.AddActionProperty[0].name == 'pos') {
 						oVo.mClickGeoPos = event.Action.AddActionProperties.AddActionProperty[0]['#'];
 					}
 					break;
@@ -830,7 +830,11 @@ sap.ui.define([
 
 			}
 			if (oVo.mEventRegistry[sName]) {
-				oVo[funcname](eventContext);
+				if (funcname in oVo) {
+					oVo[funcname](eventContext);
+				} else {
+					oVo.fireEvent(sName, eventContext);
+				}
 			}
 			if (this.mEventRegistry[sName]) {
 				eventContext.instance = oVo;
@@ -852,12 +856,12 @@ sap.ui.define([
 		for (nK = 0; nK < length; ++nK) {
 			a.push(2);
 		}
-
+		var cA, cV, bFound;
 		for (nJ = 0; nJ < diff.length; ++nJ) {
 			if (diff[nJ].type == "delete") {
-				var bFound = false;
-				var cV = 0;
-				var cA = 0;
+				bFound = false;
+				cV = 0;
+				cA = 0;
 				while (!bFound) {
 					if (cV == diff[nJ].index && a[cA] != 0) {
 						a[cA] = 0;
@@ -872,9 +876,9 @@ sap.ui.define([
 				if (diff[nJ].index >= length) {
 					ins++;
 				} else {
-					var bFound = false;
-					var cV = 0;
-					var cA = 0;
+					bFound = false;
+					cV = 0;
+					cA = 0;
 					while (!bFound) {
 						if (cV == diff[nJ].index && a[cA] == 0) {
 							a[cA] = 2;
@@ -910,7 +914,7 @@ sap.ui.define([
 
 	VoAggregation.prototype.updateAggregation = function(sName) {
 		var oBindingInfo = this.mBindingInfos['items'],
-		oBinding = oBindingInfo && oBindingInfo.binding || null;
+		    oBinding = oBindingInfo && oBindingInfo.binding || null;
 
 		VoAbstract.prototype.updateAggregation.apply(this, arguments);
 
@@ -951,11 +955,11 @@ sap.ui.define([
 					this.m_bAggChange = true;
 				} else if (changeType == 3 || changeType == 1) {
 					// elements to be added to the end or updated
-					for (var nK = 0; nK < aContexts.diff.length; ++nK) {
-						if (aContexts.diff[nK].type == "insert") {
+					for (var nL = 0; nL < aContexts.diff.length; ++nL) {
+						if (aContexts.diff[nL].type == "insert") {
 							this.aDiff.push({
 								type: "insert",
-								idx: aContexts.diff[nK].index
+								idx: aContexts.diff[nL].index
 							});
 						}
 					}

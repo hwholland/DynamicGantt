@@ -24,7 +24,13 @@ sap.ui
 				 * the context of a controller of a view extension. In this case it is recommended to pass the extending view to this method. </br>
 				 * Note that this method does not return the extension API directly, but a Promise that resolves to the extension API.
 				 * Thus, a typical use of this method might look as follows: </br>
-				 * <code>extensionAPI.getExtensionAPIPromise(oView).then(function(oExtensionAPI){ oExtensionAPI.someMethod(); });</code>
+				 * <code>sap.ui.define(["sap/suite/ui/generic/template/extensionAPI/extensionAPI"], function(extensionAPI){</br>
+				 *   ...</br>
+				 *   extensionAPI.getExtensionAPIPromise(oView).then(function(oExtensionAPI){</br> 
+				 *     oExtensionAPI.someMethod();</br> 
+				 *   });</br>
+				 *   ...</br>
+				 * });</code>
 				 *
 				 * @param {sap.ui.core.Control} oControl a control which is embedded into a Smart Template view.
 				 * @return {Promise} A <code>Promise</code> which resolves to the extension API for the embedding Smart Template view
@@ -32,6 +38,6 @@ sap.ui
 				 */
 				getExtensionAPIPromise: function(oControl) {
 					return TemplateAssembler.getExtensionAPIPromise(oControl);
-				}
+				}				
 			};
 		});

@@ -1,16 +1,22 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview The Unified Shell's page builder adapter for the 'demo' platform.
  *
- * @version 1.38.26
+ * @version 1.54.3
  */
-(function () {
-    "use strict";
-    /*global jQuery, sap, window, OData, hasher */
-    jQuery.sap.declare("sap.ushell.adapters.local.LaunchPageAdapter");
-    jQuery.sap.require("sap.ushell.resources");
-    jQuery.sap.require("sap.m.Text");
+sap.ui.define(['sap/m/Text',
+        'sap/ushell/resources',
+        'sap/ui/model/resource/ResourceModel',
+        'sap/m/GenericTile',
+        'sap/m/ImageContent',
+        'sap/m/TileContent',
+        'sap/m/NumericContent',
+        'sap/m/Link',
+        'sap/m/GenericTileMode'],
+	function(Text, resources, ResourceModel, GenericTile, ImageContent, TileContent, NumericContent, Link, GenericTileMode) {
+	"use strict";
 
+    /*global jQuery, sap, window, OData, hasher */
     /**
      * This method MUST be called by the Unified Shell's container only.
      * Constructs a new instance of the page builder adapter for the 'demo' platform.
@@ -24,7 +30,7 @@
      * @see sap.ushell.services.LaunchPage
      * @since 1.15.0
      */
-    sap.ushell.adapters.local.LaunchPageAdapter = function (oUnused, sParameter, oAdapterConfiguration) {
+    var LaunchPageAdapter = function (oUnused, sParameter, oAdapterConfiguration) {
         var aConfigGroups = jQuery.extend(true, [], oAdapterConfiguration.config.groups),
             aConfigCatalogs = oAdapterConfiguration.config.catalogs || [],
         //possibility to fail in percent
@@ -52,21 +58,22 @@
             defaultGroup.isDefaultGroup = true;
         }
 
-        this.translationBundle = sap.ushell.resources.i18n;
+        this.translationBundle = resources.i18n;
         this.TileType = {
             Tile : "tile",
             Link: "link"
         };
 
         if (!i18nModel && oAdapterConfiguration.config.pathToLocalizedContentResources) {
-            jQuery.sap.require("sap.ui.model.resource.ResourceModel");
+            sap.ui.require(['sap/ui/model/resource/ResourceModel'],
+                function (ResourceModel) {
+                    i18nModel = new sap.ui.model.resource.ResourceModel({
+                        bundleUrl : oAdapterConfiguration.config.pathToLocalizedContentResources,
+                        bundleLocale : sap.ui.getCore().getConfiguration().getLanguage()
+                    });
 
-            i18nModel = new sap.ui.model.resource.ResourceModel({
-                bundleUrl : oAdapterConfiguration.config.pathToLocalizedContentResources,
-                bundleLocale : sap.ui.getCore().getConfiguration().getLanguage()
-            });
-
-            i18n = i18nModel.getResourceBundle();
+                    i18n = i18nModel.getResourceBundle();
+                });
         }
 
         function _getTextLocalized(sKey) {
@@ -449,7 +456,12 @@
         };
 
         this.getTileTarget = function (oTile) {
-            return oTile.target_url || "";
+            var sUrlFromTileProperties;
+
+            if (oTile.properties) {
+                sUrlFromTileProperties = oTile.properties.href || oTile.properties.targetURL;
+            }
+            return oTile.target_url || sUrlFromTileProperties || "";
         };
 
         this.isTileIntentSupported = function(oTile) {
@@ -475,6 +487,13 @@
             return true;
         };
 
+        this.isLinkPersonalizationSupported = function (oTile) {
+            if (oTile) {
+                return  oTile.isLinkPersonalizationSupported;
+            }
+            return true;
+        };
+
         this.getTileView = function (oTile) {
             var oDfd = jQuery.Deferred(),
                 bFail = getSimulateFail(),
@@ -484,14 +503,18 @@
                 //Simulate an async function
                 window.setTimeout(function () {
                     if (!bFail) {
-                        oDfd.resolve(that._getTileView(oTile));
+                        that._getTileView(oTile).done(function (oTileView) {
+                            oDfd.resolve(oTileView);
+                        });
                     } else {
                         oDfd.reject();
                     }
                 }, getRequestTime());
             } else {
                 if (!bFail) {
-                    oDfd.resolve(that._getTileView(oTile));
+                    that._getTileView(oTile).done(function (oTileView) {
+                        oDfd.resolve(oTileView);
+                    });
                 } else {
                     oDfd.reject();
                 }
@@ -501,6 +524,195 @@
         };
 
         this._getTileView = function (oTileData) {
+            var sError = 'unknown error',
+                oTileUI,
+                sTileType,
+                bIsLink = this.getTileType(oTileData) === "link",
+                oDfd = jQuery.Deferred(),
+                that = this;
+
+            this._translateTileProperties(oTileData);
+            if (oTileData.namespace && oTileData.path && oTileData.moduleType) {
+                jQuery.sap.registerModulePath(oTileData.namespace, oTileData.path);
+                if (oTileData.moduleType === "UIComponent") {
+                    oTileUI = new sap.ui.core.ComponentContainer({
+                        component: sap.ui.getCore().createComponent({
+                            componentData: {
+                                properties: oTileData.properties
+                            },
+                            name: oTileData.moduleName
+                        }),
+                        height: '100%',
+                        width: '100%'
+                    });
+                } else {
+                    //XML, JSON, JS, HTML view
+                    oTileUI = sap.ui.view({
+                        viewName: oTileData.moduleName,
+                        type: sap.ui.core.mvc.ViewType[oTileData.moduleType],
+                        viewData: {
+                            properties: oTileData.properties
+                        },
+                        height: '100%'
+                    });
+                }
+                oDfd.resolve(oTileUI);
+                return oDfd.promise();
+            } else if (oTileData.tileType) {
+                // SAPUI5 Control for the standard Static or dynamic tiles
+                sTileType = bIsLink ? "Link" : oTileData.tileType;
+                if (sTileType) {
+                    var url = oTileData.properties.targetURL || oTileData.properties.href;
+
+                    try {
+                        if (url){
+                            // url may contain binding chars such as '{' and '}' for example in search result app
+                            // to avoid unwanted property binding we are setting the url as explicitly
+                            // fix csn ticket: 1570026529
+                            delete oTileData.properties.targetURL;
+
+                            this._createTileInstance(oTileData, sTileType).done(function (oTile) {
+                                oTileUI = oTile;
+
+                                //Restore the deleted url.
+                                if (typeof (oTileUI.setTargetURL) === 'function'){
+                                    oTileUI.setTargetURL(url);
+                                }
+                                oTileData.properties.targetURL = url;
+
+                                that._handleTilePress(oTileUI);
+                                that._applyDynamicTileIfoState(oTileUI);
+
+                                oDfd.resolve(oTileUI);
+                            });
+                            return oDfd.promise();
+                        } else {
+
+                            this._createTileInstance(oTileData, sTileType).done(function (oTile) {
+                                oTileUI = oTile;
+                                that._handleTilePress(oTileUI);
+                                that._applyDynamicTileIfoState(oTileUI);
+
+                                oDfd.resolve(oTileUI);
+                            });
+
+                            return oDfd.promise();
+                        }
+                    } catch (e) {
+                        oDfd.resolve(new GenericTile({
+                            header: e && (e.name + ": " + e.message) || this.translationBundle.getText("failedTileCreationMsg"),
+                            frameType: this._parseTileSizeToGenericTileFormat(oTileData.size)
+
+                        }));
+                        return oDfd.promise();
+                    }
+                } else {
+                    sError = 'TileType: ' + oTileData.tileType + ' not found!';
+                }
+            } else {
+                sError = 'No TileType defined!';
+            }
+            oDfd.resolve(new GenericTile({
+                header: sError,
+                frameType: this._parseTileSizeToGenericTileFormat(oTileData.size)
+            }));
+            return oDfd.promise();
+        };
+
+        this._getCatalogTileViewAsync = function (oTileData) {
+            var oDeferred = new jQuery.Deferred(),
+                that = this,
+                oCatalogTileInstancePromise,
+                sError = 'unknown error',
+                oTileUI,
+                sTileType,
+                bIsLink = this.getTileType(oTileData) === "link";
+
+            this._translateTileProperties(oTileData);
+            if (oTileData.namespace && oTileData.path && oTileData.moduleType) {
+                jQuery.sap.registerModulePath(oTileData.namespace, oTileData.path);
+                if (oTileData.moduleType === "UIComponent") {
+                    oTileUI = new sap.ui.core.ComponentContainer({
+                        component: sap.ui.getCore().createComponent({
+                            componentData: {
+                                properties: oTileData.properties
+                            },
+                            name: oTileData.moduleName
+                        }),
+                        height: '100%',
+                        width: '100%'
+                    });
+                } else {
+                    //XML, JSON, JS, HTML view
+                    oTileUI = sap.ui.view({
+                        viewName: oTileData.moduleName,
+                        type: sap.ui.core.mvc.ViewType[oTileData.moduleType],
+                        viewData: {
+                            properties: oTileData.properties
+                        },
+                        height: '100%'
+                    });
+                }
+                oDeferred.resolve(oTileUI);
+                return oDeferred.promise();
+            } else if (oTileData.tileType) {
+                // SAPUI5 Control for the standard Static or dynamic tiles
+                sTileType = bIsLink ? "Link" : oTileData.tileType;
+                if (sTileType) {
+                    var url = oTileData.properties.targetURL || oTileData.properties.href;
+
+                    try {
+                        if (url){
+                            // url may contain binding chars such as '{' and '}' for example in search result app
+                            // to avoid unwanted property binding we are setting the url as explicitly
+                            // fix csn ticket: 1570026529
+                            delete oTileData.properties.targetURL;
+
+                            oCatalogTileInstancePromise = this._createCatalogTileInstanceAsync(oTileData, sTileType);
+                                oCatalogTileInstancePromise.done(function (oCatalogTileUI) {
+                                    // Restore the deleted url.
+                                    if (typeof (oCatalogTileUI.setTargetURL) === 'function') {
+                                        oTileUI.setTargetURL(url);
+                                    }
+                                    oTileData.properties.targetURL = url;
+                                    that._handleTilePress(oCatalogTileUI);
+                                    that._applyDynamicTileIfoState(oCatalogTileUI);
+
+                                    oDeferred.resolve(oCatalogTileUI);
+                                });
+                        } else {
+                            oCatalogTileInstancePromise = this._createCatalogTileInstanceAsync(oTileData, sTileType);
+                            oCatalogTileInstancePromise.done(function (oCatalogTileUI) {
+                            	that._handleTilePress(oCatalogTileUI);
+                            	that._applyDynamicTileIfoState(oCatalogTileUI);
+                                oDeferred.resolve(oCatalogTileUI);
+                            });
+                        }
+                    } catch (e) {
+                    	oDeferred.resolve(
+                            GenericTile({
+                                header: e && (e.name + ": " + e.message) || this.translationBundle.getText("failedTileCreationMsg"),
+                                frameType: this._parseTileSizeToGenericTileFormat(oTileData.size)
+                            })
+                        );
+                    }
+                } else {
+                    sError = 'TileType: ' + oTileData.tileType + ' not found!';
+                }
+                return oDeferred.promise();
+            } else {
+                sError = 'No TileType defined!';
+            }
+            oDeferred.resolve(
+                GenericTile({
+                    header: sError,
+                    frameType: this._parseTileSizeToGenericTileFormat(oTileData.size)
+                })
+            );
+            return oDeferred.promise();
+        };
+
+        this._getCatalogTileView = function (oTileData) {
             var sError = 'unknown error',
                 oTileUI,
                 sTileType,
@@ -534,7 +746,7 @@
                 return oTileUI;
             } else if (oTileData.tileType) {
                 // SAPUI5 Control for the standard Static or dynamic tiles
-                sTileType = bIsLink ? "sap.m.Link" : oTileData.tileType;
+                sTileType = bIsLink ? "Link" : oTileData.tileType;
                 if (sTileType) {
                     var url = oTileData.properties.targetURL || oTileData.properties.href;
 
@@ -545,28 +757,21 @@
                             // fix csn ticket: 1570026529
                             delete oTileData.properties.targetURL;
 
-                            oTileUI = this._createTileInstance(oTileData, sTileType);
+                            oTileUI = this._createCatalogTileInstance(oTileData, sTileType);
                             //Restore the deleted url.
-                            if (bIsLink) {
-                                oTileUI.setHref(url);
-                                if (url[0] !== '#'){
-                                    oTileUI.setTarget('_blank');
-                                }
-                            } else {
-                                if (typeof (oTileUI.setTargetURL) === 'function'){
-                                    oTileUI.setTargetURL(url);
-                                }
-                                oTileData.properties.targetURL = url;
+                            if (typeof (oTileUI.setTargetURL) === 'function'){
+                                oTileUI.setTargetURL(url);
                             }
+                            oTileData.properties.targetURL = url;
                         } else {
-                            oTileUI = this._createTileInstance(oTileData);
+                            oTileUI = this._createCatalogTileInstance(oTileData, sTileType);
                         }
                         this._handleTilePress(oTileUI);
                         this._applyDynamicTileIfoState(oTileUI);
 
                         return oTileUI;
                     } catch (e) {
-                        return new sap.m.GenericTile({
+                        return new GenericTile({
                             header: e && (e.name + ": " + e.message) || this.translationBundle.getText("failedTileCreationMsg"),
                             frameType: this._parseTileSizeToGenericTileFormat(oTileData.size)
 
@@ -578,29 +783,33 @@
             } else {
                 sError = 'No TileType defined!';
             }
-            return new sap.m.GenericTile({
+            return new GenericTile({
                 header: sError,
                 frameType: this._parseTileSizeToGenericTileFormat(oTileData.size)
             });
         };
 
         this._createTileInstance = function (oTileData, sTileType) {
-            var oTileUI;
+            var oTileUI,
+                oDfd = jQuery.Deferred(),
+                oTileImage =  this._getImageContent({
+                    src: oTileData.properties.icon
+                });
 
-            jQuery.sap.require(sTileType === 'sap.m.Link' ? sTileType : 'sap.m.GenericTile');
+            oTileImage.addStyleClass("sapUshellFullWidth");
+
             switch (sTileType) {
                 case 'sap.ushell.ui.tile.DynamicTile':
-                    oTileUI = new sap.m.GenericTile({
+                    oTileUI = new GenericTile ({
                         header: oTileData.properties.title,
                         subheader: oTileData.properties.subtitle,
                         frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
-                        size: "Auto",
-                        tileContent: new sap.m.TileContent({
-                            size: "Auto",
+                        tileContent: new TileContent ({
+                            frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
                             footer: oTileData.properties.info,
                             unit: oTileData.properties.numberUnit,
                             //We'll utilize NumericContent for the "Dynamic" content.
-                            content: new sap.m.NumericContent({
+                            content: new NumericContent ({
                                 scale: oTileData.properties.numberFactor,
                                 value: oTileData.properties.numberValue,
                                 truncateValueTo: 5,//Otherwise, The default value is 4.
@@ -610,61 +819,234 @@
                                 width: "100%"
                             })
                         }),
-                        press: function () {
-                            this._genericTilePressHandler(oTileData);
+                        press: function (oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
+                        }.bind(this)
+                    });
+                    oDfd.resolve(oTileUI);
+                    break;
+
+                case 'sap.ushell.ui.tile.StaticTile':
+                    oTileUI = new GenericTile ({
+                        mode: this._parseTileModeToGenericTileFormat(oTileData.mode),
+                        header: oTileData.properties.title,
+                        subheader: oTileData.properties.subtitle,
+                        frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
+                        tileContent: new TileContent ({
+                            frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
+                            footer: oTileData.properties.info,
+                            content: oTileImage
+                        }),
+                        press: function (oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
+                        }.bind(this)
+                    });
+                    oDfd.resolve(oTileUI);
+                    break;
+
+                case 'Link':
+                    oTileUI = new GenericTile ({
+                        mode: GenericTileMode.LineMode,
+                        subheader: oTileData.properties.subtitle,
+                        header: oTileData.properties.title,
+                        //TODO: The below code is for POC only, should be removed once UI5 provide action buttons for line mode
+                        press: function(oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
+                        }.bind(this)
+                    });
+                    oDfd.resolve(oTileUI);
+                    break;
+
+                default:
+                    var sNewTileType = oTileData.tileType.replace(/\./g, '/');
+                    sap.ui.require([sNewTileType],
+                        function () {
+                            var TilePrototype = jQuery.sap.getObject(oTileData.tileType);
+                            oTileUI =  new TilePrototype(oTileData.properties || {});
+                            oDfd.resolve(oTileUI);
+                        }
+                    );
+            }
+            return oDfd.promise();
+        };
+
+        this._createCatalogTileInstanceAsync = function (oTileData, sTileType) {
+            var oDeferred = new jQuery.Deferred(),
+                oTileUI,
+                sTileType,
+                sTileTypeForRequire,
+                oTileImage = this._getImageContent({
+                    src: oTileData.properties.icon
+                });
+
+            oTileImage.addStyleClass("sapUshellFullWidth");
+
+            switch (sTileType) {
+                case 'sap.ushell.ui.tile.DynamicTile':
+                    oTileUI = new GenericTile({
+                        header: oTileData.properties.title,
+                        subheader: oTileData.properties.subtitle,
+                        frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
+                        tileContent: new TileContent({
+                            frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
+                            footer: oTileData.properties.info,
+                            unit: oTileData.properties.numberUnit,
+                            //We'll utilize NumericContent for the "Dynamic" content.
+                            content: new NumericContent({
+                                scale: oTileData.properties.numberFactor,
+                                value: oTileData.properties.numberValue,
+                                truncateValueTo: 5,//Otherwise, The default value is 4.
+                                indicator: oTileData.properties.stateArrow,
+                                valueColor: this._parseTileValueColor(oTileData.properties.numberState),
+                                icon: oTileData.properties.icon,
+                                width: "100%"
+                            })
+                        }),
+                        press: function (oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
                         }.bind(this)
                     });
                     break;
 
                 case 'sap.ushell.ui.tile.StaticTile':
-                    oTileUI = new sap.m.GenericTile({
+                    oTileUI = new GenericTile({
                         header: oTileData.properties.title,
                         subheader: oTileData.properties.subtitle,
                         frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
-                        size: "Auto",
-                        tileContent: new sap.m.TileContent({
-                            size: "Auto",
+                        tileContent: new TileContent({
+                            frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
                             footer: oTileData.properties.info,
-                            content: new sap.m.ImageContent({
-                                src: oTileData.properties.icon,
-                                width: "100%"
-                            })
+                            content: oTileImage
                         }),
-                        press: function () {
-                            this._genericTilePressHandler(oTileData);
+                        press: function (oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
                         }.bind(this)
                     });
                     break;
 
-                case 'sap.m.Link':
-                    oTileUI = new sap.m.Link({
-                        text: oTileData.properties.text
+                case 'Link':
+                    oTileUI = new GenericTile({
+                        mode: GenericTileMode.LineMode,
+                        subheader: oTileData.properties.subtitle,
+                        header: oTileData.properties.title,
+                        //TODO: The below code is for POC only, should be removed once UI5 provide action buttons for line mode
+                        press: function(oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
+                        }.bind(this)
                     });
                     break;
 
                 default:
-                    jQuery.sap.require(oTileData.tileType);
-                    var TilePrototype = jQuery.sap.getObject(oTileData.tileType);
+                	var sTileType = oTileData.tileType,
+                        sTileTypeForRequire = sTileType.replace(/\./g, "/");
 
-                    oTileUI =  new TilePrototype(oTileData.properties || {});
+                	sap.ui.require([sTileTypeForRequire],
+                        function (oTilePrototype) {
+                            oTileUI =  new oTilePrototype(oTileData.properties || {});
+                            oDeferred.resolve(oTileUI);
+                	});
             }
+            oDeferred.resolve(oTileUI);
+            return oDeferred.promise();
+        };
 
+        this._createCatalogTileInstance = function (oTileData, sTileType) {
+            var oTileUI,
+                sTileResource,
+                oTileObject,
+                oTileImage = this._getImageContent({
+                    src: oTileData.properties.icon
+                });
+
+            oTileImage.addStyleClass("sapUshellFullWidth");
+
+            switch (sTileType) {
+                case 'sap.ushell.ui.tile.DynamicTile':
+                    oTileUI = new GenericTile({
+                        header: oTileData.properties.title,
+                        subheader: oTileData.properties.subtitle,
+                        frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
+                        tileContent: new TileContent({
+                            frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
+                            footer: oTileData.properties.info,
+                            unit: oTileData.properties.numberUnit,
+                            //We'll utilize NumericContent for the "Dynamic" content.
+                            content: new NumericContent({
+                                scale: oTileData.properties.numberFactor,
+                                value: oTileData.properties.numberValue,
+                                truncateValueTo: 5,//Otherwise, The default value is 4.
+                                indicator: oTileData.properties.stateArrow,
+                                valueColor: this._parseTileValueColor(oTileData.properties.numberState),
+                                icon: oTileData.properties.icon,
+                                width: "100%"
+                            })
+                        }),
+                        press: function (oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
+                        }.bind(this)
+                    });
+                    break;
+
+                case 'sap.ushell.ui.tile.StaticTile':
+                    oTileUI = new GenericTile({
+                        header: oTileData.properties.title,
+                        subheader: oTileData.properties.subtitle,
+                        frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
+                        tileContent: new TileContent({
+                            frameType: this._parseTileSizeToGenericTileFormat(oTileData.size),
+                            footer: oTileData.properties.info,
+                            content: oTileImage
+                        }),
+                        press: function (oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
+                        }.bind(this)
+                    });
+                    break;
+
+                case 'Link':
+                    oTileUI = new GenericTile({
+                        mode: GenericTileMode.LineMode,
+                        subheader: oTileData.properties.subtitle,
+                        header: oTileData.properties.title,
+                        //TODO: The below code is for POC only, should be removed once UI5 provide action buttons for line mode
+                        press: function(oEvent) {
+                            this._genericTilePressHandler(oTileData, oEvent);
+                        }.bind(this)
+                    });
+                    break;
+
+                default:
+                    sTileResource = oTileData.tileType.replace(/\./g, "/");
+                    oTileObject = sap.ui.require(sTileResource);
+                    if (!oTileObject) {
+                        if (!jQuery.sap.getObject(oTileData.tileType)) {
+                            jQuery.sap.require(oTileData.tileType);
+                        }
+                        oTileObject = jQuery.sap.getObject(oTileData.tileType);
+                    }
+                    oTileUI = new oTileObject(oTileData.properties || {});
+            }
             return oTileUI;
         };
 
-        this._genericTilePressHandler = function (oTileData) {
-            if (oTileData.properties.targetURL){
-                if (oTileData.properties.targetURL[0] === '#') {
-                    hasher.setHash(oTileData.properties.targetURL);
-                } else {
-                    window.open(oTileData.properties.targetURL, '_blank');
+        this._genericTilePressHandler = function (oTileData, oEvent) {
+            if (oEvent.getSource().getScope && oEvent.getSource().getScope() === "Display") {
+                if (oTileData.properties.targetURL) {
+                    if (oTileData.properties.targetURL[0] === '#') {
+                        hasher.setHash(oTileData.properties.targetURL);
+                    } else {
+                        window.open(oTileData.properties.targetURL, '_blank');
+                    }
                 }
             }
         };
-        //Adapts the tile sise according to the format of the Generic tile (Used only to test the layout).
+        //Adapts the tile size according to the format of the Generic tile (Used only to test the layout).
         this._parseTileSizeToGenericTileFormat = function (tileSize) {
-
             return  tileSize === "1x2" ? "TwoByOne" : "OneByOne";
+        };
+
+        this._parseTileModeToGenericTileFormat = function (tileMode) {
+            return  tileMode === "HeaderMode" ? GenericTileMode.HeaderMode : GenericTileMode.ContentMode;
         };
 
         this._parseTileValueColor = function (tileValueColor) {
@@ -696,9 +1078,17 @@
                     fnOrigAfterRendering.apply(this, arguments);
                 }
                 var oModel = this.getModel(),
-                    sDisplayInfoState = oModel.getProperty('/data/display_info_state'),
-                    elDomRef = this.getDomRef(),
-                    elFooterInfo = elDomRef.getElementsByClassName('sapMTileCntFtrTxt')[0];
+                    sDisplayInfoState,
+                    elDomRef,
+                    elFooterInfo;
+
+                if (!oModel) {
+                	return;
+                }
+
+                sDisplayInfoState = oModel.getProperty('/data/display_info_state');
+                elDomRef = this.getDomRef();
+                elFooterInfo = elDomRef.getElementsByClassName('sapMTileCntFtrTxt')[0];
 
                 switch (sDisplayInfoState) {
                     case 'Negative':
@@ -742,7 +1132,7 @@
 
         this._translateTileProperties = function(oTileData) {
             //translation.
-            if (i18n) {
+            if (this.translationBundle) {
                 if (!oTileData.properties.isTranslated) {
                     oTileData.properties.title = _getTextLocalized(oTileData.properties.title);
                     oTileData.properties.subtitle = _getTextLocalized(oTileData.properties.subtitle);
@@ -839,7 +1229,7 @@
             return oDfd.promise();
         };
 
-        this.moveTile = function (oTile, sourceIndex, targetIndex, oSourceGroup, oTargetGroup) {
+        this.moveTile = function (oTile, sourceIndex, targetIndex, oSourceGroup, oTargetGroup, newTileType) {
             var oDfd = jQuery.Deferred(),
                 bFail = getSimulateFail(),
                 that = this;
@@ -851,6 +1241,8 @@
                         //Move a tile in the same group
                         oTargetGroup = oSourceGroup;
                     }
+
+                    oTile.isLink = newTileType ? (newTileType === that.TileType.Link) : oTile.isLink;
 
                     oSourceGroup.tiles.splice(sourceIndex, 1);
                     oTargetGroup.tiles.splice(targetIndex, 0, oTile);
@@ -950,8 +1342,12 @@
             return oCatalogTile.size;
         };
 
+        this.getCatalogTileViewControl = function (oCatalogTile) {
+            return this._getCatalogTileViewAsync(oCatalogTile);
+        };
+
         this.getCatalogTileView = function (oCatalogTile) {
-            return this._getTileView(oCatalogTile);
+            return this._getCatalogTileView(oCatalogTile);
         };
 
         this.getCatalogTileTargetURL = function (oCatalogTile) {
@@ -960,6 +1356,10 @@
 
         this.getCatalogTilePreviewTitle = function (oCatalogTile) {
             return (oCatalogTile.properties && oCatalogTile.properties.title) || null;
+        };
+
+        this.getCatalogTilePreviewSubtitle = function (oCatalogTile) {
+            return (oCatalogTile.properties && oCatalogTile.properties.subtitle) || null;
         };
 
         this.getCatalogTilePreviewIcon = function (oCatalogTile) {
@@ -1021,7 +1421,8 @@
                 title = oParameters.title,
                 subtitle = oParameters.subtitle,
                 info = oParameters.info,
-                url = oParameters.url;
+                url = oParameters.url,
+                bIsLinkPersonalizationSupported = this.isLinkPersonalizationSupported();
 
             //Simulate an async function
             window.setTimeout(function () {
@@ -1032,6 +1433,7 @@
                         chipId: "tile_0" + oGroup.tiles.length,
                         tileType: "sap.ushell.ui.tile.StaticTile",
                         id: "tile_0" + oGroup.tiles.length,
+                        isLinkPersonalizationSupported: bIsLinkPersonalizationSupported,
                         keywords: [],
                         properties: {
                             icon: "sap-icon://time-entry-request",
@@ -1125,6 +1527,10 @@
             return oDfd.promise();
         };
 
+        this._getImageContent = function (oData) {
+            return new ImageContent(oData);
+        };
+
         /**
          * This method is called to notify that the given tile has been added to some remote
          * catalog which is not specified further.
@@ -1142,4 +1548,8 @@
             return (oTile && oTile.actions) || null;
         };
     };
-}());
+
+
+	return LaunchPageAdapter;
+
+}, /* bExport= */ true);

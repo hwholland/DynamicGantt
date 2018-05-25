@@ -5,6 +5,14 @@
         xmlns:mvc="sap.ui.core.mvc"
         xmlns:template="http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1">
 
+    <VBox class="sapOvpCardOverlaySideContainer sapOvpCardRightOverlayCursor"></VBox> <!--Div to enable cursor ew-resize in Right Corner of the card-->
+
+    <FlexBox width="100%" justifyContent="End" class="sapOvpNewBadgeWrapper" visible="{= ${ovpCardProperties>/cloneCard} ? true : false}">
+        <HBox class="sapOvpNewBadge">
+            <Text text="Copy" class="sapOvpNewBadgeText"/>
+        </HBox>
+    </FlexBox>
+
     <template:if test="{= ${ovpCardProperties>/contentPosition} === 'Right'}" >
 
         <template:then>
@@ -28,5 +36,6 @@
         	</core:HTML>
         </template:else>
     </template:if>
-    
+    <HBox class="sapOvpCardOverlayContainer sapOvpCardBottomOverlayCursor"></HBox> <!--Div to enable cursor ns-resize in Bottom of the card-->
+
 </mvc:View>

@@ -3,7 +3,7 @@
     <name>semantic/FilterAction</name>
     <derived/>
     <author>SAP SE</author>
-    <documentation>A FilterAction is a {@link sap.m.Button} control enhanced with styling according to the semantics of a common "Filter" action.
+    <documentation>A FilterAction is a {@link sap.m.Button} control enhanced with styling according to the semantics of a common &quot;Filter&quot; action.
 
 A FilterAction cannot be used independently but only as aggregation content of a {@link sap.m.semantic.SemanticPage}.
 

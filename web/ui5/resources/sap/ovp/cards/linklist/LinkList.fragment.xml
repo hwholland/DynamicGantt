@@ -9,13 +9,10 @@
 				<template:elseif test="{= ${ovpCardProperties>/listFlavor} === 'carousel'}">
 					<core:Fragment fragmentName="sap.ovp.cards.linklist.fragments.LinkListStaticDataCarousel" type="XML"/>
 				</template:elseif>
-				<template:elseif test="{= ${ovpCardProperties>/listFlavor} === 'grid'}">
-					<core:Fragment fragmentName="sap.ovp.cards.linklist.fragments.LinkListStaticDataGrid" type="XML"/>
-				</template:elseif>
 			</template:if>
 		</template:then>
 		<template:else>
-			<template:with helper="sap.ovp.cards.AnnotationHelper.resolveEntityTypePath" path='ovpCardProperties>/annotationPath' var='header'>
+			<template:with helper="sap.ovp.cards.AnnotationHelper.resolveEntityTypePath" path='ovpCardProperties>/headerAnnotationPath' var='header'>
 				<template:if test="{= ${ovpCardProperties>/listFlavor} === 'standard'}">
 					<template:then>
 						<core:Fragment fragmentName="sap.ovp.cards.linklist.fragments.LinkListStandard" type="XML"/>
@@ -23,15 +20,7 @@
 					<template:elseif test="{= ${ovpCardProperties>/listFlavor} === 'carousel'}">
 						<core:Fragment fragmentName="sap.ovp.cards.linklist.fragments.LinkListCarousel" type="XML"/>
 					</template:elseif>
-					<template:elseif test="{= ${ovpCardProperties>/listFlavor} === 'grid'}">
-						<core:Fragment fragmentName="sap.ovp.cards.linklist.fragments.LinkListGrid" type="XML"/>
-					</template:elseif>
 				</template:if>
-				<template:with helper="sap.ovp.cards.AnnotationHelper.resolveEntityTypePath" path='ovpCardProperties>/communicationPath' var='contact'>
-					<template:if test="{contact>}">
-						<core:Fragment fragmentName="sap.ovp.cards.linklist.fragments.LinkListContactDetails" type="XML"/>
-					</template:if>
-				</template:with>
 			</template:with>
 		</template:else>
 	</template:if>

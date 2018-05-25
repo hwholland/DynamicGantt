@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 sap.ui.define([
 	'sap/chart/library',
@@ -13,19 +13,36 @@ sap.ui.define([
 	'sap/viz/ui5/data/MeasureDefinition',
 	'sap/chart/data/Dimension',
 	'sap/chart/data/TimeDimension',
+	'sap/chart/data/HierarchyDimension',
 	'sap/chart/data/Measure',
 	'sap/ui/model/analytics/ODataModelAdapter',
 	'sap/chart/utils/RoleFitter',
 	'sap/chart/utils/ChartUtils',
-	'sap/chart/utils/SeriesColorTracker',
 	'sap/chart/utils/ChartTypeAdapterUtils',
 	'sap/chart/utils/DateFormatUtil',
+	'sap/chart/utils/DataSourceUtils',
+	'sap/chart/utils/SelectionAPIUtils',
+	'sap/chart/utils/MeasureSemanticsUtils',
 	'sap/viz/ui5/controls/common/feeds/FeedItem',
 	'sap/ui/model/Filter',
 	'sap/ui/model/FilterOperator',
+	'sap/ui/model/FilterType',
 	'sap/ui/model/analytics/odata4analytics',
-	'sap/ui/model/Sorter',
-	'sap/chart/TimeUnitType'
+	'sap/ui/Device',
+	'sap/chart/TimeUnitType',
+	'sap/chart/coloring/Colorings',
+	'sap/chart/ChartLog',
+	'sap/chart/pagination/PagingController',
+	'sap/ui/core/LocaleData',
+	'sap/ui/core/Control',
+	'sap/ui/core/BusyIndicatorUtils',
+	'sap/ui/core/theming/Parameters',
+	'sap/chart/SeriesColorTracker',
+	'sap/viz/ui5/format/ChartFormatter',
+	'sap/chart/utils/ValueAxisScaleUtils',
+	'sap/chart/AutoScaleMode',
+	'sap/chart/ScaleBehavior',
+	'sap/viz/ui5/utils/CommonUtil'
 ], function(
 	library,
 	VizFrame,
@@ -36,23 +53,38 @@ sap.ui.define([
 	MeasureDefinition,
 	Dimension,
 	TimeDimension,
+	HierarchyDimension,
 	Measure,
 	ODataModelAdapter,
 	RoleFitter,
 	ChartUtils,
-	SeriesColorTracker,
 	ChartTypeAdapterUtils,
 	DateFormatUtil,
+	DataSourceUtils,
+	SelectionAPIUtils,
+	MeasureSemanticsUtils,
 	FeedItem,
 	Filter,
 	FilterOperator,
+	FilterType,
 	odata4analytics,
-	Sorter,
-	TimeUnitType
+	Device,
+	TimeUnitType,
+	Colorings,
+	ChartLog,
+	PagingController,
+	LocaleData,
+	Control,
+	BusyIndicatorUtils,
+	ThemeParameters,
+	SeriesColorTracker,
+	ChartFormatter,
+	ValueAxisScaleUtils,
+	AutoScaleMode,
+	ScaleBehavior,
+	CommonUtil
 ) {
 	"use strict";
-
-	var SelectionMode = sap.chart.SelectionMode;
 
 	/**
 	 * Constructor for a new Chart.
@@ -77,15 +109,14 @@ sap.ui.define([
 				/**
 				 * Type of the Chart.
 				 *
-				 * Refer to supported chart enum {@link sap.chart.ChartType}
 				 */
-				chartType										: {type: "string", defaultValue: "bar"},
+				chartType						: {type: "string", defaultValue: "bar"},
 				/**
 				 * Configuration for initialization to VizControl. This property could only set via settings parameter in Constructor.
 			 	 */
 				uiConfig : {type : "object", group : "Misc"},
 				/**
-				 * Names of the Dimensions to be displayed in the Chart.
+				 * Names of the Dimensions to be displayed in the Chart, all available dimensions will automatically append when the property isAnalytical is false.
 				 *
 				 * Depending on chart type, insufficient number of visible <code>Dimension</code>s will cause error.
 				 */
@@ -95,47 +126,220 @@ sap.ui.define([
 				 *
 				 * inResult dimension do not show up in chart layout, i.e. axis/legend. They do show in tooltip, popover, and in selection results.
 				 */
-				inResultDimensions						: {type: "string[]", defaultValue: []},				
+				inResultDimensions						: {type: "string[]", defaultValue: []},
 				/**
 				 * Names of the Measures to be displayed in the Chart.
 				 *
 				 * Depending on chart type, insufficient number of visible <code>Measure</code>s will cause errors.
 				 */
 				visibleMeasures						  : {type: "string[]", defaultValue: []},
-				/** Chart properties, refer to chart property <a href="../../vizdocs/index.html" target="_blank">documentation</a> for more details. */
+				/** Chart properties, refer to chart property <a href="docs/vizdocs/index.html" target="_blank">documentation</a> for more details. */
 				vizProperties								: {type: "object", group: "Misc"},/**
-				/** Chart scales, refer to chart property <a href="../../vizdocs/index.html" target="_blank">documentation</a> for more details. */
+				/** Chart scales, refer to chart property <a href="docs/vizdocs/index.html" target="_blank">documentation</a> for more details. */
 				vizScales										: {type : "object[]", group : "Misc"},
 				/** Whether or not an aggregated entity set is bound to the chart. */
 				isAnalytical								 : {type: "boolean"},
 				/**
 				 * Chart selection behavior.
 				 *
-				 * Supported values are "DATAPOINT", "CATEGORY", or "SERIES", case insensitive, always return in upper case.
-				 *
-				 * Unsupported values will be ignored.
 				 */
-				selectionBehavior						: {type: "string", defaultValue: "DATAPOINT"},
+				selectionBehavior						: {type: "sap.chart.SelectionBehavior", defaultValue: sap.chart.SelectionBehavior.DataPoint},
 				/**
 				 * Chart selection mode.
 				 *
-				 * Supported values are {@link sap.chart.SelectionMode.Single} or {@link sap.chart.SelectionMode.Multi}, case insensitive, always return in upper case.
-				 *
-				 * Unsupported values will be ignored.
 				 */
-				selectionMode								: {type: "string", defaultValue: sap.chart.SelectionMode.Multi},
-							/**
+				selectionMode			: {type: "sap.chart.SelectionMode", defaultValue: sap.chart.SelectionMode.Multi},
+				/**
 				 * Enable pagination mode.
 				 *
-				 * Pagination mode empowers users to visualize dataset page by page by scrolling back or forth. Currently there are some limitations of this mode in some chart transversal features. Please refer to release notes for details.
-				 *
-				 * @experimental <b>This property is only for experimental usage!!! It only works with constructor and cannot be changed during runtime.</b>
+				 * Pagination mode empowers users to visualize dataset page by page by scrolling back or forth. Currently there are some limitations of this mode in some chart transversal features, such as:
+				 * <ol>
+				 *   <li>Selection status might lost for new batch data</li>
+				 *   <li>Keyboard navigation will be only available for current continuous batch data</li>
+				 *	 <li>Zoom out might have inconsistent behavior, Hence the gesture in mobile might have the same issue</li>
+				 *	 <li>Time charts did not enable pagination yet</li>
+				 *	 <li>Series color might be inconsistent before/after jump pages</li>
+				 *   <li>It did not enable pagination when data model is OData v4 Model yet</li>
+				 * </ol>
+				 * Please refer to release notes for details.
 				 */
-				enablePagination			 : {type: "boolean", defaultValue: false}
+				enablePagination			 : {type: "boolean", defaultValue: false},
+				
+				/**
+                 * Enable Stable color mode.
+                 * To keep the same colors for the same dimension values or measure names.
+                 */
+				enableStableColor             : {type: "boolean", defaultValue: false},
+
+				/**
+                 * Enable scaling factor.
+                 */
+				enableScalingFactor             : {type: "boolean", defaultValue: false},
+				/**
+				 *
+				 Chart custom messages.
+				*/
+				customMessages				  : {type: "object", defaultValue: null},
+				/**
+				 * Chart colorings.
+				 *
+				 * Holds an object with information about the possible options how colors can be applied for indicating <code>Criticality</code> or <code>Emphasis</code> in the chart.
+				 * <pre>
+				 * Colorings: {
+				 *     Criticality: {
+				 *         …
+				 *     },
+				 *     Emphasis: {
+				 *         …
+				 *     }
+				 * }
+				 * </pre>
+				 *
+				 * <b>NOTE:</b> Dimension-based coloring does not work when {@link sap.chart.data.Measure#setSemantics} is set to {@link sap.chart.data.MeasureSemantics.Projected} or {@link sap.chart.data.MeasureSemantics.Reference} for visible measure(s).
+				 *
+				 * Refer to<br/>
+				 *   {@link sap.chart.ColoringType.Criticality}<br/>
+				 *   {@link sap.chart.ColoringType.Emphasis}<br/>
+				 * for detailed usage
+				 */
+				colorings: {type: "object", defaultValue: null},
+				/**
+				 * Active coloring configurations.
+				 *
+				 * specifies which coloring of the possible colorings is to be applied for the current chart layout. It holds an object with two properties：
+				 *
+				 * <ol>
+				 *   <li>coloring: <b>mandatory</b>, specify which kind of coloring should take effect in current chart layout. Possible values refer to {@link sap.chart.ColoringType}</li>
+				 *   <li>parameters:
+				 *     <ul>
+				 *       <li>
+				 *         <code>Criticality</code> supports two parameters: <code>"dimension"</code> and <code>"measure"</code>. Both are <b>optional</b>, one (and only one) must be provided.
+				 *         This setting disambiguates when multiple colorings for different visible dimensions and measures are applicable.
+				 *
+				 *         <code>"measure"</code> supports two input types:
+				 *           <ol>
+				 *             <li><code>string</code> for single measure name</li>
+				 *             <li><code>string[]</code> of multiple measure names(only supported in <b>static</b>), which is relevant in case of a <b>static</b> measure criticality defined on multiple measures.</li>
+				 *           </ol>
+				 *         <code>"dimension"</code> holds the dimension name as string value.
+				 *       </li>
+				 *       <li>
+				 *         <code>Emphasis</code> supports only one parameter: <code>"dimension"</code> which is <b>optional</b>.
+				 *
+				 *         <code>"dimension"</code> holds the dimension name as string value.
+				 *       </li>
+				 *     </ul>
+				 *   </li>
+				 * </ol>
+				 *
+				 * Example:
+				 * <pre>
+				 * activeColoring: {
+				 *     coloring: sap.chart.ColoringType.Criticality,
+				 *     parameters: {
+				 *         dimension: "AvailabilityStatus”
+				 *     }
+				 * }
+				 * </pre>
+				 */
+				activeColoring: {type: "object", defaultValue: null},
+				/**
+				 * Value Axis Scale.
+				 *
+				 * Specifies the scale of the chart value axes.
+				 *
+				 * <ol>
+				 *   <li>scaleBehavior: <b>optional</b>, determines whether or not all value axes in the chart should have a fixed scale. Possible values refer to {@link sap.chart.ScaleBehavior}. The default value is sap.chart.ScaleBehavior.AutoScale.
+				 *       In order to apply a fixed scale, boundary values for minimum and maximum must have been specified for all visible measures, and the axes boundaries are then created from the largest maximum and the smallest minimum value of the measures put on the respective axis.
+				 *       If any visible measure lacks this information, or scaleBehavior is set to sap.chart.ScaleBehavior.AutoScale, the chart will apply an automatic scaling for all value axes.
+				 *   </li>
+				 *   <li>fixedScaleSettings:
+				 *     <ul>
+				 *       <li>measureBoundaryValues: An object holding the fixed “minimum” and “maximum” values for all the measures.
+				 *         Stacked chart with only one measrue also uses this object to describe the fixed “minimum” and “maximum” value.
+				 *         <ul>
+				 *           <li>
+				 *             <code>measure</code> Measure name
+				 *           </li>
+				 *         </ul>
+				 *       </li>
+				 *       <li>stackedMultipleMeasureBoundaryValues: An array of objects holding the fixed “minimum” and “maximum” values only for stacked chart with mulitple measures.
+				 *         <ul>
+				 *           <li>
+				 *             <code>measures</code> the array of measure name applied to the axis.
+				 *           </li>
+				 *           <li>
+				 *             <code>boundaryValues：</code> An object holding the fixed “minimum” and “maximum” value all the measures applied to certain axis.
+				 *           </li>
+				 *         </ul>
+				 *       </li>
+				 *     </ul>
+				 *   </li>
+				 *   <li>autoScaleSettings:
+				 *     <ul>
+				 *       <li>
+				 *         <code>zeroAlwaysVisible</code> forces the value axis to always display the zero value (only a few chart types support the opposite), which is <b>optional</b>. The default value is true.
+				 *       </li>
+				 *       <li>
+				 *         <code>syncWith</code> selects how the chart adapts the value axis to the data: The axis boundaries may be determined from the loaded data, which is <b>optional</b>.
+				 *         Possible values refer to {@link sap.chart.AutoScaleMode}.
+				 *       </li>
+				 *     </ul>
+				 *   </li>
+				 * </ol>
+				 *
+				 * Example:
+				 * <pre>
+				 * valueAxisScale: {
+				 *     scaleBehavior: sap.chart.ScaleBehavior,
+				 *     fixedScaleSettings: {
+				 *         measureBoundaryValues: {
+				 *             measure_1: {
+				 *                 minimum: Number,
+				 *                 maximum: Number
+				 *             },
+				 *             measure_2: {
+				 *                 minimum: Number,
+				 *                 maximum: Number
+				 *             }
+				 *         },
+				 *         stackedMultipleMeasureBoundaryValues: [{
+	             *             measures: [ 'measure_1', 'measure_2', … ],
+	             *             boundaryValues： {
+	             *                 minimum: Number,
+				 *                 maximum: Number
+	             *             }
+				 *         }， {
+	             *             measures: [ 'measure_3', 'measure_4', … ],
+	             *             boundaryValues： {
+	             *                 minimum: Number,
+				 *                 maximum: Number
+	             *             }
+				 *         }]
+				 *     },
+				 *     autoScaleSettings: {
+				 *         zeroAlwaysVisible: Boolean,
+				 *         syncWith: sap.chart.autoScaleMode
+				 *     }
+				 * }
+				 * </pre>
+				 *
+				 * Refer to<br/>
+				 *   {@link sap.chart.AutoScaleMode.DataSet}<br/>
+				 *   {@link sap.chart.AutoScaleMode.VisibleData}<br/>
+				 *   {@link sap.chart.ScaleBehavior.AutoScale}<br/>
+				 *   {@link sap.chart.ScaleBehavior.FixedScale}<br/>
+				 * for detailed usage
+				 */
+				valueAxisScale: {type: "object", defaultValue: null}
 
 			},
 			aggregations: {
-				/** Actual data. It can be bound to an (analytical) OData model. */
+				/** 
+				 * Actual data. It can be bound to an (analytical) ODataModel.
+				 * 
+				 * <b>NOTE:</b> The metadataLoaded event {@link sap.ui.model.odata.v2.ODataModel#attachMetadataLoaded} need to be listened when bind to v2 ODataModel. 
+				 */
 				data	   : {type: "sap.ui.core.Element", multiple: true, bindable: "bindable"},
 				/** Internal VizFrame instance which does the actual rendering work. */
 				_vizFrame  : {type: "sap.viz.ui5.controls.VizFrame", multiple: false, visibility: "hidden"},
@@ -164,7 +368,11 @@ sap.ui.define([
 				/** Event fires when certain data point(s) is(are) selected, data context of selected item(s) would be passed in. */
 				selectData	   : {},
 				/** Event fires when certain data point(s) is(are) deselected, data context of deselected item(s) would be passed in */
-				deselectData   : {}
+				deselectData   : {},
+				/** Event fires when fixed scale is turned off by adding or removing dimension */
+				valueAxisFixedScaleTurnedOff : {},
+				/**	Event fires when drill stack changed. API that relys on drill stack like {@link #drillDown}, {@link #drillUp} shall be called in this event or after chart is rendered */
+				drillStackChanged : {}
 			}
 		},
 		renderer: function(oRm, oControl) {
@@ -210,12 +418,15 @@ sap.ui.define([
 	Chart.prototype.setChartType = function(sChartType, bSuppressInvalidate) {
 		this.setProperty("chartType", sChartType, bSuppressInvalidate);
 		this._bIsPagingChartType =  ChartUtils.CONFIG.pagingChartTypes.indexOf(sChartType) > -1;
+		
 		if (this._isEnablePaging()) {
-			this._initPagination(true);
+			this._getPagingController().init(false);
 		} else {
+			//TODO, move this logic out of chart.js
 			var oDataset = this._getDataset();
 			if (oDataset) {
 				oDataset.setPagingOption(null);
+				oDataset.setRange(-1, -1);
 			}
 		}
 		this._invalidateBy({
@@ -224,20 +435,168 @@ sap.ui.define([
 				vizFrame: true
 			}
 		});
+
+		this._bNeedToApplyDefaultProperties = true;
 		return this;
 	};
 
+	Chart.prototype.setColorings = function(oValue) {
+		this.setProperty("colorings", oValue);
+
+		this._invalidateBy({
+			source: this,
+			keys: {
+				vizFrame: true,
+				checkBinding: true
+			}
+		});
+
+		return this;
+	};
+
+	Chart.prototype.setActiveColoring = function(oValue) {
+		this.setProperty("activeColoring", oValue);
+
+		this._invalidateBy({
+			source: this,
+			keys: {
+				vizFrame: true,
+				checkBinding: true
+			}
+		});
+
+		return this;
+	};
+
+	Chart.prototype.setValueAxisScale = function(oValue) {
+		this._bEnbableValueAxisScale = true;
+		this.setProperty("valueAxisScale", oValue);
+
+		if (this._oValueScaleSetting && this._oValueScaleSetting.fireValueAxisFixedScaleTurnedOff) {
+			this._oValueScaleSetting.fireValueAxisFixedScaleTurnedOff = false;
+			this._oValueScaleSetting.resetValueAxisScale = true;
+		}
+
+		this._invalidateBy({
+			source: this,
+			keys: {
+				vizFrame: true
+			}
+		});
+
+		return this;
+	};
+
+	Chart.prototype._setValueAxisScale = function() {
+		var oValueAxisScale = this.getValueAxisScale(),
+			bApplyInitialValeScale = !this._rendered && !!oValueAxisScale,
+			bUpdateValueScale = !(this._mNeedToUpdate['binding'] && this._oValueScaleSetting) && this._bEnbableValueAxisScale;
+		if ( bApplyInitialValeScale || bUpdateValueScale) {
+			//When inital chart with vizScales and vizValueScales, to make sure the flag is true.
+			if (!this._bEnbableValueAxisScale) {
+				this._bEnbableValueAxisScale = true;
+			}
+			this._oValueScaleSetting =  ValueAxisScaleUtils.getValueAxisScaleSetting(
+			this.getChartType(), oValueAxisScale, this.getMeasures(), this.getVisibleMeasures());
+		}
+	};
+
+	Chart.prototype._getValueAxisScaleSetting = function() {
+		return this._bEnbableValueAxisScale ? this._oValueScaleSetting || {} : {};
+	};
+
+	Chart.prototype._validateValueScaleOnDimChange = function(aNewDimensions, aOldDimensions) {
+		if (aOldDimensions && this._oValueScaleSetting) {
+			var oValueAxisScale = this.getValueAxisScale();
+			if (oValueAxisScale && oValueAxisScale.scaleBehavior === ScaleBehavior.FixedScale) {
+				var aDimUpdated = [];
+				aNewDimensions.forEach(function(oDimension) {
+					var idx = aOldDimensions.indexOf(oDimension);
+					if (idx < 0) {
+						aDimUpdated.push(oDimension);
+					} else {
+						aOldDimensions.splice(idx, 1);
+					}
+				});
+				aDimUpdated = aDimUpdated.concat(aOldDimensions);
+				
+				if (aDimUpdated.length > 0) {
+					var bFixedScale = false, sChartType = this.getChartType();
+					if (ChartUtils.isStackedLikeChart(sChartType)) {
+						bFixedScale = true;
+						aDimUpdated.forEach(function(oDimension) {
+							if (oDimension._getFixedRole() !== 'series') {
+								bFixedScale = false;
+							}
+						});
+					}
+					if (!bFixedScale) {
+						this._oValueScaleSetting.fireValueAxisFixedScaleTurnedOff = true;
+						oValueAxisScale.scaleBehavior = ScaleBehavior.AutoScale;
+						this.setProperty('valueAxisScale', oValueAxisScale);
+						this.fireValueAxisFixedScaleTurnedOff();
+						if (this._oValueScaleSetting.resetValueAxisScale) {
+							oValueAxisScale = this.getValueAxisScale();
+							this.setProperty('valueAxisScale', oValueAxisScale);
+						}
+						this._oValueScaleSetting =
+							ValueAxisScaleUtils.getValueAxisScaleSetting(
+								sChartType, oValueAxisScale, this.getMeasures(),
+								this.getVisibleMeasures());
+					}
+				} else {
+					this._oValueScaleSetting =
+						ValueAxisScaleUtils.getValueAxisScaleSetting(
+							this.getChartType(), oValueAxisScale,
+							this.getMeasures(), this.getVisibleMeasures());
+				}
+			}
+		}
+	};
+
+	/**
+	 * Adds some dimension to the aggregation dimensions.
+	 *
+	 * Render a chart with time axis when the dimension type is {@link sap.chart.data.TimeDimension}.
+	 * Please be advised that time axis is supported with limited chart types (column, line, combination, stacked_column, bubble, scatter, dual_combination, vertical_bullet, waterfall).
+	 *
+	 * @name sap.chart.Chart#addDimension
+	 * @public
+	 * @function
+	 * @param {sap.chart.data.Dimension|sap.chart.data.TimeDimension} oDimension
+	 * The dimension to add; if empty, nothing is inserted
+	 * @return {sap.chart.Chart} Reference to this in order to allow method chaining
+	 */
+
+	/**
+	 * Removes a dimension from the aggregation dimensions, remove a visible dimension is unsupported when the property isAnalytical is false.
+	 *
+	 * @public
+	 *
+	 * @param {int|string|sap.chart.data.Dimension} oDimension
+	 * The dimension to remove or its index or id.
+	 *
+	 * @return {sap.chart.data.Dimension} The removed dimension or null
+	 */
 	Chart.prototype.removeDimension = function(oDimension) {
+		var aVisibleDimensions = this._getVisibleDimensions() || [];
+		var iIndex;
+		if (this.getIsAnalytical() === false && oDimension && oDimension.getName()) {
+			iIndex = aVisibleDimensions.indexOf(oDimension.getName());
+			if (iIndex !== -1) {
+				jQuery.sap.log.error('Data source does not support aggregation. The method "removeDimension" therefore cannot be used!');
+				return;
+			}
+		}
 		var oResult = this.removeAggregation("dimensions", oDimension);
 
 		if (oResult) {
-			var aVisibleDimensions = this._getVisibleDimensions() || [],
-				iIndex = aVisibleDimensions.indexOf(oResult.getName());
+			iIndex = aVisibleDimensions.indexOf(oResult.getName());
 			if (iIndex !== -1) {
 				aVisibleDimensions.splice(iIndex, 1);
 				this.setVisibleDimensions(aVisibleDimensions);
 			}
-			var aInResultDimensions = this._getInResultFields() || [];
+			var aInResultDimensions = this.getInResultDimensions() || [];
 			iIndex = aInResultDimensions.indexOf(oResult.getName());
 			if (iIndex !== -1) {
 				aInResultDimensions.splice(iIndex, 1);
@@ -247,16 +606,45 @@ sap.ui.define([
 		return oResult;
 	};
 
+	/**
+	 * Removes all the controls from the aggregation dimensions, only works when the property isAnalytical is true.
+	 *
+	 * Additionally, it unregisters them from the hosting UIArea.
+	 *
+	 * @public
+	 *
+	 * @return {sap.chart.data.Dimension[]} An array of the removed elements (might be empty)
+	 */
 	Chart.prototype.removeAllDimensions = function() {
-		var oResult = this.removeAllAggregation("dimensions");
-		this.setVisibleDimensions([]);
-		this.setInResultDimensions([]);
+		var oResult;
+		if (this.getIsAnalytical() === false) {
+			jQuery.sap.log.error('Data source does not support aggregation. The method "removeAllDimensions" therefore cannot be used!');
+		} else {
+			oResult = this.removeAllAggregation("dimensions");
+			this.setVisibleDimensions([]);
+			this.setInResultDimensions([]);
+		}
+
 		return oResult;
 	};
 
+	/**
+	 * Destroys all the dimensions in the aggregation dimensions, only works when the property isAnalytical is true.
+	 *
+	 * @public
+	 *
+	 * @return {sap.chart.Chart} Reference to this in order to allow method chaining
+	 */
 	Chart.prototype.destroyDimensions = function() {
-		var oResult = this.destroyAggregation("dimensions");
-		this.setVisibleDimensions([]);
+		var oResult;
+		if (this.getIsAnalytical() === false) {
+			jQuery.sap.log.error('Data source does not support aggregation. The method "destroyDimensions" therefore cannot be used!');
+		} else {
+			oResult = this.destroyAggregation("dimensions");
+			this.setVisibleDimensions([]);
+			this.setInResultDimensions([]);
+		}
+
 		return oResult;
 	};
 
@@ -311,9 +699,27 @@ sap.ui.define([
 		}, this) : aVisibleMeasures;
 	};
 
-	Chart.prototype.setVisibleDimensions = function(aDimensionNames, bSuppressInvalidate) {
-		var mSanity = this._dimensionSanityCheck({visible: aDimensionNames});
-		this.setProperty("visibleDimensions", aDimensionNames, bSuppressInvalidate);
+	/**
+	 * Sets a new value for property visibleDimensions.
+	 *
+	 * Names of the Dimensions to be displayed in the Chart, all available dimensions will automatically append when the property isAnalytical is false.
+	 *
+	 * Depending on chart type, insufficient number of visible Dimensions will cause error.
+	 *
+	 * When called with a value of null or undefined, the default value of the property will be restored.
+	 *
+	 * Default value is [].
+	 *
+	 * @public
+	 *
+	 * @param {string[]} sVisibleDimensions
+	 * New value for property visibleDimensions
+	 *
+	 * @return {sap.chart.Chart} Reference to this in order to allow method chaining
+	 */
+	Chart.prototype.setVisibleDimensions = function(sVisibleDimensions, bSuppressInvalidate) {
+		var mSanity = this._dimensionSanityCheck({visible: sVisibleDimensions});
+		this.setProperty("visibleDimensions", sVisibleDimensions, bSuppressInvalidate);
 		this.setProperty("inResultDimensions", mSanity.inResult, bSuppressInvalidate);
 		this._createDrillStack();
 		this._invalidateBy({
@@ -354,24 +760,67 @@ sap.ui.define([
 				vizFrame: true
 			}
 		});
+
 		return this;
 	};
+	
+	Chart.prototype.setEnableStableColor = function(bValue){
+	    bValue = !!bValue;
+	    if (this.getProperty("enableStableColor") !== bValue){
+	        this.setProperty("enableStableColor", bValue);
+	        this._invalidateBy({
+	            source:this,
+	            keys:{
+	                vizFrame:true
+	            }
+	        });
+	    }
+	};
+	
 
-	Chart.prototype.setEnablePagination = function(bValue, bSuppressInvalidate) {
-		if (!this._bSetEnablePagination) {
-			this.setProperty("enablePagination", bValue, bSuppressInvalidate);
-
+	/**
+	 * Sets a new value for property enablePagination, only works for oData model.
+	 *
+	 * <b>NOTE:</b> setEnablePagination currently only works in constructor.
+	 *
+	 * Enable pagination mode.
+	 *
+	 * Pagination mode empowers users to visualize dataset page by page by scrolling back or forth. Currently there are some limitations of this mode in some chart transversal features, such as:
+	 * <ol>
+	 *   <li>Selection status might lost for new batch data</li>
+	 *   <li>Keyboard navigation will be only available for current continuous batch data</li>
+	 *	 <li>Zoom out might have inconsistent behavior, hence the gesture in mobile might have the same issue</li>
+	 *	 <li>Time charts did not enable pagination yet</li>
+	 *	 <li>Series color might be inconsistent before/after jump pages</li>
+	 *	 <li>parameter <code>oBindingInfo.length</code> during {@link sap.ui.base.ManagedObject#bindAggregation bindAggregation} of {@link #getData data} will not be respected in value axis scale</li>
+	 * </ol>
+	 * Please refer to release notes for details.
+	 *
+	 * When called with a value of null or undefined, the default value of the property will be restored.
+	 *
+	 * Default value is false.
+	 *
+	 * @public
+	 *
+	 * @param {boolean}	bEnablePagination
+	 * New value for property enablePagination
+	 *
+	 * @return {sap.chart.Chart} Reference to this in order to allow method chaining
+	 */
+	Chart.prototype.setEnablePagination = function(bEnablePagination, bSuppressInvalidate) {
+		if (!this._bIsInitialized) {
+			this.setProperty("enablePagination", bEnablePagination, bSuppressInvalidate);
+			this._createDrillStack();
 			this._invalidateBy({
 				source: this,
 				keys: {
 					binding: true,
 					dataSet: true,
-					vizFrame: true,
-					drillStack: true
+					vizFrame: true
 				}
 			});
-			this._bSetEnablePagination = true;
 		}
+		return this;
 	};
 
 	// ******** Private helper functions ********
@@ -408,31 +857,34 @@ sap.ui.define([
 		return mSummary;
 	};
 
-	Chart.prototype._getInResultFields = function() {
-		var oChart = this,
-			aInResults = this.getInResultDimensions(),
-			aMsrs = this._normalizeDorM(this._getVisibleMeasures(), false),
-			aUnits = aMsrs.reduce(function(aUnits, oMsr) {
-				var unit = oMsr.getUnitBinding();
-				if (unit && aUnits.indexOf(unit) === -1 && oChart.getDimensionByName(unit) && aInResults.indexOf(unit) === -1) {
-					return aUnits.concat(unit);
-				} else {
-					return aUnits;
-				}
-			}, []);
-		return aInResults.concat(aUnits);
-	};
-
 	Chart.prototype._prepareFeeds = function() {
 		if (!this._aFeeds) {
 			var aDimensions = this._normalizeDorM(this._getVisibleDimensions(), true),
 				aMeasures = this._normalizeDorM(this._getVisibleMeasures(), false),
-				aInResults = this._normalizeDorM(this._getInResultFields(), true);
-				this._sAdapteredChartType = this.getEnablePagination() ? this.getChartType() : ChartTypeAdapterUtils.adaptChartType(this.getChartType(), aDimensions);
-			    this._aFeeds = RoleFitter.fit(this._sAdapteredChartType, aDimensions, aMeasures, aInResults, "color", this._mDataTypes);
+				aInResults = this._normalizeDorM(this.getInResultDimensions(), true),
+				aInvisibleMeasures;
+			this._sAdapteredChartType = this.getEnablePagination() ? this.getChartType() : ChartTypeAdapterUtils.adaptChartType(this.getChartType(), aDimensions);
+			
+			//Semantic relation can also start from invisible measures.
+			var aVisibleMeasures = this._getVisibleMeasures();
+			aInvisibleMeasures = this._normalizeDorM(this.getMeasures().filter(function(value){
+				return aVisibleMeasures.indexOf(value.getName()) === -1;
+			}), false);
+			
+			this._aFeeds = RoleFitter.fit(this._sAdapteredChartType, aDimensions, aMeasures, aInResults, this._enableSemanticPattern(), aInvisibleMeasures);
+			if ((!this._aFeeds._valid || this._aFeeds._unused.length) && this._sAdapteredChartType !== this.getChartType()) {
+				// fall back to original chart type if feeding is invalid for adapted chart type
+				this._sAdapteredChartType = this.getChartType();
+				this._aFeeds = RoleFitter.fit(this._sAdapteredChartType, aDimensions, aMeasures, aInResults, this._enableSemanticPattern());
+			}
+			if (this._sAdapteredChartType !== this.getChartType()) {
+				this._bNeedToApplyDefaultProperties = true;
+			}
 		}
 		return this._aFeeds;
 	};
+
+
 
 	/**
 	 * Convert an array containing any number of Dimension/Measure instances (object) and Dimension/Measure names (string)
@@ -498,14 +950,32 @@ sap.ui.define([
 		if (!aSelections || aSelections.length === 0) {
 			return {measureNames: {}};
 		}
+		var oSemanticTuples = this._getContinuesSemanticTuples();
 
 		var mSelectionSummary = aSelections.reduce(function(mSummary, oSelection) {
-			jQuery.each(oSelection.data, function(k, v) {
-				if (!mSummary[k]) {
-					mSummary[k] = [];
+			var aInvisibleSemMsr = [];
+			for (var tuple in oSemanticTuples) {
+				if (oSemanticTuples.hasOwnProperty(tuple)) {
+					var semanticRule = oSemanticTuples[tuple];
+					if (oSelection.data[tuple]) {
+						//Filter measures according with semantic relations
+						aInvisibleSemMsr.push((oSelection.data[semanticRule.timeAxis] < semanticRule.projectedValueStartTime) ? semanticRule.projected : semanticRule.actual);
+					} else {
+						//Filter internal unbound measures which is invisible for chart.
+						aInvisibleSemMsr.push(semanticRule.actual);
+						aInvisibleSemMsr.push(semanticRule.projected);
+					}
 				}
-				if (mSummary[k].indexOf(v) === -1) {
-					mSummary[k].push(v);
+			}
+
+			jQuery.each(oSelection.data, function(k, v) {
+				if (!(aInvisibleSemMsr.length > 0 && aInvisibleSemMsr.indexOf(k) > -1)) {
+					if (!mSummary[k]) {
+						mSummary[k] = [];
+					}
+					if (mSummary[k].indexOf(v) === -1) {
+						mSummary[k].push(v);
+					}
 				}
 			});
 			return mSummary;
@@ -535,30 +1005,46 @@ sap.ui.define([
 	 *
 	 * NOTE: Redundant Measures is to be handled in the request rather than here in Filter
 	 *
-	 * @return {sap.ui.model.Filter} the Filter instance
+	 * @return {object} { filters: ... hierarchyFilters: ... }
 	 * @private
 	 */
 	Chart.prototype._deriveFilterFromSelection = function() {
 		var aVisibleDimensions = this._getVisibleDimensions();
 		var that = this;
-		var aFilterCfgs = this._getVizFrame().vizSelection().map(function(oSelection) {
+		var vizSelection = this._getVizFrame().vizSelection();
+		if (this.getSelectionBehavior().toUpperCase() === sap.chart.SelectionBehavior.Category) {
+			vizSelection = vizSelection.category;
+		} else if (this.getSelectionBehavior().toUpperCase() === sap.chart.SelectionBehavior.Series) {
+			vizSelection = vizSelection.series;
+		}
+		var bHasHierarchyDim = false;
+		var aFilterCfgs = vizSelection.map(function(oSelection) {
 			var oConfig = aVisibleDimensions.reduce(function(oFilterCfg, sDimensionName) {
 				var oDimension = that.getDimensionByName(sDimensionName);
 				var value;
 				value = oSelection.data[sDimensionName];
-				if (ChartUtils.CONFIG.timeChartTypes.indexOf(that._sAdapteredChartType) > -1 &&
-					 oDimension instanceof TimeDimension) {
-					var oDateInstance = DateFormatUtil.getInstance(oDimension.getTimeUnit());
-					if (oDateInstance) {
-						var fnFormat = oDateInstance.format.bind(oDateInstance);
-						value = fnFormat(new Date(oSelection.data[sDimensionName]));
+				if (value) {
+					if (ChartUtils.CONFIG.timeChartTypes.indexOf(that._sAdapteredChartType) > -1 &&
+						 oDimension instanceof TimeDimension) {
+						var oDateInstance = DateFormatUtil.getInstance(oDimension.getTimeUnit());
+						if (oDateInstance) {
+							var fnFormat = oDateInstance.format.bind(oDateInstance);
+							value = fnFormat(new Date(oSelection.data[sDimensionName]));
+						}
 					}
+					var oFilter = new Filter({path: sDimensionName, operator: FilterOperator.EQ, value1: value});
+					if (oDimension instanceof HierarchyDimension) {
+						oFilterCfg.hierarchyFilters.push(oFilter);
+						bHasHierarchyDim = true;
+					} else {
+						oFilterCfg.filters.push(oFilter);
+					}
+					oFilterCfg.signature.push(sDimensionName + "=" + oSelection.data[sDimensionName]);
 				}
-				oFilterCfg.filters.push(new Filter({path: sDimensionName, operator: FilterOperator.EQ, value1: value}));
-				oFilterCfg.signature.push(sDimensionName + "=" + oSelection.data[sDimensionName]);
 				return oFilterCfg;
 			}, {
 				filters: [],
+				hierarchyFilters: [],
 				signature: []
 			});
 			oConfig.signature = oConfig.signature.join(";");
@@ -566,23 +1052,76 @@ sap.ui.define([
 		});
 
 		var mUniqFilters = aFilterCfgs.reduce(function(mFilters, oCfg) {
-			if (!mFilters[oCfg.signature] && oCfg.filters.length > 0) {
-				mFilters[oCfg.signature] = new Filter(oCfg.filters, true);
+			if (!mFilters[oCfg.signature] && (oCfg.filters.length + oCfg.hierarchyFilters.length > 0)) {
+				mFilters[oCfg.signature] = {
+					filters: oCfg.filters.length ? new Filter(oCfg.filters, true) : null,
+					hierarchyFilters: oCfg.hierarchyFilters.length ? new Filter(oCfg.hierarchyFilters, true) : null
+				};
 			}
 			return mFilters;
 		}, {});
 
 		var aFilters = Object.keys(mUniqFilters).map(function(k) {
-			return mUniqFilters[k];
+			return {
+				filters: mUniqFilters[k].filters,
+				hierarchyFilters: mUniqFilters[k].hierarchyFilters
+			};
 		});
+
 		if (aFilters.length > 1) {
-			return new sap.ui.model.Filter(aFilters, false);
+			if (bHasHierarchyDim) {
+				return {
+					hierarchyFilters: new Filter(aFilters.map(function(oFilter) {
+						return oFilter.hierarchyFilters;
+					}), false)
+				};
+			} else {
+				return {
+					filters: new Filter(aFilters.map(function(oFilter) {
+						return oFilter.filters;
+					}), false)
+				};
+			}
 		} else if (aFilters.length === 1) {
-			return aFilters[0];
+			return {
+				filters: aFilters[0].filters,
+				hierarchyFilters: aFilters[0].hierarchyFilters
+			};
 		} else {
 			return null;
 		}
 	};
+
+	function checkHierarchySelectionValid() {
+		var selectionBehavior = this.getSelectionBehavior();
+		var selectedDims = this._getVisibleDimensions().concat(this.getInResultDimensions()).filter(function(sDim) {
+			var oDim = this.getDimensionByName(sDim);
+			if (selectionBehavior.toUpperCase() === sap.chart.SelectionBehavior.Category) {
+				return oDim._getFixedRole() === "category" || oDim._getFixedRole() === "category2";
+			} else if (selectionBehavior.toUpperCase() === sap.chart.SelectionBehavior.Series) {
+				return oDim._getFixedRole() === "series";
+			}
+			return true;
+		}.bind(this));
+		var bHasHierarchyDim = selectedDims.some(function(sDim) {
+			var oDim = this.getDimensionByName(sDim);
+			return oDim instanceof HierarchyDimension;
+		}.bind(this));
+		var selectedItems;
+		if (selectionBehavior.toUpperCase() === sap.chart.SelectionBehavior.Category) {
+			selectedItems = this.getSelectedCategories().categories;
+		} else if (selectionBehavior.toUpperCase() === sap.chart.SelectionBehavior.Series) {
+			selectedItems = this.getSelectedSeries().series;
+		} else {
+			selectedItems = this.getSelectedDataPoints().dataPoints;
+		}
+
+		// do not allow drill down with multiple selection when hierarchy dimension found in mulitple layers of dimensions
+		if (bHasHierarchyDim && Object.keys(selectedDims).length > 1 && selectedItems.length > 1) {
+			return false;
+		}
+		return true;
+	}
 
 	/**
 	 * Check that the dimension to be drilled down actually can be drilled down
@@ -592,17 +1131,44 @@ sap.ui.define([
 	 * @return {boolean} true if the chart can drill down on all provided Dimensions, otherwise return false
 	 */
 	Chart.prototype._checkDrilldownValid = function(aIncomingDimensions) {
-		var mVisibleDimensions = this._getVisibleDimensions().concat(this._getInResultFields()).reduce(function(mMap, sDimensionName) {
+		if (this._bEmptyData) {
+			jQuery.sap.log.error("Drill down not possible, because there is already no data available!");
+			return false;
+		}
+
+		var aInResultDimensions = this.getInResultDimensions();
+		var mVisibleDimensions = this._getVisibleDimensions().concat(aInResultDimensions).reduce(function(mMap, sDimensionName) {
 			mMap[sDimensionName] = true;
 			return mMap;
 		}, {});
 
-		// Prevent drill down again on dimensions that are visible already
-		if (aIncomingDimensions.some(function(oDim) {
-			return mVisibleDimensions[oDim.getName()];
-		})) {
-			jQuery.sap.log.error("Drill down not possible, because one of the given dimensions is already drilled down!");
+		if (!checkHierarchySelectionValid.call(this)) {
+			jQuery.sap.log.error("Drill down not possible, because multiple selections on hierarchy/regular mixed dimension is not supported in backend service!");
 			return false;
+		}
+
+		function verifyDim(oDim, mSelectedDims) {
+			var result = true;
+			if (mSelectedDims[oDim.getName()]) { 
+				if (!(oDim instanceof HierarchyDimension)) {
+					jQuery.sap.log.error("Drill down not possible, because one of the given dimensions is already drilled down!");
+					result = false;
+				} else {
+					if (aInResultDimensions.indexOf(oDim.getName()) > -1) {
+						// inResult dimension does not appear in drill path, disable drill down if it is a hierarchy dimension
+						jQuery.sap.log.error("Drill down not possible, because one of the given dimensions is inResult!");
+						result = false;
+					}
+				}
+			}
+			return result;
+		}
+
+		// Prevent drill down again on dimensions that are visible already
+		for (var i = 0; i < aIncomingDimensions.length; ++i) {
+			if (!verifyDim(aIncomingDimensions[i], mVisibleDimensions)) {
+				return false;
+			}
 		}
 
 		var mArgumentDimensionNames = aIncomingDimensions.reduce(function(oResult, oDimension) {
@@ -610,18 +1176,19 @@ sap.ui.define([
 			return oResult;
 		}, {});
 
+
+		var that = this;
 		// recursively check the filter tree for a dimension which we want to drill down into
 		function findFilter(oFilter) {
 			if (jQuery.isArray(oFilter.aFilters)) { // Subtree
 				return oFilter.aFilters.some(findFilter);
 			} else { // Leaf
-				return !!mArgumentDimensionNames[oFilter.sPath];
+				return !verifyDim(that.getDimensionByName(oFilter.sPath), mArgumentDimensionNames);
 			}
 		}
 
 		var oStackTop = this._getDrillStateTop();
 		if (oStackTop && oStackTop.filter && findFilter(oStackTop.filter)) {
-			jQuery.sap.log.error("Drill down not possible, because one of the given dimensions is already filtered!");
 			return false;
 		}
 
@@ -633,29 +1200,79 @@ sap.ui.define([
 	 *
 	 * The created drill stack should allow user to drill up by removing one visible Dimension
 	 * each time until no Dimension is left
+	 * 
+	 * If some of visible dimensions are unavailable and contain hierarchy dimensions, drill stack will be initialized by treating
+	 * them as regular dimensions and update drill stack when they are available. Backward compatibility for behaivor of synchronous
+	 * call of 'getDrillStack()' can be ensured if user only use regular dimensions.
+	 *
 	 * @private
 	 */
 	Chart.prototype._createDrillStack = function() {
+		this._drillStateStack = createDrillStack.call(this);
+
+		var aVisibleDimensions = this.getProperty("visibleDimensions") || [];
+		this._aUnavailableDims = aVisibleDimensions.filter(function(sDim) {
+			return !this.getDimensionByName(sDim);
+		}.bind(this));
+
+		if (this._aUnavailableDims.length) {
+			// some dims unavailable, check drill stack when rerendering
+			this._invalidateBy({
+				source: this,
+				keys: {
+					drillStack: true
+				}
+			});
+		} else {
+			// all dims available, fire drillStackInitialized event
+			this.fireDrillStackChanged(this.getDrillStack());
+		}
+	};
+
+	Chart.prototype._updateDrillStack = function() {
+		var bHasHierarchyDim = this._aUnavailableDims.some(function(sDim) {
+			return this.getDimensionByName(sDim) instanceof HierarchyDimension;
+		}.bind(this));
+		if (bHasHierarchyDim) {
+			// update drill stack only when there are hierarchy dimensions in unavailable dims
+			this._drillStateStack = createDrillStack.call(this);
+		}
+		this._aUnavailableDims = [];
+		this.fireDrillStackChanged(this.getDrillStack());
+	};
+
+	function createDrillStack() {
 		var aVisibleDimensions = this.getProperty("visibleDimensions") || [],
 			aVisibleMeasures = this.getProperty("visibleMeasures") || [],
 			aStack = [{
 				dimensions: [],
 				measures: aVisibleMeasures,
-				filter: undefined
+				filter: undefined,
+				nonHierarchyFilters: undefined,
+				hierarchyFilters: undefined,
+				hierarchylevel: {}
 			}],
 			aStackDimensions = [];
 
+		var oHierarchylevel = {};
 		for (var i = 0; i < aVisibleDimensions.length; i++) {
-			aStackDimensions.push(aVisibleDimensions[i]);
+			var sDim = aVisibleDimensions[i];
+			aStackDimensions.push(sDim);
+			var oDim = this.getDimensionByName(sDim);
+			if (oDim && oDim instanceof HierarchyDimension) {
+				oHierarchylevel[sDim] = oDim.getLevel();
+			}
 			aStack.push({
 				dimensions: aStackDimensions.slice(),
 				measures: aVisibleMeasures,
-				filter: undefined
+				filter: undefined,
+				nonHierarchyFilters: undefined,
+				hierarchyFilters: undefined,
+				hierarchylevel: jQuery.extend(true, {}, oHierarchylevel)
 			});
 		}
-
-		this._drillStateStack = aStack;
-	};
+		return aStack;
+	}
 
 	/**
 	 * Invalidate certain aspect of the Chart control so it gets updated accordingly on the re-render phase.
@@ -672,6 +1289,7 @@ sap.ui.define([
 	Chart.prototype._invalidateBy = function(oCause) {
 		var oSource = oCause.source;
 
+		var aAdditionalDims = this._oCandidateColoringSetting ? (this._oCandidateColoringSetting.additionalDimensions || []) : [];
 		if (oSource === this) {
 			jQuery.each(oCause.keys || {}, function(k, v) {
 				this._markForUpdate(k, v);
@@ -679,18 +1297,65 @@ sap.ui.define([
 		} else if (oSource instanceof Measure && this._getVisibleMeasures().indexOf(oSource.getName()) !== -1) {
 			this._markForUpdate("dataSet", true);
 			this._markForUpdate("vizFrame", true);
-			if (oCause.property === "unitBinding") {
+			if (oCause.property === "unitBinding" ||
+				(this.getColorings() && (oCause.property === 'semantics' || oCause.property === 'semanticallyRelatedMeasures'))
+				// measure semantics will infuluence colorings and may need update binding in some cases
+				) {
 				this._markForUpdate("binding", true);
 			}
-		} else if (oSource instanceof Dimension && this._getVisibleDimensions().indexOf(oSource.getName()) !== -1) {
-			this._markForUpdate("dataSet", true);
+		} else if (oSource instanceof Dimension && this._getVisibleDimensions().concat(aAdditionalDims).indexOf(oSource.getName()) !== -1) {
+            // visible dimensions(including drilled down dimensions)
+	        this._markForUpdate("dataSet", true);
 			this._markForUpdate("vizFrame", true);
-			if (oSource.getDisplayText() && (oCause.property === "textProperty" || oCause.property === "displayText" )) {
+			if ((oSource.getDisplayText() && (oCause.property === "textProperty" || oCause.property === "displayText" ))) {
 				this._markForUpdate("binding", true);
-			}
-		}
+			} else if (oCause.property === 'level' && this.getProperty('visibleDimensions').indexOf(oSource.getName()) > -1) {
+                // reset drill stack when hierarchy level of hierarchy dimension in 'visibleDimensions' is changed
+                this._createDrillStack();
+                this._markForUpdate("binding", true);
+            }
+		} else if (oSource instanceof Dimension && this.getProperty('inResultDimensions').indexOf(oSource.getName()) > -1) {
+            // inResult dimension
+            if (oCause.property === 'level') {
+                this._markForUpdate("dataSet", true);
+                // hierarchy level change will cause binding to request new data
+                this._markForUpdate("binding", true);
+                this._markForUpdate("vizFrame", true);
+            }
+        }
 
 		this.invalidate(oCause);
+	};
+
+	Chart.prototype._handleNonAnalyticalFeeding = function() {
+		var that = this;
+		var inResult = this.getInResultDimensions();
+		var visibleDimensions = this._getVisibleDimensions(),
+			allDimensions = this.getDimensions().map(function(oValue) {
+				return oValue.getName();
+			});
+		//arr contains textProperty
+		var arr = [];
+		allDimensions.forEach(function(dimension) {
+			if (that.getDimensionByName(dimension)) {
+				var textProperty = that.getDimensionByName(dimension).getTextProperty();
+				if (textProperty) {
+					arr.push(textProperty);
+				}
+			}
+		});
+
+		/*Merge visibleDimensions and allDimensions, remove duplicate items, and textProperty and inresultDimension.
+		 *Keep the user settings of visinleDimensions, then auto append other dimensions for user.
+		 *Filter unitBinding/textProperty/inResult behind auto appending to prevent this three dimensions are already exist in visibleDimensons.
+		 */
+		var vDimensions = visibleDimensions.concat(allDimensions.filter(function(item) {
+			return (visibleDimensions.indexOf(item) < 0);
+		})).filter(function(item) {
+			return (arr.indexOf(item) < 0) && (inResult.indexOf(item) < 0);
+		});
+		this.setProperty("visibleDimensions", vDimensions);
+		this._createDrillStack();
 	};
 
 	// ******** Private updaters. These updaters are meant to be triggered by the _render function. ********
@@ -706,103 +1371,187 @@ sap.ui.define([
 		}
 	};
 	Chart.prototype._updaters = (function() {
-		function createDimAnalyticalInfos(oDim, bInResult, bInVisible) {
-			var sTextProperty = oDim.getTextProperty(),
-				aInfos = [{ name: oDim.getName(), grouped: false, inResult: !!bInResult, visible: !bInVisible }];
-
-
-			if (oDim.getDisplayText() && sTextProperty) {
-				aInfos.push({ name: sTextProperty, grouped: false, inResult: !!bInResult, visible: !bInVisible });
-			}
-
-			return aInfos;
-		}
-
-		function createMsrAnalyticalInfos(oMsr) {
-			var sUnitBinding = oMsr.getUnitBinding(),
-				aInfos = [{ name: oMsr.getName(), total: false, inResult: false, visible: true }];
-
-
-			if (sUnitBinding) {
-				aInfos.push({ name: sUnitBinding, total: false, inResult: false, visible: true });
-			}
-
-			return aInfos;
-		}
-
 		return {
 			onInvalidate: {
 				vizFrame: function() {
 					this._aFeeds = null;
+					this._bColoringParsed = null;
+				},
+				checkBinding: function() {
+					this._bColoringParsed = null;
+				},
+				binding: function() {
+					this._bColoringParsed = null;
+				},
+				loopData: function() {
+					this._bColoringParsed = null;
+				}
+			},
+			checkBinding: function() {
+				// sync point for colorings & activeColoring properties to decide if binding should be updated
+				var oCandidateColoringSetting = this._getCandidateColoringSetting();
+				var aAdditionalDimensions = oCandidateColoringSetting.additionalDimensions;
+				var aAdditionalMeasures = oCandidateColoringSetting.additionalMeasures;
+				if ((aAdditionalDimensions && aAdditionalDimensions.length) ||
+					(aAdditionalMeasures && aAdditionalMeasures.length)) {
+				    this._mNeedToUpdate["binding"] = true;
 				}
 			},
 			drillStack: function() {
-				this._createDrillStack();
+				// update drill stack if some dimension is not available when drill stack is created
+				this._updateDrillStack();
 			},
 			dataSet: function() {
-				var oDataset = this._getDataset();
-				oDataset.updateData.apply(oDataset, arguments);
+				this._getDataset().invalidate();
 			},
 			/* This BINDING is NOT the chart binding */
 			binding: function() {
-				var oBinding = this._getDataset().getBinding("data");
+				var oBinding = this._getDataset().getBinding("data"),
+					inResult = this.getInResultDimensions();
 				if (!oBinding) {
 					return;
 				}
-				var aDimensions = this._getVisibleDimensions(true),
-					aMeasures = this._getVisibleMeasures(true);
-				if (oBinding.updateAnalyticalInfo) {
-					var aAnalyticalInfos = aDimensions.reduce(function(aInfos, oDim) {
-						return aInfos.concat(createDimAnalyticalInfos(oDim));
-					}, []).concat(this._normalizeDorM(this._getInResultFields(), true).reduce(function(aInfos, oDim) {
-						return aInfos.concat(createDimAnalyticalInfos(oDim, true, true));
-					}, [])).concat(aMeasures.reduce(function(aInfos, oMsr) {
-						return aInfos.concat(createMsrAnalyticalInfos(oMsr));
-					}, []));
-					oBinding.updateAnalyticalInfo(aAnalyticalInfos);
-				}
+
+
+				var aDimensions = this._getVisibleDimensions(true).concat(this._normalizeDorM(inResult, true));
+				var aMeasures = this._getVisibleMeasures(true);
+				DataSourceUtils.updateModel(this.getIsAnalytical())(this, aDimensions, aMeasures);
 
 				var oStackTop = this._getDrillStateTop();
 				if (aDimensions.length > 0 || aMeasures.length > 0) {
-					this._getVizFrame()._pendingDataRequest(true); // prevent vizFrame from updating by an empty dataset before data is received
+					//this._getVizFrame()._pendingDataRequest(true); // prevent vizFrame from updating by an empty dataset before data is received
+					this._getVizFrame()._readyToRender(false);
 					this.setBusy(true);
 				}
-				oBinding.filter((oStackTop && oStackTop.filter) ? oStackTop.filter : undefined);
-
-				this._resetPagingOptions();
+				this._bFilterCalledByChart = true;
+				// default filtertype in v2 ODataModel and v4 ODataModel is different.
+				oBinding.filter((oStackTop && oStackTop.filter) ? oStackTop.filter : undefined, FilterType.Control);
+				if (this._bEnbableValueAxisScale) {
+					this._validateValueScaleOnDimChange(aDimensions, this._aDimensions);
+				}
+				this._aDimensions = aDimensions;
 			},
 			vizFrame: function() {
-				var oChart = this,
-					oDataset = this._getDataset(),
-					oVizFrame = this._getVizFrame(),
-					mMeasureRange = this._mMeasureRange || {};
+				var that = this,
+				oDataset = this._getDataset(),
+				oVizFrame = this._getVizFrame();
+				if (this._mNeedToUpdate['binding']) {
+					if (this._isEnablePaging()) {
+						this._getPagingController().reset();
+						this._oColoringStatus = {};
+					} else {
+						//TODO, move this logical out of chart
+						this._getDataset().setPagingOption(null);
+					}
+				} else {
+					// loop cached data if there is no binding change
+					this._markForUpdate('loopData', true);
+				}
+				if ( this.getEnableStableColor()){
+					this._oColorTracker.add(oVizFrame._runtimeScales());
+					oVizFrame._runtimeScales(this._oColorTracker.get(), true);
+				 
+				} else {
+					this._resetRuntimeScale();
+				}
+				var mMeasureRange = this._isEnablePaging() ? this._getPagingController().getMeasureRange() : {};
+
 
 				oDataset.removeAllAggregation("dimensions", true);
 				oDataset.removeAllAggregation("measures", true);
 
 				oVizFrame.removeAllAggregation("feeds", true);
-				var aFeeds = this._prepareFeeds();
-				aFeeds._def.dim.forEach(function(oDim) {
-					oDataset.addAggregation("dimensions", oDim, true);
-				}, this);
-				aFeeds._def.msr.forEach(function(oMsr) {
-					var oRange = mMeasureRange[oMsr.getIdentity()];
-					if (oRange) {
-						oMsr.setRange([oRange.min, oRange.max]);
-					}
-					if (!oChart.getDimensionByName(oMsr.getUnit())) {
-						oMsr.setUnit(null);
-					}
-					oDataset.addAggregation("measures", oMsr, true);
-				}, this);
-				aFeeds.forEach(function(oFeedItem) {
-					oVizFrame.addFeed(oFeedItem);
+
+				if (this.getIsAnalytical() === false) {
+					this._handleNonAnalyticalFeeding();
+				}
+				var aFeeds = {};
+				try {
+					aFeeds = this._prepareFeeds();
+					aFeeds._def.dim.forEach(function(oDim) {
+						oDataset.addAggregation("dimensions", oDim, true);
+					}, this);
+					aFeeds._def.msr.forEach(function(oMsr) {
+						if (oMsr) {
+							var oRange = mMeasureRange[oMsr.getIdentity()];
+							if (oRange) {
+								oMsr.setRange([oRange.min, oRange.max]);
+							}
+							if (!that.getDimensionByName(oMsr.getUnit())) {
+								oMsr.setUnit(null);
+							}
+							oDataset.addAggregation("measures", oMsr, true);
+						}
+					}, this);
+					aFeeds.forEach(function(oFeedItem) {
+						oVizFrame.addFeed(oFeedItem);
+					});
+				} catch (e) {
+					// catch the feeds' error
+					// need vizFrame to handle the error
+				}
+
+				this._semanticTuples = aFeeds._semanticTuples;
+				var oCandidateColoringSetting = this._getCandidateColoringSetting();
+
+				var aDatasetContexts = aFeeds._context || [];
+				var aAdditionalMeasures = oCandidateColoringSetting.additionalMeasures || [];
+				var aAdditionalDimensions = oCandidateColoringSetting.additionalDimensions || [];
+
+				aAdditionalMeasures.forEach(function(sMsr) {
+					aDatasetContexts.push({
+						id: sMsr,
+						showInTooltip: false
+					});
+					oDataset.addMeasure(new MeasureDefinition({
+						name: sMsr,
+						identity: sMsr,
+						value: '{' + sMsr + '}'
+					}));
 				});
+
+				aAdditionalDimensions.forEach(function(sDim) {
+					aDatasetContexts.push({
+						id: sDim,
+						showInTooltip: false
+					});
+					oDataset.addDimension(new DimensionDefinition({
+						name: sDim,
+						identity: sDim,
+						value: '{' + sDim + '}'
+					}));
+				});
+
+				oDataset.setContext(aDatasetContexts);
 
 				oVizFrame.invalidate();
 				oDataset.invalidate();
 				oVizFrame.setVizType(this._sAdapteredChartType);
-				oVizFrame.setVizProperties(this._getEffectiveProperties());
+				
+				oVizFrame._setCustomMessages(this.getCustomMessages());
+				this._setValueAxisScale();
+				//LoopData will call _setEffectiveScales and setVizProperties
+				if (!this._mNeedToUpdate['loopData']) {
+					this._setEffectiveScales();
+					oVizFrame.setVizProperties(this._getEffectiveProperties());
+				}
+			},
+			loopData: function() {
+				var oVizFrame = this._getVizFrame();
+				try {
+					this._prepareData();
+				} catch (e) {
+					if (e instanceof ChartLog) {
+						e.display();
+					} else {
+						throw e;
+					}
+				}
+				var oVizProperties = this._getEffectiveProperties();
+				//TODO: merge 'using DisplayName' logic into one loop in 'prepareData'
+				this._usingDisplayNameForSemantics(oVizProperties);
+				oVizFrame.setVizProperties(oVizProperties);
+				this._setEffectiveScales();
 			}
 		};
 
@@ -823,103 +1572,281 @@ sap.ui.define([
 		return oVizFrame ? oVizFrame.getDataset() : null;
 	};
 
-	Chart.prototype._bindingChangeListener = function() {
+	Chart.prototype._prepareData = function() {
+		this._bEmptyData = this._getContexts().length ? false : true;
+
+		// 1) get context handler of Colorings
+		var	oColoringHandler = this._getCandidateColoringSetting().contextHandler;
+
+		// 2) loop context if necessary in Colorings
+		var aContextHandlers = [];
+		if (oColoringHandler) {
+			aContextHandlers.push(oColoringHandler);
+			try {
+				this._loopContext(aContextHandlers);
+			} catch (e) {
+				if (e instanceof ChartLog) {
+					e.display();
+					// invalidate coloring setting if error
+					this._oCandidateColoringSetting = {};
+				} else {
+					throw e;
+				}
+			}
+		}
+
+		// 3) Generate semantic rules with Pattern and Coloring
+		this._oSemanticVizSettings = MeasureSemanticsUtils.getSemanticVizSettings(
+			this._sAdapteredChartType,
+			this._semanticTuples,
+			this._oCandidateColoringSetting,
+			this._enableSemanticPattern(),
+			this._bDataPointStyleSetByUser,
+			this._bLegendSetByUser
+		);
+	};
+
+	Chart.prototype._getContexts = function() {
+        return this._getDataset()._getDataContexts();
+	};
+
+	Chart.prototype._loopContext = function(aContextHandlers) {
+		var aContexts = this._getContexts();
+		if (aContexts.length > 0 && !aContexts.dataRequested) {
+			var that = this;
+			aContexts.forEach(function(oContext) {
+				aContextHandlers.forEach(function(fnContextHandler) {
+					fnContextHandler.call(that, oContext);
+				});
+			});
+		}
+	};
+	
+	Chart.prototype._filterHandler = function() {
+		if (!this._bFilterCalledByChart) {
+			this._bFilterCalledByCustomer = true;
+
+			// Coloring.Criticality.MeasureValues.ConstantThresholds shall take Filter into consideration
+			// filter will eventually trigger bindingChange, re-calculate coloring setting at that time
+			this._bColoringParsed = false;
+		}
+		this._bFilterCalledByChart = false;
+	};
+
+	Chart.prototype._dataRefreshListener = function(oEvent) {
+		if (oEvent.getParameters().reason === 'filter') {
+			this._filterHandler();
+		}
+	};
+
+	Chart.prototype._bindingChangeListener = function(oEvent) {
 		var oVizFrame = this._getVizFrame();
+		if (oEvent.getParameters().reason === 'filter') {
+			//set filter on client model will directly trigger 'dataChange' event
+			this._filterHandler();
+		}
+
+		if (this.getEnableStableColor()){
+
+			this._oColorTracker.add(oVizFrame._runtimeScales());
+			oVizFrame._runtimeScales(this._oColorTracker.get(), true);
+		}
+
+		//Here we can get the source dataset, and then set the data's displayValue to lengend's displayName in the semantic rules of vizProperties automatically for specific requirement.
+		oVizFrame.invalidate(); // prevent an unnecessary immediate VizFrame re-render, re-render should happen after all invalidates
 		this.setBusy(false);
 		if (this._isEnablePaging()) {
-			if (this._bNeedTotal) {
-				this._initPagination();
-				this._bNeedTotal = false;
-			} else if (this._bNeedPaging) {
-				var thumbPosition = oVizFrame._states().plot.transform.translate.position;
-				this._updatePage(thumbPosition);
-			}
+			this._getPagingController().bindingChanged();
 		} else {
-			this._mMeasureRange = {};
-			oVizFrame._pendingDataRequest(false);
-			oVizFrame.invalidate();
+			//allow vizframe to render
+			oVizFrame._readyToRender(true);
 		}
+
+		try {
+			this._prepareData();
+		} catch (e) {
+			if (e instanceof ChartLog) {
+				e.display();
+			}
+		}
+
+		var oVizProperties = this._getEffectiveProperties();
+		//TODO: merge 'using DisplayName' logic into one loop in 'prepareData'
+		this._usingDisplayNameForSemantics(oVizProperties);
+
+		oVizFrame.setVizProperties(oVizProperties);
+		this._setEffectiveScales();
+		this._bFilterCalledByChart = false;
+		this._bFilterCalledByCustomer = false;
+	};
+	
+	Chart.prototype._resetRuntimeScale = function(){
+		this._oColorTracker.clear();
+		this._getVizFrame()._runtimeScales(this._oColorTracker.get(), true);
 	};
 
-	Chart.prototype._initPagination = function(bNoQueryMinMax) {
-		var oBinding = this.getBinding("data"),
-			oPagingOption;
-		if (!oBinding) {
-			return;
+	Chart.prototype._hasUserSemanticProps = function() {
+		var oVizProperties = this.getProperty("vizProperties");
+		if (oVizProperties && oVizProperties.plotArea) {
+			if (oVizProperties.plotArea.dataPointStyle || oVizProperties.plotArea.seriesStyle) {
+				return true;
+			}
 		}
-		var iTotalSize = oBinding.getTotalSize();
-		if (iTotalSize >= 0) {
-			this._iTotalSize = iTotalSize;
-			if (this._iTotalSize > this._iPageSize * 2) {
-				this._iMaxPageNo = Math.floor(this._iTotalSize / this._iPageSize) - 1;
-				this._iRemainingRecords = this._iTotalSize % this._iPageSize;
-				this._bNeedPaging = true;
-				this._iOffset = null;
-				var dataRatio = this._iPageSize / this._iTotalSize;
-				oPagingOption = {
-					bEnabled: true,
-					iStartIndex: 0,
-					iLength: this._iPageSize,
-					sMode: "reset",
-					thumbRatio: dataRatio,
-					iPageNo: 0
-				};
-				if (bNoQueryMinMax) {
-					this._getVizFrame()._pendingDataRequest(false);
-				} else {
-					//invalidate vizframe until we got minMax
-					this._getVizFrame()._pendingDataRequest(true);
-					this._queryMinMax(this._measureRangeReceivedHandler.bind(this));
+		return false;
+	};
+
+	Chart.prototype._enableSemanticColoring = function() {
+		var result = true;
+		if (this._sAdapteredChartType === "heatmap") {
+			var oVizScales = this.getProperty("vizScales") || [];
+			var oVizColorScale = oVizScales.filter(function(oVizScale) {
+				return oVizScale.feed === "color";
+			})[0];
+			if (oVizColorScale) {
+				result = false;
+			}
+		} else {
+			if (this._hasUserSemanticProps()) {
+				result = false;
+			}
+		}
+		return result;
+	};
+
+	/************* Semantic Pattern's internal method *******************/
+	
+	Chart.prototype._enableSemanticPattern = function() {
+		return !this._hasUserSemanticProps() &&
+		ChartUtils.CONFIG.nonSemanticPatternChartType.indexOf(this._sAdapteredChartType) === -1;
+	};
+
+	Chart.prototype._hasSemanticPattern = function() {
+		return this._enableSemanticPattern() && MeasureSemanticsUtils.hasSemanticRelation(this._semanticTuples);
+	};
+
+	Chart.prototype._getContinuesSemanticTuples = function(){
+		var tuples = {};
+		if (this._hasSemanticPattern()) {
+			tuples = this._semanticTuples.reduce(function(arrs, tuple){
+				if (tuple.semanticMsrName) {
+					arrs[tuple.semanticMsrName] = tuple;
 				}
-			} else {
-				this._mMeasureRange = {};
-				this._bNeedPaging = false;
-				oPagingOption = {
-					bEnabled: false,
-					iStartIndex: 0,
-					iLength: this._iTotalSize
-				};
-				this._getVizFrame()._pendingDataRequest(false);
-			}
-			this._getDataset().setPagingOption(oPagingOption);
+				return arrs;
+			}, {});
 		}
+		return tuples;
 	};
 
-	Chart.prototype._resetPagingOptions = function() {
-		var oBinding = this.getBinding("data");
-		var oDataset = this._getDataset();
-		if (!oDataset || !oBinding) {
-			return;
-		}
-		if (this._isEnablePaging()) {
-			var aFeeds = this._prepareFeeds();
-			aFeeds._order = aFeeds._order.filter(function(sFeed) {
-				return sFeed !== "MND" && oBinding.getSortablePropertyNames().indexOf(sFeed) > -1;
+	Chart.prototype._getContinuesSemanticMap = function(){
+		var tuples = [];
+		if (this._hasSemanticPattern()) {
+			tuples = this._semanticTuples.filter(function(tuple){
+				return tuple.projectedValueStartTime;
 			});
-			if (aFeeds._order.length) {
-				var aSorters = this._aFeeds._order.map(function(sProperty) {
-					return new Sorter(sProperty);
-				});
-				oBinding.sort(aSorters);
-			}
-
-			this._bNeedTotal = true;
-			var oPagingOption = {
-				bEnabled: false,
-				iStartIndex: 0,
-				iLength: this._iPageSize * 2,
-				iPageNo: 0
-			};
-			oDataset.setPagingOption(oPagingOption);
-
-			this._oColorTracker.clear();
-			this._getVizFrame()._runtimeScales(this._oColorTracker.get(), true);
-		} else {
-			oDataset.setPagingOption(null);
 		}
-		this._mMeasureRange = {};
+		return tuples;
 	};
 
+	Chart.prototype._getInternalVisibleMeasures = function(){
+		var aMsrs = this._getVisibleMeasures();
+		if (this._hasSemanticPattern()) {
+			aMsrs = aMsrs.concat(this._getContinuesSemanticMap().map(function(tuple){
+				return tuple.semanticMsrName;
+			}));
+		}
+		return aMsrs;
+	};
+
+	Chart.prototype._buildSelectedDataPoints = function(oBinding, aDataPoints){
+		//For get/setSelectedDataPoints API
+		//Build vizframe's selected datapoint structure.
+		var aMsrs = this._getInternalVisibleMeasures(),
+			aDims = this._getVisibleDimensions().concat(this.getInResultDimensions()),
+			aSelectedDataPoints = this._getEffectiveContinuesDataPoints(aDataPoints);
+		return SelectionAPIUtils.buildSelectionVizCtx(aMsrs, aDims, oBinding, aSelectedDataPoints);
+	};
+
+	Chart.prototype._getEffectiveContinuesSeries = function(aSeries){
+		var aSelectedSeries = aSeries.slice(), continuesSemanticTuples = this._getContinuesSemanticMap();
+		if (this._hasSemanticPattern()) {
+			var msrsMap = aSelectedSeries.map(function(series){
+				return series.measures;
+			});
+
+			continuesSemanticTuples.forEach(function(tuple){
+				if (msrsMap.indexOf(tuple.actual) > -1 || msrsMap.indexOf(tuple.projected) > -1) {
+					aSelectedSeries = aSelectedSeries.filter(function(series){
+						return series.measures !== tuple.actual && series.measures !== tuple.projected;
+					});
+					if (msrsMap.indexOf(tuple.actual) > -1 && msrsMap.indexOf(tuple.projected) > -1) {
+						aSelectedSeries.push({
+							measures : tuple.semanticMsrName
+						});
+					}
+				}
+			});
+		}
+		return aSelectedSeries;
+	};
+
+	Chart.prototype._getEffectiveContinuesDataPoints = function(aDataPoints){
+		var aSelectedDataPoints = aDataPoints.slice(),  continuesSemanticTuples = this._getContinuesSemanticMap();
+		if (this._hasSemanticPattern()) {
+			var actIndex, proIndex, measures, tuple;
+			for (var i = 0; i < aSelectedDataPoints.length; i++) {
+				measures = aSelectedDataPoints[i].measures;
+				for (var j = 0; j < continuesSemanticTuples.length; j++) {
+					tuple = continuesSemanticTuples[j];
+					actIndex = measures.indexOf(tuple.actual);
+					if (actIndex > -1) {
+						measures.splice(actIndex, 1);
+					}
+					proIndex = measures.indexOf(tuple.projected);
+					if (proIndex > -1) {
+						measures.splice(proIndex, 1);
+					}
+					if (actIndex > -1 || proIndex > -1) {
+						measures.push(tuple.semanticMsrName);
+					}
+				}
+			}
+		}
+		return aSelectedDataPoints;
+	};
+
+	Chart.prototype._buildSelectEventData = function(data) {
+		if (data && data.length > 0 && this._hasSemanticPattern()) {
+			var value, tuple;
+			var continuesSemanticTuples = this._getContinuesSemanticMap();
+			for (var i = 0; i < data.length; i++) {
+				value = jQuery.extend(true, {}, data[i].data);
+				for (var j = 0; j < continuesSemanticTuples.length; j++) {
+					tuple = continuesSemanticTuples[j];
+					if (value.measureNames === tuple.semanticMsrName) {
+						//Need to filter interval unbound measures
+						//TODO check null value case
+						if (value[tuple.timeAxis] < tuple.projectedValueStartTime) {
+							value.measureNames = tuple.actual;
+							delete value[tuple.projected];
+							delete value[tuple.semanticMsrName];
+						} else {
+							value.measureNames = tuple.projected;
+							delete value[tuple.actual];
+							delete value[tuple.semanticMsrName];
+						}
+					} else {
+						if (value[tuple.actual] && value.measureNames !== tuple.actual) {
+							delete value[tuple.actual];
+						}
+						if (value[tuple.projected] && value.measureNames !== tuple.projected) {
+							delete value[tuple.projected];
+						}
+					}
+				}
+				data[i].data = value;
+			}
+		}
+	};
 	// ******** overridden functions ********
 
 	// override standard aggregation methods for 'data' and report an error when they are used
@@ -993,19 +1920,7 @@ sap.ui.define([
 		jQuery.sap.log.error('Chart manages the "data" aggregation only via data binding. The method "removeAllData" therefore cannot be used programmatically!');
 	};
 
-	Chart.prototype._getEntitySet = function(sPath, sNamedEntitySet) {
-		if (!sNamedEntitySet) {
-			// assume absolute path complying with conventions from OData4SAP spec
-			sNamedEntitySet = sPath.split("/")[1];
-
-			if (sNamedEntitySet.indexOf("(") != -1) {
-				sNamedEntitySet = sNamedEntitySet.split("(")[0] + "Results";
-			}
-		}
-		return sNamedEntitySet;
-	};
-
-	Chart.prototype._createOData4SAPAnalyticsModel = function(oModel) {
+    Chart.prototype._createOData4SAPAnalyticsModel = function(oModel) {
 		var oOData4SAPAnalyticsModel = null;
 		try {
 			oOData4SAPAnalyticsModel = new odata4analytics.Model(new odata4analytics.Model.ReferenceByModel(oModel));
@@ -1016,10 +1931,38 @@ sap.ui.define([
 
 	};
 
-	Chart.prototype._setIsAnalyticalProperty = function(oOData4SAPAnalyticsModel, sPath, sNamedEntitySet) {
-		if (this.getIsAnalytical() === undefined) {
-			this.setIsAnalytical(
-				oOData4SAPAnalyticsModel.findQueryResultByName(this._getEntitySet(sPath, sNamedEntitySet)) !== undefined);
+	/**
+	 * Gets current value of property isAnalytical.
+	 *
+	 * Whether or not an aggregated entity set is bound to the chart.
+	 *
+	 * The proeprty isAnalytical will programmatically set according to data source. When the data source has an aggregated entity set, isAnalytical is true, otherwise it's false.
+	 *
+	 * @public
+	 *
+	 * @return {boolean} Value of property isAnalytical
+	 */
+	Chart.prototype.getIsAnalytical = function() {
+		return this.getProperty("isAnalytical");
+	};
+
+	/**
+	 * Whether or not an aggregated entity set is bound to the chart. Deprecated.
+	 *
+	 * @public
+	 */
+	Chart.prototype.setIsAnalytical = function(oValue, bSuppressInvalidate) {
+		if (this._bIsInitialized) {
+			jQuery.sap.log.error('The proeprty isAnalytical will programmatically set according to data source. The method "setIsAnalytical" therefore cannot be used!');
+		} else {
+			this.setProperty("isAnalytical", oValue, bSuppressInvalidate);
+		}
+	};
+
+	Chart.prototype._setIsAnalyticalProperty = function(oOData4SAPAnalyticsModel, oBindingInfo) {
+		var oValue = oOData4SAPAnalyticsModel.findQueryResultByName(DataSourceUtils.getEntitySet(this.getIsAnalytical())(oBindingInfo)) !== undefined;
+		if (this.getIsAnalytical() !== oValue) {
+			this.setProperty("isAnalytical", oValue);
 		}
 	};
 
@@ -1028,34 +1971,46 @@ sap.ui.define([
 			// This may fail, in case the model is not yet set.
 			// If this case happens, the ODataModelAdapter is added by the overriden _bindAggregation,
 			// which is called during setModel(...)
+			this._oBindingInfo = jQuery.extend(true, {}, oBindingInfo);
 			var oModel = this.getModel(oBindingInfo.model);
+			var oOData4SAPAnalyticsModel;
 			if (oModel) {
-				var oOData4SAPAnalyticsModel = this._createOData4SAPAnalyticsModel(oModel);
-				this._setIsAnalyticalProperty(oOData4SAPAnalyticsModel, oBindingInfo.path, oBindingInfo.parameters ? oBindingInfo.parameters.entitySet : undefined);
-				if (this.getIsAnalytical()) {
+				var V4ODataModel = sap.ui.require("sap/ui/model/odata/v4/ODataModel");
+				var JSONModel = sap.ui.require("sap/ui/model/json/JSONModel");
+				if (JSONModel && oModel instanceof JSONModel) {
+					if (this.getIsAnalytical() !== false) {
+						this.setProperty("isAnalytical", false);
+					} 
+				} else if (V4ODataModel && oModel instanceof V4ODataModel) {
+					this.setProperty("isAnalytical", true);
 					if (oBindingInfo) {
-						oBindingInfo.parameters = jQuery.extend(true, {}, {
-									analyticalInfo: [{name: ""}] ,
-									useBatchRequests: true,
-									provideGrandTotals: false,
-									provideTotalsResultSize: false,
-									autoexpand: false,
-									reloadSingleUnitMeasures: true,
-									noPaging: true
-								},
-								oBindingInfo.parameters);
-
-						if (this._isEnablePaging()) {
-							var oPagingBindingInfo = {
-										noPaging: false
-							};
-							oBindingInfo.parameters = jQuery.extend(true, oBindingInfo.parameters, oPagingBindingInfo);
-						}
+						oBindingInfo.parameters = jQuery.extend(true, {
+							$count: oBindingInfo.length != undefined || this._isEnablePaging()
+						}, oBindingInfo.parameters);
 					}
-
-					ODataModelAdapter.apply(oModel);
-					if (oOData4SAPAnalyticsModel) {
-						oModel.setAnalyticalExtensions(oOData4SAPAnalyticsModel);
+				} else {
+					oOData4SAPAnalyticsModel = this._createOData4SAPAnalyticsModel(oModel);
+					this._setIsAnalyticalProperty(oOData4SAPAnalyticsModel, oBindingInfo);
+					if (this.getIsAnalytical()) {
+						if (oBindingInfo) {
+							var bNoPaging = true;
+							if (oBindingInfo.length != undefined || this._isEnablePaging()) {
+								bNoPaging = false;
+							}
+							oBindingInfo.parameters = jQuery.extend(true, {
+										analyticalInfo: [],
+										useBatchRequests: true,
+										provideGrandTotals: false,
+										reloadSingleUnitMeasures: true,
+										noPaging: bNoPaging
+									},
+									oBindingInfo.parameters);
+						}
+	
+						ODataModelAdapter.apply(oModel);
+						if (oOData4SAPAnalyticsModel) {
+							oModel.setAnalyticalExtensions(oOData4SAPAnalyticsModel);
+						}
 					}
 				}
 			}
@@ -1068,54 +2023,51 @@ sap.ui.define([
 			// This may fail, in case the model is not yet set.
 			// If this case happens, the ODataModelAdapter is added by the overriden _bindAggregation, which is called during setModel(...)
 			var oModel = this.getModel(oBindingInfo.model);
+			var oOData4SAPAnalyticsModel;
 			if (oModel) {
-				var oOData4SAPAnalyticsModel = this._createOData4SAPAnalyticsModel(oModel);
-				this._setIsAnalyticalProperty(oOData4SAPAnalyticsModel, oBindingInfo.path, oBindingInfo.parameters ? oBindingInfo.parameters.entitySet : undefined);
-				if (this.getIsAnalytical()) {
+				var V4ODataModel = sap.ui.require("sap/ui/model/odata/v4/ODataModel");
+				var JSONModel = sap.ui.require("sap/ui/model/json/JSONModel");
+				if (JSONModel && oModel instanceof JSONModel) {
+					if (this.getIsAnalytical() !== false) {
+						this.setProperty("isAnalytical", false);
+					}
+					this._deriveColumns(oModel, oBindingInfo);
+				} else if (V4ODataModel && oModel instanceof V4ODataModel) {
+					this.setProperty("isAnalytical", true);
 					if (oBindingInfo) {
-						oBindingInfo.parameters = jQuery.extend(true, {}, {
-									analyticalInfo: [{name: ""}] ,
-									useBatchRequests: true,
-									provideGrandTotals: false,
-									provideTotalsResultSize: false,
-									autoexpand: false,
-									reloadSingleUnitMeasures: true,
-									noPaging: true
-								},
-								oBindingInfo.parameters);
-
-						if (this._isEnablePaging()) {
-							var oPagingBindingInfo = {
-								noPaging: false
-							};
-							oBindingInfo.parameters = jQuery.extend(true, oBindingInfo.parameters, oPagingBindingInfo);
+						oBindingInfo.parameters = jQuery.extend(true, {
+							$count: oBindingInfo.length != undefined || this._isEnablePaging()
+						}, oBindingInfo.parameters);
+					}
+				} else {
+					oOData4SAPAnalyticsModel = this._createOData4SAPAnalyticsModel(oModel);
+					this._setIsAnalyticalProperty(oOData4SAPAnalyticsModel, oBindingInfo);
+					if (this.getIsAnalytical()) {
+						if (oBindingInfo) {
+							var bNoPaging = true;
+							if (oBindingInfo.length != undefined || this._isEnablePaging()) {
+								bNoPaging = false;
+							}
+							oBindingInfo.parameters = jQuery.extend(true, {
+										analyticalInfo: [] ,
+										useBatchRequests: true,
+										provideGrandTotals: false,
+										reloadSingleUnitMeasures: true,
+										noPaging: bNoPaging
+									},
+									oBindingInfo.parameters);
 						}
-
+	
+						ODataModelAdapter.apply(oModel);
+						if (oOData4SAPAnalyticsModel) {
+							oModel.setAnalyticalExtensions(oOData4SAPAnalyticsModel);
+						}
 					}
-
-					ODataModelAdapter.apply(oModel);
-					if (oOData4SAPAnalyticsModel) {
-						oModel.setAnalyticalExtensions(oOData4SAPAnalyticsModel);
-					}
-
-					var oResult = oModel.getAnalyticalExtensions().findQueryResultByName(this._getEntitySet(oBindingInfo.path, oBindingInfo.parameters ? oBindingInfo.parameters.entitySet : undefined));
-
-					this._initialiseMetaData(oResult);
+					this._deriveColumns(oModel, oBindingInfo);
 				}
 			}
-			var oDataset = this._getDataset(),
-				oOldDataBinding = oDataset.getBinding("data");
-
-			if (oOldDataBinding) {
-				oOldDataBinding.detachChange(this._bindingChangeListener, this);
-			}
+			var oDataset = this._getDataset();
 			oDataset.bindAggregation("data", oBindingInfo);
-
-			var oNewDataBinding = oDataset.getBinding("data");
-			if (oNewDataBinding) {
-				oDataset.getBinding("data").attachChange(this._bindingChangeListener, this);
-			}
-
 			this._invalidateBy({
 				source: this,
 				keys: {
@@ -1128,6 +2080,16 @@ sap.ui.define([
 		}
 	};
 
+	Chart.prototype._dataErrorListener = function(mEventParams){
+		var oVizFrame = this._getVizFrame();
+		if (oVizFrame){
+			oVizFrame._readyToRender(true);
+			oVizFrame.invalidate();
+			this.setBusy(false);
+		}
+	};
+
+
 	Chart.prototype.unbindAggregation = function(sName, bSuppressReset) {
 		if (sName === "data") {
 			var oDataset = this._getDataset();
@@ -1139,55 +2101,27 @@ sap.ui.define([
 		return BaseControl.prototype.unbindAggregation.apply(this, [sName, bSuppressReset]);
 	};
 
-	Chart.prototype._initialiseMetaData = function(oResult) {
+	Chart.prototype.unbindData = function() {
+		//remove all dimensions/visibleDimensions,measures/visibleMeasures
+		if (!this.getIsAnalytical()) {
+			this.removeAllAggregation("dimensions");
+			this.removeAllAggregation("measures");
+			this.setProperty("visibleDimensions", []);
+			this.setProperty("inResultDimensions", []);
+			this.setProperty("visibleMeasures", []);
+			this._createDrillStack();
+		}
+		this.unbindAggregation("data");
+	};
+
+	Chart.prototype._deriveColumns = function(oModel, oBindingInfo) {
 		// derive dimensions and measures from metadata, if not yet set
 		var aDimensions = this.getAggregation("dimensions");
 		var aMeasures = this.getAggregation("measures");
 		if ((aDimensions === null || aDimensions.length === 0) && (aMeasures === null || aMeasures.length === 0)) {
-			var sResultType = oResult.getEntityType().getQName();
-			sResultType = sResultType.slice(sResultType.lastIndexOf(".") + 1);
-			var sResultSchemaNamespace = oResult.getEntityType().getSchema().namespace;
-
-			aDimensions = oResult.getAllDimensions();
-			for (var i in aDimensions) {
-				var sDimensionName = aDimensions[i].getName();
-				var Clz = Dimension;
-				var oProperties = {
-					name: sDimensionName,
-					label: "{/#" + sResultType + "/" + sDimensionName + "/@sap:label}",
-					textProperty: "{/#" + sResultType + "/" + sDimensionName + "/@sap:text}"
-				};
-
-				var sName = 'name';
-				var sNamespace = 'namespace';
-				var sAnnotationAccess = "/dataServices/" +
-					"schema/[${" + sNamespace + "}==='" + sResultSchemaNamespace +
-					"']/entityType/[${" + sName + "}==='" + sResultType +
-					"']/property/[${" + sName + "}==='" + sDimensionName +
-					"']/";
-				var oUnifiedDimensionProperties = oResult.getModel().getODataModel().getMetaModel().getProperty(sAnnotationAccess);
-
-				if (oUnifiedDimensionProperties.type === "Edm.DateTime" && oUnifiedDimensionProperties['sap:display-format'] === "Date") {
-					//TODO: sap:display-format is V2 annotation, use V4 style when annotation translation is ready
-					Clz = TimeDimension;
-					oProperties.timeUnit = TimeUnitType.Date;
-				} else if (oUnifiedDimensionProperties.type === "Edm.String" && TimeUnitType[oUnifiedDimensionProperties['sap:semantics']]) {
-					//TODO: sap:semantics is V2 annotation, use V4 style when annotation translation is ready
-					Clz = TimeDimension;
-					oProperties.timeUnit = oUnifiedDimensionProperties['sap:semantics'];
-				}
-				this.addDimension(new Clz(oProperties));
-			}
-
-			aMeasures = oResult.getAllMeasures();
-			for (var j in aMeasures) {
-				var sMeasureName = aMeasures[j].getName();
-				this.addMeasure(new Measure({
-					name: sMeasureName,
-					label: "{/#" + sResultType + "/" + sMeasureName + "/@sap:label}"
-				}));
-			}
-
+			var mColumns = DataSourceUtils.deriveColumns(this.getIsAnalytical())(oModel, oBindingInfo);
+			mColumns.dimensions.forEach(this.addDimension.bind(this));
+			mColumns.measures.forEach(this.addMeasure.bind(this));
 		}
 	};
 
@@ -1197,17 +2131,32 @@ sap.ui.define([
 	 */
 	Chart.prototype.onBeforeRendering = function() {
 		BaseControl.prototype.onBeforeRendering.apply(this, arguments);
-		jQuery.each(this._updaters, function(key, fn) {
+		var aOrder = ["onInvalidate", "drillStack", "dataSet", "vizFrame", "checkBinding", "binding", "loopData"];
+		// ensure "vizFrame" updaters earlier than binding since semantic coloring depends on auto-feeding
+		aOrder.forEach(function(key) {
 			if (this._mNeedToUpdate[key]) {
-				fn.call(this);
-				this._mNeedToUpdate[key] = false;
+				this._updaters[key].call(this);
 			}
+		}.bind(this));
+
+		jQuery.each(this._mNeedToUpdate, function(key) {
+			this._mNeedToUpdate[key] = false;
 		}.bind(this));
 	};
 
 	// Override to prevent Basecontrol._render from createing DOM node, since Chart performs rendering via _vizFrame
 	Chart.prototype.onAfterRendering = function () {
 		this._showLoading(this._bLoading);
+		this._rendered = true;
+	};
+
+	Chart.prototype.onlocalizationChanged = function() {
+		this._invalidateBy({
+			source: this,
+			keys: {
+				vizFrame: true
+			}
+		});
 	};
 
 	/*
@@ -1215,6 +2164,7 @@ sap.ui.define([
 	 */
 	Chart.prototype.exit = function() {
 		this._getDataset().unbindAggregation('data', true);
+		this._oColorTracker.clear();
 		BaseControl.prototype.exit.apply(this, arguments);
 		var oVizFrame = this._getVizFrame();
 		if (this._delegateEventHandlers) {
@@ -1225,56 +2175,131 @@ sap.ui.define([
 			delete this._delegateEventHandlers;
 		}
 		oVizFrame.detachRenderComplete(this._vizFrameRenderCompleteHandler, this);
+		oVizFrame.detachEvent("_zoomDetected", vizFrameZoomDetectedHandler.bind(this), this);
+		oVizFrame.detachEvent("_selectionDetails", vizFrameSelectionDetailsHandler.bind(this), this);
 	};
 
+	
 	/*
 	 * @override
 	 */
 	Chart.prototype.applySettings = function() {
-		sap.ui.core.Control.prototype.applySettings.apply(this, arguments);
+	    this._mNeedToUpdate = {};
 
-		var oDataset = new sap.viz.ui5.data.FlattenedDataset();
+		Control.prototype.applySettings.apply(this, arguments);
 
-				/**
-				  make applicationSet : fiori as default. If we write it in the metadata, the jsdoc could not be generated correctly.
-				**/
+		var oDataset = new FlattenedDataset();
+		oDataset.attachEvent("dataChange", {}, this._bindingChangeListener, this);
+		oDataset.attachEvent("dataRefresh", {}, this._dataRefreshListener, this);
+		oDataset.attachEvent("dataError", {}, this._dataErrorListener, this);
+
+		// make applicationSet : fiori as default. If we write it in the metadata, the jsdoc could not be generated correctly.
 		var uiConfig = jQuery.extend(true, {}, {
-				'applicationSet': 'fiori'
+			'applicationSet': 'fiori'
 		}, this.getUiConfig());
 		this.setUiConfig(uiConfig);
+		this._bNeedToApplyDefaultProperties = true;
+		this._oSemanticVizSettings = {};
 
 		var oVizFrame = new VizFrame({
 			width: vizFrameSize(this.getWidth()),
 			height: vizFrameSize(this.getHeight()),
 			vizType: this.getChartType(),
 			uiConfig: this.getUiConfig(),
-			vizProperties: jQuery.extend(true, {
-				'title' : {
-					'visible' : false
-				}
-			}, this._getEffectiveProperties())
+			vizProperties: this._getEffectiveProperties()
 		});
 
 		oVizFrame.setDataset(oDataset);
 		oVizFrame.attachRenderComplete(null, this._updateLoadingIndicator.bind(this));
-		
-		this._rendered = false;
-		
-		oVizFrame.attachEventOnce("renderComplete", function() {
-			this._rendered = true;
+
+		oVizFrame.attachEvent("_zoomDetected", vizFrameZoomDetectedHandler.bind(this));
+
+		// The loading page should hide after renderfail when in pagination.
+		oVizFrame.attachEvent("renderFail", null, function(e) {
+			var pagingController =  this._getPagingController();
+			if (pagingController._sLoadingTimer) {
+				jQuery.sap.clearDelayedCall(pagingController._sLoadingTimer);
+				pagingController._sLoadingTimer = null;
+			}
+			this._showLoading(false);
 		}, this);
 
-		oVizFrame._pendingDataRequest(true);
-						this.setAggregation("_vizFrame", oVizFrame);
-						this._delegateEvents();
+		this._rendered = false;
+        //prevent chart to be rendered if no dimension or measure is feed
+        oVizFrame._readyToRender(false);
 
-		this._bSetEnablePagination = true;
-		this._bNeedTotal = true;
-		this._bNeedPaging = false;
-		this._iPageSize = 500;
-		this._oColorTracker = new SeriesColorTracker();
+		this.setAggregation("_vizFrame", oVizFrame);
+		this._delegateEvents();
+
 		this._sAdapteredChartType = this.getChartType();
-					};
+		this._bIsInitialized = true;
+		this._oCandidateColoringSetting = {};
+
+		this._oColoringStatus = {};
+        this._oColorTracker = new SeriesColorTracker();
+        if (this._isEnablePaging()) {
+			this._getPagingController();
+		}
+	};
+
+	/**
+	 * Set the chart custom messages. Supported messages please refer to enum {@link sap.chart.MessageId}.
+	 *
+	 * The user should handle the message localization.
+	 *
+	 * Example:
+	 *
+	 * <pre>
+	 * oChart.setCustomMessages({
+	 *	 'NO_DATA': "No data. Please change your filter"
+	 * });
+	 * </pre>
+	 *
+	 *When called with an invalid value, the default value will be restored.
+	 *
+	 * @param {object} oCustomMessages object containing customMessage values to update
+	 * @public
+	 * @returns {sap.chart.Chart}
+	 */
+	Chart.prototype.setCustomMessages = function(oCustomMessages) {
+		this.setProperty("customMessages", oCustomMessages);
+		var oVizFrame = this._getVizFrame();
+		if (oVizFrame) {
+			oVizFrame._setCustomMessages(oCustomMessages);
+		}
+		return this;
+	};
+
+
+    /**
+     * Get zoom information.
+     *
+     * Return the zooming enablement and current zooming level of chart.
+     *
+     * Object has the following structure:
+     *
+     * Example:
+     * <pre>
+     * {
+     *     "enabled":true,
+     *     "currentZoomLevel":0.16
+     * }
+     * </pre>
+     * @public
+     * @since 1.54
+     * @return {object} The zooming enablement and current zooming level of chart.The zooming level is between 0 and 1, and null when zooming isn't applicable.
+     */
+	Chart.prototype.getZoomInfo = function() {
+        return this._getZoomInfo();
+	};
+
+    //internal method for customer before version rel-1.54.
+	Chart.prototype._getZoomInfo = function() {
+		var oVizFrame = this._getVizFrame();
+		if (oVizFrame) {
+			return oVizFrame._getZoomInfo();
+		}
+	};
 
 	// ******** Public API ********
 
@@ -1284,125 +2309,17 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.resetLayout = function() {
+		this._createDrillStack();
 		this._invalidateBy({
 			source: this,
 			keys: {
 				binding: true,
 				vizFrame: true,
-				drillStack: true,
 				dataSet: true
 			}
 		});
 		return this;
 	};
-
-	// ******** Selection API ********
-	var _SelectionHelper = (function() {
-		function makeLookUp(aKeys) {
-			return aKeys.reduce(function(mLookUp, sKey) {
-				mLookUp[sKey] = true;
-				return mLookUp;
-			}, {});
-		}
-		function toVizCtx(aVisibleMeasures, aVisibleDimensions) {
-			var mVisibleMsrs = makeLookUp(aVisibleMeasures);
-
-			function dimWrapper(oContextObj) {
-				return aVisibleDimensions.reduce(function(oPartialDataCtx, sDim) {
-					if (oContextObj.hasOwnProperty(sDim)) {
-						oPartialDataCtx[sDim] = oContextObj[sDim];
-					}
-					return oPartialDataCtx;
-				}, {});
-			}
-
-			return function(aRequestedMeasures, oContextObj) {
-				return aRequestedMeasures.filter(function(sMsr) {
-					return mVisibleMsrs[sMsr];
-				}).map(function(sMsr) {
-					var oDataCtx = dimWrapper(oContextObj);
-					oDataCtx[sMsr] = "*";
-					return {data: oDataCtx};
-				});
-			};
-		}
-
-		function fromVizCtx(aVisibleMeasures, aVisibleDimensions) {
-			var mVisibleMsrs = makeLookUp(aVisibleMeasures);
-			return function(oVizCtx) {
-				return {
-					index: oVizCtx._context_row_number,
-					measures: Object.keys(oVizCtx).filter(function(sMsr) {
-						return mVisibleMsrs[sMsr];
-					})
-				};
-			};
-		}
-
-		function toVizCSCtx(oCtx) {
-			var oVizCtx = {data:{}},
-				oMsrVal = oCtx.measures,
-				oDimVal = oCtx.dimensions;
-
-			if (oMsrVal) {
-				oVizCtx.data.measureNames = (oMsrVal instanceof Array) ? {"in": oMsrVal} : oMsrVal;
-			}
-
-			jQuery.each(oDimVal || {}, function(k, v) {
-				oVizCtx.data[k] = (v instanceof Array) ? {"in": v} : v;
-			});
-
-			return oVizCtx;
-		}
-
-		function fromVizCSCtx(oVizCtx) {
-			var oData = oVizCtx.data;
-			return Object.keys(oData).reduce(function(obj, k) {
-				var v = oData[k];
-				if (v.in && v.in instanceof Array) {
-					v = v.in;
-				}
-				if (k === "measureNames") {
-					obj.measures = v;
-				} else if (!obj.dimensions) {
-					obj.dimensions = {};
-					obj.dimensions[k] = v;
-				} else {
-					obj.dimensions[k] = v;
-				}
-				return obj;
-			}, {});
-		}
-
-		function buildSelectionVizCtx(aVisibleMeasures, aVisibleDimensions, oBinding, aContexts) {
-			var converter = toVizCtx(aVisibleMeasures, aVisibleDimensions);
-			return aContexts.reduce(function(aData, oCtx) {
-				var aCtxs = oBinding.getContexts(oCtx.index, 1);
-				if (aCtxs.length > 0) {
-					aData = aData.concat(converter(oCtx.measures, aCtxs[0].getObject()));
-				}
-				return aData;
-			}, []);
-		}
-
-		return {
-			makeLookUp: makeLookUp,
-			toVizCtx: toVizCtx,
-			fromVizCtx: fromVizCtx,
-			toVizCSCtx: toVizCSCtx,
-			fromVizCSCtx: fromVizCSCtx,
-			buildSelectionVizCtx: buildSelectionVizCtx,
-			match: function(oRef, oVal, aMeasures) {
-				return Object.keys(oRef).every(function(k) {
-					if (aMeasures.indexOf(k) !== -1) {
-						return oVal.hasOwnProperty(k);
-					} else {
-						return oRef[k] === oVal[k];
-					}
-				});
-			}
-		};
-	})();
 
 	// ******************** Datapoint Selection ********************
 	/**
@@ -1425,16 +2342,14 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.setSelectedDataPoints = function(aDataPoints) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oBinding = this.getBinding("data"),
 			oVizFrame = this._getVizFrame();
 			if (!oBinding || !oVizFrame || this.getSelectionBehavior().toUpperCase() !== "DATAPOINT") {
 				return this;
 			}
 			oVizFrame.vizSelection([], {clearSelection: true});
-			var aMsrs = this._getVisibleMeasures(),
-				aDims = this._getVisibleDimensions().concat(this._getInResultFields());
-			oVizFrame.vizSelection(_SelectionHelper.buildSelectionVizCtx(aMsrs, aDims, oBinding, aDataPoints), {
+			oVizFrame.vizSelection(this._buildSelectedDataPoints(oBinding, aDataPoints), {
 				selectionMode: this.getSelectionMode()
 			});
 		}
@@ -1463,14 +2378,14 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.addSelectedDataPoints = function(aDataPoints) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oBinding = this.getBinding("data"),
 			oVizFrame = this._getVizFrame();
 			if (!oBinding || !oVizFrame || this.getSelectionBehavior().toUpperCase() !== "DATAPOINT") {
 				return this;
 			}
-			oVizFrame.vizSelection(_SelectionHelper.buildSelectionVizCtx(this._getVisibleMeasures(), this._getVisibleDimensions(), oBinding, aDataPoints), {
-				selectionMode: SelectionMode.Multi
+			oVizFrame.vizSelection(this._buildSelectedDataPoints(oBinding, aDataPoints), {
+				selectionMode: library.SelectionMode.Multi
 			});
 		}
 		return this;
@@ -1482,11 +2397,16 @@ sap.ui.define([
 	 * Datapoint object has the following structure:
 	 * <pre>
 	 * {
-	 * 		groupId:  "groupId",		  // group ID (optional)
-	 * 		index:		index,				  // index of the data in the group
+	 * 		index:		index,		  // index of the data in the group
 	 * 		measures: ["measureId"]   // measure IDs (data points created from the same Context object
 	 * 														  // differing only in measure names are merged together)
 	 * 		context:  [Context]		   // Context object
+	 *		unit: {
+	 *			measureId : ""	  // unit of measure
+	 *		}
+	 *		dataName: {
+	 *			measureId or dimensionId : ""      // dataName of measure or dimension
+	 *		}
 	 * }
 	 * </pre>
 	 *
@@ -1504,28 +2424,38 @@ sap.ui.define([
 				dataPoints: []
 			};
 		}
-		var converter = _SelectionHelper.fromVizCtx(this._getVisibleMeasures(), this._getVisibleDimensions());
-		var aSelectedDataPoints = oVizFrame.vizSelection(),
-			mSelectedDataPoints = aSelectedDataPoints.map(function(n) {
-				return n.data;
-			}).map(converter).reduce(function(map, ctx) {
-				var id = ctx.index;
-				map[id] = jQuery.extend(true, map[id] || {}, _SelectionHelper.makeLookUp(ctx.measures));
-				return map;
-			}, {});
-		var oDataSet = this._getDataset();
+		var oSemanticTuples = this._getContinuesSemanticTuples();
+		var mVisibleMsrs = this._getVisibleMeasures(),
+			oDataSet = this._getDataset(),
+			aSelectedDataPoints = oVizFrame.vizSelection() || [], mSelectedDataPoints = {};
+		for (var i = 0, len = aSelectedDataPoints.length; i < len; i++) {
+			var dataPoint = aSelectedDataPoints[i],
+				idx = dataPoint.data._context_row_number;
+			if (!mSelectedDataPoints[idx]) {
+				mSelectedDataPoints[idx] = {
+					index: idx,
+					measures: [],
+					context: oDataSet.findContext({"_context_row_number": idx})
+				};
+			}
+			dataPoint.measures = SelectionAPIUtils.filterVisibleMsr(dataPoint.data, mVisibleMsrs);
+			if (!jQuery.isEmptyObject(oSemanticTuples)) {
+				SelectionAPIUtils.filterSemMsr(oSemanticTuples, mVisibleMsrs, dataPoint);
+			}
+			mSelectedDataPoints[idx].measures = mSelectedDataPoints[idx].measures.concat(dataPoint.measures);
+			if (dataPoint.unit) {
+				mSelectedDataPoints[idx].unit = jQuery.extend(true, mSelectedDataPoints[idx].unit, dataPoint.unit);
+			}
+			if (dataPoint.dataName) {
+				mSelectedDataPoints[idx].dataName = jQuery.extend(true, mSelectedDataPoints[idx].dataName, dataPoint.dataName);
+			}
+		}
 		return {
 			count: aSelectedDataPoints.length,
 			dataPoints: Object.keys(mSelectedDataPoints).map(function(id) {
-				var idx = parseInt(id, 10);
-				return {
-					index: idx,
-					measures: Object.keys(mSelectedDataPoints[id]),
-					context: oDataSet.findContext({"_context_row_number": idx})
-				};
+				return mSelectedDataPoints[id];
 			})
 		};
-
 	};
 
 	/**
@@ -1549,15 +2479,13 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.removeSelectedDataPoints = function(aDataPoints) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oBinding = this.getBinding("data"),
 			oVizFrame = this._getVizFrame();
 			if (!oVizFrame || this.getSelectionBehavior().toUpperCase() !== "DATAPOINT") {
 				return this;
 			}
-			var aVisibleMsrs = this._getVisibleMeasures();
-			var aVisibleDims = this._getVisibleDimensions();
-			var aToRemove = _SelectionHelper.buildSelectionVizCtx(aVisibleMsrs, aVisibleDims, oBinding, aDataPoints);
+			var aToRemove = this._buildSelectedDataPoints(oBinding, aDataPoints);
 			oVizFrame.vizSelection(aToRemove, {
 				deselection: true
 			});
@@ -1590,14 +2518,14 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.setSelectedCategories = function(aCategories) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oVizFrame = this._getVizFrame(),
 			sBehavior = this.getSelectionBehavior().toUpperCase();
 			if (!oVizFrame || sBehavior !== "CATEGORY") {
 				return this;
 			}
 			oVizFrame.vizSelection([], {clearSelection: true});
-			oVizFrame.vizSelection(aCategories.map(_SelectionHelper.toVizCSCtx), {
+			oVizFrame.vizSelection(aCategories.map(SelectionAPIUtils.toVizCSCtx), {
 				selectionMode: this.getSelectionMode()
 			});
 		}
@@ -1628,14 +2556,14 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.addSelectedCategories = function(aCategories) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oVizFrame = this._getVizFrame(),
 			sBehavior = this.getSelectionBehavior().toUpperCase();
 			if (!oVizFrame || sBehavior !== "CATEGORY") {
 				return this;
 			}
-			oVizFrame.vizSelection(aCategories.map(_SelectionHelper.toVizCSCtx), {
-				selectionMode: SelectionMode.Multi
+			oVizFrame.vizSelection(aCategories.map(SelectionAPIUtils.toVizCSCtx), {
+				selectionMode: library.SelectionMode.Multi
 			});
 		}
 		return this;
@@ -1665,13 +2593,13 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.removeSelectedCategories = function(aCategories) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oVizFrame = this._getVizFrame(),
 			sBehavior = this.getSelectionBehavior().toUpperCase();
 			if (!oVizFrame || sBehavior !== "CATEGORY") {
 				return this;
 			}
-			oVizFrame.vizSelection(aCategories.map(_SelectionHelper.toVizCSCtx), {
+			oVizFrame.vizSelection(aCategories.map(SelectionAPIUtils.toVizCSCtx), {
 				deselection: true
 			});
 		}
@@ -1708,10 +2636,10 @@ sap.ui.define([
 				categories: []
 			};
 		} else {
-			var aSelections = oVizFrame.vizSelection();
+			var aSelections = oVizFrame.vizSelection() || [];
 			return {
 				count: aSelections.length,
-				categories: (aSelections.category || []).map(_SelectionHelper.fromVizCSCtx)
+				categories: (aSelections.category || []).map(SelectionAPIUtils.fromVizCSCtx)
 			};
 		}
 	};
@@ -1741,14 +2669,15 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.setSelectedSeries = function(aSeries) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oVizFrame = this._getVizFrame(),
 			sBehavior = this.getSelectionBehavior().toUpperCase();
 			if (!oVizFrame || sBehavior !== "SERIES") {
 				return this;
 			}
 			oVizFrame.vizSelection([], {clearSelection: true});
-			oVizFrame.vizSelection(aSeries.map(_SelectionHelper.toVizCSCtx), {
+			var aSelectedSeries = this._getEffectiveContinuesSeries(aSeries);
+			oVizFrame.vizSelection(aSelectedSeries.map(SelectionAPIUtils.toVizCSCtx), {
 				selectionMode: this.getSelectionMode()
 			});
 		}
@@ -1779,14 +2708,15 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.addSelectedSeries = function(aSeries) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oVizFrame = this._getVizFrame(),
 			sBehavior = this.getSelectionBehavior().toUpperCase();
 			if (!oVizFrame || sBehavior !== "SERIES") {
 				return this;
 			}
-			oVizFrame.vizSelection(aSeries.map(_SelectionHelper.toVizCSCtx), {
-				selectionMode: SelectionMode.Multi
+			var aSelectedSeries = this._getEffectiveContinuesSeries(aSeries);
+			oVizFrame.vizSelection(aSelectedSeries.map(SelectionAPIUtils.toVizCSCtx), {
+				selectionMode: library.SelectionMode.Multi
 			});
 		}
 		return this;
@@ -1816,13 +2746,14 @@ sap.ui.define([
 	 * @returns {sap.chart.Chart} Reference to <code>this</code> in order to allow method chaining
 	 */
 	Chart.prototype.removeSelectedSeries = function(aSeries) {
-		if (this.getSelectionMode() !== SelectionMode.None) {
+		if (this.getSelectionMode() !== library.SelectionMode.None) {
 			var oVizFrame = this._getVizFrame(),
 			sBehavior = this.getSelectionBehavior().toUpperCase();
 			if (!oVizFrame || sBehavior !== "SERIES") {
 				return this;
 			}
-			oVizFrame.vizSelection(aSeries.map(_SelectionHelper.toVizCSCtx), {
+			var aSelectedSeries = this._getEffectiveContinuesSeries(aSeries);
+			oVizFrame.vizSelection(aSelectedSeries.map(SelectionAPIUtils.toVizCSCtx), {
 				deselection: true
 			});
 		}
@@ -1861,27 +2792,66 @@ sap.ui.define([
 				series: []
 			};
 		} else {
-			var aSelections = oVizFrame.vizSelection();
+			var aSelections = oVizFrame.vizSelection() || [],
+				aSeries = (aSelections.series || []).map(SelectionAPIUtils.fromVizCSCtx),
+				aSemanticMsrs = [], semanticTuples = this._getContinuesSemanticTuples();
+
+			aSeries = aSeries.filter(function(series){
+				var accepted = true;
+				if (series && series.measures) {
+					var semanticTuple = semanticTuples[series.measures];
+					if (semanticTuple &&  semanticTuple.semanticMsrName === series.measures) {
+						aSemanticMsrs.push({
+							measures : semanticTuple.actual
+						});
+						aSemanticMsrs.push({
+							measures : semanticTuple.projected
+						});
+						accepted = false;
+					}
+				}
+				return accepted;
+			});
+			aSeries = aSeries.concat(aSemanticMsrs);
 			return {
 				count: aSelections.length,
-				series: (aSelections.series || []).map(_SelectionHelper.fromVizCSCtx)
+				series: aSeries
 			};
 		}
 	};
 
+	function getAndFilter(aFilters) {
+		var aNonEmptyFilters = aFilters.filter(function(oFilter) {
+			return oFilter;
+		});
+		if (aNonEmptyFilters.length === 0) {
+			return null;
+		} else if (aNonEmptyFilters.length === 1) {
+			return aNonEmptyFilters[0];
+		} else {
+			return new Filter(aNonEmptyFilters, true);
+		}
+	}
+
 	// ******** Drill down/up API ********
 
 	/**
-	 * Drill down on specific Dimension(s).
+	 * Drill down on specific Dimension(s), only works when the property isAnalytical is true.
 	 *
 	 * The drill down Dimension(s) must present in the Dimension aggregation
 	 * and must NOT present in previous drill down or be visible already.
+	 *
+	 * <b>NOTE:</b> parameter <code>oBindingInfo.length</code> during {@link sap.ui.base.ManagedObject#bindAggregation bindAggregation} of {@link #getData data} always takes effect in drill workflow.
 	 *
 	 * @public
 	 *
 	 * @param {array} vDimensions an array, or just a single instance, of either Dimension instance or Dimension name to drill down
 	 */
 	Chart.prototype.drillDown = function(vDimensions) {
+		if (this.getIsAnalytical() === false) {
+			jQuery.sap.log.error('Data source does not support drillDown/drillUp. The method "drillDown" therefore cannot be used!');
+			return;
+		}
 		// make sure that only dimensions are drilled down
 		if (vDimensions && !(vDimensions instanceof Array)) {
 			vDimensions = [vDimensions];
@@ -1892,7 +2862,6 @@ sap.ui.define([
 			return;
 		}
 		if (!this._checkDrilldownValid(aDimensions)) {
-			jQuery.sap.log.warning("Drill down not possible for " + aDimensions + ". Already drilled down.");
 			return;
 		}
 
@@ -1900,24 +2869,50 @@ sap.ui.define([
 			mRedundants = this._redundantsFromSelection(),
 			oSelectionFilter = this._deriveFilterFromSelection();
 
-		var oNewFilter;
+		var nonHierarchyFilter, hierarchyFilter, oNewFilter;
 		if (oSelectionFilter) {
-			oNewFilter = !(oStackTop && oStackTop.filter) ? oSelectionFilter : new Filter([oSelectionFilter, oStackTop.filter], true);
+			nonHierarchyFilter = getAndFilter([oSelectionFilter.filters, oStackTop.nonHierarchyFilters]);
+			// update hierarchy filter instead of directly combined with previous one due to backend limitation
+			hierarchyFilter = oSelectionFilter.hierarchyFilters || oStackTop.hierarchyFilters;
+			oNewFilter = getAndFilter([nonHierarchyFilter, hierarchyFilter]);
 		}
+		var oHierarchylevel = jQuery.extend(true, {}, oStackTop.hierarchylevel);
+
+		aDimensions.forEach(function(oDim) {
+			if (oDim instanceof HierarchyDimension) {
+				if (oHierarchylevel[oDim.getName()] == null) {
+					oHierarchylevel[oDim.getName()] = oDim.getLevel();
+				} else {
+					oHierarchylevel[oDim.getName()] += 1;
+				}
+			}
+		});
+
+		var newStackTopDims = oStackTop.dimensions.slice().filter(function(sDim) {
+			return !mRedundants[sDim];
+		});
+		newStackTopDims = newStackTopDims.concat(aDimensions.filter(function(oDim) {
+			return newStackTopDims.indexOf(oDim.getName()) === -1;
+		}).map(function(oDim) {
+			return oDim.getName();
+		}));
 
 		// dimension(s) can be used for drill down
 		this._drillStateStack.push({
-			dimensions: oStackTop.dimensions.slice().concat(aDimensions.map(function(oDim) {
-				return oDim.getName();
-			})).filter(function(sDim) {
-				return !mRedundants[sDim];
-			}),
+			dimensions: newStackTopDims,
 			measures:  oStackTop.measures.filter(function(sMsr) {
 				return !mRedundants.measureNames[sMsr];
 			}),
 			filter: oNewFilter,
+			hierarchylevel: oHierarchylevel,
+			nonHierarchyFilters: nonHierarchyFilter,
+			hierarchyFilters: hierarchyFilter,
 			redundant: mRedundants
 		});
+
+		if (this._aUnavailableDims.length === 0) {
+			this.fireDrillStackChanged(this.getDrillStack());
+		}
 
 		var aDimensionNames = aDimensions.map(function(oDim) {
 			return oDim.getName();
@@ -1935,17 +2930,32 @@ sap.ui.define([
 	};
 
 	/**
-	 * Drill up to previous drill down state, or remove the last visible Dimension
+	 * Drill up to previous drill down state, only works when the property isAnalytical is true.
+	 *
+	 * <b>NOTE:</b> parameter <code>oBindingInfo.length</code> during {@link sap.ui.base.ManagedObject#bindAggregation bindAggregation} of {@link #getData data} always takes effect in drill workflow.
+	 *
+	 * @param {Integer} iIndex index of drill state in history to drill up. Default to the previous state in history if available.
 	 *
 	 * @public
 	 */
-	Chart.prototype.drillUp = function() {
-		if (this._drillStateStack.length > 1) {
-			var oPreviousState = this._drillStateStack.pop(),
-				oStackTop = this._getDrillStateTop();
+	Chart.prototype.drillUp = function(iIndex) {
+		if (this.getIsAnalytical() === false) {
+			jQuery.sap.log.error('Data source does not support drillDown/drillUp. The method "drillUp" therefore cannot be used!');
+			return;
+		}
+        if (arguments.length === 0) {
+			iIndex = this._drillStateStack.length - 2;
+		}
+		var oNewStackTop = this._drillStateStack[iIndex];
+		if (oNewStackTop && iIndex != this._drillStateStack.length - 1) {
+			var oPreviousState = this._drillStateStack.pop();
+			this._drillStateStack.splice(iIndex + 1);
+			if (this._aUnavailableDims.length === 0) {
+				this.fireDrillStackChanged(this.getDrillStack());
+			}
 			this.fireDrilledUp({
 				dimensions: oPreviousState.dimensions.filter(function(d) {
-					return oStackTop.dimensions.indexOf(d) === -1;
+					return oNewStackTop.dimensions.indexOf(d) === -1;
 				})
 			});
 			this._invalidateBy({
@@ -1956,6 +2966,29 @@ sap.ui.define([
 				}
 			});
 		}
+	};
+
+	/**
+	 * Return all drill down states, only works when the property isAnalytical is true.
+	 *
+	 * NOTE: If {@link sap.chart.data.HierarchyDimension} is used when calling {@link #setVisibleDimensions}, drill stack could not be determined synchronously. Listen to <code>drillStackChanged</code> event instead.
+	 *
+	 * @return {Object[]} array of drill state objects
+	 * @public
+	 */
+	Chart.prototype.getDrillStack = function() {
+		if (this.getIsAnalytical() === false) {
+			jQuery.sap.log.error('Data source does not support drillDown/drillUp. The method "getDrillStack" therefore cannot be used!');
+			return;
+		}
+		return jQuery.map(this._drillStateStack || [], function(oState, i) {
+			return {
+				dimension: oState.dimensions.slice(),
+				measure: oState.measures.slice(),
+				filter: oState.filter,
+				hierarchylevel: jQuery.extend(true, {}, oState.hierarchylevel)
+			};
+		});
 	};
 
 	/**
@@ -2050,7 +3083,7 @@ sap.ui.define([
 	 *
 	 * Chart's properties will be updated with the parameter.
 	 *
-	 * Refer to chart property <a href="../../vizdocs/index.html" target="_blank">documentation</a> for more details.
+	 * Refer to chart property <a href="docs/vizdocs/index.html" target="_blank">documentation</a> for more details.
 	 *
 	 * @param {object}
 	 *			  oVizProperties object containing vizProperty values to update
@@ -2059,15 +3092,35 @@ sap.ui.define([
 	Chart.prototype.setVizProperties = function(oVizProperties) {
 		oVizProperties = VizPropertiesHelper.sanitize(oVizProperties);
 		this.setProperty("vizProperties", oVizProperties);
+		
+		if (oVizProperties.plotArea && oVizProperties.plotArea.dataPointStyle) {
+			this._bDataPointStyleSetByUser = true;
+			this._invalidateBy({
+				source: this,
+				keys: {
+					// update vizFrame since feeding depends on semantic rules in coloring case
+					vizFrame: true,
+					loopData: true
+				}
+			});
+		}
+		
+		if (oVizProperties.legend && oVizProperties.legend.title) {
+			this._bLegendSetByUser = true;
+		}
+		
+		// always call setVizProperties of vizframe to cache properties when initialization
+		// currently there is no implementation to operate cached property(e.g. modify dataPointStyle's displayName)
+		// in this case we respect user's oginial input
 		if (this._getVizFrame()) {
-			this._getVizFrame().setVizProperties(jQuery.extend({}, oVizProperties));
+			this._getVizFrame().setVizProperties(this._getEffectiveProperties());
 		}
 	};
 
 	/**
 	 * Return Chart's properties.
 	 *
-	 * Refer to chart property <a href="../../vizdocs/index.html" target="_blank">documentation</a> for more details.
+	 * Refer to chart property <a href="docs/vizdocs/index.html" target="_blank">documentation</a> for more details.
 	 *
 	 * @returns {object} the Chart properties object
 	 * @public
@@ -2105,7 +3158,7 @@ sap.ui.define([
 	 *
 	 * Chart's scales will be updated with the parameters.
 	 *
-	 * Refer to chart property <a href="../../vizdocs/index.html" target="_blank">documentation</a> for more details.
+	 * Refer to chart property <a href="docs/vizdocs/index.html" target="_blank">documentation</a> for more details.
 	 *
 	 * @param {object[]}
 	 *			  oVizScales array of vizScale objects
@@ -2113,6 +3166,14 @@ sap.ui.define([
 	 */
 	Chart.prototype.setVizScales = function(oVizScales) {
 		this.setProperty("vizScales", oVizScales);
+		this._aVizValueScales = oVizScales.filter(function(oVizScale) {
+			return oVizScale.feed === "valueAxis" ||
+				oVizScale.feed === "valueAxis2" ||
+				oVizScale.feed === "actualValues";
+		});
+		if (this._aVizValueScales && this._aVizValueScales.length > 0) {
+			this._bEnbableValueAxisScale = false;
+		}
 		if (this._getVizFrame()) {
 			this._getVizFrame().setVizScales(oVizScales);
 		}
@@ -2121,7 +3182,7 @@ sap.ui.define([
 	/**
 	 * Return Chart's scales.
 	 *
-	 * Refer to chart property <a href="../../vizdocs/index.html" target="_blank">documentation</a> for more details.
+	 * Refer to chart property <a href="docs/vizdocs/index.html" target="_blank">documentation</a> for more details.
 	 *
 	 * @returns {object[]} an array of scale objects
 	 * @public
@@ -2171,6 +3232,7 @@ sap.ui.define([
 			var sName = sEvent.charAt(0).toUpperCase() + sEvent.slice(1);
 			var handler = function(oEvent) {
 				var oParameters = oEvent.getParameters();
+				this._buildSelectEventData(oParameters.data);
 				delete oParameters.id;
 				this.fireEvent(sEvent, oParameters);
 			};
@@ -2185,7 +3247,7 @@ sap.ui.define([
 
 		this._vizFrameRenderCompleteHandler = vizFrameRenderCompleteHandler.bind(this);
 		oVizFrame.attachRenderComplete(null, this._vizFrameRenderCompleteHandler);
-		oVizFrame.attachEvent("_scroll", scrollHandler.bind(this));
+		oVizFrame.attachEvent("_selectionDetails", vizFrameSelectionDetailsHandler.bind(this));
 	};
 
 	/**
@@ -2249,166 +3311,175 @@ sap.ui.define([
 		});
 	};
 
-	/*
-	Chart.prototype._openContextMenu = function(oEvent) {
-		var oMenu = this.getContextMenu();
-		var bKeyboard = oEvent.type == "keyup";
-		var eDock = sap.ui.core.Popup.Dock;
-		var oSource = oEvent.getSource();
-		oMenu.open(bKeyboard, oSource, eDock.BeginTop, eDock.BeginBottom, oSource);
-	};
-
-	Chart.prototype._initContextMenu = function()  {
-		if (! this._mContextMenuItem){
-			this._mContextMenuItem = {};
-		}
-		if (! this._mDimensionMenuItem){
-			this._mDimensionMenuItem = {};
-		}
-		if (! this._mChartTypeMenuItem){
-			this._mChartTypeMenuItem = {};
-		}
-		var oContextMenu = new Menu(this.getId() + "-ContextMenu");
-		var aItems = this._getContextMenuItems(oContextMenu.sId);
-		for (var i = 0; i < aItems.length; i++) {
-			var aSubItems = this._getContextMenuItems(aItems[i].sId);
-			if (aSubItems && aSubItems.length > 0 ) {
-				var oSubmenu = new Menu();
-				for (var j = 0; j < aSubItems.length; j++) {
-					oSubmenu.addItem(aSubItems[j]);
-				}
-				aItems[i].setSubmenu(oSubmenu);
-			};
-			oContextMenu.addItem(aItems[i]);
-		}
-		this.setContextMenu(oContextMenu);
-	};
-
-	Chart.prototype.getContextMenu = function() {
-		// initialize context menu on first get request (may come from hosting app )
-		if (!this.getAggregation("contextMenu")) {
-			this._initContextMenu();
-		}
-		return this.getAggregation("contextMenu");
-	};
-
-	Chart.prototype.ngetContextMenuItems = function() {
-		this.getContextMenu(); // make sure it is initialized
-
-		return this._mContextMenuItem;
-	};
-
-	Chart.prototype._getContextMenuItems = function(sId) {
-		var aItems = [];
-		var that = this;
-		var sSubId = sId.slice(sId.indexOf("-")+1);
-		var sSubIdLast = sId.slice(sId.lastIndexOf("-")+1);
-
-		if (sSubIdLast == "ContextMenu") {
-
-			// add drill down sub menu
-			this._mDimensionMenuItem["@@drillDownMenuItem@@"] = this._createContextMenuItem(
-				sSubId + "-DrillDownBy", "Drill Down By", null, null,	null, null
-			);
-			aItems.push(this._mDimensionMenuItem["@@drillDownMenuItem@@"]);
-			this._mContextMenuItem["DRILL_DOWN"] = this._mDimensionMenuItem["@@drillDownMenuItem@@"];
-
-			// add drill up item
-			this._mDimensionMenuItem["@@drillUpMenuItem@@"] = this._createContextMenuItem(
-				sSubId + "-DrillUp", "Drill Up",	null, null, null, function() {
-					that.drillUp();
-				}
-			);
-			aItems.push(this._mDimensionMenuItem["@@drillUpMenuItem@@"]);
-			this._mContextMenuItem["DRILL_UP"] = this._mDimensionMenuItem["@@drillUpMenuItem@@"];
-
-			// add chart types sub menu
-			var oSubMenu = this._createContextMenuItem(
-				sSubId + "-ChartType", "Set Chart Type", null, null, null, null
-			);
-
-			oSubMenu.getSubmenu = function() {
-				// update menu items for available chart types
-				var aAvailableChartTypeName = that.getAvailableChartTypes();
-				for (var sChartTypeMenuItemName in that._mChartTypeMenuItem) {
-					var bIsAvailable = aAvailableChartTypeName.indexOf(sChartTypeMenuItemName) != -1;
-					that._mChartTypeMenuItem[sChartTypeMenuItemName].setVisible(bIsAvailable);
-				}
-				that._mChartTypeMenuItem[that.getProperty("chartType")].setVisible(false);
-
-				// this._mChartTypeMenuItem
-				return sap.ui.unified.MenuItemBase.prototype.getSubmenu.apply(this);
+	Chart.prototype._getDynamicScaleProp =  function(){
+		return {
+			general : {
+				enableScalingFactor: this.getEnableScalingFactor()
 			}
-			aItems.push(oSubMenu);
-			this._mContextMenuItem["SET_CHART_TYPE"] = oSubMenu;
-		} else if (sSubIdLast == "ChartType") {
-
-			var aChartTypes = this.getChartTypes();
-			for (var i = 0; i < aChartTypes.length; i++) {
-				this._mChartTypeMenuItem[aChartTypes[i]] = this._createContextMenuItem(
-					sSubId + "-" + aChartTypes[i],
-					that.getChartTypeLabel(aChartTypes[i]),
-					null,
-					"chartType",
-					aChartTypes[i],
-					function(oEvent) {
-						that.setChartType(oEvent.getParameter("item").data("chartType"));
-						//							that._updateFeeds();
-					}
-				);
-				aItems.push(this._mChartTypeMenuItem[aChartTypes[i]]);
-			}
-
-		} else if (sSubIdLast == "DrillDownBy" ) {
-			var aAggregationDimensions = this.getDimensions();
-			var aVisibleDimensions = this.getVisibleDimensions();
-			var mVisibleDimensionNames = aVisibleDimensions.reduce(function(oResult, oDimension) {
-				oResult[oDimension.getName()] = oDimension;
-				return oResult;
-			}, {});
-
-			// create drill down menu items
-			for (var i = 0; i < aAggregationDimensions.length; i++) {
-				var oDimension = aAggregationDimensions[i];
-				this._mDimensionMenuItem[oDimension.getName()] = this._createContextMenuItem(
-					sSubId + "-" + oDimension.getName(),
-					oDimension.getLabel(),
-					null,
-					"dimensionName",
-					oDimension.getName(),
-					function(oEvent) {
-						oEvent.oSource.setVisible(false);
-						that.drillDown(oEvent.getParameter("item").data("dimensionName"));
-					}
-				); // TODO change to ID
-				if (mVisibleDimensionNames[oDimension.getName()]) {
-					this._mDimensionMenuItem[oDimension.getName()].setVisible(false);
-				}
-				aItems.push(this._mDimensionMenuItem[oDimension.getName()]);
-			}
-		}
-
-		return aItems;
+		};
 	};
 
-	Chart.prototype._createContextMenuItem = function(sId, sTextI18nKey, sIcon, sDataKey, sDataValue, fHandler) {
-		return new MenuItem(this.getId() + "-" + sId, {
-			text: sTextI18nKey, //this.oResBundle.getText(sTextI18nKey),
-			icon: sIcon ? "sap-icon://" + sIcon : null,
-			customData: [{key: sDataKey, value: sDataValue}],
-			select: fHandler || function() {}
-		});
-	};
-	*/
-	
 	Chart.prototype._getEffectiveProperties = function() {
-		return jQuery.extend(true, 
-				{},
-				this._getDefaultVizProperties(),
-				this.getProperty("vizProperties"),
-				this._getHostedVizProperties(),
-				this._getPagingVizProperties());
+		var oVizProperties = {
+			'title' : {
+				'visible' : false
+			}
+		};
+		if (this._bNeedToApplyDefaultProperties) {
+			oVizProperties = jQuery.extend(true, oVizProperties, this._getDefaultVizProperties());
+			this._bNeedToApplyDefaultProperties = false;
+		}
+		
+		var chartType = this.getChartType();
+		
+		oVizProperties = jQuery.extend(true, oVizProperties,
+			this._oSemanticVizSettings.properties || {},
+			this.getProperty("vizProperties"),
+			this._getHostedVizProperties(),
+			this._getPagingVizProperties(),
+			this._getTimeProperties(),
+			this._getValueAxisScaleSetting().property || {},
+			this._getDynamicScaleProp(),
+			MeasureSemanticsUtils.getSemanticSettingsForCombination(
+				this._semanticTuples, chartType));
+		
+		return oVizProperties;
 	};
+
+	Chart.prototype._setEffectiveScales = function() {
+		/* Priority order:
+		* 1. valueAxisScales > vizValueScales.
+		* 2. vizColorScales > _oSemanticScales(_oSemanticScales will be empty if vizColorScales is not set).
+		* So effecttiveScales is consist of valueAxisScales, vizScales(including vizValueScales and vizColorScales), and semanticScales.
+		*/
+		var oVizFrame = this._getVizFrame(),
+			oVizScales = this.getProperty('vizScales'),
+			oValueAxisScaleSetting = this._getValueAxisScaleSetting(),
+			vizColorScale = (oVizScales || []).filter(function(oScale){
+				return oScale.feed === 'color';
+			});
+		var effecttiveScales = CommonUtil.extendScales(oVizScales, oValueAxisScaleSetting.scale || [], this._oSemanticVizSettings.scales || []);
+		if (this._oSemanticVizSettings.replaceColorScales && vizColorScale.length === 0) {
+			//Clear color scale if there isn't any color scales setting.
+			oVizFrame.setVizScales(effecttiveScales, {replace: true});
+		} else {
+			oVizFrame.setVizScales(effecttiveScales);
+		}
+	};
+
+	Chart.prototype._usingDisplayNameForSemantics = function(oVizProperties) {
+		//check whether the parameter is undefined or null
+		var isExist = function(o) {
+			if ((typeof (o) === 'undefined') || (o === null)) {
+				return false;
+			}
+			return true;
+		};
+
+		if (oVizProperties.plotArea && oVizProperties.plotArea.dataPointStyle && oVizProperties.plotArea.dataPointStyle.rules) {
+			
+			/*
+			If semantic rules meet the following 4 conditions:
+			(1) aRules[i].displayName === undefined : displayName isn’t defined
+			(2) akeys.length === 1 : Only one sematic rules condition;
+			(3) oDataContext[key].hasOwnProperty("equal") == true : use ‘equal’ label;
+			(4) aVisibleDimensions.indexOf(key) !== -1 : the condition is for dimension;
+			Then if the value of 'equal' is equal to some value in oBindingData, when meet the any of the following 2 conditions:
+			(1) this.getDimensionByName(key).getTextProperty() === undefined
+			(2) this.getDimensionByName(key).getDisplayText() === false
+			set the corresponding value of 'equal' to the the rule's displayName. otherwise, set the displayText to the rule's displayName.
+			Otherwise show the default "Semantic Range1".
+			*/
+
+			//currently, there are only two types of binding
+			var aContexts = this._getContexts();
+			if (aContexts.length > 0 && !aContexts.hasOwnProperty("dataRequested")) {
+				var aVisibleDimensions = this.getVisibleDimensions(),
+					aRules = oVizProperties.plotArea.dataPointStyle.rules;
+				for (var i = 0; i < aRules.length; i++) {
+					var oDataContext = aRules[i].dataContext;
+					if (oDataContext && oDataContext.length !== 0) {
+						var akeys = Object.keys(oDataContext);
+						if ( !isExist(aRules[i].displayName) && akeys.length === 1) {
+							var key = akeys[0];
+							if (oDataContext[key].hasOwnProperty("equal") && aVisibleDimensions.indexOf(key) !== -1) {
+								var sTextProperty = this.getDimensionByName(key).getTextProperty();
+								for (var j = 0; j < aContexts.length; j++) {
+									if (aContexts[j].getProperty(key) === oDataContext[key].equal) {
+										var sDisplayName = aContexts[j].getProperty(sTextProperty);
+										if (!isExist(sTextProperty) || !isExist(sDisplayName) || typeof (sDisplayName) === "object" || this.getDimensionByName(key).getDisplayText() === false) {
+											aRules[i].displayName = oDataContext[key].equal;
+											break;
+										} else {
+											aRules[i].displayName = sDisplayName;
+											break;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	};
+
+	Chart.prototype._getCandidateColoringSetting = function() {
+		if (!this._bColoringParsed) {
+			if (this._enableSemanticColoring()) {
+				this._bColoringParsed = true;
+				this._oCandidateColoringSetting = {};
+				var oDimMsr = {},
+				oColoring = this.getColorings(),
+				oActiveColoring = this.getActiveColoring();
+				oDimMsr.aMsr = this._normalizeDorM(this.getVisibleMeasures());
+
+				var oStackTop = this._getDrillStateTop();
+				var aRedundantDims = [], aVisibleDims;
+				if (oStackTop.redundant) {
+				// consider redundant dimensions as visible dim when matching ConstantThresholds.AggregationLevels.VisibleDimensions
+				var aRedundantDims = Object.keys(oStackTop.redundant).filter(function(key) {
+					return key !== 'measureNames';
+				});
+			}
+			aVisibleDims = this._normalizeDorM(this.getVisibleDimensions().concat(aRedundantDims), true);
+			oDimMsr.aDim = aVisibleDims;
+
+			oDimMsr.aInResultDim = this._normalizeDorM(this.getInResultDimensions(), true);
+			oDimMsr.allMsr = this.getMeasures().map(function(oMsr){
+				return oMsr.getName();
+			});
+			oDimMsr.allDim = this.getDimensions().map(function(oDim){
+				return oDim.getName();
+			});
+
+			if (oColoring) {
+				try {
+					var sUrl = jQuery.sap.getResourcePath("sap/chart/i18n/i18n.properties");
+					var oBundle = jQuery.sap.resources({
+						url: sUrl
+					});
+					var options = {
+						bFiltered: this._bFilterCalledByCustomer
+					};
+					this._oCandidateColoringSetting = Colorings.getCandidateSetting(oColoring, oActiveColoring, this._semanticTuples, oDimMsr, this._oColoringStatus || {}, this._sAdapteredChartType || this.getChartType(), oBundle, options);
+					//use original chartType here since adapted chartType is not ready in some workflow
+				} catch (e) {
+					if (e instanceof ChartLog) {
+						e.display();
+					} else {
+						throw e;
+					}
+				}
+			}
+		} else {
+			this._oCandidateColoringSetting = {};
+		}
+
+	}
+		return this._oCandidateColoringSetting;
+	};
+
 
 	// ---------------- Hosted VizProperties ----------------
 	Chart.prototype._hostedVizProperties = {
@@ -2428,27 +3499,30 @@ sap.ui.define([
 
     };
 
-	var FIORI_LABEL_SHORTFORMAT_10 = "__UI5__ShortIntegerMaxFraction10";
-	var FIORI_LABEL_FORMAT_2 = "__UI5__FloatMaxFraction2";
-	var FIORI_LABEL_SHORTFORMAT_2 = "__UI5__ShortIntegerMaxFraction2";
 	Chart.prototype._getDefaultVizProperties = function() {
 		// Use UI5 formatter by default in analytic chart
-		var type = 'info/' + this._sAdapteredChartType;
+		var type = 'info/' + (this._sAdapteredChartType || this.getChartType());
 		var bIsPercentage = (type.indexOf("info/100_") === 0);
 		var bIsPie = (type === "info/pie" || type === "info/donut");
-		return jQuery.extend(true,
+		var oDefaults = {
+			interaction: {
+				extraEventInfo: true
+			}
+		};
+
+		return jQuery.extend(true, oDefaults,
 							 applyDefaultFormatString({}, type,
 													  ["valueAxis.label.formatString", "valueAxis2.label.formatString"],
-													  bIsPercentage ? '' : FIORI_LABEL_SHORTFORMAT_10),
+													  bIsPercentage ? '' : ChartFormatter.DefaultPattern.SHORTFLOAT),
 							 applyDefaultFormatString({}, type,
 													  ["legend.formatString", "sizeLegend.formatString"],
-													  FIORI_LABEL_SHORTFORMAT_2),
+													  ChartFormatter.DefaultPattern.SHORTFLOAT_MFD2),
 							 applyDefaultFormatString({}, type,
 													  ["plotArea.dataLabel.formatString"],
-													  bIsPie ? '' : FIORI_LABEL_SHORTFORMAT_2),
+													  bIsPie ? '' : ChartFormatter.DefaultPattern.SHORTFLOAT_MFD2),
 							 applyDefaultFormatString({}, type,
 													  ["tooltip.formatString"],
-													  bIsPercentage ? '' : FIORI_LABEL_FORMAT_2));
+													  bIsPercentage ? '' : ChartFormatter.DefaultPattern.STANDARDFLOAT));
 
 		function setPropertiesValue(properties, path, value) {
 			if (path.length === 0) {
@@ -2508,24 +3582,166 @@ sap.ui.define([
 		}
 	};
 
-	Chart.prototype.setSelectionMode = ChartUtils.hostVizPropertySetter("selectionMode", "interaction.selectability.mode", {
-		convert: function(s) {
-			return s ? s.toUpperCase() : s;
-		},
-		validate: function(s) {
-			return [SelectionMode.Multi, SelectionMode.Single, SelectionMode.None].indexOf(s) !== -1 && !this.getEnablePagination();
+	Chart.prototype._getTimeProperties = function() {
+		var aTimeLevels = ["year", "month", "day"]; //default value
+		var oFiscalYearPeriodCount = null;  //default value
+		var that = this;
+		var sTimeDim = this.getVisibleDimensions().filter(function(sDim) {
+			var oDim = that.getDimensionByName(sDim);
+			return (oDim instanceof sap.chart.data.TimeDimension && oDim._getFixedRole() === "category");
+		})[0];
+		
+		var sweekConfig = "ISO";
+		var iMinDays, iFirstDayOfWeek, region;
+
+		if (sTimeDim) {
+			var oTimeDim = this.getDimensionByName(sTimeDim);
+			switch (oTimeDim.getTimeUnit()) {
+				case TimeUnitType.yearmonthday:
+					aTimeLevels = ["year", "month", "day"];
+					break;
+				case TimeUnitType.yearquarter:
+					aTimeLevels = ["year", "quarter"];
+					break;
+				case TimeUnitType.yearmonth:
+					aTimeLevels = ["year", "month"];
+					break;
+				case TimeUnitType.yearweek:
+					aTimeLevels = ["year", "week"];
+
+					var oLocale = sap.ui.getCore().getConfiguration().getFormatSettings().getFormatLocale(),
+						oLocaleData = LocaleData.getInstance(oLocale),
+						region = oLocale.getRegion();
+
+					iMinDays = oLocaleData.getMinimalDaysInFirstWeek();
+					iFirstDayOfWeek = oLocaleData.getFirstDayOfWeek();
+					iFirstDayOfWeek = iFirstDayOfWeek === 0 ? 7 : iFirstDayOfWeek;  //info uses 7 for Sunday
+					sweekConfig = "Gregorian";
+					break;
+				case TimeUnitType.fiscalyear:
+					aTimeLevels = ["fiscal_year"];
+					break;
+				case TimeUnitType.fiscalyearperiod:
+					aTimeLevels = ["fiscal_period", "fiscal_year"];
+					break;
+				default:
+			}
+			
+			oFiscalYearPeriodCount = oTimeDim.getFiscalYearPeriodCount();
 		}
-	});
-	Chart.prototype.getSelectionMode = ChartUtils.hostVizPropertyGetter("selectionMode", "interaction.selectability.mode");
-	Chart.prototype.setSelectionBehavior = ChartUtils.hostVizPropertySetter("selectionBehavior", "interaction.selectability.behavior", {
-		convert: function(s) {
-			return s ? s.toUpperCase() : s;
-		},
-		validate: function(s) {
-			return ["DATAPOINT", "CATEGORY", "SERIES"].indexOf(s) !== -1;
+
+		var oProps = this.getProperty("vizProperties");
+		if (oProps && oProps.timeAxis) {
+			// user properties have higher priority
+			var timeAxis = oProps.timeAxis;
+			if (timeAxis.levels) {
+				aTimeLevels = timeAxis.levels;
+			}
+			if (timeAxis.fiscal && timeAxis.fiscal.periodNumbers) {
+				oFiscalYearPeriodCount = timeAxis.fiscal.periodNumbers;
+			}
 		}
-	});
-	Chart.prototype.getSelectionBehavior = ChartUtils.hostVizPropertyGetter("selectionBehavior", "interaction.selectability.behavior");
+
+		return {
+			"timeAxis": {
+				"levels": aTimeLevels,
+				"fiscal": {
+					"periodNumbers": oFiscalYearPeriodCount
+				},
+				"levelConfig" : {
+					"week" : {
+						"type" : sweekConfig,
+						"minDays" : iMinDays,
+						"firstDayOfWeek" : iFirstDayOfWeek,
+						"region" : region
+					}
+				}
+			}
+		};
+	};
+
+	Chart.prototype.setSelectionMode = function (oValue) {
+		this.setProperty("selectionMode", oValue);
+		var oVizFrame = this._getVizFrame();
+		if (oVizFrame) {
+			oVizFrame.setVizProperties({interaction: {selectability: {mode: oValue}}});
+		}
+		return this;
+	};
+
+	Chart.prototype.getSelectionMode = function () {
+		var oVizFrame = this._getVizFrame();
+		if (oVizFrame) {
+			return oVizFrame.getVizProperties().interaction.selectability.mode;
+		} else {
+			return this.getProperty("selectionMode");
+		}
+	};
+
+	Chart.prototype.setSelectionBehavior = function(oValue){
+		this.setProperty("selectionBehavior", oValue);
+		var oVizFrame = this._getVizFrame();
+		if (oVizFrame) {
+			oVizFrame.setVizProperties({interaction: {selectability: {behavior: oValue}}});
+		}
+		return this;
+	};
+
+
+	Chart.prototype.setEnableScalingFactor = function(value){
+		this.setProperty("enableScalingFactor", value);
+		this._invalidateBy({
+			source: this,
+			keys: {
+				vizFrame: true
+			}
+		});
+		return this;
+	};
+
+	/**
+	 * return the scaling factor. Or return null when scaling factor is disable.
+	 *
+	 * @public
+	 *
+	 * @return {object} A scaling factor object or null
+	 */
+	Chart.prototype.getScalingFactor = function(){
+		var oVizFrame = this._getVizFrame();
+		if (oVizFrame) {
+			var temp = oVizFrame._states()["dynamicScale"];
+			if (temp) {
+				var result = null;
+				var keys = ["primaryValues", "secondaryValues"];
+				var axes = [temp.valueAxis, temp.valueAxis2];
+				for (var ii = 0; ii < keys.length; ii++) {
+					var scaleFactor = axes[ii];
+					if (scaleFactor && (scaleFactor.symbol || scaleFactor.unit)) {
+						result = result || {};
+						var key = keys[ii];
+						result[key] = {
+							scalingFactor: scaleFactor.symbol
+						};
+
+						if (scaleFactor.unit) {
+							result[key]["unit"] = scaleFactor.unit;
+						}
+					}
+				}
+				return result;
+			}
+		}
+		return null;
+	};
+
+	Chart.prototype.getSelectionBehavior = function () {
+		var oVizFrame = this._getVizFrame();
+		if (oVizFrame) {
+			return oVizFrame.getVizProperties().interaction.selectability.behavior;
+		} else {
+			return this.getProperty("selectionBehavior");
+		}
+	};
 
 	// ---------------- Public Helpers ----------------
 	/**
@@ -2558,135 +3774,45 @@ sap.ui.define([
 		return this.getDimensions().filter(function(d) {return d instanceof TimeDimension;});
 	};
 
-	function scrollHandler(oEvent) {
-		if (this._isEnablePaging() && this._bNeedPaging) {
-			//var oVizFrame = this._getVizFrame();
-			var ratio = oEvent.getParameters().position;
-			this._updatePage(ratio);
-		}
-	}
-
 	Chart.prototype._isEnablePaging = function() {
-		this._bMobile = sap.ui.Device.system.tablet || sap.ui.Device.system.phone;
-		var ret = this.getEnablePagination() && this._bIsPagingChartType && !this._bMobile;
+		this._bMobile = (Device.system.tablet && !Device.system.desktop) || Device.system.phone;
+		var model = this.getModel();
+		var V4ODataModel = sap.ui.require("sap/ui/model/odata/v4/ODataModel");
+		var JSONModel = sap.ui.require("sap/ui/model/json/JSONModel");
+		var ret = !(JSONModel && model instanceof JSONModel) && !(V4ODataModel && model instanceof V4ODataModel) && 
+			this.getEnablePagination() && this._bIsPagingChartType && !this._bMobile;
 		return ret;
-	};
-
-	Chart.prototype._updatePage = function(ratio) {
-		var oVizFrame = this._getVizFrame();
-		var iCurrentPageNo = Math.floor(this._iTotalSize * ratio / this._iPageSize);
-		//we merge last two pages in case last page does not reach pageSize
-		iCurrentPageNo = Math.min(iCurrentPageNo, this._iMaxPageNo);
-		this._iOffset = null;
-
-		var iStartIndex = Math.max((iCurrentPageNo - 1) * this._iPageSize, 0);
-		var iLength, domain;
-
-		if (iCurrentPageNo === 0) {
-			iLength = this._iPageSize;
-				domain = this._iPageSize;
-		} else if (iCurrentPageNo === this._iMaxPageNo){
-			iLength = this._iPageSize * 2 + this._iRemainingRecords;
-			domain = this._iPageSize + this._iRemainingRecords;
-		} else {
-			iLength = this._iPageSize * 2;
-			domain = this._iPageSize;
-		}
-		this._iOffset = (this._iTotalSize * ratio - iCurrentPageNo * this._iPageSize) / domain;
-		
-        var oDataset = this._getDataset();
-        
-		if (oDataset.getRenderedPageNo() === iCurrentPageNo) {
-			//current page is rendered
-			var translate = {
-				plot: {
-					transform: {
-						translate: {
-							translateByPage: {
-								context: this._middleCtx,
-								offset: this._iOffset
-							}
-						}
-					}
-				}
-			};
-			oVizFrame._states(translate);
-			this._showLoading(false);
-		} else {
-			if (this._pagingTimer) {
-				jQuery.sap.clearDelayedCall(this._pagingTimer);
-			}
-			this._pagingTimer = jQuery.sap.delayedCall(50, this, function() {
-				var aContexts = this.getBinding("data").getContexts(iStartIndex, iLength);
-				var bNoContexts = aContexts.some(function(oContext) {
-					return oContext === undefined;
-				});
-				if (bNoContexts) {
-					//need request new data
-					oDataset.suppressInvalidate();
-				} else {
-					//analytical binding has these data in local
-					//current page is not rendered
-					var oPagingOption = {
-						bEnabled: true,
-						iStartIndex: iStartIndex,
-						iLength: iLength,
-						sMode: "update",
-						thumbRatio: null,
-						iPageNo: iCurrentPageNo
-					};
-					oDataset.setPagingOption(oPagingOption);
-					oDataset.updateData();
-					oVizFrame.invalidate();
-					this._oColorTracker.add(this._getVizFrame()._runtimeScales());
-					this._getVizFrame()._runtimeScales(this._oColorTracker.get(), true);
-				}
-			});
-			this._sLoadingTimer = this._sLoadingTimer || jQuery.sap.delayedCall(200, this, function() {
-				this._showLoading(true);
-			});
-		}
 	};
 
 	function vizFrameRenderCompleteHandler(oEvent) {
 		var oParameters = oEvent.getParameters();
 		delete oParameters.id;
 
-		if (this._isEnablePaging() && this._bNeedPaging) {
-			if (this._sLoadingTimer) {
-				jQuery.sap.clearDelayedCall(this._sLoadingTimer);
-                this._sLoadingTimer = null;
-			}
-			var oVizFrame = this._getVizFrame();
-			var oBinding = this.getBinding("data");
-			var oDataset = this._getDataset();
-			var iRenderedPageNo = oDataset.getRenderedPageNo();
-			if (iRenderedPageNo !==  0) {
-				var iMidRecordNo = iRenderedPageNo * this._iPageSize - 1;
-				this._middleCtx = oBinding.getContexts(iMidRecordNo, 1)[0].getObject();
-			} else {
-				this._middleCtx = null;
-			}
-			if (this._middleCtx || this._iOffset) {
-					var translate = {
-							plot: {
-								transform: {
-									translate: {
-										translateByPage: {
-											context: this._middleCtx,
-											offset: this._iOffset
-										}
-									}
-								}
-							}
-						};
-				oVizFrame._states(translate);
-			}
-			this._showLoading(false);
+		if (this._isEnablePaging()) {
+			this._getPagingController().vizFrameRenderCompleted();
 		}
-		
+
 		this.fireEvent("renderComplete", oParameters);
 	}
+
+	function vizFrameZoomDetectedHandler(oEvent) {
+		var oParameters = oEvent.getParameters();
+		delete oParameters.id;
+		this.fireEvent("_zoomDetected", oParameters);
+	}
+
+	function vizFrameSelectionDetailsHandler(oEvent) {
+		var oParameters = oEvent.getParameters();
+		delete oParameters.id;
+		var oDataSet = this._getDataset();
+		oParameters.data.forEach(function(data){
+			data.context = oDataSet.findContext({
+				"_context_row_number": data.data._context_row_number
+			});
+		});
+		this.fireEvent("_selectionDetails", oParameters);
+	}
+
 
 	/*
 	 * TODO: Comment this function later
@@ -2733,7 +3859,7 @@ sap.ui.define([
 	};
 
 	Chart.prototype._createLoadingIndicator = function() {
-		var $indicator = jQuery(sap.ui.core.BusyIndicatorUtils.getElement());
+		var $indicator = jQuery(BusyIndicatorUtils.getElement());
 		var $text = jQuery("<p>").attr("class", "loading-text").text("Loading");
 		$text.css({
 			"position": "absolute",
@@ -2782,19 +3908,19 @@ sap.ui.define([
 		//var $next = $text.next();
 		$text.css({
 			"top": oPosition.height / 2,
-			"font-weight": sap.ui.core.theming.Parameters.get("sapUiChartTitleFontWeight"),
-			"font-size": sap.ui.core.theming.Parameters.get("sapUiChartMainTitleFontSize"),
-			"color": sap.ui.core.theming.Parameters.get("sapUiChartMainTitleFontSize")
+			"font-weight": ThemeParameters.get("sapUiChartTitleFontWeight"),
+			"font-size": ThemeParameters.get("sapUiChartMainTitleFontSize"),
+			"color": ThemeParameters.get("sapUiChartMainTitleFontSize")
 		});
 
 		this._$loadingIndicator.css({
-			"background-color": sap.ui.core.theming.Parameters.get("sapUiExtraLightBG")
+			"background-color": ThemeParameters.get("sapUiExtraLightBG")
 		});
 	};
 
 	Chart.prototype._getRequiredDimensions = function() {
 		var aVisDims = this._getVisibleDimensions(),
-			aInResultDims = this._getInResultFields();
+			aInResultDims = this.getInResultDimensions();
 		return this._normalizeDorM(aVisDims.concat(aInResultDims), true);
 	};
 
@@ -2802,89 +3928,37 @@ sap.ui.define([
 		return this._getVisibleMeasures(true);
 	};
 
-	// Request for the min/max at current aggregation level for all visible measures
-	Chart.prototype._queryMinMax = function(fnCallback) {
-		var aDims = this._getRequiredDimensions().map(function(oDim) {
-				return oDim.getName();
-			}),
-			aMsrs = this._getRequiredMeasures().map(function(oMsr) {
-				return oMsr.getName();
-			});
-
-		var oResult = aMsrs.reduce(function(oResult, sMsr) {
-			oResult[sMsr] = {min: {}, max: {}};
-			return oResult;
-		}, {});
-
-		function checkComplete() {
-			var bAllComplete = aMsrs.every(function(sMsr) {
-				return oResult[sMsr].min.requested && oResult[sMsr].max.requested;
-			});
-			if (bAllComplete) {
-				fnCallback(oResult);
-			}
+	/**
+     * Export the current chart as SVG String.
+     * The chart is ready to be exported to SVG ONLY after the initialization is finished.
+     * Any attempt to export to SVG before that will result in an empty SVG string.
+     * @public
+     * @param {Object} [option]
+     * <pre>
+     * {
+     *     width: Number - the exported svg will be scaled to the specific width.
+     *     height: Number - the exported svg will be scaled to the specific height.
+     *     hideTitleLegend: Boolean - flag to indicate if the exported SVG includes the original title and legend.
+     *     hideAxis: Boolean - flag to indicate if the exported SVG includes the original axis.
+     * }
+     * </pre>
+     * @return {string} the SVG string of the current viz or empty svg if error occurs.
+     */
+	Chart.prototype.exportToSVGString = function(option) {
+		var sSVGString = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100%\" height=\"100%\"/>",
+			oVizFrame = this._getVizFrame();
+		if (oVizFrame) {
+			sSVGString = oVizFrame.exportToSVGString(option);
 		}
+		return sSVGString;
+	};
 
-		function onsuccess(sMsr, sKey, oData) {
-			oResult[sMsr][sKey].requested = true;
-			oResult[sMsr][sKey].value = parseFloat(oData && oData.results[0][sMsr]);
-			checkComplete();
-		}
+	Chart.prototype._getPagingController = function(){
+        if (!this._pagingController){
+            this._pagingController = new PagingController(this);
+        }
 
-		function onerror(sMsr, sKey, oData) {
-			oResult[sMsr][sKey].requested = true;
-			oResult[sMsr][sKey].error = oData;
-			checkComplete();
-		}
-
-		var aQueries = aMsrs.reduce(function(aQueries, sMsr) {
-			return aQueries.concat({
-				urlParameters: {
-					"$select": aDims.concat(sMsr).join(","),
-					"$top": 1,
-					"$orderby": sMsr + " asc"
-				},
-				success: onsuccess.bind(null, sMsr, "min"),
-				error: onerror.bind(null, sMsr, "min")
-			}, {
-				urlParameters: {
-					"$select": aDims.concat(sMsr).join(","),
-					"$top": 1,
-					"$orderby": sMsr + " desc"
-				},
-				success: onsuccess.bind(null, sMsr, "max"),
-				error: onerror.bind(null, sMsr, "max")
-			});
-		}, []);
-
-		var oBinding = this.getBinding("data"),
-			sPath = oBinding.getPath(),
-			oModel = oBinding.getModel();
-		aQueries.forEach(function(oQuery) {
-			oModel.read(sPath, oQuery);
-		});
-		
-		return aQueries;
-    };
-
-	Chart.prototype._measureRangeReceivedHandler = function(oQueryResult) {
-		var mMeasureRange = {};
-		jQuery.each(oQueryResult, function(sMsrId, oResult) {
-			mMeasureRange[sMsrId] = {
-					min: oResult.min.value,
-					max: oResult.max.value
-			};
-		});
-		this._mMeasureRange = mMeasureRange;
-		var oVizFrame = this._getVizFrame();
-		oVizFrame._pendingDataRequest(false);
-		this._invalidateBy({
-			source: this,
-			keys: {
-				vizFrame: true
-			}
-		});
-		this.setBusy(false);
+        return this._pagingController;
 	};
 
 	return Chart;

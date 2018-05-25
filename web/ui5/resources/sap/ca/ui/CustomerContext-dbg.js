@@ -65,7 +65,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * 
  * When opening the dialog in "select" mode, if a customer has been persisted in a previous session, it will be retrieved and the dialog won't open at all.
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public
@@ -655,8 +655,7 @@ sap.ca.ui.CustomerContext.prototype.select = function () {
 			try {
 				var oReadPromise = this._oPersService.getPersData();
 				oReadPromise.done(jQuery.proxy(function (sCustomer) { // Success callback
-
-					if (sCustomer && sCustomer !== "") {
+					if (sCustomer !== null && sCustomer !== "") {
 						var oCustomer = JSON.parse(sCustomer);
 
 						// set the right item into the list

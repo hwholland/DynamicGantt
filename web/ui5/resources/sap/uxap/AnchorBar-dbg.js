@@ -150,9 +150,7 @@ sap.ui.define([
 	AnchorBar.DOM_CALC_DELAY = 200; // ms
 
 	AnchorBar.prototype.setSelectedButton = function (oButton) {
-		var sPreviouslySelectedButtonId = this.getSelectedButton(),
-			oPreviouslySelectedButton,
-			aSelectItems = this._oSelect.getItems(),
+		var aSelectItems = this._oSelect.getItems(),
 			bHasSelectItems = aSelectItems.length > 0;
 
 		if (typeof oButton === "string") {
@@ -161,7 +159,7 @@ sap.ui.define([
 
 		if (oButton) {
 
-			if (oButton.getId() === sPreviouslySelectedButtonId) {
+			if (oButton.getId() === this.getSelectedButton()) {
 				return this;
 			}
 
@@ -173,10 +171,9 @@ sap.ui.define([
 			}
 
 			if (this._bHasButtonsBar) {
-
-				oPreviouslySelectedButton = sap.ui.getCore().byId(sPreviouslySelectedButtonId);
-				this._toggleSelectionStyleClass(oPreviouslySelectedButton, false);
-				this._toggleSelectionStyleClass(oButton, true);
+				//remove selection class from the currently selected item
+				this.$().find(".sapUxAPAnchorBarButtonSelected").removeClass("sapUxAPAnchorBarButtonSelected").attr("aria-checked", false);
+				oButton.$().addClass("sapUxAPAnchorBarButtonSelected").attr("aria-checked", true);
 
 				if (oSelectedSectionId) {
 					this.scrollToSection(oSelectedSectionId, AnchorBar.SCROLL_DURATION);
@@ -375,13 +372,6 @@ sap.ui.define([
 		aContent.forEach(function (oButton) {
 			oButton.$().attr("aria-controls", oButton.data("sectionId"));
 		});
-	};
-
-	AnchorBar.prototype._toggleSelectionStyleClass = function(oButton, bAdd) {
-		if (oButton) {
-			oButton.toggleStyleClass("sapUxAPAnchorBarButtonSelected", bAdd);
-			oButton.$().attr("aria-checked", bAdd);
-		}
 	};
 
 	AnchorBar.prototype._addKeyboardHandling = function (oCurrentPopover) {

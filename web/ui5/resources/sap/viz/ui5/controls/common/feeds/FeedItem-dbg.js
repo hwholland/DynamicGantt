@@ -1,7 +1,7 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 // Provides control sap.viz.ui5.controls.common.feeds.FeedItem.
@@ -48,7 +48,7 @@ sap.ui.define(['sap/ui/core/Element','sap/viz/library','./AnalysisObject'],
 			/**
 			 * Value of a feed item.
 			 */
-			values : {type : "string[]", group : "Misc", defaultValue : null}
+			values : {type : "any[]", group : "Misc", defaultValue : null}
 		}
 	}});
 

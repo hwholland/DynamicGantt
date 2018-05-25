@@ -7,52 +7,52 @@
     <since>1.34</since>
     <baseType>sap.ui.core/Control</baseType>
     <properties>
-        <property name="animateTextChange" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="animateTextChange">
             <documentation>If set to true, the change of the value will be animated.</documentation>
         </property>
-        <property name="formatterValue" type="sap.ui.core/boolean" defaultValue="false" group="Data">
+        <property group="Data" defaultValue="false" type="sap.ui.core/boolean" name="formatterValue">
             <documentation>If set to true, the value parameter contains a numeric value and scale. If set to false (default), the value parameter contains a numeric value only.</documentation>
         </property>
-        <property name="icon" type="sap.ui.core/URI" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/URI" name="icon">
             <documentation>The icon to be displayed as a graphical element within the control. This can be an image or an icon from the icon font.</documentation>
         </property>
-        <property name="iconDescription" type="sap.ui.core/string" group="Accessibility">
+        <property group="Accessibility" type="sap.ui.core/string" name="iconDescription">
             <documentation>Description of an icon that is used in the tooltip.</documentation>
         </property>
-        <property name="indicator" type="sap.m/DeviationIndicator" defaultValue="None" group="Appearance">
+        <property group="Appearance" defaultValue="None" type="sap.m/DeviationIndicator" name="indicator">
             <documentation>The indicator arrow that shows value deviation.</documentation>
         </property>
-        <property name="nullifyValue" type="sap.ui.core/boolean" defaultValue="true" group="Behavior">
+        <property group="Behavior" defaultValue="true" type="sap.ui.core/boolean" name="nullifyValue">
             <documentation>If set to true, the omitted value property is set to 0.</documentation>
         </property>
-        <property name="scale" type="sap.ui.core/string" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/string" name="scale">
             <documentation>The scaling prefix. Financial characters can be used for currencies and counters. The SI prefixes can be used for units. If the scaling prefix contains more than three characters, only the first three characters are displayed.</documentation>
         </property>
-        <property name="size" type="sap.m/Size" defaultValue="Auto" group="Appearance">
+        <property group="Appearance" defaultValue="Auto" type="sap.m/Size" name="size">
             <documentation>Updates the size of the control. If not set, then the default size is applied based on the device tile.</documentation>
             <deprecation since="1.38.0">The NumericContent control has now a fixed size, depending on the used media (desktop, tablet or phone).</deprecation>
         </property>
-        <property name="truncateValueTo" type="sap.ui.core/int" defaultValue="4" group="Appearance">
+        <property group="Appearance" defaultValue="4" type="sap.ui.core/int" name="truncateValueTo">
             <documentation>The number of characters of the &lt;code&gt;value&lt;/code&gt; property to display.</documentation>
         </property>
-        <property name="value" type="sap.ui.core/string" group="Data">
+        <property group="Data" type="sap.ui.core/string" name="value">
             <documentation>The actual value.</documentation>
         </property>
-        <property name="valueColor" type="sap.m/ValueColor" defaultValue="Neutral" group="Appearance">
+        <property group="Appearance" defaultValue="Neutral" type="sap.m/ValueColor" name="valueColor">
             <documentation>The semantic color of the value.</documentation>
         </property>
-        <property name="width" type="sap.ui.core/CSSSize" group="Appearance">
+        <property group="Appearance" type="sap.ui.core/CSSSize" name="width">
             <documentation>The width of the control. If it is not set, the size of the control is defined by the 'size' property.</documentation>
         </property>
-        <property name="withMargin" type="sap.ui.core/boolean" defaultValue="true" group="Appearance">
+        <property group="Appearance" defaultValue="true" type="sap.ui.core/boolean" name="withMargin">
             <documentation>If the value is set to false, the content is adjusted to the whole size of the control.</documentation>
         </property>
-        <property name="state" type="sap.m/LoadState" defaultValue="Loaded" group="Behavior">
+        <property group="Behavior" defaultValue="Loaded" type="sap.m/LoadState" name="state">
             <documentation>Indicates the load status.</documentation>
         </property>
     </properties>
     <events>
-        <event name="press" allowPreventDefault="false">
+        <event allowPreventDefault="false" name="press">
             <documentation>The event is fired when the user chooses the numeric content.</documentation>
         </event>
     </events>

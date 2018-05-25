@@ -1,19 +1,20 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 
-(function () {
+sap.ui.define([
+], function () {
     "use strict";
     /*global jQuery, sap */
-    jQuery.sap.declare("sap.ushell.services.Message");
 
     /**
      * Message service.
      *
-     * @constructor
      * @name sap.ushell.services.Message
+     *
+     * @constructor
      * @since 1.16.0
      * @public
      */
-    sap.ushell.services.Message = function () {
+     function Message() {
 
         var fnShellCallBackFunction = null;
 
@@ -70,9 +71,10 @@
          * @methodOf sap.ushell.services.Message#
          * @name info
          * @public
+         * @alias sap.ushell.services.Message#info
          */
         this.info = function (sMessage, iDuration) {
-            this.show(sap.ushell.services.Message.Type.INFO, sMessage, { duration : iDuration || 3000 });
+            this.show(Message.Type.INFO, sMessage, { duration : iDuration || 3000 });
         };
 
         /**
@@ -86,12 +88,13 @@
          * @methodOf sap.ushell.services.Message#
          * @name error
          * @public
+         * @alias sap.ushell.services.Message#error
          */
         this.error = function (sMessage, sTitle) {
             sMessage = (sTitle !== undefined) ? sTitle + " , " + sMessage : sMessage;
             jQuery.sap.log.error(sMessage);
 
-            this.show(sap.ushell.services.Message.Type.ERROR, sMessage, { title : sTitle });
+            this.show(Message.Type.ERROR, sMessage, { title : sTitle });
         };
 
         /**
@@ -117,33 +120,25 @@
          * @methodOf sap.ushell.services.Message#
          * @name confirm
          * @public
+         * @alias sap.ushell.services.Message#confirm
          */
         this.confirm = function (sMessage, fnCallback, sTitle, vActions) {
-            this.show(sap.ushell.services.Message.Type.CONFIRM, sMessage, { title : sTitle, callback : fnCallback, actions : vActions });
+            this.show(Message.Type.CONFIRM, sMessage, { title : sTitle, callback : fnCallback, actions : vActions });
         };
     };
-    sap.ushell.services.Message.hasNoAdapter = true;
-
-//    /**
-//    * The Unified Shell message service as a singleton object.
-//    *
-//    * @class The unified shell's message service, which provides a unified way to raise messages.
-//    *
-//    * @name sap.ushell.services.Message
-//    * @since 1.16.0
-//    * @public
-//    */
-
 
     /**
-    * @name sap.ushell.services.Message.Type
-    * @since 1.16.0
-    * @private
-    */
-    sap.ushell.services.Message.Type = {
+     * @name sap.ushell.services.Message.Type
+     * @since 1.16.0
+     * @private
+     */
+    Message.Type = {
         INFO : 0,
         ERROR : 1,
         CONFIRM : 2
     };
 
-}());
+    Message.hasNoAdapter = true;
+    return Message;
+
+}, true /* bExport */);

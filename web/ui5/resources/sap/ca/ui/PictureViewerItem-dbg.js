@@ -50,7 +50,7 @@ jQuery.sap.require("sap.ui.core.Control");
  * @class
  * Picture viewer control relying on the TileContainer control
  * @extends sap.ui.core.Control
- * @version 1.38.5
+ * @version 1.54.0
  *
  * @constructor
  * @public

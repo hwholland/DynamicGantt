@@ -1,29 +1,188 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /**
  * @fileOverview This file contains miscellaneous utility functions.
+ * They are for exclusive use within the unified shell unless otherwise noted.
  */
 
-(function () {
+sap.ui.define(function() {
     "use strict";
-    /*global dispatchEvent, document, jQuery, URI, localStorage, sap, clearTimeout, setTimeout */
+
+    /*global dispatchEvent, document, jQuery, URI, localStorage, sap, clearTimeout, setTimeout WeakMap */
 
     // ensure that sap.ushell exists
-    jQuery.sap.declare("sap.ushell.utils");
-
-    sap.ushell.utils = {};
+    var utils = {};
 
     /**
      * Tells whether the given value is an array.
      *
-     * @param {object} o
+     * @param {object} v
      *   any value
      * @returns {boolean}
      *   <code>true</code> if and only if the given value is an array
+     * @private
      * @since 1.34.0
      */
-    sap.ushell.utils.isArray = function (o) {
+    utils.isArray = function (v) {
         // see Crockford page 61
-        return Object.prototype.toString.apply(o) === '[object Array]';
+        return Object.prototype.toString.apply(v) === "[object Array]";
+    };
+
+    /**
+     * Tells whether the given value is a plain object.
+     *
+     * @param {object} v
+     *   any value
+     *
+     * @returns {boolean}
+     *   <code>true</code> if and only if the given value is an Object
+     */
+    utils.isPlainObject = function (v) {
+        return Object.prototype.toString.apply(v) === "[object Object]";
+    };
+
+    /**
+     * Decides whether a value is defined or undefined.
+     *
+     * @param {variant} v
+     *   Any value
+     *
+     * @return {boolean}
+     *   Whether the passed value is defined
+     *
+     * @private
+     */
+    utils.isDefined = function (v) {
+        return typeof v !== "undefined";
+    }
+
+    /**
+     * Returns the deep copy of a complex or a primitive data type.
+     * <p>
+     * WARNING: This method assumes complex data types are either plain objects
+     * or arrays. Any object that is not a plain object is kept as is, without
+     * being deeply cloned.
+     * <p>
+     * If a complex value that includes functions, null, or undefined values
+     * are passed, these will be preserved in the cloned complex type.
+     *
+     * @param {variant} vData
+     *  the data to clone, can have any type
+     *
+     * @returns {variant}
+     *  the cloned data
+     *
+     * @private
+     */
+    utils.clone = function (vData) {
+        function createEmptyComplexFrom (vOriginalComplex) {
+            return utils.isPlainObject(vOriginalComplex) ? {} : [];
+        }
+        function isDeepClonableComplex (v) {
+            return utils.isPlainObject(v) || utils.isArray(v);
+        }
+        function getItemsOf (vComplex) {
+            return utils.isPlainObject(vComplex)
+                ? Object.keys(vComplex).map(function (sKey) {
+                    return { key: sKey, value: vComplex[sKey] };
+                })
+                : vComplex.map(function (vItem) {
+                    return { value: vItem };
+                });
+        }
+        function appendItemToComplex (oItem, vComplex) {
+            var fnAppend = utils.isPlainObject(vComplex)
+                ? function (oItem, vComplex) { vComplex[oItem.key] = oItem.value; }
+                : function (oItem, vComplex) { vComplex.push(oItem.value); }
+
+            fnAppend(oItem, vComplex);
+        }
+        function scheduleItemsCopy (aItemsToClone, aRemainingItemsCount, aQueue) {
+            aRemainingItemsCount.push(aItemsToClone.length);
+            Array.prototype.push.apply(aQueue, aItemsToClone);
+        }
+
+        if (!isDeepClonableComplex(vData)) {
+            return vData;
+        }
+
+        var vClone = createEmptyComplexFrom(vData);
+
+        // Algorithm implements a breadth first search (BFS) on the complex
+        // data type. It maintains 3 queues:
+        //
+        // - The queue of references to initially empty complex types. Items
+        //   from this queues are only filled with clones of other items.
+        var aComplexClonesToFillQueue = [ vClone ];
+        // - The queue of original items (complex or primitive) that must be
+        //   first cloned and then added to the next complex from
+        //   aComplexClonesToFillQueue.
+        var aRemainingOriginalItems = [];
+        // - Keeps the count of how many items from aRemainingOriginalItems
+        //   must be cloned next.
+        var aRemainingOriginalItemsCount = [];
+
+        var oVisitedReferences = new WeakMap();
+        oVisitedReferences.set(vData, vClone);
+
+        scheduleItemsCopy(
+            getItemsOf(vData),  // items
+            aRemainingOriginalItemsCount,
+            aRemainingOriginalItems
+        );
+
+        while (aComplexClonesToFillQueue.length > 0) {
+            var vTargetComplex = aComplexClonesToFillQueue.shift();
+            var iRemainingCount = aRemainingOriginalItemsCount.shift();
+
+            aRemainingOriginalItems
+                .splice(0, iRemainingCount) // work on items for target complex only
+                .forEach(function (oItemToClone) {
+                    var vPrimitiveOrComplex = oItemToClone.value;
+
+                    if (!isDeepClonableComplex(vPrimitiveOrComplex)) {
+                        appendItemToComplex(oItemToClone, vTargetComplex);
+                        return;
+                    }
+
+                    // -- clonable complex value --
+                    var vOriginalComplex = vPrimitiveOrComplex;
+
+                    // reference?
+                    var vAlreadyClonedComplex = oVisitedReferences.get(vOriginalComplex);
+                    if (vAlreadyClonedComplex) {
+                        // no need to clone this again, just create a circular
+                        // reference within the cloned object.
+                        appendItemToComplex({
+                            key: oItemToClone.key,
+                            value: vAlreadyClonedComplex  // reference to existing object in the cloned object
+                        }, vTargetComplex);
+                        return;
+                    }
+
+                    // new object
+                    var vComplexToFillLater = createEmptyComplexFrom(vOriginalComplex);
+
+                    oVisitedReferences.set(vOriginalComplex, vComplexToFillLater);
+
+                    appendItemToComplex({
+                        key: oItemToClone.key,
+                        value: vComplexToFillLater
+                    }, vTargetComplex);
+
+                    // fill this complex later
+                    aComplexClonesToFillQueue.push(vComplexToFillLater);
+
+                    // queue items for later
+                    scheduleItemsCopy(
+                        getItemsOf(vOriginalComplex),
+                        aRemainingOriginalItemsCount,
+                        aRemainingOriginalItems
+                    );
+
+                });
+        }
+
+        return vClone;
     };
 
     /**
@@ -32,10 +191,10 @@
      * @param {string} sAccessPath  an accesss path, e.g. sap|flp.type
      * representing  o["sap.flp"].type
      * @returns {any} the value of the member or undefined if access path not found
-     * @since 1.38.4
-     *
+     * @since 1.40.0
+     * @private
      */
-    sap.ushell.utils.getMember = function (oObject,sAccessPath) {
+    utils.getMember = function (oObject,sAccessPath) {
         var oPathSegments = sAccessPath.split("."),
             oNextObject = oObject;
         if (!oObject) {
@@ -50,7 +209,7 @@
         return oNextObject;
     };
 
-    sap.ushell.utils.addTime = function (sId, sInfo, iEnd) {
+    utils.addTime = function (sId, sInfo, iEnd) {
         if (!window["sap-ushell-startTime"]) {
             window["sap-ushell-startTime"] = Date.now();
         }
@@ -71,15 +230,16 @@
      *   the error component to log
      * @class
      * @constructor
+     * @private
      * @since 1.15.0
      */
-    sap.ushell.utils.Error = function (sMessage, sComponent) {
+    utils.Error = function (sMessage, sComponent) {
         this.name = "sap.ushell.utils.Error";
         this.message = sMessage;
         jQuery.sap.log.error(sMessage, null, sComponent);
     };
 
-    sap.ushell.utils.Error.prototype = new Error();
+    utils.Error.prototype = new Error();
 
     /**
      * Wrapper for localStorage.setItem() including exception handling
@@ -96,7 +256,7 @@
      * @since 1.21.2
      * @private
      */
-    sap.ushell.utils.localStorageSetItem = function (sKey, sValue, bLocalEvent) {
+    utils.localStorageSetItem = function (sKey, sValue, bLocalEvent) {
         var oEvent;
         try {
             localStorage.setItem(sKey, sValue);
@@ -123,8 +283,45 @@
      * @private
      * @since 1.34.0
      */
-    sap.ushell.utils.getLocalStorage = function () {
+    utils.getLocalStorage = function () {
         return window.localStorage;
+    };
+
+    /**
+     * Returns an unique ID based on jQuery.sap.uid().
+     *
+     * @param {function || array} vTestCondition
+     *   Can be either an array of all already existing IDs or a function which must check if the
+     *   new generated ID is unique.
+     *   In case of an array generateUniqueId will generate new IDs as long as it finds one which
+     *   is unique.
+     *   In case of a function it will be called with every generated ID. The function shall
+     *   check if the generated ID is unique and shall return true in that case;
+     * @returns {string}
+     *   An unique ID which passed the fnCheckId test.
+     * @private
+     * @since 1.42.0
+     */
+    utils.generateUniqueId = function (vTestCondition) {
+        var sUniqueId,
+            aExistingIds,
+            fnIsUniqueId;
+
+        if (jQuery.isArray(vTestCondition)) {
+            aExistingIds = vTestCondition;
+
+            fnIsUniqueId = function (sGeneratedId) {
+                return aExistingIds.indexOf(sGeneratedId) === -1;
+            };
+        } else {
+            fnIsUniqueId = vTestCondition;
+        }
+
+        do {
+            sUniqueId = jQuery.sap.uid();
+        } while (!fnIsUniqueId(sUniqueId)); // accept falsy values
+
+        return sUniqueId;
     };
 
     /**
@@ -135,19 +332,20 @@
      * @private
      * @since 1.34.0
      */
-    sap.ushell.utils.reload = function () {
+    utils.reload = function () {
         location.reload();
     };
 
     /**
-     * given a link tag ( a ) or a window object, calculate the origin (protocol, host, port)
+     * Given a link tag ( a ) or a window object, calculate the origin (protocol, host, port)
      * especially for cases where the .origin property is not present on the DOM Member
      * (IE11)
      * @param {object} oDomObject a location bearig object, e.g. a link-tag DOMObject or a window
      * @returns {string} a string containing protocol :// host : port (if present),
      *  e.g. "http://www.sap.com:8080" or "https://uefa.fifa.com"
+     * @private
      */
-    sap.ushell.utils.calculateOrigin = function (oDomObject) {
+    utils.calculateOrigin = function (oDomObject) {
         var oURI;
         if (oDomObject.origin) {
             return oDomObject.origin;
@@ -162,7 +360,13 @@
         }
     };
 
-    sap.ushell.utils._getPrivateEpcm = function () {
+    /**
+     * Exposes a private epcm object used for the NWBC for Desktop integration
+     * @return {object} a native browser object
+     * @private
+     *
+     */
+    utils.getPrivateEpcm = function () {
         if (window.external && window.external && typeof window.external.getPrivateEpcm !== "undefined") {
             return window.external.getPrivateEpcm();
         }
@@ -182,8 +386,8 @@
      * @return {boolean}
      *     whether the browser can open SapGui applications natively
      */
-    sap.ushell.utils.hasNativeNavigationCapability = function () {
-        return sap.ushell.utils.isFeatureBitEnabled(1);
+    utils.hasNativeNavigationCapability = function () {
+        return utils.isFeatureBitEnabled(1);
     };
 
     /**
@@ -198,8 +402,8 @@
      * @return {boolean}
      *     whether the browser can logout natively
      */
-    sap.ushell.utils.hasNativeLogoutCapability = function () {
-        return sap.ushell.utils.isFeatureBitEnabled(2);
+    utils.hasNativeLogoutCapability = function () {
+        return utils.isFeatureBitEnabled(2);
     };
 
     /**
@@ -212,12 +416,12 @@
      * @return {boolean}
      *     whether the feature bit is enabled or not
      */
-    sap.ushell.utils.isFeatureBitEnabled = function (iFeatureBit) {
+    utils.isFeatureBitEnabled = function (iFeatureBit) {
         var sFeaturesHex = "0",
             oPrivateEpcm;
 
         // Try to get the Feature version number
-        oPrivateEpcm = sap.ushell.utils._getPrivateEpcm();
+        oPrivateEpcm = utils.getPrivateEpcm();
         if (oPrivateEpcm) {
             try {
                 sFeaturesHex = oPrivateEpcm.getNwbcFeatureBits();
@@ -246,7 +450,7 @@
      * @private
      * @since 1.36.0
      */
-    sap.ushell.utils.isApplicationTypeNWBCRelated = function (sApplicationType) {
+    utils.isApplicationTypeNWBCRelated = function (sApplicationType) {
         return sApplicationType === "NWBC" || sApplicationType === "TR";
     };
 
@@ -268,7 +472,7 @@
      * @private
      * @since 1.34.0
      */
-    sap.ushell.utils.appendUserIdToUrl = function (sParamName, sUrl) {
+    utils.appendUserIdToUrl = function (sParamName, sUrl) {
         var sUserId = sap.ushell.Container.getService("UserInfo").getUser().getId(),
             sSep = sUrl.indexOf("?") >= 0 ? "&" : "?";
 
@@ -285,7 +489,7 @@
      *      true iff the resolution result represents a response which is to be treated by the Fiori Desktop client
      * @private
      */
-    sap.ushell.utils.isNativeWebGuiNavigation = function (oResolvedNavigationTarget) {
+    utils.isNativeWebGuiNavigation = function (oResolvedNavigationTarget) {
         if (this.hasNativeNavigationCapability() && oResolvedNavigationTarget && oResolvedNavigationTarget.applicationType === "TR") {
             return true;
         }
@@ -299,7 +503,7 @@
      * @class
      * @since 1.15.0
      */
-    sap.ushell.utils.Map = function () {
+    utils.Map = function () {
         this.entries = {};
     };
 
@@ -317,7 +521,7 @@
      *   the old value
      * @since 1.15.0
      */
-    sap.ushell.utils.Map.prototype.put = function (sKey, vValue) {
+    utils.Map.prototype.put = function (sKey, vValue) {
         var vOldValue = this.get(sKey);
         this.entries[sKey] = vValue;
         return vOldValue;
@@ -332,9 +536,9 @@
      *   <tt>true</tt> if this map contains a mapping for the specified key
      * @since 1.15.0
      */
-    sap.ushell.utils.Map.prototype.containsKey = function (sKey) {
+    utils.Map.prototype.containsKey = function (sKey) {
         if (typeof sKey !== "string") {
-            throw new sap.ushell.utils.Error("Not a string key: " + sKey, "sap.ushell.utils.Map");
+            throw new utils.Error("Not a string key: " + sKey, "sap.ushell.utils.Map");
         }
         return Object.prototype.hasOwnProperty.call(this.entries, sKey);
     };
@@ -349,7 +553,7 @@
      *   contains no mapping for the key
      * @since 1.15.0
      */
-    sap.ushell.utils.Map.prototype.get = function (sKey) {
+    utils.Map.prototype.get = function (sKey) {
         if (this.containsKey(sKey)) {
             return this.entries[sKey];
         }
@@ -363,7 +567,7 @@
      *   this map's keys
      * @since 1.15.0
      */
-    sap.ushell.utils.Map.prototype.keys = function () {
+    utils.Map.prototype.keys = function () {
         return Object.keys(this.entries);
     };
 
@@ -373,7 +577,7 @@
      *  the map's key to be removed
      * @since 1.17.1
      */
-    sap.ushell.utils.Map.prototype.remove = function (sKey) {
+    utils.Map.prototype.remove = function (sKey) {
         delete this.entries[sKey];
     };
 
@@ -384,7 +588,7 @@
      *   this map's string representation
      * @since 1.15.0
      */
-    sap.ushell.utils.Map.prototype.toString = function () {
+    utils.Map.prototype.toString = function () {
         var aResult = ['sap.ushell.utils.Map('];
         aResult.push(JSON.stringify(this.entries));
         aResult.push(')');
@@ -403,7 +607,7 @@
      *     specified parameter (search string), if not specified, search part of current url is used
      *  @returns {boolean} true, false or undefined
      */
-    sap.ushell.utils.getParameterValueBoolean = function (sParameterName, sParams) {
+    utils.getParameterValueBoolean = function (sParameterName, sParams) {
         var aArr = jQuery.sap.getUriParameters(sParams).mParams && jQuery.sap.getUriParameters(sParams).mParams[sParameterName],
             aTruthy = ["true", "x"],
             aFalsy = ["false", ""],
@@ -434,14 +638,14 @@
      *   whether the call shall be asynchronously
      * @since 1.28.0
      */
-    sap.ushell.utils.call = function (fnSuccess, fnFailure, bAsync) {
+    utils.call = function (fnSuccess, fnFailure, bAsync) {
         // Be aware of that this function is also defined as "sap.ui2.srvc.call".
         // Only difference is error logging to UI5. Please keep aligned!
         var sMessage;
 
         if (bAsync) {
             setTimeout(function () {
-                sap.ushell.utils.call(fnSuccess, fnFailure, false);
+                utils.call(fnSuccess, fnFailure, false);
             }, 0);
             return;
         }
@@ -462,46 +666,16 @@
     /**
      * Setting Tiles visibility using the Visibility contract, according to the view-port's position.
      */
-    sap.ushell.utils.handleTilesVisibility = function () {
-        var start = new Date(),
-            // Get the visible and non-visible Tiles
-            aTiles = sap.ushell.utils.getVisibleTiles(),
-            duration,
-            launchPageService;
-
-        if (aTiles && aTiles.length) {
-            launchPageService = sap.ushell.Container.getService("LaunchPage");
-
-            aTiles.forEach(function (oTile) {
-                var tileObject = sap.ushell.utils.getTileObject(oTile);
-                if (tileObject !== null) {
-                    launchPageService.setTileVisible(tileObject, oTile.isDisplayedInViewPort);
-                }
-            });
-            jQuery.sap.log.debug("Visible Tiles: " + aTiles.filter(function (oTile) {return oTile.isDisplayedInViewPort; }).length);
-            jQuery.sap.log.debug("NonVisible Tiles: " + aTiles.filter(function (oTile) {return !oTile.isDisplayedInViewPort; }).length);
-        }
-
-        duration = new Date() - start;
-        jQuery.sap.log.debug("Start time is: " + start + " and duration is: " + duration);
+    utils.handleTilesVisibility = function () {
+        utils.getVisibleTiles();
     };
 
     /**
      * Refresh the visible Dynamic Tiles
      */
-    sap.ushell.utils.refreshTiles = function () {
-        var aTiles = sap.ushell.utils.getVisibleTiles(),
-            launchPageService;
-
-        if (aTiles && aTiles.length) {
-            launchPageService = sap.ushell.Container.getService("LaunchPage");
-            aTiles.forEach(function (oTile) {
-                var tileObject = sap.ushell.utils.getTileObject(oTile);
-                if (tileObject !== null) {
-                    launchPageService.refreshTile(tileObject);
-                }
-            });
-        }
+    utils.refreshTiles = function () {
+        var oEventBus = sap.ui.getCore().getEventBus();
+        oEventBus.publish("launchpad", "refresTiles");
     };
 
     /**
@@ -511,21 +685,12 @@
      *
      * This action happens immediately with no timers or timeouts.
      */
-    sap.ushell.utils.setTilesNoVisibility = function () {
+    utils.setTilesNoVisibility = function () {
         // this method currently is used upon navigation (i.e. Shell.controlelr - openApp)
         // as there is logic that is running in the background such as OData count calls of the dynamic tiles
         // which are still visible at navigation (as no one had marked it otherwise).
-        var aTiles = sap.ushell.utils.getVisibleTiles(),
-            launchPageService;
-        if ((typeof aTiles !== "undefined") && aTiles.length > 0) {
-            launchPageService = sap.ushell.Container.getService("LaunchPage");
-
-            aTiles.forEach(function (oTile) {
-                launchPageService.setTileVisible(sap.ushell.utils.getTileObject(oTile), false);
-            });
-            jQuery.sap.log.debug("Visible Tiles: " + aTiles.filter(function (oTile) {return oTile.isDisplayedInViewPort; }).length);
-            jQuery.sap.log.debug("NonVisible Tiles: " + aTiles.filter(function (oTile) {return !oTile.isDisplayedInViewPort; }).length);
-        }
+        var oEventBus = sap.ui.getCore().getEventBus();
+        oEventBus.publish("launchpad", "setTilesNoVisibility");
     };
 
     /**
@@ -533,9 +698,9 @@
      * @param {string} hash shell hash
      * @returns {string} Semantic Object action part of hash, false in case of a syntactically wrong hash
      */
-    sap.ushell.utils.getBasicHash = function (hash) {
+    utils.getBasicHash = function (hash) {
         // Check hash validity
-        if (!sap.ushell.utils.validHash(hash)) {
+        if (!utils.validHash(hash)) {
             jQuery.sap.log.debug("Utils ; getBasicHash ; Got invalid hash");
             return false;
         }
@@ -546,11 +711,11 @@
         return oShellHash ?  oShellHash.semanticObject + "-" + oShellHash.action : hash;
     };
 
-    sap.ushell.utils.validHash = function (hash) {
+    utils.validHash = function (hash) {
         return (hash && hash.constructor === String && jQuery.trim(hash) !== "");
     };
 
-    sap.ushell.utils.handleTilesOpacity = function (oModel) {
+    utils.handleTilesOpacity = function (oModel) {
         jQuery.sap.require("sap.ui.core.theming.Parameters");
 
         var aTilesOpacityValues,
@@ -603,7 +768,7 @@
 
     };
 
-    sap.ushell.utils.convertToRealOpacity = function (amountOfUsage, max) {
+    utils.convertToRealOpacity = function (amountOfUsage, max) {
         var aOpacityLevels = [1, 0.95, 0.9, 0.85, 0.8],
             iOpacityVariance = Math.floor(max / aOpacityLevels.length),
             iOpacityLevelIndex;
@@ -618,7 +783,7 @@
         return iOpacityLevelIndex < aOpacityLevels.length ? aOpacityLevels[iOpacityLevelIndex] : aOpacityLevels[aOpacityLevels.length - 1];
     };
 
-    sap.ushell.utils.getCurrentHiddenGroupIds = function (oModel) {
+    utils.getCurrentHiddenGroupIds = function (oModel) {
         var oLaunchPageService = sap.ushell.Container.getService("LaunchPage"),
             aGroups = oModel.getProperty('/groups'),
             aHiddenGroupsIDs = [],
@@ -627,10 +792,11 @@
             bGroupVisible;
 
         for (groupIndex in aGroups) {
+            //check if have property isGroupVisible on aGroups if undefined set isGroupVisible true;
+            bGroupVisible = aGroups[groupIndex]?aGroups[groupIndex].isGroupVisible:true;
             //In case of edit mode - it may be that group was only created in RT and still doesn't have an object property
             if (aGroups[groupIndex].object) {
                 sGroupId = oLaunchPageService.getGroupId(aGroups[groupIndex].object);
-                bGroupVisible = aGroups[groupIndex].isGroupVisible;
             }
             if (!bGroupVisible && sGroupId !== undefined) {
                 aHiddenGroupsIDs.push(sGroupId);
@@ -639,7 +805,7 @@
         return aHiddenGroupsIDs;
     };
 
-    sap.ushell.utils.hexToRgb = function (hex) {
+    utils.hexToRgb = function (hex) {
         var bIsHexIllegal = !hex || hex[0] != '#' || (hex.length  != 4 && hex.length != 7),
             result;
 
@@ -659,7 +825,7 @@
      *   the device's form factor ("desktop", "tablet" or "phone")
      * @since 1.25.1
      */
-    sap.ushell.utils.getFormFactor = function () {
+    utils.getFormFactor = function () {
         // be aware of that this function is also defined as sap.ui2.srvc.getFormFactor. Keep in sync!
         var oSystem = sap.ui.Device.system;
 
@@ -681,15 +847,17 @@
      *
      * @returns {Array} Array of Tile objects, each one includes the flag "isDisplayedInViewPort" indicating its visibility
      */
-    sap.ushell.utils.getVisibleTiles = function () {
+    utils.getVisibleTiles = function () {
 
         var nWindowHeight = document.body.clientHeight,
             oControl = sap.ui.getCore().byId("dashboardGroups"),
             oNavContainer = sap.ui.getCore().byId("viewPortContainer"),
             groupsIndex,
             tilesIndex,
+            aElementsInd,
             group,
             groupTiles,
+            groupLinks,
             oTile,
             tileDomRef,
             tileOffset,
@@ -699,7 +867,16 @@
             aTiles = [],
             aGrpDomElement,
             bIsInDashBoard,
-            aGroups;
+            aVisibleTiles = [],
+            oEventBus = sap.ui.getCore().getEventBus(),
+            aGroups,
+            oElementsByType,
+            oElements,
+            isDisplayedInViewPort;
+        //in case of user move to new tab
+        if ( window.document.hidden ) {
+            oEventBus.publish("launchpad", "onHiddenTab");
+        };
 
         if (oControl && oControl.getGroups() && oNavContainer) {
             //verify we are in the dashboard page
@@ -712,66 +889,100 @@
             for (groupsIndex = 0; groupsIndex < aGroups.length; groupsIndex = groupsIndex + 1) {
                 group = aGroups[groupsIndex];
                 groupTiles = group.getTiles();
-                if (groupTiles) {
-                    // Loop over all Tiles in the current Group
-                    for (tilesIndex = 0; tilesIndex < groupTiles.length; tilesIndex = tilesIndex + 1) {
+                groupLinks = group.getLinks();
 
-                        oTile = groupTiles[tilesIndex];
+                oElementsByType = [groupTiles, groupLinks];
+                for (aElementsInd = 0; aElementsInd < oElementsByType.length; aElementsInd++) {
+                    oElements = oElementsByType[aElementsInd];
 
-                        if (!bIsInDashBoard || window.document.hidden) {
-                            // if current state is not dashboard ("Home") set not visible
-                            oTile.isDisplayedInViewPort = false;
-                            aTiles.push(oTile);
-                        } else {
-                            tileDomRef = jQuery(oTile.getDomRef());
-                            tileOffset = tileDomRef.offset();
+                    if (oElements) {
+                        // Loop over all Tiles in the current Group
+                        for (tilesIndex = 0; tilesIndex < oElements.length; tilesIndex++) {
 
-                            if (tileOffset) {
-                                tileTop = tileDomRef.offset().top;
-                                tileBottom = tileTop + tileDomRef.height();
+                            oTile = oElements[tilesIndex];
 
-                                // If the Tile is located above or below the view-port
-                                oTile.isDisplayedInViewPort = group.getVisible() && (tileBottom > shellHdrHeight) && (tileTop < nWindowHeight);
+                            if (!bIsInDashBoard || window.document.hidden) {
+                                // if current state is not dashboard ("Home") set not visible
                                 aTiles.push(oTile);
+                            } else {
+                                tileDomRef = jQuery(oTile.getDomRef());
+                                tileOffset = tileDomRef.offset();
+
+                                if (tileOffset) {
+                                    tileTop = tileDomRef.offset().top;
+                                    tileBottom = tileTop + tileDomRef.height();
+
+                                    // If the Tile is located above or below the view-port
+                                    isDisplayedInViewPort = group.getVisible() && (tileBottom > shellHdrHeight - 300) && (tileTop < nWindowHeight + 300);
+
+                                    if (isDisplayedInViewPort) {
+                                        aVisibleTiles.push({
+                                            oTile: utils.getTileModel(oTile),
+                                            iGroup: groupsIndex,
+                                            bIsExtanded: (tileBottom > shellHdrHeight) && (tileTop < nWindowHeight)? false: true
+                                        });
+                                    } else {
+                                        if (aVisibleTiles.length > 0) {
+                                            oEventBus.publish("launchpad", "visibleTilesChanged", aVisibleTiles);
+                                            return aTiles;
+                                        }
+                                    }
+                                    aTiles.push(oTile);
+                                }
                             }
-                        }
-                    } // End of Tiles loop
+                        } // End of Tiles loop
+                    }
                 }
             } // End of Groups loop
         }
+
+        if (aVisibleTiles.length > 0) {
+            oEventBus.publish("launchpad", "visibleTilesChanged", aVisibleTiles);
+        }
+
         return aTiles;
     };
 
-    sap.ushell.utils.getTileObject = function (ui5TileObject) {
+    utils.getTileModel = function (ui5TileObject) {
+        var bindingContext = ui5TileObject.getBindingContext();
+        return bindingContext.getObject() ? bindingContext.getObject() : null;
+    };
+
+    utils.getTileObject = function (ui5TileObject) {
         var bindingContext = ui5TileObject.getBindingContext();
         return bindingContext.getObject() ? bindingContext.getObject().object : null;
     };
 
-    sap.ushell.utils.addBottomSpace = function () {
-        var jqContainer = jQuery('#dashboardGroups').find('.sapUshellTileContainer:visible');
-        var lastGroup = jqContainer.last(),
-            headerHeight = jQuery(".sapUshellShellHead > div").height(),
-            lastGroupHeight = lastGroup.parent().height(),
-            groupTitleMarginTop = parseInt(lastGroup.find(".sapUshellContainerTitle").css("margin-top"), 10),
-            groupsContainerPaddingBottom = parseInt(jQuery('.sapUshellDashboardGroupsContainer').css("padding-bottom"), 10),
-            nBottomSpace;
+    utils.addBottomSpace = function () {
+        var fnAddBottomSpaceAfterAllContentLoaded = function () {
+            var jqContainer = jQuery('#dashboardGroups').find('.sapUshellTileContainer:visible');
+            var lastGroup = jqContainer.last(),
+                headerHeight = jQuery(".sapUshellShellHead > div").height(),
+                lastGroupHeight = lastGroup.parent().height(),
+                groupTitleMarginTop = parseInt(lastGroup.find(".sapUshellContainerTitle").css("margin-top"), 10),
+                groupsContainerPaddingBottom = parseInt(jQuery('.sapUshellDashboardGroupsContainer').css("padding-bottom"), 10),
+                nBottomSpace;
 
-        if (jqContainer.length === 1) {
-            nBottomSpace = 0;
-        } else {
-            nBottomSpace = jQuery(window).height() - headerHeight - lastGroupHeight - groupTitleMarginTop - groupsContainerPaddingBottom;
-            nBottomSpace = (nBottomSpace < 0) ? 0 : nBottomSpace;
-        }
+            if (jqContainer.length === 1) {
+                nBottomSpace = 0;
+            } else {
+                nBottomSpace = jQuery(window).height() - headerHeight - lastGroupHeight - groupTitleMarginTop - groupsContainerPaddingBottom;
+                nBottomSpace = (nBottomSpace < 0) ? 0 : nBottomSpace;
+            }
 
-        // Add margin to the bottom of the screen in order to allow the lower TileContainer (in case it is chosen)
-        // to be shown on the top of the view-port
-        jQuery('.sapUshellDashboardGroupsContainer').css("margin-bottom", nBottomSpace + "px");
+            // Add margin to the bottom of the screen in order to allow the lower TileContainer (in case it is chosen)
+            // to be shown on the top of the view-port
+            jQuery('.sapUshellDashboardGroupsContainer').css("margin-bottom", nBottomSpace + "px");
+            sap.ui.getCore().getEventBus().unsubscribe("launchpad", "dashboardModelContentLoaded", fnAddBottomSpaceAfterAllContentLoaded, this);
+        }.bind(this);
+        sap.ui.getCore().getEventBus().subscribe("launchpad", "dashboardModelContentLoaded", fnAddBottomSpaceAfterAllContentLoaded, this);
+
     };
 
-    sap.ushell.utils.calcVisibilityModes = function (oGroup, personalization) {
+    utils.calcVisibilityModes = function (oGroup, personalization) {
         var bIsVisibleInNormalMode = true,
             bIsVisibleInActionMode = true,
-            hasVisibleTiles = sap.ushell.utils.groupHasVisibleTiles(oGroup.tiles, oGroup.links);
+            hasVisibleTiles = utils.groupHasVisibleTiles(oGroup.tiles, oGroup.pendingLinks ? oGroup.pendingLinks : oGroup.links);
 
         //tileActionModeActive = false
         if (!hasVisibleTiles && (!personalization || (oGroup.isGroupLocked) || (oGroup.isDefaultGroup))) {
@@ -787,7 +998,7 @@
 
     };
 
-    sap.ushell.utils.groupHasVisibleTiles = function (groupTiles, groupLinks) {
+    utils.groupHasVisibleTiles = function (groupTiles, groupLinks) {
         var visibleTilesInGroup = false,
             tileIndex,
             tempTile,
@@ -796,7 +1007,7 @@
 
         tiles = tiles.concat(links);
 
-        if (tiles.length === 0) {
+        if (!tiles.length) {
             return false;
         }
 
@@ -822,8 +1033,9 @@
      * @returns {jQuery.Deferred.promise|function}
      *    a promise or a function
      */
-    sap.ushell.utils.invokeUnfoldingArrayArguments = function (fnFunction, aArguments) {
-        var aArgArray,
+    utils.invokeUnfoldingArrayArguments = function (fnFunction, aArguments) {
+        var that = this,
+            aArgArray,
             oDeferred,
             aPromises,
             aRes,
@@ -851,7 +1063,7 @@
                 throw new Error("Expected Array as nTh Argument of multivalue invokation: first Argument must be array of array of arguments: single valued f(p1,p2), f(p1_2,p2_2), f(p1_3,p2_3) : multivalued : f([[p1,p2],[p1_2,p2_2],[p1_3,p2_3]]");
             }
             // nThArgs is an array of the arguments
-            var pr = fnFunction.apply(this, nThArgs),
+            var pr = fnFunction.apply(that, nThArgs),
                 pr2 = new jQuery.Deferred();
 
             pr.done(function () {
@@ -881,7 +1093,7 @@
      *
      * @private
      */
-    sap.ushell.utils.isClientSideNavTargetResolutionEnabled = function () {
+    utils.isClientSideNavTargetResolutionEnabled = function () {
         var bDefaultEnabled = true,
             sLocalStorageClientSetting;
 
@@ -903,7 +1115,7 @@
         // Check when disabled
         if (sLocalStorageClientSetting === "" ||
                 sLocalStorageClientSetting === false ||
-                sap.ushell.utils.getParameterValueBoolean("sap-ushell-nav-cs") === false) {
+                utils.getParameterValueBoolean("sap-ushell-nav-cs") === false) {
 
             return false;
         }
@@ -911,20 +1123,27 @@
         // Default behavior
         return bDefaultEnabled;
     };
-    sap.ushell.utils._getCurrentDate = function () {
+    utils._getCurrentDate = function () {
         return new Date();
     };
-    sap.ushell.utils.formatDate = function (sCreatedAt) {
-        var iCreatedAtInt,
+
+    utils._convertToUTC = function (date) {
+        var utc_timestamp = Date.UTC(date.getUTCFullYear(),date.getUTCMonth(), date.getUTCDate() ,
+            date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds(), date.getUTCMilliseconds());
+        return utc_timestamp;
+    };
+
+    utils.formatDate = function (sCreatedAt) {
+        var iCreatedAt,
             iNow,
             iTimeGap,
             iDays,
             iHours,
             iMinutes;
 
-        iCreatedAtInt = new Date(sCreatedAt);
-        iNow = sap.ushell.utils._getCurrentDate();
-        iTimeGap = iNow.getTime() - iCreatedAtInt;
+        iCreatedAt = utils._convertToUTC(new Date(sCreatedAt));
+        iNow = utils._convertToUTC(utils._getCurrentDate());
+        iTimeGap = iNow - iCreatedAt;
         iDays = parseInt(iTimeGap / (1000 * 60 * 60 * 24), 10);
         if (iDays > 0) {
             if (iDays === 1) {
@@ -946,10 +1165,10 @@
             }
             return sap.ushell.resources.i18n.getText("time_minutes", iMinutes);
         }
-        return sap.ushell.resources.i18n.getText("just_arrived");
+        return sap.ushell.resources.i18n.getText("just_now");
     };
 
-    sap.ushell.utils.toExternalWithParameters = function (sSemanticObject, sAction, aParameters) {
+    utils.toExternalWithParameters = function (sSemanticObject, sAction, aParameters) {
         var oCrossAppNavService = sap.ushell.Container.getService("CrossApplicationNavigation"),
             oTargetObject = {},
             oParametersObject = {},
@@ -977,4 +1196,69 @@
         // Navigate
         oCrossAppNavService.toExternal(oTargetObject);
     };
-}());
+
+    /**
+     * Moves an element (specified by the index) inside of an array to a new index
+     *
+     * @param {array} aArray
+     *  The array which contains all relevant elements
+     * @param {number} nSourceIndex
+     *  The index of the element which needs to be moved
+     * @param {number} nTargetIndex
+     *  The index where to element should be moved to
+     * @returns {array}
+     *  The array after the move of the element.
+     * @throws
+     *  throws exception "Incorrect input parameters passed",
+     *      if no array or an empty array is provided
+     *  throws exception "Index out of bounds"
+     *      if nTargetIndex or nSourceIndex are out of bounds of the array
+     *
+     * @since 1.39.0
+     * @public
+     */
+    utils.moveElementInsideOfArray = function (aArray, nSourceIndex, nTargetIndex) {
+        if (!utils.isArray(aArray) || nSourceIndex === undefined || nTargetIndex === undefined) {
+            throw "Incorrect input parameters passed";
+        }
+        if (nSourceIndex >= aArray.length  || nTargetIndex >= aArray.length ||
+        nTargetIndex < 0 || nSourceIndex < 0 )  {
+            throw "Index out of bounds";
+        }
+
+        var oElement = aArray.splice(nSourceIndex, 1)[0];
+        aArray.splice(nTargetIndex, 0, oElement);
+        return aArray;
+    };
+
+    /**
+     * Changes an input target object by assigning each property of one
+     * or more objects to it.
+     *
+     * @param {object} oTarget
+     *    the base object
+     * @param {...object} oSource
+     *    one or more source objects to extend the target with
+     * @returns {object}
+     *    the extended target object
+     * @private
+     */
+    utils.shallowMergeObject = function (oTarget /*, ...rest */) {
+        return Array.prototype.slice.call(arguments, 1, arguments.length)
+            .map(function (oSource) {
+                return {
+                    sourceObject: oSource,
+                    properties: Object.keys(oSource)
+                };
+            })
+            .reduce(function (oResult, oSource) {
+                oSource.properties.forEach(function (sProperty) {
+                    oResult[sProperty] = oSource.sourceObject[sProperty];
+                });
+                return oResult;
+            }, oTarget);
+    };
+
+    return utils;
+
+}, /* bExport= */ true);

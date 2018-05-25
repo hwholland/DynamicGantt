@@ -1,7 +1,8 @@
 /*
  * ! SAP UI development toolkit for HTML5 (SAPUI5)
 
-(c) Copyright 2009-2016 SAP SE. All rights reserved
+		(c) Copyright 2009-2018 SAP SE. All rights reserved
+	
  */
 
 // Provides SortController
@@ -17,14 +18,15 @@ sap.ui.define([
 	 * @extends sap.ui.comp.personalization.BaseController
 	 * @author SAP
 	 * @version 1.25.0-SNAPSHOT
+	 * @private
 	 * @alias sap.ui.comp.personalization.SortController
 	 */
-	var SortController = BaseController.extend("sap.ui.comp.personalization.SortController",
-	/** @lends sap.ui.comp.personalization.SortController */
+	var SortController = BaseController.extend("sap.ui.comp.personalization.SortController", /** @lends sap.ui.comp.personalization.SortController */
 	{
 		constructor: function(sId, mSettings) {
 			BaseController.apply(this, arguments);
 			this.setType(sap.m.P13nPanelType.sort);
+			this.setItemType(sap.m.P13nPanelType.sort + "Items");
 		},
 		metadata: {
 			events: {
@@ -36,217 +38,64 @@ sap.ui.define([
 	SortController.prototype.setTable = function(oTable) {
 		BaseController.prototype.setTable.apply(this, arguments);
 
-		if (oTable instanceof sap.ui.table.Table) {
+		if (this.getTable() && (this.getTableType() === sap.ui.comp.personalization.TableType.AnalyticalTable || this.getTableType() === sap.ui.comp.personalization.TableType.Table || this.getTableType() === sap.ui.comp.personalization.TableType.TreeTable)) {
 			oTable.detachSort(this._onSort, this);
 			oTable.attachSort(this._onSort, this);
 		}
 	};
 
-	SortController.prototype.getTitleText = function() {
-		return sap.ui.getCore().getLibraryResourceBundle("sap.ui.comp").getText("PERSODIALOG_TAB_SORT");
-	};
-
-	/**
-	 * this method will make a complete json snapshot of the current table instance ("original") from the perspective of the columns controller; the
-	 * json snapshot can later be applied to any table instance to recover all columns related infos of the "original" table TODO: This really only
-	 * works for when max 1 sort criteria is defined since otherwise potentially order of sort criteria is destroyed
-	 */
-	SortController.prototype._getTable2Json = function() {
-		var oJsonData = this.createPersistentStructure();
-		var oTable = this.getTable();
-		Util.createSort2Json(oTable, oJsonData.sort.sortItems, this.getIgnoreColumnKeys());
-		return oJsonData;
-	};
-
-	SortController.prototype._getTable2JsonRestore = function() {
-		return this._getTable2Json();
-	};
-
-	SortController.prototype.syncTable2TransientModel = function() {
-		var oTable = this.getTable();
-		var aItems = [];
-		var oColumn;
-		var sColumnKey;
-		var oColumnKey2ColumnMap = this.getColumnMap(true);
-
-		if (oTable) {
-			if (oTable instanceof sap.ui.table.Table) {
-				for (sColumnKey in oColumnKey2ColumnMap) {
-					oColumn = oColumnKey2ColumnMap[sColumnKey];
-					if (Util.isSortable(oColumn)) {
-						aItems.push({
-							columnKey: sColumnKey,
-							text: oColumn.getLabel().getText(),
-							tooltip: (oColumn.getTooltip() instanceof sap.ui.core.TooltipBase) ? oColumn.getTooltip().getTooltip_Text() : oColumn.getTooltip_Text()
-						});
-					}
-				}
-			} else if (oTable instanceof sap.m.Table) {
-				for (sColumnKey in oColumnKey2ColumnMap) {
-					oColumn = oColumnKey2ColumnMap[sColumnKey];
-					if (Util.isSortable(oColumn)) {
-						aItems.push({
-							columnKey: sColumnKey,
-							text: oColumn.getHeader().getText(),
-							tooltip: (oColumn.getHeader().getTooltip() instanceof sap.ui.core.TooltipBase) ? oColumn.getHeader().getTooltip().getTooltip_Text() : oColumn.getHeader().getTooltip_Text()
-						});
-					}
-				}
-			} else if (oTable instanceof sap.ui.comp.personalization.ChartWrapper) {
-				for (sColumnKey in oColumnKey2ColumnMap) {
-					oColumn = oColumnKey2ColumnMap[sColumnKey];
-					aItems.push({
-						columnKey: sColumnKey,
-						text: oColumn.getLabel(),
-						tooltip: (oColumn.getTooltip() instanceof sap.ui.core.TooltipBase) ? oColumn.getTooltip().getTooltip_Text() : oColumn.getTooltip_Text()
-					});
-				}
-			}
-		}
-
-		Util.sortItemsByText(aItems);
-
-		aItems.splice(0, 0, {
-			key: null,
-			text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("P13NDIALOG_SELECTION_NONE")
-		});
-
-		// check if items was changed at all and take over if it was changed
-		// TODO: clean up here
-		var aItemsBefore = this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.sort.items;
-		if (jQuery(aItems).not(aItemsBefore).length !== 0 || jQuery(aItemsBefore).not(aItems).length !== 0) {
-			this.getModel("$sapuicomppersonalizationBaseController").getData().transientData.sort.items = aItems;
-		}
-	};
-
-	SortController.prototype._onSort = function(oEvent) {
-		oEvent.preventDefault();
-		var bAdded = oEvent.mParameters.columnAdded;
-
-		var oTable = this.getTable();
-		if (typeof oTable === "string") {
-			oTable = sap.ui.getCore().byId(oTable);
-		}
-
-		this.fireBeforePotentialTableChange();
-
-		// remove existing sortings
-		if (!bAdded) {
-			var oColumnKey2ColumnMap = this.getColumnMap();
-			for ( var sColumnKey in oColumnKey2ColumnMap) {
-				var oColumn = oColumnKey2ColumnMap[sColumnKey];
-				if (oColumn.setSorted) {
-					oColumn.setSorted(false);
-				}
-			}
-		}
-		var oColumn = oEvent.mParameters.column;
-		if (oColumn && oColumn.setSorted) {
-			oColumn.setSorted(true);
-			oColumn.setSortOrder(oEvent.mParameters.sortOrder);
-		}
-
-		var oSortData = this.getModel("$sapuicomppersonalizationBaseController").getData().persistentData.sort;
-
-		if (!bAdded) {
-			oSortData.sortItems = [];
-		}
-
-		var i = Util.getIndexByKey(oSortData.sortItems, Util.getColumnKey(oColumn));
-		if (i > -1) {
-			oSortData.sortItems.splice(i, 1);
-		}
-		oSortData.sortItems.push({
-			columnKey: Util.getColumnKey(oColumn),
-			operation: oEvent.mParameters.sortOrder
-		});
-
-		this.fireAfterPotentialTableChange();
-
-		this.fireAfterSortModelDataChange();
-	};
-
-	SortController.prototype.getPanel = function() {
-
-		sap.ui.getCore().loadLibrary("sap.m");
-
-		jQuery.sap.require("sap/m/P13nSortPanel");
-		jQuery.sap.require("sap/m/P13nItem");
-		jQuery.sap.require("sap/m/P13nSortItem");
-
-		if (!this.getColumnHelper().hasSortableColumns()) {
+	SortController.prototype.getColumn2Json = function(oColumn, sColumnKey, iIndex) {
+		if (!Util.isSortable(oColumn)) {
 			return null;
 		}
-		var that = this;
-		var oPanel = new sap.m.P13nSortPanel({
-			title: this.getTitleText(),
-			containerQuery: true,
-			items: {
-				path: "$sapmP13nPanel>/transientData/sort/items",
-				template: new sap.m.P13nItem({
-					columnKey: "{$sapmP13nPanel>columnKey}",
-					text: "{$sapmP13nPanel>text}",
-					tooltip: "{$sapmP13nPanel>tooltip}",
-					maxLength: "{$sapmP13nPanel>maxlength}",
-					type: "{$sapmP13nPanel>type}"
-				})
-			},
-			sortItems: {
-				path: "$sapmP13nPanel>/persistentData/sort/sortItems",
-				template: new sap.m.P13nSortItem({
-					columnKey: "{$sapmP13nPanel>columnKey}",
-					operation: "{$sapmP13nPanel>operation}"
-				})
-			},
-			beforeNavigationTo: that.setModelFunction()
-		});
-
-		oPanel.attachAddSortItem(function(oEvent) {
-			var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-			var params = oEvent.getParameters();
-			var oSortItem = {
-				columnKey: params.sortItemData.getColumnKey(),
-				operation: params.sortItemData.getOperation()
-			};
-			if (params.index > -1) {
-				oData.persistentData.sort.sortItems.splice(params.index, 0, oSortItem);
-			} else {
-				oData.persistentData.sort.sortItems.push(oSortItem);
-			}
-			this.getModel("$sapuicomppersonalizationBaseController").setData(oData, true);
-		}, this);
-
-		oPanel.attachRemoveSortItem(function(oEvent) {
-			var params = oEvent.getParameters();
-			var oData = this.getModel("$sapuicomppersonalizationBaseController").getData();
-			if (params.index > -1) {
-				oData.persistentData.sort.sortItems.splice(params.index, 1);
-				this.getModel("$sapuicomppersonalizationBaseController").setData(oData, true);
-			}
-		}, this);
-
-		return oPanel;
+		if (!oColumn.getSorted || (oColumn.getSorted && !oColumn.getSorted())) {
+			return null;
+		}
+		return {
+			columnKey: sColumnKey,
+			operation: oColumn.getSortOrder()
+		};
 	};
 
-	SortController.prototype.syncJsonModel2Table = function(oJsonModel) {
+	SortController.prototype.getColumn2JsonTransient = function(oColumn, sColumnKey, sText, sTooltip) {
+		if (!Util.isSortable(oColumn)) {
+			return null;
+		}
+		return {
+			columnKey: sColumnKey,
+			text: sText,
+			tooltip: sTooltip
+		// maxLength: "",
+		// type: ""
+		};
+	};
+
+	SortController.prototype.handleIgnore = function(oJson, iIndex) {
+		oJson.sort.sortItems.splice(iIndex, 1);
+	};
+
+	SortController.prototype.syncJson2Table = function(oJson) {
 		var oColumnKey2ColumnMap = this.getColumnMap();
 		var oColumnKey2ColumnMapUnsorted = jQuery.extend(true, {}, oColumnKey2ColumnMap);
 
 		this.fireBeforePotentialTableChange();
 
-		if (this.getTable() instanceof sap.ui.table.Table) {
-			oJsonModel.sort.sortItems.forEach(function(oSortItem) {
-				var oColumn = oColumnKey2ColumnMap[oSortItem.columnKey];
+		if (this.getTableType() === sap.ui.comp.personalization.TableType.AnalyticalTable || this.getTableType() === sap.ui.comp.personalization.TableType.Table || this.getTableType() === sap.ui.comp.personalization.TableType.TreeTable) {
+			oJson.sort.sortItems.forEach(function(oMSortItem) {
+				var oColumn = oColumnKey2ColumnMap[oMSortItem.columnKey];
 				if (!oColumn) {
+					return;
+				}
+				if (oMSortItem.operation === undefined) {
 					return;
 				}
 				if (!oColumn.getSorted()) {
 					oColumn.setSorted(true);
 				}
-				if (oColumn.getSortOrder() !== oSortItem.operation) {
-					oColumn.setSortOrder(oSortItem.operation);
+				if (oColumn.getSortOrder() !== oMSortItem.operation) {
+					oColumn.setSortOrder(oMSortItem.operation);
 				}
-				delete oColumnKey2ColumnMapUnsorted[oSortItem.columnKey];
+				delete oColumnKey2ColumnMapUnsorted[oMSortItem.columnKey];
 			});
 
 			for ( var sColumnKey in oColumnKey2ColumnMapUnsorted) {
@@ -258,6 +107,143 @@ sap.ui.define([
 		}
 
 		this.fireAfterPotentialTableChange();
+	};
+
+	SortController.prototype.getDataSuiteFormat2Json = function(oDataSuiteFormat) {
+		var oJson = this.createControlDataStructure();
+
+		if (!oDataSuiteFormat.SortOrder || !oDataSuiteFormat.SortOrder.length) {
+			return oJson;
+		}
+
+		// var aIgnoreColumnKeys = this.getIgnoreColumnKeys();
+		oJson.sort.sortItems = oDataSuiteFormat.SortOrder.
+		// filter(function(oSortOrder) {
+		// 	return aIgnoreColumnKeys.indexOf(oSortOrder.Property) < 0;
+		// }).
+		map(function(oSortOrder) {
+			return {
+				columnKey: oSortOrder.Property,
+				operation: oSortOrder.Descending ? "Descending" : "Ascending"
+			};
+		});
+		return oJson;
+	};
+
+	/**
+	 * Creates property <code>SortOrder</code> in <code>oDataSuiteFormat</code> object if at least one sort item exists. The <code>SortOrder</code> contains the current PersistentData snapshot.
+	 * @param {object} oDataSuiteFormat Structure of Data Suite Format
+	 */
+	SortController.prototype.getDataSuiteFormatSnapshot = function(oDataSuiteFormat) {
+		var oControlDataTotal = this.getUnionData(this.getControlDataInitial(), this.getControlData());
+		if (!oControlDataTotal.sort || !oControlDataTotal.sort.sortItems || !oControlDataTotal.sort.sortItems.length) {
+			return;
+		}
+		oDataSuiteFormat.SortOrder = oControlDataTotal.sort.sortItems.map(function(oSortItem) {
+			return {
+				Property: oSortItem.columnKey,
+				Descending: oSortItem.operation === "Descending"
+			};
+		});
+	};
+
+	SortController.prototype._onSort = function(oEvent) {
+		oEvent.preventDefault();
+
+		// this.fireBeforePotentialTableChange();
+
+		this._updateInternalModel(Util.getColumnKey(oEvent.getParameter("column")), oEvent.getParameter("sortOrder"), oEvent.getParameter("columnAdded"));
+		this.syncJson2Table(this.getControlData());
+
+		// this.fireAfterPotentialTableChange();
+		this.fireAfterSortModelDataChange();
+	};
+
+	SortController.prototype._updateInternalModel = function(sColumnKey, sOperation, bAddNewSort) {
+		if (!sColumnKey || (sOperation !== "Descending" && sOperation !== "Ascending")) {
+			return;
+		}
+
+		// 1. Prepare 'controlData'
+		if (!bAddNewSort) {
+			this.getInternalModel().setProperty("/controlData/sort/sortItems", []);
+		}
+		var oControlData = this.getControlData();
+
+		// 2. update / insert sortItem in 'controlData'
+		var iIndex = Util.getIndexByKey("columnKey", sColumnKey, oControlData.sort.sortItems);
+		iIndex = (iIndex > -1) ? iIndex : oControlData.sort.sortItems.length;
+		this.getInternalModel().setProperty("/controlData/sort/sortItems/" + iIndex + "/", {
+			columnKey: sColumnKey,
+			operation: sOperation
+		});
+
+		// 3. update 'controlDataBase'
+		this.updateControlDataBaseFromJson(oControlData);
+	};
+
+	SortController.prototype.getPanel = function() {
+		sap.ui.getCore().loadLibrary("sap.m");
+		jQuery.sap.require("sap/m/P13nSortPanel");
+		jQuery.sap.require("sap/m/P13nItem");
+		jQuery.sap.require("sap/m/P13nSortItem");
+
+		// Note: in the time where controller gets the panel all table columns are present (also missing columns).
+		// Note: in case that all sortable columns are excluded we nevertheless have to create the panel for the case that some sortable columns will be included.
+		if (!Util.hasSortableColumns(this.getColumnMap())) {
+			return null;
+		}
+
+		var that = this;
+		return new sap.m.P13nSortPanel({
+			containerQuery: true,
+			items: {
+				path: "$sapmP13nPanel>/transientData/sort/sortItems",
+				template: new sap.m.P13nItem({
+					columnKey: "{$sapmP13nPanel>columnKey}",
+					text: "{$sapmP13nPanel>text}",
+					tooltip: "{$sapmP13nPanel>tooltip}"
+				// maxLength: "{$sapmP13nPanel>maxlength}",
+				// type: "{$sapmP13nPanel>type}"
+				})
+			},
+			sortItems: {
+				path: "$sapmP13nPanel>/controlDataReduce/sort/sortItems",
+				template: new sap.m.P13nSortItem({
+					columnKey: "{$sapmP13nPanel>columnKey}",
+					operation: "{$sapmP13nPanel>operation}"
+				})
+			},
+			beforeNavigationTo: this.setModelFunction(),
+			addSortItem: function(oEvent) {
+				if (!oEvent.getParameter("sortItemData")) {
+					return;
+				}
+				var iIndex = oEvent.getParameter("index");
+				var oSortItemData = oEvent.getParameter("sortItemData");
+				var oSortItem = {
+					columnKey: oSortItemData.getColumnKey(),
+					operation: oSortItemData.getOperation()
+				};
+				var oControlDataReduce = that.getControlDataReduce();
+
+				if (iIndex > -1) {
+					oControlDataReduce.sort.sortItems.splice(iIndex, 0, oSortItem);
+				} else {
+					oControlDataReduce.sort.sortItems.push(oSortItem);
+				}
+				that.setControlDataReduce2Model(oControlDataReduce);
+			},
+			removeSortItem: function(oEvent) {
+				var iIndex = oEvent.getParameter("index");
+				if (iIndex < 0) {
+					return;
+				}
+				var oJson = that.getControlDataReduce();
+				oJson.sort.sortItems.splice(iIndex, 1);
+				that.setControlDataReduce2Model(oJson);
+			}
+		});
 	};
 
 	/**
@@ -307,36 +293,20 @@ sap.ui.define([
 	};
 
 	/**
-	 * @param {object} oPersistentDataBase: JSON object to which different properties from JSON oPersistentDataCompare are added
-	 * @param {object} oPersistentDataCompare: JSON object from where the different properties are added to oPersistentDataBase. Note: if sortItems is []
+	 * @param {object} oJsonBase: JSON object to which different properties from JSON oJson are added
+	 * @param {object} oJson: JSON object from where the different properties are added to oJsonBase. Note: if sortItems is []
 	 *        then it means that all sortItems have been deleted
-	 * @returns {object} new JSON object as union result of oPersistentDataBase and oPersistentDataCompare
+	 * @returns {object} new JSON object as union result of oJsonBase and oJson
 	 */
-	SortController.prototype.getUnionData = function(oPersistentDataBase, oPersistentDataCompare) {
-		// not valid
-		if (!oPersistentDataCompare || !oPersistentDataCompare.sort || !oPersistentDataCompare.sort.sortItems) {
+	SortController.prototype.getUnionData = function(oJsonBase, oJson) {
+		if (!oJson || !oJson.sort || !oJson.sort.sortItems) {
 			return {
-				sort: Util.copy(oPersistentDataBase.sort)
+				sort: Util.copy(oJsonBase.sort)
 			};
 		}
 
 		return {
-			sort: Util.copy(oPersistentDataCompare.sort)
-		};
-	};
-
-	SortController.prototype.determineNeededColumnKeys = function(oPersistentData) {
-		var aNeededColumnKeys = [];
-		if (!oPersistentData || !oPersistentData.sort || !oPersistentData.sort.sortItems) {
-			return {
-				sort: []
-			};
-		}
-		oPersistentData.sort.sortItems.forEach(function(oModelColumn) {
-			aNeededColumnKeys.push(oModelColumn.columnKey);
-		});
-		return {
-			sort: aNeededColumnKeys
+			sort: Util.copy(oJson.sort)
 		};
 	};
 
@@ -347,10 +317,8 @@ sap.ui.define([
 	 */
 	SortController.prototype.exit = function() {
 		BaseController.prototype.exit.apply(this, arguments);
-
-		var oTable = this.getTable();
-		if (oTable && oTable instanceof sap.ui.table.Table) {
-			oTable.detachSort(this._onSort, this);
+		if (this.getTable() && (this.getTableType() === sap.ui.comp.personalization.TableType.AnalyticalTable || this.getTableType() === sap.ui.comp.personalization.TableType.Table || this.getTableType() === sap.ui.comp.personalization.TableType.TreeTable)) {
+			this.getTable().detachSort(this._onSort, this);
 		}
 	};
 

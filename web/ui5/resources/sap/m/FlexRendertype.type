@@ -10,7 +10,7 @@
         <value name="List">
             <documentation>The UI5 controls are wrapped in LI elements, the surrounding Flex Box is an unordered list (UL).</documentation>
         </value>
-        <value name="Bare" since="1.42.1">
+        <value since="1.42.1" name="Bare">
             <documentation>The UI5 controls are not wrapped in an additional HTML element, the surrounding Flex Box is a DIV element.</documentation>
         </value>
     </enumeration>

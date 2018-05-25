@@ -4,18 +4,19 @@
  * (c) Copyright 2012-2014 SAP AG. All rights reserved
  */
 jQuery.sap.declare("sap.apf.utils.serializationMediator");
+jQuery.sap.require("sap.apf.core.constants");
 
 (function() {
 	'use strict';
 	/**
 	 * @private
 	 * @class Serialization Mediator gets, collects and distributes non-core objects for persistence operations (save, open and delete).
-	 * @param {object} oInject Object containing an instance of {@link sap.apf.utils.FilterIdHandler} and {@link sap.apf.core.Instance}
-	 * @param {object} oInject.instances.filterIdHandler Instance of {@link sap.apf.utils.FilterIdHandler} 
-	 * @param {object} oInject.instances.coreApi Instance of {@link sap.apf.core.Instance}
+	 * @param {object} inject Object containing an instance of {@link sap.apf.utils.FilterIdHandler} and {@link sap.apf.core.Instance}
+	 * @param {object} inject.instances.filterIdHandler Instance of {@link sap.apf.utils.FilterIdHandler} 
+	 * @param {object} inject.instances.coreApi Instance of {@link sap.apf.core.Instance}
 	 * @returns {sap.apf.utils.SerializationMediator}
 	 */
-	sap.apf.utils.SerializationMediator = function(oInject) {
+	sap.apf.utils.SerializationMediator = function(inject) {
 		/**
 		 * @private
 		 * @function
@@ -30,21 +31,13 @@ jQuery.sap.declare("sap.apf.utils.serializationMediator");
 		 * @returns undefined
 		 */
 		this.savePath = function(arg1, arg2, arg3) {
-			var oExternalObjects;
-			oInject.instances.startFilterHandler.serialize().done(afterStartFilterHandlerSerialized);
-			function afterStartFilterHandlerSerialized(serializedStartFilter) {
-				oExternalObjects = {
-					filterIdHandler : oInject.instances.filterIdHandler.serialize(),
-					startFilterHandler : serializedStartFilter
-				};
-				if (typeof arg1 === 'string' && typeof arg2 === 'function') {
-					//case for create path
-					oInject.instances.coreApi.savePath(arg1, arg2, oExternalObjects);
-				} else if (typeof arg1 === 'string' && typeof arg2 === 'string' && typeof arg3 === 'function') {
-					//case for update path
-					oInject.instances.coreApi.savePath(arg1, arg2, arg3, oExternalObjects);
+			this.serialize(false).done(function(serializableApfState){
+				if (typeof arg1 === 'string' && typeof arg2 === 'function') { //case for create path
+					inject.instances.coreApi.savePath(arg1, arg2, serializableApfState);
+				} else if (typeof arg1 === 'string' && typeof arg2 === 'string' && typeof arg3 === 'function') { //case for update path
+					inject.instances.coreApi.savePath(arg1, arg2, arg3, serializableApfState);
 				}
-			}
+			});
 		};
 		/**
 		 * @private
@@ -56,19 +49,27 @@ jQuery.sap.declare("sap.apf.utils.serializationMediator");
 		 * @param {number} [nActiveStep] Sets the active step.
 		 * @returns undefined
 		 */
-		this.openPath = function(sPathId, fnCallback, nActiveStep) {
-			var fnCallbackFromCoreApi = function(oResponse, oEntityTypeMetadata, oMessageObjectForUI) {
-				if (oResponse && oResponse.path && oResponse.path.SerializedAnalysisPath && oResponse.path.SerializedAnalysisPath.filterIdHandler) {
-					oInject.instances.filterIdHandler.deserialize(oResponse.path.SerializedAnalysisPath.filterIdHandler);
-					delete oResponse.path.SerializedAnalysisPath.filterIdHandler;
+		this.openPath = function(pathId, callback, indexOfActiveStep) {
+			inject.instances.coreApi.openPath(pathId, callbackFromCoreApi.bind(this));
+			function callbackFromCoreApi(response, metadata, messageObject) {
+				inject.instances.coreApi.resetPath();
+				
+				inject.instances.messageHandler.setCallbackForTriggeringFatal(callbackForMessageHandling);
+				this.deserialize(response.path.SerializedAnalysisPath, indexOfActiveStep).done(function(){
+					inject.instances.messageHandler.setCallbackForTriggeringFatal(undefined);
+					callback({}, metadata);
+				});
+				
+				function callbackForMessageHandling(messageObject){
+					if(messageObject.getSeverity() !== sap.apf.core.constants.message.severity.warning){
+						var messageObjectDeserialization = inject.instances.messageHandler.createMessageObject({
+							code : '5210'
+						});
+						messageObjectDeserialization.setPrevious(messageObject);
+						inject.instances.messageHandler.putMessage(messageObjectDeserialization);
+					}
 				}
-				if (oResponse && oResponse.path && oResponse.path.SerializedAnalysisPath && oResponse.path.SerializedAnalysisPath.startFilterHandler) {
-					oInject.instances.startFilterHandler.deserialize(oResponse.path.SerializedAnalysisPath.startFilterHandler);
-					delete oResponse.path.SerializedAnalysisPath.startFilterHandler;
-				}
-				fnCallback(oResponse, oEntityTypeMetadata, oMessageObjectForUI);
-			};
-			oInject.instances.coreApi.openPath(sPathId, fnCallbackFromCoreApi, nActiveStep);
+			}
 		};
 		/**
 		 * @private
@@ -80,7 +81,7 @@ jQuery.sap.declare("sap.apf.utils.serializationMediator");
 		 * @returns undefined
 		 */
 		this.deletePath = function(sPathId, fnCallback) {
-			oInject.instances.coreApi.deletePath(sPathId, fnCallback);
+			inject.instances.coreApi.deletePath(sPathId, fnCallback);
 		};
 		/**
 		 * @private
@@ -92,8 +93,58 @@ jQuery.sap.declare("sap.apf.utils.serializationMediator");
 		 * @returns undefined
 		 */
 		this.readPaths = function(fnCallback) {
-			oInject.instances.coreApi.readPaths(fnCallback);
+			inject.instances.coreApi.readPaths(fnCallback);
+		};
+		
+		this.serialize = function(isTransient, keepInitialStartFilterValues){
+			var result = jQuery.Deferred();
+			var serializableObject = {};
+			inject.instances.startFilterHandler.serialize(undefined, keepInitialStartFilterValues).done(function(serializableSFH){
+				var serializableCore = inject.instances.coreApi.serialize();
+				serializableObject.startFilterHandler = serializableSFH;
+				serializableObject.filterIdHandler = inject.instances.filterIdHandler.serialize();
+				serializableObject.path = serializableCore.path;
+				serializableObject.smartFilterBar = serializableCore.smartFilterBar;
+				if(isTransient){
+					serializableObject.pathName = inject.instances.coreApi.getPathName();
+					serializableObject.dirtyState = inject.instances.coreApi.isDirty();
+				}
+				
+				result.resolve(serializableObject);
+			});
+			return result;
+		};
+		this.deserialize = function(serializedApfState, indexOfActiveStep){
+			var deferred = jQuery.Deferred();
+			var serializedCore;
+			if(serializedApfState.dirtyState !== undefined){
+				inject.instances.coreApi.setDirtyState(serializedApfState.dirtyState);
+			}
+			if(serializedApfState.pathName !== undefined){
+				inject.instances.coreApi.setPathName(serializedApfState.pathName);
+			}
+			serializedCore = {
+					path : serializedApfState.path, 
+					smartFilterBar : serializedApfState.smartFilterBar
+			};
+			if(indexOfActiveStep !== undefined) {
+				serializedCore.path.indicesOfActiveSteps[0] = indexOfActiveStep;
+			}
+			//Deserialize after configuration is loaded
+			inject.instances.coreApi.getApplicationConfigProperties().done(function(){
+				inject.instances.coreApi.deserialize(serializedCore);
+				inject.instances.filterIdHandler.deserialize(serializedApfState.filterIdHandler);
+				inject.instances.startFilterHandler.getStartFilters().done(function(){
+					if(serializedApfState.startFilterHandler){
+						inject.instances.startFilterHandler.deserialize(serializedApfState.startFilterHandler).done(function(){
+							deferred.resolve();
+						});
+					}else{
+						deferred.resolve();
+					}
+				});
+			});
+			return deferred.promise();
 		};
 	};
-
 }());

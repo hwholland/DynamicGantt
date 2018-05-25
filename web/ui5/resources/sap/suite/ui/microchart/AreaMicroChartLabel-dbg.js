@@ -1,13 +1,11 @@
 /*!
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-		(c) Copyright 2009-2016 SAP SE. All rights reserved
-	
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
-// This control displays the history of values as a line mini chart or an area mini chart.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
-	function(jQuery, library, Element) {
+sap.ui.define(['./library', 'sap/ui/core/Element'],
+	function(library, Element) {
 	"use strict";
 
 	/**
@@ -20,7 +18,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * Displays or hides the labels for start and end dates, start and end values, and minimum and maximum values.
 	 * @extends sap.ui.core.Control
 	 *
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.34
 	 *
 	 * @public
@@ -28,20 +26,20 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Element'],
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var AreaMicroChartLabel = Element.extend("sap.suite.ui.microchart.AreaMicroChartLabel", /** @lends sap.suite.ui.microchart.AreaMicroChartLabel.prototype */ {
-			metadata : {
-				library : "sap.suite.ui.microchart",
-				properties : {
+		metadata : {
+			library : "sap.suite.ui.microchart",
+			properties : {
 
-					/**
-					 * The graphic element color.
-					 */
-					color: { group: "Misc", type: "sap.m.ValueColor", defaultValue: "Neutral" },
+				/**
+				 * The graphic element color.
+				 */
+				color: { group: "Misc", type: "sap.m.ValueColor", defaultValue: "Neutral" },
 
-					/**
-					 * The line title.
-					 */
-					label: {type : "string", group : "Misc", defaultValue : "" }
-				}
+				/**
+				 * The line title.
+				 */
+				label: {type : "string", group : "Misc", defaultValue : "" }
+			}
 		}
 	});
 

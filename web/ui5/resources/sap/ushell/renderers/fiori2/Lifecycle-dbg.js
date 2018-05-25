@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2014 SAP SE, All Rights Reserved
+// Copyright (c) 2009-2017 SAP SE, All Rights Reserved
 /*global jQuery, sap */
  /**
   * Handling of lifecycle events in fiori2 renderer.<br>
@@ -8,9 +8,8 @@
   * lifecycleEventHandler uses oEventMap to get the name of the relevant lifecycle event<br>
   * and publishes it with the namespace "sap.ushell"
   */
-(function () {
-    "use strict";
-    jQuery.sap.declare("sap.ushell.renderers.fiori2.Lifecycle");
+sap.ui.define(function() {
+	"use strict";
 
     var sLifecycleEventNamespace = "sap.ushell",
         sEventName,
@@ -68,4 +67,6 @@
             lifecycleEventHandler
         );
     }
-}());
+
+
+}, /* bExport= */ false);

@@ -1,8 +1,7 @@
 /*
  * SAP UI development toolkit for HTML5 (SAPUI5)
 
-        (c) Copyright 2009-2016 SAP SE. All rights reserved
-    
+(c) Copyright 2009-2018 SAP SE. All rights reserved
  */
 
 sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], function(jQuery, BaseController, DraftContext) {
@@ -25,7 +24,7 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], fun
 	 *        implementations of error situations. The event <code>fatalError</code> is thrown, if fatal errors occur during execution of OData
 	 *        requests.
 	 * @author SAP SE
-	 * @version 1.38.33
+	 * @version 1.54.3
 	 * @since 1.30.0
 	 * @alias sap.ui.generic.app.transaction.DraftController
 	 * @param {sap.ui.model.odata.ODataModel} oModel The OData model currently used
@@ -70,6 +69,7 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], fun
 	 * @param {map} mParameters Parameters to control the behavior of the request
 	 * @param {string} mParameters.batchGroupId The ID of the batch group to use
 	 * @param {string} mParameters.changeSetId The ID of the change set to use
+	 * @param {array | object} [mParameters.predefinedValues] An array that specifies a set of properties or the entry
 	 * @returns {Promise} A <code>Promise</code> for asynchronous execution
 	 * @throws {Error} Throws an error if no entity set is handed over as input parameter
 	 * @private
@@ -84,16 +84,23 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], fun
 		mParameters = mParameters || {};
 
 		return new Promise(function(resolve, reject) {
-			var fSuccess = function(oData, oResponse) {
+			var fnSuccess = function(oData, oResponse) {
 				resolve({
 					responseData: oData,
 					httpResponse: oResponse
 				});
 			};
 
-			that._oModel.createEntry(sPath, {
-				success: fSuccess,
-				error: reject,
+			var createdContext;
+			var fnError = function(oError){
+				that._oModel.deleteCreatedEntry(createdContext);
+				reject(oError);
+			};
+
+			createdContext = that._oModel.createEntry(sPath, {
+				properties: mParameters.predefinedValues,
+				success: fnSuccess,
+				error: fnError,
 				batchGroupId: mParameters.batchGroupId,
 				changeSetId: mParameters.changeSetId
 			});
@@ -111,8 +118,12 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], fun
 	 * @private
 	 */
 	DraftController.prototype.validateDraft = function(oContext, mParameters) {
-		var oImport = this.getDraftContext().getODataDraftFunctionImportName(oContext, "ValidationFunction");
-		return this._callAction(oImport, oContext, mParameters);
+		if (!oContext.getModel().getObject(oContext.getPath()).IsActiveEntity) {
+			var oImport = this.getDraftContext().getODataDraftFunctionImportName(oContext, "ValidationFunction");
+			return this._callAction(oImport, oContext, mParameters);
+		} else {
+			return Promise.resolve();
+		}
 	};
 
 	/**
@@ -126,13 +137,18 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], fun
 	 * @private
 	 */
 	DraftController.prototype.prepareDraft = function(oContext, mParameters) {
-		var oImport;
+		if (!oContext.getModel().getObject(oContext.getPath()).IsActiveEntity) {
+			var oImport;
+	
+			mParameters = mParameters || {};
+			mParameters.urlParameters = mParameters.urlParameters || {};
+	
+			oImport = this.getDraftContext().getODataDraftFunctionImportName(oContext, "PreparationAction");
+			return this._callAction(oImport, oContext, mParameters);
+		} else {
+			return Promise.resolve();
+		}
 
-		mParameters = mParameters || {};
-		mParameters.urlParameters = mParameters.urlParameters || {};
-
-		oImport = this.getDraftContext().getODataDraftFunctionImportName(oContext, "PreparationAction");
-		return this._callAction(oImport, oContext, mParameters);
 	};
 
 	/**
@@ -156,13 +172,16 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], fun
 	 * @param {sap.ui.model.Context} oContext The given binding context
 	 * @param {map} mParameters Parameters to control the behavior
 	 * @returns {Promise} A <code>Promise</code> for asynchronous execution
-	 * @throws {Error} Throws an error if no context is handed over as input parameter or if the function import does not exist or the action input
-	 *         parameters are invalid
+	 * @throws {Error} Throws an error if no context is handed over as input parameter or if no EditAction exists
+	 *         or if mParameters are invalid
 	 * @private
 	 */
 	DraftController.prototype.editDraft = function(oContext, mParameters) {
-		var oImport = this.getDraftContext().getODataDraftFunctionImportName(oContext, "EditAction");
-		return this._callAction(oImport, oContext, mParameters);
+		var sImportName = this.getDraftContext().getODataDraftFunctionImportName(oContext, "EditAction");
+		if (sImportName){
+			return this._callAction(sImportName, oContext, mParameters);
+		}
+		throw new Error(oContext ? "No Edit action defined for the given context" : "No context provided for the Edit action");
 	};
 
 	/**
@@ -250,26 +269,35 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], fun
 	 *
 	 * @param {string} sEntitySet The name of the entity set
 	 * @param {string} sPath Path identifying the new entity instance
+	 * @param {array | object} [vPredefinedValues] An array that specifies a set of properties or the entry
 	 * @returns {Promise} A <code>Promise</code> for asynchronous execution of the request
 	 * @public
 	 */
-	DraftController.prototype.createNewDraftEntity = function(sEntitySet, sPath) {
-		var oPromise, oPromise2, that = this, mParameters = {
-			batchGroupId: "Changes",
-			changeSetId: "Changes",
-			noShowSuccessToast: true,
-			forceSubmit: true,
-			failedMsg: "New draft document could not be created"
+	DraftController.prototype.createNewDraftEntity = function(sEntitySet, sPath, vPredefinedValues) {
+		var that = this;
+		var sId4BatchGroupAndChangeSet = "Changes";
+		var mParameters1 = {
+			predefinedValues: vPredefinedValues,
+			batchGroupId: sId4BatchGroupAndChangeSet,
+			changeSetId: sId4BatchGroupAndChangeSet
 		};
 
-		oPromise = this.createDraft(sEntitySet, sPath, mParameters).then(function(oResponse) {
+		var oPromise1 = this.createDraft(sEntitySet, sPath, mParameters1).then(function(oResponse) {
 			return that._normalizeResponse(oResponse, true);
 		}, function(oResponse) {
 			var oResponseOut = that._normalizeError(oResponse);
 			throw oResponseOut;
 		});
-		oPromise2 = this.triggerSubmitChanges(mParameters).then(function() {
-			return oPromise.then(function(oResponse) {
+		
+		var mParameters2 = {
+			batchGroupId: sId4BatchGroupAndChangeSet,
+			changeSetId: sId4BatchGroupAndChangeSet,
+			noShowSuccessToast: true,
+			forceSubmit: true,
+			failedMsg: "New draft document could not be created"
+		};
+		var oPromise2 = this.triggerSubmitChanges(mParameters2).then(function() {
+			return oPromise1.then(function(oResponse) {
 				var bIsActiveEntity, bHasDraftEntity, oResponseEntity, oResponseOut = that._normalizeResponse(oResponse, true);
 
 				// mind nesting of promises and error situation.
@@ -298,7 +326,7 @@ sap.ui.define([	"jquery.sap.global", "./BaseController", "./DraftContext" ], fun
 
 		// continue, if all "sub-ordinate" promises have been resolved.
 		return this._returnPromiseAll([
-			oPromise, oPromise2
+			oPromise1, oPromise2
 		]);
 	};
 

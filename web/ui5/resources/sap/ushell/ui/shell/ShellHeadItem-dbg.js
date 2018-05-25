@@ -1,5 +1,5 @@
 /*!
- * ${copyright}
+ * Copyright (c) 2009-2017 SAP SE, All Rights Reserved
  */
 /*global jQuery, sap */
 // Provides control sap.ushell.ui.shell.ShellHeadItem.
@@ -9,162 +9,217 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 
 
 
-    /**
-     * Constructor for a new ShellHeadItem.
-     *
-     * @param {string} [sId] id for the new control, generated automatically if no id is given
-     * @param {object} [mSettings] initial settings for the new control
-     *
-     * @class
-     * Header Action item of the Shell.
-     * @extends sap.ui.core.Control
-     *
-     * @author SAP SE
-     * @version ${version}
-     *
-     * @constructor
-     * @private
-     * @since 1.15.1
-     * @alias sap.ushell.ui.shell.ShellHeadItem
-     * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
-     */
-        var ShellHeadItem = Control.extend("sap.ushell.ui.shell.ShellHeadItem", /** @lends sap.ushell.ui.shell.ShellHeadItem.prototype */ { metadata : {
+        /**
+         * Constructor for a new ShellHeadItem.
+         *
+         * @param {string} [sId] id for the new control, generated automatically if no id is given
+         * @param {object} [mSettings] initial settings for the new control
+         *
+         * @class
+         * Header Action item of the Shell.
+         * @extends sap.ui.core.Control
+         *
+         * @author SAP SE
+         * @version 1.54.3
+         *
+         * @constructor
+         * @private
+         * @since 1.15.1
+         * @alias sap.ushell.ui.shell.ShellHeadItem
+         * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
+         */
+        var ShellHeadItem = Control.extend("sap.ushell.ui.shell.ShellHeadItem", /** @lends sap.ushell.ui.shell.ShellHeadItem.prototype */ {
+            metadata: {
 
-            properties : {
+                properties: {
 
-                /**
-                 * If set to true, a divider is displayed before the item.
-                 * @deprecated Since version 1.18.
-                 * Dividers are not supported anymore.
-                 */
-                startsSection : {type : "boolean", group : "Appearance", defaultValue : false, deprecated: true},
+                    /**
+                     * If set to true, a divider is displayed before the item.
+                     * @deprecated Since version 1.18.
+                     * Dividers are not supported anymore.
+                     */
+                    startsSection: {
+                        type: "boolean",
+                        group: "Appearance",
+                        defaultValue: false,
+                        deprecated: true
+                    },
 
-                /**
-                 * If set to true, a separator is displayed after the item.
-                 * @since 1.22.5
-                 */
-                showSeparator : {type : "boolean", group : "Appearance", defaultValue : true},
-                /**
-                 * If set to false, the button isn't clickable and displayed as disabled.
-                 * @since 1.38
-                 */
-                enabled : {type : "boolean", group : "Appearance", defaultValue : true},
+                    /**
+                     * If set to true, a separator is displayed after the item.
+                     * @since 1.22.5
+                     */
+                    showSeparator: {
+                        type: "boolean",
+                        group: "Appearance",
+                        defaultValue: true
+                    },
+                    /**
+                     * If set to false, the button isn't clickable and displayed as disabled.
+                     * @since 1.38
+                     */
+                    enabled: {
+                        type: "boolean",
+                        group: "Appearance",
+                        defaultValue: true
+                    },
 
-                /**
-                 * If set to true, the item gets a special design.
-                 */
-                selected : {type : "boolean", group : "Appearance", defaultValue : false},
+                    /**
+                     * If set to true, the item gets a special design.
+                     */
+                    selected: {
+                        type: "boolean",
+                        group: "Appearance",
+                        defaultValue: false
+                    },
 
-                /**
-                 * If set to true, a theme dependent marker is shown on the item.
-                 * @deprecated Since version 1.18.
-                 * Markers should not be used anymore.
-                 */
-                showMarker : {type : "boolean", group : "Appearance", defaultValue : false, deprecated: true},
+                    /**
+                     * If set to true, a theme dependent marker is shown on the item.
+                     * @deprecated Since version 1.18.
+                     * Markers should not be used anymore.
+                     */
+                    showMarker: {
+                        type: "boolean",
+                        group: "Appearance",
+                        defaultValue: false,
+                        deprecated: true
+                    },
 
-                /**
-                 * The icon of the item, either defined in the sap.ui.core.IconPool or an URI to a custom image. An icon must be set.
-                 */
-                icon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : null},
+                    /**
+                     * The icon of the item, either defined in the sap.ui.core.IconPool or an URI to a custom image. An icon must be set.
+                     */
+                    icon: {
+                        type: "sap.ui.core.URI",
+                        group: "Appearance",
+                        defaultValue: null
+                    },
 
-                target : {type : "sap.ui.core.URI", group : "Appearance", defaultValue : null},
+                    target: {
+                        type: "sap.ui.core.URI",
+                        group: "Appearance",
+                        defaultValue: null
+                    },
 
-                ariaLabel : {type : "string", group : "Appearance", defaultValue : null},
+                    ariaLabel: {
+                        type: "string",
+                        group: "Appearance",
+                        defaultValue: null
+                    },
 
-                /**
-                 * The text of the item. Text is only visible if the item is not rendered as part of the Header
-                 * i.e. if it is rendered as part of an overflow button in a Popover
-                 * @since 1.38
-                 */
-                text : {type : "string", group : "Appearance", defaultValue : null},
+                    /**
+                     * The text of the item. Text is only visible if the item is not rendered as part of the Header
+                     * i.e. if it is rendered as part of an overflow button in a Popover
+                     * @since 1.38
+                     */
+                    text: {
+                        type: "string",
+                        group: "Appearance",
+                        defaultValue: null
+                    },
 
-                /**
-                 * Invisible items are not shown on the UI.
-                 * @since 1.18
-                 */
-                visible : {type : "boolean", group : "Appearance", defaultValue : true},
+                    /**
+                     * Invisible items are not shown on the UI.
+                     * @since 1.18
+                     */
+                    visible: {
+                        type: "boolean",
+                        group: "Appearance",
+                        defaultValue: true
+                    },
 
-                floatingNumber : {type : "int", group : "Appearance", defaultValue : null},
+                    floatingNumber: {
+                        type: "int",
+                        group: "Appearance",
+                        defaultValue: null
+                    },
 
-                floatingNumberMaxValue : {type : "int", group : "Appearance", defaultValue : 999}
+                    floatingNumberMaxValue: {
+                        type: "int",
+                        group: "Appearance",
+                        defaultValue: 999
+                    }
+                },
+                events: {
+
+                    /**
+                     * Event is fired when the user presses the item.
+                     */
+                    press: {}
+                }
             },
-            events : {
-
-                /**
-                 * Event is fired when the user presses the item.
-                 */
-                press : {}
-            }
-        },
-        renderer : {
-            render: function (rm, oItem) {
-                if ((oItem.getTarget() || "") !== "") {
-                    rm.write("<a tabindex='0' href='");
-                    rm.writeEscaped(oItem.getTarget());
-                    rm.write("'");
-                } else {
-                    rm.write("<a tabindex='0'");
-                }
-                rm.writeAccessibilityState(oItem, {role : 'button'});
-                rm.writeControlData(oItem);
-                rm.addClass("sapUshellShellHeadItm");
-                var bRenderText = oItem._shouldRenderText();
-                if (bRenderText){
-                    rm.addClass("sapUshellShellHeadItmText");
-                }
-
-                if (oItem._headerHideSeperators) {
-                    rm.addClass("sapUshellHeaderHideSeparators");
-                }
-
-                if (!oItem.getEnabled()) {
-                    rm.addClass("sapUshellShellHeadItmDisabled");
-                }
-
-                if (oItem.getFloatingNumber && oItem.getFloatingNumber() > 0 &&  oItem.getVisible()) {
-                    // Verify that the floating number is not bigger than the maximum
-                    var sFloatingNumber = oItem.getDisplayFloatingNumber();
-                    rm.addClass("sapUshellShellHeadItmCounter");
-                    rm.writeAttribute("counter-content", sFloatingNumber);
-                }
-                if (oItem.getStartsSection()) {
-                    rm.addClass("sapUshellShellHeadItmDelim");
-                }
-                if (oItem.getShowSeparator()) {
-                    rm.addClass("sapUshellShellHeadItmSep");
-                }
-                if (!oItem.getVisible()) {
-                    rm.addClass("sapUshellShellHidden");
-                }
-                if (oItem.getAriaLabel()) {
-                    //Handle Aria Label rendering
-                    rm.writeAccessibilityState({
-                        label: oItem.getAriaLabel(),
-                        role: "button"
+            renderer: {
+                render: function (rm, oItem) {
+                    if ((oItem.getTarget() || "") !== "") {
+                        rm.write("<a tabindex='0' href='");
+                        rm.writeEscaped(oItem.getTarget());
+                        rm.write("'");
+                    } else {
+                        rm.write("<a tabindex='0'");
+                    }
+                    rm.writeAccessibilityState(oItem, {
+                        role: 'button'
                     });
+                    rm.writeControlData(oItem);
+                    rm.addClass("sapUshellShellHeadItm");
+                    var bRenderText = oItem._shouldRenderText();
+                    if (bRenderText) {
+                        rm.addClass("sapUshellShellHeadItmText");
+                    }
+
+                    if (oItem._headerHideSeperators) {
+                        rm.addClass("sapUshellHeaderHideSeparators");
+                    }
+
+                    if (!oItem.getEnabled()) {
+                        rm.addClass("sapUshellShellHeadItmDisabled");
+                    }
+
+                    if (oItem.getFloatingNumber && oItem.getFloatingNumber() > 0 && oItem.getVisible()) {
+                        // Verify that the floating number is not bigger than the maximum
+                        var sFloatingNumber = oItem.getDisplayFloatingNumber();
+                        rm.addClass("sapUshellShellHeadItmCounter");
+                        rm.writeAttribute("data-counter-content", sFloatingNumber);
+                    }
+                    if (oItem.getStartsSection()) {
+                        rm.addClass("sapUshellShellHeadItmDelim");
+                    }
+                    if (oItem.getShowSeparator()) {
+                        rm.addClass("sapUshellShellHeadItmSep");
+                    }
+                    if (!oItem.getVisible()) {
+                        rm.addClass("sapUshellShellHidden");
+                    }
+                    if (oItem.getAriaLabel()) {
+                        //Handle Aria Label rendering
+                        rm.writeAccessibilityState({
+                            label: oItem.getAriaLabel(),
+                            role: "button"
+                        });
+                    }
+                    if (oItem.getSelected()) {
+                        rm.addClass("sapUshellShellHeadItmSel");
+                    }
+                    if (oItem.getShowMarker()) {
+                        rm.addClass("sapUshellShellHeadItmMark");
+                    }
+                    rm.writeClasses();
+                    var tooltip = oItem.getTooltip_AsString();
+                    if (tooltip) {
+                        rm.writeAttributeEscaped("title", tooltip);
+                    }
+                    rm.write("><span></span><div class='sapUshellShellHeadItmMarker'><div></div></div>");
+                    if (bRenderText) {
+                        rm.write("<b class='sapUshellShellHeadItmCenterText'>");
+                        rm.writeEscaped(oItem.getText());
+                        rm.write("</b>");
+                    }
+                    rm.write("</a>");
                 }
-                if (oItem.getSelected()) {
-                    rm.addClass("sapUshellShellHeadItmSel");
-                }
-                if (oItem.getShowMarker()) {
-                    rm.addClass("sapUshellShellHeadItmMark");
-                }
-                rm.writeClasses();
-                var tooltip = oItem.getTooltip_AsString();
-                if (tooltip) {
-                    rm.writeAttributeEscaped("title", tooltip);
-                }
-                rm.write("><span></span><div class='sapUshellShellHeadItmMarker'><div></div></div>");
-                if (bRenderText){
-                    rm.writeEscaped(oItem.getText());
-                }
-                rm.write("</a>");
             }
-        }
         });
 
         ShellHeadItem.prototype._shouldRenderText = function () {
-            if (this.getText() && this.getParent()){
+            if (this.getText() && this.getParent()) {
                 return !(this.getParent() instanceof sap.ushell.ui.shell.ShellHeader);
             }
             return false;
@@ -272,6 +327,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
             if (IconPool.isIconURI(sIco)) {
                 var oIconInfo = IconPool.getIconInfo(sIco);
                 $Ico.html("").css("style", "");
+                jQuery(this.$().children()[0]).removeClass('userImgSpan');
                 if (oIconInfo) {
                     $Ico.text(oIconInfo.content).css("font-family", "'" + oIconInfo.fontFamily + "'");
                 }
@@ -279,7 +335,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
                 var $Image = this.$("img-inner");
                 if ($Image.length === 0 || $Image.attr("src") !== sIco) {
                     jQuery(this.$().children()[0]).addClass('userImgSpan');
-                    jQuery(this.$().children().first().before("<div class='userImg'></div>"));
                     $Ico.css("style", "").html("<img id='" + this.getId() + "-img-inner' src='" + jQuery.sap.encodeHTML(sIco) + "'></img>");
                 }
             }
@@ -288,15 +343,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
         ShellHeadItem.prototype.getDisplayFloatingNumber = function () {
             var iNumber = this.getFloatingNumber(),
                 iMaxValueNumber = this.getFloatingNumberMaxValue();
-                var sDisplayNumber = iNumber + "";
+            var sDisplayNumber = iNumber + "";
             if (iNumber > iMaxValueNumber) {
                 sDisplayNumber = iMaxValueNumber + "+";
             }
             return sDisplayNumber;
         };
 
-    // in case someone already using the API sap.ushell.renderers.fiori2.RendererExtensions.addHeaderItem
-    // with sap.ui.unified.ShellHeadItem() instance
+        // in case someone already using the API sap.ushell.renderers.fiori2.RendererExtensions.addHeaderItem
+        // with sap.ui.unified.ShellHeadItem() instance
         jQuery.sap.declare('sap.ui.unified.ShellHeadItem');
         sap.ui.unified.ShellHeadItem = ShellHeadItem;
 

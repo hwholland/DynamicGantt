@@ -1,5 +1,7 @@
 /*
-* ! @copyright@
+* ! SAP UI development toolkit for HTML5 (SAPUI5)
+ * 
+ * (c) Copyright 2009-2017 SAP SE. All rights reserved
 */
 sap.ui.define(["./Mode", "sap/m/CustomListItem", "sap/m/Label", "sap/ui/model/Filter", "sap/ui/model/FilterOperator", "sap/collaboration/components/utils/PendingRequestsUtil"], function(Mode, CustomListItem, Label, Filter, FilterOperator, PendingRequestsUtil) {
 	

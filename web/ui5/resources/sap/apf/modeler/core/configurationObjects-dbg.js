@@ -26,6 +26,7 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 		/* @type {sap.apf.modeler.core.ConfigurationObjects} */
 		var that = this;
 		var Hashtable, textPool, persistenceProxy, messageHandler;
+		var metadataFactory = inject.instances.metadataFactory;
 		if (inject.constructors && inject.constructors.Hashtable) {
 			Hashtable = inject.constructors.Hashtable;
 		} 
@@ -98,7 +99,7 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			if (rightLower) {
 				thumbnail.rightLower = this.serializeLabelKey(rightLower);
 			}
-			if (thumbnail.leftLower || thumbnail.leftUpper || thumbnail.rightLower || thumbnail.rightUpper) { // fixme: optional thumbnail???
+			if (thumbnail.leftLower || thumbnail.leftUpper || thumbnail.rightLower || thumbnail.rightUpper) {
 				configObject.thumbnail = thumbnail;
 			}
 		};
@@ -321,6 +322,19 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 					}
 					propertyValues.push(propertyValue);
 				});
+				var hierarchicalProperty = [{}];
+				if(representation.getHierarchyProperty()){
+					hierarchicalProperty[0].fieldName = representation.getHierarchyProperty();
+					hierarchicalProperty[0].kind = "hierarchicalColumn";
+					if (representation.getHierarchyPropertyTextLabelKey()) {
+						hierarchicalProperty[0].fieldDesc = {
+							type : 'label',
+							kind : 'text',
+							key : representation.getHierarchyPropertyTextLabelKey()
+						};
+					}
+					hierarchicalProperty[0].labelDisplayOption = representation.getHierarchyPropertyLabelDisplayOption();
+				}
 				orderbyValues = [];
 				representation.getOrderbySpecifications().forEach(function(spec) {
 					orderbyValues.push({
@@ -335,6 +349,7 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 						dimensions : dimensionValues,
 						measures : measureValues,
 						properties : propertyValues,
+						hierarchicalProperty : hierarchicalProperty,
 						alternateRepresentationTypeId : representation.getAlternateRepresentationType()
 					}
 				};
@@ -367,11 +382,20 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			var bindingId = "binding-for-" + step.getId();
 			var TextElement = textPool.get(step.getTitleId());
 			var stepDescription = (TextElement && TextElement.TextElementDescription) || "";
+			if(step.getFilterPropertyLabelKey() || step.getFilterPropertyLabelDisplayOption()){
+				var requiredFilterOptions = {
+						labelDisplayOption : step.getFilterPropertyLabelDisplayOption()
+				};
+				if(step.getFilterPropertyLabelKey()){
+					requiredFilterOptions.fieldDesc = this.serializeLabelKey(step.getFilterPropertyLabelKey());
+				}
+			}
 			containers.bindings.push({
 				type : "binding",
 				id : bindingId,
 				stepDescription : stepDescription,
 				requiredFilters : step.getFilterProperties(),
+				requiredFilterOptions : requiredFilterOptions,
 				representations : serializeRepresentations(step)
 			});
 			return bindingId;
@@ -438,8 +462,9 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			var description = (TextElement && TextElement.TextElementDescription) || "";
 			var longTitleId = step.getLongTitleId();
 			var topNsettings;
+
 			var result = {
-				type : "step",
+				type : step.getType(),
 				description : description,
 				request : requestId,
 				binding : bindingId,
@@ -447,11 +472,16 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 				title : that.serializeLabelKey(step.getTitleId()),
 				navigationTargets : []
 			};
+			if (step.getHierarchyProperty && step.getHierarchyProperty() ){
+				result.hierarchyProperty = step.getHierarchyProperty();
+			}
 			if (step.getFilterMappingService()) {
 				result.filterMapping = {
 					requestForMappedFilter : that.serializeFilterMappingRequest(step, containers),
 					target : step.getFilterMappingTargetProperties(),
-					keepSource : step.getFilterMappingKeepSource() ? "true" : "false"
+					targetPropertyLabelKey : step.getFilterMappingTargetPropertyLabelKey(),
+					targetPropertyDisplayOption : step.getFilterMappingTargetPropertyLabelDisplayOption(),
+					keepSource : step.getFilterMappingKeepSource() ? "true" : "false"	
 				};
 			}
 			topNsettings = step.getTopN();
@@ -502,7 +532,7 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 				property : facetFilter.getProperty(),
 				multiSelection : facetFilter.isMultiSelection() + "",
 				preselectionFunction : facetFilter.getPreselectionFunction(),
-				preselectionDefaults : facetFilter.getPreselectionDefaults(),
+				preselectionDefaults : serializePreselectionDefault(),
 				valueList: valueList,
 				label : that.serializeLabelKey(facetFilter.getLabelKey()),
 				invisible : !facetFilter.isVisible(),
@@ -539,6 +569,12 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 				containers.requests.push(request);
 				return requestId;
 			}
+			function serializePreselectionDefault(){
+				if(facetFilter.getNoneSelection() === true){
+					return null;
+				}
+				return facetFilter.getPreselectionDefaults();
+			}
 		};
 		/**
 		 * @private
@@ -554,12 +590,21 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 				id : navigationTarget.getId(),
 				semanticObject : navigationTarget.getSemanticObject(),
 				action : navigationTarget.getAction(),
-				isStepSpecific : navigationTarget.isStepSpecific()
+				isStepSpecific : navigationTarget.isStepSpecific(),
+				useDynamicParameters : navigationTarget.getUseDynamicParameters(),
+				parameters : navigationTarget.getAllNavigationParameters()
 			};
 			if (navigationTarget.getFilterMappingService()) {
 				result.filterMapping = {
 					requestForMappedFilter : that.serializeFilterMappingRequest(navigationTarget, containers),
 					target : navigationTarget.getFilterMappingTargetProperties()
+				};
+			}
+			if (navigationTarget.getTitleKey()){
+				result.title = {
+					key : navigationTarget.getTitleKey(),
+					type : "label",
+					kind : "text"
 				};
 			}
 			return result;
@@ -573,11 +618,19 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 		 */
 		this.serializeSmartFilterBar = function(smartFilterBar){
 			if(smartFilterBar){
+				if (!smartFilterBar.isEntityTypeConverted()) {
+					return {
+						id: smartFilterBar.getId(),
+						type: 'smartFilterBar',
+						service: smartFilterBar.getService(),
+						entityType: smartFilterBar.getEntitySet()
+					};
+				} 
 				return {
 					id: smartFilterBar.getId(),
 					type: 'smartFilterBar',
 					service: smartFilterBar.getService(),
-					entityType: smartFilterBar.getEntityType()
+					entitySet: smartFilterBar.getEntitySet()
 				};
 			}
 		};
@@ -661,15 +714,23 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 		 * @param {sap.apf.modeler.core.RegistryWrapper} registry
 		 */
 		function mapStepToDesignTime(configStep, registry, configurationEditor) {
-			var stepId = configurationEditor.createStepWithId(configStep.id);
-			var modelStep = configurationEditor.getStep(stepId);
+			var stepId;
+			var modelStep;
+			if(configStep.type === "hierarchicalStep"){
+				stepId = configurationEditor.createHierarchicalStepWithId(configStep.id);
+				modelStep = configurationEditor.getStep(stepId);
+				modelStep.setHierarchyProperty(configStep.hierarchyProperty);
+			} else {
+				stepId = configurationEditor.createStepWithId(configStep.id);
+				modelStep = configurationEditor.getStep(stepId);
+			}
 			var request = registry.getItem(configStep.request);
 			if (request.entityType) { // TODO: remove workaround earliest 5th November
 				request.entitySet = request.entityType;
 				delete request.entityType;
 			}
 			if (request.service) {
-				configurationEditor.registerService(request.service);
+				configurationEditor.registerServiceAsPromise(request.service);
 			}
 			modelStep.setService(request.service);
 			modelStep.setEntitySet(request.entitySet);
@@ -690,11 +751,23 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			binding.requiredFilters.forEach(function(property) {
 				modelStep.addFilterProperty(property);
 			});
+			if(binding.requiredFilterOptions){
+				modelStep.setFilterPropertyLabelDisplayOption(binding.requiredFilterOptions.labelDisplayOption);
+				if(binding.requiredFilterOptions.fieldDesc){
+					modelStep.setFilterPropertyLabelKey(binding.requiredFilterOptions.fieldDesc.key);
+				}
+			}
 			binding.representations.forEach(function(configRepresentation) {
 				var member;
 				var modelRepresentation = modelStep.getRepresentation(modelStep.createRepresentation().getId());
 				modelRepresentation.setRepresentationType(configRepresentation.representationTypeId);
 				modelRepresentation.setAlternateRepresentationType(configRepresentation.parameter.alternateRepresentationTypeId);
+				if(configRepresentation.parameter.hierarchicalProperty && configRepresentation.parameter.hierarchicalProperty[0] && configRepresentation.parameter.hierarchicalProperty[0].fieldDesc){
+					modelRepresentation.setHierarchyPropertyTextLabelKey(configRepresentation.parameter.hierarchicalProperty[0].fieldDesc.key);
+				}
+				if(configRepresentation.parameter.hierarchicalProperty && configRepresentation.parameter.hierarchicalProperty[0]){
+					modelRepresentation.setHierarchyPropertyLabelDisplayOption(configRepresentation.parameter.hierarchicalProperty[0].labelDisplayOption);
+				}
 				configRepresentation.parameter.dimensions.forEach(function(dimensionConfig) {
 					modelRepresentation.addDimension(dimensionConfig.fieldName);
 					if (dimensionConfig.fieldDesc) {
@@ -764,6 +837,8 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			modelFacetFilter.setProperty(configFacetFilter.property);
 			if (configFacetFilter.preselectionFunction && configFacetFilter.preselectionFunction !== "") {
 				modelFacetFilter.setPreselectionFunction(configFacetFilter.preselectionFunction);
+			} else if (configFacetFilter.preselectionDefaults === null) {
+				modelFacetFilter.setNoneSelection(true);
 			} else {
 				modelFacetFilter.setPreselectionDefaults(configFacetFilter.preselectionDefaults);
 			}
@@ -793,7 +868,7 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 					delete configRequestForValueHelp.entityType;
 				}
 				if (configRequestForValueHelp.service) {
-					configurationEditor.registerService(configRequestForValueHelp.service);
+					configurationEditor.registerServiceAsPromise(configRequestForValueHelp.service);
 					modelFacetFilter.setServiceOfValueHelp(configRequestForValueHelp.service);
 				}
 				if (configRequestForValueHelp.entitySet) {
@@ -810,7 +885,7 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 					delete configRequestForFilterResolution.entityType;
 				}
 				if (configRequestForFilterResolution.service) {
-					configurationEditor.registerService(configRequestForFilterResolution.service);
+					configurationEditor.registerServiceAsPromise(configRequestForFilterResolution.service);
 					modelFacetFilter.setServiceOfFilterResolution(configRequestForFilterResolution.service);
 				}
 				if (configRequestForFilterResolution.entitySet) {
@@ -834,14 +909,25 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			var modelNavigationTarget = configurationEditor.getNavigationTarget(id);
 			modelNavigationTarget.setSemanticObject(configNavigationTarget.semanticObject);
 			modelNavigationTarget.setAction(configNavigationTarget.action);
+			if (configNavigationTarget.parameters) {
+				configNavigationTarget.parameters.forEach(function (parameter) {
+					modelNavigationTarget.addNavigationParameter(parameter.key, parameter.value);
+				});
+			}
 			if (configNavigationTarget.isStepSpecific === true) {
 				//                modelNavigationTarget.setStepSpecific(configNavigationTarget.isStepSpecific);
 				modelNavigationTarget.setStepSpecific();
 			} else {
 				modelNavigationTarget.setGlobal();
 			}
+			if (configNavigationTarget.useDynamicParameters === true) {
+				modelNavigationTarget.setUseDynamicParameters(true);
+			}
 			if (configNavigationTarget.filterMapping) {
 				mapFilterMappingToDesignTime(configNavigationTarget.filterMapping, modelNavigationTarget, registry);
+			}
+			if (configNavigationTarget.title && configNavigationTarget.title.key){
+				modelNavigationTarget.setTitleKey(configNavigationTarget.title.key);
 			}
 		}
 		function mapFilterMappingToDesignTime(configFilterMapping, modelWithFilterMapping, registry) {
@@ -855,6 +941,12 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			configFilterMapping.target.forEach(function(property) {
 				modelWithFilterMapping.addFilterMappingTargetProperty(property);
 			});
+			if (configFilterMapping.targetPropertyLabelKey){
+				modelWithFilterMapping.setFilterMappingTargetPropertyLabelKey(configFilterMapping.targetPropertyLabelKey);
+			}
+			if (configFilterMapping.targetPropertyDisplayOption){
+				modelWithFilterMapping.setFilterMappingTargetPropertyLabelDisplayOption(configFilterMapping.targetPropertyDisplayOption);
+			}
 			if (configFilterMapping.hasOwnProperty("keepSource")) {
 				if (configFilterMapping.keepSource === "true") {
 					modelWithFilterMapping.setFilterMappingKeepSource(true);
@@ -863,30 +955,61 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 				}
 			}
 		}
-		function mapSmartFilterBarToDesignTime(registry, configurationEditor){
+		function mapSmartFilterBarToDesignTimeAsPromise(registry, configurationEditor){
+			var deferred = jQuery.Deferred();
+			
 			var smartFilterBarConfig = registry.getItem("SmartFilterBar-1");
 			if(smartFilterBarConfig){
 				configurationEditor.setFilterOption({smartFilterBar : true});
 				var smartFilterBar = configurationEditor.getSmartFilterBar();
 				smartFilterBar.setService(smartFilterBarConfig.service);
-				smartFilterBar.setEntityType(smartFilterBarConfig.entityType);
-				return true;
+				
+				if (smartFilterBarConfig.service) {
+					configurationEditor.registerServiceAsPromise(smartFilterBarConfig.service);
+				}
+				if (smartFilterBarConfig.entitySet) {
+					smartFilterBar.setEntitySet(smartFilterBarConfig.entitySet);
+					deferred.resolve(true);
+				} else if (smartFilterBarConfig.entityType) {
+					metadataFactory.getMetadata(smartFilterBarConfig.service).done(function(metadata) {
+						if (metadata) {
+							var entitySet = metadata.getEntitySetByEntityType(smartFilterBarConfig.entityType);
+							if (entitySet) {
+								smartFilterBar.setEntitySet(entitySet);	
+							} else {
+								smartFilterBar.setEntitySet(smartFilterBarConfig.entityType, true);
+								complain("11524", [smartFilterBarConfig.entityType]);
+							}
+						}
+						deferred.resolve(true);
+					}).fail(function() {
+						smartFilterBar.setEntitySet(smartFilterBarConfig.entityType, true);
+						complain("11524", [smartFilterBarConfig.entityType]);
+						deferred.resolve(true);
+					});	
+				} else {
+					deferred.resolve(true);
+				}
+			} else {
+				deferred.resolve(false);
 			}
-			return false;
+			return deferred.promise();
 		}
 		/**
 		 * @private
 		 * @function
-		 * @name sap.apf.modeler.core.ConfigurationObjects#mapToDesignTime
+		 * @name sap.apf.modeler.core.ConfigurationObjects#mapToDesignTimeAsPromise
 		 * @description Retrieve all first class citizens (e.g. steps and categories) from the hashtable and transfer them to the containers in the configurationEditor.
 		 *      Assumption: all input entities have identifier.
 		 * @param {sap.apf.modeler.core.RegistryWrapper} registry
 		 * @param {sap.apf.modeler.core.ConfigurationEditor} configurationEditor
+		 * @returns {jQuery.Deferred} promise
 		 */
-		this.mapToDesignTime = function(registry, configurationEditor) {
+		this.mapToDesignTimeAsPromise = function(registry, configurationEditor) {
+			var deferred = jQuery.Deferred();
 			var facetFilterConfig;
 			var facetFilterExists = false;
-			var smartFilterBarExists = false;
+			
 			configurationEditor.setApplicationTitle(registry.getItem('applicationTitle').key);
 			registry.getSteps().forEach(function(step) {
 				mapStepToDesignTime(step, registry, configurationEditor);
@@ -913,11 +1036,15 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			registry.getNavigationTargets().forEach(function(navigationTarget) {
 				mapNavigationTargetToDesignTime(navigationTarget, registry, configurationEditor);
 			});
-			smartFilterBarExists = mapSmartFilterBarToDesignTime(registry, configurationEditor);
+			mapSmartFilterBarToDesignTimeAsPromise(registry, configurationEditor).done(function(smartFilterBarExists){
+				if(!facetFilterExists && !smartFilterBarExists){
+					configurationEditor.setFilterOption({none : true});
+				}
+				deferred.resolve();
+			});
 			
-			if(!facetFilterExists && !smartFilterBarExists){
-				configurationEditor.setFilterOption({none : true});
-			}
+			
+			return deferred.promise();
 		};
 		/**
 		 * @private
@@ -931,12 +1058,12 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 			var filterApplication = new sap.apf.core.utils.Filter(messageHandler, 'Application', 'eq', applicationId);
 			persistenceProxy.readCollection("configuration", function(result, metadata, messageObject) {
 				callbackAfterLoad(result, metadata, messageObject); //needed: for debugging purposes
-			}, undefined, undefined, filterApplication, true);
+			}, undefined, ["AnalyticalConfiguration", "SerializedAnalyticalConfiguration"], filterApplication);
 		};
 		/**
 		 * @private
 		 * @function
-		 * @name sap.apf.modeler.core.ConfigurationObjects#loadAllConfigurations
+		 * @name sap.apf.modeler.core.ConfigurationObjects#getTextKeysFromAllConfigurations
 		 * @description Load thext keys for all configuration objects of a given application
 		 * @param {String} applicationId - Id of the application
 		 * @param {Function} callbackAfterGet - callback with signature callbackAfterGet(textKeys, messageObject)
@@ -1000,14 +1127,14 @@ jQuery.sap.declare("sap.apf.modeler.core.configurationObjects");
 	 * @name sap.apf.modeler.core.ConfigurationObjects.getTextKeysFromConfiguration
 	 * @description deeply get all text keys for a stringifiable configuration object and its references
 	 * @param {Object} configuration - Stringifiable configuration object
-	 * @return {Array} Text keys
+	 * @returns {Array} Text keys
 	 */
 	sap.apf.modeler.core.ConfigurationObjects.getTextKeysFromConfiguration = function getTextKeysFromConfiguration(configuration) {
 		var resultValue = [];
 		if (!configuration) {
-			return;
+			return undefined;
 		}
-		if (configuration.type && configuration.type === "label" && configuration.kind && configuration.kind === "text" && configuration.key) {
+		if (configuration.type === "label" && configuration.kind === "text" && configuration.key) {
 			return [ configuration.key ];
 		}
 		for( var item in configuration) {
