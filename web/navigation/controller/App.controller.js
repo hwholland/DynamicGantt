@@ -15,8 +15,19 @@ sap.ui.define([
 			}).then(function(oComp) {
 				//var oView = oComp.getAggregation("rootControl");
 				var oGantt = oComp._oGanttChartContainer;
+				that._oGanttChartWithTable = oComp._oGanttChartWithTable;
 				that.byId("navPage").addContent(oGantt);
+				setTimeout(function(){
+					that._oGanttChartWithTable.jumpToPosition(new Date("2015-01-01"));
+				},1000);
 			});
+		},
+
+		onAfterRendering: function() {
+			var that = this;
+			setTimeout(function(){
+				that._oGanttChartWithTable.jumpToPosition(new Date("2015-01-01"));
+			},1000);
 		}
 	});
 });

@@ -1,5 +1,5 @@
-sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/model/models", "sap/ui/table/Column", "sap/gantt/config/Shape"],
-	function (UIComponent, JSONModel, models, Column, Shape) {
+sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/model/models", "sap/ui/table/Column", "sap/gantt/config/Shape", "sap/gantt/def/cal/CalendarDefs", "sap/gantt/def/cal/Calendar", "sap/gantt/def/cal/TimeInterval"],
+	function (UIComponent, JSONModel, models, Column, Shape, CalendarDefs, Calendar) {
 		"use strict";
 
 		/**
@@ -48,10 +48,10 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/
 				var fnBindRows = function (oEvent) {
 					this.getGanttRowBinding(oGantt);
 					this.getGanttRelationshipBinding(oGantt);
-					//this.setCalendarDef();
-					this._oGanttChartWithTable.setShapeDataNames(["order"]);
-					this._oGanttChartWithTable.setShapes(this._configShape());
-					//this.configure();
+					//this.setCalendar();
+					//this._oGanttChartWithTable.setShapeDataNames(["order"]);
+					//this._oGanttChartWithTable.setShapes(this._configShape());
+					this.configure();
 					this.setChartToContainer();
 				};
 
@@ -59,11 +59,12 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/
 				oGantt.loadData("../gantt/model/data.json");
 
 				console.log(this);
-
+/*
 				if (Object.getOwnPropertyNames(this.oComponentData).length === 0) {
+					console.log("configure");
 					this.configure();
 				}
-
+*/
 
 			},
 
@@ -105,7 +106,7 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/
 			 */
 			getChartContainer: function () {
 				var oGanttChartContainer = new sap.gantt.GanttChartContainer("GanttChartContainer", {
-					height:"1000px"
+					height: "750px"
 				});
 				this._oGanttChartContainer = oGanttChartContainer;
 				return (oGanttChartContainer);
@@ -181,44 +182,432 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/
 			//								AUTOMATIC CONFIGURATION FUNCTIONS									//
 			//////////////////////////////////////////////////////////////////////////////////////////////////////
 
+					/*
+		 * Create CustomToolbar
+		 * @private
+		 * @returns {Object} oToolbar
+		 */
+		_createCustomToolbar: function() {
+			var that = this;
+			var oToolbar = new sap.m.Toolbar({
+				content: [
+					new sap.m.Link({
+						text: "Create Task",
+						press: function() {
+							that.createTask();
+						}
+					}),
+					new sap.m.ToolbarSpacer({width: "10px"}),
+					new sap.m.Link({
+						text: "Delete Task",
+						press: function() {
+							that.deleteTask();
+						}
+					}),
+					new sap.m.ToolbarSpacer({width: "10px"}),
+					new sap.m.ToolbarSeparator()
+				]
+			});
+
+			return oToolbar;
+		},
+
+		/*
+		 * Create ToolbarSchemes
+		 * @private
+		 * @returns {Array} aToolbarSchemes
+		 */
+		_createToolbarSchemes: function() {
+			var aToolbarSchemes = [
+				new sap.gantt.config.ToolbarScheme({
+					key: "GLOBAL_TOOLBAR",
+					customToolbarItems: new sap.gantt.config.ToolbarGroup({
+						position: "R2",
+						overflowPriority: sap.m.OverflowToolbarPriority.High
+					}),
+					timeZoom: new sap.gantt.config.ToolbarGroup({
+						position: "R4",
+						overflowPriority: sap.m.OverflowToolbarPriority.NeverOverflow
+					}),
+					legend: new sap.gantt.config.ToolbarGroup({
+						position: "R3",
+						overflowPriority: sap.m.OverflowToolbarPriority.Low
+					}),
+					settings: new sap.gantt.config.SettingGroup({
+						position: "R1",
+						overflowPriority: sap.m.OverflowToolbarPriority.Low,
+						items: sap.gantt.config.DEFAULT_TOOLBAR_SETTING_ITEMS
+					}),
+					toolbarDesign: sap.m.ToolbarDesign.Transparent
+				}),
+				new sap.gantt.config.ToolbarScheme({
+					key: "LOCAL_TOOLBAR"
+				})
+			];
+
+			return aToolbarSchemes;
+		},
+
+			setCalendar: function () {
+				this._oGanttChartWithTable.setCalendarDef(new CalendarDefs({
+					defs: {
+						path: "data>/root/calendar",
+						template: new Calendar({
+							key: "{data>id}",
+							timeIntervals: {
+								path: "data>data",
+								templateShareable: true,
+								template: new TimeInterval({
+									startTime: "{data>startTime}",
+									endTime: "{data>endTime}"
+								})
+							}
+						})
+					}
+				}))
+			},
+
+			getContainerLayouts: function () {
+				var aContainerLayouts = [
+					new sap.gantt.config.ContainerLayout({
+						key: "gantt.default_layout",
+						text: "Default Layout",
+						toolbarSchemeKey: "GLOBAL_TOOLBAR"
+					})
+				];
+
+				return aContainerLayouts;
+			},
+
 			/*
 			 * Configuration of Shape.
 			 * @private
 			 * @returns {Array} aShapes
 			 */
-			_configShape: function () {
-			
-				var oOrderShape = new sap.gantt.config.Shape({
-					key: "activity",
-					shapeClassName: "sap.gantt.shape.Rectangle",
-					shapeDataName: "activity",
-					level: 10,
+			_configShape: function() {
+				var aShapes = [];
+	
+				sap.ui.define(["sap/gantt/shape/Group"], function (Group) {
+					var RectangleGroup = Group.extend("sap.test.RectangleGroup");
+	
+					RectangleGroup.prototype.getRLSAnchors = function(oRawData, oObjectInfo) {
+						var shapes = this.getShapes();
+						var rectangleShapeClass;
+						var _x, _y;
+	
+						for (var i in shapes) {
+							if (shapes[i] instanceof sap.gantt.shape.Rectangle) {
+								rectangleShapeClass = shapes[i];
+							}
+						}
+	
+						_x = rectangleShapeClass.getX(oRawData);
+						_y = rectangleShapeClass.getY(oRawData, oObjectInfo) + rectangleShapeClass.getHeight() / 2;
+	
+						return {
+							startPoint: {
+								x: _x,
+								y: _y,
+								height:rectangleShapeClass.getHeight(oRawData)
+							},
+							endPoint: {
+								x: _x + rectangleShapeClass.getWidth(oRawData),
+								y: _y,
+								height:rectangleShapeClass.getHeight(oRawData)
+							}
+						};
+					};
+	
+					return RectangleGroup;
+				}, true);
+	
+				sap.ui.define(["sap/gantt/shape/Rectangle"], function (Rectangle) {
+					var shapeRectangle = Rectangle.extend("sap.test.shapeRectangle");
+	
+					shapeRectangle.prototype.getFill = function (oRawData) {
+						switch (oRawData.level) {
+						case "1":
+							return "#FAC364";
+						default:
+							return "#5CBAE5";
+						}
+					};
+	
+					return shapeRectangle;
+				}, true);
+	
+				sap.ui.define(["sap/gantt/shape/SelectedShape"], function (SelectedShape) {
+					var selectRectange = SelectedShape.extend("sap.test.selectRectange");
+	
+					selectRectange.prototype.getStroke = function (oRawData) {
+						switch (oRawData.level) {
+						case "1":
+							return "#B57506";
+						default:
+							return "#156589";
+						}
+					};
+					selectRectange.prototype.getStrokeWidth = function () {
+						return 2;
+					};
+	
+					return selectRectange;
+				});
+				
+				// define a milestone (diamond)
+				sap.ui.define(["sap/gantt/shape/ext/Diamond", "sap/ui/core/Core"], function (Diamond, Core) {
+					var milestone = Diamond.extend("sap.test.Milestone");			
+					return milestone;
+				}, true);
+				
+				// define a constraint (triangle)
+				sap.ui.define(["sap/gantt/shape/ext/Triangle", "sap/ui/core/Core"], function (Triangle, Core) {
+					var constraint = Triangle.extend("sap.test.Constraint");
+					return constraint;
+				}, true);
+	
+				var oTopShape = new sap.gantt.config.Shape({
+					key: "top",
+					shapeDataName: "order",
+					shapeClassName: "sap.test.shapeRectangle",
+					selectedClassName: "sap.test.selectRectange",
+					level: 5,
 					shapeProperties: {
-						time: "{data>startTime}",
-						endTime: "{data>endTime}",
-						fill: "#A52A2A",
-						height: 21,
-						rx: 10,
-						ry: 10,
-						yBias: 0.5,
+						time: "{startTime}",
+						endTime: "{endTime}",
+						height: 20,
 						isDuration: true,
 						enableDnD: true
 					}
 				});
-
-				var aShapes = [oOrderShape];
-
+	
+				var oOrderShape = new sap.gantt.config.Shape({
+					key: "order",
+					shapeDataName: "order",
+					shapeClassName: "sap.test.RectangleGroup",
+					selectedClassName: "sap.test.selectRectange",
+					level: 5,
+					shapeProperties: {
+						time: "{startTime}",
+						endTime: "{endTime}",
+						height: 20,
+						isDuration: true,
+						enableDnD: true
+					},
+					groupAggregation: [
+						new sap.gantt.config.Shape({
+							shapeClassName: "sap.test.shapeRectangle",
+							selectedClassName: "sap.test.selectRectange",
+							shapeProperties: {
+								time: "{startTime}",
+								endTime: "{endTime}",
+								title: "{tooltip}",
+								height: 20,
+								isDuration: true,
+								enableDnD: true
+							}
+						})
+					]
+				});
+				// define a milestone config
+				var oDiamondConfig = new sap.gantt.config.Shape({
+					key: "diamond",
+					shapeClassName: "sap.test.Milestone",
+					shapeDataName: "milestone",
+					level: 5,
+					shapeProperties: {
+						time: "{endTime}",
+						strokeWidth: 2,
+						title: "{tooltip}",
+						verticalDiagonal: 18,
+						horizontalDiagonal: 18,
+						yBias: -1,
+						fill: "#666666"
+					}
+				});
+				// define a constraint config
+				var oTriangleConfig = new sap.gantt.config.Shape({
+					key: "triangle",
+					shapeClassName: "sap.test.Constraint",
+					shapeDataName: "constraint",
+					level: 5,
+					shapeProperties: {
+						time: "{time}",
+						strokeWidth: 1,
+						title: "{tooltip}",
+						fill: "#666666",
+						rotationAngle: "{ratationAngle}",
+						base: 6,
+						height: 6,
+						distanceOfyAxisHeight: 3,
+						yBias: 7
+					}
+				});
+	
+				var oRelShape = new sap.gantt.config.Shape({
+					key: "relationship",
+					shapeDataName: "relationship",
+					level: 30,
+					shapeClassName: "sap.gantt.shape.ext.rls.Relationship",
+					shapeProperties: {
+						isDuration: false,
+						lShapeforTypeFS: true,
+						showStart: false,
+						showEnd: true,
+						stroke: "#848F94",
+						strokeWidth: 1,
+						type: "{relation_type}",
+						fromObjectPath:"{fromObjectPath}",
+						toObjectPath:"{toObjectPath}",
+						fromDataId:"{fromDataId}",
+						toDataId:"{toDataId}",
+						fromShapeId:"{fromShapeId}",
+						toShapeId:"{toShapeId}",	
+						title: "{tooltip}",
+						id: "{guid}"
+					}
+				});
+	
+				var oCalendarConfig = new sap.gantt.config.Shape({
+					key: "nwt",
+					shapeClassName: "sap.gantt.shape.cal.Calendar",
+					shapeDataName: "nwt",
+					level: 32,
+					shapeProperties: {
+						calendarName: "{id}"
+					}
+				});
+	
+				var oCalendarConfigForWeekends = new sap.gantt.config.Shape({
+					key: "nwtForWeekends",
+					shapeClassName: "sap.gantt.shape.cal.Calendar",
+					shapeDataName: "nwtForWeekends",
+					level: 32,
+					shapeProperties: {
+						calendarName: "{id}"
+					}
+				});
+	
+				aShapes = [oTopShape, oOrderShape, oDiamondConfig, oTriangleConfig, oRelShape, oCalendarConfig, oCalendarConfigForWeekends];
+	
 				return aShapes;
 			},
 
+			getTimeAxis: function() {
+				var oTimeAxis = new sap.gantt.config.TimeAxis({
+					planHorizon: new sap.gantt.config.TimeHorizon({
+						startTime: "20131228000000",
+						endTime: "20170101000000"
+					}),
+					// specify initHorizon rather than the default one
+					initHorizon: new sap.gantt.config.TimeHorizon({
+						startTime: "20161001000000",
+						endTime: "20161201000000"
+					}),
+					zoomStrategy: {
+						"1day": {
+							innerInterval: {
+								unit: sap.gantt.config.TimeUnit.day,
+								span: 1,
+								range: 90
+							},
+							largeInterval: {
+								unit: sap.gantt.config.TimeUnit.week,
+								span: 1,
+								pattern: "MMM yyyy,'Week' ww"
+							},
+							smallInterval: {
+								unit: sap.gantt.config.TimeUnit.day,
+								span: 1,
+								pattern: "EEE dd"
+							}
+						},
+						"1week": {
+							innerInterval: {
+								unit: sap.gantt.config.TimeUnit.week,
+								span: 1,
+								range: 90
+							},
+							largeInterval: {
+								unit: sap.gantt.config.TimeUnit.month,
+								span: 1,
+								pattern: "MMMM yyyy"
+							},
+							smallInterval: {
+								unit: sap.gantt.config.TimeUnit.week,
+								span: 1,
+								pattern: "'CW' w"
+							}
+						},
+						"1month": {
+							innerInterval: {
+								unit: sap.gantt.config.TimeUnit.month,
+								span: 1,
+								range: 90
+							},
+							largeInterval: {
+								unit: sap.gantt.config.TimeUnit.month,
+								span: 3,
+								pattern: "yyyy, QQQ"
+							},
+							smallInterval: {
+								unit: sap.gantt.config.TimeUnit.month,
+								span: 1,
+								pattern: "MMM"
+							}
+						},
+						"1quarter": {
+							innerInterval: {
+								unit: sap.gantt.config.TimeUnit.month,
+								span: 3,
+								range: 90
+							},
+							largeInterval: {
+								unit: sap.gantt.config.TimeUnit.year,
+								span: 1,
+								pattern: "yyyy"
+							},
+							smallInterval: {
+								unit: sap.gantt.config.TimeUnit.month,
+								span: 3,
+								pattern: "QQQ"
+							}
+						},
+						"1year": {
+							innerInterval: {
+								unit: sap.gantt.config.TimeUnit.year,
+								span: 1,
+								range: 90
+							},
+							largeInterval: {
+								unit: sap.gantt.config.TimeUnit.year,
+								span: 10,
+								pattern: "yyyy"
+							},
+							smallInterval: {
+								unit: sap.gantt.config.TimeUnit.year,
+								span: 1,
+								pattern: "yyyy"
+							}
+						}
+					},
+					granularity: "1week",
+					finestGranularity:  "1day",
+					coarsestGranularity:  "1year",
+					rate:  1
+				});
+	
+				return oTimeAxis;
+			},
+
 			configure: function () {
-				//this._oGanttChartContainer.setContainerLayouts(this.getContainerLayouts());
+				this._oGanttChartContainer.setContainerLayouts(this.getContainerLayouts());
 				//this._oGanttChartContainer.setLegendContainer(this.getLegendContainer());
-				//this._oGanttChartContainer.setContainerLayoutKey("sap.test.gantt_layout");
-				//this._oGanttChartContainer.setToolbarSchemes(this.getToolbarSchemes());
+				this._oGanttChartContainer.setContainerLayoutKey("gantt.default_layout");
+				//this._oGanttChartContainer.setToolbarSchemes(this._createToolbarSchemes());
 				//this._oGanttChartContainer.addCustomToolbarItem(this._createCustomToolbar());
-				//this._oGanttChartWithTable.setTimeAxis(this._createTimeAxis());
-				this._oGanttChartWithTable.setShapeDataNames(["order"]);
+				this._oGanttChartWithTable.setTimeAxis(this.getTimeAxis());
+				this._oGanttChartWithTable.setShapeDataNames(["top", "order", "milestone", "constraint", "relationship", "nwt", "nwtForWeekends"]);
 				this._oGanttChartWithTable.setShapes(this._configShape());
 				//this._oGanttChartWithTable.setToolbarSchemes(this.getToolbarSchemes());
 				//this._oGanttChartWithTable.setSelectionMode(sap.gantt.SelectionMode.Multiple);

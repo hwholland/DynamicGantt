@@ -16,12 +16,10 @@
     "label": "Start Date",
     "visible": true,
     "width": "150px",
-    "sortProperty": "startDate",
-    "filterProperty": "startDate",
     "template": {
       "fragment": "DatePicker",
       "binding": {
-        "value": "data>startDate"
+        "value": "data>order/0/startTime"
       }
     },
     "mergeDuplicates": false
@@ -29,12 +27,10 @@
     "label": "End Date",
     "visible": true,
     "width": "150px",
-    "sortProperty": "endDate",
-    "filterProperty": "endDate",
     "template": {
       "fragment": "DatePicker",
       "binding": {
-        "value": "data>endDate"
+        "value": "data>order/0/endTime"
       }
     },
     "mergeDuplicates": false
