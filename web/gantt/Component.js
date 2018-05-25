@@ -21,6 +21,7 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/
 				this.setModel(models.createDeviceModel(), "device");
 				this._oConfig = this.getModel("config");
 				this._oData = this.getModel("data");
+				this._oModel = this._oData;
 				// begin building the UI control
 				this.getChartContainer();
 				this.getGanttChartWithTable();
@@ -119,7 +120,8 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/
 			 */
 			getGanttChartWithTable: function () {
 				var oGanttChartWithTable = new sap.gantt.GanttChartWithTable({
-					baseRowHeight: 50
+					baseRowHeight: 50,
+					selectionMode: "Single"
 					//chartSchemes: sap.gantt.config.ChartScheme[],
 					//objectTypes: sap.gantt.config.Mode[],
 					//modes: sap.gantt.config.Mode[]
@@ -488,7 +490,7 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/
 					}
 				});
 	
-				aShapes = [oTopShape, oOrderShape, oDiamondConfig, oTriangleConfig, oRelShape, oCalendarConfig, oCalendarConfigForWeekends];
+				aShapes = [oTopShape, oOrderShape, oDiamondConfig, oTriangleConfig, oRelShape/*, oCalendarConfig, oCalendarConfigForWeekends*/];
 	
 				return aShapes;
 			},
@@ -600,17 +602,395 @@ sap.ui.define(["sap/ui/core/UIComponent", "sap/ui/model/json/JSONModel", "gantt/
 				return oTimeAxis;
 			},
 
+			_createLegendContainer: function() {
+				var sSumTaskColor = "#FAC364";
+				var sTasksColor = "#5CBAE5";
+				var sRelColor = "#848F94";
+				var sTextColor = sap.ui.getCore().getConfiguration().getTheme() === "sap_hcb" ? "white" : "";
+				var oLegend = new sap.gantt.legend.LegendContainer({
+					legendSections: [
+						new sap.m.Page({
+							title: "Tasks",
+							content:[
+								new sap.ui.core.HTML({
+									content: "<div width='100%' height='50%' style='margin-top: 25px'><svg width='180px' height='60px'><g>" +
+										"<g style='display: block;'>" +
+										"<g><rect x='" + (sap.ui.getCore().getConfiguration().getRTL() ? "155" : "25" ) + "' y='2' width='20' height='20' fill=" + sSumTaskColor + " style='stroke: " + sSumTaskColor + "; stroke-width: 2px;'></rect>" +
+										"<text x='" + (sap.ui.getCore().getConfiguration().getRTL() ? "125" : "55" ) + "' y='16' font-size='0.875rem' fill=" + sTextColor + ">Summary task</text></g>" +
+										"<g><rect x='" + (sap.ui.getCore().getConfiguration().getRTL() ? "155" : "25" ) + "' y='32' width='20' height='20' fill=" + sTasksColor + " style='stroke: " + sTasksColor + "; stroke-width: 2px;'></rect>" +
+										"<text x='" + (sap.ui.getCore().getConfiguration().getRTL() ? "125" : "55" ) + "' y='46' font-size='0.875rem' fill=" + sTextColor + ">Task</text></g>" +
+										"</g></g></svg></div>"
+								})
+							]
+						}),
+						new sap.m.Page({
+							title: "Relationships",
+							content:[
+								new sap.ui.core.HTML({
+									content: "<div width='100%' height='50%' style='margin-top: 25px'><svg width='180px' height='25px'><g>" +
+										"<g style='display: block;'>" +
+										"<g><rect x='" + (sap.ui.getCore().getConfiguration().getRTL() ? "155" : "25" ) + "' y='8' width='20' height='1' fill=" + sRelColor + " style='stroke: " + sRelColor + "; stroke-width: 1px;'></rect>" +
+										"<text x='" + (sap.ui.getCore().getConfiguration().getRTL() ? "125" : "55" ) + "' y='12.5' font-size='0.875rem' fill=" + sTextColor + ">Relationship</text></g>" +
+										"</g></g></svg></div>"
+								})
+							]
+						})
+					]
+				});
+	
+				return oLegend;
+			},
+
 			configure: function () {
 				this._oGanttChartContainer.setContainerLayouts(this.getContainerLayouts());
-				//this._oGanttChartContainer.setLegendContainer(this.getLegendContainer());
+				this._oGanttChartContainer.setLegendContainer(this._createLegendContainer());
 				this._oGanttChartContainer.setContainerLayoutKey("gantt.default_layout");
-				//this._oGanttChartContainer.setToolbarSchemes(this._createToolbarSchemes());
-				//this._oGanttChartContainer.addCustomToolbarItem(this._createCustomToolbar());
+				this._oGanttChartContainer.setToolbarSchemes(this._createToolbarSchemes());
+				this._oGanttChartContainer.addCustomToolbarItem(this._createCustomToolbar());
 				this._oGanttChartWithTable.setTimeAxis(this.getTimeAxis());
-				this._oGanttChartWithTable.setShapeDataNames(["top", "order", "milestone", "constraint", "relationship", "nwt", "nwtForWeekends"]);
+				this._oGanttChartWithTable.setShapeDataNames(["top", "order", "milestone", "constraint", "relationship"/*, "nwt", "nwtForWeekends"*/]);
 				this._oGanttChartWithTable.setShapes(this._configShape());
 				//this._oGanttChartWithTable.setToolbarSchemes(this.getToolbarSchemes());
-				//this._oGanttChartWithTable.setSelectionMode(sap.gantt.SelectionMode.Multiple);
+				this._oGanttChartWithTable.setSelectionMode(sap.gantt.SelectionMode.Multiple);
+			},
+
+				/*
+		 * Show "Not Allowed" message.
+		 * @private
+		 * @returns undefined
+		 */
+		_showNotAllowedMsg: function() {
+			MessageToast.show("Not allowed");
+		},
+
+		/*
+		 * Handle event of shapeDragEnd
+		 * @public
+		 * @param {Object} [oEvent] event context
+		 * @returns {Boolean} if Drag and Drop succeed
+		 */
+		handleShapeDragEnd: function(oEvent) {
+			var oParam = oEvent.getParameters();
+			var aSourceShapeData = oParam.sourceShapeData;
+			var oSourceShapeData = aSourceShapeData[0].shapeData;
+			var sSourceId = aSourceShapeData[0].objectInfo.id;
+			var oTargetData = oParam.targetData;
+
+			//change the form of date from millis to timestamp
+			var sTarStartTime = sap.gantt.misc.Format.dateToAbapTimestamp(new Date(oTargetData.mouseTimestamp.startTime));
+			var sTarEndTime = sap.gantt.misc.Format.dateToAbapTimestamp(new Date(oTargetData.mouseTimestamp.endTime));
+			
+			if (!oTargetData.objectInfo) {
+				this._showNotAllowedMsg();
+				return false;
 			}
+
+			var sTargetId = oTargetData.objectInfo.id;
+			var sId = aSourceShapeData[0].objectInfo.id;
+			
+			if (this._checkDropSameRow(sSourceId, sTargetId) && this._selectOnlyOneRow(aSourceShapeData)) {
+				//oSourceShapeData is a reference, so we only need to change startTime and endTime, then reset data model 
+				oSourceShapeData.startTime = sTarStartTime;
+				oSourceShapeData.endTime = sTarEndTime;
+				var oModelData = this._oModel.getData();
+				this._oModel.setData(oModelData);
+				return true;
+			} else {
+				this._showNotAllowedMsg();
+				return false;
+			}
+		},
+
+		/*
+		 * Check if drop the selected task to the same row
+		 * @private
+		 * @param {String} [sSourceId] source id
+		 * @param {String} [sTargetId] target id
+		 * @returns {Boolean} if drop the selected task in the same row
+		 */
+		_checkDropSameRow: function(sSourceId, sTargetId) {
+			if (sSourceId === sTargetId) {
+				return true;
+			} else {
+				return false;
+			}
+		},
+
+		/*
+		 * Check if only select one row of chart
+		 * @private
+		 * @param {Array} [aSourceShapeData] array of source data
+		 * @returns {Boolean} if only select one row of chart
+		 */
+		_selectOnlyOneRow: function(aSourceShapeData) {
+			if (aSourceShapeData.length === 1) {
+				return true;
+			} else {
+				return false;
+			}
+		},
+		_createTimeAxis1: function() {
+			var oTimeAxis = new sap.gantt.config.TimeAxis({
+				planHorizon: new sap.gantt.config.TimeHorizon({
+					startTime: "20071228000000",
+					endTime: "20270101000000"
+				}),
+				initHorizon: new sap.gantt.config.TimeHorizon({
+					
+				}),
+				zoomStrategy: {
+					"1day": {
+						innerInterval: {
+							unit: sap.gantt.config.TimeUnit.day,
+							span: 1,
+							range: 90
+						},
+						largeInterval: {
+							unit: sap.gantt.config.TimeUnit.week,
+							span: 1,
+							format: "MMM yyyy,'Week' ww"
+						},
+						smallInterval: {
+							unit: sap.gantt.config.TimeUnit.day,
+							span: 1,
+							format: "EEE dd"
+						}
+					},
+					"1week": {
+						innerInterval: {
+							unit: sap.gantt.config.TimeUnit.week,
+							span: 1,
+							range: 90
+						},
+						largeInterval: {
+							unit: sap.gantt.config.TimeUnit.month,
+							span: 1,
+							format: "MMMM yyyy"
+						},
+						smallInterval: {
+							unit: sap.gantt.config.TimeUnit.week,
+							span: 1,
+							format: "'CW' w"
+						}
+					},
+					"1month": {
+						innerInterval: {
+							unit: sap.gantt.config.TimeUnit.month,
+							span: 1,
+							range: 90
+						},
+						largeInterval: {
+							unit: sap.gantt.config.TimeUnit.month,
+							span: 3,
+							format: "yyyy, QQQ"
+						},
+						smallInterval: {
+							unit: sap.gantt.config.TimeUnit.month,
+							span: 1,
+							format: "MMM"
+						}
+					},
+					"1quarter": {
+						innerInterval: {
+							unit: sap.gantt.config.TimeUnit.month,
+							span: 3,
+							range: 90
+						},
+						largeInterval: {
+							unit: sap.gantt.config.TimeUnit.year,
+							span: 1,
+							format: "yyyy"
+						},
+						smallInterval: {
+							unit: sap.gantt.config.TimeUnit.month,
+							span: 3,
+							format: "QQQ"
+						}
+					},
+					"1year": {
+						innerInterval: {
+							unit: sap.gantt.config.TimeUnit.year,
+							span: 1,
+							range: 90
+						},
+						largeInterval: {
+							unit: sap.gantt.config.TimeUnit.year,
+							span: 10,
+							format: "yyyy"
+						},
+						smallInterval: {
+							unit: sap.gantt.config.TimeUnit.year,
+							span: 1,
+							format: "yyyy"
+						}
+					}
+				},
+				granularity: "1quarter",
+				finestGranularity:  "1day",
+				coarsestGranularity:  "1year",
+				rate:  1
+			});
+
+			return oTimeAxis;
+		},
+
+		/*
+		 * Create task
+		 * @public
+		 * @returns undefined
+		 */
+		createTask: function() {
+			var oGanttChartContainer = this._oGanttChartContainer;
+			var aSelectedRows = oGanttChartContainer.getSelectedRows(0)[0].selectedRows;
+
+			if (this._checkSelectedRow(aSelectedRows)) {
+				this._addRows(aSelectedRows);
+			}
+			var aIds = [];
+			for (var i = 0; i < aSelectedRows.length; i++) {
+				aIds.push(aSelectedRows[i].id);
+			}
+			setTimeout(function(){
+				oGanttChartContainer.deselectRows(0);
+				oGanttChartContainer.selectRows(0, aIds);//reselect rows
+			}, 300);
+		},
+
+		/*
+		 * Check if one or more rows selected
+		 * @public
+		 * @param {Array} [aSelectedRows] array contain selected rows
+		 * @returns {Boolean} if one or more tasks selected
+		 */
+		_checkSelectedRow: function(aSelectedRows) {
+			if (aSelectedRows.length >= 1) {
+				return true;
+			} else {
+				MessageToast.show("Plase select one or more rows");
+				return false;
+			}
+		},
+
+		/*
+		 * Add one or more rows
+		 * @public
+		 * @param {Array} [aSelectedRows] array contain selected rows
+		 * @returns undefined
+		 */
+		_addRows: function(aSelectedRows) {
+			var oModelData = this._oModel.getData(); //data in model
+			var aTreeData = oModelData.root.children; //data of root level
+
+			for (var i = 0, len = aSelectedRows.length; i < len; i++) {
+				var sId = aSelectedRows[i].id;
+				this._addRow(aTreeData, sId);
+			}
+
+			this._oModel.setData(oModelData); //update data of model
+		},
+
+		/*
+		 * Add one row
+		 * @public
+		 * @param {Array} [aTreeNodes] array contain selected rows
+		 * @param {String} [sId] id of selected row
+		 * @returns undefined
+		 */
+		_addRow: function(aTreeNodes, sId) {
+			if (!aTreeNodes || !aTreeNodes.length){
+				return;
+			}
+
+			for (var i = 0, len = aTreeNodes.length; i < len; i++) {
+				var oNode = aTreeNodes[i];
+				var aChildNodes = oNode.children;
+
+				//find object of corresponding sId and add a new object
+				if (oNode.id === sId) {
+					var oNewNode = $.extend(true, {}, oNode);//deep copy oNode
+					oNewNode.id = oNode.id + " - Copy" + Math.floor((Math.random() * 1000) + 1);
+					oNewNode.name = oNode.name + " - Copy";
+					oNewNode.order[0].id = oNewNode.order[0].id + " - Copy" + Math.floor((Math.random() * 1000) + 1);
+					aTreeNodes.splice(i + 1, 0, oNewNode);
+					return;
+				}
+
+				if (aChildNodes && aChildNodes.length > 0){
+					this._addRow(aChildNodes, sId);
+				}
+			}
+		},
+
+		/*
+		 * Delete task
+		 * @public
+		 * @returns undefined
+		 */
+		deleteTask: function() {
+			var oGanttChartContainer = this.getView().byId("GanttChartContainer");
+			var aSelectedRows = oGanttChartContainer.getSelectedRows(1)[0].selectedRows;
+
+			if (this._checkSelectedRow(aSelectedRows)) {
+				this._deleteRows(aSelectedRows);
+				this._clearSelection();
+			}
+		},
+
+		/*
+		 * Clear Selection
+		 * @private
+		 *@returns undefined
+		 */
+		_clearSelection: function() {
+			var oGanttChartContainer = this.getView().byId("GanttChartContainer");
+
+			oGanttChartContainer.deselectRows(oGanttChartContainer.getSelectedRows(0));
+		},
+
+		/*
+		 * Delete one or more rows
+		 * @public
+		 * @param {Array} [aSelectedRows] array contain selected rows
+		 * @returns undefined
+		 */
+		_deleteRows: function(aSelectedRows) {
+			var oModelData = this._oModel.getData(); //data in model
+			var aTreeData = oModelData.root.children; //data of root level
+
+			for (var i = 0, len = aSelectedRows.length; i < len; i++) {
+				var sId = aSelectedRows[i].id;
+				this._deleteRow(aTreeData, sId);
+			}
+
+			this._oModel.setData(oModelData); //update data of model
+		},
+
+		/*
+		 * Delete one row
+		 * @public
+		 * @param {Array} [aTreeNodes] array contain selected rows
+		 * @param {String} [sId] id of selected row
+		 * @returns undefined
+		 */
+		_deleteRow: function(aTreeNodes, sId) {
+			if (!aTreeNodes || !aTreeNodes.length){
+				return;
+			}
+
+			for (var i = 0, len = aTreeNodes.length; i < len; i++) {
+				var oNode = aTreeNodes[i];
+				var aChildNodes = oNode.children;
+
+				//find object of corresponding sId and delete it
+				if (oNode.id === sId) {
+					aTreeNodes.splice(i, 1);
+					return;
+				}
+
+				if (aChildNodes && aChildNodes.length > 0){
+					this._deleteRow(aChildNodes, sId);
+				}
+			}
+		}
 		});
 	});
